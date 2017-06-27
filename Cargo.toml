@@ -4,3 +4,4 @@ version = "0.1.0"
 authors = ["Daniel Kolsoi <thadan64@gmail.com>"]
 
 [dependencies]
+llvm-sys = "37.0.1" # TODO: Configure based on feature
