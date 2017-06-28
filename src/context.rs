@@ -7,11 +7,10 @@ use llvm_sys::target::{LLVMOpaqueTargetData, LLVMTargetDataRef, LLVM_InitializeN
 use llvm_sys::transforms::scalar::{LLVMAddMemCpyOptPass};
 use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LLVMAtomicOrdering};
 
-// From Docs: A single context is not thread safe.
-// However, different contexts can execute on different threads simultaneously.
-pub struct Context {
-    context: LLVMContextRef,
-}
+use {BasicBlock, Builder, Context, FunctionValue, Module, Type};
+
+use std::ffi::CString;
+use std::mem::transmute;
 
 impl Context {
     pub fn create() -> Self {
