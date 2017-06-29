@@ -1,7 +1,13 @@
 [package]
 name = "inkwell"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["Daniel Kolsoi <thadan64@gmail.com>"]
+description = "Inkwell aims to help you pen your own programming languages by safely wrapping llvm-sys. Currently squatting until 0.1.0 release."
+repository = "https://github.com/TheDan64/inkwell"
+readme = "README.md"
+keywords = ["llvm", "safe", "wrapper"]
+license = "Apache-2.0"
+categories = ["development-tools::ffi"]
 
 [dependencies]
-llvm-sys = "37.0.1" # TODO: Configure based on feature
+llvm-sys = "37.0.3" # TODO: Configure based on feature toggle. GH#1
