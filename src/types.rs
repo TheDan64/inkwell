@@ -5,7 +5,6 @@ use llvm_sys::LLVMTypeKind;
 use std::ffi::CStr;
 use std::fmt;
 use std::mem::{transmute, uninitialized};
-use std::marker::PhantomData;
 
 use context::{Context, ContextRef};
 use values::Value;
@@ -143,7 +142,11 @@ impl Type {
         Value::new(val)
     }
 
-    pub(crate) fn get_context(&self) -> ContextRef { // REVIEW: Option<ContextRef>? I believe types can be context-less (maybe not, it might auto assign the global context (if any??))
+    pub fn get_context(&self) -> ContextRef {
+        // We don't return an option because LLVM seems
+        // to always assign a context, even to types
+        // created without an explicit context, somehow
+
         let context = unsafe {
             LLVMGetTypeContext(self.type_)
         };

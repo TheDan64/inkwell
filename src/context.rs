@@ -10,7 +10,6 @@ use values::FunctionValue;
 use std::ffi::CString;
 use std::mem::{forget, transmute};
 use std::ops::Deref;
-use std::marker::PhantomData;
 
 // From Docs: A single context is not thread safe.
 // However, different contexts can execute on different threads simultaneously.
@@ -215,7 +214,7 @@ pub struct ContextRef {
 }
 
 impl ContextRef {
-    pub(crate) fn new(context: Context) -> Self {
+    pub fn new(context: Context) -> Self {
         ContextRef {
             context: Some(context),
         }
@@ -226,7 +225,7 @@ impl Deref for ContextRef {
     type Target = Context;
 
     fn deref(&self) -> &Self::Target {
-        &self.context.as_ref().unwrap()
+        &self.context.as_ref().expect("ContextRef should never be deref'd after being dropped")
     }
 }
 
@@ -242,6 +241,19 @@ fn test_no_context_double_free() {
     let int = context.i8_type();
 
     {
-        let context = int.get_context();
+        int.get_context();
     }
+}
+
+#[test]
+fn test_get_context_from_contextless_value() {
+    use llvm_sys::core::LLVMInt8Type;
+
+    let type_ = unsafe {
+        LLVMInt8Type() // TODO: Replace with wrapped method
+    };
+
+    let int = Type::new(type_);
+
+    assert!(!(*int.get_context()).context.is_null());
 }
