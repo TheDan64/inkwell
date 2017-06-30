@@ -5,20 +5,23 @@ use llvm_sys::LLVMTypeKind;
 use std::ffi::CStr;
 use std::fmt;
 use std::mem::{transmute, uninitialized};
+use std::marker::PhantomData;
 
-use context::Context;
+use context::{Context, ContextRef};
 use values::Value;
 
-pub struct Type {
+pub struct Type<'t> {
     pub(crate) type_: LLVMTypeRef,
+    phantom: PhantomData<&'t bool>,
 }
 
-impl Type {
-    pub(crate) fn new(type_: LLVMTypeRef) -> Type {
+impl<'t> Type<'t> {
+    pub(crate) fn new(type_: LLVMTypeRef) -> Self {
         assert!(!type_.is_null());
 
         Type {
-            type_: type_
+            type_: type_,
+            phantom: PhantomData,
         }
     }
 
@@ -28,7 +31,7 @@ impl Type {
         }
     }
 
-    pub fn ptr_type(&self, address_space: u32) -> Type {
+    pub fn ptr_type(&self, address_space: u32) -> Self {
         let type_ = unsafe {
             LLVMPointerType(self.type_, address_space)
         };
@@ -50,7 +53,7 @@ impl Type {
         FunctionType::new(fn_type)
     }
 
-    pub fn array_type(&self, size: u32) -> Type {
+    pub fn array_type(&self, size: u32) -> Self {
         let type_ = unsafe {
             LLVMArrayType(self.type_, size)
         };
@@ -142,15 +145,12 @@ impl Type {
         Value::new(val)
     }
 
-    // FIXME: Not approved by the FDA, may cause segfaults
-    // If multiple Context objects are created, one is bound to be `Drop`ped at end of a scope
-    // Should create only a Context reference to avoid `Drop`
-    fn get_context(&self) -> Context { // REVIEW: Option<Context>? I believe types can be context-less (maybe not, it might auto assign the global context (if any??))
+    pub(crate) fn get_context(&self) -> ContextRef<'t> { // REVIEW: Option<ContextRef>? I believe types can be context-less (maybe not, it might auto assign the global context (if any??))
         let context = unsafe {
             LLVMGetTypeContext(self.type_)
         };
 
-        Context::new(context)
+        ContextRef::new(Context::new(context))
     }
 
     /// REVIEW: Untested
@@ -161,7 +161,7 @@ impl Type {
     }
 }
 
-impl fmt::Debug for Type {
+impl<'t> fmt::Debug for Type<'t> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let llvm_type = unsafe {
             CStr::from_ptr(LLVMPrintTypeToString(self.type_))

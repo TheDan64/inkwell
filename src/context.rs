@@ -8,7 +8,9 @@ use types::Type;
 use values::FunctionValue;
 
 use std::ffi::CString;
-use std::mem::transmute;
+use std::mem::{forget, transmute};
+use std::ops::Deref;
+use std::marker::PhantomData;
 
 // From Docs: A single context is not thread safe.
 // However, different contexts can execute on different threads simultaneously.
@@ -205,5 +207,43 @@ impl Drop for Context {
         unsafe {
             LLVMContextDispose(self.context);
         }
+    }
+}
+
+pub struct ContextRef<'r> {
+    context: Option<Context>,
+    phantom: PhantomData<&'r bool>,
+}
+
+impl<'r> ContextRef<'r> {
+    pub(crate) fn new(context: Context) -> Self {
+        ContextRef {
+            context: Some(context),
+            phantom: PhantomData,
+        }
+    }
+}
+
+impl<'r> Deref for ContextRef<'r> {
+    type Target = Context;
+
+    fn deref(&self) -> &Self::Target {
+        &self.context.as_ref().unwrap()
+    }
+}
+
+impl<'r> Drop for ContextRef<'r> {
+    fn drop(&mut self) {
+        forget(self.context.take());
+    }
+}
+
+#[test]
+fn test_no_context_double_free() {
+    let context = Context::create();
+    let int = context.i8_type();
+
+    {
+        let context = int.get_context();
     }
 }
