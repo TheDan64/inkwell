@@ -10,18 +10,16 @@ use std::marker::PhantomData;
 use context::{Context, ContextRef};
 use values::Value;
 
-pub struct Type<'t> {
+pub struct Type {
     pub(crate) type_: LLVMTypeRef,
-    phantom: PhantomData<&'t bool>,
 }
 
-impl<'t> Type<'t> {
+impl Type {
     pub(crate) fn new(type_: LLVMTypeRef) -> Self {
         assert!(!type_.is_null());
 
         Type {
             type_: type_,
-            phantom: PhantomData,
         }
     }
 
@@ -145,7 +143,7 @@ impl<'t> Type<'t> {
         Value::new(val)
     }
 
-    pub(crate) fn get_context(&self) -> ContextRef<'t> { // REVIEW: Option<ContextRef>? I believe types can be context-less (maybe not, it might auto assign the global context (if any??))
+    pub(crate) fn get_context(&self) -> ContextRef { // REVIEW: Option<ContextRef>? I believe types can be context-less (maybe not, it might auto assign the global context (if any??))
         let context = unsafe {
             LLVMGetTypeContext(self.type_)
         };
@@ -161,7 +159,7 @@ impl<'t> Type<'t> {
     }
 }
 
-impl<'t> fmt::Debug for Type<'t> {
+impl fmt::Debug for Type {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let llvm_type = unsafe {
             CStr::from_ptr(LLVMPrintTypeToString(self.type_))

@@ -210,21 +210,19 @@ impl Drop for Context {
     }
 }
 
-pub struct ContextRef<'r> {
+pub struct ContextRef {
     context: Option<Context>,
-    phantom: PhantomData<&'r bool>,
 }
 
-impl<'r> ContextRef<'r> {
+impl ContextRef {
     pub(crate) fn new(context: Context) -> Self {
         ContextRef {
             context: Some(context),
-            phantom: PhantomData,
         }
     }
 }
 
-impl<'r> Deref for ContextRef<'r> {
+impl Deref for ContextRef {
     type Target = Context;
 
     fn deref(&self) -> &Self::Target {
@@ -232,7 +230,7 @@ impl<'r> Deref for ContextRef<'r> {
     }
 }
 
-impl<'r> Drop for ContextRef<'r> {
+impl Drop for ContextRef {
     fn drop(&mut self) {
         forget(self.context.take());
     }
