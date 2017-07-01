@@ -225,7 +225,7 @@ impl Deref for ContextRef {
     type Target = Context;
 
     fn deref(&self) -> &Self::Target {
-        &self.context.as_ref().expect("ContextRef should never be deref'd after being dropped")
+        self.context.as_ref().expect("ContextRef should never be deref'd after being dropped")
     }
 }
 
