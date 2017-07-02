@@ -58,6 +58,7 @@ impl Value {
         }
     }
 
+    // REVIEW: Might be a good candidate for "impl AnyType"
     pub fn get_type(&self) -> Type {
         let type_ = unsafe {
             LLVMTypeOf(self.value)

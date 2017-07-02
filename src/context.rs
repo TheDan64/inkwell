@@ -4,7 +4,7 @@ use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef};
 use basic_block::BasicBlock;
 use builder::Builder;
 use module::Module;
-use types::{IntType, Type};
+use types::{AnyType, FloatType, IntType, StructType, VoidType};
 use values::FunctionValue;
 
 use std::ffi::CString;
@@ -52,12 +52,12 @@ impl Context {
         Module::new(module)
     }
 
-    pub fn void_type(&self) -> Type {
+    pub fn void_type(&self) -> VoidType {
         let void_type = unsafe {
             LLVMVoidTypeInContext(self.context)
         };
 
-        Type::new(void_type)
+        VoidType::new(void_type)
     }
 
     pub fn bool_type(&self) -> IntType {
@@ -119,34 +119,36 @@ impl Context {
         IntType::new(int_type)
     }
 
-    pub fn f32_type(&self) -> Type {
+    pub fn f32_type(&self) -> FloatType {
         let f32_type = unsafe {
             LLVMFloatTypeInContext(self.context)
         };
 
-        Type::new(f32_type)
+        FloatType::new(f32_type)
     }
 
-    pub fn f64_type(&self) -> Type {
+    pub fn f64_type(&self) -> FloatType {
         let f64_type = unsafe {
             LLVMDoubleTypeInContext(self.context)
         };
 
-        Type::new(f64_type)
+        FloatType::new(f64_type)
     }
 
-    pub fn f128_type(&self) -> Type {
+    pub fn f128_type(&self) -> FloatType {
         let f128_type = unsafe {
             LLVMFP128TypeInContext(self.context)
         };
 
-        Type::new(f128_type)
+        FloatType::new(f128_type)
     }
 
-    pub fn struct_type(&self, field_types: Vec<Type>, packed: bool, name: &str) -> Type { // REVIEW: StructType?
+    // REVIEW: AnyType but VoidType? FunctionType?
+    // REVIEW: Changed field_types signature, untested
+    pub fn struct_type(&self, field_types: &mut [&AnyType], packed: bool, name: &str) -> StructType {
         // WARNING: transmute will no longer work correctly if Type gains more fields
         // We're avoiding reallocation by telling rust Vec<Type> is identical to Vec<LLVMTypeRef>
-        let mut field_types: Vec<LLVMTypeRef> = unsafe {
+        let mut field_types: &mut [LLVMTypeRef] = unsafe {
             transmute(field_types)
         };
 
@@ -166,7 +168,7 @@ impl Context {
             }
         };
 
-        Type::new(struct_type)
+        StructType::new(struct_type)
     }
 
     pub fn append_basic_block(&self, function: &FunctionValue, name: &str) -> BasicBlock {

@@ -11,6 +11,8 @@ use values::{IntValue, Value};
 
 // Worth noting that types seem to be singletons. At the very least, primitives are.
 // Though this is likely only true per thread since LLVM claims to not be very thread-safe.
+// TODO: Make not public if possible
+// TODO: Might be a good idea to create a google doc spreadsheet to outline which Types should get which methods from Type
 pub struct Type {
     pub(crate) type_: LLVMTypeRef,
 }
@@ -25,38 +27,41 @@ impl Type {
     }
 
     // NOTE: AnyType
-    pub fn dump_type(&self) {
+    fn dump_type(&self) {
         unsafe {
             LLVMDumpType(self.type_);
         }
     }
 
     // NOTE: AnyType
-    pub fn ptr_type(&self, address_space: u32) -> Self {
-        let type_ = unsafe {
+    fn ptr_type(&self, address_space: u32) -> PointerType {
+        let ptr_type = unsafe {
             LLVMPointerType(self.type_, address_space)
         };
 
-        Type::new(type_)
+        PointerType::new(ptr_type)
     }
 
-    // NOTE: AnyType
-    pub fn fn_type(&self, param_types: &mut [Type], is_var_args: bool) -> FunctionType {
+    // TODO: param_types: &[&AnyType]
+    // REVIEW: Is this actually AnyType except FunctionType? VoidType? Can you make a FunctionType from a FunctionType???
+    fn fn_type(&self, param_types: &mut [&AnyType], is_var_args: bool) -> FunctionType {
         // WARNING: transmute will no longer work correctly if Type gains more fields
         // We're avoiding reallocation by telling rust Vec<Type> is identical to Vec<LLVMTypeRef>
+
+        // FIXME: Turning AnyType into an enum likely broke transmute
         let mut param_types: &mut [LLVMTypeRef] = unsafe {
             transmute(param_types)
         };
 
         let fn_type = unsafe {
-            LLVMFunctionType(self.type_, param_types.as_mut_ptr(), param_types.len() as u32, is_var_args as i32) // REVIEW: safe to cast usize to u32?
+            LLVMFunctionType(self.type_, param_types.as_mut_ptr(), param_types.len() as u32, is_var_args as i32)
         };
 
         FunctionType::new(fn_type)
     }
 
     // NOTE: AnyType? -> ArrayType
-    pub fn array_type(&self, size: u32) -> Self {
+    fn array_type(&self, size: u32) -> Self {
         let type_ = unsafe {
             LLVMArrayType(self.type_, size)
         };
@@ -64,19 +69,8 @@ impl Type {
         Type::new(type_)
     }
 
-    // NOTE: FloatType -> FloatValue
-    pub fn const_float(&self, value: f64) -> Value {
-        // REVIEW: What if type is void??
-
-        let value = unsafe {
-            LLVMConstReal(self.type_, value)
-        };
-
-        Value::new(value)
-    }
-
     // NOTE: AnyType? -> ArrayType
-    pub fn const_array(&self, values: Vec<Value>) -> Value {
+    fn const_array(&self, values: Vec<Value>) -> Value {
         // WARNING: transmute will no longer work correctly if Type gains more fields
         // We're avoiding reallocation by telling rust Vec<Type> is identical to Vec<LLVMTypeRef>
         let mut values: Vec<LLVMValueRef> = unsafe {
@@ -91,8 +85,8 @@ impl Type {
     }
 
     // NOTE: AnyType?
-    // REVIEW: Untested
-    pub fn get_undef(&self) -> Value {
+    // REVIEW: Untested; impl AnyValue?
+    fn get_undef(&self) -> Value {
         let value = unsafe {
             LLVMGetUndef(self.type_)
         };
@@ -100,32 +94,16 @@ impl Type {
         Value::new(value)
     }
 
-    // NOTE: StructType, "get_type_at_field_index"
-    // LLVM 3.7+
-    // REVIEW: Untested
-    pub fn get_type_at_struct_index(&self, index: u32) -> Option<Type> {
-        // REVIEW: This should only be used on Struct Types, so add a StructType?
-        let type_ = unsafe {
-            LLVMStructGetTypeAtIndex(self.type_, index)
-        };
-
-        if type_.is_null() {
-            return None;
-        }
-
-        Some(Type::new(type_))
-    }
-
     // NOTE: AnyType
-    pub fn get_kind(&self) -> LLVMTypeKind {
+    pub(crate) fn get_kind(&self) -> LLVMTypeKind {
         unsafe {
             LLVMGetTypeKind(self.type_)
         }
     }
 
     // NOTE: AnyType
-    // REVIEW: Untested
-    pub fn get_alignment(&self) -> Value {
+    // REVIEW: Untested; Return IntValue?
+    fn get_alignment(&self) -> Value {
         let val = unsafe {
             LLVMAlignOf(self.type_)
         };
@@ -133,19 +111,7 @@ impl Type {
         Value::new(val)
     }
 
-    // NOTE: StructType -> StructValue
-    /// REVIEW: Untested
-    pub fn const_struct(&self, value: &mut Value, num: u32) -> Value {
-        // REVIEW: What if not a struct? Need StructType?
-        // TODO: Better name for num. What's it for?
-        let val = unsafe {
-            LLVMConstNamedStruct(self.type_, &mut value.value, num)
-        };
-
-        Value::new(val)
-    }
-
-    pub fn get_context(&self) -> ContextRef {
+    fn get_context(&self) -> ContextRef {
         // We don't return an option because LLVM seems
         // to always assign a context, even to types
         // created without an explicit context, somehow
@@ -158,7 +124,7 @@ impl Type {
     }
 
     /// REVIEW: Untested
-    pub fn is_sized(&self) -> bool {
+    fn is_sized(&self) -> bool {
         unsafe {
             LLVMTypeIsSized(self.type_) == 1
         }
@@ -212,6 +178,10 @@ impl FunctionType {
             LLVMCountParamTypes(self.fn_type)
         }
     }
+
+    // pub fn is_sized(&self) -> bool {
+    //     self.fn_type.is_sized()
+    // }
 }
 
 impl fmt::Debug for FunctionType {
@@ -225,7 +195,7 @@ impl fmt::Debug for FunctionType {
 }
 
 pub struct IntType {
-    int_type: LLVMTypeRef,
+    int_type: Type,
 }
 
 impl IntType {
@@ -233,7 +203,7 @@ impl IntType {
         assert!(!int_type.is_null());
 
         IntType {
-            int_type
+            int_type: Type::new(int_type),
         }
     }
 
@@ -298,52 +268,140 @@ impl IntType {
 
     pub fn const_int(&self, value: u64, sign_extend: bool) -> IntValue {
         let value = unsafe {
-            LLVMConstInt(self.int_type, value, sign_extend as i32)
+            LLVMConstInt(self.int_type.type_, value, sign_extend as i32)
         };
 
         IntValue::new(value)
     }
 
-    // TODO: DEDUPE, param_types: &[&AnyType]
-    // REVIEW: Is this AnyType but FunctionType? Can you make a FunctionType from a FunctionType???
     pub fn fn_type(&self, param_types: &mut [&AnyType], is_var_args: bool) -> FunctionType {
-        // WARNING: transmute will no longer work correctly if Type gains more fields
-        // We're avoiding reallocation by telling rust Vec<Type> is identical to Vec<LLVMTypeRef>
-
-        // FIXME: Turning AnyType into an enum likely broke transmute
-        let mut param_types: &mut [LLVMTypeRef] = unsafe {
-            transmute(param_types)
-        };
-
-        let fn_type = unsafe {
-            LLVMFunctionType(self.int_type, param_types.as_mut_ptr(), param_types.len() as u32, is_var_args as i32) // REVIEW: safe to cast usize to u32?
-        };
-
-        FunctionType::new(fn_type)
+        self.int_type.fn_type(param_types, is_var_args)
     }
 
-    // TODO: DEDUPE
     pub fn get_context(&self) -> ContextRef {
-        // We don't return an option because LLVM seems
-        // to always assign a context, even to types
-        // created without an explicit context, somehow
+        self.int_type.get_context()
+    }
 
-        let context = unsafe {
-            LLVMGetTypeContext(self.int_type)
-        };
-
-        ContextRef::new(Context::new(context))
+    pub fn is_sized(&self) -> bool {
+        self.int_type.is_sized()
     }
 }
 
-struct FloatType {
-    float_type: LLVMTypeRef,
+pub struct FloatType {
+    float_type: Type,
 }
 
-pub trait AnyType {}
+impl FloatType {
+    pub(crate) fn new(float_type: LLVMTypeRef) -> Self {
+        FloatType {
+            float_type: Type::new(float_type),
+        }
+    }
 
-impl AnyType for IntType {}
-impl AnyType for Type {}
+    pub fn fn_type(&self, param_types: &mut [&AnyType], is_var_args: bool) -> FunctionType {
+        self.float_type.fn_type(param_types, is_var_args)
+    }
+
+    // TODO: Return FloatValue
+    pub fn const_float(&self, value: f64) -> Value {
+        let value = unsafe {
+            LLVMConstReal(self.float_type.type_, value)
+        };
+
+        Value::new(value)
+    }
+
+    pub fn is_sized(&self) -> bool {
+        self.float_type.is_sized()
+    }
+}
+
+pub struct StructType {
+    struct_type: Type,
+}
+
+impl StructType {
+    pub(crate) fn new(struct_type: LLVMTypeRef) -> Self {
+        StructType {
+            struct_type: Type::new(struct_type),
+        }
+    }
+
+    // REVIEW: Untested
+    // TODO: Would be great to be able to smartly be able to do this by field name
+    // TODO: LLVM 3.7+ only
+    pub fn get_type_at_field_index(&self, index: u32) -> Option<Type> {
+        // REVIEW: This should only be used on Struct Types, so add a StructType?
+        let type_ = unsafe {
+            LLVMStructGetTypeAtIndex(self.struct_type.type_, index)
+        };
+
+        if type_.is_null() {
+            return None;
+        }
+
+        Some(Type::new(type_))
+    }
+
+    // TODO: Return StructValue
+    // REVIEW: Untested
+    // TODO: Better name for num. What's it for?
+    pub fn const_struct(&self, value: &mut Value, num: u32) -> Value {
+        let val = unsafe {
+            LLVMConstNamedStruct(self.struct_type.type_, &mut value.value, num)
+        };
+
+        Value::new(val)
+    }
+
+    pub fn is_sized(&self) -> bool {
+        self.struct_type.is_sized()
+    }
+}
+
+pub struct VoidType {
+    void_type: Type,
+}
+
+impl VoidType {
+    pub(crate) fn new(void_type: LLVMTypeRef) -> Self {
+        VoidType {
+            void_type: Type::new(void_type),
+        }
+    }
+
+    pub fn is_sized(&self) -> bool {
+        self.void_type.is_sized()
+    }
+}
+
+macro_rules! type_set {
+    ($trait_name:ident: $($args:ident),*) => (
+        pub trait $trait_name {}
+
+        $(
+            impl $trait_name for $args {}
+        )*
+    );
+}
+
+pub struct PointerType {
+    ptr_type: Type,
+}
+
+impl PointerType {
+    pub(crate) fn new(ptr_type: LLVMTypeRef) -> Self {
+        PointerType {
+            ptr_type: Type::new(ptr_type),
+        }
+    }
+
+    pub fn is_sized(&self) -> bool {
+        self.ptr_type.is_sized()
+    }
+}
+
+type_set! {AnyType: IntType, FloatType, PointerType, StructType, VoidType}
 
 #[test]
 fn test_function_type() {
