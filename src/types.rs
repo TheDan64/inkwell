@@ -7,7 +7,7 @@ use std::fmt;
 use std::mem::{transmute, uninitialized};
 
 use context::{Context, ContextRef};
-use values::Value;
+use values::{IntValue, Value};
 
 // Worth noting that types seem to be singletons. At the very least, primitives are.
 // Though this is likely only true per thread since LLVM claims to not be very thread-safe.
@@ -62,15 +62,6 @@ impl Type {
         };
 
         Type::new(type_)
-    }
-
-    // NOTE: IntValue
-    pub fn const_int(&self, value: u64, sign_extend: bool) -> Value {
-        let value = unsafe {
-            LLVMConstInt(self.type_, value, sign_extend as i32)
-        };
-
-        Value::new(value)
     }
 
     // NOTE: FloatType -> FloatValue
@@ -233,12 +224,12 @@ impl fmt::Debug for FunctionType {
     }
 }
 
-struct IntType {
+pub struct IntType {
     int_type: LLVMTypeRef,
 }
 
 impl IntType {
-    fn new(int_type: LLVMTypeRef) -> Self {
+    pub(crate) fn new(int_type: LLVMTypeRef) -> Self {
         assert!(!int_type.is_null());
 
         IntType {
@@ -246,7 +237,7 @@ impl IntType {
         }
     }
 
-    fn bool_type() -> Self {
+    pub fn bool_type() -> Self {
         let type_ = unsafe {
             LLVMInt1Type()
         };
@@ -254,7 +245,7 @@ impl IntType {
         IntType::new(type_)
     }
 
-    fn i8_type() -> Self {
+    pub fn i8_type() -> Self {
         let type_ = unsafe {
             LLVMInt8Type()
         };
@@ -262,7 +253,7 @@ impl IntType {
         IntType::new(type_)
     }
 
-    fn i16_type() -> Self {
+    pub fn i16_type() -> Self {
         let type_ = unsafe {
             LLVMInt16Type()
         };
@@ -270,7 +261,7 @@ impl IntType {
         IntType::new(type_)
     }
 
-    fn i32_type() -> Self {
+    pub fn i32_type() -> Self {
         let type_ = unsafe {
             LLVMInt32Type()
         };
@@ -278,7 +269,7 @@ impl IntType {
         IntType::new(type_)
     }
 
-    fn i64_type() -> Self {
+    pub fn i64_type() -> Self {
         let type_ = unsafe {
             LLVMInt64Type()
         };
@@ -286,7 +277,7 @@ impl IntType {
         IntType::new(type_)
     }
 
-    fn i128_type() -> Self {
+    pub fn i128_type() -> Self {
         // REVIEW: The docs says there's a LLVMInt128Type, but
         // it might only be in a newer version
 
@@ -297,12 +288,51 @@ impl IntType {
         IntType::new(type_)
     }
 
-    fn custom_width_int_type(bits: u32) -> Self {
+    pub fn custom_width_int_type(bits: u32) -> Self {
         let type_ = unsafe {
             LLVMIntType(bits)
         };
 
         IntType::new(type_)
+    }
+
+    pub fn const_int(&self, value: u64, sign_extend: bool) -> IntValue {
+        let value = unsafe {
+            LLVMConstInt(self.int_type, value, sign_extend as i32)
+        };
+
+        IntValue::new(value)
+    }
+
+    // TODO: DEDUPE, param_types: &[&AnyType]
+    // REVIEW: Is this AnyType but FunctionType? Can you make a FunctionType from a FunctionType???
+    pub fn fn_type(&self, param_types: &mut [&AnyType], is_var_args: bool) -> FunctionType {
+        // WARNING: transmute will no longer work correctly if Type gains more fields
+        // We're avoiding reallocation by telling rust Vec<Type> is identical to Vec<LLVMTypeRef>
+
+        // FIXME: Turning AnyType into an enum likely broke transmute
+        let mut param_types: &mut [LLVMTypeRef] = unsafe {
+            transmute(param_types)
+        };
+
+        let fn_type = unsafe {
+            LLVMFunctionType(self.int_type, param_types.as_mut_ptr(), param_types.len() as u32, is_var_args as i32) // REVIEW: safe to cast usize to u32?
+        };
+
+        FunctionType::new(fn_type)
+    }
+
+    // TODO: DEDUPE
+    pub fn get_context(&self) -> ContextRef {
+        // We don't return an option because LLVM seems
+        // to always assign a context, even to types
+        // created without an explicit context, somehow
+
+        let context = unsafe {
+            LLVMGetTypeContext(self.int_type)
+        };
+
+        ContextRef::new(Context::new(context))
     }
 }
 
@@ -310,22 +340,23 @@ struct FloatType {
     float_type: LLVMTypeRef,
 }
 
-trait AnyType {}
+pub trait AnyType {}
+
+impl AnyType for IntType {}
+impl AnyType for Type {}
 
 #[test]
 fn test_function_type() {
     let context = Context::create();
     let int = context.i8_type();
-    let int2 = context.i8_type();
-    let int3 = context.i8_type();
-
-    let fn_type = int.fn_type(&mut [int2, int3], false);
-
+    let float = context.f32_type();
+    let fn_type = int.fn_type(&mut [&int, &int, &float], false);
     let param_types = fn_type.get_param_types();
 
-    assert_eq!(param_types.len(), 2);
-    assert_eq!(param_types[0].type_, int.type_);
-    assert_eq!(param_types[1].type_, int.type_);
+    assert_eq!(param_types.len(), 3);
+    // assert_eq!(param_types[0].type_, int.int_type);
+    // assert_eq!(param_types[1].type_, int.int_type);
+    // assert_eq!(param_types[2].type_, float.type_);
 
     // assert!(!fn_type.is_var_arg());
 

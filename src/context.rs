@@ -4,7 +4,7 @@ use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef};
 use basic_block::BasicBlock;
 use builder::Builder;
 use module::Module;
-use types::Type;
+use types::{IntType, Type};
 use values::FunctionValue;
 
 use std::ffi::CString;
@@ -60,47 +60,47 @@ impl Context {
         Type::new(void_type)
     }
 
-    pub fn bool_type(&self) -> Type {
+    pub fn bool_type(&self) -> IntType {
         let bool_type = unsafe {
             LLVMInt1TypeInContext(self.context)
         };
 
-        Type::new(bool_type)
+        IntType::new(bool_type)
     }
 
-    pub fn i8_type(&self) -> Type {
+    pub fn i8_type(&self) -> IntType {
         let i8_type = unsafe {
             LLVMInt8TypeInContext(self.context)
         };
 
-        Type::new(i8_type)
+        IntType::new(i8_type)
     }
 
-    pub fn i16_type(&self) -> Type {
+    pub fn i16_type(&self) -> IntType {
         let i16_type = unsafe {
             LLVMInt16TypeInContext(self.context)
         };
 
-        Type::new(i16_type)
+        IntType::new(i16_type)
     }
 
-    pub fn i32_type(&self) -> Type {
+    pub fn i32_type(&self) -> IntType {
         let i32_type = unsafe {
             LLVMInt32TypeInContext(self.context)
         };
 
-        Type::new(i32_type)
+        IntType::new(i32_type)
     }
 
-    pub fn i64_type(&self) -> Type {
+    pub fn i64_type(&self) -> IntType {
         let i64_type = unsafe {
             LLVMInt64TypeInContext(self.context)
         };
 
-        Type::new(i64_type)
+        IntType::new(i64_type)
     }
 
-    pub fn i128_type(&self) -> Type {
+    pub fn i128_type(&self) -> IntType {
         // REVIEW: The docs says there's a LLVMInt128TypeInContext, but
         // it might only be in a newer version
 
@@ -108,15 +108,15 @@ impl Context {
             LLVMIntTypeInContext(self.context, 128)
         };
 
-        Type::new(i128_type)
+        IntType::new(i128_type)
     }
 
-    pub fn custom_width_int_type(&self, bits: u32) -> Type {
+    pub fn custom_width_int_type(&self, bits: u32) -> IntType {
         let int_type = unsafe {
             LLVMIntTypeInContext(self.context, bits)
         };
 
-        Type::new(int_type)
+        IntType::new(int_type)
     }
 
     pub fn f32_type(&self) -> Type {
@@ -246,14 +246,21 @@ fn test_no_context_double_free() {
 }
 
 #[test]
+fn test_no_context_double_free2() {
+    let context = Context::create();
+    let int = context.i8_type();
+    let context2 = int.get_context();
+
+    fn move_(context: Context) {}
+
+    move_(context);
+
+    context2.i8_type().const_int(0, false);
+}
+
+#[test]
 fn test_get_context_from_contextless_value() {
-    use llvm_sys::core::LLVMInt8Type;
-
-    let type_ = unsafe {
-        LLVMInt8Type() // TODO: Replace with wrapped method
-    };
-
-    let int = Type::new(type_);
+    let int = IntType::i8_type();
 
     assert!(!(*int.get_context()).context.is_null());
 }

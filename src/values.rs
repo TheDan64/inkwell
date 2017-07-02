@@ -8,7 +8,7 @@ use std::fmt;
 use std::mem::transmute;
 
 use basic_block::BasicBlock;
-use types::Type;
+use types::{IntType, Type};
 
 // REVIEW: Is clone, copy really needed?
 #[derive(Clone, Copy)]
@@ -138,13 +138,13 @@ impl Value {
     }
 }
 
-impl From<u64> for Value {
-    fn from(int: u64) -> Value {
+impl From<u64> for IntValue {
+    fn from(int: u64) -> IntValue {
         let type_ = unsafe {
             LLVMInt32Type()
         };
 
-        Type::new(type_).const_int(int, false)
+        IntType::new(type_).const_int(int, false)
     }
 }
 
@@ -418,6 +418,18 @@ impl Iterator for ParamValueIter {
         self.param_iter_value = next_value;
 
         Some(ParamValue::new(next_value))
+    }
+}
+
+pub struct IntValue {
+    int_value: LLVMValueRef,
+}
+
+impl IntValue {
+    pub(crate) fn new(value: LLVMValueRef) -> Self {
+        IntValue {
+            int_value: value,
+        }
     }
 }
 

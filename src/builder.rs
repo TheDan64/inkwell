@@ -3,7 +3,7 @@ use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LLVMAtomicOrdering};
 
 use basic_block::BasicBlock;
-use values::{FunctionValue, Value};
+use values::{FunctionValue, IntValue, Value};
 use types::Type;
 
 use std::ffi::CString;
