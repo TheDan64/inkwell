@@ -320,12 +320,6 @@ impl fmt::Debug for FunctionValue {
     }
 }
 
-impl AsRef<LLVMValueRef> for FunctionValue {
-    fn as_ref(&self) -> &LLVMValueRef {
-        &self.fn_value
-    }
-}
-
 pub struct ParamValue {
     param_value: LLVMValueRef,
 }

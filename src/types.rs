@@ -194,6 +194,12 @@ impl fmt::Debug for FunctionType {
     }
 }
 
+// impl AsRef<Type> for FunctionType {
+//     fn as_ref(&self) -> &Type {
+//         &self.fn_type
+//     }
+// }
+
 pub struct IntType {
     int_type: Type,
 }
@@ -287,6 +293,12 @@ impl IntType {
     }
 }
 
+impl AsRef<Type> for IntType {
+    fn as_ref(&self) -> &Type {
+        &self.int_type
+    }
+}
+
 pub struct FloatType {
     float_type: Type,
 }
@@ -313,6 +325,12 @@ impl FloatType {
 
     pub fn is_sized(&self) -> bool {
         self.float_type.is_sized()
+    }
+}
+
+impl AsRef<Type> for FloatType {
+    fn as_ref(&self) -> &Type {
+        &self.float_type
     }
 }
 
@@ -359,6 +377,12 @@ impl StructType {
     }
 }
 
+impl AsRef<Type> for StructType {
+    fn as_ref(&self) -> &Type {
+        &self.struct_type
+    }
+}
+
 pub struct VoidType {
     void_type: Type,
 }
@@ -375,14 +399,10 @@ impl VoidType {
     }
 }
 
-macro_rules! type_set {
-    ($trait_name:ident: $($args:ident),*) => (
-        pub trait $trait_name {}
-
-        $(
-            impl $trait_name for $args {}
-        )*
-    );
+impl AsRef<Type> for VoidType {
+    fn as_ref(&self) -> &Type {
+        &self.void_type
+    }
 }
 
 pub struct PointerType {
@@ -399,6 +419,26 @@ impl PointerType {
     pub fn is_sized(&self) -> bool {
         self.ptr_type.is_sized()
     }
+
+    pub fn ptr_type(&self, address_space: u32) -> PointerType {
+        self.ptr_type.ptr_type(address_space)
+    }
+}
+
+impl AsRef<Type> for PointerType {
+    fn as_ref(&self) -> &Type {
+        &self.ptr_type
+    }
+}
+
+macro_rules! type_set {
+    ($trait_name:ident: $($args:ident),*) => (
+        pub trait $trait_name: AsRef<Type> {}
+
+        $(
+            impl $trait_name for $args {}
+        )*
+    );
 }
 
 type_set! {AnyType: IntType, FloatType, PointerType, StructType, VoidType}

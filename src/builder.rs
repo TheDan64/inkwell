@@ -4,7 +4,7 @@ use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LL
 
 use basic_block::BasicBlock;
 use values::{FunctionValue, IntValue, Value};
-use types::Type;
+use types::AnyType;
 
 use std::ffi::CString;
 use std::mem::transmute;
@@ -86,11 +86,11 @@ impl Builder {
         Value::new(value)
     }
 
-    pub fn build_phi(&self, type_: &Type, name: &str) -> Value {
+    pub fn build_phi(&self, type_: &AnyType, name: &str) -> Value {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildPhi(self.builder, type_.type_, c_string.as_ptr())
+            LLVMBuildPhi(self.builder, type_.as_ref().type_, c_string.as_ptr())
         };
 
         Value::new(value)
@@ -114,42 +114,42 @@ impl Builder {
         Value::new(value)
     }
 
-    pub fn build_stack_allocation(&self, type_: &Type, name: &str) -> Value {
+    pub fn build_stack_allocation(&self, type_: &AnyType, name: &str) -> Value {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildAlloca(self.builder, type_.type_, c_string.as_ptr())
+            LLVMBuildAlloca(self.builder, type_.as_ref().type_, c_string.as_ptr())
         };
 
         Value::new(value)
     }
 
-    pub fn build_heap_allocation(&self, type_: &Type, name: &str) -> Value {
+    pub fn build_heap_allocation(&self, type_: &AnyType, name: &str) -> Value {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildMalloc(self.builder, type_.type_, c_string.as_ptr())
+            LLVMBuildMalloc(self.builder, type_.as_ref().type_, c_string.as_ptr())
         };
 
         Value::new(value)
     }
 
     // TODO: Rename to "build_heap_allocated_aRray" + stack version?
-    pub fn build_array_heap_allocation<V: Into<Value> + Copy>(&self, type_: &Type, size: &V, name: &str) -> Value {
+    pub fn build_array_heap_allocation<V: Into<Value> + Copy>(&self, type_: &AnyType, size: &V, name: &str) -> Value {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildArrayMalloc(self.builder, type_.type_, (*size).into().value, c_string.as_ptr())
+            LLVMBuildArrayMalloc(self.builder, type_.as_ref().type_, (*size).into().value, c_string.as_ptr())
         };
 
         Value::new(value)
     }
 
-    pub fn build_stack_allocated_array<V: Into<Value> + Copy>(&self, type_: &Type, size: &V, name: &str) -> Value {
+    pub fn build_stack_allocated_array<V: Into<Value> + Copy>(&self, type_: &AnyType, size: &V, name: &str) -> Value {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildArrayAlloca(self.builder, type_.type_, (*size).into().value, c_string.as_ptr())
+            LLVMBuildArrayAlloca(self.builder, type_.as_ref().type_, (*size).into().value, c_string.as_ptr())
         };
 
         Value::new(value)
@@ -301,21 +301,21 @@ impl Builder {
 
 
     /// REVIEW: Untested
-    pub fn build_cast(&self, op: LLVMOpcode, from_value: &Value, to_type: &Type, name: &str) -> Value {
+    pub fn build_cast(&self, op: LLVMOpcode, from_value: &Value, to_type: &AnyType, name: &str) -> Value {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildCast(self.builder, op, from_value.value, to_type.type_, c_string.as_ptr())
+            LLVMBuildCast(self.builder, op, from_value.value, to_type.as_ref().type_, c_string.as_ptr())
         };
 
         Value::new(value)
     }
 
-    pub fn build_pointer_cast(&self, from: &Value, to: &Type, name: &str) -> Value {
+    pub fn build_pointer_cast(&self, from: &Value, to: &AnyType, name: &str) -> Value {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildPointerCast(self.builder, from.value, to.type_, c_string.as_ptr())
+            LLVMBuildPointerCast(self.builder, from.value, to.as_ref().type_, c_string.as_ptr())
         };
 
         Value::new(value)

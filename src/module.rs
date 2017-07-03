@@ -11,7 +11,7 @@ use std::mem::{uninitialized, zeroed};
 use data_layout::DataLayout;
 use execution_engine::ExecutionEngine;
 use pass_manager::PassManager;
-use types::{FunctionType, Type};
+use types::{AnyType, FunctionType, Type};
 use values::{FunctionValue, Value};
 
 pub struct Module {
@@ -55,6 +55,8 @@ impl Module {
         Some(FunctionValue::new(value))
     }
 
+    // FIXME: Return AnyType? Enum may be value to transfer ownership.
+    // Maybe even a goog impl AnyType candidate
     pub fn get_type(&self, name: &str) -> Option<Type> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -143,11 +145,11 @@ impl Module {
         PassManager::new(pass_manager)
     }
 
-    pub fn add_global(&self, type_: &Type, init_value: &Option<Value>, name: &str) -> Value {
+    pub fn add_global(&self, type_: &AnyType, init_value: &Option<Value>, name: &str) -> Value {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMAddGlobal(self.module, type_.type_, c_string.as_ptr())
+            LLVMAddGlobal(self.module, type_.as_ref().type_, c_string.as_ptr())
         };
 
         if let Some(ref init_val) = *init_value {
