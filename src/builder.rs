@@ -3,7 +3,7 @@ use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LLVMAtomicOrdering};
 
 use basic_block::BasicBlock;
-use values::{FunctionValue, IntValue, Value};
+use values::{AnyValue, FunctionValue, IntValue, Value};
 use types::AnyType;
 
 use std::ffi::CString;
@@ -38,7 +38,7 @@ impl Builder {
     pub fn build_call<V: Into<Value> + Copy>(&self, function: &FunctionValue, args: &[V], name: &str) -> Value {
         // LLVM gets upset when void calls are named because they don't return anything
         let name = unsafe {
-            match LLVMGetTypeKind(LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(function.fn_value)))) {
+            match LLVMGetTypeKind(LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(function.fn_value.value)))) {
                 LLVMTypeKind::LLVMVoidTypeKind => "",
                 _ => name,
             }
@@ -58,7 +58,7 @@ impl Builder {
         };
 
         let value = unsafe {
-            LLVMBuildCall(self.builder, function.fn_value, args.as_mut_ptr(), args.len() as u32, c_string.as_ptr())
+            LLVMBuildCall(self.builder, function.fn_value.value, args.as_mut_ptr(), args.len() as u32, c_string.as_ptr())
         };
 
         Value::new(value)
@@ -200,11 +200,11 @@ impl Builder {
         Value::new(value)
     }
 
-    pub fn build_int_add(&self, left_value: &Value, right_value: &Value, name: &str) -> Value {
+    pub fn build_int_add(&self, left_value: &AnyValue, right_value: &AnyValue, name: &str) -> Value {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildAdd(self.builder, left_value.value, right_value.value, c_string.as_ptr())
+            LLVMBuildAdd(self.builder, left_value.as_ref().value, right_value.as_ref().value, c_string.as_ptr())
         };
 
         Value::new(value)
@@ -321,11 +321,11 @@ impl Builder {
         Value::new(value)
     }
 
-    pub fn build_int_compare(&self, op: LLVMIntPredicate, left_val: &Value, right_val: &Value, name: &str) -> Value {
+    pub fn build_int_compare(&self, op: LLVMIntPredicate, left_val: &IntValue, right_val: &IntValue, name: &str) -> Value {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildICmp(self.builder, op, left_val.value, right_val.value, c_string.as_ptr())
+            LLVMBuildICmp(self.builder, op, left_val.int_value.value, right_val.int_value.value, c_string.as_ptr())
         };
 
         Value::new(value)

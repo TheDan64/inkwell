@@ -281,7 +281,7 @@ impl IntType {
         IntValue::new(value)
     }
 
-    pub fn fn_type(&self, param_types: &mut [&AnyType], is_var_args: bool) -> FunctionType {
+    pub fn fn_type(&self, param_types: &[&AnyType], is_var_args: bool) -> FunctionType {
         self.int_type.fn_type(param_types, is_var_args)
     }
 
@@ -317,7 +317,7 @@ impl FloatType {
         }
     }
 
-    pub fn fn_type(&self, param_types: &mut [&AnyType], is_var_args: bool) -> FunctionType {
+    pub fn fn_type(&self, param_types: &[&AnyType], is_var_args: bool) -> FunctionType {
         self.float_type.fn_type(param_types, is_var_args)
     }
 
@@ -401,7 +401,7 @@ impl StructType {
         self.struct_type.ptr_type(address_space)
     }
 
-    pub fn fn_type(&self, param_types: &mut [&AnyType], is_var_args: bool) -> FunctionType {
+    pub fn fn_type(&self, param_types: &[&AnyType], is_var_args: bool) -> FunctionType {
         self.struct_type.fn_type(param_types, is_var_args)
     }
 }
@@ -437,7 +437,7 @@ impl VoidType {
         self.void_type.ptr_type(address_space)
     }
 
-    pub fn fn_type(&self, param_types: &mut [&AnyType], is_var_args: bool) -> FunctionType {
+    pub fn fn_type(&self, param_types: &[&AnyType], is_var_args: bool) -> FunctionType {
         self.void_type.fn_type(param_types, is_var_args)
     }
 }
@@ -473,7 +473,7 @@ impl PointerType {
         self.ptr_type.get_context()
     }
 
-    pub fn fn_type(&self, param_types: &mut [&AnyType], is_var_args: bool) -> FunctionType {
+    pub fn fn_type(&self, param_types: &[&AnyType], is_var_args: bool) -> FunctionType {
         self.ptr_type.fn_type(param_types, is_var_args)
     }
 }
@@ -514,7 +514,7 @@ fn test_function_type() {
 
     // assert!(!fn_type.is_var_arg());
 
-    // let fn_type = int.fn_type(&mut [context.i8_type()], true);
+    // let fn_type = int.fn_type(&[context.i8_type()], true);
 
     // assert!(fn_type.is_var_arg());
 

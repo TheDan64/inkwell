@@ -4,7 +4,7 @@ use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef};
 use basic_block::BasicBlock;
 use builder::Builder;
 use module::Module;
-use types::{AnyType, FloatType, IntType, StructType, VoidType};
+use types::{AnyType, BasicType, FloatType, IntType, StructType, VoidType};
 use values::FunctionValue;
 
 use std::ffi::CString;
@@ -145,13 +145,10 @@ impl Context {
 
     // REVIEW: AnyType but VoidType? FunctionType?
     // REVIEW: Changed field_types signature, untested
-    pub fn struct_type(&self, field_types: &mut [&AnyType], packed: bool, name: &str) -> StructType {
-        // WARNING: transmute will no longer work correctly if Type gains more fields
-        // We're avoiding reallocation by telling rust Vec<Type> is identical to Vec<LLVMTypeRef>
-        let mut field_types: &mut [LLVMTypeRef] = unsafe {
-            transmute(field_types)
-        };
-
+    pub fn struct_type(&self, field_types: &[&BasicType], packed: bool, name: &str) -> StructType {
+        let mut field_types: Vec<LLVMTypeRef> = field_types.iter()
+                                                           .map(|val| val.as_ref().type_)
+                                                           .collect();
         let struct_type = if name.is_empty() {
             unsafe {
                 LLVMStructTypeInContext(self.context, field_types.as_mut_ptr(), field_types.len() as u32, packed as i32)
@@ -175,7 +172,7 @@ impl Context {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let bb = unsafe {
-            LLVMAppendBasicBlockInContext(self.context, function.fn_value, c_string.as_ptr())
+            LLVMAppendBasicBlockInContext(self.context, function.fn_value.value, c_string.as_ptr())
         };
 
         BasicBlock::new(bb)

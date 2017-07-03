@@ -27,7 +27,7 @@ impl Module {
         }
     }
 
-    pub fn add_function(&self, name: &str, return_type: FunctionType) -> FunctionValue {
+    pub fn add_function(&self, name: &str, return_type: &FunctionType) -> FunctionValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -41,7 +41,7 @@ impl Module {
         FunctionValue::new(value)
     }
 
-    pub fn get_function(&self, name: &str) -> Option<FunctionValue> {
+    pub fn get_function_address(&self, name: &str) -> Option<FunctionValue> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {

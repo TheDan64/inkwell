@@ -25,7 +25,7 @@ impl Value {
         }
     }
 
-    pub fn set_global_constant(&self, num: i32) { // REVIEW: Need better name for this arg
+    fn set_global_constant(&self, num: i32) { // REVIEW: Need better name for this arg
         unsafe {
             LLVMSetGlobalConstant(self.value, num)
         }
@@ -39,27 +39,31 @@ impl Value {
         }
     }
 
-    pub fn get_name(&self) -> &CStr {
+    fn get_name(&self) -> &CStr {
         unsafe {
             CStr::from_ptr(LLVMGetValueName(self.value))
         }
     }
 
-    pub fn add_incoming(&self, mut incoming_values: &mut Value, mut incoming_basic_block: &mut BasicBlock, count: u32) { // REVIEW: PhiValue (self) only?
+    // REVIEW: PhiValue (self) only?
+    // REVIEW: Is incoming_values really ArrayValue? Or an &[AnyValue]?
+    fn add_incoming(&self, incoming_values: &AnyValue, mut incoming_basic_block: &mut BasicBlock, count: u32) {
+        let value = &mut [incoming_values.as_ref().value];
+
         unsafe {
-            LLVMAddIncoming(self.value, &mut incoming_values.value, &mut incoming_basic_block.basic_block, count);
+            LLVMAddIncoming(self.value, value.as_mut_ptr(), &mut incoming_basic_block.basic_block, count);
         }
     }
 
-    /// REVIEW: Untested
-    pub fn is_undef(&self) -> bool {
+    // REVIEW: Untested
+    fn is_undef(&self) -> bool {
         unsafe {
             LLVMIsUndef(self.value) == 1
         }
     }
 
-    // REVIEW: Might be a good candidate for "impl AnyType"
-    pub fn get_type(&self) -> Type {
+    // REVIEW: Might be a good candidate for "impl AnyType" or just enum of owned value
+    fn get_type(&self) -> Type {
         let type_ = unsafe {
             LLVMTypeOf(self.value)
         };
@@ -67,45 +71,46 @@ impl Value {
         Type::new(type_)
     }
 
-    pub fn get_type_kind(&self) -> LLVMTypeKind {
+    fn get_type_kind(&self) -> LLVMTypeKind {
         self.get_type().get_kind()
     }
 
-    pub fn is_pointer(&self) -> bool {
+    fn is_pointer(&self) -> bool {
         match self.get_type_kind() {
             LLVMTypeKind::LLVMPointerTypeKind => true,
             _ => false,
         }
     }
-    pub fn is_int(&self) -> bool {
+
+    fn is_int(&self) -> bool {
         match self.get_type_kind() {
             LLVMTypeKind::LLVMIntegerTypeKind => true,
             _ => false,
         }
     }
 
-    pub fn is_f32(&self) -> bool {
+    fn is_f32(&self) -> bool {
         match self.get_type_kind() {
             LLVMTypeKind::LLVMFloatTypeKind => true,
             _ => false,
         }
     }
 
-    pub fn is_f64(&self) -> bool {
+    fn is_f64(&self) -> bool {
         match self.get_type_kind() {
             LLVMTypeKind::LLVMDoubleTypeKind => true,
             _ => false,
         }
     }
 
-    pub fn is_f128(&self) -> bool {
+    fn is_f128(&self) -> bool {
         match self.get_type_kind() {
             LLVMTypeKind::LLVMFP128TypeKind => true,
             _ => false,
         }
     }
 
-    pub fn is_float(&self) -> bool {
+    fn is_float(&self) -> bool {
         match self.get_type_kind() {
             LLVMTypeKind::LLVMHalfTypeKind |
             LLVMTypeKind::LLVMFloatTypeKind |
@@ -117,41 +122,25 @@ impl Value {
         }
     }
 
-    pub fn is_struct(&self) -> bool {
+    fn is_struct(&self) -> bool {
         match self.get_type_kind() {
             LLVMTypeKind::LLVMStructTypeKind => true,
             _ => false,
         }
     }
 
-    pub fn is_array(&self) -> bool {
+    fn is_array(&self) -> bool {
         match self.get_type_kind() {
             LLVMTypeKind::LLVMArrayTypeKind => true,
             _ => false,
         }
     }
 
-    pub fn is_void(&self) -> bool {
+    fn is_void(&self) -> bool {
         match self.get_type_kind() {
             LLVMTypeKind::LLVMVoidTypeKind => true,
             _ => false,
         }
-    }
-}
-
-impl From<u64> for IntValue {
-    fn from(int: u64) -> IntValue {
-        let type_ = unsafe {
-            LLVMInt32Type()
-        };
-
-        IntType::new(type_).const_int(int, false)
-    }
-}
-
-impl AsRef<LLVMValueRef> for Value {
-    fn as_ref(&self) -> &LLVMValueRef {
-        &self.value
     }
 }
 
@@ -184,22 +173,19 @@ impl fmt::Debug for Value {
 }
 
 pub struct FunctionValue {
-    pub(crate) fn_value: LLVMValueRef,
+    pub(crate) fn_value: Value,
 }
 
 impl FunctionValue {
     pub(crate) fn new(value: LLVMValueRef) -> FunctionValue {
-        // TODO: Debug mode only assertions:
-        {
-            assert!(!value.is_null());
+        assert!(!value.is_null());
 
-            unsafe {
-                assert!(!LLVMIsAFunction(value).is_null())
-            }
+        unsafe {
+            assert!(!LLVMIsAFunction(value).is_null())
         }
 
         FunctionValue {
-            fn_value: value
+            fn_value: Value::new(value)
         }
     }
 
@@ -211,7 +197,7 @@ impl FunctionValue {
         };
 
         let code = unsafe {
-            LLVMVerifyFunction(self.fn_value, action)
+            LLVMVerifyFunction(self.fn_value.value, action)
         };
 
         if code == 1 {
@@ -221,7 +207,7 @@ impl FunctionValue {
 
     pub fn get_first_param(&self) -> Option<ParamValue> {
         let param = unsafe {
-            LLVMGetFirstParam(self.fn_value)
+            LLVMGetFirstParam(self.fn_value.value)
         };
 
         if param.is_null() {
@@ -233,7 +219,7 @@ impl FunctionValue {
 
     pub fn get_first_basic_block(&self) -> Option<BasicBlock> {
         let bb = unsafe {
-            LLVMGetFirstBasicBlock(self.fn_value)
+            LLVMGetFirstBasicBlock(self.fn_value.value)
         };
 
         if bb.is_null() {
@@ -251,7 +237,7 @@ impl FunctionValue {
         }
 
         let param = unsafe {
-            LLVMGetParam(self.fn_value, nth)
+            LLVMGetParam(self.fn_value.value, nth)
         };
 
         Some(ParamValue::new(param))
@@ -259,7 +245,7 @@ impl FunctionValue {
 
     pub fn count_params(&self) -> u32 {
         unsafe {
-            LLVMCountParams(self.fn_value)
+            LLVMCountParams(self.fn_value.value)
         }
     }
 
@@ -268,7 +254,7 @@ impl FunctionValue {
         let mut blocks = vec![];
 
         unsafe {
-            LLVMGetBasicBlocks(self.fn_value, blocks.as_mut_ptr());
+            LLVMGetBasicBlocks(self.fn_value.value, blocks.as_mut_ptr());
 
             transmute(blocks)
         }
@@ -276,7 +262,7 @@ impl FunctionValue {
 
     pub fn get_return_type(&self) -> Type {
         let type_ = unsafe {
-            LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(self.fn_value)))
+            LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(self.fn_value.value)))
         };
 
         Type::new(type_)
@@ -284,36 +270,42 @@ impl FunctionValue {
 
     pub fn params(&self) -> ParamValueIter {
         ParamValueIter {
-            param_iter_value: self.fn_value,
+            param_iter_value: self.fn_value.value,
             start: true,
         }
     }
 
     pub fn get_last_basic_block(&self) -> BasicBlock {
         let bb = unsafe {
-            LLVMGetLastBasicBlock(self.fn_value)
+            LLVMGetLastBasicBlock(self.fn_value.value)
         };
 
         BasicBlock::new(bb)
     }
 }
 
+impl AsRef<Value> for FunctionValue {
+    fn as_ref(&self) -> &Value {
+        &self.fn_value
+    }
+}
+
 impl fmt::Debug for FunctionValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let llvm_value = unsafe {
-            CStr::from_ptr(LLVMPrintValueToString(self.fn_value))
+            CStr::from_ptr(LLVMPrintValueToString(self.fn_value.value))
         };
         let llvm_type = unsafe {
-            CStr::from_ptr(LLVMPrintTypeToString(LLVMTypeOf(self.fn_value)))
+            CStr::from_ptr(LLVMPrintTypeToString(LLVMTypeOf(self.fn_value.value)))
         };
         let name = unsafe {
-            CStr::from_ptr(LLVMGetValueName(self.fn_value))
+            CStr::from_ptr(LLVMGetValueName(self.fn_value.value))
         };
         let is_const = unsafe {
-            LLVMIsConstant(self.fn_value) == 1
+            LLVMIsConstant(self.fn_value.value) == 1
         };
         let is_null = unsafe {
-            LLVMIsNull(self.fn_value) == 1
+            LLVMIsNull(self.fn_value.value) == 1
         };
 
         write!(f, "FunctionValue {{\n    name: {:?}\n    address: {:?}\n    is_const: {:?}\n    is_null: {:?}\n    llvm_value: {:?}\n    llvm_type: {:?}\n}}", name, self.fn_value, is_const, is_null, llvm_value, llvm_type)
@@ -321,7 +313,7 @@ impl fmt::Debug for FunctionValue {
 }
 
 pub struct ParamValue {
-    param_value: LLVMValueRef,
+    param_value: Value,
 }
 
 impl ParamValue {
@@ -329,7 +321,7 @@ impl ParamValue {
         assert!(!param_value.is_null());
 
         ParamValue {
-            param_value: param_value
+            param_value: Value::new(param_value)
         }
     }
 
@@ -337,40 +329,27 @@ impl ParamValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         unsafe {
-            LLVMSetValueName(self.param_value, c_string.as_ptr())
+            LLVMSetValueName(self.param_value.value, c_string.as_ptr())
         }
-    }
-
-    pub fn as_value(&self) -> Value {
-        // REVIEW: Would like to not have this in favor of function params being smarter about what they accept
-        // Also letting another variable have access to inner raw ptr is risky
-
-        Value::new(self.param_value)
-    }
-}
-
-impl AsRef<LLVMValueRef> for ParamValue {
-    fn as_ref(&self) -> &LLVMValueRef {
-        &self.param_value
     }
 }
 
 impl fmt::Debug for ParamValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let llvm_value = unsafe {
-            CStr::from_ptr(LLVMPrintValueToString(self.param_value))
+            CStr::from_ptr(LLVMPrintValueToString(self.param_value.value))
         };
         let llvm_type = unsafe {
-            CStr::from_ptr(LLVMPrintTypeToString(LLVMTypeOf(self.param_value)))
+            CStr::from_ptr(LLVMPrintTypeToString(LLVMTypeOf(self.param_value.value)))
         };
         let name = unsafe {
-            CStr::from_ptr(LLVMGetValueName(self.param_value))
+            CStr::from_ptr(LLVMGetValueName(self.param_value.value))
         };
         let is_const = unsafe {
-            LLVMIsConstant(self.param_value) == 1
+            LLVMIsConstant(self.param_value.value) == 1
         };
         let is_null = unsafe {
-            LLVMIsNull(self.param_value) == 1
+            LLVMIsNull(self.param_value.value) == 1
         };
 
         write!(f, "FunctionValue {{\n    name: {:?}\n    address: {:?}\n    is_const: {:?}\n    is_null: {:?}\n    llvm_value: {:?}\n    llvm_type: {:?}\n}}", name, self.param_value, is_const, is_null, llvm_value, llvm_type)
@@ -416,17 +395,72 @@ impl Iterator for ParamValueIter {
     }
 }
 
+impl AsRef<Value> for ParamValue {
+    fn as_ref(&self) -> &Value {
+        &self.param_value
+    }
+}
+
 pub struct IntValue {
-    int_value: LLVMValueRef,
+    pub(crate) int_value: Value,
 }
 
 impl IntValue {
     pub(crate) fn new(value: LLVMValueRef) -> Self {
         IntValue {
-            int_value: value,
+            int_value: Value::new(value),
         }
     }
 }
+
+impl AsRef<Value> for IntValue {
+    fn as_ref(&self) -> &Value {
+        &self.int_value
+    }
+}
+
+impl From<u64> for IntValue {
+    fn from(int: u64) -> IntValue {
+        IntType::i32_type().const_int(int, false)
+    }
+}
+
+pub struct FloatValue {
+    float_value: Value
+}
+
+impl FloatValue {
+    pub(crate) fn new(value: LLVMValueRef) -> Self {
+        FloatValue {
+            float_value: Value::new(value),
+        }
+    }
+}
+
+impl AsRef<Value> for FloatValue {
+    fn as_ref(&self) -> &Value {
+        &self.float_value
+    }
+}
+
+impl AsRef<Value> for Value { // TODO: Remove
+    fn as_ref(&self) -> &Value {
+        &self
+    }
+}
+
+macro_rules! value_set {
+    ($trait_name:ident: $($args:ident),*) => (
+        pub trait $trait_name: AsRef<Value> {}
+
+        $(
+            impl $trait_name for $args {}
+        )*
+    );
+}
+
+value_set! {AnyValue: IntValue, FloatValue, ParamValue, FunctionValue, Value} // TODO: Remove Value
+value_set! {BasicValue: IntValue, FloatValue, ParamValue}
 
 // Case for separate Value structs:
 // LLVMValueRef can be a value (ie int)
