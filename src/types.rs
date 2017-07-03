@@ -33,7 +33,6 @@ impl Type {
         }
     }
 
-    // NOTE: AnyType
     fn ptr_type(&self, address_space: u32) -> PointerType {
         let ptr_type = unsafe {
             LLVMPointerType(self.type_, address_space)
@@ -42,17 +41,11 @@ impl Type {
         PointerType::new(ptr_type)
     }
 
-    // TODO: param_types: &[&AnyType]
     // REVIEW: Is this actually AnyType except FunctionType? VoidType? Can you make a FunctionType from a FunctionType???
-    fn fn_type(&self, param_types: &mut [&AnyType], is_var_args: bool) -> FunctionType {
-        // WARNING: transmute will no longer work correctly if Type gains more fields
-        // We're avoiding reallocation by telling rust Vec<Type> is identical to Vec<LLVMTypeRef>
-
-        // FIXME: Turning AnyType into an enum likely broke transmute
-        let mut param_types: &mut [LLVMTypeRef] = unsafe {
-            transmute(param_types)
-        };
-
+    fn fn_type(&self, param_types: &[&AnyType], is_var_args: bool) -> FunctionType {
+        let mut param_types: Vec<LLVMTypeRef> = param_types.iter()
+                                                           .map(|val| val.as_ref().type_)
+                                                           .collect();
         let fn_type = unsafe {
             LLVMFunctionType(self.type_, param_types.as_mut_ptr(), param_types.len() as u32, is_var_args as i32)
         };
@@ -141,7 +134,7 @@ impl fmt::Debug for Type {
 }
 
 pub struct FunctionType {
-    pub(crate) fn_type: LLVMTypeRef,
+    pub(crate) fn_type: Type,
 }
 
 impl FunctionType {
@@ -149,14 +142,14 @@ impl FunctionType {
         assert!(!fn_type.is_null());
 
         FunctionType {
-            fn_type: fn_type
+            fn_type: Type::new(fn_type)
         }
     }
 
     // REVIEW: Not working
     fn is_var_arg(&self) -> bool {
         unsafe {
-            LLVMIsFunctionVarArg(self.fn_type) != 0
+            LLVMIsFunctionVarArg(self.fn_type.type_) != 0
         }
     }
 
@@ -167,7 +160,7 @@ impl FunctionType {
         let raw_vec = unsafe { uninitialized() };
 
         unsafe {
-            LLVMGetParamTypes(self.fn_type, raw_vec);
+            LLVMGetParamTypes(self.fn_type.type_, raw_vec);
 
             transmute(Vec::from_raw_parts(raw_vec, count as usize, count as usize))
         }
@@ -175,30 +168,38 @@ impl FunctionType {
 
     pub fn count_param_types(&self) -> u32 {
         unsafe {
-            LLVMCountParamTypes(self.fn_type)
+            LLVMCountParamTypes(self.fn_type.type_)
         }
     }
 
-    // pub fn is_sized(&self) -> bool {
-    //     self.fn_type.is_sized()
-    // }
+    pub fn is_sized(&self) -> bool {
+        self.fn_type.is_sized()
+    }
+
+    pub fn get_context(&self) -> ContextRef {
+        self.fn_type.get_context()
+    }
+
+    pub fn ptr_type(&self, address_space: u32) -> PointerType {
+        self.fn_type.ptr_type(address_space)
+    }
 }
 
 impl fmt::Debug for FunctionType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let llvm_type = unsafe {
-            CStr::from_ptr(LLVMPrintTypeToString(self.fn_type))
+            CStr::from_ptr(LLVMPrintTypeToString(self.fn_type.type_))
         };
 
-        write!(f, "FunctionType {{\n    address: {:?}\n    llvm_type: {:?}\n}}", self.fn_type, llvm_type)
+        write!(f, "FunctionType {{\n    address: {:?}\n    llvm_type: {:?}\n}}", self.fn_type.type_, llvm_type)
     }
 }
 
-// impl AsRef<Type> for FunctionType {
-//     fn as_ref(&self) -> &Type {
-//         &self.fn_type
-//     }
-// }
+impl AsRef<Type> for FunctionType {
+    fn as_ref(&self) -> &Type {
+        &self.fn_type
+    }
+}
 
 pub struct IntType {
     int_type: Type,
@@ -291,6 +292,10 @@ impl IntType {
     pub fn is_sized(&self) -> bool {
         self.int_type.is_sized()
     }
+
+    pub fn ptr_type(&self, address_space: u32) -> PointerType {
+        self.int_type.ptr_type(address_space)
+    }
 }
 
 impl AsRef<Type> for IntType {
@@ -305,6 +310,8 @@ pub struct FloatType {
 
 impl FloatType {
     pub(crate) fn new(float_type: LLVMTypeRef) -> Self {
+        assert!(!float_type.is_null());
+
         FloatType {
             float_type: Type::new(float_type),
         }
@@ -326,6 +333,14 @@ impl FloatType {
     pub fn is_sized(&self) -> bool {
         self.float_type.is_sized()
     }
+
+    pub fn get_context(&self) -> ContextRef {
+        self.float_type.get_context()
+    }
+
+    pub fn ptr_type(&self, address_space: u32) -> PointerType {
+        self.float_type.ptr_type(address_space)
+    }
 }
 
 impl AsRef<Type> for FloatType {
@@ -340,6 +355,8 @@ pub struct StructType {
 
 impl StructType {
     pub(crate) fn new(struct_type: LLVMTypeRef) -> Self {
+        assert!(!struct_type.is_null());
+
         StructType {
             struct_type: Type::new(struct_type),
         }
@@ -375,6 +392,18 @@ impl StructType {
     pub fn is_sized(&self) -> bool {
         self.struct_type.is_sized()
     }
+
+    pub fn get_context(&self) -> ContextRef {
+        self.struct_type.get_context()
+    }
+
+    pub fn ptr_type(&self, address_space: u32) -> PointerType {
+        self.struct_type.ptr_type(address_space)
+    }
+
+    pub fn fn_type(&self, param_types: &mut [&AnyType], is_var_args: bool) -> FunctionType {
+        self.struct_type.fn_type(param_types, is_var_args)
+    }
 }
 
 impl AsRef<Type> for StructType {
@@ -389,6 +418,8 @@ pub struct VoidType {
 
 impl VoidType {
     pub(crate) fn new(void_type: LLVMTypeRef) -> Self {
+        assert!(!void_type.is_null());
+
         VoidType {
             void_type: Type::new(void_type),
         }
@@ -396,6 +427,18 @@ impl VoidType {
 
     pub fn is_sized(&self) -> bool {
         self.void_type.is_sized()
+    }
+
+    pub fn get_context(&self) -> ContextRef {
+        self.void_type.get_context()
+    }
+
+    pub fn ptr_type(&self, address_space: u32) -> PointerType {
+        self.void_type.ptr_type(address_space)
+    }
+
+    pub fn fn_type(&self, param_types: &mut [&AnyType], is_var_args: bool) -> FunctionType {
+        self.void_type.fn_type(param_types, is_var_args)
     }
 }
 
@@ -411,6 +454,8 @@ pub struct PointerType {
 
 impl PointerType {
     pub(crate) fn new(ptr_type: LLVMTypeRef) -> Self {
+        assert!(!ptr_type.is_null());
+
         PointerType {
             ptr_type: Type::new(ptr_type),
         }
@@ -422,6 +467,14 @@ impl PointerType {
 
     pub fn ptr_type(&self, address_space: u32) -> PointerType {
         self.ptr_type.ptr_type(address_space)
+    }
+
+    pub fn get_context(&self) -> ContextRef {
+        self.ptr_type.get_context()
+    }
+
+    pub fn fn_type(&self, param_types: &mut [&AnyType], is_var_args: bool) -> FunctionType {
+        self.ptr_type.fn_type(param_types, is_var_args)
     }
 }
 
@@ -441,20 +494,23 @@ macro_rules! type_set {
     );
 }
 
-type_set! {AnyType: IntType, FloatType, PointerType, StructType, VoidType}
+type_set! {AnyType: IntType, FunctionType, FloatType, PointerType, StructType, VoidType}
+type_set! {BasicType: IntType, FloatType, PointerType, StructType, VoidType}
+
+// REVIEW: Possible to impl Debug for AnyType?
 
 #[test]
 fn test_function_type() {
     let context = Context::create();
     let int = context.i8_type();
     let float = context.f32_type();
-    let fn_type = int.fn_type(&mut [&int, &int, &float], false);
+    let fn_type = int.fn_type(&[&int, &int, &float], false);
     let param_types = fn_type.get_param_types();
 
     assert_eq!(param_types.len(), 3);
-    // assert_eq!(param_types[0].type_, int.int_type);
-    // assert_eq!(param_types[1].type_, int.int_type);
-    // assert_eq!(param_types[2].type_, float.type_);
+    assert_eq!(param_types[0].type_, int.as_ref().type_);
+    assert_eq!(param_types[1].type_, int.as_ref().type_);
+    assert_eq!(param_types[2].type_, float.as_ref().type_);
 
     // assert!(!fn_type.is_var_arg());
 

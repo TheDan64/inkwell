@@ -31,7 +31,7 @@ impl Module {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMAddFunction(self.module, c_string.as_ptr(), return_type.fn_type)
+            LLVMAddFunction(self.module, c_string.as_ptr(), return_type.fn_type.type_)
         };
 
         // unsafe {
