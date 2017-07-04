@@ -80,7 +80,7 @@ impl Builder {
         };
 
         let value = unsafe {
-            LLVMBuildGEP(self.builder, ptr.value, index_values.as_mut_ptr(), index_values.len() as u32, c_string.as_ptr())
+            LLVMBuildGEP(self.builder, ptr.as_ref().value, index_values.as_mut_ptr(), index_values.len() as u32, c_string.as_ptr())
         };
 
         Value::new(value)
@@ -98,7 +98,7 @@ impl Builder {
 
     pub fn build_store(&self, value: &AnyValue, ptr: &PointerValue) -> Value {
         let value = unsafe {
-            LLVMBuildStore(self.builder, value.value, ptr.value)
+            LLVMBuildStore(self.builder, value.as_ref().value, ptr.as_ref().value)
         };
 
         Value::new(value)
@@ -108,7 +108,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildLoad(self.builder, ptr.value, c_string.as_ptr())
+            LLVMBuildLoad(self.builder, ptr.as_ref().value, c_string.as_ptr())
         };
 
         Value::new(value)

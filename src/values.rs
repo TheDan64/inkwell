@@ -461,6 +461,24 @@ impl AsRef<Value> for StructValue {
     }
 }
 
+pub struct PointerValue {
+    ptr_value: Value
+}
+
+impl PointerValue {
+    pub(crate) fn new(value: LLVMValueRef) -> Self {
+        PointerValue {
+            ptr_value: Value::new(value),
+        }
+    }
+}
+
+impl AsRef<Value> for PointerValue {
+    fn as_ref(&self) -> &Value {
+        &self.ptr_value
+    }
+}
+
 impl AsRef<Value> for Value { // TODO: Remove
     fn as_ref(&self) -> &Value {
         &self
