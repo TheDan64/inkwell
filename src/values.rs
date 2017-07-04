@@ -10,8 +10,6 @@ use std::mem::transmute;
 use basic_block::BasicBlock;
 use types::{IntType, Type};
 
-// REVIEW: Is clone, copy really needed?
-#[derive(Clone, Copy)]
 pub struct Value {
     pub(crate) value: LLVMValueRef,
 }
@@ -31,7 +29,7 @@ impl Value {
         }
     }
 
-    fn set_name(&mut self, name: &str) {
+    fn set_name(&self, name: &str) {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         unsafe {
@@ -45,13 +43,15 @@ impl Value {
         }
     }
 
+    // REVIEW: Untested
     // REVIEW: PhiValue (self) only?
     // REVIEW: Is incoming_values really ArrayValue? Or an &[AnyValue]?
-    fn add_incoming(&self, incoming_values: &AnyValue, mut incoming_basic_block: &mut BasicBlock, count: u32) {
+    fn add_incoming(&self, incoming_values: &AnyValue, incoming_basic_block: &BasicBlock, count: u32) {
         let value = &mut [incoming_values.as_ref().value];
+        let basic_block = &mut [incoming_basic_block.basic_block];
 
         unsafe {
-            LLVMAddIncoming(self.value, value.as_mut_ptr(), &mut incoming_basic_block.basic_block, count);
+            LLVMAddIncoming(self.value, value.as_mut_ptr(), basic_block.as_mut_ptr(), count);
         }
     }
 
@@ -325,7 +325,7 @@ impl ParamValue {
         }
     }
 
-    pub fn set_name(&mut self, name: &str) {
+    pub fn set_name(&self, name: &str) {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         unsafe {
@@ -443,6 +443,24 @@ impl AsRef<Value> for FloatValue {
     }
 }
 
+pub struct StructValue {
+    struct_value: Value
+}
+
+impl StructValue {
+    pub(crate) fn new(value: LLVMValueRef) -> Self {
+        StructValue {
+            struct_value: Value::new(value),
+        }
+    }
+}
+
+impl AsRef<Value> for StructValue {
+    fn as_ref(&self) -> &Value {
+        &self.struct_value
+    }
+}
+
 impl AsRef<Value> for Value { // TODO: Remove
     fn as_ref(&self) -> &Value {
         &self
@@ -459,8 +477,8 @@ macro_rules! value_set {
     );
 }
 
-value_set! {AnyValue: IntValue, FloatValue, ParamValue, FunctionValue, Value} // TODO: Remove Value
-value_set! {BasicValue: IntValue, FloatValue, ParamValue}
+value_set! {AnyValue: IntValue, FloatValue, ParamValue, FunctionValue, StructValue, Value} // TODO: Remove Value, ParamValue?
+value_set! {BasicValue: IntValue, FloatValue, StructValue, ParamValue} // TODO: Remove ParamValue?
 
 // Case for separate Value structs:
 // LLVMValueRef can be a value (ie int)

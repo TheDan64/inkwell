@@ -3,7 +3,7 @@ use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LLVMAtomicOrdering};
 
 use basic_block::BasicBlock;
-use values::{AnyValue, FunctionValue, IntValue, Value};
+use values::{AnyValue, FunctionValue, IntValue, PointerValue, Value};
 use types::AnyType;
 
 use std::ffi::CString;
@@ -64,7 +64,7 @@ impl Builder {
         Value::new(value)
     }
 
-    pub fn build_gep<V: Into<Value> + Copy>(&self, ptr: &Value, ordered_indexes: &[V], name: &str) -> Value {
+    pub fn build_gep<V: Into<Value> + Copy>(&self, ptr: &PointerValue, ordered_indexes: &[V], name: &str) -> Value {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         // TODO: Assert vec values are all i32 => Result? Might not always be desirable
@@ -96,7 +96,7 @@ impl Builder {
         Value::new(value)
     }
 
-    pub fn build_store(&self, value: &Value, ptr: &Value) -> Value {
+    pub fn build_store(&self, value: &AnyValue, ptr: &PointerValue) -> Value {
         let value = unsafe {
             LLVMBuildStore(self.builder, value.value, ptr.value)
         };
@@ -104,7 +104,7 @@ impl Builder {
         Value::new(value)
     }
 
-    pub fn build_load(&self, ptr: &Value, name: &str) -> Value {
+    pub fn build_load(&self, ptr: &PointerValue, name: &str) -> Value {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {

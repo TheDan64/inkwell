@@ -1,0 +1,30 @@
+language: rust
+
+sudo: false
+
+rust:
+  - stable
+  - beta
+  - nightly
+
+matrix:
+  allow_failures:
+    - rust: nightly
+
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+      - llvm-toolchain-precise-3.7
+    packages:
+      - llvm-3.7-dev
+      - libelf-dev
+      - lib32z1-dev
+      - libedit-dev
+      - libdw-dev
+
+before_install:
+  - export PATH=/usr/lib/llvm-3.7/bin/:$HOME/.local/bin:$PATH
+
+notifications:
+  email: false

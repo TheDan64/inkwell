@@ -7,12 +7,11 @@ use std::fmt;
 use std::mem::{transmute, uninitialized};
 
 use context::{Context, ContextRef};
-use values::{IntValue, Value};
+use values::{IntValue, StructValue, Value};
 
 // Worth noting that types seem to be singletons. At the very least, primitives are.
 // Though this is likely only true per thread since LLVM claims to not be very thread-safe.
 // TODO: Make not public if possible
-// TODO: Might be a good idea to create a google doc spreadsheet to outline which Types should get which methods from Type
 pub struct Type {
     pub(crate) type_: LLVMTypeRef,
 }
@@ -378,15 +377,16 @@ impl StructType {
         Some(Type::new(type_))
     }
 
-    // TODO: Return StructValue
     // REVIEW: Untested
     // TODO: Better name for num. What's it for?
-    pub fn const_struct(&self, value: &mut Value, num: u32) -> Value {
+    pub fn const_struct(&self, value: &Value, num: u32) -> StructValue {
+        let value = &mut [value.value];
+
         let val = unsafe {
-            LLVMConstNamedStruct(self.struct_type.type_, &mut value.value, num)
+            LLVMConstNamedStruct(self.struct_type.type_, value.as_mut_ptr(), num)
         };
 
-        Value::new(val)
+        StructValue::new(val)
     }
 
     pub fn is_sized(&self) -> bool {

@@ -21,7 +21,7 @@ impl ExecutionEngine {
         }
     }
 
-    pub fn add_module(&mut self, module: &Module) {
+    pub fn add_module(&self, module: &Module) {
         unsafe {
             LLVMAddModule(self.execution_engine, module.module)
         }
