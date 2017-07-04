@@ -419,9 +419,19 @@ impl AsRef<Value> for IntValue {
     }
 }
 
-impl From<u64> for IntValue {
-    fn from(int: u64) -> IntValue {
-        IntType::i32_type().const_int(int, false)
+pub trait IntoIntValue {
+    fn into_int_value(&self) -> IntValue;
+}
+
+impl IntoIntValue for IntValue {
+    fn into_int_value(&self) -> IntValue {
+        IntValue::new(self.int_value.value)
+    }
+}
+
+impl IntoIntValue for u64 {
+    fn into_int_value(&self) -> IntValue {
+        IntType::i32_type().const_int(*self, false)
     }
 }
 

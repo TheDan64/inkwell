@@ -36,7 +36,7 @@ Here's [tari's llvm-sys example](https://bitbucket.org/tari/llvm-sys.rs/src/ea4a
 
     builder.build_return(Some(sum));
 
-    let addr = execution_engine.get_function_address("sum").unwrap();
+    let addr = execution_engine.get_function("sum").unwrap();
 
     let sum: extern "C" fn(u64, u64, u64) -> u64 = unsafe { transmute(addr) };
 

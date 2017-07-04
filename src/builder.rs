@@ -3,7 +3,7 @@ use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LLVMAtomicOrdering};
 
 use basic_block::BasicBlock;
-use values::{AnyValue, FunctionValue, IntValue, PointerValue, Value};
+use values::{AnyValue, FunctionValue, IntValue, PointerValue, Value, IntoIntValue};
 use types::AnyType;
 
 use std::ffi::CString;
@@ -64,21 +64,12 @@ impl Builder {
         Value::new(value)
     }
 
-    pub fn build_gep<V: Into<Value> + Copy>(&self, ptr: &PointerValue, ordered_indexes: &[V], name: &str) -> Value {
+    pub fn build_gep(&self, ptr: &PointerValue, ordered_indexes: &[&IntoIntValue], name: &str) -> Value {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
-        // TODO: Assert vec values are all i32 => Result? Might not always be desirable
-        // REVIEW: Had to make Value Copy + Clone to get this to work...
-        // Is this safe, given Value is a raw ptr wrapper?
-        // I suppose in theory LLVM should never delete the values in the scope of this call, but still
-        let index_values: Vec<Value> = ordered_indexes.iter().map(|val| (*val).into()).collect();
-
-        // WARNING: transmute will no longer work correctly if Value gains more fields
-        // We're avoiding reallocation by telling rust Vec<Value> is identical to Vec<LLVMValueRef>
-        let mut index_values: Vec<LLVMValueRef> = unsafe {
-            transmute(index_values)
-        };
-
+        let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
+                                                                 .map(|val| val.into_int_value().int_value.value)
+                                                                 .collect();
         let value = unsafe {
             LLVMBuildGEP(self.builder, ptr.as_ref().value, index_values.as_mut_ptr(), index_values.len() as u32, c_string.as_ptr())
         };
