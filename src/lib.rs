@@ -42,7 +42,7 @@ fn test_tari_example() {
 
     builder.build_return(Some(sum));
 
-    let addr = execution_engine.get_function("sum").unwrap();
+    let addr = execution_engine.get_function_address("sum").unwrap();
 
     let sum: extern "C" fn(u64, u64, u64) -> u64 = unsafe { transmute(addr) };
 
