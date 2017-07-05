@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction};
-use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMInt32Type, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf};
+use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMInt32Type, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind};
 use llvm_sys::LLVMTypeKind;
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -8,7 +8,7 @@ use std::fmt;
 use std::mem::transmute;
 
 use basic_block::BasicBlock;
-use types::{IntType, Type};
+use types::{AnyType, IntType, StructType, FloatType, PointerType, FunctionType, VoidType, Type};
 
 pub struct Value {
     pub(crate) value: LLVMValueRef,
@@ -44,7 +44,6 @@ impl Value {
     }
 
     // REVIEW: Untested
-    // REVIEW: PhiValue (self) only?
     // REVIEW: Is incoming_values really ArrayValue? Or an &[AnyValue]?
     fn add_incoming(&self, incoming_values: &AnyValue, incoming_basic_block: &BasicBlock, count: u32) {
         let value = &mut [incoming_values.as_ref().value];
@@ -62,17 +61,39 @@ impl Value {
         }
     }
 
-    // REVIEW: Might be a good candidate for "impl AnyType" or just enum of owned value
-    fn get_type(&self) -> Type {
+    // TODO: impl AnyType when it stabilizes
+    fn get_type(&self) -> Box<AnyType> {
         let type_ = unsafe {
             LLVMTypeOf(self.value)
         };
+        let type_kind = unsafe {
+            LLVMGetTypeKind(type_)
+        };
 
-        Type::new(type_)
+        match type_kind {
+            LLVMVoidTypeKind => Box::new(VoidType::new(type_)),
+            LLVMHalfTypeKind => Box::new(FloatType::new(type_)),
+            LLVMFloatTypeKind => Box::new(FloatType::new(type_)),
+            LLVMDoubleTypeKind => Box::new(FloatType::new(type_)),
+            LLVMX86_FP80TypeKind => Box::new(FloatType::new(type_)),
+            LLVMFP128TypeKind => Box::new(FloatType::new(type_)),
+            LLVMPPC_FP128TypeKind => Box::new(FloatType::new(type_)),
+            LLVMLabelTypeKind => panic!("FIXME: Unsupported type: Label"),
+            LLVMIntegerTypeKind => Box::new(IntType::new(type_)),
+            LLVMFunctionTypeKind => Box::new(FunctionType::new(type_)),
+            LLVMStructTypeKind => Box::new(StructType::new(type_)),
+            LLVMArrayTypeKind => panic!("FIXME: Unsupported type: Array"),
+            LLVMPointerTypeKind => Box::new(PointerType::new(type_)),
+            LLVMVectorTypeKind => panic!("FIXME: Unsupported type: Vector"),
+            LLVMMetadataTypeKind => panic!("FIXME: Unsupported type: Metadata"),
+            LLVMX86_MMXTypeKind => panic!("FIXME: Unsupported type: MMX"),
+            LLVMTokenTypeKind => panic!("FIXME: Unsupported type: Token"),
+        }
     }
 
+    // REVIEW: Remove?
     fn get_type_kind(&self) -> LLVMTypeKind {
-        self.get_type().get_kind()
+        (*self.get_type()).as_ref().get_kind()
     }
 
     fn is_pointer(&self) -> bool {
@@ -282,6 +303,10 @@ impl FunctionValue {
 
         BasicBlock::new(bb)
     }
+
+    pub fn get_name(&self) -> &CStr {
+        self.fn_value.get_name()
+    }
 }
 
 impl AsRef<Value> for FunctionValue {
@@ -331,6 +356,10 @@ impl ParamValue {
         unsafe {
             LLVMSetValueName(self.param_value.value, c_string.as_ptr())
         }
+    }
+
+    pub fn get_name(&self) -> &CStr {
+        self.param_value.get_name()
     }
 }
 
@@ -411,6 +440,10 @@ impl IntValue {
             int_value: Value::new(value),
         }
     }
+
+    pub fn get_name(&self) -> &CStr {
+        self.int_value.get_name()
+    }
 }
 
 impl AsRef<Value> for IntValue {
@@ -445,6 +478,10 @@ impl FloatValue {
             float_value: Value::new(value),
         }
     }
+
+    pub fn get_name(&self) -> &CStr {
+        self.float_value.get_name()
+    }
 }
 
 impl AsRef<Value> for FloatValue {
@@ -463,6 +500,10 @@ impl StructValue {
             struct_value: Value::new(value),
         }
     }
+
+    pub fn get_name(&self) -> &CStr {
+        self.struct_value.get_name()
+    }
 }
 
 impl AsRef<Value> for StructValue {
@@ -472,7 +513,7 @@ impl AsRef<Value> for StructValue {
 }
 
 pub struct PointerValue {
-    ptr_value: Value
+    pub(crate) ptr_value: Value
 }
 
 impl PointerValue {
@@ -481,11 +522,41 @@ impl PointerValue {
             ptr_value: Value::new(value),
         }
     }
+
+    pub fn get_name(&self) -> &CStr {
+        self.ptr_value.get_name()
+    }
 }
 
 impl AsRef<Value> for PointerValue {
     fn as_ref(&self) -> &Value {
         &self.ptr_value
+    }
+}
+
+pub struct PhiValue {
+    phi_value: Value
+}
+
+impl PhiValue {
+    pub(crate) fn new(value: LLVMValueRef) -> Self {
+        PhiValue {
+            phi_value: Value::new(value),
+        }
+    }
+
+    pub fn add_incoming(&self, incoming_values: &AnyValue, incoming_basic_block: &BasicBlock, count: u32) {
+        self.phi_value.add_incoming(incoming_values, incoming_basic_block, count)
+    }
+
+    pub fn get_name(&self) -> &CStr {
+        self.phi_value.get_name()
+    }
+}
+
+impl AsRef<Value> for PhiValue {
+    fn as_ref(&self) -> &Value {
+        &self.phi_value
     }
 }
 
@@ -505,8 +576,8 @@ macro_rules! value_set {
     );
 }
 
-value_set! {AnyValue: IntValue, FloatValue, ParamValue, FunctionValue, StructValue, Value} // TODO: Remove Value, ParamValue?
-value_set! {BasicValue: IntValue, FloatValue, StructValue, ParamValue} // TODO: Remove ParamValue?
+value_set! {AnyValue: IntValue, FloatValue, PhiValue, ParamValue, FunctionValue, StructValue, Value} // TODO: Remove Value, ParamValue?
+value_set! {BasicValue: IntValue, FloatValue, PhiValue, StructValue, ParamValue} // TODO: Remove ParamValue?
 
 // Case for separate Value structs:
 // LLVMValueRef can be a value (ie int)

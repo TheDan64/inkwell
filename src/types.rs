@@ -484,6 +484,8 @@ impl AsRef<Type> for PointerType {
     }
 }
 
+// TODO: VectorType
+
 macro_rules! type_set {
     ($trait_name:ident: $($args:ident),*) => (
         pub trait $trait_name: AsRef<Type> {}

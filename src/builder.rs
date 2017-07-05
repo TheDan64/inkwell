@@ -3,7 +3,7 @@ use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LLVMAtomicOrdering};
 
 use basic_block::BasicBlock;
-use values::{AnyValue, FunctionValue, IntValue, PointerValue, Value, IntoIntValue};
+use values::{AnyValue, PhiValue, FunctionValue, IntValue, PointerValue, Value, IntoIntValue};
 use types::AnyType;
 
 use std::ffi::CString;
@@ -64,7 +64,7 @@ impl Builder {
         Value::new(value)
     }
 
-    pub fn build_gep(&self, ptr: &PointerValue, ordered_indexes: &[&IntoIntValue], name: &str) -> Value {
+    pub fn build_gep(&self, ptr: &PointerValue, ordered_indexes: &[&IntoIntValue], name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
@@ -74,17 +74,17 @@ impl Builder {
             LLVMBuildGEP(self.builder, ptr.as_ref().value, index_values.as_mut_ptr(), index_values.len() as u32, c_string.as_ptr())
         };
 
-        Value::new(value)
+        PointerValue::new(value)
     }
 
-    pub fn build_phi(&self, type_: &AnyType, name: &str) -> Value {
+    pub fn build_phi(&self, type_: &AnyType, name: &str) -> PhiValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildPhi(self.builder, type_.as_ref().type_, c_string.as_ptr())
         };
 
-        Value::new(value)
+        PhiValue::new(value)
     }
 
     pub fn build_store(&self, value: &AnyValue, ptr: &PointerValue) -> Value {
@@ -105,57 +105,59 @@ impl Builder {
         Value::new(value)
     }
 
-    pub fn build_stack_allocation(&self, type_: &AnyType, name: &str) -> Value {
+    pub fn build_stack_allocation(&self, type_: &AnyType, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildAlloca(self.builder, type_.as_ref().type_, c_string.as_ptr())
         };
 
-        Value::new(value)
+        PointerValue::new(value)
     }
 
-    pub fn build_heap_allocation(&self, type_: &AnyType, name: &str) -> Value {
+    pub fn build_heap_allocation(&self, type_: &AnyType, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildMalloc(self.builder, type_.as_ref().type_, c_string.as_ptr())
         };
 
-        Value::new(value)
+        PointerValue::new(value)
     }
 
-    // TODO: Rename to "build_heap_allocated_aRray" + stack version?
-    pub fn build_array_heap_allocation<V: Into<Value> + Copy>(&self, type_: &AnyType, size: &V, name: &str) -> Value {
+    // TODO: Rename to "build_heap_allocated_array" + stack version?
+    // REVIEW: Is this still a PointerValue (as opposed to an ArrayValue?)
+    pub fn build_array_heap_allocation<V: Into<Value> + Copy>(&self, type_: &AnyType, size: &V, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildArrayMalloc(self.builder, type_.as_ref().type_, (*size).into().value, c_string.as_ptr())
         };
 
-        Value::new(value)
+        PointerValue::new(value)
     }
 
-    pub fn build_stack_allocated_array<V: Into<Value> + Copy>(&self, type_: &AnyType, size: &V, name: &str) -> Value {
+    // REVIEW: Is this still a PointerValue (as opposed to an ArrayValue?)
+    pub fn build_stack_allocated_array<V: Into<Value> + Copy>(&self, type_: &AnyType, size: &V, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildArrayAlloca(self.builder, type_.as_ref().type_, (*size).into().value, c_string.as_ptr())
         };
 
-        Value::new(value)
+        PointerValue::new(value)
     }
 
     /// REVIEW: Untested
-    pub fn build_free(&self, ptr: &Value) -> Value { // REVIEW: Why does free return? Seems like original pointer? Ever useful?
+    pub fn build_free(&self, ptr: &PointerValue) -> Value { // REVIEW: Why does free return? Seems like original pointer? Ever useful?
         let val = unsafe {
-            LLVMBuildFree(self.builder, ptr.value)
+            LLVMBuildFree(self.builder, ptr.as_ref().value)
         };
 
         Value::new(val)
     }
 
-    pub fn insert_instruction(&self, value: Value) {
+    pub fn insert_instruction(&self, value: &Value) {
         unsafe {
             LLVMInsertIntoBuilder(self.builder, value.value);
         }
