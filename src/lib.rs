@@ -40,7 +40,7 @@ fn test_tari_example() {
     let sum = builder.build_int_add(&x, &y, "sum");
     let sum = builder.build_int_add(&sum, &z, "sum");
 
-    builder.build_return(Some(sum));
+    builder.build_return(Some(&sum));
 
     let addr = execution_engine.get_function_address("sum").unwrap();
 

@@ -488,9 +488,9 @@ impl AsRef<Type> for PointerType {
     }
 }
 
-// TODO: VectorType
+// TODO: VectorType, ArrayType
 
-macro_rules! type_set {
+macro_rules! type_trait_set {
     ($trait_name:ident: $($args:ident),*) => (
         pub trait $trait_name: AsRef<Type> {}
 
@@ -500,8 +500,21 @@ macro_rules! type_set {
     );
 }
 
-type_set! {AnyType: IntType, FunctionType, FloatType, PointerType, StructType, VoidType}
-type_set! {BasicType: IntType, FloatType, PointerType, StructType, VoidType}
+macro_rules! type_enum_set {
+    ($enum_name:ident: $($args:ident),*) => (
+        pub enum $enum_name {
+            $(
+                $args($args),
+            )*
+        }
+    );
+}
+
+// TODO: Possibly rename to AnyTypeTrait, BasicTypeTrait
+type_trait_set! {AnyType: IntType, FunctionType, FloatType, PointerType, StructType, VoidType}
+type_trait_set! {BasicType: IntType, FloatType, PointerType, StructType, VoidType}
+
+type_enum_set! {AnyTypeEnum: IntType, FunctionType, FloatType, PointerType, StructType, VoidType}
 
 // REVIEW: Possible to impl Debug for AnyType?
 
@@ -511,6 +524,9 @@ fn test_function_type() {
     let int = context.i8_type();
     let float = context.f32_type();
     let fn_type = int.fn_type(&[&int, &int, &float], false);
+
+    assert!(!fn_type.is_var_arg());
+
     let param_types = fn_type.get_param_types();
 
     assert_eq!(param_types.len(), 3);
@@ -518,11 +534,7 @@ fn test_function_type() {
     assert_eq!(param_types[1].type_, int.as_ref().type_);
     assert_eq!(param_types[2].type_, float.as_ref().type_);
 
-    // assert!(!fn_type.is_var_arg());
+    let fn_type = int.fn_type(&[&int, &float], true);
 
-    // let fn_type = int.fn_type(&[context.i8_type()], true);
-
-    // assert!(fn_type.is_var_arg());
-
-    // TODO: Test fn_type with different type structs in one call
+    assert!(fn_type.is_var_arg());
 }

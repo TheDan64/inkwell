@@ -469,7 +469,7 @@ impl IntoIntValue for u64 {
 }
 
 pub struct FloatValue {
-    float_value: Value
+    pub(crate) float_value: Value
 }
 
 impl FloatValue {
@@ -577,7 +577,7 @@ macro_rules! value_set {
 }
 
 value_set! {AnyValue: IntValue, FloatValue, PhiValue, ParamValue, FunctionValue, StructValue, Value} // TODO: Remove Value, ParamValue?
-value_set! {BasicValue: IntValue, FloatValue, PhiValue, StructValue, ParamValue} // TODO: Remove ParamValue?
+value_set! {BasicValue: IntValue, FloatValue, StructValue, ParamValue} // TODO: Remove ParamValue?
 
 // Case for separate Value structs:
 // LLVMValueRef can be a value (ie int)
