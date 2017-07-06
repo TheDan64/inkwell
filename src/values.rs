@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction};
-use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMInt32Type, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind};
+use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind};
 use llvm_sys::LLVMTypeKind;
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -71,23 +71,23 @@ impl Value {
         };
 
         match type_kind {
-            LLVMVoidTypeKind => Box::new(VoidType::new(type_)),
-            LLVMHalfTypeKind => Box::new(FloatType::new(type_)),
-            LLVMFloatTypeKind => Box::new(FloatType::new(type_)),
-            LLVMDoubleTypeKind => Box::new(FloatType::new(type_)),
-            LLVMX86_FP80TypeKind => Box::new(FloatType::new(type_)),
-            LLVMFP128TypeKind => Box::new(FloatType::new(type_)),
-            LLVMPPC_FP128TypeKind => Box::new(FloatType::new(type_)),
-            LLVMLabelTypeKind => panic!("FIXME: Unsupported type: Label"),
-            LLVMIntegerTypeKind => Box::new(IntType::new(type_)),
-            LLVMFunctionTypeKind => Box::new(FunctionType::new(type_)),
-            LLVMStructTypeKind => Box::new(StructType::new(type_)),
-            LLVMArrayTypeKind => panic!("FIXME: Unsupported type: Array"),
-            LLVMPointerTypeKind => Box::new(PointerType::new(type_)),
-            LLVMVectorTypeKind => panic!("FIXME: Unsupported type: Vector"),
-            LLVMMetadataTypeKind => panic!("FIXME: Unsupported type: Metadata"),
-            LLVMX86_MMXTypeKind => panic!("FIXME: Unsupported type: MMX"),
-            LLVMTokenTypeKind => panic!("FIXME: Unsupported type: Token"),
+            LLVMTypeKind::LLVMVoidTypeKind => Box::new(VoidType::new(type_)),
+            LLVMTypeKind::LLVMHalfTypeKind => Box::new(FloatType::new(type_)),
+            LLVMTypeKind::LLVMFloatTypeKind => Box::new(FloatType::new(type_)),
+            LLVMTypeKind::LLVMDoubleTypeKind => Box::new(FloatType::new(type_)),
+            LLVMTypeKind::LLVMX86_FP80TypeKind => Box::new(FloatType::new(type_)),
+            LLVMTypeKind::LLVMFP128TypeKind => Box::new(FloatType::new(type_)),
+            LLVMTypeKind::LLVMPPC_FP128TypeKind => Box::new(FloatType::new(type_)),
+            LLVMTypeKind::LLVMLabelTypeKind => panic!("FIXME: Unsupported type: Label"),
+            LLVMTypeKind::LLVMIntegerTypeKind => Box::new(IntType::new(type_)),
+            LLVMTypeKind::LLVMFunctionTypeKind => Box::new(FunctionType::new(type_)),
+            LLVMTypeKind::LLVMStructTypeKind => Box::new(StructType::new(type_)),
+            LLVMTypeKind::LLVMArrayTypeKind => panic!("FIXME: Unsupported type: Array"),
+            LLVMTypeKind::LLVMPointerTypeKind => Box::new(PointerType::new(type_)),
+            LLVMTypeKind::LLVMVectorTypeKind => panic!("FIXME: Unsupported type: Vector"),
+            LLVMTypeKind::LLVMMetadataTypeKind => panic!("FIXME: Unsupported type: Metadata"),
+            LLVMTypeKind::LLVMX86_MMXTypeKind => panic!("FIXME: Unsupported type: MMX"),
+            // LLVMTypeKind::LLVMTokenTypeKind => panic!("FIXME: Unsupported type: Token"), // Different version?
         }
     }
 

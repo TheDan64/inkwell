@@ -8,7 +8,7 @@ use types::{AnyType, BasicType, FloatType, IntType, StructType, VoidType};
 use values::FunctionValue;
 
 use std::ffi::CString;
-use std::mem::{forget, transmute};
+use std::mem::forget;
 use std::ops::Deref;
 
 // From Docs: A single context is not thread safe.

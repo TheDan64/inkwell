@@ -4,7 +4,7 @@ use llvm_sys::LLVMTypeKind;
 
 use std::ffi::CStr;
 use std::fmt;
-use std::mem::{transmute, uninitialized};
+use std::mem::{transmute, forget};
 
 use context::{Context, ContextRef};
 use values::{IntValue, StructValue, Value};
@@ -152,17 +152,21 @@ impl FunctionType {
         }
     }
 
-    // REVIEW: This was marked as "not working properly". Maybe need more test cases,
-    // particularly with types created without an explicit context
+    // TODO: Vec<Box<AnyType>> or Vec<impl AnyType> if that's a thing
     pub fn get_param_types(&self) -> Vec<Type> {
         let count = self.count_param_types();
-        let raw_vec = unsafe { uninitialized() };
+        let mut raw_vec: Vec<LLVMTypeRef> = Vec::with_capacity(count as usize);
+        let ptr = raw_vec.as_mut_ptr();
 
-        unsafe {
-            LLVMGetParamTypes(self.fn_type.type_, raw_vec);
+        forget(raw_vec);
 
-            transmute(Vec::from_raw_parts(raw_vec, count as usize, count as usize))
-        }
+        let raw_vec = unsafe {
+            LLVMGetParamTypes(self.fn_type.type_, ptr);
+
+            Vec::from_raw_parts(ptr, count as usize, count as usize)
+        };
+
+        raw_vec.iter().map(|val| Type::new(*val)).collect()
     }
 
     pub fn count_param_types(&self) -> u32 {
