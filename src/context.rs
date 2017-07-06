@@ -4,7 +4,7 @@ use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef};
 use basic_block::BasicBlock;
 use builder::Builder;
 use module::Module;
-use types::{AnyType, BasicType, FloatType, IntType, StructType, VoidType};
+use types::{BasicType, FloatType, IntType, StructType, VoidType};
 use values::FunctionValue;
 
 use std::ffi::CString;

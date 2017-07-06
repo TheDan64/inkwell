@@ -562,7 +562,7 @@ impl AsRef<Value> for PhiValue {
 
 impl AsRef<Value> for Value { // TODO: Remove
     fn as_ref(&self) -> &Value {
-        &self
+        self
     }
 }
 
