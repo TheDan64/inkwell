@@ -578,14 +578,25 @@ macro_rules! enum_value_set {
                 $args($args),
             )*
         }
+
+        impl AsRef<Value> for $enum_name {
+            fn as_ref(&self) -> &Value {
+                match self {
+                    $(
+                        &$enum_name::$args(ref t) => t.as_ref(),
+                    )*
+                }
+            }
+        }
     );
 }
 
-trait_value_set! {AnyValue: ArrayValue, IntValue, FloatValue, PhiValue, PointerValue, FunctionValue, StructValue, Value} // TODO: Remove Value
-trait_value_set! {BasicValue: ArrayValue, IntValue, FloatValue, StructValue, PointerValue}
-
 enum_value_set! {AnyValueEnum: ArrayValue, IntValue, FloatValue, PhiValue, FunctionValue, PointerValue, StructValue}
 enum_value_set! {BasicValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue}
+
+trait_value_set! {AnyValue: AnyValueEnum, BasicValueEnum, ArrayValue, IntValue, FloatValue, PhiValue, PointerValue, FunctionValue, StructValue, Value} // TODO: Remove Value
+trait_value_set! {BasicValue: ArrayValue, BasicValueEnum, IntValue, FloatValue, StructValue, PointerValue}
+
 
 impl BasicValueEnum {
     pub(crate) fn new(value: LLVMValueRef) -> BasicValueEnum {

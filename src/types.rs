@@ -568,15 +568,25 @@ macro_rules! enum_type_set {
                 $args($args),
             )*
         }
+
+        impl AsRef<Type> for $enum_name {
+            fn as_ref(&self) -> &Type {
+                match self {
+                    $(
+                        &$enum_name::$args(ref t) => t.as_ref(),
+                    )*
+                }
+            }
+        }
     );
 }
 
-// TODO: Possibly rename to AnyTypeTrait, BasicTypeTrait
-trait_type_set! {AnyType: IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VoidType}
-trait_type_set! {BasicType: IntType, FloatType, PointerType, StructType, ArrayType, VoidType}
-
 enum_type_set! {AnyTypeEnum: IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VoidType}
 enum_type_set! {BasicTypeEnum: IntType, FloatType, PointerType, StructType, ArrayType} // TODO: VectorType
+
+// TODO: Possibly rename to AnyTypeTrait, BasicTypeTrait
+trait_type_set! {AnyType: AnyTypeEnum, BasicTypeEnum, IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VoidType}
+trait_type_set! {BasicType: BasicTypeEnum, IntType, FloatType, PointerType, StructType, ArrayType, VoidType}
 
 impl BasicTypeEnum {
     pub(crate) fn new(type_: LLVMTypeRef) -> BasicTypeEnum {
