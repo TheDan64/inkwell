@@ -8,7 +8,7 @@ use std::fmt;
 use std::mem::transmute;
 
 use basic_block::BasicBlock;
-use types::{AnyType, IntType, StructType, FloatType, PointerType, FunctionType, VoidType, Type};
+use types::{AnyType, BasicTypeEnum, IntType, StructType, FloatType, PointerType, FunctionType, VoidType};
 
 pub struct Value {
     pub(crate) value: LLVMValueRef,
@@ -281,12 +281,12 @@ impl FunctionValue {
         }
     }
 
-    pub fn get_return_type(&self) -> Type {
+    pub fn get_return_type(&self) -> BasicTypeEnum {
         let type_ = unsafe {
             LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(self.fn_value.value)))
         };
 
-        Type::new(type_)
+        BasicTypeEnum::new(type_)
     }
 
     pub fn params(&self) -> ParamValueIter {

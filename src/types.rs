@@ -152,8 +152,7 @@ impl FunctionType {
         }
     }
 
-    // TODO: Vec<Box<AnyType>> or Vec<impl AnyType> if that's a thing
-    pub fn get_param_types(&self) -> Vec<Type> {
+    pub fn get_param_types(&self) -> Vec<BasicTypeEnum> {
         let count = self.count_param_types();
         let mut raw_vec: Vec<LLVMTypeRef> = Vec::with_capacity(count as usize);
         let ptr = raw_vec.as_mut_ptr();
@@ -166,7 +165,7 @@ impl FunctionType {
             Vec::from_raw_parts(ptr, count as usize, count as usize)
         };
 
-        raw_vec.iter().map(|val| Type::new(*val)).collect()
+        raw_vec.iter().map(|val| BasicTypeEnum::new(*val)).collect()
     }
 
     pub fn count_param_types(&self) -> u32 {
@@ -371,7 +370,7 @@ impl StructType {
     // REVIEW: Untested
     // TODO: Would be great to be able to smartly be able to do this by field name
     // TODO: LLVM 3.7+ only
-    pub fn get_type_at_field_index(&self, index: u32) -> Option<Type> {
+    pub fn get_type_at_field_index(&self, index: u32) -> Option<BasicTypeEnum> {
         // REVIEW: This should only be used on Struct Types, so add a StructType?
         let type_ = unsafe {
             LLVMStructGetTypeAtIndex(self.struct_type.type_, index)
@@ -381,7 +380,7 @@ impl StructType {
             return None;
         }
 
-        Some(Type::new(type_))
+        Some(BasicTypeEnum::new(type_))
     }
 
     // REVIEW: Untested
@@ -576,6 +575,38 @@ impl BasicTypeEnum {
             panic!("Called BasicValueEnum.into_struct_value on {:?}", self);
         }
     }
+
+    pub fn as_int_type(&self) -> &IntType {
+        if let &BasicTypeEnum::IntType(ref i) = self {
+            &i
+        } else {
+            panic!("Called BasicValueEnum.as_int_value on {:?}", self);
+        }
+    }
+
+    pub fn as_float_type(&self) -> &FloatType {
+        if let &BasicTypeEnum::FloatType(ref f) = self {
+            &f
+        } else {
+            panic!("Called BasicValueEnum.as_float_value on {:?}", self);
+        }
+    }
+
+    pub fn as_ptr_type(&self) -> &PointerType {
+        if let &BasicTypeEnum::PointerType(ref p) = self {
+            &p
+        } else {
+            panic!("Called BasicValueEnum.as_ptr_value on {:?}", self);
+        }
+    }
+
+    pub fn as_struct_type(&self) -> &StructType {
+        if let &BasicTypeEnum::StructType(ref s) = self {
+            &s
+        } else {
+            panic!("Called BasicValueEnum.as_struct_value on {:?}", self);
+        }
+    }
 }
 
 // REVIEW: Possible to impl Debug for AnyType?
@@ -592,9 +623,9 @@ fn test_function_type() {
     let param_types = fn_type.get_param_types();
 
     assert_eq!(param_types.len(), 3);
-    assert_eq!(param_types[0].type_, int.as_ref().type_);
-    assert_eq!(param_types[1].type_, int.as_ref().type_);
-    assert_eq!(param_types[2].type_, float.as_ref().type_);
+    assert_eq!(param_types[0].as_int_type().as_ref().type_, int.as_ref().type_);
+    assert_eq!(param_types[1].as_int_type().as_ref().type_, int.as_ref().type_);
+    assert_eq!(param_types[2].as_float_type().as_ref().type_, float.as_ref().type_);
 
     let fn_type = int.fn_type(&[&int, &float], true);
 
