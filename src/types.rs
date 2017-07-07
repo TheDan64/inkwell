@@ -7,7 +7,7 @@ use std::fmt;
 use std::mem::{transmute, forget};
 
 use context::{Context, ContextRef};
-use values::{IntValue, StructValue, Value};
+use values::{ArrayValue, BasicValue, IntValue, StructValue, Value};
 
 // Worth noting that types seem to be singletons. At the very least, primitives are.
 // Though this is likely only true per thread since LLVM claims to not be very thread-safe.
@@ -53,28 +53,22 @@ impl Type {
         FunctionType::new(fn_type)
     }
 
-    // NOTE: AnyType? -> ArrayType
-    fn array_type(&self, size: u32) -> Self {
+    fn array_type(&self, size: u32) -> ArrayType {
         let type_ = unsafe {
             LLVMArrayType(self.type_, size)
         };
 
-        Type::new(type_)
+        ArrayType::new(type_)
     }
 
-    // NOTE: AnyType? -> ArrayType
-    fn const_array(&self, values: Vec<Value>) -> Value {
-        // WARNING: transmute will no longer work correctly if Type gains more fields
-        // We're avoiding reallocation by telling rust Vec<Type> is identical to Vec<LLVMTypeRef>
-        let mut values: Vec<LLVMValueRef> = unsafe {
-            transmute(values)
-        };
+    fn const_array<V: BasicValue>(&self, values: Vec<&V>) -> ArrayValue {
+        let mut values: Vec<LLVMValueRef> = values.iter().map(|val| val.as_ref().value).collect();
 
         let value = unsafe {
             LLVMConstArray(self.type_, values.as_mut_ptr(), values.len() as u32)
         };
 
-        Value::new(value)
+        ArrayValue::new(value)
     }
 
     // NOTE: AnyType?
@@ -289,6 +283,10 @@ impl IntType {
         self.int_type.fn_type(param_types, is_var_args)
     }
 
+    pub fn array_type(&self, size: u32) -> ArrayType {
+        self.int_type.array_type(size)
+    }
+
     pub fn get_context(&self) -> ContextRef {
         self.int_type.get_context()
     }
@@ -324,6 +322,10 @@ impl FloatType {
 
     pub fn fn_type(&self, param_types: &[&AnyType], is_var_args: bool) -> FunctionType {
         self.float_type.fn_type(param_types, is_var_args)
+    }
+
+    pub fn array_type(&self, size: u32) -> ArrayType {
+        self.float_type.array_type(size)
     }
 
     // TODO: Return FloatValue
@@ -411,6 +413,10 @@ impl StructType {
     pub fn fn_type(&self, param_types: &[&AnyType], is_var_args: bool) -> FunctionType {
         self.struct_type.fn_type(param_types, is_var_args)
     }
+
+    pub fn array_type(&self, size: u32) -> ArrayType {
+        self.struct_type.array_type(size)
+    }
 }
 
 impl AsRef<Type> for StructType {
@@ -485,6 +491,10 @@ impl PointerType {
     pub fn fn_type(&self, param_types: &[&AnyType], is_var_args: bool) -> FunctionType {
         self.ptr_type.fn_type(param_types, is_var_args)
     }
+
+    pub fn array_type(&self, size: u32) -> ArrayType {
+        self.ptr_type.array_type(size)
+    }
 }
 
 impl AsRef<Type> for PointerType {
@@ -493,7 +503,52 @@ impl AsRef<Type> for PointerType {
     }
 }
 
-// TODO: VectorType, ArrayType
+#[derive(Debug)]
+pub struct ArrayType {
+    array_type: Type,
+}
+
+impl ArrayType {
+    pub(crate) fn new(array_type: LLVMTypeRef) -> Self {
+        assert!(!array_type.is_null());
+
+        ArrayType {
+            array_type: Type::new(array_type),
+        }
+    }
+
+    pub fn is_sized(&self) -> bool {
+        self.array_type.is_sized()
+    }
+
+    pub fn ptr_type(&self, address_space: u32) -> PointerType {
+        self.array_type.ptr_type(address_space)
+    }
+
+    pub fn get_context(&self) -> ContextRef {
+        self.array_type.get_context()
+    }
+
+    pub fn fn_type(&self, param_types: &[&AnyType], is_var_args: bool) -> FunctionType {
+        self.array_type.fn_type(param_types, is_var_args)
+    }
+
+    pub fn array_type(&self, size: u32) -> ArrayType {
+        self.array_type.array_type(size)
+    }
+
+    pub fn const_array<V: BasicValue>(&self, values: Vec<&V>) -> ArrayValue {
+        self.array_type.const_array(values)
+    }
+}
+
+impl AsRef<Type> for ArrayType {
+    fn as_ref(&self) -> &Type {
+        &self.array_type
+    }
+}
+
+// TODO: VectorType
 
 macro_rules! trait_type_set {
     ($trait_name:ident: $($args:ident),*) => (
@@ -517,11 +572,11 @@ macro_rules! enum_type_set {
 }
 
 // TODO: Possibly rename to AnyTypeTrait, BasicTypeTrait
-trait_type_set! {AnyType: IntType, FunctionType, FloatType, PointerType, StructType, VoidType}
-trait_type_set! {BasicType: IntType, FloatType, PointerType, StructType, VoidType}
+trait_type_set! {AnyType: IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VoidType}
+trait_type_set! {BasicType: IntType, FloatType, PointerType, StructType, ArrayType, VoidType}
 
-enum_type_set! {AnyTypeEnum: IntType, FunctionType, FloatType, PointerType, StructType, VoidType}
-enum_type_set! {BasicTypeEnum: IntType, FloatType, PointerType, StructType} // ArrayType, VectorType
+enum_type_set! {AnyTypeEnum: IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VoidType}
+enum_type_set! {BasicTypeEnum: IntType, FloatType, PointerType, StructType, ArrayType} // TODO: VectorType
 
 impl BasicTypeEnum {
     pub(crate) fn new(type_: LLVMTypeRef) -> BasicTypeEnum {
@@ -539,7 +594,7 @@ impl BasicTypeEnum {
             LLVMTypeKind::LLVMIntegerTypeKind => BasicTypeEnum::IntType(IntType::new(type_)),
             LLVMTypeKind::LLVMStructTypeKind => BasicTypeEnum::StructType(StructType::new(type_)),
             LLVMTypeKind::LLVMPointerTypeKind => BasicTypeEnum::PointerType(PointerType::new(type_)),
-            LLVMTypeKind::LLVMArrayTypeKind => panic!("TODO: Unsupported type: Array"),
+            LLVMTypeKind::LLVMArrayTypeKind => BasicTypeEnum::ArrayType(ArrayType::new(type_)),
             LLVMTypeKind::LLVMVectorTypeKind => panic!("TODO: Unsupported type: Vector"),
             _ => unreachable!("Unsupported type"),
         }
@@ -549,7 +604,7 @@ impl BasicTypeEnum {
         if let BasicTypeEnum::IntType(i) = self {
             i
         } else {
-            panic!("Called BasicValueEnum.into_int_value on {:?}", self);
+            panic!("Called BasicValueEnum.into_int_type on {:?}", self);
         }
     }
 
@@ -557,15 +612,15 @@ impl BasicTypeEnum {
         if let BasicTypeEnum::FloatType(f) = self {
             f
         } else {
-            panic!("Called BasicValueEnum.into_float_value on {:?}", self);
+            panic!("Called BasicValueEnum.into_float_type on {:?}", self);
         }
     }
 
-    pub fn into_ptr_type(self) -> PointerType {
+    pub fn into_pointer_type(self) -> PointerType {
         if let BasicTypeEnum::PointerType(p) = self {
             p
         } else {
-            panic!("Called BasicValueEnum.into_ptr_value on {:?}", self);
+            panic!("Called BasicValueEnum.into_ptr_type on {:?}", self);
         }
     }
 
@@ -573,7 +628,15 @@ impl BasicTypeEnum {
         if let BasicTypeEnum::StructType(s) = self {
             s
         } else {
-            panic!("Called BasicValueEnum.into_struct_value on {:?}", self);
+            panic!("Called BasicValueEnum.into_struct_type on {:?}", self);
+        }
+    }
+
+    pub fn into_array_type(self) -> ArrayType {
+        if let BasicTypeEnum::ArrayType(a) = self {
+            a
+        } else {
+            panic!("Called BasicValueEnum.into_array_type on {:?}", self);
         }
     }
 
@@ -581,7 +644,7 @@ impl BasicTypeEnum {
         if let &BasicTypeEnum::IntType(ref i) = self {
             &i
         } else {
-            panic!("Called BasicValueEnum.as_int_value on {:?}", self);
+            panic!("Called BasicValueEnum.as_int_type on {:?}", self);
         }
     }
 
@@ -589,15 +652,15 @@ impl BasicTypeEnum {
         if let &BasicTypeEnum::FloatType(ref f) = self {
             &f
         } else {
-            panic!("Called BasicValueEnum.as_float_value on {:?}", self);
+            panic!("Called BasicValueEnum.as_float_type on {:?}", self);
         }
     }
 
-    pub fn as_ptr_type(&self) -> &PointerType {
+    pub fn as_pointer_type(&self) -> &PointerType {
         if let &BasicTypeEnum::PointerType(ref p) = self {
             &p
         } else {
-            panic!("Called BasicValueEnum.as_ptr_value on {:?}", self);
+            panic!("Called BasicValueEnum.as_pointer_type on {:?}", self);
         }
     }
 
@@ -605,7 +668,15 @@ impl BasicTypeEnum {
         if let &BasicTypeEnum::StructType(ref s) = self {
             &s
         } else {
-            panic!("Called BasicValueEnum.as_struct_value on {:?}", self);
+            panic!("Called BasicValueEnum.as_struct_type on {:?}", self);
+        }
+    }
+
+    pub fn as_array_type(&self) -> &ArrayType {
+        if let &BasicTypeEnum::ArrayType(ref a) = self {
+            &a
+        } else {
+            panic!("Called BasicValueEnum.as_array_type on {:?}", self);
         }
     }
 }

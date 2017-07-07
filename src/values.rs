@@ -391,6 +391,10 @@ impl IntValue {
     pub fn get_name(&self) -> &CStr {
         self.int_value.get_name()
     }
+
+    pub fn set_name(&self, name: &str) {
+        self.int_value.set_name(name);
+    }
 }
 
 impl AsRef<Value> for IntValue {
@@ -430,6 +434,10 @@ impl FloatValue {
     pub fn get_name(&self) -> &CStr {
         self.float_value.get_name()
     }
+
+    pub fn set_name(&self, name: &str) {
+        self.float_value.set_name(name);
+    }
 }
 
 impl AsRef<Value> for FloatValue {
@@ -453,6 +461,10 @@ impl StructValue {
     pub fn get_name(&self) -> &CStr {
         self.struct_value.get_name()
     }
+
+    pub fn set_name(&self, name: &str) {
+        self.struct_value.set_name(name);
+    }
 }
 
 impl AsRef<Value> for StructValue {
@@ -475,6 +487,10 @@ impl PointerValue {
 
     pub fn get_name(&self) -> &CStr {
         self.ptr_value.get_name()
+    }
+
+    pub fn set_name(&self, name: &str) {
+        self.ptr_value.set_name(name);
     }
 }
 
@@ -517,6 +533,33 @@ impl AsRef<Value> for Value { // TODO: Remove
     }
 }
 
+#[derive(Debug)]
+pub struct ArrayValue {
+    array_value: Value
+}
+
+impl ArrayValue {
+    pub(crate) fn new(value: LLVMValueRef) -> Self {
+        ArrayValue {
+            array_value: Value::new(value),
+        }
+    }
+
+    pub fn get_name(&self) -> &CStr {
+        self.array_value.get_name()
+    }
+
+    pub fn set_name(&self, name: &str) {
+        self.array_value.set_name(name);
+    }
+}
+
+impl AsRef<Value> for ArrayValue {
+    fn as_ref(&self) -> &Value {
+        &self.array_value
+    }
+}
+
 macro_rules! trait_value_set {
     ($trait_name:ident: $($args:ident),*) => (
         pub trait $trait_name: AsRef<Value> {}
@@ -538,11 +581,11 @@ macro_rules! enum_value_set {
     );
 }
 
-trait_value_set! {AnyValue: IntValue, FloatValue, PhiValue, FunctionValue, StructValue, Value} // TODO: Remove Value
-trait_value_set! {BasicValue: IntValue, FloatValue, StructValue}
+trait_value_set! {AnyValue: ArrayValue, IntValue, FloatValue, PhiValue, PointerValue, FunctionValue, StructValue, Value} // TODO: Remove Value
+trait_value_set! {BasicValue: ArrayValue, IntValue, FloatValue, StructValue, PointerValue}
 
-enum_value_set! {AnyValueEnum: IntValue, FloatValue, PhiValue, FunctionValue, PointerValue, StructValue}
-enum_value_set! {BasicValueEnum: IntValue, FloatValue, PointerValue, StructValue}
+enum_value_set! {AnyValueEnum: ArrayValue, IntValue, FloatValue, PhiValue, FunctionValue, PointerValue, StructValue}
+enum_value_set! {BasicValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue}
 
 impl BasicValueEnum {
     pub(crate) fn new(value: LLVMValueRef) -> BasicValueEnum {
@@ -560,7 +603,7 @@ impl BasicValueEnum {
             LLVMTypeKind::LLVMIntegerTypeKind => BasicValueEnum::IntValue(IntValue::new(value)),
             LLVMTypeKind::LLVMStructTypeKind => BasicValueEnum::StructValue(StructValue::new(value)),
             LLVMTypeKind::LLVMPointerTypeKind => BasicValueEnum::PointerValue(PointerValue::new(value)),
-            LLVMTypeKind::LLVMArrayTypeKind => panic!("TODO: Unsupported type: Array"),
+            LLVMTypeKind::LLVMArrayTypeKind => BasicValueEnum::ArrayValue(ArrayValue::new(value)),
             LLVMTypeKind::LLVMVectorTypeKind => panic!("TODO: Unsupported type: Vector"),
             _ => unreachable!("Unsupported type"),
         }
@@ -582,11 +625,11 @@ impl BasicValueEnum {
         }
     }
 
-    pub fn into_ptr_value(self) -> PointerValue {
+    pub fn into_pointer_value(self) -> PointerValue {
         if let BasicValueEnum::PointerValue(p) = self {
             p
         } else {
-            panic!("Called BasicValueEnum.into_ptr_value on {:?}", self);
+            panic!("Called BasicValueEnum.into_pointer_value on {:?}", self);
         }
     }
 
@@ -595,6 +638,14 @@ impl BasicValueEnum {
             s
         } else {
             panic!("Called BasicValueEnum.into_struct_value on {:?}", self);
+        }
+    }
+
+    pub fn into_array_value(self) -> ArrayValue {
+        if let BasicValueEnum::ArrayValue(a) = self {
+            a
+        } else {
+            panic!("Called BasicValueEnum.into_array_value on {:?}", self);
         }
     }
 }
