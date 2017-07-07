@@ -195,11 +195,11 @@ impl Builder {
         FloatValue::new(value)
     }
 
-    pub fn build_int_add(&self, lhs: &AnyValue, rhs: &AnyValue, name: &str) -> IntValue {
+    pub fn build_int_add(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildAdd(self.builder, lhs.as_ref().value, rhs.as_ref().value, c_string.as_ptr())
+            LLVMBuildAdd(self.builder, lhs.int_value.value, rhs.int_value.value, c_string.as_ptr())
         };
 
         IntValue::new(value)

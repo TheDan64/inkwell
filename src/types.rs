@@ -204,6 +204,7 @@ impl AsRef<Type> for FunctionType {
     }
 }
 
+#[derive(Debug)]
 pub struct IntType {
     int_type: Type,
 }
@@ -307,6 +308,7 @@ impl AsRef<Type> for IntType {
     }
 }
 
+#[derive(Debug)]
 pub struct FloatType {
     float_type: Type,
 }
@@ -352,6 +354,7 @@ impl AsRef<Type> for FloatType {
     }
 }
 
+#[derive(Debug)]
 pub struct StructType {
     struct_type: Type,
 }
@@ -416,6 +419,7 @@ impl AsRef<Type> for StructType {
     }
 }
 
+#[derive(Debug)]
 pub struct VoidType {
     void_type: Type,
 }
@@ -452,6 +456,7 @@ impl AsRef<Type> for VoidType {
     }
 }
 
+#[derive(Debug)]
 pub struct PointerType {
     ptr_type: Type,
 }
@@ -490,7 +495,7 @@ impl AsRef<Type> for PointerType {
 
 // TODO: VectorType, ArrayType
 
-macro_rules! type_trait_set {
+macro_rules! trait_type_set {
     ($trait_name:ident: $($args:ident),*) => (
         pub trait $trait_name: AsRef<Type> {}
 
@@ -500,8 +505,9 @@ macro_rules! type_trait_set {
     );
 }
 
-macro_rules! type_enum_set {
+macro_rules! enum_type_set {
     ($enum_name:ident: $($args:ident),*) => (
+        #[derive(Debug)]
         pub enum $enum_name {
             $(
                 $args($args),
@@ -511,10 +517,10 @@ macro_rules! type_enum_set {
 }
 
 // TODO: Possibly rename to AnyTypeTrait, BasicTypeTrait
-type_trait_set! {AnyType: IntType, FunctionType, FloatType, PointerType, StructType, VoidType}
-type_trait_set! {BasicType: IntType, FloatType, PointerType, StructType, VoidType}
+trait_type_set! {AnyType: IntType, FunctionType, FloatType, PointerType, StructType, VoidType}
+trait_type_set! {BasicType: IntType, FloatType, PointerType, StructType, VoidType}
 
-type_enum_set! {AnyTypeEnum: IntType, FunctionType, FloatType, PointerType, StructType, VoidType}
+enum_type_set! {AnyTypeEnum: IntType, FunctionType, FloatType, PointerType, StructType, VoidType}
 
 // REVIEW: Possible to impl Debug for AnyType?
 

@@ -250,7 +250,7 @@ impl FunctionValue {
         Some(BasicBlock::new(bb))
     }
 
-    pub fn get_nth_param(&self, nth: u32) -> Option<ParamValue> {
+    pub fn get_nth_param(&self, nth: u32) -> Option<BasicValueEnum> {
         let count = self.count_params();
 
         if nth + 1 > count {
@@ -260,8 +260,24 @@ impl FunctionValue {
         let param = unsafe {
             LLVMGetParam(self.fn_value.value, nth)
         };
+        let type_kind = unsafe {
+            LLVMGetTypeKind(LLVMTypeOf(param))
+        };
 
-        Some(ParamValue::new(param))
+        match type_kind {
+            LLVMTypeKind::LLVMHalfTypeKind => Some(BasicValueEnum::FloatValue(FloatValue::new(param))),
+            LLVMTypeKind::LLVMFloatTypeKind => Some(BasicValueEnum::FloatValue(FloatValue::new(param))),
+            LLVMTypeKind::LLVMDoubleTypeKind => Some(BasicValueEnum::FloatValue(FloatValue::new(param))),
+            LLVMTypeKind::LLVMX86_FP80TypeKind => Some(BasicValueEnum::FloatValue(FloatValue::new(param))),
+            LLVMTypeKind::LLVMFP128TypeKind => Some(BasicValueEnum::FloatValue(FloatValue::new(param))),
+            LLVMTypeKind::LLVMPPC_FP128TypeKind => Some(BasicValueEnum::FloatValue(FloatValue::new(param))),
+            LLVMTypeKind::LLVMIntegerTypeKind => Some(BasicValueEnum::IntValue(IntValue::new(param))),
+            LLVMTypeKind::LLVMStructTypeKind => Some(BasicValueEnum::StructValue(StructValue::new(param))),
+            LLVMTypeKind::LLVMArrayTypeKind => panic!("FIXME: Unsupported type: Array"),
+            LLVMTypeKind::LLVMPointerTypeKind => Some(BasicValueEnum::PointerValue(PointerValue::new(param))),
+            LLVMTypeKind::LLVMVectorTypeKind => panic!("FIXME: Unsupported type: Vector"),
+            _ => unreachable!("Unsupported type"),
+        }
     }
 
     pub fn count_params(&self) -> u32 {
@@ -430,6 +446,7 @@ impl AsRef<Value> for ParamValue {
     }
 }
 
+#[derive(Debug)]
 pub struct IntValue {
     pub(crate) int_value: Value,
 }
@@ -468,6 +485,7 @@ impl IntoIntValue for u64 {
     }
 }
 
+#[derive(Debug)]
 pub struct FloatValue {
     pub(crate) float_value: Value
 }
@@ -490,6 +508,7 @@ impl AsRef<Value> for FloatValue {
     }
 }
 
+#[derive(Debug)]
 pub struct StructValue {
     struct_value: Value
 }
@@ -512,6 +531,7 @@ impl AsRef<Value> for StructValue {
     }
 }
 
+#[derive(Debug)]
 pub struct PointerValue {
     pub(crate) ptr_value: Value
 }
@@ -534,6 +554,7 @@ impl AsRef<Value> for PointerValue {
     }
 }
 
+#[derive(Debug)]
 pub struct PhiValue {
     phi_value: Value
 }
@@ -566,7 +587,7 @@ impl AsRef<Value> for Value { // TODO: Remove
     }
 }
 
-macro_rules! value_set {
+macro_rules! trait_value_set {
     ($trait_name:ident: $($args:ident),*) => (
         pub trait $trait_name: AsRef<Value> {}
 
@@ -576,11 +597,53 @@ macro_rules! value_set {
     );
 }
 
-value_set! {AnyValue: IntValue, FloatValue, PhiValue, ParamValue, FunctionValue, StructValue, Value} // TODO: Remove Value, ParamValue?
-value_set! {BasicValue: IntValue, FloatValue, StructValue, ParamValue} // TODO: Remove ParamValue?
+macro_rules! enum_value_set {
+    ($enum_name:ident: $($args:ident),*) => (
+        #[derive(Debug)]
+        pub enum $enum_name {
+            $(
+                $args($args),
+            )*
+        }
+    );
+}
 
-// Case for separate Value structs:
-// LLVMValueRef can be a value (ie int)
-// LLVMValueRef can be a function
-// LLVMValueRef can be a function param
-// LLVMValueRef can be a comparison_op
+trait_value_set! {AnyValue: IntValue, FloatValue, PhiValue, ParamValue, FunctionValue, StructValue, Value} // TODO: Remove Value, ParamValue?
+trait_value_set! {BasicValue: IntValue, FloatValue, StructValue, ParamValue} // TODO: Remove ParamValue?
+
+enum_value_set! {AnyValueEnum: IntValue, FloatValue, PhiValue, FunctionValue, PointerValue, StructValue}
+enum_value_set! {BasicValueEnum: IntValue, FloatValue, PointerValue, StructValue}
+
+impl BasicValueEnum {
+    pub fn into_int_value(self) -> IntValue {
+        if let BasicValueEnum::IntValue(i) = self {
+            i
+        } else {
+            panic!("Called BasicValueEnum.into_int_value on {:?}", self);
+        }
+    }
+
+    pub fn into_float_value(self) -> FloatValue {
+        if let BasicValueEnum::FloatValue(f) = self {
+            f
+        } else {
+            panic!("Called BasicValueEnum.into_float_value on {:?}", self);
+        }
+    }
+
+    pub fn into_ptr_value(self) -> PointerValue {
+        if let BasicValueEnum::PointerValue(p) = self {
+            p
+        } else {
+            panic!("Called BasicValueEnum.into_ptr_value on {:?}", self);
+        }
+    }
+
+    pub fn into_struct_value(self) -> StructValue {
+        if let BasicValueEnum::StructValue(s) = self {
+            s
+        } else {
+            panic!("Called BasicValueEnum.into_struct_value on {:?}", self);
+        }
+    }
+}

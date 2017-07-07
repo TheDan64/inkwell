@@ -29,9 +29,9 @@ Here's [tari's llvm-sys example](https://bitbucket.org/tari/llvm-sys.rs/src/ea4a
 
     builder.position_at_end(&basic_block);
 
-    let x = function.get_nth_param(0).unwrap();
-    let y = function.get_nth_param(1).unwrap();
-    let z = function.get_nth_param(2).unwrap();
+    let x = function.get_nth_param(0).unwrap().into_int_value();
+    let y = function.get_nth_param(1).unwrap().into_int_value();
+    let z = function.get_nth_param(2).unwrap().into_int_value();
 
     let sum = builder.build_int_add(&x, &y, "sum");
     let sum = builder.build_int_add(&sum, &z, "sum");
