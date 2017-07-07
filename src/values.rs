@@ -337,61 +337,13 @@ impl fmt::Debug for FunctionValue {
     }
 }
 
-pub struct ParamValue {
-    param_value: Value,
-}
-
-impl ParamValue {
-    pub(crate) fn new(param_value: LLVMValueRef) -> ParamValue {
-        assert!(!param_value.is_null());
-
-        ParamValue {
-            param_value: Value::new(param_value)
-        }
-    }
-
-    pub fn set_name(&self, name: &str) {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
-
-        unsafe {
-            LLVMSetValueName(self.param_value.value, c_string.as_ptr())
-        }
-    }
-
-    pub fn get_name(&self) -> &CStr {
-        self.param_value.get_name()
-    }
-}
-
-impl fmt::Debug for ParamValue {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let llvm_value = unsafe {
-            CStr::from_ptr(LLVMPrintValueToString(self.param_value.value))
-        };
-        let llvm_type = unsafe {
-            CStr::from_ptr(LLVMPrintTypeToString(LLVMTypeOf(self.param_value.value)))
-        };
-        let name = unsafe {
-            CStr::from_ptr(LLVMGetValueName(self.param_value.value))
-        };
-        let is_const = unsafe {
-            LLVMIsConstant(self.param_value.value) == 1
-        };
-        let is_null = unsafe {
-            LLVMIsNull(self.param_value.value) == 1
-        };
-
-        write!(f, "FunctionValue {{\n    name: {:?}\n    address: {:?}\n    is_const: {:?}\n    is_null: {:?}\n    llvm_value: {:?}\n    llvm_type: {:?}\n}}", name, self.param_value, is_const, is_null, llvm_value, llvm_type)
-    }
-}
-
 pub struct ParamValueIter {
     param_iter_value: LLVMValueRef,
     start: bool,
 }
 
 impl Iterator for ParamValueIter {
-    type Item = ParamValue;
+    type Item = BasicValueEnum;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.start {
@@ -407,7 +359,7 @@ impl Iterator for ParamValueIter {
 
             self.param_iter_value = first_value;
 
-            return Some(ParamValue::new(first_value));
+            return Some(BasicValueEnum::new(first_value));
         }
 
         let next_value = unsafe {
@@ -420,13 +372,7 @@ impl Iterator for ParamValueIter {
 
         self.param_iter_value = next_value;
 
-        Some(ParamValue::new(next_value))
-    }
-}
-
-impl AsRef<Value> for ParamValue {
-    fn as_ref(&self) -> &Value {
-        &self.param_value
+        Some(BasicValueEnum::new(next_value))
     }
 }
 
@@ -592,8 +538,8 @@ macro_rules! enum_value_set {
     );
 }
 
-trait_value_set! {AnyValue: IntValue, FloatValue, PhiValue, ParamValue, FunctionValue, StructValue, Value} // TODO: Remove Value, ParamValue?
-trait_value_set! {BasicValue: IntValue, FloatValue, StructValue, ParamValue} // TODO: Remove ParamValue?
+trait_value_set! {AnyValue: IntValue, FloatValue, PhiValue, FunctionValue, StructValue, Value} // TODO: Remove Value
+trait_value_set! {BasicValue: IntValue, FloatValue, StructValue}
 
 enum_value_set! {AnyValueEnum: IntValue, FloatValue, PhiValue, FunctionValue, PointerValue, StructValue}
 enum_value_set! {BasicValueEnum: IntValue, FloatValue, PointerValue, StructValue}

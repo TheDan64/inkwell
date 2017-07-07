@@ -12,6 +12,7 @@ use values::{IntValue, StructValue, Value};
 // Worth noting that types seem to be singletons. At the very least, primitives are.
 // Though this is likely only true per thread since LLVM claims to not be very thread-safe.
 // TODO: Make not public if possible
+#[doc(hidden)]
 pub struct Type {
     pub(crate) type_: LLVMTypeRef,
 }
