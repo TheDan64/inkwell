@@ -11,7 +11,7 @@ use std::mem::{uninitialized, zeroed};
 use data_layout::DataLayout;
 use execution_engine::ExecutionEngine;
 use pass_manager::PassManager;
-use types::{AnyType, FunctionType, Type};
+use types::{AnyType, FunctionType, BasicTypeEnum};
 use values::{FunctionValue, Value};
 
 pub struct Module {
@@ -55,9 +55,7 @@ impl Module {
         Some(FunctionValue::new(value))
     }
 
-    // FIXME: Return AnyType? Enum may be value to transfer ownership.
-    // Maybe even a goog impl AnyType candidate
-    pub fn get_type(&self, name: &str) -> Option<Type> {
+    pub fn get_type(&self, name: &str) -> Option<BasicTypeEnum> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let type_ = unsafe {
@@ -68,7 +66,7 @@ impl Module {
             return None;
         }
 
-        Some(Type::new(type_))
+        Some(BasicTypeEnum::new(type_))
     }
 
     pub fn create_execution_engine(&self, jit_mode: bool) -> Result<ExecutionEngine, String> {

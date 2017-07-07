@@ -226,7 +226,7 @@ impl FunctionValue {
         }
     }
 
-    pub fn get_first_param(&self) -> Option<ParamValue> {
+    pub fn get_first_param(&self) -> Option<BasicValueEnum> {
         let param = unsafe {
             LLVMGetFirstParam(self.fn_value.value)
         };
@@ -235,7 +235,7 @@ impl FunctionValue {
             return None;
         }
 
-        Some(ParamValue::new(param))
+        Some(BasicValueEnum::new(param))
     }
 
     pub fn get_first_basic_block(&self) -> Option<BasicBlock> {
@@ -260,24 +260,8 @@ impl FunctionValue {
         let param = unsafe {
             LLVMGetParam(self.fn_value.value, nth)
         };
-        let type_kind = unsafe {
-            LLVMGetTypeKind(LLVMTypeOf(param))
-        };
 
-        match type_kind {
-            LLVMTypeKind::LLVMHalfTypeKind => Some(BasicValueEnum::FloatValue(FloatValue::new(param))),
-            LLVMTypeKind::LLVMFloatTypeKind => Some(BasicValueEnum::FloatValue(FloatValue::new(param))),
-            LLVMTypeKind::LLVMDoubleTypeKind => Some(BasicValueEnum::FloatValue(FloatValue::new(param))),
-            LLVMTypeKind::LLVMX86_FP80TypeKind => Some(BasicValueEnum::FloatValue(FloatValue::new(param))),
-            LLVMTypeKind::LLVMFP128TypeKind => Some(BasicValueEnum::FloatValue(FloatValue::new(param))),
-            LLVMTypeKind::LLVMPPC_FP128TypeKind => Some(BasicValueEnum::FloatValue(FloatValue::new(param))),
-            LLVMTypeKind::LLVMIntegerTypeKind => Some(BasicValueEnum::IntValue(IntValue::new(param))),
-            LLVMTypeKind::LLVMStructTypeKind => Some(BasicValueEnum::StructValue(StructValue::new(param))),
-            LLVMTypeKind::LLVMArrayTypeKind => panic!("FIXME: Unsupported type: Array"),
-            LLVMTypeKind::LLVMPointerTypeKind => Some(BasicValueEnum::PointerValue(PointerValue::new(param))),
-            LLVMTypeKind::LLVMVectorTypeKind => panic!("FIXME: Unsupported type: Vector"),
-            _ => unreachable!("Unsupported type"),
-        }
+        Some(BasicValueEnum::new(param))
     }
 
     pub fn count_params(&self) -> u32 {
@@ -615,6 +599,27 @@ enum_value_set! {AnyValueEnum: IntValue, FloatValue, PhiValue, FunctionValue, Po
 enum_value_set! {BasicValueEnum: IntValue, FloatValue, PointerValue, StructValue}
 
 impl BasicValueEnum {
+    pub(crate) fn new(value: LLVMValueRef) -> BasicValueEnum {
+        let type_kind = unsafe {
+            LLVMGetTypeKind(LLVMTypeOf(value))
+        };
+
+        match type_kind {
+            LLVMTypeKind::LLVMHalfTypeKind => BasicValueEnum::FloatValue(FloatValue::new(value)),
+            LLVMTypeKind::LLVMFloatTypeKind => BasicValueEnum::FloatValue(FloatValue::new(value)),
+            LLVMTypeKind::LLVMDoubleTypeKind => BasicValueEnum::FloatValue(FloatValue::new(value)),
+            LLVMTypeKind::LLVMX86_FP80TypeKind => BasicValueEnum::FloatValue(FloatValue::new(value)),
+            LLVMTypeKind::LLVMFP128TypeKind => BasicValueEnum::FloatValue(FloatValue::new(value)),
+            LLVMTypeKind::LLVMPPC_FP128TypeKind => BasicValueEnum::FloatValue(FloatValue::new(value)),
+            LLVMTypeKind::LLVMIntegerTypeKind => BasicValueEnum::IntValue(IntValue::new(value)),
+            LLVMTypeKind::LLVMStructTypeKind => BasicValueEnum::StructValue(StructValue::new(value)),
+            LLVMTypeKind::LLVMPointerTypeKind => BasicValueEnum::PointerValue(PointerValue::new(value)),
+            LLVMTypeKind::LLVMArrayTypeKind => panic!("TODO: Unsupported type: Array"),
+            LLVMTypeKind::LLVMVectorTypeKind => panic!("TODO: Unsupported type: Vector"),
+            _ => unreachable!("Unsupported type"),
+        }
+    }
+
     pub fn into_int_value(self) -> IntValue {
         if let BasicValueEnum::IntValue(i) = self {
             i

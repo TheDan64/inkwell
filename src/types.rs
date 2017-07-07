@@ -521,6 +521,62 @@ trait_type_set! {AnyType: IntType, FunctionType, FloatType, PointerType, StructT
 trait_type_set! {BasicType: IntType, FloatType, PointerType, StructType, VoidType}
 
 enum_type_set! {AnyTypeEnum: IntType, FunctionType, FloatType, PointerType, StructType, VoidType}
+enum_type_set! {BasicTypeEnum: IntType, FloatType, PointerType, StructType} // ArrayType, VectorType
+
+impl BasicTypeEnum {
+    pub(crate) fn new(type_: LLVMTypeRef) -> BasicTypeEnum {
+        let type_kind = unsafe {
+            LLVMGetTypeKind(type_)
+        };
+
+        match type_kind {
+            LLVMTypeKind::LLVMHalfTypeKind => BasicTypeEnum::FloatType(FloatType::new(type_)),
+            LLVMTypeKind::LLVMFloatTypeKind => BasicTypeEnum::FloatType(FloatType::new(type_)),
+            LLVMTypeKind::LLVMDoubleTypeKind => BasicTypeEnum::FloatType(FloatType::new(type_)),
+            LLVMTypeKind::LLVMX86_FP80TypeKind => BasicTypeEnum::FloatType(FloatType::new(type_)),
+            LLVMTypeKind::LLVMFP128TypeKind => BasicTypeEnum::FloatType(FloatType::new(type_)),
+            LLVMTypeKind::LLVMPPC_FP128TypeKind => BasicTypeEnum::FloatType(FloatType::new(type_)),
+            LLVMTypeKind::LLVMIntegerTypeKind => BasicTypeEnum::IntType(IntType::new(type_)),
+            LLVMTypeKind::LLVMStructTypeKind => BasicTypeEnum::StructType(StructType::new(type_)),
+            LLVMTypeKind::LLVMPointerTypeKind => BasicTypeEnum::PointerType(PointerType::new(type_)),
+            LLVMTypeKind::LLVMArrayTypeKind => panic!("TODO: Unsupported type: Array"),
+            LLVMTypeKind::LLVMVectorTypeKind => panic!("TODO: Unsupported type: Vector"),
+            _ => unreachable!("Unsupported type"),
+        }
+    }
+
+    pub fn into_int_type(self) -> IntType {
+        if let BasicTypeEnum::IntType(i) = self {
+            i
+        } else {
+            panic!("Called BasicValueEnum.into_int_value on {:?}", self);
+        }
+    }
+
+    pub fn into_float_type(self) -> FloatType {
+        if let BasicTypeEnum::FloatType(f) = self {
+            f
+        } else {
+            panic!("Called BasicValueEnum.into_float_value on {:?}", self);
+        }
+    }
+
+    pub fn into_ptr_type(self) -> PointerType {
+        if let BasicTypeEnum::PointerType(p) = self {
+            p
+        } else {
+            panic!("Called BasicValueEnum.into_ptr_value on {:?}", self);
+        }
+    }
+
+    pub fn into_struct_type(self) -> StructType {
+        if let BasicTypeEnum::StructType(s) = self {
+            s
+        } else {
+            panic!("Called BasicValueEnum.into_struct_value on {:?}", self);
+        }
+    }
+}
 
 // REVIEW: Possible to impl Debug for AnyType?
 
