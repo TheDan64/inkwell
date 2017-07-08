@@ -4,10 +4,9 @@ use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LL
 
 use basic_block::BasicBlock;
 use values::{AnyValue, BasicValue, BasicValueEnum, PhiValue, FunctionValue, FloatValue, IntValue, PointerValue, Value, IntoIntValue};
-use types::{AnyType, BasicType, PointerType};
+use types::{AnyType, BasicType, PointerType, AsLLVMTypeRef};
 
 use std::ffi::CString;
-use std::mem::transmute;
 
 pub struct Builder {
     builder: LLVMBuilderRef,
@@ -79,7 +78,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildPhi(self.builder, type_.as_ref().type_, c_string.as_ptr())
+            LLVMBuildPhi(self.builder, type_.as_llvm_type_ref(), c_string.as_ptr())
         };
 
         PhiValue::new(value)
@@ -107,7 +106,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildAlloca(self.builder, type_.as_ref().type_, c_string.as_ptr())
+            LLVMBuildAlloca(self.builder, type_.as_llvm_type_ref(), c_string.as_ptr())
         };
 
         PointerValue::new(value)
@@ -117,7 +116,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildMalloc(self.builder, type_.as_ref().type_, c_string.as_ptr())
+            LLVMBuildMalloc(self.builder, type_.as_llvm_type_ref(), c_string.as_ptr())
         };
 
         PointerValue::new(value)
@@ -129,7 +128,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildArrayMalloc(self.builder, type_.as_ref().type_, (*size).into().value, c_string.as_ptr())
+            LLVMBuildArrayMalloc(self.builder, type_.as_llvm_type_ref(), (*size).into().value, c_string.as_ptr())
         };
 
         PointerValue::new(value)
@@ -140,7 +139,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildArrayAlloca(self.builder, type_.as_ref().type_, (*size).into().value, c_string.as_ptr())
+            LLVMBuildArrayAlloca(self.builder, type_.as_llvm_type_ref(), (*size).into().value, c_string.as_ptr())
         };
 
         PointerValue::new(value)
@@ -293,7 +292,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildCast(self.builder, op, from_value.as_ref().value, to_type.as_ref().type_, c_string.as_ptr())
+            LLVMBuildCast(self.builder, op, from_value.as_ref().value, to_type.as_llvm_type_ref(), c_string.as_ptr())
         };
 
         Value::new(value)
@@ -303,7 +302,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildPointerCast(self.builder, from.as_ref().value, to.as_ref().type_, c_string.as_ptr())
+            LLVMBuildPointerCast(self.builder, from.as_ref().value, to.as_llvm_type_ref(), c_string.as_ptr())
         };
 
         PointerValue::new(value)

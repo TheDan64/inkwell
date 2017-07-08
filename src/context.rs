@@ -4,7 +4,7 @@ use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef};
 use basic_block::BasicBlock;
 use builder::Builder;
 use module::Module;
-use types::{BasicType, FloatType, IntType, StructType, VoidType};
+use types::{AsLLVMTypeRef, BasicType, FloatType, IntType, StructType, VoidType};
 use values::FunctionValue;
 
 use std::ffi::CString;
@@ -147,7 +147,7 @@ impl Context {
     // REVIEW: Changed field_types signature, untested
     pub fn struct_type(&self, field_types: &[&BasicType], packed: bool, name: &str) -> StructType {
         let mut field_types: Vec<LLVMTypeRef> = field_types.iter()
-                                                           .map(|val| val.as_ref().type_)
+                                                           .map(|val| val.as_llvm_type_ref())
                                                            .collect();
         let struct_type = if name.is_empty() {
             unsafe {

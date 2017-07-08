@@ -1,7 +1,7 @@
 use llvm_sys::target::{LLVMTargetDataRef, LLVMCopyStringRepOfTargetData, LLVMSizeOfTypeInBits};
 
 use data_layout::DataLayout;
-use types::AnyType;
+use types::{AnyType, AsLLVMTypeRef};
 
 pub struct TargetData {
     pub(crate) target_data: LLVMTargetDataRef,
@@ -26,7 +26,7 @@ impl TargetData {
 
     pub fn get_bit_size(&self, type_: &AnyType) -> u64 {
         unsafe {
-            LLVMSizeOfTypeInBits(self.target_data, type_.as_ref().type_)
+            LLVMSizeOfTypeInBits(self.target_data, type_.as_llvm_type_ref())
         }
     }
 }

@@ -4,21 +4,33 @@ use llvm_sys::LLVMTypeKind;
 
 use std::ffi::CStr;
 use std::fmt;
-use std::mem::{transmute, forget};
+use std::mem::forget;
 
 use context::{Context, ContextRef};
 use values::{ArrayValue, BasicValue, IntValue, StructValue, Value};
 
+mod private {
+    // This is an ugly privacy hack so that Type can stay private to this module
+    // and so that super traits using this trait will be not be implementable
+    // outside this library
+    use llvm_sys::prelude::LLVMTypeRef;
+
+    pub trait AsLLVMTypeRef {
+        fn as_llvm_type_ref(&self) -> LLVMTypeRef;
+    }
+}
+
+pub(crate) use self::private::AsLLVMTypeRef;
+
 // Worth noting that types seem to be singletons. At the very least, primitives are.
 // Though this is likely only true per thread since LLVM claims to not be very thread-safe.
 // TODO: Make not public if possible
-#[doc(hidden)]
-pub struct Type {
-    pub(crate) type_: LLVMTypeRef,
+struct Type {
+    type_: LLVMTypeRef,
 }
 
 impl Type {
-    pub(crate) fn new(type_: LLVMTypeRef) -> Self {
+    fn new(type_: LLVMTypeRef) -> Self {
         assert!(!type_.is_null());
 
         Type {
@@ -44,7 +56,7 @@ impl Type {
     // REVIEW: Is this actually AnyType except FunctionType? VoidType? Can you make a FunctionType from a FunctionType???
     fn fn_type(&self, param_types: &[&AnyType], is_var_args: bool) -> FunctionType {
         let mut param_types: Vec<LLVMTypeRef> = param_types.iter()
-                                                           .map(|val| val.as_ref().type_)
+                                                           .map(|val| val.as_llvm_type_ref())
                                                            .collect();
         let fn_type = unsafe {
             LLVMFunctionType(self.type_, param_types.as_mut_ptr(), param_types.len() as u32, is_var_args as i32)
@@ -128,7 +140,7 @@ impl fmt::Debug for Type {
 }
 
 pub struct FunctionType {
-    pub(crate) fn_type: Type,
+    fn_type: Type,
 }
 
 impl FunctionType {
@@ -192,9 +204,9 @@ impl fmt::Debug for FunctionType {
     }
 }
 
-impl AsRef<Type> for FunctionType {
-    fn as_ref(&self) -> &Type {
-        &self.fn_type
+impl AsLLVMTypeRef for FunctionType {
+    fn as_llvm_type_ref(&self) -> LLVMTypeRef {
+        self.fn_type.type_
     }
 }
 
@@ -300,9 +312,9 @@ impl IntType {
     }
 }
 
-impl AsRef<Type> for IntType {
-    fn as_ref(&self) -> &Type {
-        &self.int_type
+impl AsLLVMTypeRef for IntType {
+    fn as_llvm_type_ref(&self) -> LLVMTypeRef {
+        self.int_type.type_
     }
 }
 
@@ -350,9 +362,9 @@ impl FloatType {
     }
 }
 
-impl AsRef<Type> for FloatType {
-    fn as_ref(&self) -> &Type {
-        &self.float_type
+impl AsLLVMTypeRef for FloatType {
+    fn as_llvm_type_ref(&self) -> LLVMTypeRef {
+        self.float_type.type_
     }
 }
 
@@ -419,9 +431,9 @@ impl StructType {
     }
 }
 
-impl AsRef<Type> for StructType {
-    fn as_ref(&self) -> &Type {
-        &self.struct_type
+impl AsLLVMTypeRef for StructType {
+    fn as_llvm_type_ref(&self) -> LLVMTypeRef {
+        self.struct_type.type_
     }
 }
 
@@ -456,9 +468,9 @@ impl VoidType {
     }
 }
 
-impl AsRef<Type> for VoidType {
-    fn as_ref(&self) -> &Type {
-        &self.void_type
+impl AsLLVMTypeRef for VoidType {
+    fn as_llvm_type_ref(&self) -> LLVMTypeRef {
+        self.void_type.type_
     }
 }
 
@@ -497,9 +509,9 @@ impl PointerType {
     }
 }
 
-impl AsRef<Type> for PointerType {
-    fn as_ref(&self) -> &Type {
-        &self.ptr_type
+impl AsLLVMTypeRef for PointerType {
+    fn as_llvm_type_ref(&self) -> LLVMTypeRef {
+        self.ptr_type.type_
     }
 }
 
@@ -542,9 +554,9 @@ impl ArrayType {
     }
 }
 
-impl AsRef<Type> for ArrayType {
-    fn as_ref(&self) -> &Type {
-        &self.array_type
+impl AsLLVMTypeRef for ArrayType {
+    fn as_llvm_type_ref(&self) -> LLVMTypeRef {
+        self.array_type.type_
     }
 }
 
@@ -552,7 +564,7 @@ impl AsRef<Type> for ArrayType {
 
 macro_rules! trait_type_set {
     ($trait_name:ident: $($args:ident),*) => (
-        pub trait $trait_name: AsRef<Type> {}
+        pub trait $trait_name: AsLLVMTypeRef {}
 
         $(
             impl $trait_name for $args {}
@@ -569,11 +581,11 @@ macro_rules! enum_type_set {
             )*
         }
 
-        impl AsRef<Type> for $enum_name {
-            fn as_ref(&self) -> &Type {
+        impl AsLLVMTypeRef for $enum_name {
+            fn as_llvm_type_ref(&self) -> LLVMTypeRef {
                 match self {
                     $(
-                        &$enum_name::$args(ref t) => t.as_ref(),
+                        &$enum_name::$args(ref t) => t.as_llvm_type_ref(),
                     )*
                 }
             }

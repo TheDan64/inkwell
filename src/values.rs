@@ -92,77 +92,77 @@ impl Value {
     }
 
     // REVIEW: Remove?
-    fn get_type_kind(&self) -> LLVMTypeKind {
-        (*self.get_type()).as_ref().get_kind()
-    }
+    // fn get_type_kind(&self) -> LLVMTypeKind {
+    //     (*self.get_type()).as_llvm_type_ref().get_kind()
+    // }
 
-    fn is_pointer(&self) -> bool {
-        match self.get_type_kind() {
-            LLVMTypeKind::LLVMPointerTypeKind => true,
-            _ => false,
-        }
-    }
+    // fn is_pointer(&self) -> bool {
+    //     match self.get_type_kind() {
+    //         LLVMTypeKind::LLVMPointerTypeKind => true,
+    //         _ => false,
+    //     }
+    // }
 
-    fn is_int(&self) -> bool {
-        match self.get_type_kind() {
-            LLVMTypeKind::LLVMIntegerTypeKind => true,
-            _ => false,
-        }
-    }
+    // fn is_int(&self) -> bool {
+    //     match self.get_type_kind() {
+    //         LLVMTypeKind::LLVMIntegerTypeKind => true,
+    //         _ => false,
+    //     }
+    // }
 
-    fn is_f32(&self) -> bool {
-        match self.get_type_kind() {
-            LLVMTypeKind::LLVMFloatTypeKind => true,
-            _ => false,
-        }
-    }
+    // fn is_f32(&self) -> bool {
+    //     match self.get_type_kind() {
+    //         LLVMTypeKind::LLVMFloatTypeKind => true,
+    //         _ => false,
+    //     }
+    // }
 
-    fn is_f64(&self) -> bool {
-        match self.get_type_kind() {
-            LLVMTypeKind::LLVMDoubleTypeKind => true,
-            _ => false,
-        }
-    }
+    // fn is_f64(&self) -> bool {
+    //     match self.get_type_kind() {
+    //         LLVMTypeKind::LLVMDoubleTypeKind => true,
+    //         _ => false,
+    //     }
+    // }
 
-    fn is_f128(&self) -> bool {
-        match self.get_type_kind() {
-            LLVMTypeKind::LLVMFP128TypeKind => true,
-            _ => false,
-        }
-    }
+    // fn is_f128(&self) -> bool {
+    //     match self.get_type_kind() {
+    //         LLVMTypeKind::LLVMFP128TypeKind => true,
+    //         _ => false,
+    //     }
+    // }
 
-    fn is_float(&self) -> bool {
-        match self.get_type_kind() {
-            LLVMTypeKind::LLVMHalfTypeKind |
-            LLVMTypeKind::LLVMFloatTypeKind |
-            LLVMTypeKind::LLVMDoubleTypeKind |
-            LLVMTypeKind::LLVMX86_FP80TypeKind |
-            LLVMTypeKind::LLVMFP128TypeKind |
-            LLVMTypeKind::LLVMPPC_FP128TypeKind => true,
-            _ => false,
-        }
-    }
+    // fn is_float(&self) -> bool {
+    //     match self.get_type_kind() {
+    //         LLVMTypeKind::LLVMHalfTypeKind |
+    //         LLVMTypeKind::LLVMFloatTypeKind |
+    //         LLVMTypeKind::LLVMDoubleTypeKind |
+    //         LLVMTypeKind::LLVMX86_FP80TypeKind |
+    //         LLVMTypeKind::LLVMFP128TypeKind |
+    //         LLVMTypeKind::LLVMPPC_FP128TypeKind => true,
+    //         _ => false,
+    //     }
+    // }
 
-    fn is_struct(&self) -> bool {
-        match self.get_type_kind() {
-            LLVMTypeKind::LLVMStructTypeKind => true,
-            _ => false,
-        }
-    }
+    // fn is_struct(&self) -> bool {
+    //     match self.get_type_kind() {
+    //         LLVMTypeKind::LLVMStructTypeKind => true,
+    //         _ => false,
+    //     }
+    // }
 
-    fn is_array(&self) -> bool {
-        match self.get_type_kind() {
-            LLVMTypeKind::LLVMArrayTypeKind => true,
-            _ => false,
-        }
-    }
+    // fn is_array(&self) -> bool {
+    //     match self.get_type_kind() {
+    //         LLVMTypeKind::LLVMArrayTypeKind => true,
+    //         _ => false,
+    //     }
+    // }
 
-    fn is_void(&self) -> bool {
-        match self.get_type_kind() {
-            LLVMTypeKind::LLVMVoidTypeKind => true,
-            _ => false,
-        }
-    }
+    // fn is_void(&self) -> bool {
+    //     match self.get_type_kind() {
+    //         LLVMTypeKind::LLVMVoidTypeKind => true,
+    //         _ => false,
+    //     }
+    // }
 }
 
 impl fmt::Debug for Value {
@@ -270,7 +270,7 @@ impl FunctionValue {
         }
     }
 
-    /// REVIEW: Untested
+    // REVIEW: Untested; probably doesn't work. Should remove transmute.
     pub fn get_basic_blocks(&self) -> Vec<BasicBlock> {
         let mut blocks = vec![];
 
@@ -597,7 +597,6 @@ enum_value_set! {BasicValueEnum: ArrayValue, IntValue, FloatValue, PointerValue,
 trait_value_set! {AnyValue: AnyValueEnum, BasicValueEnum, ArrayValue, IntValue, FloatValue, PhiValue, PointerValue, FunctionValue, StructValue, Value} // TODO: Remove Value
 trait_value_set! {BasicValue: ArrayValue, BasicValueEnum, IntValue, FloatValue, StructValue, PointerValue}
 
-
 impl BasicValueEnum {
     pub(crate) fn new(value: LLVMValueRef) -> BasicValueEnum {
         let type_kind = unsafe {
@@ -657,6 +656,46 @@ impl BasicValueEnum {
             a
         } else {
             panic!("Called BasicValueEnum.into_array_value on {:?}", self);
+        }
+    }
+
+    pub fn as_int_value(&self) -> &IntValue {
+        if let &BasicValueEnum::IntValue(ref i) = self {
+            i
+        } else {
+            panic!("Called BasicValueEnum.as_int_value on {:?}", self);
+        }
+    }
+
+    pub fn as_float_value(&self) -> &FloatValue {
+        if let &BasicValueEnum::FloatValue(ref f) = self {
+            f
+        } else {
+            panic!("Called BasicValueEnum.as_float_value on {:?}", self);
+        }
+    }
+
+    pub fn as_pointer_value(&self) -> &PointerValue {
+        if let &BasicValueEnum::PointerValue(ref p) = self {
+            p
+        } else {
+            panic!("Called BasicValueEnum.as_pointer_value on {:?}", self);
+        }
+    }
+
+    pub fn as_struct_value(&self) -> &StructValue {
+        if let &BasicValueEnum::StructValue(ref s) = self {
+            s
+        } else {
+            panic!("Called BasicValueEnum.as_struct_value on {:?}", self);
+        }
+    }
+
+    pub fn as_array_value(&self) -> &ArrayValue {
+        if let &BasicValueEnum::ArrayValue(ref a) = self {
+            a
+        } else {
+            panic!("Called BasicValueEnum.as_array_value on {:?}", self);
         }
     }
 }
