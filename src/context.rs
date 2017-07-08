@@ -4,7 +4,7 @@ use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef};
 use basic_block::BasicBlock;
 use builder::Builder;
 use module::Module;
-use types::{AsLLVMTypeRef, BasicType, FloatType, IntType, StructType, VoidType};
+use types::{BasicType, FloatType, IntType, StructType, VoidType};
 use values::FunctionValue;
 
 use std::ffi::CString;
@@ -250,7 +250,7 @@ fn test_no_context_double_free2() {
     let int = context.i8_type();
     let context2 = int.get_context();
 
-    fn move_(context: Context) {}
+    fn move_(_: Context) {}
 
     move_(context);
 

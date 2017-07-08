@@ -583,9 +583,9 @@ macro_rules! enum_type_set {
 
         impl AsLLVMTypeRef for $enum_name {
             fn as_llvm_type_ref(&self) -> LLVMTypeRef {
-                match self {
+                match *self {
                     $(
-                        &$enum_name::$args(ref t) => t.as_llvm_type_ref(),
+                        $enum_name::$args(ref t) => t.as_llvm_type_ref(),
                     )*
                 }
             }
@@ -607,11 +607,11 @@ impl BasicTypeEnum {
         };
 
         match type_kind {
-            LLVMTypeKind::LLVMHalfTypeKind => BasicTypeEnum::FloatType(FloatType::new(type_)),
-            LLVMTypeKind::LLVMFloatTypeKind => BasicTypeEnum::FloatType(FloatType::new(type_)),
-            LLVMTypeKind::LLVMDoubleTypeKind => BasicTypeEnum::FloatType(FloatType::new(type_)),
-            LLVMTypeKind::LLVMX86_FP80TypeKind => BasicTypeEnum::FloatType(FloatType::new(type_)),
-            LLVMTypeKind::LLVMFP128TypeKind => BasicTypeEnum::FloatType(FloatType::new(type_)),
+            LLVMTypeKind::LLVMHalfTypeKind |
+            LLVMTypeKind::LLVMFloatTypeKind |
+            LLVMTypeKind::LLVMDoubleTypeKind |
+            LLVMTypeKind::LLVMX86_FP80TypeKind |
+            LLVMTypeKind::LLVMFP128TypeKind |
             LLVMTypeKind::LLVMPPC_FP128TypeKind => BasicTypeEnum::FloatType(FloatType::new(type_)),
             LLVMTypeKind::LLVMIntegerTypeKind => BasicTypeEnum::IntType(IntType::new(type_)),
             LLVMTypeKind::LLVMStructTypeKind => BasicTypeEnum::StructType(StructType::new(type_)),
@@ -663,40 +663,40 @@ impl BasicTypeEnum {
     }
 
     pub fn as_int_type(&self) -> &IntType {
-        if let &BasicTypeEnum::IntType(ref i) = self {
-            &i
+        if let BasicTypeEnum::IntType(ref i) = *self {
+            i
         } else {
             panic!("Called BasicValueEnum.as_int_type on {:?}", self);
         }
     }
 
     pub fn as_float_type(&self) -> &FloatType {
-        if let &BasicTypeEnum::FloatType(ref f) = self {
-            &f
+        if let BasicTypeEnum::FloatType(ref f) = *self {
+            f
         } else {
             panic!("Called BasicValueEnum.as_float_type on {:?}", self);
         }
     }
 
     pub fn as_pointer_type(&self) -> &PointerType {
-        if let &BasicTypeEnum::PointerType(ref p) = self {
-            &p
+        if let BasicTypeEnum::PointerType(ref p) = *self {
+            p
         } else {
             panic!("Called BasicValueEnum.as_pointer_type on {:?}", self);
         }
     }
 
     pub fn as_struct_type(&self) -> &StructType {
-        if let &BasicTypeEnum::StructType(ref s) = self {
-            &s
+        if let BasicTypeEnum::StructType(ref s) = *self {
+            s
         } else {
             panic!("Called BasicValueEnum.as_struct_type on {:?}", self);
         }
     }
 
     pub fn as_array_type(&self) -> &ArrayType {
-        if let &BasicTypeEnum::ArrayType(ref a) = self {
-            &a
+        if let BasicTypeEnum::ArrayType(ref a) = *self {
+            a
         } else {
             panic!("Called BasicValueEnum.as_array_type on {:?}", self);
         }

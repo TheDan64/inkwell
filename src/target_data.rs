@@ -1,7 +1,7 @@
 use llvm_sys::target::{LLVMTargetDataRef, LLVMCopyStringRepOfTargetData, LLVMSizeOfTypeInBits};
 
 use data_layout::DataLayout;
-use types::{AnyType, AsLLVMTypeRef};
+use types::AnyType;
 
 pub struct TargetData {
     pub(crate) target_data: LLVMTargetDataRef,

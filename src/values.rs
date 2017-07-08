@@ -581,9 +581,9 @@ macro_rules! enum_value_set {
 
         impl AsRef<Value> for $enum_name {
             fn as_ref(&self) -> &Value {
-                match self {
+                match *self {
                     $(
-                        &$enum_name::$args(ref t) => t.as_ref(),
+                        $enum_name::$args(ref t) => t.as_ref(),
                     )*
                 }
             }
@@ -604,11 +604,11 @@ impl BasicValueEnum {
         };
 
         match type_kind {
-            LLVMTypeKind::LLVMHalfTypeKind => BasicValueEnum::FloatValue(FloatValue::new(value)),
-            LLVMTypeKind::LLVMFloatTypeKind => BasicValueEnum::FloatValue(FloatValue::new(value)),
-            LLVMTypeKind::LLVMDoubleTypeKind => BasicValueEnum::FloatValue(FloatValue::new(value)),
-            LLVMTypeKind::LLVMX86_FP80TypeKind => BasicValueEnum::FloatValue(FloatValue::new(value)),
-            LLVMTypeKind::LLVMFP128TypeKind => BasicValueEnum::FloatValue(FloatValue::new(value)),
+            LLVMTypeKind::LLVMFloatTypeKind |
+            LLVMTypeKind::LLVMFP128TypeKind |
+            LLVMTypeKind::LLVMDoubleTypeKind |
+            LLVMTypeKind::LLVMHalfTypeKind |
+            LLVMTypeKind::LLVMX86_FP80TypeKind |
             LLVMTypeKind::LLVMPPC_FP128TypeKind => BasicValueEnum::FloatValue(FloatValue::new(value)),
             LLVMTypeKind::LLVMIntegerTypeKind => BasicValueEnum::IntValue(IntValue::new(value)),
             LLVMTypeKind::LLVMStructTypeKind => BasicValueEnum::StructValue(StructValue::new(value)),
@@ -660,7 +660,7 @@ impl BasicValueEnum {
     }
 
     pub fn as_int_value(&self) -> &IntValue {
-        if let &BasicValueEnum::IntValue(ref i) = self {
+        if let BasicValueEnum::IntValue(ref i) = *self {
             i
         } else {
             panic!("Called BasicValueEnum.as_int_value on {:?}", self);
@@ -668,7 +668,7 @@ impl BasicValueEnum {
     }
 
     pub fn as_float_value(&self) -> &FloatValue {
-        if let &BasicValueEnum::FloatValue(ref f) = self {
+        if let BasicValueEnum::FloatValue(ref f) = *self {
             f
         } else {
             panic!("Called BasicValueEnum.as_float_value on {:?}", self);
@@ -676,7 +676,7 @@ impl BasicValueEnum {
     }
 
     pub fn as_pointer_value(&self) -> &PointerValue {
-        if let &BasicValueEnum::PointerValue(ref p) = self {
+        if let BasicValueEnum::PointerValue(ref p) = *self {
             p
         } else {
             panic!("Called BasicValueEnum.as_pointer_value on {:?}", self);
@@ -684,7 +684,7 @@ impl BasicValueEnum {
     }
 
     pub fn as_struct_value(&self) -> &StructValue {
-        if let &BasicValueEnum::StructValue(ref s) = self {
+        if let BasicValueEnum::StructValue(ref s) = *self {
             s
         } else {
             panic!("Called BasicValueEnum.as_struct_value on {:?}", self);
@@ -692,7 +692,7 @@ impl BasicValueEnum {
     }
 
     pub fn as_array_value(&self) -> &ArrayValue {
-        if let &BasicValueEnum::ArrayValue(ref a) = self {
+        if let BasicValueEnum::ArrayValue(ref a) = *self {
             a
         } else {
             panic!("Called BasicValueEnum.as_array_value on {:?}", self);
