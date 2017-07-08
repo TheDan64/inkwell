@@ -8,7 +8,7 @@ use std::fmt;
 use std::mem::transmute;
 
 use basic_block::BasicBlock;
-use types::{AnyType, BasicTypeEnum, IntType, StructType, FloatType, PointerType, FunctionType, VoidType};
+use types::{AnyTypeEnum, BasicTypeEnum, IntType};
 
 pub struct Value {
     pub(crate) value: LLVMValueRef,
@@ -62,33 +62,12 @@ impl Value {
     }
 
     // TODO: impl AnyType when it stabilizes
-    fn get_type(&self) -> Box<AnyType> {
+    fn get_type(&self) -> AnyTypeEnum {
         let type_ = unsafe {
             LLVMTypeOf(self.value)
         };
-        let type_kind = unsafe {
-            LLVMGetTypeKind(type_)
-        };
 
-        match type_kind {
-            LLVMTypeKind::LLVMVoidTypeKind => Box::new(VoidType::new(type_)),
-            LLVMTypeKind::LLVMHalfTypeKind => Box::new(FloatType::new(type_)),
-            LLVMTypeKind::LLVMFloatTypeKind => Box::new(FloatType::new(type_)),
-            LLVMTypeKind::LLVMDoubleTypeKind => Box::new(FloatType::new(type_)),
-            LLVMTypeKind::LLVMX86_FP80TypeKind => Box::new(FloatType::new(type_)),
-            LLVMTypeKind::LLVMFP128TypeKind => Box::new(FloatType::new(type_)),
-            LLVMTypeKind::LLVMPPC_FP128TypeKind => Box::new(FloatType::new(type_)),
-            LLVMTypeKind::LLVMLabelTypeKind => panic!("FIXME: Unsupported type: Label"),
-            LLVMTypeKind::LLVMIntegerTypeKind => Box::new(IntType::new(type_)),
-            LLVMTypeKind::LLVMFunctionTypeKind => Box::new(FunctionType::new(type_)),
-            LLVMTypeKind::LLVMStructTypeKind => Box::new(StructType::new(type_)),
-            LLVMTypeKind::LLVMArrayTypeKind => panic!("FIXME: Unsupported type: Array"),
-            LLVMTypeKind::LLVMPointerTypeKind => Box::new(PointerType::new(type_)),
-            LLVMTypeKind::LLVMVectorTypeKind => panic!("FIXME: Unsupported type: Vector"),
-            LLVMTypeKind::LLVMMetadataTypeKind => panic!("FIXME: Unsupported type: Metadata"),
-            LLVMTypeKind::LLVMX86_MMXTypeKind => panic!("FIXME: Unsupported type: MMX"),
-            // LLVMTypeKind::LLVMTokenTypeKind => panic!("FIXME: Unsupported type: Token"), // Different version?
-        }
+        AnyTypeEnum::new(type_)
     }
 
     // REVIEW: Remove?

@@ -4,7 +4,7 @@ use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LL
 
 use basic_block::BasicBlock;
 use values::{AnyValue, BasicValue, BasicValueEnum, PhiValue, FunctionValue, FloatValue, IntValue, PointerValue, Value, IntoIntValue};
-use types::{AnyType, BasicType, PointerType, AsLLVMTypeRef};
+use types::{AnyType, PointerType, AsLLVMTypeRef};
 
 use std::ffi::CString;
 
@@ -34,10 +34,13 @@ impl Builder {
             }
         };
 
+        // REVIEW: Void doesn't seem to make much sense but it's the type of return statements (3.7)
+        // I think 3.8/3.9+ introduces LLVMValueKind which does have an InstructionValue, which might
+        // be more correct to replicate, even in earlier versions?
         Value::new(value)
     }
 
-    pub fn build_call(&self, function: &FunctionValue, args: &[&BasicValue], name: &str) -> Value {
+    pub fn build_call(&self, function: &FunctionValue, args: &[&BasicValue], name: &str) -> BasicValueEnum {
         // LLVM gets upset when void calls are named because they don't return anything
         let name = unsafe {
             match LLVMGetTypeKind(LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(function.fn_value.value)))) {
@@ -58,7 +61,7 @@ impl Builder {
             LLVMBuildCall(self.builder, function.fn_value.value, args.as_mut_ptr(), args.len() as u32, c_string.as_ptr())
         };
 
-        Value::new(value)
+        BasicValueEnum::new(value)
     }
 
     pub fn build_gep(&self, ptr: &PointerValue, ordered_indexes: &[&IntoIntValue], name: &str) -> PointerValue {
@@ -454,4 +457,34 @@ impl Drop for Builder {
             LLVMDisposeBuilder(self.builder);
         }
     }
+}
+
+#[test]
+fn test_build_call() {
+    use context::Context;
+
+    let context = Context::create();
+    let module = context.create_module("sum");
+    let builder = context.create_builder();
+
+    let f32_type = context.f32_type();
+    let fn_type = f32_type.fn_type(&[], false);
+
+    let function = module.add_function("get_pi", &fn_type);
+    let basic_block = context.append_basic_block(&function, "entry");
+
+    builder.position_at_end(&basic_block);
+
+    let pi = f32_type.const_float(3.14);
+
+    builder.build_return(Some(&pi));
+
+    let function2 = module.add_function("wrapper", &fn_type);
+    let basic_block2 = context.append_basic_block(&function2, "entry");
+
+    builder.position_at_end(&basic_block2);
+
+    let pi2 = builder.build_call(&function, &[], "get_pi");
+
+    builder.build_return(Some(&pi2));
 }
