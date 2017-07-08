@@ -717,9 +717,9 @@ fn test_function_type() {
     let param_types = fn_type.get_param_types();
 
     assert_eq!(param_types.len(), 3);
-    assert_eq!(param_types[0].as_int_type().as_ref().type_, int.as_ref().type_);
-    assert_eq!(param_types[1].as_int_type().as_ref().type_, int.as_ref().type_);
-    assert_eq!(param_types[2].as_float_type().as_ref().type_, float.as_ref().type_);
+    assert_eq!(param_types[0].as_int_type().as_llvm_type_ref(), int.as_llvm_type_ref());
+    assert_eq!(param_types[1].as_int_type().as_llvm_type_ref(), int.as_llvm_type_ref());
+    assert_eq!(param_types[2].as_float_type().as_llvm_type_ref(), float.as_llvm_type_ref());
 
     let fn_type = int.fn_type(&[&int, &float], true);
 
