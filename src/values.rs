@@ -10,6 +10,19 @@ use std::mem::transmute;
 use basic_block::BasicBlock;
 use types::{AnyTypeEnum, BasicTypeEnum, IntType};
 
+mod private {
+    // This is an ugly privacy hack so that Type can stay private to this module
+    // and so that super traits using this trait will be not be implementable
+    // outside this library
+    use llvm_sys::prelude::LLVMValueRef;
+
+    pub trait AsLLVMValueRef {
+        fn as_llvm_value_ref(&self) -> LLVMValueRef;
+    }
+}
+
+pub(crate) use self::private::AsLLVMValueRef;
+
 pub struct Value {
     pub(crate) value: LLVMValueRef,
 }
@@ -46,7 +59,7 @@ impl Value {
     // REVIEW: Untested
     // REVIEW: Is incoming_values really ArrayValue? Or an &[AnyValue]?
     fn add_incoming(&self, incoming_values: &AnyValue, incoming_basic_block: &BasicBlock, count: u32) {
-        let value = &mut [incoming_values.as_ref().value];
+        let value = &mut [incoming_values.as_llvm_value_ref()];
         let basic_block = &mut [incoming_basic_block.basic_block];
 
         unsafe {
@@ -61,7 +74,6 @@ impl Value {
         }
     }
 
-    // TODO: impl AnyType when it stabilizes
     fn get_type(&self) -> AnyTypeEnum {
         let type_ = unsafe {
             LLVMTypeOf(self.value)
@@ -288,9 +300,9 @@ impl FunctionValue {
     }
 }
 
-impl AsRef<Value> for FunctionValue {
-    fn as_ref(&self) -> &Value {
-        &self.fn_value
+impl AsLLVMValueRef for FunctionValue {
+    fn as_llvm_value_ref(&self) -> LLVMValueRef {
+        self.fn_value.value
     }
 }
 
@@ -376,9 +388,9 @@ impl IntValue {
     }
 }
 
-impl AsRef<Value> for IntValue {
-    fn as_ref(&self) -> &Value {
-        &self.int_value
+impl AsLLVMValueRef for IntValue {
+    fn as_llvm_value_ref(&self) -> LLVMValueRef {
+        self.int_value.value
     }
 }
 
@@ -419,9 +431,9 @@ impl FloatValue {
     }
 }
 
-impl AsRef<Value> for FloatValue {
-    fn as_ref(&self) -> &Value {
-        &self.float_value
+impl AsLLVMValueRef for FloatValue {
+    fn as_llvm_value_ref(&self) -> LLVMValueRef {
+        self.float_value.value
     }
 }
 
@@ -446,9 +458,9 @@ impl StructValue {
     }
 }
 
-impl AsRef<Value> for StructValue {
-    fn as_ref(&self) -> &Value {
-        &self.struct_value
+impl AsLLVMValueRef for StructValue {
+    fn as_llvm_value_ref(&self) -> LLVMValueRef {
+        self.struct_value.value
     }
 }
 
@@ -473,9 +485,9 @@ impl PointerValue {
     }
 }
 
-impl AsRef<Value> for PointerValue {
-    fn as_ref(&self) -> &Value {
-        &self.ptr_value
+impl AsLLVMValueRef for PointerValue {
+    fn as_llvm_value_ref(&self) -> LLVMValueRef {
+        self.ptr_value.value
     }
 }
 
@@ -500,15 +512,15 @@ impl PhiValue {
     }
 }
 
-impl AsRef<Value> for PhiValue {
-    fn as_ref(&self) -> &Value {
-        &self.phi_value
+impl AsLLVMValueRef for PhiValue {
+    fn as_llvm_value_ref(&self) -> LLVMValueRef {
+        self.phi_value.value
     }
 }
 
-impl AsRef<Value> for Value { // TODO: Remove
-    fn as_ref(&self) -> &Value {
-        self
+impl AsLLVMValueRef for Value { // TODO: Remove
+    fn as_llvm_value_ref(&self) -> LLVMValueRef {
+        self.value
     }
 }
 
@@ -533,15 +545,15 @@ impl ArrayValue {
     }
 }
 
-impl AsRef<Value> for ArrayValue {
-    fn as_ref(&self) -> &Value {
-        &self.array_value
+impl AsLLVMValueRef for ArrayValue {
+    fn as_llvm_value_ref(&self) -> LLVMValueRef {
+        self.array_value.value
     }
 }
 
 macro_rules! trait_value_set {
     ($trait_name:ident: $($args:ident),*) => (
-        pub trait $trait_name: AsRef<Value> {}
+        pub trait $trait_name: AsLLVMValueRef {}
 
         $(
             impl $trait_name for $args {}
@@ -558,11 +570,11 @@ macro_rules! enum_value_set {
             )*
         }
 
-        impl AsRef<Value> for $enum_name {
-            fn as_ref(&self) -> &Value {
+        impl AsLLVMValueRef for $enum_name {
+            fn as_llvm_value_ref(&self) -> LLVMValueRef {
                 match *self {
                     $(
-                        $enum_name::$args(ref t) => t.as_ref(),
+                        $enum_name::$args(ref t) => t.as_llvm_value_ref(),
                     )*
                 }
             }

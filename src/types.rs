@@ -74,7 +74,7 @@ impl Type {
     }
 
     fn const_array<V: BasicValue>(&self, values: Vec<&V>) -> ArrayValue {
-        let mut values: Vec<LLVMValueRef> = values.iter().map(|val| val.as_ref().value).collect();
+        let mut values: Vec<LLVMValueRef> = values.iter().map(|val| val.as_llvm_value_ref()).collect();
 
         let value = unsafe {
             LLVMConstArray(self.type_, values.as_mut_ptr(), values.len() as u32)

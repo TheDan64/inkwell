@@ -3,8 +3,8 @@ use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LLVMAtomicOrdering};
 
 use basic_block::BasicBlock;
-use values::{AnyValue, BasicValue, BasicValueEnum, PhiValue, FunctionValue, FloatValue, IntValue, PointerValue, Value, IntoIntValue};
-use types::{AnyType, PointerType, AsLLVMTypeRef};
+use values::{AnyValue, AsLLVMValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, FloatValue, IntValue, PointerValue, Value, IntoIntValue};
+use types::{AnyType, BasicType, PointerType, AsLLVMTypeRef};
 
 use std::ffi::CString;
 
@@ -29,7 +29,7 @@ impl Builder {
 
         let value = unsafe {
             match value {
-                Some(v) => LLVMBuildRet(self.builder, v.as_ref().value),
+                Some(v) => LLVMBuildRet(self.builder, v.as_llvm_value_ref()),
                 None => LLVMBuildRetVoid(self.builder),
             }
         };
@@ -55,7 +55,7 @@ impl Builder {
         // Is this safe, given Value is a raw ptr wrapper?
         // I suppose in theory LLVM should never delete the values in the scope of this call, but still
         let mut args: Vec<LLVMValueRef> = args.iter()
-                                              .map(|val| val.as_ref().value)
+                                              .map(|val| val.as_llvm_value_ref())
                                               .collect();
         let value = unsafe {
             LLVMBuildCall(self.builder, function.fn_value.value, args.as_mut_ptr(), args.len() as u32, c_string.as_ptr())
@@ -71,7 +71,7 @@ impl Builder {
                                                                  .map(|val| val.into_int_value().int_value.value)
                                                                  .collect();
         let value = unsafe {
-            LLVMBuildGEP(self.builder, ptr.as_ref().value, index_values.as_mut_ptr(), index_values.len() as u32, c_string.as_ptr())
+            LLVMBuildGEP(self.builder, ptr.as_llvm_value_ref(), index_values.as_mut_ptr(), index_values.len() as u32, c_string.as_ptr())
         };
 
         PointerValue::new(value)
@@ -89,7 +89,7 @@ impl Builder {
 
     pub fn build_store(&self, value: &AnyValue, ptr: &PointerValue) -> Value {
         let value = unsafe {
-            LLVMBuildStore(self.builder, value.as_ref().value, ptr.as_ref().value)
+            LLVMBuildStore(self.builder, value.as_llvm_value_ref(), ptr.as_llvm_value_ref())
         };
 
         Value::new(value)
@@ -99,7 +99,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildLoad(self.builder, ptr.as_ref().value, c_string.as_ptr())
+            LLVMBuildLoad(self.builder, ptr.as_llvm_value_ref(), c_string.as_ptr())
         };
 
         BasicValueEnum::new(value)
@@ -127,22 +127,22 @@ impl Builder {
 
     // TODO: Rename to "build_heap_allocated_array" + stack version?
     // REVIEW: Is this still a PointerValue (as opposed to an ArrayValue?)
-    pub fn build_array_heap_allocation<V: Into<Value> + Copy>(&self, type_: &AnyType, size: &V, name: &str) -> PointerValue {
+    pub fn build_array_heap_allocation(&self, type_: &BasicType, size: &BasicValue, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildArrayMalloc(self.builder, type_.as_llvm_type_ref(), (*size).into().value, c_string.as_ptr())
+            LLVMBuildArrayMalloc(self.builder, type_.as_llvm_type_ref(), size.as_llvm_value_ref(), c_string.as_ptr())
         };
 
         PointerValue::new(value)
     }
 
     // REVIEW: Is this still a PointerValue (as opposed to an ArrayValue?)
-    pub fn build_stack_allocated_array<V: Into<Value> + Copy>(&self, type_: &AnyType, size: &V, name: &str) -> PointerValue {
+    pub fn build_stack_allocated_array(&self, type_: &BasicType, size: &BasicValue, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildArrayAlloca(self.builder, type_.as_llvm_type_ref(), (*size).into().value, c_string.as_ptr())
+            LLVMBuildArrayAlloca(self.builder, type_.as_llvm_type_ref(), size.as_llvm_value_ref(), c_string.as_ptr())
         };
 
         PointerValue::new(value)
@@ -151,7 +151,7 @@ impl Builder {
     /// REVIEW: Untested
     pub fn build_free(&self, ptr: &PointerValue) -> Value { // REVIEW: Why does free return? Seems like original pointer? Ever useful?
         let val = unsafe {
-            LLVMBuildFree(self.builder, ptr.as_ref().value)
+            LLVMBuildFree(self.builder, ptr.as_llvm_value_ref())
         };
 
         Value::new(val)
@@ -295,7 +295,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildCast(self.builder, op, from_value.as_ref().value, to_type.as_llvm_type_ref(), c_string.as_ptr())
+            LLVMBuildCast(self.builder, op, from_value.as_llvm_value_ref(), to_type.as_llvm_type_ref(), c_string.as_ptr())
         };
 
         Value::new(value)
@@ -305,7 +305,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildPointerCast(self.builder, from.as_ref().value, to.as_llvm_type_ref(), c_string.as_ptr())
+            LLVMBuildPointerCast(self.builder, from.as_llvm_value_ref(), to.as_llvm_type_ref(), c_string.as_ptr())
         };
 
         PointerValue::new(value)
@@ -315,7 +315,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildICmp(self.builder, op, lhs.as_ref().value, rhs.as_ref().value, c_string.as_ptr())
+            LLVMBuildICmp(self.builder, op, lhs.as_llvm_value_ref(), rhs.as_llvm_value_ref(), c_string.as_ptr())
         };
 
         IntValue::new(value)
