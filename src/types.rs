@@ -590,6 +590,14 @@ macro_rules! enum_type_set {
                 }
             }
         }
+
+        $(
+            impl From<$args> for $enum_name {
+                fn from(value: $args) -> $enum_name {
+                    $enum_name::$args(value)
+                }
+            }
+        )*
     );
 }
 
@@ -727,6 +735,46 @@ impl BasicTypeEnum {
             a
         } else {
             panic!("Called BasicValueEnum.as_array_type on {:?}", self);
+        }
+    }
+
+    pub fn is_int_type(&self) -> bool {
+        if let BasicTypeEnum::IntType(_) = *self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_float_type(&self) -> bool {
+        if let BasicTypeEnum::FloatType(_) = *self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_pointer_type(&self) -> bool {
+        if let BasicTypeEnum::PointerType(_) = *self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_struct_type(&self) -> bool {
+        if let BasicTypeEnum::StructType(_) = *self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_array_type(&self) -> bool {
+        if let BasicTypeEnum::ArrayType(_) = *self {
+            true
+        } else {
+            false
         }
     }
 }

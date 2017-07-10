@@ -579,6 +579,14 @@ macro_rules! enum_value_set {
                 }
             }
         }
+
+        $(
+            impl From<$args> for $enum_name {
+                fn from(value: $args) -> $enum_name {
+                    $enum_name::$args(value)
+                }
+            }
+        )*
     );
 }
 
@@ -608,6 +616,14 @@ impl BasicValueEnum {
             LLVMTypeKind::LLVMVectorTypeKind => panic!("TODO: Unsupported type: Vector"),
             _ => unreachable!("Unsupported type"),
         }
+    }
+
+    pub fn get_type(&self) -> BasicTypeEnum {
+        let type_ = unsafe {
+            LLVMTypeOf(self.as_llvm_value_ref())
+        };
+
+        BasicTypeEnum::new(type_)
     }
 
     pub fn into_int_value(self) -> IntValue {
@@ -687,6 +703,46 @@ impl BasicValueEnum {
             a
         } else {
             panic!("Called BasicValueEnum.as_array_value on {:?}", self);
+        }
+    }
+
+    pub fn is_int_value(&self) -> bool {
+        if let BasicValueEnum::IntValue(_) = *self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_float_value(&self) -> bool {
+        if let BasicValueEnum::FloatValue(_) = *self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_pointer_value(&self) -> bool {
+        if let BasicValueEnum::PointerValue(_) = *self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_struct_value(&self) -> bool {
+        if let BasicValueEnum::StructValue(_) = *self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_array_value(&self) -> bool {
+        if let BasicValueEnum::ArrayValue(_) = *self {
+            true
+        } else {
+            false
         }
     }
 }
