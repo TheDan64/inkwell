@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
-use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile};
+use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
 use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMCreateFunctionPassManagerForModule, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget};
 use llvm_sys::execution_engine::{LLVMCreateExecutionEngineForModule, LLVMLinkInInterpreter, LLVMLinkInMCJIT};
 use llvm_sys::prelude::LLVMModuleRef;
@@ -11,6 +11,7 @@ use std::mem::{uninitialized, zeroed};
 
 use data_layout::DataLayout;
 use execution_engine::ExecutionEngine;
+use memory_buffer::MemoryBuffer;
 use pass_manager::PassManager;
 use types::{BasicType, FunctionType, BasicTypeEnum, AsLLVMTypeRef};
 use values::{BasicValue, FunctionValue, PointerValue};
@@ -178,6 +179,15 @@ impl Module {
         };
 
         code == 0
+    }
+
+    // REVIEW: Untested
+    pub fn write_bitcode_to_memory(&self) -> MemoryBuffer {
+        let memory_buffer = unsafe {
+            LLVMWriteBitcodeToMemoryBuffer(self.module)
+        };
+
+        MemoryBuffer::new(memory_buffer)
     }
 
     pub fn verify(&self, print: bool) -> bool {

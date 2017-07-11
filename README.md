@@ -13,7 +13,7 @@ Inkwell aims to help you pen your own programming languages by safely wrapping l
 Here's [tari's llvm-sys example](https://bitbucket.org/tari/llvm-sys.rs/src/ea4ac92a171da2c1851806b91e531ed3a0b41091/examples/jit-function.rs) written in safe code<sup>1</sup> with Inkwell:
 
 ```rust
-    use context::Context;
+    use inkwell::context::Context;
     use std::mem::transmute;
 
     let context = Context::create();

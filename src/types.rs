@@ -100,14 +100,13 @@ impl Type {
         }
     }
 
-    // NOTE: AnyType
     // REVIEW: Untested; Return IntValue?
-    fn get_alignment(&self) -> Value {
+    fn get_alignment(&self) -> IntValue {
         let val = unsafe {
             LLVMAlignOf(self.type_)
         };
 
-        Value::new(val)
+        IntValue::new(val)
     }
 
     fn get_context(&self) -> ContextRef {
@@ -347,7 +346,6 @@ impl FloatType {
         self.float_type.array_type(size)
     }
 
-    // TODO: Return FloatValue
     pub fn const_float(&self, value: f64) -> FloatValue {
         let value = unsafe {
             LLVMConstReal(self.float_type.type_, value)

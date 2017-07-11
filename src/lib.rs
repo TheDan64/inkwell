@@ -5,6 +5,7 @@ pub mod builder;
 pub mod context;
 pub mod data_layout;
 pub mod execution_engine;
+pub mod memory_buffer;
 pub mod module;
 pub mod pass_manager;
 pub mod target_data;

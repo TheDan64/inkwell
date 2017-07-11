@@ -28,6 +28,7 @@ impl ExecutionEngine {
     }
 
     /// WARNING: The returned address *will* be invalid if the EE drops first
+    /// Do not attempt to transmute it to a function if the ExecutionEngine is gone
     pub fn get_function_address(&self, fn_name: &str) -> Result<u64, String> {
 
         if !self.jit_mode {
