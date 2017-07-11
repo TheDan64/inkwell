@@ -173,14 +173,8 @@ impl fmt::Debug for Value {
         let is_null = unsafe {
             LLVMIsNull(self.value) == 1
         };
-        let is_const_array = unsafe {
-            !LLVMIsAConstantArray(self.value).is_null()
-        };
-        let is_const_data_array = unsafe {
-            !LLVMIsAConstantDataArray(self.value).is_null()
-        };
 
-        write!(f, "Value {{\n    name: {:?}\n    address: {:?}\n    is_const: {:?}\n    is_const_array: {:?}\n    is_const_data_array: {:?}\n    is_null: {:?}\n    llvm_value: {:?}\n    llvm_type: {:?}\n}}", name, self.value, is_const, is_const_array, is_const_data_array, is_null, llvm_value, llvm_type)
+        write!(f, "Value {{\n    name: {:?}\n    address: {:?}\n    is_const: {:?}\n    is_null: {:?}\n    llvm_value: {:?}\n    llvm_type: {:?}\n}}", name, self.value, is_const, is_null, llvm_value, llvm_type)
     }
 }
 
@@ -539,7 +533,6 @@ impl AsLLVMValueRef for Value { // TODO: Remove
     }
 }
 
-#[derive(Debug)]
 pub struct ArrayValue {
     array_value: Value
 }
@@ -563,6 +556,34 @@ impl ArrayValue {
 impl AsLLVMValueRef for ArrayValue {
     fn as_llvm_value_ref(&self) -> LLVMValueRef {
         self.array_value.value
+    }
+}
+
+impl fmt::Debug for ArrayValue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let llvm_value = unsafe {
+            CStr::from_ptr(LLVMPrintValueToString(self.as_llvm_value_ref()))
+        };
+        let llvm_type = unsafe {
+            CStr::from_ptr(LLVMPrintTypeToString(LLVMTypeOf(self.as_llvm_value_ref())))
+        };
+        let name = unsafe {
+            CStr::from_ptr(LLVMGetValueName(self.as_llvm_value_ref()))
+        };
+        let is_const = unsafe {
+            LLVMIsConstant(self.as_llvm_value_ref()) == 1
+        };
+        let is_null = unsafe {
+            LLVMIsNull(self.as_llvm_value_ref()) == 1
+        };
+        let is_const_array = unsafe {
+            !LLVMIsAConstantArray(self.as_llvm_value_ref()).is_null()
+        };
+        let is_const_data_array = unsafe {
+            !LLVMIsAConstantDataArray(self.as_llvm_value_ref()).is_null()
+        };
+
+        write!(f, "Value {{\n    name: {:?}\n    address: {:?}\n    is_const: {:?}\n    is_const_array: {:?}\n    is_const_data_array: {:?}\n    is_null: {:?}\n    llvm_value: {:?}\n    llvm_type: {:?}\n}}", name, self.as_llvm_value_ref(), is_const, is_const_array, is_const_data_array, is_null, llvm_value, llvm_type)
     }
 }
 
