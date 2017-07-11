@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
-// use llvm_sys::bit_writer::LLVMParseIRInContext;
+use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile};
 use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMCreateFunctionPassManagerForModule, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget};
 use llvm_sys::execution_engine::{LLVMCreateExecutionEngineForModule, LLVMLinkInInterpreter, LLVMLinkInMCJIT};
 use llvm_sys::prelude::LLVMModuleRef;
@@ -13,7 +13,7 @@ use data_layout::DataLayout;
 use execution_engine::ExecutionEngine;
 use pass_manager::PassManager;
 use types::{BasicType, FunctionType, BasicTypeEnum, AsLLVMTypeRef};
-use values::{BasicValue, FunctionValue, Value};
+use values::{BasicValue, FunctionValue, PointerValue};
 
 pub struct Module {
     pub(crate) module: LLVMModuleRef,
@@ -152,7 +152,8 @@ impl Module {
         PassManager::new(pass_manager)
     }
 
-    pub fn add_global(&self, type_: &BasicType, init_value: Option<&BasicValue>, name: &str) -> Value {
+    // REVIEW: Is this really always a pointer? It would make sense...
+    pub fn add_global(&self, type_: &BasicType, init_value: Option<&BasicValue>, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -165,19 +166,19 @@ impl Module {
             }
         }
 
-        Value::new(value)
+        PointerValue::new(value)
     }
 
-    // REVIEW: Only available in newer version?
-    // pub fn write_bitcode_to_file(&self, path: &str) -> bool {
-    //     let c_string = CString::new(path).expect("Conversion to CString failed unexpectedly");
+    // REVIEW: Untested
+    pub fn write_bitcode_to_file(&self, path: &str) -> bool {
+        let c_string = CString::new(path).expect("Conversion to CString failed unexpectedly");
 
-    //     let code = unsafe {
-    //         LLVMParseIRInContext(self.module, c_string.as_ptr())
-    //     };
+        let code = unsafe {
+            LLVMWriteBitcodeToFile(self.module, c_string.as_ptr())
+        };
 
-    //     code == 0
-    // }
+        code == 0
+    }
 
     pub fn verify(&self, print: bool) -> bool {
         let err_str: *mut *mut i8 = unsafe { zeroed() };

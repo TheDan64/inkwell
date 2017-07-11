@@ -619,7 +619,7 @@ enum_type_set! {BasicTypeEnum: IntType, FloatType, PointerType, StructType, Arra
 
 // TODO: Possibly rename to AnyTypeTrait, BasicTypeTrait
 trait_type_set! {AnyType: AnyTypeEnum, BasicTypeEnum, IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VoidType}
-trait_type_set! {BasicType: BasicTypeEnum, IntType, FloatType, PointerType, StructType, ArrayType, VoidType}
+trait_type_set! {BasicType: BasicTypeEnum, IntType, FloatType, PointerType, StructType, ArrayType}
 
 impl AnyTypeEnum {
     pub(crate) fn new(type_: LLVMTypeRef) -> AnyTypeEnum {

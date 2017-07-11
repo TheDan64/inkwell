@@ -1,4 +1,4 @@
-use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction};
+use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
 use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind};
 use llvm_sys::LLVMTypeKind;
 use llvm_sys::prelude::LLVMValueRef;
@@ -201,6 +201,7 @@ impl FunctionValue {
         }
     }
 
+    // TODO: Maybe support LLVMAbortProcessAction?
     pub fn verify(&self, print: bool) {
         let action = if print {
             LLVMVerifierFailureAction::LLVMPrintMessageAction
@@ -297,6 +298,20 @@ impl FunctionValue {
 
     pub fn get_name(&self) -> &CStr {
         self.fn_value.get_name()
+    }
+
+    // REVIEW: Untested
+    pub fn view_function_config(&self) {
+        unsafe {
+            LLVMViewFunctionCFG(self.as_llvm_value_ref())
+        }
+    }
+
+    // REVIEW: Untested
+    pub fn view_function_config_only(&self) {
+        unsafe {
+            LLVMViewFunctionCFGOnly(self.as_llvm_value_ref())
+        }
     }
 }
 
