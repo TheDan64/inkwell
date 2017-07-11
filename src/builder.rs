@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf};
+use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf, LLVMSetTailCall};
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LLVMAtomicOrdering};
 
@@ -40,7 +40,7 @@ impl Builder {
         Value::new(value)
     }
 
-    pub fn build_call(&self, function: &FunctionValue, args: &[&BasicValue], name: &str) -> BasicValueEnum {
+    pub fn build_call(&self, function: &FunctionValue, args: &[&BasicValue], name: &str, tail_call: bool) -> BasicValueEnum {
         // LLVM gets upset when void calls are named because they don't return anything
         let name = unsafe {
             match LLVMGetTypeKind(LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(function.fn_value.value)))) {
@@ -60,6 +60,11 @@ impl Builder {
         let value = unsafe {
             LLVMBuildCall(self.builder, function.fn_value.value, args.as_mut_ptr(), args.len() as u32, c_string.as_ptr())
         };
+
+        // REVIEW: Untested
+        unsafe {
+            LLVMSetTailCall(value, tail_call as i32)
+        }
 
         BasicValueEnum::new(value)
     }
@@ -127,12 +132,11 @@ impl Builder {
 
     // TODO: Rename to "build_heap_allocated_array" + stack version?
     // REVIEW: Is this still a PointerValue (as opposed to an ArrayValue?)
-    // REVIEW: Size should be IntoIntValue trait?
-    pub fn build_array_heap_allocation(&self, type_: &BasicType, size: &BasicValue, name: &str) -> PointerValue {
+    pub fn build_array_heap_allocation(&self, type_: &BasicType, size: &IntoIntValue, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildArrayMalloc(self.builder, type_.as_llvm_type_ref(), size.as_llvm_value_ref(), c_string.as_ptr())
+            LLVMBuildArrayMalloc(self.builder, type_.as_llvm_type_ref(), size.into_int_value().as_llvm_value_ref(), c_string.as_ptr())
         };
 
         PointerValue::new(value)
@@ -140,11 +144,11 @@ impl Builder {
 
     // REVIEW: Is this still a PointerValue (as opposed to an ArrayValue?)
     // REVIEW: Size should be IntoIntValue trait?
-    pub fn build_stack_allocated_array(&self, type_: &BasicType, size: &BasicValue, name: &str) -> PointerValue {
+    pub fn build_stack_allocated_array(&self, type_: &BasicType, size: &IntoIntValue, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildArrayAlloca(self.builder, type_.as_llvm_type_ref(), size.as_llvm_value_ref(), c_string.as_ptr())
+            LLVMBuildArrayAlloca(self.builder, type_.as_llvm_type_ref(), size.into_int_value().as_llvm_value_ref(), c_string.as_ptr())
         };
 
         PointerValue::new(value)
@@ -486,7 +490,7 @@ fn test_build_call() {
 
     builder.position_at_end(&basic_block2);
 
-    let pi2 = builder.build_call(&function, &[], "get_pi");
+    let pi2 = builder.build_call(&function, &[], "get_pi", false);
 
     builder.build_return(Some(&pi2));
 }

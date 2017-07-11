@@ -1,5 +1,6 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
-use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMCreateFunctionPassManagerForModule, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer};
+// use llvm_sys::bit_writer::LLVMParseIRInContext;
+use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMCreateFunctionPassManagerForModule, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget};
 use llvm_sys::execution_engine::{LLVMCreateExecutionEngineForModule, LLVMLinkInInterpreter, LLVMLinkInMCJIT};
 use llvm_sys::prelude::LLVMModuleRef;
 use llvm_sys::target::{LLVM_InitializeNativeTarget, LLVM_InitializeNativeAsmPrinter, LLVM_InitializeNativeAsmParser, LLVM_InitializeNativeDisassembler};
@@ -11,8 +12,8 @@ use std::mem::{uninitialized, zeroed};
 use data_layout::DataLayout;
 use execution_engine::ExecutionEngine;
 use pass_manager::PassManager;
-use types::{AnyType, FunctionType, BasicTypeEnum, AsLLVMTypeRef};
-use values::{FunctionValue, Value};
+use types::{BasicType, FunctionType, BasicTypeEnum, AsLLVMTypeRef};
+use values::{BasicValue, FunctionValue, Value};
 
 pub struct Module {
     pub(crate) module: LLVMModuleRef,
@@ -67,6 +68,14 @@ impl Module {
         }
 
         Some(BasicTypeEnum::new(type_))
+    }
+
+    pub fn set_target(&self, target_triple: &str) {
+        let c_string = CString::new(target_triple).expect("Conversion to CString failed unexpectedly");
+
+        unsafe {
+            LLVMSetTarget(self.module, c_string.as_ptr())
+        }
     }
 
     pub fn create_execution_engine(&self, jit_mode: bool) -> Result<ExecutionEngine, String> {
@@ -143,21 +152,32 @@ impl Module {
         PassManager::new(pass_manager)
     }
 
-    pub fn add_global(&self, type_: &AnyType, init_value: &Option<Value>, name: &str) -> Value {
+    pub fn add_global(&self, type_: &BasicType, init_value: Option<&BasicValue>, name: &str) -> Value {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMAddGlobal(self.module, type_.as_llvm_type_ref(), c_string.as_ptr())
         };
 
-        if let Some(ref init_val) = *init_value {
+        if let Some(ref init_val) = init_value {
             unsafe {
-                LLVMSetInitializer(value, init_val.value)
+                LLVMSetInitializer(value, init_val.as_llvm_value_ref())
             }
         }
 
         Value::new(value)
     }
+
+    // REVIEW: Only available in newer version?
+    // pub fn write_bitcode_to_file(&self, path: &str) -> bool {
+    //     let c_string = CString::new(path).expect("Conversion to CString failed unexpectedly");
+
+    //     let code = unsafe {
+    //         LLVMParseIRInContext(self.module, c_string.as_ptr())
+    //     };
+
+    //     code == 0
+    // }
 
     pub fn verify(&self, print: bool) -> bool {
         let err_str: *mut *mut i8 = unsafe { zeroed() };

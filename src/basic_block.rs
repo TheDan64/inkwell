@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMInsertBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf};
+use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMInsertBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDeleteBasicBlock};
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
 
 use values::{FunctionValue, Value};
@@ -75,6 +75,14 @@ impl BasicBlock {
         };
 
         BasicBlock::new(bb)
+    }
+
+    // REVIEW: Could potentially be unsafe if there are existing references. Might need a global ref counter
+    // keeping private for now
+    fn delete(self) {
+        unsafe {
+            LLVMDeleteBasicBlock(self.basic_block)
+        }
     }
 }
 

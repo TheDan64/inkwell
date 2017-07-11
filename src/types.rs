@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMAlignOf, LLVMArrayType, LLVMConstArray, LLVMConstInt, LLVMConstNamedStruct, LLVMConstReal, LLVMCountParamTypes, LLVMDumpType, LLVMFunctionType, LLVMGetParamTypes, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMIsFunctionVarArg, LLVMPointerType, LLVMPrintTypeToString, LLVMStructGetTypeAtIndex, LLVMTypeIsSized, LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMIntType};
+use llvm_sys::core::{LLVMAlignOf, LLVMArrayType, LLVMConstArray, LLVMConstInt, LLVMConstNamedStruct, LLVMConstReal, LLVMCountParamTypes, LLVMDumpType, LLVMFunctionType, LLVMGetParamTypes, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMIsFunctionVarArg, LLVMPointerType, LLVMPrintTypeToString, LLVMStructGetTypeAtIndex, LLVMTypeIsSized, LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMIntType, LLVMGetArrayLength, LLVMSizeOf};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use llvm_sys::LLVMTypeKind;
 
@@ -122,11 +122,18 @@ impl Type {
         ContextRef::new(Context::new(context))
     }
 
-    /// REVIEW: Untested
     fn is_sized(&self) -> bool {
         unsafe {
             LLVMTypeIsSized(self.type_) == 1
         }
+    }
+
+    fn size(&self) -> IntValue { // Option<IntValue>? What happens when type is unsized? We could return 0?
+        let int_value = unsafe {
+            LLVMSizeOf(self.type_)
+        };
+
+        IntValue::new(int_value)
     }
 }
 
@@ -551,6 +558,12 @@ impl ArrayType {
 
     pub fn const_array<V: BasicValue>(&self, values: Vec<&V>) -> ArrayValue {
         self.array_type.const_array(values)
+    }
+
+    pub fn len(&self) -> u32 {
+        unsafe {
+            LLVMGetArrayLength(self.as_llvm_type_ref())
+        }
     }
 }
 
