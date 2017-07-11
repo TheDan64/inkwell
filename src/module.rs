@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
-use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
+use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer, LLVMWriteBitcodeToFD};
 use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMCreateFunctionPassManagerForModule, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget};
 use llvm_sys::execution_engine::{LLVMCreateExecutionEngineForModule, LLVMLinkInInterpreter, LLVMLinkInMCJIT};
 use llvm_sys::prelude::LLVMModuleRef;
@@ -7,7 +7,10 @@ use llvm_sys::target::{LLVM_InitializeNativeTarget, LLVM_InitializeNativeAsmPrin
 
 // REVIEW: Drop for Module? There's a LLVM method, but I read context dispose takes care of it...
 use std::ffi::{CString, CStr};
+use std::fs::File;
 use std::mem::{uninitialized, zeroed};
+use std::path::Path;
+use std::os::unix::io::AsRawFd;
 
 use data_layout::DataLayout;
 use execution_engine::ExecutionEngine;
@@ -171,14 +174,20 @@ impl Module {
     }
 
     // REVIEW: Untested
-    pub fn write_bitcode_to_file(&self, path: &str) -> bool {
-        let c_string = CString::new(path).expect("Conversion to CString failed unexpectedly");
+    pub fn write_bitcode_to_path(&self, path: &Path) -> bool {
+        let path_str = path.to_str().expect("Did not find a valid Unicode path string");
+        let c_string = CString::new(path_str).expect("Conversion to CString failed unexpectedly");
 
-        let code = unsafe {
-            LLVMWriteBitcodeToFile(self.module, c_string.as_ptr())
-        };
+        unsafe {
+            LLVMWriteBitcodeToFile(self.module, c_string.as_ptr()) == 0
+        }
+    }
 
-        code == 0
+    pub fn write_bitcode_to_file(&self, file: &File, should_close: bool, unbuffered: bool) -> bool {
+        // REVIEW: as_raw_fd docs suggest it only works in *nix
+        unsafe {
+            LLVMWriteBitcodeToFD(self.module, file.as_raw_fd(), should_close as i32, unbuffered as i32) == 0
+        }
     }
 
     // REVIEW: Untested
