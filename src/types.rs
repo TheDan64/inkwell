@@ -7,7 +7,7 @@ use std::fmt;
 use std::mem::forget;
 
 use context::{Context, ContextRef};
-use values::{ArrayValue, BasicValue, FloatValue, IntValue, StructValue, Value};
+use values::{AsLLVMValueRef, ArrayValue, BasicValue, FloatValue, IntValue, StructValue, Value};
 
 mod private {
     // This is an ugly privacy hack so that Type can stay private to this module
@@ -15,6 +15,7 @@ mod private {
     // outside this library
     use llvm_sys::prelude::LLVMTypeRef;
 
+    // TODO: Probably rename this to AsTypeRef, as_type_ref
     pub trait AsLLVMTypeRef {
         fn as_llvm_type_ref(&self) -> LLVMTypeRef;
     }
@@ -406,7 +407,7 @@ impl StructType {
     // REVIEW: Untested
     // TODO: Better name for num. What's it for?
     pub fn const_struct(&self, value: &Value, num: u32) -> StructValue {
-        let value = &mut [value.value];
+        let value = &mut [value.as_llvm_value_ref()];
 
         let val = unsafe {
             LLVMConstNamedStruct(self.struct_type.type_, value.as_mut_ptr(), num)

@@ -243,7 +243,7 @@ impl Module {
 fn test_write_bitcode_to_path() {
     use context::Context;
     use std::env::temp_dir;
-    use std::fs::File;
+    use std::fs::{File, remove_file};
     use std::io::Read;
 
     let mut path = temp_dir();
@@ -259,18 +259,20 @@ fn test_write_bitcode_to_path() {
     module.write_bitcode_to_path(&path);
 
     let mut contents = Vec::new();
-    let mut file = File::open(path).expect("Could not open temp file");
+    let mut file = File::open(&path).expect("Could not open temp file");
 
     file.read_to_end(&mut contents).expect("Unable to verify written file");
 
     assert!(contents.len() > 0);
+
+    remove_file(&path).unwrap();
 }
 
 #[test]
 fn test_write_bitcode_to_file() {
     use context::Context;
     use std::env::temp_dir;
-    use std::fs::File;
+    use std::fs::{File, remove_file};
     use std::io::{Read, Seek, SeekFrom};
 
     let mut path = temp_dir();
@@ -288,9 +290,13 @@ fn test_write_bitcode_to_file() {
     module.write_bitcode_to_file(&file, true, false);
 
     let mut contents = Vec::new();
-    let mut file2 = File::open(path).expect("Could not open temp file");
+    let mut file2 = File::open(&path).expect("Could not open temp file");
 
     file.read_to_end(&mut contents).expect("Unable to verify written file");
 
     assert!(contents.len() > 0);
+
+    remove_file(&path).unwrap();
+
+    // REVIEW: This test infrequently fails. LLVM bug?
 }

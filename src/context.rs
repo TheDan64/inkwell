@@ -5,7 +5,7 @@ use basic_block::BasicBlock;
 use builder::Builder;
 use module::Module;
 use types::{BasicType, FloatType, IntType, StructType, VoidType};
-use values::FunctionValue;
+use values::{AsLLVMValueRef, FunctionValue};
 
 use std::ffi::CString;
 use std::mem::forget;
@@ -172,7 +172,7 @@ impl Context {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let bb = unsafe {
-            LLVMAppendBasicBlockInContext(self.context, function.fn_value.value, c_string.as_ptr())
+            LLVMAppendBasicBlockInContext(self.context, function.as_llvm_value_ref(), c_string.as_ptr())
         };
 
         BasicBlock::new(bb)
@@ -259,7 +259,13 @@ fn test_no_context_double_free2() {
 
 #[test]
 fn test_get_context_from_contextless_value() {
+    use llvm_sys::core::LLVMGetGlobalContext;
+
     let int = IntType::i8_type();
+    let global_context = unsafe {
+        LLVMGetGlobalContext()
+    };
 
     assert!(!(*int.get_context()).context.is_null());
+    assert!((*int.get_context()).context == global_context);
 }

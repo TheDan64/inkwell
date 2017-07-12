@@ -43,7 +43,7 @@ impl Builder {
     pub fn build_call(&self, function: &FunctionValue, args: &[&BasicValue], name: &str, tail_call: bool) -> BasicValueEnum {
         // LLVM gets upset when void calls are named because they don't return anything
         let name = unsafe {
-            match LLVMGetTypeKind(LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(function.fn_value.value)))) {
+            match LLVMGetTypeKind(LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(function.as_llvm_value_ref())))) {
                 LLVMTypeKind::LLVMVoidTypeKind => "",
                 _ => name,
             }
@@ -58,7 +58,7 @@ impl Builder {
                                               .map(|val| val.as_llvm_value_ref())
                                               .collect();
         let value = unsafe {
-            LLVMBuildCall(self.builder, function.fn_value.value, args.as_mut_ptr(), args.len() as u32, c_string.as_ptr())
+            LLVMBuildCall(self.builder, function.as_llvm_value_ref(), args.as_mut_ptr(), args.len() as u32, c_string.as_ptr())
         };
 
         // REVIEW: Untested
@@ -73,7 +73,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
-                                                                 .map(|val| val.into_int_value().int_value.value)
+                                                                 .map(|val| val.into_int_value().as_llvm_value_ref())
                                                                  .collect();
         let value = unsafe {
             LLVMBuildGEP(self.builder, ptr.as_llvm_value_ref(), index_values.as_mut_ptr(), index_values.len() as u32, c_string.as_ptr())
@@ -165,7 +165,7 @@ impl Builder {
 
     pub fn insert_instruction(&self, value: &Value) {
         unsafe {
-            LLVMInsertIntoBuilder(self.builder, value.value);
+            LLVMInsertIntoBuilder(self.builder, value.as_llvm_value_ref());
         }
     }
 
@@ -268,7 +268,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildFSub(self.builder, lhs.float_value.value, rhs.float_value.value, c_string.as_ptr())
+            LLVMBuildFSub(self.builder, lhs.as_llvm_value_ref(), rhs.as_llvm_value_ref(), c_string.as_ptr())
         };
 
         FloatValue::new(value)
@@ -279,7 +279,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildMul(self.builder, lhs.int_value.value, rhs.int_value.value, c_string.as_ptr())
+            LLVMBuildMul(self.builder, lhs.as_llvm_value_ref(), rhs.as_llvm_value_ref(), c_string.as_ptr())
         };
 
         IntValue::new(value)
@@ -290,21 +290,21 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildFMul(self.builder, lhs.float_value.value, rhs.float_value.value, c_string.as_ptr())
+            LLVMBuildFMul(self.builder, lhs.as_llvm_value_ref(), rhs.as_llvm_value_ref(), c_string.as_ptr())
         };
 
         FloatValue::new(value)
     }
 
     // REVIEW: Untested
-    pub fn build_cast(&self, op: LLVMOpcode, from_value: &AnyValue, to_type: &AnyType, name: &str) -> Value {
+    pub fn build_cast(&self, op: LLVMOpcode, from_value: &BasicValue, to_type: &BasicType, name: &str) -> BasicValueEnum {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildCast(self.builder, op, from_value.as_llvm_value_ref(), to_type.as_llvm_type_ref(), c_string.as_ptr())
         };
 
-        Value::new(value)
+        BasicValueEnum::new(value)
     }
 
     pub fn build_pointer_cast(&self, from: &PointerValue, to: &PointerType, name: &str) -> PointerValue {
@@ -331,7 +331,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildFCmp(self.builder, op, lhs.float_value.value, rhs.float_value.value, c_string.as_ptr())
+            LLVMBuildFCmp(self.builder, op, lhs.as_llvm_value_ref(), rhs.as_llvm_value_ref(), c_string.as_ptr())
         };
 
         IntValue::new(value)
@@ -347,7 +347,7 @@ impl Builder {
 
     pub fn build_conditional_branch(&self, comparison: &IntValue, then_block: &BasicBlock, else_block: &BasicBlock) -> Value {
         let value = unsafe {
-            LLVMBuildCondBr(self.builder, comparison.int_value.value, then_block.basic_block, else_block.basic_block)
+            LLVMBuildCondBr(self.builder, comparison.as_llvm_value_ref(), then_block.basic_block, else_block.basic_block)
         };
 
         Value::new(value)
@@ -359,7 +359,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildNeg(self.builder, value.int_value.value, c_string.as_ptr())
+            LLVMBuildNeg(self.builder, value.as_llvm_value_ref(), c_string.as_ptr())
         };
 
         IntValue::new(value)
@@ -371,7 +371,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildFNeg(self.builder, value.float_value.value, c_string.as_ptr())
+            LLVMBuildFNeg(self.builder, value.as_llvm_value_ref(), c_string.as_ptr())
         };
 
         FloatValue::new(value)
@@ -403,7 +403,7 @@ impl Builder {
         Value::new(value)
     }
 
-    pub fn build_insert_value(&self, value: &Value, ptr: &PointerValue, index: u32, name: &str) -> Value { // BasicValueEnum?
+    pub fn build_insert_value(&self, value: &BasicValue, ptr: &PointerValue, index: u32, name: &str) -> Value { // BasicValueEnum?
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -450,7 +450,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let val = unsafe {
-            LLVMBuildIsNotNull(self.builder, value.ptr_value.value, c_string.as_ptr())
+            LLVMBuildIsNotNull(self.builder, value.as_llvm_value_ref(), c_string.as_ptr())
         };
 
         IntValue::new(val)

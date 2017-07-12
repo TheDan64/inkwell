@@ -16,6 +16,7 @@ mod private {
     // outside this library
     use llvm_sys::prelude::LLVMValueRef;
 
+    // TODO: Probably rename this to AsValueRef, as_value_ref
     pub trait AsLLVMValueRef {
         fn as_llvm_value_ref(&self) -> LLVMValueRef;
     }
@@ -24,7 +25,7 @@ mod private {
 pub(crate) use self::private::AsLLVMValueRef;
 
 pub struct Value {
-    pub(crate) value: LLVMValueRef,
+    value: LLVMValueRef,
 }
 
 impl Value {
@@ -179,7 +180,7 @@ impl fmt::Debug for Value {
 }
 
 pub struct FunctionValue {
-    pub(crate) fn_value: Value,
+    fn_value: Value,
 }
 
 impl FunctionValue {
@@ -378,7 +379,7 @@ impl Iterator for ParamValueIter {
 
 #[derive(Debug)]
 pub struct IntValue {
-    pub(crate) int_value: Value,
+    int_value: Value,
 }
 
 impl IntValue {
@@ -415,13 +416,14 @@ impl IntoIntValue for IntValue {
 
 impl IntoIntValue for u64 {
     fn into_int_value(&self) -> IntValue {
+        // REVIEWL This will probably assign the global context, not necessarily the one the user is using.
         IntType::i32_type().const_int(*self, false)
     }
 }
 
 #[derive(Debug)]
 pub struct FloatValue {
-    pub(crate) float_value: Value
+    float_value: Value
 }
 
 impl FloatValue {
@@ -475,7 +477,7 @@ impl AsLLVMValueRef for StructValue {
 
 #[derive(Debug)]
 pub struct PointerValue {
-    pub(crate) ptr_value: Value
+    ptr_value: Value
 }
 
 impl PointerValue {

@@ -2,7 +2,7 @@ use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecution
 
 use module::Module;
 use target_data::TargetData;
-use values::FunctionValue;
+use values::{AsLLVMValueRef, FunctionValue};
 
 use std::ffi::CString;
 
@@ -60,7 +60,7 @@ impl ExecutionEngine {
         let mut args = vec![]; // TODO: Support args
 
         unsafe {
-            LLVMRunFunction(self.execution_engine, function.fn_value.value, args.len() as u32, args.as_mut_ptr()); // REVIEW: usize to u32 ok??
+            LLVMRunFunction(self.execution_engine, function.as_llvm_value_ref(), args.len() as u32, args.as_mut_ptr()); // REVIEW: usize to u32 ok??
         }
     }
 
@@ -69,7 +69,7 @@ impl ExecutionEngine {
         let env_p = vec![]; // REVIEW: No clue what this is
 
         unsafe {
-            LLVMRunFunctionAsMain(self.execution_engine, function.fn_value.value, args.len() as u32, args.as_ptr(), env_p.as_ptr()); // REVIEW: usize to u32 cast ok??
+            LLVMRunFunctionAsMain(self.execution_engine, function.as_llvm_value_ref(), args.len() as u32, args.as_ptr(), env_p.as_ptr()); // REVIEW: usize to u32 cast ok??
         }
     }
 }
