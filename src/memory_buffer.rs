@@ -1,5 +1,8 @@
-use llvm_sys::prelude::{LLVMModuleRef, LLVMMemoryBufferRef};
 use llvm_sys::core::{LLVMDisposeMessage, LLVMCreateMemoryBufferWithContentsOfFile, LLVMCreateMemoryBufferWithSTDIN, LLVMCreateMemoryBufferWithMemoryRange, LLVMCreateMemoryBufferWithMemoryRangeCopy, LLVMGetBufferStart, LLVMGetBufferSize, LLVMDisposeMemoryBuffer};
+use llvm_sys::prelude::LLVMMemoryBufferRef;
+use llvm_sys::object::LLVMCreateObjectFile;
+
+use object_file::ObjectFile;
 
 use std::ffi::{CString, CStr};
 use std::mem::zeroed;
@@ -107,6 +110,14 @@ impl MemoryBuffer {
         unsafe {
             LLVMGetBufferSize(self.memory_buffer)
         }
+    }
+
+    pub fn create_object_file(&self) -> ObjectFile {
+        let object_file = unsafe {
+            LLVMCreateObjectFile(self.memory_buffer)
+        };
+
+        ObjectFile::new(object_file)
     }
 }
 

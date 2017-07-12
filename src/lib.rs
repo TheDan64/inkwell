@@ -7,12 +7,13 @@ pub mod data_layout;
 pub mod execution_engine;
 pub mod memory_buffer;
 pub mod module;
+pub mod object_file;
 pub mod pass_manager;
 pub mod target_data;
 pub mod types;
 pub mod values;
 
-// REVIEW: Is this only available in newer versions?
+// TODO: 3.8+
 // pub fn enable_llvm_pretty_stack_trace() {
 //     use llvm_sys::error_handling::LLVMEnablePrettyStackTrace;
 
