@@ -40,7 +40,7 @@ impl Type {
     }
 
     // NOTE: AnyType
-    fn dump_type(&self) {
+    fn dump(&self) {
         unsafe {
             LLVMDumpType(self.type_);
         }

@@ -1,4 +1,4 @@
-use llvm_sys::object::{LLVMDisposeObjectFile, LLVMObjectFileRef, LLVMSectionIteratorRef, LLVMGetSections, LLVMDisposeSectionIterator, LLVMSymbolIteratorRef, LLVMIsSectionIteratorAtEnd, LLVMGetSectionName, LLVMDisposeRelocationIterator, LLVMRelocationIteratorRef, LLVMDisposeSymbolIterator, LLVMGetSectionContents, LLVMGetSectionSize, LLVMMoveToNextSection, LLVMGetSectionAddress, LLVMGetSymbolName, LLVMGetSymbolSize, LLVMGetRelocations, LLVMGetSymbolAddress, LLVMGetRelocationOffset, LLVMGetRelocationSymbol, LLVMGetRelocationType, LLVMGetRelocationTypeName, LLVMGetRelocationValueString, LLVMMoveToNextSymbol, LLVMMoveToNextRelocation, LLVMIsSymbolIteratorAtEnd, LLVMIsRelocationIteratorAtEnd};
+use llvm_sys::object::{LLVMDisposeObjectFile, LLVMObjectFileRef, LLVMSectionIteratorRef, LLVMGetSections, LLVMDisposeSectionIterator, LLVMSymbolIteratorRef, LLVMIsSectionIteratorAtEnd, LLVMGetSectionName, LLVMDisposeRelocationIterator, LLVMRelocationIteratorRef, LLVMDisposeSymbolIterator, LLVMGetSectionContents, LLVMGetSectionSize, LLVMMoveToNextSection, LLVMGetSectionAddress, LLVMGetSymbolName, LLVMGetSymbolSize, LLVMGetRelocations, LLVMGetSymbolAddress, LLVMGetRelocationOffset, LLVMGetRelocationSymbol, LLVMGetRelocationType, LLVMGetRelocationTypeName, LLVMGetRelocationValueString, LLVMMoveToNextSymbol, LLVMMoveToNextRelocation, LLVMIsSymbolIteratorAtEnd, LLVMIsRelocationIteratorAtEnd, LLVMGetSymbols};
 
 use std::ffi::CStr;
 
@@ -25,6 +25,14 @@ impl ObjectFile {
         };
 
         SectionIterator::new(section_iterator, self.object_file)
+    }
+
+    pub fn get_symbols(&self) -> SymbolIterator {
+        let symbol_iterator = unsafe {
+            LLVMGetSymbols(self.object_file)
+        };
+
+        SymbolIterator::new(symbol_iterator, self.object_file)
     }
 }
 
@@ -203,6 +211,7 @@ impl Relocation {
 
     pub fn get_symbols(&self) -> SymbolIterator {
         let symbol_iterator = unsafe {
+            // REVIEW: Is this just returning a single Smybol (given the name) and not a full iterator?
             LLVMGetRelocationSymbol(self.relocation)
         };
 

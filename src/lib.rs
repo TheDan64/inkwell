@@ -13,14 +13,15 @@ pub mod target_data;
 pub mod types;
 pub mod values;
 
-// TODO: 3.8+
-// pub fn enable_llvm_pretty_stack_trace() {
-//     use llvm_sys::error_handling::LLVMEnablePrettyStackTrace;
+// TODO: Probably move into error handling module
+pub fn enable_llvm_pretty_stack_trace() {
+    // use llvm_sys::error_handling::LLVMEnablePrettyStackTrace; // v3.8
+    use llvm_sys::core::LLVMEnablePrettyStackTrace;
 
-//     unsafe {
-//         LLVMEnablePrettyStackTrace()
-//     }
-// }
+    unsafe {
+        LLVMEnablePrettyStackTrace()
+    }
+}
 
 // Misc Notes
 // Always pass a c_string.as_ptr() call into the function call directly and never
