@@ -5,7 +5,7 @@ use basic_block::BasicBlock;
 use builder::Builder;
 use module::Module;
 use types::{BasicType, FloatType, IntType, StructType, VoidType};
-use values::{AsLLVMValueRef, FunctionValue};
+use values::{AsValueRef, FunctionValue};
 
 use std::ffi::CString;
 use std::mem::forget;
@@ -147,7 +147,7 @@ impl Context {
     // REVIEW: Changed field_types signature, untested
     pub fn struct_type(&self, field_types: &[&BasicType], packed: bool, name: &str) -> StructType {
         let mut field_types: Vec<LLVMTypeRef> = field_types.iter()
-                                                           .map(|val| val.as_llvm_type_ref())
+                                                           .map(|val| val.as_type_ref())
                                                            .collect();
         let struct_type = if name.is_empty() {
             unsafe {
@@ -172,7 +172,7 @@ impl Context {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let bb = unsafe {
-            LLVMAppendBasicBlockInContext(self.context, function.as_llvm_value_ref(), c_string.as_ptr())
+            LLVMAppendBasicBlockInContext(self.context, function.as_value_ref(), c_string.as_ptr())
         };
 
         BasicBlock::new(bb)

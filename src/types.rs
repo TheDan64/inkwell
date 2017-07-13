@@ -7,7 +7,7 @@ use std::fmt;
 use std::mem::forget;
 
 use context::{Context, ContextRef};
-use values::{AsLLVMValueRef, ArrayValue, BasicValue, FloatValue, IntValue, StructValue, Value};
+use values::{AsValueRef, ArrayValue, BasicValue, FloatValue, IntValue, StructValue, Value};
 
 mod private {
     // This is an ugly privacy hack so that Type can stay private to this module
@@ -15,13 +15,12 @@ mod private {
     // outside this library
     use llvm_sys::prelude::LLVMTypeRef;
 
-    // TODO: Probably rename this to AsTypeRef, as_type_ref
-    pub trait AsLLVMTypeRef {
-        fn as_llvm_type_ref(&self) -> LLVMTypeRef;
+    pub trait AsTypeRef {
+        fn as_type_ref(&self) -> LLVMTypeRef;
     }
 }
 
-pub(crate) use self::private::AsLLVMTypeRef;
+pub(crate) use self::private::AsTypeRef;
 
 // Worth noting that types seem to be singletons. At the very least, primitives are.
 // Though this is likely only true per thread since LLVM claims to not be very thread-safe.
@@ -57,7 +56,7 @@ impl Type {
     // REVIEW: Is this actually AnyType except FunctionType? VoidType? Can you make a FunctionType from a FunctionType???
     fn fn_type(&self, param_types: &[&AnyType], is_var_args: bool) -> FunctionType {
         let mut param_types: Vec<LLVMTypeRef> = param_types.iter()
-                                                           .map(|val| val.as_llvm_type_ref())
+                                                           .map(|val| val.as_type_ref())
                                                            .collect();
         let fn_type = unsafe {
             LLVMFunctionType(self.type_, param_types.as_mut_ptr(), param_types.len() as u32, is_var_args as i32)
@@ -75,7 +74,7 @@ impl Type {
     }
 
     fn const_array<V: BasicValue>(&self, values: Vec<&V>) -> ArrayValue {
-        let mut values: Vec<LLVMValueRef> = values.iter().map(|val| val.as_llvm_value_ref()).collect();
+        let mut values: Vec<LLVMValueRef> = values.iter().map(|val| val.as_value_ref()).collect();
 
         let value = unsafe {
             LLVMConstArray(self.type_, values.as_mut_ptr(), values.len() as u32)
@@ -211,8 +210,8 @@ impl fmt::Debug for FunctionType {
     }
 }
 
-impl AsLLVMTypeRef for FunctionType {
-    fn as_llvm_type_ref(&self) -> LLVMTypeRef {
+impl AsTypeRef for FunctionType {
+    fn as_type_ref(&self) -> LLVMTypeRef {
         self.fn_type.type_
     }
 }
@@ -319,8 +318,8 @@ impl IntType {
     }
 }
 
-impl AsLLVMTypeRef for IntType {
-    fn as_llvm_type_ref(&self) -> LLVMTypeRef {
+impl AsTypeRef for IntType {
+    fn as_type_ref(&self) -> LLVMTypeRef {
         self.int_type.type_
     }
 }
@@ -368,8 +367,8 @@ impl FloatType {
     }
 }
 
-impl AsLLVMTypeRef for FloatType {
-    fn as_llvm_type_ref(&self) -> LLVMTypeRef {
+impl AsTypeRef for FloatType {
+    fn as_type_ref(&self) -> LLVMTypeRef {
         self.float_type.type_
     }
 }
@@ -407,7 +406,7 @@ impl StructType {
     // REVIEW: Untested
     // TODO: Better name for num. What's it for?
     pub fn const_struct(&self, value: &Value, num: u32) -> StructValue {
-        let value = &mut [value.as_llvm_value_ref()];
+        let value = &mut [value.as_value_ref()];
 
         let val = unsafe {
             LLVMConstNamedStruct(self.struct_type.type_, value.as_mut_ptr(), num)
@@ -437,8 +436,8 @@ impl StructType {
     }
 }
 
-impl AsLLVMTypeRef for StructType {
-    fn as_llvm_type_ref(&self) -> LLVMTypeRef {
+impl AsTypeRef for StructType {
+    fn as_type_ref(&self) -> LLVMTypeRef {
         self.struct_type.type_
     }
 }
@@ -474,8 +473,8 @@ impl VoidType {
     }
 }
 
-impl AsLLVMTypeRef for VoidType {
-    fn as_llvm_type_ref(&self) -> LLVMTypeRef {
+impl AsTypeRef for VoidType {
+    fn as_type_ref(&self) -> LLVMTypeRef {
         self.void_type.type_
     }
 }
@@ -515,8 +514,8 @@ impl PointerType {
     }
 }
 
-impl AsLLVMTypeRef for PointerType {
-    fn as_llvm_type_ref(&self) -> LLVMTypeRef {
+impl AsTypeRef for PointerType {
+    fn as_type_ref(&self) -> LLVMTypeRef {
         self.ptr_type.type_
     }
 }
@@ -561,13 +560,13 @@ impl ArrayType {
 
     pub fn len(&self) -> u32 {
         unsafe {
-            LLVMGetArrayLength(self.as_llvm_type_ref())
+            LLVMGetArrayLength(self.as_type_ref())
         }
     }
 }
 
-impl AsLLVMTypeRef for ArrayType {
-    fn as_llvm_type_ref(&self) -> LLVMTypeRef {
+impl AsTypeRef for ArrayType {
+    fn as_type_ref(&self) -> LLVMTypeRef {
         self.array_type.type_
     }
 }
@@ -576,7 +575,7 @@ impl AsLLVMTypeRef for ArrayType {
 
 macro_rules! trait_type_set {
     ($trait_name:ident: $($args:ident),*) => (
-        pub trait $trait_name: AsLLVMTypeRef {}
+        pub trait $trait_name: AsTypeRef {}
 
         $(
             impl $trait_name for $args {}
@@ -593,11 +592,11 @@ macro_rules! enum_type_set {
             )*
         }
 
-        impl AsLLVMTypeRef for $enum_name {
-            fn as_llvm_type_ref(&self) -> LLVMTypeRef {
+        impl AsTypeRef for $enum_name {
+            fn as_type_ref(&self) -> LLVMTypeRef {
                 match *self {
                     $(
-                        $enum_name::$args(ref t) => t.as_llvm_type_ref(),
+                        $enum_name::$args(ref t) => t.as_type_ref(),
                     )*
                 }
             }
@@ -805,9 +804,9 @@ fn test_function_type() {
     let param_types = fn_type.get_param_types();
 
     assert_eq!(param_types.len(), 3);
-    assert_eq!(param_types[0].as_int_type().as_llvm_type_ref(), int.as_llvm_type_ref());
-    assert_eq!(param_types[1].as_int_type().as_llvm_type_ref(), int.as_llvm_type_ref());
-    assert_eq!(param_types[2].as_float_type().as_llvm_type_ref(), float.as_llvm_type_ref());
+    assert_eq!(param_types[0].as_int_type().as_type_ref(), int.as_type_ref());
+    assert_eq!(param_types[1].as_int_type().as_type_ref(), int.as_type_ref());
+    assert_eq!(param_types[2].as_float_type().as_type_ref(), float.as_type_ref());
 
     let fn_type = int.fn_type(&[&int, &float], true);
 

@@ -2,7 +2,7 @@ use llvm_sys::target::{LLVMTargetDataRef, LLVMCopyStringRepOfTargetData, LLVMSiz
 
 use data_layout::DataLayout;
 use pass_manager::PassManager;
-use types::{AnyType, AsLLVMTypeRef, StructType};
+use types::{AnyType, AsTypeRef, StructType};
 use values::AnyValue;
 
 use std::ffi::CString;
@@ -37,7 +37,7 @@ impl TargetData {
     // REVIEW: Does this only work if Sized?
     pub fn get_bit_size(&self, type_: &AnyType) -> u64 {
         unsafe {
-            LLVMSizeOfTypeInBits(self.target_data, type_.as_llvm_type_ref())
+            LLVMSizeOfTypeInBits(self.target_data, type_.as_type_ref())
         }
     }
 
@@ -78,51 +78,51 @@ impl TargetData {
 
     pub fn get_store_size(&self, type_: &AnyType) -> u64 {
         unsafe {
-            LLVMStoreSizeOfType(self.target_data, type_.as_llvm_type_ref())
+            LLVMStoreSizeOfType(self.target_data, type_.as_type_ref())
         }
     }
 
     pub fn get_abi_size(&self, type_: &AnyType) -> u64 {
         unsafe {
-            LLVMABISizeOfType(self.target_data, type_.as_llvm_type_ref())
+            LLVMABISizeOfType(self.target_data, type_.as_type_ref())
         }
     }
 
     pub fn get_abi_alignment(&self, type_: &AnyType) -> u32 {
         unsafe {
-            LLVMABIAlignmentOfType(self.target_data, type_.as_llvm_type_ref())
+            LLVMABIAlignmentOfType(self.target_data, type_.as_type_ref())
         }
     }
 
     pub fn get_call_frame_alignment(&self, type_: &AnyType) -> u32 {
         unsafe {
-            LLVMCallFrameAlignmentOfType(self.target_data, type_.as_llvm_type_ref())
+            LLVMCallFrameAlignmentOfType(self.target_data, type_.as_type_ref())
         }
     }
 
     pub fn get_preferred_alignment(&self, type_: &AnyType) -> u32 {
         unsafe {
-            LLVMPreferredAlignmentOfType(self.target_data, type_.as_llvm_type_ref())
+            LLVMPreferredAlignmentOfType(self.target_data, type_.as_type_ref())
         }
     }
 
     // REVIEW: Untested
     pub fn get_preferred_alignment_of_global(&self, value: &AnyValue) -> u32 {
         unsafe {
-            LLVMPreferredAlignmentOfGlobal(self.target_data, value.as_llvm_value_ref())
+            LLVMPreferredAlignmentOfGlobal(self.target_data, value.as_value_ref())
         }
     }
 
     pub fn element_at_offset(&self, type_: &StructType, offset: u64) -> u32 {
         unsafe {
-            LLVMElementAtOffset(self.target_data, type_.as_llvm_type_ref(), offset)
+            LLVMElementAtOffset(self.target_data, type_.as_type_ref(), offset)
         }
     }
 
     // FIXME: Out of bounds returns bad data, should return Option<u64>
     pub fn offset_of_element(&self, type_: &StructType, element: u32) -> u64 {
         unsafe {
-            LLVMOffsetOfElement(self.target_data, type_.as_llvm_type_ref(), element)
+            LLVMOffsetOfElement(self.target_data, type_.as_type_ref(), element)
         }
     }
 }

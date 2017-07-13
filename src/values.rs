@@ -16,13 +16,12 @@ mod private {
     // outside this library
     use llvm_sys::prelude::LLVMValueRef;
 
-    // TODO: Probably rename this to AsValueRef, as_value_ref
-    pub trait AsLLVMValueRef {
-        fn as_llvm_value_ref(&self) -> LLVMValueRef;
+    pub trait AsValueRef {
+        fn as_value_ref(&self) -> LLVMValueRef;
     }
 }
 
-pub(crate) use self::private::AsLLVMValueRef;
+pub(crate) use self::private::AsValueRef;
 
 pub struct Value {
     value: LLVMValueRef,
@@ -60,7 +59,7 @@ impl Value {
     // REVIEW: Untested
     // REVIEW: Is incoming_values really ArrayValue? Or an &[AnyValue]?
     fn add_incoming(&self, incoming_values: &AnyValue, incoming_basic_block: &BasicBlock, count: u32) {
-        let value = &mut [incoming_values.as_llvm_value_ref()];
+        let value = &mut [incoming_values.as_value_ref()];
         let basic_block = &mut [incoming_basic_block.basic_block];
 
         unsafe {
@@ -298,20 +297,20 @@ impl FunctionValue {
     // REVIEW: Untested
     pub fn view_function_config(&self) {
         unsafe {
-            LLVMViewFunctionCFG(self.as_llvm_value_ref())
+            LLVMViewFunctionCFG(self.as_value_ref())
         }
     }
 
     // REVIEW: Untested
     pub fn view_function_config_only(&self) {
         unsafe {
-            LLVMViewFunctionCFGOnly(self.as_llvm_value_ref())
+            LLVMViewFunctionCFGOnly(self.as_value_ref())
         }
     }
 }
 
-impl AsLLVMValueRef for FunctionValue {
-    fn as_llvm_value_ref(&self) -> LLVMValueRef {
+impl AsValueRef for FunctionValue {
+    fn as_value_ref(&self) -> LLVMValueRef {
         self.fn_value.value
     }
 }
@@ -398,12 +397,20 @@ impl IntValue {
     }
 }
 
-impl AsLLVMValueRef for IntValue {
-    fn as_llvm_value_ref(&self) -> LLVMValueRef {
+impl AsValueRef for IntValue {
+    fn as_value_ref(&self) -> LLVMValueRef {
         self.int_value.value
     }
 }
 
+// TODO: IntoIntValue needs to be reworked. Major flaws:
+// * Cannot specify context, even optionally. Currently defaults
+//   to global context which is likely not the user's context.
+// * Cannot specify type or sign and currently assumes i32. It'd
+//   be cool to be able to do 42.into_int_value::<i32>(&context)
+//   though that does seem like the kind of verbosity that I was
+//   originally trying to avoid with IntoIntValue. May as well do
+//   context.i32_type().const_int(42, true);
 pub trait IntoIntValue {
     fn into_int_value(&self) -> IntValue;
 }
@@ -442,8 +449,8 @@ impl FloatValue {
     }
 }
 
-impl AsLLVMValueRef for FloatValue {
-    fn as_llvm_value_ref(&self) -> LLVMValueRef {
+impl AsValueRef for FloatValue {
+    fn as_value_ref(&self) -> LLVMValueRef {
         self.float_value.value
     }
 }
@@ -469,8 +476,8 @@ impl StructValue {
     }
 }
 
-impl AsLLVMValueRef for StructValue {
-    fn as_llvm_value_ref(&self) -> LLVMValueRef {
+impl AsValueRef for StructValue {
+    fn as_value_ref(&self) -> LLVMValueRef {
         self.struct_value.value
     }
 }
@@ -496,8 +503,8 @@ impl PointerValue {
     }
 }
 
-impl AsLLVMValueRef for PointerValue {
-    fn as_llvm_value_ref(&self) -> LLVMValueRef {
+impl AsValueRef for PointerValue {
+    fn as_value_ref(&self) -> LLVMValueRef {
         self.ptr_value.value
     }
 }
@@ -523,14 +530,14 @@ impl PhiValue {
     }
 }
 
-impl AsLLVMValueRef for PhiValue {
-    fn as_llvm_value_ref(&self) -> LLVMValueRef {
+impl AsValueRef for PhiValue {
+    fn as_value_ref(&self) -> LLVMValueRef {
         self.phi_value.value
     }
 }
 
-impl AsLLVMValueRef for Value { // TODO: Remove
-    fn as_llvm_value_ref(&self) -> LLVMValueRef {
+impl AsValueRef for Value { // TODO: Remove
+    fn as_value_ref(&self) -> LLVMValueRef {
         self.value
     }
 }
@@ -555,8 +562,8 @@ impl ArrayValue {
     }
 }
 
-impl AsLLVMValueRef for ArrayValue {
-    fn as_llvm_value_ref(&self) -> LLVMValueRef {
+impl AsValueRef for ArrayValue {
+    fn as_value_ref(&self) -> LLVMValueRef {
         self.array_value.value
     }
 }
@@ -564,34 +571,34 @@ impl AsLLVMValueRef for ArrayValue {
 impl fmt::Debug for ArrayValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let llvm_value = unsafe {
-            CStr::from_ptr(LLVMPrintValueToString(self.as_llvm_value_ref()))
+            CStr::from_ptr(LLVMPrintValueToString(self.as_value_ref()))
         };
         let llvm_type = unsafe {
-            CStr::from_ptr(LLVMPrintTypeToString(LLVMTypeOf(self.as_llvm_value_ref())))
+            CStr::from_ptr(LLVMPrintTypeToString(LLVMTypeOf(self.as_value_ref())))
         };
         let name = unsafe {
-            CStr::from_ptr(LLVMGetValueName(self.as_llvm_value_ref()))
+            CStr::from_ptr(LLVMGetValueName(self.as_value_ref()))
         };
         let is_const = unsafe {
-            LLVMIsConstant(self.as_llvm_value_ref()) == 1
+            LLVMIsConstant(self.as_value_ref()) == 1
         };
         let is_null = unsafe {
-            LLVMIsNull(self.as_llvm_value_ref()) == 1
+            LLVMIsNull(self.as_value_ref()) == 1
         };
         let is_const_array = unsafe {
-            !LLVMIsAConstantArray(self.as_llvm_value_ref()).is_null()
+            !LLVMIsAConstantArray(self.as_value_ref()).is_null()
         };
         let is_const_data_array = unsafe {
-            !LLVMIsAConstantDataArray(self.as_llvm_value_ref()).is_null()
+            !LLVMIsAConstantDataArray(self.as_value_ref()).is_null()
         };
 
-        write!(f, "Value {{\n    name: {:?}\n    address: {:?}\n    is_const: {:?}\n    is_const_array: {:?}\n    is_const_data_array: {:?}\n    is_null: {:?}\n    llvm_value: {:?}\n    llvm_type: {:?}\n}}", name, self.as_llvm_value_ref(), is_const, is_const_array, is_const_data_array, is_null, llvm_value, llvm_type)
+        write!(f, "Value {{\n    name: {:?}\n    address: {:?}\n    is_const: {:?}\n    is_const_array: {:?}\n    is_const_data_array: {:?}\n    is_null: {:?}\n    llvm_value: {:?}\n    llvm_type: {:?}\n}}", name, self.as_value_ref(), is_const, is_const_array, is_const_data_array, is_null, llvm_value, llvm_type)
     }
 }
 
 macro_rules! trait_value_set {
     ($trait_name:ident: $($args:ident),*) => (
-        pub trait $trait_name: AsLLVMValueRef {}
+        pub trait $trait_name: AsValueRef {}
 
         $(
             impl $trait_name for $args {}
@@ -608,11 +615,11 @@ macro_rules! enum_value_set {
             )*
         }
 
-        impl AsLLVMValueRef for $enum_name {
-            fn as_llvm_value_ref(&self) -> LLVMValueRef {
+        impl AsValueRef for $enum_name {
+            fn as_value_ref(&self) -> LLVMValueRef {
                 match *self {
                     $(
-                        $enum_name::$args(ref t) => t.as_llvm_value_ref(),
+                        $enum_name::$args(ref t) => t.as_value_ref(),
                     )*
                 }
             }
@@ -658,7 +665,7 @@ impl BasicValueEnum {
 
     pub fn get_type(&self) -> BasicTypeEnum {
         let type_ = unsafe {
-            LLVMTypeOf(self.as_llvm_value_ref())
+            LLVMTypeOf(self.as_value_ref())
         };
 
         BasicTypeEnum::new(type_)

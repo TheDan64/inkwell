@@ -16,7 +16,7 @@ use data_layout::DataLayout;
 use execution_engine::ExecutionEngine;
 use memory_buffer::MemoryBuffer;
 use pass_manager::PassManager;
-use types::{BasicType, FunctionType, BasicTypeEnum, AsLLVMTypeRef};
+use types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
 use values::{BasicValue, FunctionValue, PointerValue};
 
 pub struct Module {
@@ -36,7 +36,7 @@ impl Module {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMAddFunction(self.module, c_string.as_ptr(), return_type.as_llvm_type_ref())
+            LLVMAddFunction(self.module, c_string.as_ptr(), return_type.as_type_ref())
         };
 
         // unsafe {
@@ -161,12 +161,12 @@ impl Module {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMAddGlobal(self.module, type_.as_llvm_type_ref(), c_string.as_ptr())
+            LLVMAddGlobal(self.module, type_.as_type_ref(), c_string.as_ptr())
         };
 
         if let Some(ref init_val) = init_value {
             unsafe {
-                LLVMSetInitializer(value, init_val.as_llvm_value_ref())
+                LLVMSetInitializer(value, init_val.as_value_ref())
             }
         }
 
