@@ -1,11 +1,10 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer, LLVMWriteBitcodeToFD};
-use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMCreateFunctionPassManagerForModule, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget};
+use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMCreateFunctionPassManagerForModule, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule};
 use llvm_sys::execution_engine::{LLVMCreateExecutionEngineForModule, LLVMLinkInInterpreter, LLVMLinkInMCJIT};
 use llvm_sys::prelude::LLVMModuleRef;
 use llvm_sys::target::{LLVM_InitializeNativeTarget, LLVM_InitializeNativeAsmPrinter, LLVM_InitializeNativeAsmParser, LLVM_InitializeNativeDisassembler};
 
-// REVIEW: Drop for Module? There's a LLVM method, but I read context dispose takes care of it...
 use std::ffi::{CString, CStr};
 use std::fs::File;
 use std::mem::{uninitialized, zeroed};
@@ -238,6 +237,25 @@ impl Module {
         }
     }
 }
+
+impl Clone for Module {
+    fn clone(&self) -> Self {
+        let module = unsafe {
+            LLVMCloneModule(self.module)
+        };
+
+        Module::new(module)
+    }
+}
+
+// FIXME: Causes segfault in test(s)
+// impl Drop for Module {
+//     fn drop(&mut self) {
+//         unsafe {
+//             LLVMDisposeModule(self.module)
+//         }
+//     }
+// }
 
 #[test]
 fn test_write_bitcode_to_path() {

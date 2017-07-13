@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructSetBody, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext};
+use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructSetBody, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext};
 use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef};
 
 use basic_block::BasicBlock;
@@ -18,6 +18,14 @@ pub struct Context {
 }
 
 impl Context {
+    pub(crate) fn new(context: LLVMContextRef) -> Self {
+        assert!(!context.is_null());
+
+        Context {
+            context: context
+        }
+    }
+
     pub fn create() -> Self {
         let context = unsafe {
             LLVMContextCreate()
@@ -26,12 +34,12 @@ impl Context {
         Context::new(context)
     }
 
-    pub(crate) fn new(context: LLVMContextRef) -> Self {
-        assert!(!context.is_null());
+    pub fn get_global_context() -> ContextRef {
+        let context = unsafe {
+            LLVMGetGlobalContext()
+        };
 
-        Context {
-            context: context
-        }
+        ContextRef::new(Context::new(context))
     }
 
     pub fn create_builder(&self) -> Builder {
@@ -216,6 +224,9 @@ impl Drop for Context {
     }
 }
 
+// Alternate strategy would be to just define ownership parameter
+// on Context, and only call destructor if true. Not sure of pros/cons
+// compared to this approach other than not needing Deref trait's ugly syntax
 pub struct ContextRef {
     context: Option<Context>,
 }
@@ -266,9 +277,13 @@ fn test_no_context_double_free2() {
 }
 
 #[test]
-fn test_get_context_from_contextless_value() {
-    use llvm_sys::core::LLVMGetGlobalContext;
+fn test_no_context_double_free3() {
+    Context::get_global_context();
+    Context::get_global_context();
+}
 
+#[test]
+fn test_get_context_from_contextless_value() {
     let int = IntType::i8_type();
     let global_context = unsafe {
         LLVMGetGlobalContext()

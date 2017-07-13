@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMAlignOf, LLVMArrayType, LLVMConstArray, LLVMConstInt, LLVMConstNamedStruct, LLVMConstReal, LLVMCountParamTypes, LLVMDumpType, LLVMFunctionType, LLVMGetParamTypes, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMIsFunctionVarArg, LLVMPointerType, LLVMPrintTypeToString, LLVMStructGetTypeAtIndex, LLVMTypeIsSized, LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMIntType, LLVMGetArrayLength, LLVMSizeOf, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMGetIntTypeWidth};
+use llvm_sys::core::{LLVMAlignOf, LLVMArrayType, LLVMConstArray, LLVMConstInt, LLVMConstNamedStruct, LLVMConstReal, LLVMCountParamTypes, LLVMDumpType, LLVMFunctionType, LLVMGetParamTypes, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMIsFunctionVarArg, LLVMPointerType, LLVMPrintTypeToString, LLVMStructGetTypeAtIndex, LLVMTypeIsSized, LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMIntType, LLVMGetArrayLength, LLVMSizeOf, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMGetIntTypeWidth, LLVMVoidType, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use llvm_sys::LLVMTypeKind;
 
@@ -486,6 +486,42 @@ impl StructType {
             LLVMIsOpaqueStruct(self.struct_type.type_) == 1
         }
     }
+
+    // REVIEW: No way to set name like in context.struct_type() method?
+    pub fn struct_type(field_types: &[&BasicType], packed: bool) -> Self {
+        let mut field_types: Vec<LLVMTypeRef> = field_types.iter()
+                                                           .map(|val| val.as_type_ref())
+                                                           .collect();
+        let struct_type = unsafe {
+            LLVMStructType(field_types.as_mut_ptr(), field_types.len() as u32, packed as i32)
+        };
+
+        StructType::new(struct_type)
+    }
+
+    // REVIEW: Method name
+    pub fn count_field_types(&self) -> u32 {
+        unsafe {
+            LLVMCountStructElementTypes(self.as_type_ref())
+        }
+    }
+
+    // REVIEW: Method name
+    pub fn get_field_types(&self) -> Vec<BasicTypeEnum> {
+        let count = self.count_field_types();
+        let mut raw_vec: Vec<LLVMTypeRef> = Vec::with_capacity(count as usize);
+        let ptr = raw_vec.as_mut_ptr();
+
+        forget(raw_vec);
+
+        let raw_vec = unsafe {
+            LLVMGetStructElementTypes(self.as_type_ref(), ptr);
+
+            Vec::from_raw_parts(ptr, count as usize, count as usize)
+        };
+
+        raw_vec.iter().map(|val| BasicTypeEnum::new(*val)).collect()
+    }
 }
 
 impl AsTypeRef for StructType {
@@ -522,6 +558,14 @@ impl VoidType {
 
     pub fn fn_type(&self, param_types: &[&AnyType], is_var_args: bool) -> FunctionType {
         self.void_type.fn_type(param_types, is_var_args)
+    }
+
+    pub fn void_type() -> Self {
+        let void_type = unsafe {
+            LLVMVoidType()
+        };
+
+        VoidType::new(void_type)
     }
 }
 
