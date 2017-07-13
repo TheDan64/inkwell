@@ -8,7 +8,7 @@ use std::fmt;
 use std::mem::transmute;
 
 use basic_block::BasicBlock;
-use types::{AnyTypeEnum, BasicTypeEnum, IntType};
+use types::{AnyTypeEnum, ArrayType, BasicTypeEnum, PointerType, FloatType, IntType, StructType};
 
 mod private {
     // This is an ugly privacy hack so that Type can stay private to this module
@@ -395,6 +395,14 @@ impl IntValue {
     pub fn set_name(&self, name: &str) {
         self.int_value.set_name(name);
     }
+
+    pub fn get_type(&self) -> IntType {
+        let int_type = unsafe {
+            LLVMTypeOf(self.as_value_ref())
+        };
+
+        IntType::new(int_type)
+    }
 }
 
 impl AsValueRef for IntValue {
@@ -447,6 +455,14 @@ impl FloatValue {
     pub fn set_name(&self, name: &str) {
         self.float_value.set_name(name);
     }
+
+    pub fn get_type(&self) -> FloatType {
+        let float_type = unsafe {
+            LLVMTypeOf(self.as_value_ref())
+        };
+
+        FloatType::new(float_type)
+    }
 }
 
 impl AsValueRef for FloatValue {
@@ -474,6 +490,14 @@ impl StructValue {
     pub fn set_name(&self, name: &str) {
         self.struct_value.set_name(name);
     }
+
+    pub fn get_type(&self) -> StructType {
+        let struct_type = unsafe {
+            LLVMTypeOf(self.as_value_ref())
+        };
+
+        StructType::new(struct_type)
+    }
 }
 
 impl AsValueRef for StructValue {
@@ -500,6 +524,14 @@ impl PointerValue {
 
     pub fn set_name(&self, name: &str) {
         self.ptr_value.set_name(name);
+    }
+
+    pub fn get_type(&self) -> PointerType {
+        let pointer_type = unsafe {
+            LLVMTypeOf(self.as_value_ref())
+        };
+
+        PointerType::new(pointer_type)
     }
 }
 
@@ -559,6 +591,14 @@ impl ArrayValue {
 
     pub fn set_name(&self, name: &str) {
         self.array_value.set_name(name);
+    }
+
+    pub fn get_type(&self) -> ArrayType {
+        let array_type = unsafe {
+            LLVMTypeOf(self.as_value_ref())
+        };
+
+        ArrayType::new(array_type)
     }
 }
 

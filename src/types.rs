@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMAlignOf, LLVMArrayType, LLVMConstArray, LLVMConstInt, LLVMConstNamedStruct, LLVMConstReal, LLVMCountParamTypes, LLVMDumpType, LLVMFunctionType, LLVMGetParamTypes, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMIsFunctionVarArg, LLVMPointerType, LLVMPrintTypeToString, LLVMStructGetTypeAtIndex, LLVMTypeIsSized, LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMIntType, LLVMGetArrayLength, LLVMSizeOf};
+use llvm_sys::core::{LLVMAlignOf, LLVMArrayType, LLVMConstArray, LLVMConstInt, LLVMConstNamedStruct, LLVMConstReal, LLVMCountParamTypes, LLVMDumpType, LLVMFunctionType, LLVMGetParamTypes, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMIsFunctionVarArg, LLVMPointerType, LLVMPrintTypeToString, LLVMStructGetTypeAtIndex, LLVMTypeIsSized, LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMIntType, LLVMGetArrayLength, LLVMSizeOf, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMGetIntTypeWidth};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use llvm_sys::LLVMTypeKind;
 
@@ -316,6 +316,12 @@ impl IntType {
     pub fn ptr_type(&self, address_space: u32) -> PointerType {
         self.int_type.ptr_type(address_space)
     }
+
+    pub fn get_bit_width(&self) -> u32 {
+        unsafe {
+            LLVMGetIntTypeWidth(self.as_type_ref())
+        }
+    }
 }
 
 impl AsTypeRef for IntType {
@@ -364,6 +370,38 @@ impl FloatType {
 
     pub fn ptr_type(&self, address_space: u32) -> PointerType {
         self.float_type.ptr_type(address_space)
+    }
+
+    pub fn f16_type() -> Self {
+        let float_type = unsafe {
+            LLVMHalfType()
+        };
+
+        FloatType::new(float_type)
+    }
+
+    pub fn f32_type() -> Self {
+        let float_type = unsafe {
+            LLVMFloatType()
+        };
+
+        FloatType::new(float_type)
+    }
+
+    pub fn f64_type() -> Self {
+        let float_type = unsafe {
+            LLVMDoubleType()
+        };
+
+        FloatType::new(float_type)
+    }
+
+    pub fn i128_type() -> Self {
+        let float_type = unsafe {
+            LLVMFP128Type()
+        };
+
+        FloatType::new(float_type)
     }
 }
 
@@ -433,6 +471,20 @@ impl StructType {
 
     pub fn array_type(&self, size: u32) -> ArrayType {
         self.struct_type.array_type(size)
+    }
+
+    pub fn is_packed(&self) -> bool {
+        // REVIEW: Is == 1 correct?
+        unsafe {
+            LLVMIsPackedStruct(self.struct_type.type_) == 1
+        }
+    }
+
+    pub fn is_opaque(&self) -> bool {
+        // REVIEW: Is == 1 correct?
+        unsafe {
+            LLVMIsOpaqueStruct(self.struct_type.type_) == 1
+        }
     }
 }
 
