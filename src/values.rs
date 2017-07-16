@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind};
+use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind, LLVMGetNextFunction, LLVMGetPreviousFunction};
 use llvm_sys::LLVMTypeKind;
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -210,6 +210,31 @@ impl FunctionValue {
         if code == 1 {
             panic!("LLVMGenError")
         }
+    }
+
+    // If there's a demand, could easily create a module.get_functions() -> Iterator
+    pub fn get_next_function(&self) -> Option<Self> {
+        let function = unsafe {
+            LLVMGetNextFunction(self.as_value_ref())
+        };
+
+        if function.is_null() {
+            return None;
+        }
+
+        Some(FunctionValue::new(function))
+    }
+
+    pub fn get_previous_function(&self) -> Option<Self> {
+        let function = unsafe {
+            LLVMGetPreviousFunction(self.as_value_ref())
+        };
+
+        if function.is_null() {
+            return None;
+        }
+
+        Some(FunctionValue::new(function))
     }
 
     pub fn get_first_param(&self) -> Option<BasicValueEnum> {

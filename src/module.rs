@@ -1,6 +1,6 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer, LLVMWriteBitcodeToFD};
-use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMCreateFunctionPassManagerForModule, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule};
+use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMCreateFunctionPassManagerForModule, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetDataLayout, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction};
 use llvm_sys::execution_engine::{LLVMCreateExecutionEngineForModule, LLVMLinkInInterpreter, LLVMLinkInMCJIT};
 use llvm_sys::prelude::LLVMModuleRef;
 use llvm_sys::target::{LLVM_InitializeNativeTarget, LLVM_InitializeNativeAsmPrinter, LLVM_InitializeNativeAsmParser, LLVM_InitializeNativeDisassembler};
@@ -11,6 +11,7 @@ use std::mem::{uninitialized, zeroed};
 use std::path::Path;
 use std::os::unix::io::AsRawFd;
 
+use context::{Context, ContextRef};
 use data_layout::DataLayout;
 use execution_engine::ExecutionEngine;
 use memory_buffer::MemoryBuffer;
@@ -31,6 +32,16 @@ impl Module {
         }
     }
 
+    pub fn create(name: &str) -> Self {
+        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+
+        let module = unsafe {
+            LLVMModuleCreateWithName(c_string.as_ptr())
+        };
+
+        Module::new(module)
+    }
+
     pub fn add_function(&self, name: &str, return_type: &FunctionType) -> FunctionValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -43,6 +54,38 @@ impl Module {
         // }
 
         FunctionValue::new(value)
+    }
+
+    pub fn get_context(&self) -> ContextRef {
+        let context = unsafe {
+            LLVMGetModuleContext(self.module)
+        };
+
+        ContextRef::new(Context::new(context))
+    }
+
+    pub fn get_first_function(&self) -> Option<FunctionValue> {
+        let function = unsafe {
+            LLVMGetFirstFunction(self.module)
+        };
+
+        if function.is_null() {
+            return None;
+        }
+
+        Some(FunctionValue::new(function))
+    }
+
+    pub fn get_last_function(&self) -> Option<FunctionValue> {
+        let function = unsafe {
+            LLVMGetLastFunction(self.module)
+        };
+
+        if function.is_null() {
+            return None;
+        }
+
+        Some(FunctionValue::new(function))
     }
 
     pub fn get_function(&self, name: &str) -> Option<FunctionValue> {
@@ -78,6 +121,12 @@ impl Module {
 
         unsafe {
             LLVMSetTarget(self.module, c_string.as_ptr())
+        }
+    }
+
+    pub fn get_target(&self) -> &CStr {
+        unsafe {
+            CStr::from_ptr(LLVMGetTarget(self.module))
         }
     }
 
@@ -225,6 +274,12 @@ impl Module {
         }
 
         code == 0
+    }
+
+    pub fn get_data_layout(&self) -> &CStr {
+        unsafe {
+            CStr::from_ptr(LLVMGetDataLayout(self.module))
+        }
     }
 
     pub fn set_data_layout(&self, data_layout: DataLayout) {
