@@ -34,6 +34,7 @@ pub enum RelocMode {
     DynamicNoPic,
 }
 
+// TODO: Doc: Base gets you TargetMachine support, machine_code gets you asm_backend
 pub struct InitializationConfig {
     pub asm_printer: bool,
     pub base: bool,
@@ -710,7 +711,15 @@ fn test_target() {
     assert_eq!(TargetMachine::get_default_triple(), &*CString::new("x86_64-pc-linux-gnu").unwrap());
     assert!(Target::get_first().is_none());
 
-    Target::initialize_x86(InitializationConfig::default());
+    let mut config = InitializationConfig {
+        asm_printer: false,
+        base: false,
+        dissassembler: false,
+        info: true,
+        machine_code: false,
+    };
+
+    Target::initialize_x86(&config);
 
     let target = Target::get_first().expect("Did not find any target");
 
@@ -719,6 +728,24 @@ fn test_target() {
     assert!(target.has_jit());
     assert!(!target.has_asm_backend());
     assert!(!target.has_target_machine());
+
+    config.base = true;
+
+    Target::initialize_x86(&config);
+
+    let target = Target::get_first().expect("Did not find any target");
+
+    assert!(!target.has_asm_backend());
+    assert!(target.has_target_machine());
+
+    config.machine_code = true;
+
+    Target::initialize_x86(&config);
+
+    let target = Target::get_first().expect("Did not find any target");
+
+    assert!(target.has_asm_backend());
+    assert!(target.has_target_machine());
 
     // TODO: See what happens to create_target_machine when when target.has_target_machine() is false
     // Maybe it should return an Option<TargetMachine>
