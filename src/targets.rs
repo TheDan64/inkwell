@@ -388,7 +388,7 @@ impl Target {
         }
     }
 
-    pub fn create_target_machine(&self, triple: &str, cpu: &str, features: &str, level: Option<CodeGenOptLevel>, reloc_mode: RelocMode, code_model: CodeModel) -> TargetMachine {
+    pub fn create_target_machine(&self, triple: &str, cpu: &str, features: &str, level: Option<CodeGenOptLevel>, reloc_mode: RelocMode, code_model: CodeModel) -> Option<TargetMachine> {
         let triple = CString::new(triple).expect("Conversion to CString failed unexpectedly");
         let cpu = CString::new(cpu).expect("Conversion to CString failed unexpectedly");
         let features = CString::new(features).expect("Conversion to CString failed unexpectedly");
@@ -416,7 +416,11 @@ impl Target {
             LLVMCreateTargetMachine(self.target, triple.as_ptr(), cpu.as_ptr(), features.as_ptr(), level, reloc_mode, code_model)
         };
 
-        TargetMachine::new(target_machine)
+        if target_machine.is_null() {
+            return None;
+        }
+
+        Some(TargetMachine::new(target_machine))
     }
 
     pub fn get_first() -> Option<Self> {
@@ -729,6 +733,8 @@ fn test_target() {
     assert!(!target.has_asm_backend());
     assert!(!target.has_target_machine());
 
+    assert!(target.create_target_machine("x86-64", "xx", "yy", None, RelocMode::Default, CodeModel::Default).is_none());
+
     config.base = true;
 
     Target::initialize_x86(&config);
@@ -737,6 +743,8 @@ fn test_target() {
 
     assert!(!target.has_asm_backend());
     assert!(target.has_target_machine());
+
+    let target_machine = target.create_target_machine("zz", "xx", "yy", None, RelocMode::Default, CodeModel::Default).expect("Could not create TargetMachine");
 
     config.machine_code = true;
 
