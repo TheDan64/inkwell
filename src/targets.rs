@@ -7,6 +7,7 @@ use pass_manager::PassManager;
 use types::{AnyType, AsTypeRef, StructType};
 use values::AnyValue;
 
+use std::default::Default;
 use std::ffi::{CStr, CString};
 use std::mem::zeroed;
 use std::ptr;
@@ -33,6 +34,26 @@ pub enum RelocMode {
     DynamicNoPic,
 }
 
+pub struct InitializationConfig {
+    pub asm_printer: bool,
+    pub base: bool,
+    pub dissassembler: bool,
+    pub info: bool,
+    pub machine_code: bool,
+}
+
+impl Default for InitializationConfig {
+    fn default() -> Self {
+        InitializationConfig {
+            asm_printer: true,
+            base: true,
+            dissassembler: true,
+            info: true,
+            machine_code: true,
+        }
+    }
+}
+
 pub struct Target {
     target: LLVMTargetRef,
 }
@@ -48,57 +69,323 @@ impl Target {
 
     // REVIEW: Should this just initialize all? Is opt into each a good idea?
 
-    // pub fn initialize_x86(base: bool, info: bool, machine_code: bool, asm_printer: bool, asm_parser: bool, dissassembler: bool) {
+    pub fn initialize_x86(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeX86Target, LLVMInitializeX86TargetInfo, LLVMInitializeX86TargetMC, LLVMInitializeX86Disassembler, LLVMInitializeX86AsmPrinter};
 
-    // }
+        unsafe {
+            if config.base {
+                LLVMInitializeX86Target()
+            }
 
-    // pub fn initialize_arm(base: bool, info: bool, machine_code: bool, asm_printer: bool, asm_parser: bool, dissassembler: bool) {
+            if config.info {
+                LLVMInitializeX86TargetInfo()
+            }
 
-    // }
+            if config.asm_printer {
+                LLVMInitializeX86AsmPrinter()
+            }
 
-    // pub fn initialize_mips(base: bool, info: bool, machine_code: bool, asm_printer: bool, asm_parser: bool, dissassembler: bool) {
+            if config.dissassembler {
+                LLVMInitializeX86Disassembler()
+            }
 
-    // }
+            if config.machine_code {
+                LLVMInitializeX86TargetMC()
+            }
+        }
+    }
 
-    // pub fn initialize_aarch64(base: bool, info: bool, machine_code: bool, asm_printer: bool, asm_parser: bool, dissassembler: bool) {
+    pub fn initialize_arm(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeARMTarget, LLVMInitializeARMTargetInfo, LLVMInitializeARMTargetMC, LLVMInitializeARMDisassembler, LLVMInitializeARMAsmPrinter};
 
-    // }
+        unsafe {
+            if config.base {
+                LLVMInitializeARMTarget()
+            }
 
-    // pub fn initialize_r600(base: bool, info: bool, machine_code: bool, asm_printer: bool, asm_parser: bool, dissassembler: bool) {
+            if config.info {
+                LLVMInitializeARMTargetInfo()
+            }
 
-    // }
+            if config.asm_printer {
+                LLVMInitializeARMAsmPrinter()
+            }
 
-    // pub fn initialize_system_z(base: bool, info: bool, machine_code: bool, asm_printer: bool, asm_parser: bool, dissassembler: bool) {
+            if config.dissassembler {
+                LLVMInitializeARMDisassembler()
+            }
 
-    // }
+            if config.machine_code {
+                LLVMInitializeARMTargetMC()
+            }
+        }
+    }
 
-    // pub fn initialize_hexagon(base: bool, info: bool, machine_code: bool, asm_printer: bool, asm_parser: bool, dissassembler: bool) {
+    pub fn initialize_mips(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeMipsTarget, LLVMInitializeMipsTargetInfo, LLVMInitializeMipsTargetMC, LLVMInitializeMipsDisassembler, LLVMInitializeMipsAsmPrinter};
 
-    // }
+        unsafe {
+            if config.base {
+                LLVMInitializeMipsTarget()
+            }
 
-    // pub fn initialize_nvptx(base: bool, info: bool, machine_code: bool, asm_printer: bool, asm_parser: bool, dissassembler: bool) {
+            if config.info {
+                LLVMInitializeMipsTargetInfo()
+            }
 
-    // }
+            if config.asm_printer {
+                LLVMInitializeMipsAsmPrinter()
+            }
 
-    // pub fn initialize_cpp_backend(base: bool, info: bool, machine_code: bool, asm_printer: bool, asm_parser: bool, dissassembler: bool) {
+            if config.dissassembler {
+                LLVMInitializeMipsDisassembler()
+            }
 
-    // }
+            if config.machine_code {
+                LLVMInitializeMipsTargetMC()
+            }
+        }
+    }
 
-    // pub fn initialize_msp430(base: bool, info: bool, machine_code: bool, asm_printer: bool, asm_parser: bool, dissassembler: bool) {
+    pub fn initialize_aarch64(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeAArch64Target, LLVMInitializeAArch64TargetInfo, LLVMInitializeAArch64TargetMC, LLVMInitializeAArch64Disassembler, LLVMInitializeAArch64AsmPrinter};
 
-    // }
+        unsafe {
+            if config.base {
+                LLVMInitializeAArch64Target()
+            }
 
-    // pub fn initialize_x_core(base: bool, info: bool, machine_code: bool, asm_printer: bool, asm_parser: bool, dissassembler: bool) {
+            if config.info {
+                LLVMInitializeAArch64TargetInfo()
+            }
 
-    // }
+            if config.asm_printer {
+                LLVMInitializeAArch64AsmPrinter()
+            }
 
-    // pub fn initialize_power_pc(base: bool, info: bool, machine_code: bool, asm_printer: bool, asm_parser: bool, dissassembler: bool) {
+            if config.dissassembler {
+                LLVMInitializeAArch64Disassembler()
+            }
 
-    // }
+            if config.machine_code {
+                LLVMInitializeAArch64TargetMC()
+            }
+        }
+    }
 
-    // pub fn initialize_sparc(base: bool, info: bool, machine_code: bool, asm_printer: bool, asm_parser: bool, dissassembler: bool) {
+    pub fn initialize_r600(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeR600Target, LLVMInitializeR600TargetInfo, LLVMInitializeR600TargetMC, LLVMInitializeR600AsmPrinter};
 
-    // }
+        unsafe {
+            if config.base {
+                LLVMInitializeR600Target()
+            }
+
+            if config.info {
+                LLVMInitializeR600TargetInfo()
+            }
+
+            if config.asm_printer {
+                LLVMInitializeR600AsmPrinter()
+            }
+
+            if config.machine_code {
+                LLVMInitializeR600TargetMC()
+            }
+        }
+    }
+
+    pub fn initialize_system_z(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeSystemZTarget, LLVMInitializeSystemZTargetInfo, LLVMInitializeSystemZTargetMC, LLVMInitializeSystemZDisassembler, LLVMInitializeSystemZAsmPrinter};
+
+        unsafe {
+            if config.base {
+                LLVMInitializeSystemZTarget()
+            }
+
+            if config.info {
+                LLVMInitializeSystemZTargetInfo()
+            }
+
+            if config.asm_printer {
+                LLVMInitializeSystemZAsmPrinter()
+            }
+
+            if config.dissassembler {
+                LLVMInitializeSystemZDisassembler()
+            }
+
+            if config.machine_code {
+                LLVMInitializeSystemZTargetMC()
+            }
+        }
+    }
+
+    pub fn initialize_hexagon(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeHexagonTarget, LLVMInitializeHexagonTargetInfo, LLVMInitializeHexagonTargetMC, LLVMInitializeHexagonDisassembler, LLVMInitializeHexagonAsmPrinter};
+
+        unsafe {
+            if config.base {
+                LLVMInitializeHexagonTarget()
+            }
+
+            if config.info {
+                LLVMInitializeHexagonTargetInfo()
+            }
+
+            if config.asm_printer {
+                LLVMInitializeHexagonAsmPrinter()
+            }
+
+            if config.dissassembler {
+                LLVMInitializeHexagonDisassembler()
+            }
+
+            if config.machine_code {
+                LLVMInitializeHexagonTargetMC()
+            }
+        }
+    }
+
+    pub fn initialize_nvptx(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeNVPTXTarget, LLVMInitializeNVPTXTargetInfo, LLVMInitializeNVPTXTargetMC, LLVMInitializeNVPTXAsmPrinter};
+
+        unsafe {
+            if config.base {
+                LLVMInitializeNVPTXTarget()
+            }
+
+            if config.info {
+                LLVMInitializeNVPTXTargetInfo()
+            }
+
+            if config.asm_printer {
+                LLVMInitializeNVPTXAsmPrinter()
+            }
+
+            if config.machine_code {
+                LLVMInitializeNVPTXTargetMC()
+            }
+        }
+    }
+
+    pub fn initialize_cpp_backend(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeCppBackendTarget, LLVMInitializeCppBackendTargetInfo, LLVMInitializeCppBackendTargetMC};
+
+        unsafe {
+            if config.base {
+                LLVMInitializeCppBackendTarget()
+            }
+
+            if config.info {
+                LLVMInitializeCppBackendTargetInfo()
+            }
+
+            if config.machine_code {
+                LLVMInitializeCppBackendTargetMC()
+            }
+        }
+    }
+
+    pub fn initialize_msp430(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeMSP430Target, LLVMInitializeMSP430TargetInfo, LLVMInitializeMSP430TargetMC, LLVMInitializeMSP430AsmPrinter};
+
+        unsafe {
+            if config.base {
+                LLVMInitializeMSP430Target()
+            }
+
+            if config.info {
+                LLVMInitializeMSP430TargetInfo()
+            }
+
+            if config.asm_printer {
+                LLVMInitializeMSP430AsmPrinter()
+            }
+
+            if config.machine_code {
+                LLVMInitializeMSP430TargetMC()
+            }
+        }
+    }
+
+    pub fn initialize_x_core(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeXCoreTarget, LLVMInitializeXCoreTargetInfo, LLVMInitializeXCoreTargetMC, LLVMInitializeXCoreDisassembler, LLVMInitializeXCoreAsmPrinter};
+
+        unsafe {
+            if config.base {
+                LLVMInitializeXCoreTarget()
+            }
+
+            if config.info {
+                LLVMInitializeXCoreTargetInfo()
+            }
+
+            if config.asm_printer {
+                LLVMInitializeXCoreAsmPrinter()
+            }
+
+            if config.dissassembler {
+                LLVMInitializeXCoreDisassembler()
+            }
+
+            if config.machine_code {
+                LLVMInitializeXCoreTargetMC()
+            }
+        }
+    }
+
+    pub fn initialize_power_pc(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializePowerPCTarget, LLVMInitializePowerPCTargetInfo, LLVMInitializePowerPCTargetMC, LLVMInitializePowerPCDisassembler, LLVMInitializePowerPCAsmPrinter};
+
+        unsafe {
+            if config.base {
+                LLVMInitializePowerPCTarget()
+            }
+
+            if config.info {
+                LLVMInitializePowerPCTargetInfo()
+            }
+
+            if config.asm_printer {
+                LLVMInitializePowerPCAsmPrinter()
+            }
+
+            if config.dissassembler {
+                LLVMInitializePowerPCDisassembler()
+            }
+
+            if config.machine_code {
+                LLVMInitializePowerPCTargetMC()
+            }
+        }
+    }
+
+    pub fn initialize_sparc(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeSparcTarget, LLVMInitializeSparcTargetInfo, LLVMInitializeSparcTargetMC, LLVMInitializeSparcDisassembler, LLVMInitializeSparcAsmPrinter};
+
+        unsafe {
+            if config.base {
+                LLVMInitializeSparcTarget()
+            }
+
+            if config.info {
+                LLVMInitializeSparcTargetInfo()
+            }
+
+            if config.asm_printer {
+                LLVMInitializeSparcAsmPrinter()
+            }
+
+            if config.dissassembler {
+                LLVMInitializeSparcDisassembler()
+            }
+
+            if config.machine_code {
+                LLVMInitializeSparcTargetMC()
+            }
+        }
+    }
 
     pub fn create_target_machine(&self, triple: &str, cpu: &str, features: &str, level: Option<CodeGenOptLevel>, reloc_mode: RelocMode, code_model: CodeModel) -> TargetMachine {
         let triple = CString::new(triple).expect("Conversion to CString failed unexpectedly");
@@ -419,16 +706,11 @@ impl TargetData {
 
 #[test]
 fn test_target() {
-    use llvm_sys::target:: LLVMInitializeX86TargetInfo;
-
     // REVIEW: Some of the machine specific stuff may vary. Should allow multiple possibilites
     assert_eq!(TargetMachine::get_default_triple(), &*CString::new("x86_64-pc-linux-gnu").unwrap());
     assert!(Target::get_first().is_none());
 
-    // TODO: Replace with safe wrapper
-    unsafe {
-        LLVMInitializeX86TargetInfo();
-    }
+    Target::initialize_x86(InitializationConfig::default());
 
     let target = Target::get_first().expect("Did not find any target");
 

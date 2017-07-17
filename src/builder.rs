@@ -50,10 +50,6 @@ impl Builder {
         };
 
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
-
-        // REVIEW: Had to make Value Copy + Clone to get this to work...
-        // Is this safe, given Value is a raw ptr wrapper?
-        // I suppose in theory LLVM should never delete the values in the scope of this call, but still
         let mut args: Vec<LLVMValueRef> = args.iter()
                                               .map(|val| val.as_value_ref())
                                               .collect();
@@ -143,7 +139,6 @@ impl Builder {
     }
 
     // REVIEW: Is this still a PointerValue (as opposed to an ArrayValue?)
-    // REVIEW: Size should be IntoIntValue trait?
     pub fn build_stack_allocated_array(&self, type_: &BasicType, size: &IntoIntValue, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -353,9 +348,8 @@ impl Builder {
         Value::new(value)
     }
 
-    /// REVIEW: Combine with float neg?
-    /// REVIEW: Untested
-    pub fn build_neg(&self, value: &IntValue, name: &str) -> IntValue {
+    // REVIEW: Untested
+    pub fn build_int_neg(&self, value: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -365,8 +359,7 @@ impl Builder {
         IntValue::new(value)
     }
 
-    /// REVIEW: Combine with int neg?
-    /// REVIEW: Untested
+    // REVIEW: Untested
     pub fn build_float_neg(&self, value: &FloatValue, name: &str) -> FloatValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -413,7 +406,7 @@ impl Builder {
         Value::new(value)
     }
 
-    /// REVIEW: Untested
+    // REVIEW: Untested
     pub fn build_unreachable(&self) -> Value {
         let val = unsafe {
             LLVMBuildUnreachable(self.builder)
@@ -422,7 +415,7 @@ impl Builder {
         Value::new(val)
     }
 
-    /// REVIEW: Untested
+    // REVIEW: Untested
     // TODO: Better name for num?
     pub fn build_fence(&self, atmoic_ordering: LLVMAtomicOrdering, num: i32, name: &str) -> Value {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
