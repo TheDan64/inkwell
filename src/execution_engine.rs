@@ -1,7 +1,7 @@
 use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule};
 
 use module::Module;
-use target_data::TargetData;
+use targets::TargetData;
 use values::{AsValueRef, FunctionValue};
 
 use std::ffi::CString;

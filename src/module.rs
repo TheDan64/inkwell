@@ -116,6 +116,7 @@ impl Module {
         Some(BasicTypeEnum::new(type_))
     }
 
+    // TODO: Make this take a targets::Target object by ref and call get_name
     pub fn set_target(&self, target_triple: &str) {
         let c_string = CString::new(target_triple).expect("Conversion to CString failed unexpectedly");
 
@@ -212,7 +213,7 @@ impl Module {
             LLVMAddGlobal(self.module, type_.as_type_ref(), c_string.as_ptr())
         };
 
-        if let Some(ref init_val) = init_value {
+        if let Some(init_val) = init_value {
             unsafe {
                 LLVMSetInitializer(value, init_val.as_value_ref())
             }

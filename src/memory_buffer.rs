@@ -7,6 +7,7 @@ use object_file::ObjectFile;
 use std::ffi::{CString, CStr};
 use std::mem::zeroed;
 use std::path::Path;
+use std::ptr;
 
 // REVIEW: This whole module is very untested
 pub struct MemoryBuffer {
@@ -24,8 +25,7 @@ impl MemoryBuffer {
 
     pub fn create_from_file(path: &Path) -> Result<Self, String> {
         let path = path.to_str().expect("Did not find a valid Unicode path string");
-        let c_string = CString::new(path).expect("Conversion to CString failed unexpectedly");
-        let memory_buffer = 0 as *mut LLVMMemoryBufferRef;
+        let memory_buffer = ptr::null_mut();
         let err_str = unsafe { zeroed() };
 
         let return_code = unsafe {
@@ -52,7 +52,7 @@ impl MemoryBuffer {
     }
 
     pub fn create_from_stdin() -> Result<Self, String> {
-        let memory_buffer = 0 as *mut LLVMMemoryBufferRef;
+        let memory_buffer = ptr::null_mut();
         let err_str = unsafe { zeroed() };
 
         let return_code = unsafe {

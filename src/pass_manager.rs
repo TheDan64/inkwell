@@ -3,7 +3,7 @@ use llvm_sys::prelude::LLVMPassManagerRef;
 use llvm_sys::target::LLVMAddTargetData;
 use llvm_sys::transforms::scalar::LLVMAddMemCpyOptPass;
 
-use target_data::TargetData;
+use targets::TargetData;
 
 // REVIEW: Could possbily use the builder pattern for setting which passes to use
 pub struct PassManager {

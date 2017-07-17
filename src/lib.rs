@@ -9,7 +9,7 @@ pub mod memory_buffer;
 pub mod module;
 pub mod object_file;
 pub mod pass_manager;
-pub mod target_data;
+pub mod targets;
 pub mod types;
 pub mod values;
 
