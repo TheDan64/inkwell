@@ -31,6 +31,9 @@ pub fn enable_llvm_pretty_stack_trace() {
 fn test_tari_example() {
     use context::Context;
     use std::mem::transmute;
+    use targets::{InitializationConfig, Target};
+
+    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
 
     let context = Context::create();
     let module = context.create_module("sum");

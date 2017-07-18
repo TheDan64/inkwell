@@ -141,39 +141,6 @@ impl Module {
             }
         }
 
-        // TODO: Check that these calls are even needed
-        let code = unsafe {
-            LLVM_InitializeNativeTarget()
-        };
-
-        if code == 1 {
-            return Err("Unknown error in initializing native target".into());
-        }
-
-        let code = unsafe {
-            LLVM_InitializeNativeAsmPrinter()
-        };
-
-        if code == 1 {
-            return Err("Unknown error in initializing native asm printer".into());
-        }
-
-        let code = unsafe {
-            LLVM_InitializeNativeAsmParser()
-        };
-
-        if code == 1 { // REVIEW: Does parser need to go before printer?
-            return Err("Unknown error in initializing native asm parser".into());
-        }
-
-        let code = unsafe {
-            LLVM_InitializeNativeDisassembler()
-        };
-
-        if code == 1 {
-            return Err("Unknown error in initializing native disassembler".into());
-        }
-
         unsafe {
             LLVMLinkInInterpreter();
         }
