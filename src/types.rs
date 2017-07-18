@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMAlignOf, LLVMArrayType, LLVMConstArray, LLVMConstInt, LLVMConstNamedStruct, LLVMConstReal, LLVMCountParamTypes, LLVMDumpType, LLVMFunctionType, LLVMGetParamTypes, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMIsFunctionVarArg, LLVMPointerType, LLVMPrintTypeToString, LLVMStructGetTypeAtIndex, LLVMTypeIsSized, LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMIntType, LLVMGetArrayLength, LLVMSizeOf, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMGetIntTypeWidth, LLVMVoidType, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetPointerAddressSpace, LLVMVectorType, LLVMGetVectorSize, LLVMConstVector};
+use llvm_sys::core::{LLVMAlignOf, LLVMArrayType, LLVMConstArray, LLVMConstInt, LLVMConstNamedStruct, LLVMConstReal, LLVMCountParamTypes, LLVMDumpType, LLVMFunctionType, LLVMGetParamTypes, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMIsFunctionVarArg, LLVMPointerType, LLVMPrintTypeToString, LLVMStructGetTypeAtIndex, LLVMTypeIsSized, LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMIntType, LLVMGetArrayLength, LLVMSizeOf, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMGetIntTypeWidth, LLVMVoidType, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetPointerAddressSpace, LLVMVectorType, LLVMGetVectorSize, LLVMConstVector, LLVMPPCFP128Type};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use llvm_sys::LLVMTypeKind;
 
@@ -416,6 +416,14 @@ impl FloatType {
     pub fn i128_type() -> Self {
         let float_type = unsafe {
             LLVMFP128Type()
+        };
+
+        FloatType::new(float_type)
+    }
+
+    pub fn f128_type_ppc() -> Self {
+        let float_type = unsafe {
+            LLVMPPCFP128Type()
         };
 
         FloatType::new(float_type)

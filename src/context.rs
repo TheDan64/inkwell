@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructSetBody, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext};
+use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructSetBody, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext};
 use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef};
 
 use basic_block::BasicBlock;
@@ -154,6 +154,14 @@ impl Context {
     pub fn f128_type(&self) -> FloatType {
         let f128_type = unsafe {
             LLVMFP128TypeInContext(self.context)
+        };
+
+        FloatType::new(f128_type)
+    }
+
+    pub fn f128_type_ppc(&self) -> FloatType {
+        let f128_type = unsafe {
+            LLVMPPCFP128TypeInContext(self.context)
         };
 
         FloatType::new(f128_type)
