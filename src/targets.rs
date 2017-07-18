@@ -36,6 +36,7 @@ pub enum RelocMode {
 
 // TODO: Doc: Base gets you TargetMachine support, machine_code gets you asm_backend
 pub struct InitializationConfig {
+    pub asm_parser: bool,
     pub asm_printer: bool,
     pub base: bool,
     pub dissassembler: bool,
@@ -46,6 +47,7 @@ pub struct InitializationConfig {
 impl Default for InitializationConfig {
     fn default() -> Self {
         InitializationConfig {
+            asm_parser: true,
             asm_printer: true,
             base: true,
             dissassembler: true,
@@ -69,9 +71,8 @@ impl Target {
     }
 
     // REVIEW: Should this just initialize all? Is opt into each a good idea?
-
     pub fn initialize_x86(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeX86Target, LLVMInitializeX86TargetInfo, LLVMInitializeX86TargetMC, LLVMInitializeX86Disassembler, LLVMInitializeX86AsmPrinter};
+        use llvm_sys::target::{LLVMInitializeX86Target, LLVMInitializeX86TargetInfo, LLVMInitializeX86TargetMC, LLVMInitializeX86Disassembler, LLVMInitializeX86AsmPrinter, LLVMInitializeX86AsmParser};
 
         unsafe {
             if config.base {
@@ -86,6 +87,10 @@ impl Target {
                 LLVMInitializeX86AsmPrinter()
             }
 
+            if config.asm_parser {
+                LLVMInitializeX86AsmParser()
+            }
+
             if config.dissassembler {
                 LLVMInitializeX86Disassembler()
             }
@@ -97,7 +102,7 @@ impl Target {
     }
 
     pub fn initialize_arm(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeARMTarget, LLVMInitializeARMTargetInfo, LLVMInitializeARMTargetMC, LLVMInitializeARMDisassembler, LLVMInitializeARMAsmPrinter};
+        use llvm_sys::target::{LLVMInitializeARMTarget, LLVMInitializeARMTargetInfo, LLVMInitializeARMTargetMC, LLVMInitializeARMDisassembler, LLVMInitializeARMAsmPrinter, LLVMInitializeARMAsmParser};
 
         unsafe {
             if config.base {
@@ -112,6 +117,10 @@ impl Target {
                 LLVMInitializeARMAsmPrinter()
             }
 
+            if config.asm_parser {
+                LLVMInitializeARMAsmParser()
+            }
+
             if config.dissassembler {
                 LLVMInitializeARMDisassembler()
             }
@@ -123,7 +132,7 @@ impl Target {
     }
 
     pub fn initialize_mips(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeMipsTarget, LLVMInitializeMipsTargetInfo, LLVMInitializeMipsTargetMC, LLVMInitializeMipsDisassembler, LLVMInitializeMipsAsmPrinter};
+        use llvm_sys::target::{LLVMInitializeMipsTarget, LLVMInitializeMipsTargetInfo, LLVMInitializeMipsTargetMC, LLVMInitializeMipsDisassembler, LLVMInitializeMipsAsmPrinter, LLVMInitializeMipsAsmParser};
 
         unsafe {
             if config.base {
@@ -138,6 +147,10 @@ impl Target {
                 LLVMInitializeMipsAsmPrinter()
             }
 
+            if config.asm_parser {
+                LLVMInitializeMipsAsmParser()
+            }
+
             if config.dissassembler {
                 LLVMInitializeMipsDisassembler()
             }
@@ -149,7 +162,7 @@ impl Target {
     }
 
     pub fn initialize_aarch64(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeAArch64Target, LLVMInitializeAArch64TargetInfo, LLVMInitializeAArch64TargetMC, LLVMInitializeAArch64Disassembler, LLVMInitializeAArch64AsmPrinter};
+        use llvm_sys::target::{LLVMInitializeAArch64Target, LLVMInitializeAArch64TargetInfo, LLVMInitializeAArch64TargetMC, LLVMInitializeAArch64Disassembler, LLVMInitializeAArch64AsmPrinter, LLVMInitializeAArch64AsmParser};
 
         unsafe {
             if config.base {
@@ -164,6 +177,10 @@ impl Target {
                 LLVMInitializeAArch64AsmPrinter()
             }
 
+            if config.asm_parser {
+                LLVMInitializeAArch64AsmParser()
+            }
+
             if config.dissassembler {
                 LLVMInitializeAArch64Disassembler()
             }
@@ -175,7 +192,7 @@ impl Target {
     }
 
     pub fn initialize_r600(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeR600Target, LLVMInitializeR600TargetInfo, LLVMInitializeR600TargetMC, LLVMInitializeR600AsmPrinter};
+        use llvm_sys::target::{LLVMInitializeR600Target, LLVMInitializeR600TargetInfo, LLVMInitializeR600TargetMC, LLVMInitializeR600AsmPrinter, LLVMInitializeR600AsmParser};
 
         unsafe {
             if config.base {
@@ -190,6 +207,10 @@ impl Target {
                 LLVMInitializeR600AsmPrinter()
             }
 
+            if config.asm_parser {
+                LLVMInitializeR600AsmParser()
+            }
+
             if config.machine_code {
                 LLVMInitializeR600TargetMC()
             }
@@ -197,7 +218,7 @@ impl Target {
     }
 
     pub fn initialize_system_z(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeSystemZTarget, LLVMInitializeSystemZTargetInfo, LLVMInitializeSystemZTargetMC, LLVMInitializeSystemZDisassembler, LLVMInitializeSystemZAsmPrinter};
+        use llvm_sys::target::{LLVMInitializeSystemZTarget, LLVMInitializeSystemZTargetInfo, LLVMInitializeSystemZTargetMC, LLVMInitializeSystemZDisassembler, LLVMInitializeSystemZAsmPrinter, LLVMInitializeSystemZAsmParser};
 
         unsafe {
             if config.base {
@@ -210,6 +231,10 @@ impl Target {
 
             if config.asm_printer {
                 LLVMInitializeSystemZAsmPrinter()
+            }
+
+            if config.asm_parser {
+                LLVMInitializeSystemZAsmParser()
             }
 
             if config.dissassembler {
@@ -337,7 +362,7 @@ impl Target {
     }
 
     pub fn initialize_power_pc(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializePowerPCTarget, LLVMInitializePowerPCTargetInfo, LLVMInitializePowerPCTargetMC, LLVMInitializePowerPCDisassembler, LLVMInitializePowerPCAsmPrinter};
+        use llvm_sys::target::{LLVMInitializePowerPCTarget, LLVMInitializePowerPCTargetInfo, LLVMInitializePowerPCTargetMC, LLVMInitializePowerPCDisassembler, LLVMInitializePowerPCAsmPrinter, LLVMInitializePowerPCAsmParser};
 
         unsafe {
             if config.base {
@@ -352,6 +377,10 @@ impl Target {
                 LLVMInitializePowerPCAsmPrinter()
             }
 
+            if config.asm_parser {
+                LLVMInitializePowerPCAsmParser()
+            }
+
             if config.dissassembler {
                 LLVMInitializePowerPCDisassembler()
             }
@@ -363,7 +392,7 @@ impl Target {
     }
 
     pub fn initialize_sparc(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeSparcTarget, LLVMInitializeSparcTargetInfo, LLVMInitializeSparcTargetMC, LLVMInitializeSparcDisassembler, LLVMInitializeSparcAsmPrinter};
+        use llvm_sys::target::{LLVMInitializeSparcTarget, LLVMInitializeSparcTargetInfo, LLVMInitializeSparcTargetMC, LLVMInitializeSparcDisassembler, LLVMInitializeSparcAsmPrinter, LLVMInitializeSparcAsmParser};
 
         unsafe {
             if config.base {
@@ -376,6 +405,10 @@ impl Target {
 
             if config.asm_printer {
                 LLVMInitializeSparcAsmPrinter()
+            }
+
+            if config.asm_parser {
+                LLVMInitializeSparcAsmParser()
             }
 
             if config.dissassembler {
@@ -716,6 +749,7 @@ fn test_target() {
     assert!(Target::get_first().is_none());
 
     let mut config = InitializationConfig {
+        asm_parser: false,
         asm_printer: false,
         base: false,
         dissassembler: false,
