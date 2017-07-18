@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMAlignOf, LLVMArrayType, LLVMConstArray, LLVMConstInt, LLVMConstNamedStruct, LLVMConstReal, LLVMCountParamTypes, LLVMDumpType, LLVMFunctionType, LLVMGetParamTypes, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMIsFunctionVarArg, LLVMPointerType, LLVMPrintTypeToString, LLVMStructGetTypeAtIndex, LLVMTypeIsSized, LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMIntType, LLVMGetArrayLength, LLVMSizeOf, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMGetIntTypeWidth, LLVMVoidType, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes};
+use llvm_sys::core::{LLVMAlignOf, LLVMArrayType, LLVMConstArray, LLVMConstInt, LLVMConstNamedStruct, LLVMConstReal, LLVMCountParamTypes, LLVMDumpType, LLVMFunctionType, LLVMGetParamTypes, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMIsFunctionVarArg, LLVMPointerType, LLVMPrintTypeToString, LLVMStructGetTypeAtIndex, LLVMTypeIsSized, LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMIntType, LLVMGetArrayLength, LLVMSizeOf, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMGetIntTypeWidth, LLVMVoidType, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetPointerAddressSpace};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use llvm_sys::LLVMTypeKind;
 
@@ -134,13 +134,18 @@ impl Type {
 
         IntValue::new(int_value)
     }
+
+    fn print_to_string(&self) -> &CStr {
+        unsafe {
+            CStr::from_ptr(LLVMPrintTypeToString(self.type_))
+        }
+    }
 }
 
 impl fmt::Debug for Type {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let llvm_type = unsafe {
-            CStr::from_ptr(LLVMPrintTypeToString(self.type_))
-        };
+        let llvm_type = self.print_to_string();
+
         write!(f, "Type {{\n    address: {:?}\n    llvm_type: {:?}\n}}", self.type_, llvm_type)
     }
 }
@@ -198,13 +203,15 @@ impl FunctionType {
     pub fn ptr_type(&self, address_space: u32) -> PointerType {
         self.fn_type.ptr_type(address_space)
     }
+
+    pub fn print_to_string(&self) -> &CStr {
+        self.fn_type.print_to_string()
+    }
 }
 
 impl fmt::Debug for FunctionType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let llvm_type = unsafe {
-            CStr::from_ptr(LLVMPrintTypeToString(self.fn_type.type_))
-        };
+        let llvm_type = self.print_to_string();
 
         write!(f, "FunctionType {{\n    address: {:?}\n    llvm_type: {:?}\n}}", self.fn_type.type_, llvm_type)
     }
@@ -322,6 +329,10 @@ impl IntType {
             LLVMGetIntTypeWidth(self.as_type_ref())
         }
     }
+
+    pub fn print_to_string(&self) -> &CStr {
+        self.int_type.print_to_string()
+    }
 }
 
 impl AsTypeRef for IntType {
@@ -402,6 +413,10 @@ impl FloatType {
         };
 
         FloatType::new(float_type)
+    }
+
+    pub fn print_to_string(&self) -> &CStr {
+        self.float_type.print_to_string()
     }
 }
 
@@ -522,6 +537,10 @@ impl StructType {
 
         raw_vec.iter().map(|val| BasicTypeEnum::new(*val)).collect()
     }
+
+    pub fn print_to_string(&self) -> &CStr {
+        self.struct_type.print_to_string()
+    }
 }
 
 impl AsTypeRef for StructType {
@@ -567,6 +586,10 @@ impl VoidType {
 
         VoidType::new(void_type)
     }
+
+    pub fn print_to_string(&self) -> &CStr {
+        self.void_type.print_to_string()
+    }
 }
 
 impl AsTypeRef for VoidType {
@@ -607,6 +630,16 @@ impl PointerType {
 
     pub fn array_type(&self, size: u32) -> ArrayType {
         self.ptr_type.array_type(size)
+    }
+
+    pub fn get_address_space(&self) -> u32 {
+        unsafe {
+            LLVMGetPointerAddressSpace(self.as_type_ref())
+        }
+    }
+
+    pub fn print_to_string(&self) -> &CStr {
+        self.ptr_type.print_to_string()
     }
 }
 
@@ -658,6 +691,10 @@ impl ArrayType {
         unsafe {
             LLVMGetArrayLength(self.as_type_ref())
         }
+    }
+
+    pub fn print_to_string(&self) -> &CStr {
+        self.array_type.print_to_string()
     }
 }
 

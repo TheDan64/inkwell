@@ -36,6 +36,12 @@ impl Value {
         }
     }
 
+    fn is_null(&self) -> bool {
+        unsafe {
+            LLVMIsNull(self.value) == 1
+        }
+    }
+
     fn set_global_constant(&self, num: i32) { // REVIEW: Need better name for this arg
         unsafe {
             LLVMSetGlobalConstant(self.value, num)
@@ -80,6 +86,12 @@ impl Value {
         };
 
         AnyTypeEnum::new(type_)
+    }
+
+    fn print_to_string(&self) -> &CStr {
+        unsafe {
+            CStr::from_ptr(LLVMPrintValueToString(self.value))
+        }
     }
 
     // REVIEW: Remove?
@@ -158,9 +170,7 @@ impl Value {
 
 impl fmt::Debug for Value {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let llvm_value = unsafe {
-            CStr::from_ptr(LLVMPrintValueToString(self.value))
-        };
+        let llvm_value = self.print_to_string();
         let llvm_type = unsafe {
             CStr::from_ptr(LLVMPrintTypeToString(LLVMTypeOf(self.value)))
         };
@@ -170,11 +180,10 @@ impl fmt::Debug for Value {
         let is_const = unsafe {
             LLVMIsConstant(self.value) == 1
         };
-        let is_null = unsafe {
-            LLVMIsNull(self.value) == 1
-        };
+        let is_null = self.is_null();
+        let is_undef = self.is_undef();
 
-        write!(f, "Value {{\n    name: {:?}\n    address: {:?}\n    is_const: {:?}\n    is_null: {:?}\n    llvm_value: {:?}\n    llvm_type: {:?}\n}}", name, self.value, is_const, is_null, llvm_value, llvm_type)
+        write!(f, "Value {{\n    name: {:?}\n    address: {:?}\n    is_const: {:?}\n    is_null: {:?}\n    is_undef: {:?}\n    llvm_value: {:?}\n    llvm_type: {:?}\n}}", name, self.value, is_const, is_null, is_undef, llvm_value, llvm_type)
     }
 }
 
@@ -193,6 +202,18 @@ impl FunctionValue {
         FunctionValue {
             fn_value: Value::new(value)
         }
+    }
+
+    pub fn is_null(&self) -> bool {
+        self.fn_value.is_null()
+    }
+
+    pub fn is_undef(&self) -> bool {
+        self.fn_value.is_undef()
+    }
+
+    pub fn print_to_string(&self) -> &CStr {
+        self.fn_value.print_to_string()
     }
 
     // TODO: Maybe support LLVMAbortProcessAction?
@@ -342,9 +363,7 @@ impl AsValueRef for FunctionValue {
 
 impl fmt::Debug for FunctionValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let llvm_value = unsafe {
-            CStr::from_ptr(LLVMPrintValueToString(self.fn_value.value))
-        };
+        let llvm_value = self.print_to_string();
         let llvm_type = unsafe {
             CStr::from_ptr(LLVMPrintTypeToString(LLVMTypeOf(self.fn_value.value)))
         };
@@ -354,9 +373,7 @@ impl fmt::Debug for FunctionValue {
         let is_const = unsafe {
             LLVMIsConstant(self.fn_value.value) == 1
         };
-        let is_null = unsafe {
-            LLVMIsNull(self.fn_value.value) == 1
-        };
+        let is_null = self.is_null();
 
         write!(f, "FunctionValue {{\n    name: {:?}\n    address: {:?}\n    is_const: {:?}\n    is_null: {:?}\n    llvm_value: {:?}\n    llvm_type: {:?}\n}}", name, self.fn_value, is_const, is_null, llvm_value, llvm_type)
     }
@@ -428,6 +445,18 @@ impl IntValue {
 
         IntType::new(int_type)
     }
+
+    pub fn is_null(&self) -> bool {
+        self.int_value.is_null()
+    }
+
+    pub fn is_undef(&self) -> bool {
+        self.int_value.is_undef()
+    }
+
+    pub fn print_to_string(&self) -> &CStr {
+        self.int_value.print_to_string()
+    }
 }
 
 impl AsValueRef for IntValue {
@@ -488,6 +517,18 @@ impl FloatValue {
 
         FloatType::new(float_type)
     }
+
+    pub fn is_null(&self) -> bool {
+        self.float_value.is_null()
+    }
+
+    pub fn is_undef(&self) -> bool {
+        self.float_value.is_undef()
+    }
+
+    pub fn print_to_string(&self) -> &CStr {
+        self.float_value.print_to_string()
+    }
 }
 
 impl AsValueRef for FloatValue {
@@ -522,6 +563,18 @@ impl StructValue {
         };
 
         StructType::new(struct_type)
+    }
+
+    pub fn is_null(&self) -> bool {
+        self.struct_value.is_null()
+    }
+
+    pub fn is_undef(&self) -> bool {
+        self.struct_value.is_undef()
+    }
+
+    pub fn print_to_string(&self) -> &CStr {
+        self.struct_value.print_to_string()
     }
 }
 
@@ -558,6 +611,18 @@ impl PointerValue {
 
         PointerType::new(pointer_type)
     }
+
+    pub fn is_null(&self) -> bool {
+        self.ptr_value.is_null()
+    }
+
+    pub fn is_undef(&self) -> bool {
+        self.ptr_value.is_undef()
+    }
+
+    pub fn print_to_string(&self) -> &CStr {
+        self.ptr_value.print_to_string()
+    }
 }
 
 impl AsValueRef for PointerValue {
@@ -584,6 +649,18 @@ impl PhiValue {
 
     pub fn get_name(&self) -> &CStr {
         self.phi_value.get_name()
+    }
+
+    pub fn is_null(&self) -> bool {
+        self.phi_value.is_null()
+    }
+
+    pub fn is_undef(&self) -> bool {
+        self.phi_value.is_undef()
+    }
+
+    pub fn print_to_string(&self) -> &CStr {
+        self.phi_value.print_to_string()
     }
 }
 
@@ -625,6 +702,18 @@ impl ArrayValue {
 
         ArrayType::new(array_type)
     }
+
+    pub fn is_null(&self) -> bool {
+        self.array_value.is_null()
+    }
+
+    pub fn is_undef(&self) -> bool {
+        self.array_value.is_undef()
+    }
+
+    pub fn print_to_string(&self) -> &CStr {
+        self.array_value.print_to_string()
+    }
 }
 
 impl AsValueRef for ArrayValue {
@@ -635,9 +724,7 @@ impl AsValueRef for ArrayValue {
 
 impl fmt::Debug for ArrayValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let llvm_value = unsafe {
-            CStr::from_ptr(LLVMPrintValueToString(self.as_value_ref()))
-        };
+        let llvm_value = self.print_to_string();
         let llvm_type = unsafe {
             CStr::from_ptr(LLVMPrintTypeToString(LLVMTypeOf(self.as_value_ref())))
         };
@@ -647,9 +734,7 @@ impl fmt::Debug for ArrayValue {
         let is_const = unsafe {
             LLVMIsConstant(self.as_value_ref()) == 1
         };
-        let is_null = unsafe {
-            LLVMIsNull(self.as_value_ref()) == 1
-        };
+        let is_null = self.is_null();
         let is_const_array = unsafe {
             !LLVMIsAConstantArray(self.as_value_ref()).is_null()
         };
