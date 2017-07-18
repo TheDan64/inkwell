@@ -39,7 +39,7 @@ pub struct InitializationConfig {
     pub asm_parser: bool,
     pub asm_printer: bool,
     pub base: bool,
-    pub dissassembler: bool,
+    pub disassembler: bool,
     pub info: bool,
     pub machine_code: bool,
 }
@@ -50,7 +50,7 @@ impl Default for InitializationConfig {
             asm_parser: true,
             asm_printer: true,
             base: true,
-            dissassembler: true,
+            disassembler: true,
             info: true,
             machine_code: true,
         }
@@ -91,7 +91,7 @@ impl Target {
                 LLVMInitializeX86AsmParser()
             }
 
-            if config.dissassembler {
+            if config.disassembler {
                 LLVMInitializeX86Disassembler()
             }
 
@@ -121,7 +121,7 @@ impl Target {
                 LLVMInitializeARMAsmParser()
             }
 
-            if config.dissassembler {
+            if config.disassembler {
                 LLVMInitializeARMDisassembler()
             }
 
@@ -151,7 +151,7 @@ impl Target {
                 LLVMInitializeMipsAsmParser()
             }
 
-            if config.dissassembler {
+            if config.disassembler {
                 LLVMInitializeMipsDisassembler()
             }
 
@@ -181,7 +181,7 @@ impl Target {
                 LLVMInitializeAArch64AsmParser()
             }
 
-            if config.dissassembler {
+            if config.disassembler {
                 LLVMInitializeAArch64Disassembler()
             }
 
@@ -237,7 +237,7 @@ impl Target {
                 LLVMInitializeSystemZAsmParser()
             }
 
-            if config.dissassembler {
+            if config.disassembler {
                 LLVMInitializeSystemZDisassembler()
             }
 
@@ -263,7 +263,7 @@ impl Target {
                 LLVMInitializeHexagonAsmPrinter()
             }
 
-            if config.dissassembler {
+            if config.disassembler {
                 LLVMInitializeHexagonDisassembler()
             }
 
@@ -351,7 +351,7 @@ impl Target {
                 LLVMInitializeXCoreAsmPrinter()
             }
 
-            if config.dissassembler {
+            if config.disassembler {
                 LLVMInitializeXCoreDisassembler()
             }
 
@@ -381,7 +381,7 @@ impl Target {
                 LLVMInitializePowerPCAsmParser()
             }
 
-            if config.dissassembler {
+            if config.disassembler {
                 LLVMInitializePowerPCDisassembler()
             }
 
@@ -411,12 +411,88 @@ impl Target {
                 LLVMInitializeSparcAsmParser()
             }
 
-            if config.dissassembler {
+            if config.disassembler {
                 LLVMInitializeSparcDisassembler()
             }
 
             if config.machine_code {
                 LLVMInitializeSparcTargetMC()
+            }
+        }
+    }
+
+    pub fn initialize_native(config: &InitializationConfig) -> Result<(), String> {
+        use llvm_sys::target::{LLVM_InitializeNativeTarget, LLVM_InitializeNativeAsmParser, LLVM_InitializeNativeAsmPrinter, LLVM_InitializeNativeDisassembler};
+
+        if config.base {
+            let code = unsafe {
+                LLVM_InitializeNativeTarget()
+            };
+
+            if code == 1 {
+                return Err("Unknown error in initializing native target".into());
+            }
+        }
+
+        if config.asm_printer {
+            let code = unsafe {
+                LLVM_InitializeNativeAsmPrinter()
+            };
+
+            if code == 1 {
+                return Err("Unknown error in initializing native asm printer".into());
+            }
+        }
+
+        if config.asm_parser {
+            let code = unsafe {
+                LLVM_InitializeNativeAsmParser()
+            };
+
+            if code == 1 { // REVIEW: Does parser need to go before printer?
+                return Err("Unknown error in initializing native asm parser".into());
+            }
+        }
+
+        if config.disassembler {
+            let code = unsafe {
+                LLVM_InitializeNativeDisassembler()
+            };
+
+            if code == 1 {
+                return Err("Unknown error in initializing native disassembler".into());
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn initialize_all(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVM_InitializeAllTargetInfos, LLVM_InitializeAllTargets, LLVM_InitializeAllTargetMCs, LLVM_InitializeAllAsmPrinters, LLVM_InitializeAllAsmParsers, LLVM_InitializeAllDisassemblers};
+
+        unsafe {
+            if config.base {
+                LLVM_InitializeAllTargets()
+            }
+
+            if config.info {
+                LLVM_InitializeAllTargetInfos()
+            }
+
+            if config.asm_parser {
+                LLVM_InitializeAllAsmParsers()
+            }
+
+            if config.asm_printer {
+                LLVM_InitializeAllAsmPrinters()
+            }
+
+            if config.disassembler {
+                LLVM_InitializeAllDisassemblers()
+            }
+
+            if config.machine_code {
+                LLVM_InitializeAllTargetMCs()
             }
         }
     }
@@ -752,7 +828,7 @@ fn test_target() {
         asm_parser: false,
         asm_printer: false,
         base: false,
-        dissassembler: false,
+        disassembler: false,
         info: true,
         machine_code: false,
     };
