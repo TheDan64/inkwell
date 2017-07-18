@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind, LLVMGetNextFunction, LLVMGetPreviousFunction};
+use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind, LLVMGetNextFunction, LLVMGetPreviousFunction, LLVMIsAConstantVector, LLVMIsAConstantDataVector};
 use llvm_sys::LLVMTypeKind;
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -746,6 +746,43 @@ impl fmt::Debug for ArrayValue {
     }
 }
 
+#[derive(Debug)]
+pub struct VectorValue {
+    vec_value: Value,
+}
+
+impl VectorValue {
+    pub(crate) fn new(vector_value: LLVMValueRef) -> Self {
+        assert!(!vector_value.is_null());
+
+        VectorValue {
+            vec_value: Value::new(vector_value)
+        }
+    }
+
+    pub fn is_constant_vector(&self) -> IntValue { // TSv2: IntValue<bool>
+        let int_value = unsafe {
+            LLVMIsAConstantVector(self.as_value_ref())
+        };
+
+        IntValue::new(int_value)
+    }
+
+    pub fn is_constant_data_vector(&self) -> IntValue { // TSv2: IntValue<bool>
+        let int_value = unsafe {
+            LLVMIsAConstantDataVector(self.as_value_ref())
+        };
+
+        IntValue::new(int_value)
+    }
+}
+
+impl AsValueRef for VectorValue {
+    fn as_value_ref(&self) -> LLVMValueRef {
+        self.vec_value.value
+    }
+}
+
 macro_rules! trait_value_set {
     ($trait_name:ident: $($args:ident),*) => (
         pub trait $trait_name: AsValueRef {}
@@ -785,11 +822,11 @@ macro_rules! enum_value_set {
     );
 }
 
-enum_value_set! {AnyValueEnum: ArrayValue, IntValue, FloatValue, PhiValue, FunctionValue, PointerValue, StructValue}
-enum_value_set! {BasicValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue}
+enum_value_set! {AnyValueEnum: ArrayValue, IntValue, FloatValue, PhiValue, FunctionValue, PointerValue, StructValue, VectorValue}
+enum_value_set! {BasicValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue, VectorValue}
 
-trait_value_set! {AnyValue: AnyValueEnum, BasicValueEnum, ArrayValue, IntValue, FloatValue, PhiValue, PointerValue, FunctionValue, StructValue, Value} // TODO: Remove Value
-trait_value_set! {BasicValue: ArrayValue, BasicValueEnum, IntValue, FloatValue, StructValue, PointerValue}
+trait_value_set! {AnyValue: AnyValueEnum, BasicValueEnum, ArrayValue, IntValue, FloatValue, PhiValue, PointerValue, FunctionValue, StructValue, VectorValue, Value} // TODO: Remove Value
+trait_value_set! {BasicValue: ArrayValue, BasicValueEnum, IntValue, FloatValue, StructValue, PointerValue, VectorValue}
 
 impl BasicValueEnum {
     pub(crate) fn new(value: LLVMValueRef) -> BasicValueEnum {

@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMAlignOf, LLVMArrayType, LLVMConstArray, LLVMConstInt, LLVMConstNamedStruct, LLVMConstReal, LLVMCountParamTypes, LLVMDumpType, LLVMFunctionType, LLVMGetParamTypes, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMIsFunctionVarArg, LLVMPointerType, LLVMPrintTypeToString, LLVMStructGetTypeAtIndex, LLVMTypeIsSized, LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMIntType, LLVMGetArrayLength, LLVMSizeOf, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMGetIntTypeWidth, LLVMVoidType, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetPointerAddressSpace};
+use llvm_sys::core::{LLVMAlignOf, LLVMArrayType, LLVMConstArray, LLVMConstInt, LLVMConstNamedStruct, LLVMConstReal, LLVMCountParamTypes, LLVMDumpType, LLVMFunctionType, LLVMGetParamTypes, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMIsFunctionVarArg, LLVMPointerType, LLVMPrintTypeToString, LLVMStructGetTypeAtIndex, LLVMTypeIsSized, LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMIntType, LLVMGetArrayLength, LLVMSizeOf, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMGetIntTypeWidth, LLVMVoidType, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetPointerAddressSpace, LLVMVectorType, LLVMGetVectorSize, LLVMConstVector};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use llvm_sys::LLVMTypeKind;
 
@@ -7,7 +7,7 @@ use std::fmt;
 use std::mem::forget;
 
 use context::{Context, ContextRef};
-use values::{AsValueRef, ArrayValue, BasicValue, FloatValue, IntValue, StructValue, Value};
+use values::{AsValueRef, ArrayValue, BasicValue, FloatValue, IntValue, StructValue, VectorValue, Value}; // TODO: Remove Value
 
 mod private {
     // This is an ugly privacy hack so that Type can stay private to this module
@@ -53,6 +53,14 @@ impl Type {
         PointerType::new(ptr_type)
     }
 
+    fn vec_type(&self, size: u32) -> VectorType {
+        let vec_type = unsafe {
+            LLVMVectorType(self.type_, size)
+        };
+
+        VectorType::new(vec_type)
+    }
+
     // REVIEW: Is this actually AnyType except FunctionType? VoidType? Can you make a FunctionType from a FunctionType???
     fn fn_type(&self, param_types: &[&AnyType], is_var_args: bool) -> FunctionType {
         let mut param_types: Vec<LLVMTypeRef> = param_types.iter()
@@ -71,16 +79,6 @@ impl Type {
         };
 
         ArrayType::new(type_)
-    }
-
-    fn const_array<V: BasicValue>(&self, values: Vec<&V>) -> ArrayValue {
-        let mut values: Vec<LLVMValueRef> = values.iter().map(|val| val.as_value_ref()).collect();
-
-        let value = unsafe {
-            LLVMConstArray(self.type_, values.as_mut_ptr(), values.len() as u32)
-        };
-
-        ArrayValue::new(value)
     }
 
     // NOTE: AnyType?
@@ -312,6 +310,10 @@ impl IntType {
         self.int_type.array_type(size)
     }
 
+    pub fn vec_type(&self, size: u32) -> VectorType {
+        self.int_type.vec_type(size)
+    }
+
     pub fn get_context(&self) -> ContextRef {
         self.int_type.get_context()
     }
@@ -361,6 +363,10 @@ impl FloatType {
 
     pub fn array_type(&self, size: u32) -> ArrayType {
         self.float_type.array_type(size)
+    }
+
+    pub fn vec_type(&self, size: u32) -> VectorType {
+        self.float_type.vec_type(size)
     }
 
     pub fn const_float(&self, value: f64) -> FloatValue {
@@ -683,8 +689,15 @@ impl ArrayType {
         self.array_type.array_type(size)
     }
 
-    pub fn const_array<V: BasicValue>(&self, values: Vec<&V>) -> ArrayValue {
-        self.array_type.const_array(values)
+    pub fn const_array<V: BasicValue>(&self, values: &[&V]) -> ArrayValue {
+        let mut values: Vec<LLVMValueRef> = values.iter()
+                                                  .map(|val| val.as_value_ref())
+                                                  .collect();
+        let value = unsafe {
+            LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32)
+        };
+
+        ArrayValue::new(value)
     }
 
     pub fn len(&self) -> u32 {
@@ -704,7 +717,53 @@ impl AsTypeRef for ArrayType {
     }
 }
 
-// TODO: VectorType
+#[derive(Debug)]
+// REVIEW: vec_type() is impl for IntType & FloatType. Need to
+// find out if it is valid for other types too. Maybe PointerType?
+pub struct VectorType {
+    vec_type: Type,
+}
+
+impl VectorType {
+    fn new(vector_type: LLVMTypeRef) -> Self {
+        assert!(vector_type.is_null());
+
+        VectorType {
+            vec_type: Type::new(vector_type),
+        }
+    }
+
+    pub fn size(&self) -> u32 {
+        unsafe {
+            LLVMGetVectorSize(self.as_type_ref())
+        }
+    }
+
+    // REVIEW:
+    // TypeSafety v2 (GH Issue #8) could help here by constraining
+    // sub-types to be the same across the board. For now, we could
+    // have V just be the set of Int & Float and any others that
+    // are valid for Vectors
+    // REVIEW: Maybe we could make this use &self if the vector size
+    // is stored as a const and the input values took a const size?
+    // Something like: values: &[&V; self.size]. Doesn't sound possible though
+    pub fn const_vector<V: BasicValue>(values: &[&V]) -> VectorValue {
+        let mut values: Vec<LLVMValueRef> = values.iter()
+                                                  .map(|val| val.as_value_ref())
+                                                  .collect();
+        let vec_value = unsafe {
+            LLVMConstVector(values.as_mut_ptr(), values.len() as u32)
+        };
+
+        VectorValue::new(vec_value)
+    }
+}
+
+impl AsTypeRef for VectorType {
+    fn as_type_ref(&self) -> LLVMTypeRef {
+        self.vec_type.type_
+    }
+}
 
 macro_rules! trait_type_set {
     ($trait_name:ident: $($args:ident),*) => (
@@ -745,12 +804,12 @@ macro_rules! enum_type_set {
     );
 }
 
-enum_type_set! {AnyTypeEnum: IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VoidType}
-enum_type_set! {BasicTypeEnum: IntType, FloatType, PointerType, StructType, ArrayType} // TODO: VectorType
+enum_type_set! {AnyTypeEnum: IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VoidType, VectorType}
+enum_type_set! {BasicTypeEnum: IntType, FloatType, PointerType, StructType, ArrayType, VectorType}
 
 // TODO: Possibly rename to AnyTypeTrait, BasicTypeTrait
-trait_type_set! {AnyType: AnyTypeEnum, BasicTypeEnum, IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VoidType}
-trait_type_set! {BasicType: BasicTypeEnum, IntType, FloatType, PointerType, StructType, ArrayType}
+trait_type_set! {AnyType: AnyTypeEnum, BasicTypeEnum, IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VoidType, VectorType}
+trait_type_set! {BasicType: BasicTypeEnum, IntType, FloatType, PointerType, StructType, ArrayType, VectorType}
 
 impl AnyTypeEnum {
     pub(crate) fn new(type_: LLVMTypeRef) -> AnyTypeEnum {
@@ -772,7 +831,7 @@ impl AnyTypeEnum {
             LLVMTypeKind::LLVMStructTypeKind => AnyTypeEnum::StructType(StructType::new(type_)),
             LLVMTypeKind::LLVMArrayTypeKind => AnyTypeEnum::ArrayType(ArrayType::new(type_)),
             LLVMTypeKind::LLVMPointerTypeKind => AnyTypeEnum::PointerType(PointerType::new(type_)),
-            LLVMTypeKind::LLVMVectorTypeKind => panic!("FIXME: Unsupported type: Vector"),
+            LLVMTypeKind::LLVMVectorTypeKind => AnyTypeEnum::VectorType(VectorType::new(type_)),
             LLVMTypeKind::LLVMMetadataTypeKind => panic!("FIXME: Unsupported type: Metadata"),
             LLVMTypeKind::LLVMX86_MMXTypeKind => panic!("FIXME: Unsupported type: MMX"),
             // LLVMTypeKind::LLVMTokenTypeKind => panic!("FIXME: Unsupported type: Token"), // Different version?
@@ -797,7 +856,7 @@ impl BasicTypeEnum {
             LLVMTypeKind::LLVMStructTypeKind => BasicTypeEnum::StructType(StructType::new(type_)),
             LLVMTypeKind::LLVMPointerTypeKind => BasicTypeEnum::PointerType(PointerType::new(type_)),
             LLVMTypeKind::LLVMArrayTypeKind => BasicTypeEnum::ArrayType(ArrayType::new(type_)),
-            LLVMTypeKind::LLVMVectorTypeKind => panic!("TODO: Unsupported type: Vector"),
+            LLVMTypeKind::LLVMVectorTypeKind => BasicTypeEnum::VectorType(VectorType::new(type_)),
             _ => unreachable!("Unsupported type"),
         }
     }
@@ -842,6 +901,14 @@ impl BasicTypeEnum {
         }
     }
 
+    pub fn into_vector_type(self) -> VectorType {
+        if let BasicTypeEnum::VectorType(a) = self {
+            a
+        } else {
+            panic!("Called BasicValueEnum.into_vector_type on {:?}", self);
+        }
+    }
+
     pub fn as_int_type(&self) -> &IntType {
         if let BasicTypeEnum::IntType(ref i) = *self {
             i
@@ -882,6 +949,14 @@ impl BasicTypeEnum {
         }
     }
 
+    pub fn as_vector_type(&self) -> &VectorType {
+        if let BasicTypeEnum::VectorType(ref a) = *self {
+            a
+        } else {
+            panic!("Called BasicValueEnum.as_array_type on {:?}", self);
+        }
+    }
+
     pub fn is_int_type(&self) -> bool {
         if let BasicTypeEnum::IntType(_) = *self {
             true
@@ -916,6 +991,14 @@ impl BasicTypeEnum {
 
     pub fn is_array_type(&self) -> bool {
         if let BasicTypeEnum::ArrayType(_) = *self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_vector_type(&self) -> bool {
+        if let BasicTypeEnum::VectorType(_) = *self {
             true
         } else {
             false
