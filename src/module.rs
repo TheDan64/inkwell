@@ -256,7 +256,7 @@ impl Module {
         }
     }
 
-    pub fn dump(&self) {
+    pub fn print_to_stderr(&self) {
         unsafe {
             LLVMDumpModule(self.module);
         }

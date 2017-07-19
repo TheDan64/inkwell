@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind, LLVMGetNextFunction, LLVMGetPreviousFunction, LLVMIsAConstantVector, LLVMIsAConstantDataVector};
+use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind, LLVMGetNextFunction, LLVMGetPreviousFunction, LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMDumpValue};
 use llvm_sys::LLVMTypeKind;
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -8,7 +8,7 @@ use std::fmt;
 use std::mem::transmute;
 
 use basic_block::BasicBlock;
-use types::{AnyTypeEnum, ArrayType, BasicTypeEnum, PointerType, FloatType, IntType, StructType};
+use types::{AnyTypeEnum, ArrayType, BasicTypeEnum, PointerType, FloatType, IntType, StructType, VectorType};
 
 mod private {
     // This is an ugly privacy hack so that Type can stay private to this module
@@ -91,6 +91,12 @@ impl Value {
     fn print_to_string(&self) -> &CStr {
         unsafe {
             CStr::from_ptr(LLVMPrintValueToString(self.value))
+        }
+    }
+
+    fn print_to_stderr(&self) {
+        unsafe {
+            LLVMDumpValue(self.value)
         }
     }
 
@@ -214,6 +220,10 @@ impl FunctionValue {
 
     pub fn print_to_string(&self) -> &CStr {
         self.fn_value.print_to_string()
+    }
+
+    pub fn print_to_stderr(&self) {
+        self.fn_value.print_to_stderr()
     }
 
     // TODO: Maybe support LLVMAbortProcessAction?
@@ -457,6 +467,10 @@ impl IntValue {
     pub fn print_to_string(&self) -> &CStr {
         self.int_value.print_to_string()
     }
+
+    pub fn print_to_stderr(&self) {
+        self.int_value.print_to_stderr()
+    }
 }
 
 impl AsValueRef for IntValue {
@@ -529,6 +543,10 @@ impl FloatValue {
     pub fn print_to_string(&self) -> &CStr {
         self.float_value.print_to_string()
     }
+
+    pub fn print_to_stderr(&self) {
+        self.float_value.print_to_stderr()
+    }
 }
 
 impl AsValueRef for FloatValue {
@@ -575,6 +593,10 @@ impl StructValue {
 
     pub fn print_to_string(&self) -> &CStr {
         self.struct_value.print_to_string()
+    }
+
+    pub fn print_to_stderr(&self) {
+        self.struct_value.print_to_stderr()
     }
 }
 
@@ -623,6 +645,10 @@ impl PointerValue {
     pub fn print_to_string(&self) -> &CStr {
         self.ptr_value.print_to_string()
     }
+
+    pub fn print_to_stderr(&self) {
+        self.ptr_value.print_to_stderr()
+    }
 }
 
 impl AsValueRef for PointerValue {
@@ -661,6 +687,10 @@ impl PhiValue {
 
     pub fn print_to_string(&self) -> &CStr {
         self.phi_value.print_to_string()
+    }
+
+    pub fn print_to_stderr(&self) {
+        self.phi_value.print_to_stderr()
     }
 }
 
@@ -713,6 +743,10 @@ impl ArrayValue {
 
     pub fn print_to_string(&self) -> &CStr {
         self.array_value.print_to_string()
+    }
+
+    pub fn print_to_stderr(&self) {
+        self.array_value.print_to_stderr()
     }
 }
 
@@ -774,6 +808,38 @@ impl VectorValue {
         };
 
         IntValue::new(int_value)
+    }
+
+    pub fn print_to_string(&self) -> &CStr {
+        self.vec_value.print_to_string()
+    }
+
+    pub fn print_to_stderr(&self) {
+        self.vec_value.print_to_stderr()
+    }
+
+    pub fn get_name(&self) -> &CStr {
+        self.vec_value.get_name()
+    }
+
+    pub fn set_name(&self, name: &str) {
+        self.vec_value.set_name(name);
+    }
+
+    pub fn get_type(&self) -> VectorType {
+        let vec_type = unsafe {
+            LLVMTypeOf(self.as_value_ref())
+        };
+
+        VectorType::new(vec_type)
+    }
+
+    pub fn is_null(&self) -> bool {
+        self.vec_value.is_null()
+    }
+
+    pub fn is_undef(&self) -> bool {
+        self.vec_value.is_undef()
     }
 }
 
@@ -898,6 +964,14 @@ impl BasicValueEnum {
         }
     }
 
+    pub fn into_vector_value(self) -> VectorValue {
+        if let BasicValueEnum::VectorValue(v) = self {
+            v
+        } else {
+            panic!("Called BasicValueEnum.into_array_value on {:?}", self);
+        }
+    }
+
     pub fn as_int_value(&self) -> &IntValue {
         if let BasicValueEnum::IntValue(ref i) = *self {
             i
@@ -938,6 +1012,14 @@ impl BasicValueEnum {
         }
     }
 
+    pub fn as_vector_value(&self) -> &VectorValue {
+        if let BasicValueEnum::VectorValue(ref v) = *self {
+            v
+        } else {
+            panic!("Called BasicValueEnum.as_array_value on {:?}", self);
+        }
+    }
+
     pub fn is_int_value(&self) -> bool {
         if let BasicValueEnum::IntValue(_) = *self {
             true
@@ -972,6 +1054,14 @@ impl BasicValueEnum {
 
     pub fn is_array_value(&self) -> bool {
         if let BasicValueEnum::ArrayValue(_) = *self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_vector_value(&self) -> bool {
+        if let BasicValueEnum::VectorValue(_) = *self {
             true
         } else {
             false

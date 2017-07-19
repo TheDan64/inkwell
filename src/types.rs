@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMAlignOf, LLVMArrayType, LLVMConstArray, LLVMConstInt, LLVMConstNamedStruct, LLVMConstReal, LLVMCountParamTypes, LLVMDumpType, LLVMFunctionType, LLVMGetParamTypes, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMIsFunctionVarArg, LLVMPointerType, LLVMPrintTypeToString, LLVMStructGetTypeAtIndex, LLVMTypeIsSized, LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMIntType, LLVMGetArrayLength, LLVMSizeOf, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMGetIntTypeWidth, LLVMVoidType, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetPointerAddressSpace, LLVMVectorType, LLVMGetVectorSize, LLVMConstVector, LLVMPPCFP128Type};
+use llvm_sys::core::{LLVMAlignOf, LLVMArrayType, LLVMConstArray, LLVMConstInt, LLVMConstNamedStruct, LLVMConstReal, LLVMCountParamTypes, LLVMDumpType, LLVMFunctionType, LLVMGetParamTypes, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMIsFunctionVarArg, LLVMPointerType, LLVMPrintTypeToString, LLVMStructGetTypeAtIndex, LLVMTypeIsSized, LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMIntType, LLVMGetArrayLength, LLVMSizeOf, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMGetIntTypeWidth, LLVMVoidType, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetPointerAddressSpace, LLVMVectorType, LLVMGetVectorSize, LLVMConstVector, LLVMPPCFP128Type, LLVMGetStructName, LLVMConstAllOnes, LLVMConstPointerNull, LLVMConstNull};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use llvm_sys::LLVMTypeKind;
 
@@ -7,7 +7,7 @@ use std::fmt;
 use std::mem::forget;
 
 use context::{Context, ContextRef};
-use values::{AsValueRef, ArrayValue, BasicValue, FloatValue, IntValue, StructValue, VectorValue, Value}; // TODO: Remove Value
+use values::{AsValueRef, ArrayValue, BasicValue, FloatValue, IntValue, PointerValue, StructValue, VectorValue, Value}; // TODO: Remove Value
 
 mod private {
     // This is an ugly privacy hack so that Type can stay private to this module
@@ -39,10 +39,18 @@ impl Type {
     }
 
     // NOTE: AnyType
-    fn dump(&self) {
+    fn print_to_stderr(&self) {
         unsafe {
             LLVMDumpType(self.type_);
         }
+    }
+
+    fn const_null_ptr(&self) -> PointerValue {
+        let ptr_type = unsafe {
+            LLVMConstPointerNull(self.type_)
+        };
+
+        PointerValue::new(ptr_type)
     }
 
     fn ptr_type(&self, address_space: u32) -> PointerType {
@@ -198,12 +206,12 @@ impl FunctionType {
         self.fn_type.get_context()
     }
 
-    pub fn ptr_type(&self, address_space: u32) -> PointerType {
-        self.fn_type.ptr_type(address_space)
-    }
-
     pub fn print_to_string(&self) -> &CStr {
         self.fn_type.print_to_string()
+    }
+
+    pub fn print_to_stderr(&self) {
+        self.fn_type.print_to_stderr()
     }
 }
 
@@ -296,10 +304,30 @@ impl IntType {
 
     pub fn const_int(&self, value: u64, sign_extend: bool) -> IntValue {
         let value = unsafe {
-            LLVMConstInt(self.int_type.type_, value, sign_extend as i32)
+            LLVMConstInt(self.as_type_ref(), value, sign_extend as i32)
         };
 
         IntValue::new(value)
+    }
+
+    pub fn const_all_ones(&self) -> IntValue {
+        let value = unsafe {
+            LLVMConstAllOnes(self.as_type_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_null_ptr(&self) -> PointerValue {
+        self.int_type.const_null_ptr()
+    }
+
+    pub fn const_null(&self) -> IntValue {
+        let null = unsafe {
+            LLVMConstNull(self.as_type_ref())
+        };
+
+        IntValue::new(null)
     }
 
     pub fn fn_type(&self, param_types: &[&AnyType], is_var_args: bool) -> FunctionType {
@@ -334,6 +362,10 @@ impl IntType {
 
     pub fn print_to_string(&self) -> &CStr {
         self.int_type.print_to_string()
+    }
+
+    pub fn print_to_stderr(&self) {
+        self.int_type.print_to_stderr()
     }
 }
 
@@ -375,6 +407,18 @@ impl FloatType {
         };
 
         FloatValue::new(value)
+    }
+
+    pub fn const_null_ptr(&self) -> PointerValue {
+        self.float_type.const_null_ptr()
+    }
+
+    pub fn const_null(&self) -> FloatValue {
+        let null = unsafe {
+            LLVMConstNull(self.as_type_ref())
+        };
+
+        FloatValue::new(null)
     }
 
     pub fn is_sized(&self) -> bool {
@@ -432,6 +476,10 @@ impl FloatType {
     pub fn print_to_string(&self) -> &CStr {
         self.float_type.print_to_string()
     }
+
+    pub fn print_to_stderr(&self) {
+        self.float_type.print_to_stderr()
+    }
 }
 
 impl AsTypeRef for FloatType {
@@ -482,12 +530,30 @@ impl StructType {
         StructValue::new(val)
     }
 
+    pub fn const_null_ptr(&self) -> PointerValue {
+        self.struct_type.const_null_ptr()
+    }
+
+    pub fn const_null(&self) -> StructValue {
+        let null = unsafe {
+            LLVMConstNull(self.as_type_ref())
+        };
+
+        StructValue::new(null)
+    }
+
     pub fn is_sized(&self) -> bool {
         self.struct_type.is_sized()
     }
 
     pub fn get_context(&self) -> ContextRef {
         self.struct_type.get_context()
+    }
+
+    pub fn get_name(&self) -> &CStr {
+        unsafe {
+            CStr::from_ptr(LLVMGetStructName(self.as_type_ref()))
+        }
     }
 
     pub fn ptr_type(&self, address_space: u32) -> PointerType {
@@ -555,6 +621,10 @@ impl StructType {
     pub fn print_to_string(&self) -> &CStr {
         self.struct_type.print_to_string()
     }
+
+    pub fn print_to_stderr(&self) {
+        self.struct_type.print_to_stderr()
+    }
 }
 
 impl AsTypeRef for StructType {
@@ -603,6 +673,14 @@ impl VoidType {
 
     pub fn print_to_string(&self) -> &CStr {
         self.void_type.print_to_string()
+    }
+
+    pub fn print_to_stderr(&self) {
+        self.void_type.print_to_stderr()
+    }
+
+    pub fn const_null_ptr(&self) -> PointerValue {
+        self.void_type.const_null_ptr()
     }
 }
 
@@ -654,6 +732,22 @@ impl PointerType {
 
     pub fn print_to_string(&self) -> &CStr {
         self.ptr_type.print_to_string()
+    }
+
+    pub fn print_to_stderr(&self) {
+        self.ptr_type.print_to_stderr()
+    }
+
+    pub fn const_null_ptr(&self) -> PointerValue {
+        self.ptr_type.const_null_ptr()
+    }
+
+    pub fn const_null(&self) -> PointerValue {
+        let null = unsafe {
+            LLVMConstNull(self.as_type_ref())
+        };
+
+        PointerValue::new(null)
     }
 }
 
@@ -708,6 +802,18 @@ impl ArrayType {
         ArrayValue::new(value)
     }
 
+    pub fn const_null_ptr(&self) -> PointerValue {
+        self.array_type.const_null_ptr()
+    }
+
+    pub fn const_null(&self) -> ArrayValue {
+        let null = unsafe {
+            LLVMConstNull(self.as_type_ref())
+        };
+
+        ArrayValue::new(null)
+    }
+
     pub fn len(&self) -> u32 {
         unsafe {
             LLVMGetArrayLength(self.as_type_ref())
@@ -716,6 +822,10 @@ impl ArrayType {
 
     pub fn print_to_string(&self) -> &CStr {
         self.array_type.print_to_string()
+    }
+
+    pub fn print_to_stderr(&self) {
+        self.array_type.print_to_stderr()
     }
 }
 
@@ -733,7 +843,7 @@ pub struct VectorType {
 }
 
 impl VectorType {
-    fn new(vector_type: LLVMTypeRef) -> Self {
+    pub(crate) fn new(vector_type: LLVMTypeRef) -> Self {
         assert!(vector_type.is_null());
 
         VectorType {
@@ -764,6 +874,26 @@ impl VectorType {
         };
 
         VectorValue::new(vec_value)
+    }
+
+    pub fn const_null_ptr(&self) -> PointerValue {
+        self.vec_type.const_null_ptr()
+    }
+
+    pub fn const_null(&self) -> VectorValue {
+        let null = unsafe {
+            LLVMConstNull(self.as_type_ref())
+        };
+
+        VectorValue::new(null)
+    }
+
+    pub fn print_to_string(&self) -> &CStr {
+        self.vec_type.print_to_string()
+    }
+
+    pub fn print_to_stderr(&self) {
+        self.vec_type.print_to_stderr()
     }
 }
 
@@ -910,8 +1040,8 @@ impl BasicTypeEnum {
     }
 
     pub fn into_vector_type(self) -> VectorType {
-        if let BasicTypeEnum::VectorType(a) = self {
-            a
+        if let BasicTypeEnum::VectorType(v) = self {
+            v
         } else {
             panic!("Called BasicValueEnum.into_vector_type on {:?}", self);
         }
@@ -958,8 +1088,8 @@ impl BasicTypeEnum {
     }
 
     pub fn as_vector_type(&self) -> &VectorType {
-        if let BasicTypeEnum::VectorType(ref a) = *self {
-            a
+        if let BasicTypeEnum::VectorType(ref v) = *self {
+            v
         } else {
             panic!("Called BasicValueEnum.as_array_type on {:?}", self);
         }
