@@ -133,7 +133,11 @@ impl Type {
         }
     }
 
-    fn size(&self) -> IntValue { // Option<IntValue>? What happens when type is unsized? We could return 0?
+    // REVIEW: Option<IntValue>? What happens when type is unsized? We could return 0?
+    // Also, is this even useful? Sized or not should be known at compile time?
+    // For example, void is not sized. This may only be useful on Type Traits/Enums
+    // where the actual type is unknown (trait) or yet undetermined (enum)
+    fn size(&self) -> IntValue {
         let int_value = unsafe {
             LLVMSizeOf(self.type_)
         };
@@ -550,10 +554,20 @@ impl StructType {
         self.struct_type.get_context()
     }
 
-    pub fn get_name(&self) -> &CStr {
-        unsafe {
-            CStr::from_ptr(LLVMGetStructName(self.as_type_ref()))
+    pub fn get_name(&self) -> Option<&CStr> {
+        let name = unsafe {
+            LLVMGetStructName(self.as_type_ref())
+        };
+
+        if name.is_null() {
+            return None;
         }
+
+        let c_str = unsafe {
+            CStr::from_ptr(name)
+        };
+
+        Some(c_str)
     }
 
     pub fn ptr_type(&self, address_space: u32) -> PointerType {
@@ -569,14 +583,14 @@ impl StructType {
     }
 
     pub fn is_packed(&self) -> bool {
-        // REVIEW: Is == 1 correct?
         unsafe {
             LLVMIsPackedStruct(self.struct_type.type_) == 1
         }
     }
 
+    // TODO: Worth documenting that a sturct is opaque when types are not
+    // yet assigned (empty array to struct_type)
     pub fn is_opaque(&self) -> bool {
-        // REVIEW: Is == 1 correct?
         unsafe {
             LLVMIsOpaqueStruct(self.struct_type.type_) == 1
         }
@@ -844,7 +858,7 @@ pub struct VectorType {
 
 impl VectorType {
     pub(crate) fn new(vector_type: LLVMTypeRef) -> Self {
-        assert!(vector_type.is_null());
+        assert!(!vector_type.is_null());
 
         VectorType {
             vec_type: Type::new(vector_type),
@@ -1165,4 +1179,28 @@ fn test_function_type() {
     let fn_type = int.fn_type(&[&int, &float], true);
 
     assert!(fn_type.is_var_arg());
+}
+
+#[test]
+fn test_struct_type() {
+    use std::ffi::CString;
+
+    let context = Context::create();
+    let int = context.i8_type();
+    let int_vector = int.vec_type(100);
+    let float = context.f32_type();
+    let float_array = float.array_type(3);
+    let av_struct = context.struct_type(&[&int_vector, &float_array], false, "");
+
+    assert!(!av_struct.is_packed());
+    assert!(!av_struct.is_opaque());
+    assert!(av_struct.is_sized());
+    assert!(av_struct.get_name().is_none());
+
+    let av_struct = context.struct_type(&[&int_vector, &float_array], true, "av_struct");
+
+    assert!(av_struct.is_packed());
+    assert!(!av_struct.is_opaque());
+    assert!(av_struct.is_sized());
+    assert_eq!(av_struct.get_name(), Some(&*CString::new("av_struct").unwrap()));
 }

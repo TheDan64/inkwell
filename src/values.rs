@@ -794,6 +794,7 @@ impl VectorValue {
         }
     }
 
+    // REVIEW: Should this be !int_value.is_null() to return bool?
     pub fn is_constant_vector(&self) -> IntValue { // TSv2: IntValue<bool>
         let int_value = unsafe {
             LLVMIsAConstantVector(self.as_value_ref())
@@ -802,6 +803,7 @@ impl VectorValue {
         IntValue::new(int_value)
     }
 
+    // REVIEW: Should this be !int_value.is_null() to return bool?
     pub fn is_constant_data_vector(&self) -> IntValue { // TSv2: IntValue<bool>
         let int_value = unsafe {
             LLVMIsAConstantDataVector(self.as_value_ref())
