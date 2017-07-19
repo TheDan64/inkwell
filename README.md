@@ -14,43 +14,43 @@ Inkwell aims to help you pen your own programming languages by safely wrapping l
 Here's [tari's llvm-sys example](https://bitbucket.org/tari/llvm-sys.rs/src/ea4ac92a171da2c1851806b91e531ed3a0b41091/examples/jit-function.rs) written in safe code<sup>1</sup> with Inkwell:
 
 ```rust
-    use inkwell::context::Context;
-    use inkwell::targets::{InitializationConfig, Target};
-    use std::mem::transmute;
+use inkwell::context::Context;
+use inkwell::targets::{InitializationConfig, Target};
+use std::mem::transmute;
 
-    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
 
-    let context = Context::create();
-    let module = context.create_module("sum");
-    let builder = context.create_builder();
-    let execution_engine = module.create_execution_engine(true).unwrap();
+let context = Context::create();
+let module = context.create_module("sum");
+let builder = context.create_builder();
+let execution_engine = module.create_execution_engine(true).unwrap();
 
-    let i64_type = context.i64_type();
-    let fn_type = i64_type.fn_type(&[&i64_type, &i64_type, &i64_type], false);
+let i64_type = context.i64_type();
+let fn_type = i64_type.fn_type(&[&i64_type, &i64_type, &i64_type], false);
 
-    let function = module.add_function("sum", &fn_type);
-    let basic_block = context.append_basic_block(&function, "entry");
+let function = module.add_function("sum", &fn_type);
+let basic_block = context.append_basic_block(&function, "entry");
 
-    builder.position_at_end(&basic_block);
+builder.position_at_end(&basic_block);
 
-    let x = function.get_nth_param(0).unwrap().into_int_value();
-    let y = function.get_nth_param(1).unwrap().into_int_value();
-    let z = function.get_nth_param(2).unwrap().into_int_value();
+let x = function.get_nth_param(0).unwrap().into_int_value();
+let y = function.get_nth_param(1).unwrap().into_int_value();
+let z = function.get_nth_param(2).unwrap().into_int_value();
 
-    let sum = builder.build_int_add(&x, &y, "sum");
-    let sum = builder.build_int_add(&sum, &z, "sum");
+let sum = builder.build_int_add(&x, &y, "sum");
+let sum = builder.build_int_add(&sum, &z, "sum");
 
-    builder.build_return(Some(&sum));
+builder.build_return(Some(&sum));
 
-    let addr = execution_engine.get_function_address("sum").unwrap();
+let addr = execution_engine.get_function_address("sum").unwrap();
 
-    let sum: extern "C" fn(u64, u64, u64) -> u64 = unsafe { transmute(addr) };
+let sum: extern "C" fn(u64, u64, u64) -> u64 = unsafe { transmute(addr) };
 
-    let x = 1u64;
-    let y = 2u64;
-    let z = 3u64;
+let x = 1u64;
+let y = 2u64;
+let z = 3u64;
 
-    assert_eq!(sum(x, y, z), x + y + z);
+assert_eq!(sum(x, y, z), x + y + z);
 ```
 
 <sup>1</sup> Casting the LLVM JIT function address into a rust function does require a single unsafe transmute, since Inkwell doesn't know what the function signature is. Maybe we can do something about this in the future? In theory, fn_type does contain all the needed info, so whether or not we can do this automagically depends on what rust is capable of. Converting structs, pointers, and other types could be tricky but might be seen as a form of deserialization. See [#5](https://github.com/TheDan64/inkwell/issues/5) for the tracking issue.
