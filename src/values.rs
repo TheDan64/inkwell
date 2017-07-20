@@ -104,74 +104,6 @@ impl Value {
     // fn get_type_kind(&self) -> LLVMTypeKind {
     //     (*self.get_type()).as_llvm_type_ref().get_kind()
     // }
-
-    // fn is_pointer(&self) -> bool {
-    //     match self.get_type_kind() {
-    //         LLVMTypeKind::LLVMPointerTypeKind => true,
-    //         _ => false,
-    //     }
-    // }
-
-    // fn is_int(&self) -> bool {
-    //     match self.get_type_kind() {
-    //         LLVMTypeKind::LLVMIntegerTypeKind => true,
-    //         _ => false,
-    //     }
-    // }
-
-    // fn is_f32(&self) -> bool {
-    //     match self.get_type_kind() {
-    //         LLVMTypeKind::LLVMFloatTypeKind => true,
-    //         _ => false,
-    //     }
-    // }
-
-    // fn is_f64(&self) -> bool {
-    //     match self.get_type_kind() {
-    //         LLVMTypeKind::LLVMDoubleTypeKind => true,
-    //         _ => false,
-    //     }
-    // }
-
-    // fn is_f128(&self) -> bool {
-    //     match self.get_type_kind() {
-    //         LLVMTypeKind::LLVMFP128TypeKind => true,
-    //         _ => false,
-    //     }
-    // }
-
-    // fn is_float(&self) -> bool {
-    //     match self.get_type_kind() {
-    //         LLVMTypeKind::LLVMHalfTypeKind |
-    //         LLVMTypeKind::LLVMFloatTypeKind |
-    //         LLVMTypeKind::LLVMDoubleTypeKind |
-    //         LLVMTypeKind::LLVMX86_FP80TypeKind |
-    //         LLVMTypeKind::LLVMFP128TypeKind |
-    //         LLVMTypeKind::LLVMPPC_FP128TypeKind => true,
-    //         _ => false,
-    //     }
-    // }
-
-    // fn is_struct(&self) -> bool {
-    //     match self.get_type_kind() {
-    //         LLVMTypeKind::LLVMStructTypeKind => true,
-    //         _ => false,
-    //     }
-    // }
-
-    // fn is_array(&self) -> bool {
-    //     match self.get_type_kind() {
-    //         LLVMTypeKind::LLVMArrayTypeKind => true,
-    //         _ => false,
-    //     }
-    // }
-
-    // fn is_void(&self) -> bool {
-    //     match self.get_type_kind() {
-    //         LLVMTypeKind::LLVMVoidTypeKind => true,
-    //         _ => false,
-    //     }
-    // }
 }
 
 impl fmt::Debug for Value {
@@ -890,11 +822,15 @@ macro_rules! enum_value_set {
     );
 }
 
+enum_value_set! {AggregateValueEnum: ArrayValue, StructValue}
 enum_value_set! {AnyValueEnum: ArrayValue, IntValue, FloatValue, PhiValue, FunctionValue, PointerValue, StructValue, VectorValue}
 enum_value_set! {BasicValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue, VectorValue}
 
-trait_value_set! {AnyValue: AnyValueEnum, BasicValueEnum, ArrayValue, IntValue, FloatValue, PhiValue, PointerValue, FunctionValue, StructValue, VectorValue, Value} // TODO: Remove Value
-trait_value_set! {BasicValue: ArrayValue, BasicValueEnum, IntValue, FloatValue, StructValue, PointerValue, VectorValue}
+trait_value_set! {AggregateValue: ArrayValue, AggregateValueEnum, StructValue}
+trait_value_set! {AnyValue: AnyValueEnum, BasicValueEnum, AggregateValueEnum, ArrayValue, IntValue, FloatValue, PhiValue, PointerValue, FunctionValue, StructValue, VectorValue, Value} // TODO: Remove Value
+trait_value_set! {BasicValue: ArrayValue, BasicValueEnum, AggregateValueEnum, IntValue, FloatValue, StructValue, PointerValue, VectorValue}
+
+// REVIEW: into/as/is functions are getting rediculious. Need macros or enum-methods crate
 
 impl BasicValueEnum {
     pub(crate) fn new(value: LLVMValueRef) -> BasicValueEnum {

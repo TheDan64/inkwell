@@ -3,7 +3,7 @@ use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LLVMAtomicOrdering};
 
 use basic_block::BasicBlock;
-use values::{AnyValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, FloatValue, IntValue, PointerValue, Value, IntoIntValue};
+use values::{AnyValue, AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, FloatValue, IntValue, PointerValue, Value, IntoIntValue};
 use types::{AsTypeRef, AnyType, BasicType, PointerType};
 
 use std::ffi::CString;
@@ -149,8 +149,9 @@ impl Builder {
         PointerValue::new(value)
     }
 
-    /// REVIEW: Untested
-    pub fn build_free(&self, ptr: &PointerValue) -> Value { // REVIEW: Why does free return? Seems like original pointer? Ever useful?
+    // REVIEW: Untested
+    // REVIEW: Why does free return? Seems like original pointer? Ever useful?
+    pub fn build_free(&self, ptr: &PointerValue) -> Value {
         let val = unsafe {
             LLVMBuildFree(self.builder, ptr.as_value_ref())
         };
@@ -386,14 +387,16 @@ impl Builder {
         }
     }
 
-    pub fn build_extract_value(&self, value: &Value, index: u32, name: &str) -> Value { // BasicValueEnum?
+    // REVIEW: How does LLVM treat out of bound index? Maybe we should return an Option?
+    // or is that only in bounds GEP
+    pub fn build_extract_value(&self, value: &AggregateValue, index: u32, name: &str) -> BasicValueEnum {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildExtractValue(self.builder, value.as_value_ref(), index, c_string.as_ptr())
         };
 
-        Value::new(value)
+        BasicValueEnum::new(value)
     }
 
     pub fn build_insert_value(&self, value: &BasicValue, ptr: &PointerValue, index: u32, name: &str) -> Value { // BasicValueEnum?

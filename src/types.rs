@@ -7,7 +7,7 @@ use std::fmt;
 use std::mem::forget;
 
 use context::{Context, ContextRef};
-use values::{AsValueRef, ArrayValue, BasicValue, FloatValue, IntValue, PointerValue, StructValue, VectorValue, Value}; // TODO: Remove Value
+use values::{AsValueRef, ArrayValue, BasicValue, FloatValue, FunctionValue, IntValue, PointerValue, StructValue, VectorValue};
 
 mod private {
     // This is an ugly privacy hack so that Type can stay private to this module
@@ -89,14 +89,10 @@ impl Type {
         ArrayType::new(type_)
     }
 
-    // NOTE: AnyType?
-    // REVIEW: Untested; impl AnyValue?
-    fn get_undef(&self) -> Value {
-        let value = unsafe {
+    fn get_undef(&self) -> LLVMValueRef {
+        unsafe {
             LLVMGetUndef(self.type_)
-        };
-
-        Value::new(value)
+        }
     }
 
     // NOTE: AnyType
@@ -216,6 +212,11 @@ impl FunctionType {
 
     pub fn print_to_stderr(&self) {
         self.fn_type.print_to_stderr()
+    }
+
+    // REVIEW: Can you do undef for functions?
+    pub fn get_undef(&self) -> FunctionValue {
+        FunctionValue::new(self.fn_type.get_undef())
     }
 }
 
@@ -371,6 +372,10 @@ impl IntType {
     pub fn print_to_stderr(&self) {
         self.int_type.print_to_stderr()
     }
+
+    pub fn get_undef(&self) -> IntValue {
+        IntValue::new(self.int_type.get_undef())
+    }
 }
 
 impl AsTypeRef for IntType {
@@ -484,6 +489,10 @@ impl FloatType {
     pub fn print_to_stderr(&self) {
         self.float_type.print_to_stderr()
     }
+
+    pub fn get_undef(&self) -> FloatValue {
+        FloatValue::new(self.float_type.get_undef())
+    }
 }
 
 impl AsTypeRef for FloatType {
@@ -524,11 +533,11 @@ impl StructType {
 
     // REVIEW: Untested
     // TODO: Better name for num. What's it for?
-    pub fn const_struct(&self, value: &Value, num: u32) -> StructValue {
+    pub fn const_struct(&self, value: &BasicValue, num: u32) -> StructValue {
         let value = &mut [value.as_value_ref()];
 
         let val = unsafe {
-            LLVMConstNamedStruct(self.struct_type.type_, value.as_mut_ptr(), num)
+            LLVMConstNamedStruct(self.as_type_ref(), value.as_mut_ptr(), num)
         };
 
         StructValue::new(val)
@@ -638,6 +647,10 @@ impl StructType {
 
     pub fn print_to_stderr(&self) {
         self.struct_type.print_to_stderr()
+    }
+
+    pub fn get_undef(&self) -> StructValue {
+        StructValue::new(self.struct_type.get_undef())
     }
 }
 
@@ -763,6 +776,10 @@ impl PointerType {
 
         PointerValue::new(null)
     }
+
+    pub fn get_undef(&self) -> PointerValue {
+        PointerValue::new(self.ptr_type.get_undef())
+    }
 }
 
 impl AsTypeRef for PointerType {
@@ -841,6 +858,10 @@ impl ArrayType {
     pub fn print_to_stderr(&self) {
         self.array_type.print_to_stderr()
     }
+
+    pub fn get_undef(&self) -> ArrayValue {
+        ArrayValue::new(self.array_type.get_undef())
+    }
 }
 
 impl AsTypeRef for ArrayType {
@@ -908,6 +929,10 @@ impl VectorType {
 
     pub fn print_to_stderr(&self) {
         self.vec_type.print_to_stderr()
+    }
+
+    pub fn get_undef(&self) -> VectorValue {
+        VectorValue::new(self.vec_type.get_undef())
     }
 }
 
