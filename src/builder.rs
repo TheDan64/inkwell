@@ -1,10 +1,10 @@
-use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf, LLVMSetTailCall};
+use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf, LLVMSetTailCall, LLVMBuildExtractElement, LLVMBuildInsertElement, LLVMBuildIntToPtr, LLVMBuildPtrToInt};
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LLVMAtomicOrdering};
 
 use basic_block::BasicBlock;
-use values::{AnyValue, AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, FloatValue, IntValue, PointerValue, Value, IntoIntValue};
-use types::{AsTypeRef, AnyType, BasicType, PointerType};
+use values::{AnyValue, AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, FloatValue, IntValue, PointerValue, Value, IntoIntValue, VectorValue};
+use types::{AsTypeRef, AnyType, BasicType, PointerType, IntType};
 
 use std::ffi::CString;
 
@@ -409,6 +409,26 @@ impl Builder {
         Value::new(value)
     }
 
+    pub fn build_extract_element(&self, vector: &VectorValue, index: &IntValue, name: &str) -> BasicValueEnum {
+        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+
+        let value = unsafe {
+            LLVMBuildExtractElement(self.builder, vector.as_value_ref(), index.as_value_ref(), c_string.as_ptr())
+        };
+
+        BasicValueEnum::new(value)
+    }
+
+    pub fn build_insert_element(&self, vector: &VectorValue, element: &BasicValue, index: &IntValue, name: &str) -> BasicValueEnum {
+        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+
+        let value = unsafe {
+            LLVMBuildInsertElement(self.builder, vector.as_value_ref(), element.as_value_ref(), index.as_value_ref(), c_string.as_ptr())
+        };
+
+        BasicValueEnum::new(value)
+    }
+
     // REVIEW: Untested
     pub fn build_unreachable(&self) -> Value {
         let val = unsafe {
@@ -431,25 +451,46 @@ impl Builder {
     }
 
     // REVIEW: Untested
-    pub fn build_is_null(&self, value: &PointerValue, name: &str) -> IntValue {
+    pub fn build_is_null(&self, ptr: &PointerValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let val = unsafe {
-            LLVMBuildIsNull(self.builder, value.as_value_ref(), c_string.as_ptr())
+            LLVMBuildIsNull(self.builder, ptr.as_value_ref(), c_string.as_ptr())
         };
 
         IntValue::new(val)
     }
 
     // REVIEW: Untested
-    pub fn build_is_not_null(&self, value: &PointerValue, name: &str) -> IntValue {
+    pub fn build_is_not_null(&self, ptr: &PointerValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let val = unsafe {
-            LLVMBuildIsNotNull(self.builder, value.as_value_ref(), c_string.as_ptr())
+            LLVMBuildIsNotNull(self.builder, ptr.as_value_ref(), c_string.as_ptr())
         };
 
         IntValue::new(val)
+    }
+
+    // REVIEW: Should this be type_: &BasicType or is &PointerType correct?
+    pub fn build_int_to_ptr(&self, int: &IntValue, ptr_type: &PointerType, name: &str) -> PointerValue {
+        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+
+        let value = unsafe {
+            LLVMBuildIntToPtr(self.builder, int.as_value_ref(), ptr_type.as_type_ref(), c_string.as_ptr())
+        };
+
+        PointerValue::new(value)
+    }
+
+    pub fn build_ptr_to_int(&self, ptr: &PointerValue, int_type: &IntType, name: &str) -> IntValue {
+        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+
+        let value = unsafe {
+            LLVMBuildPtrToInt(self.builder, ptr.as_value_ref(), int_type.as_type_ref(), c_string.as_ptr())
+        };
+
+        IntValue::new(value)
     }
 }
 
