@@ -411,31 +411,6 @@ impl AsValueRef for IntValue {
     }
 }
 
-// TODO: IntoIntValue needs to be reworked. Major flaws:
-// * Cannot specify context, even optionally. Currently defaults
-//   to global context which is likely not the user's context.
-// * Cannot specify type or sign and currently assumes i32. It'd
-//   be cool to be able to do 42.into_int_value::<i32>(&context)
-//   though that does seem like the kind of verbosity that I was
-//   originally trying to avoid with IntoIntValue. May as well do
-//   context.i32_type().const_int(42, true);
-pub trait IntoIntValue {
-    fn into_int_value(&self) -> IntValue;
-}
-
-impl IntoIntValue for IntValue {
-    fn into_int_value(&self) -> IntValue {
-        IntValue::new(self.int_value.value)
-    }
-}
-
-impl IntoIntValue for u64 {
-    fn into_int_value(&self) -> IntValue {
-        // REVIEWL This will probably assign the global context, not necessarily the one the user is using.
-        IntType::i32_type().const_int(*self, false)
-    }
-}
-
 #[derive(Debug)]
 pub struct FloatValue {
     float_value: Value

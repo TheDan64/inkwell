@@ -3,7 +3,7 @@ use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LLVMAtomicOrdering};
 
 use basic_block::BasicBlock;
-use values::{AnyValue, AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, FloatValue, IntValue, PointerValue, Value, IntoIntValue, VectorValue};
+use values::{AnyValue, AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, FloatValue, IntValue, PointerValue, Value, VectorValue};
 use types::{AsTypeRef, AnyType, BasicType, PointerType, IntType};
 
 use std::ffi::CString;
@@ -65,11 +65,11 @@ impl Builder {
         BasicValueEnum::new(value)
     }
 
-    pub fn build_gep(&self, ptr: &PointerValue, ordered_indexes: &[&IntoIntValue], name: &str) -> PointerValue {
+    pub fn build_gep(&self, ptr: &PointerValue, ordered_indexes: &[&IntValue], name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
-                                                                 .map(|val| val.into_int_value().as_value_ref())
+                                                                 .map(|val| val.as_value_ref())
                                                                  .collect();
         let value = unsafe {
             LLVMBuildGEP(self.builder, ptr.as_value_ref(), index_values.as_mut_ptr(), index_values.len() as u32, c_string.as_ptr())
@@ -128,22 +128,22 @@ impl Builder {
 
     // TODO: Rename to "build_heap_allocated_array" + stack version?
     // REVIEW: Is this still a PointerValue (as opposed to an ArrayValue?)
-    pub fn build_array_heap_allocation(&self, type_: &BasicType, size: &IntoIntValue, name: &str) -> PointerValue {
+    pub fn build_array_heap_allocation(&self, type_: &BasicType, size: &IntValue, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildArrayMalloc(self.builder, type_.as_type_ref(), size.into_int_value().as_value_ref(), c_string.as_ptr())
+            LLVMBuildArrayMalloc(self.builder, type_.as_type_ref(), size.as_value_ref(), c_string.as_ptr())
         };
 
         PointerValue::new(value)
     }
 
     // REVIEW: Is this still a PointerValue (as opposed to an ArrayValue?)
-    pub fn build_stack_allocated_array(&self, type_: &BasicType, size: &IntoIntValue, name: &str) -> PointerValue {
+    pub fn build_stack_allocated_array(&self, type_: &BasicType, size: &IntValue, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildArrayAlloca(self.builder, type_.as_type_ref(), size.into_int_value().as_value_ref(), c_string.as_ptr())
+            LLVMBuildArrayAlloca(self.builder, type_.as_type_ref(), size.as_value_ref(), c_string.as_ptr())
         };
 
         PointerValue::new(value)
