@@ -191,28 +191,28 @@ impl Target {
         }
     }
 
-    pub fn initialize_r600(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeR600Target, LLVMInitializeR600TargetInfo, LLVMInitializeR600TargetMC, LLVMInitializeR600AsmPrinter, LLVMInitializeR600AsmParser};
+    pub fn initialize_amd_gpu(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeAMDGPUTarget, LLVMInitializeAMDGPUTargetInfo, LLVMInitializeAMDGPUTargetMC, LLVMInitializeAMDGPUAsmPrinter, LLVMInitializeAMDGPUAsmParser};
 
         unsafe {
             if config.base {
-                LLVMInitializeR600Target()
+                LLVMInitializeAMDGPUTarget()
             }
 
             if config.info {
-                LLVMInitializeR600TargetInfo()
+                LLVMInitializeAMDGPUTargetInfo()
             }
 
             if config.asm_printer {
-                LLVMInitializeR600AsmPrinter()
+                LLVMInitializeAMDGPUAsmPrinter()
             }
 
             if config.asm_parser {
-                LLVMInitializeR600AsmParser()
+                LLVMInitializeAMDGPUAsmParser()
             }
 
             if config.machine_code {
-                LLVMInitializeR600TargetMC()
+                LLVMInitializeAMDGPUTargetMC()
             }
         }
     }
@@ -417,6 +417,33 @@ impl Target {
 
             if config.machine_code {
                 LLVMInitializeSparcTargetMC()
+            }
+        }
+    }
+
+    pub fn initialize_bpf(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeBPFTarget, LLVMInitializeBPFTargetInfo, LLVMInitializeBPFTargetMC, LLVMInitializeBPFDisassembler, LLVMInitializeBPFAsmPrinter};
+
+        unsafe {
+            if config.base {
+                LLVMInitializeBPFTarget()
+            }
+
+            if config.info {
+                LLVMInitializeBPFTargetInfo()
+            }
+
+            if config.asm_printer {
+                LLVMInitializeBPFAsmPrinter()
+            }
+
+            // Not linking correctly
+            // if config.disassembler {
+            //     LLVMInitializeBPFDisassembler()
+            // }
+
+            if config.machine_code {
+                LLVMInitializeBPFTargetMC()
             }
         }
     }

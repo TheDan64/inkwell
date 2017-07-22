@@ -10,4 +10,4 @@ license = "Apache-2.0"
 categories = ["development-tools::ffi"]
 
 [dependencies]
-llvm-sys = "37.0.3" # TODO: Configure based on feature toggle. GH#1
+llvm-sys = "37.0.4" # TODO: Configure based on feature toggle. GH#1
