@@ -1,11 +1,11 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind, LLVMGetNextFunction, LLVMGetPreviousFunction, LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMDumpValue};
+use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind, LLVMGetNextFunction, LLVMGetPreviousFunction, LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMDumpValue, LLVMCountBasicBlocks};
 use llvm_sys::LLVMTypeKind;
-use llvm_sys::prelude::LLVMValueRef;
+use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 
 use std::ffi::{CString, CStr};
 use std::fmt;
-use std::mem::transmute;
+use std::mem::forget;
 
 use basic_block::BasicBlock;
 use types::{AnyTypeEnum, ArrayType, BasicTypeEnum, PointerType, FloatType, IntType, StructType, VectorType};
@@ -244,15 +244,26 @@ impl FunctionValue {
         }
     }
 
-    // REVIEW: Untested; probably doesn't work. Should remove transmute.
-    pub fn get_basic_blocks(&self) -> Vec<BasicBlock> {
-        let mut blocks = vec![];
-
+    pub fn count_basic_blocks(&self) -> u32 {
         unsafe {
-            LLVMGetBasicBlocks(self.fn_value.value, blocks.as_mut_ptr());
-
-            transmute(blocks)
+            LLVMCountBasicBlocks(self.as_value_ref())
         }
+    }
+
+    pub fn get_basic_blocks(&self) -> Vec<BasicBlock> {
+        let count = self.count_basic_blocks();
+        let mut raw_vec: Vec<LLVMBasicBlockRef> = Vec::with_capacity(count as usize);
+        let ptr = raw_vec.as_mut_ptr();
+
+        forget(raw_vec);
+
+        let raw_vec = unsafe {
+            LLVMGetBasicBlocks(self.as_value_ref(), ptr);
+
+            Vec::from_raw_parts(ptr, count as usize, count as usize)
+        };
+
+        raw_vec.iter().map(|val| BasicBlock::new(*val)).collect()
     }
 
     pub fn get_return_type(&self) -> BasicTypeEnum {
@@ -270,12 +281,16 @@ impl FunctionValue {
         }
     }
 
-    pub fn get_last_basic_block(&self) -> BasicBlock {
+    pub fn get_last_basic_block(&self) -> Option<BasicBlock> {
         let bb = unsafe {
             LLVMGetLastBasicBlock(self.fn_value.value)
         };
 
-        BasicBlock::new(bb)
+        if bb.is_null() {
+            return None;
+        }
+
+        Some(BasicBlock::new(bb))
     }
 
     pub fn get_name(&self) -> &CStr {
@@ -980,4 +995,35 @@ impl BasicValueEnum {
             false
         }
     }
+}
+
+#[test]
+fn test_get_basic_blocks() {
+    use context::Context;
+
+    let context = Context::create();
+    let module = context.create_module("test");
+
+    let bool_type = context.bool_type();
+    let fn_type = bool_type.fn_type(&[], false);
+
+    let function = module.add_function("testing", &fn_type);
+
+    assert_eq!(function.get_name(), &*CString::new("testing").unwrap());
+    assert_eq!(function.get_return_type().into_int_type().get_bit_width(), 1);
+
+    assert!(function.get_last_basic_block().is_none());
+    assert_eq!(function.get_basic_blocks().len(), 0);
+
+    let basic_block = context.append_basic_block(&function, "entry");
+
+    let last_basic_block = function.get_last_basic_block()
+                                   .expect("Did not find expected basic block");
+
+    assert_eq!(last_basic_block.basic_block, basic_block.basic_block);
+
+    let basic_blocks = function.get_basic_blocks();
+
+    assert_eq!(basic_blocks.len(), 1);
+    assert_eq!(basic_blocks[0].basic_block, basic_block.basic_block);
 }
