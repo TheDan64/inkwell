@@ -6,6 +6,12 @@ use values::{AsValueRef, FunctionValue};
 
 use std::ffi::CString;
 
+#[derive(Debug, PartialEq)]
+pub enum GetFunctionAddressError {
+    JITNotEnabled,
+    FunctionNotFound, // 404!
+}
+
 pub struct ExecutionEngine {
     execution_engine: LLVMExecutionEngineRef,
     jit_mode: bool,
@@ -29,10 +35,9 @@ impl ExecutionEngine {
 
     /// WARNING: The returned address *will* be invalid if the EE drops first
     /// Do not attempt to transmute it to a function if the ExecutionEngine is gone
-    pub fn get_function_address(&self, fn_name: &str) -> Result<u64, String> {
-
+    pub fn get_function_address(&self, fn_name: &str) -> Result<u64, GetFunctionAddressError> {
         if !self.jit_mode {
-            return Err("ExecutionEngineError: Cannot use get_function_address in non jit_mode".into());
+            return Err(GetFunctionAddressError::JITNotEnabled);
         }
 
         let c_string = CString::new(fn_name).expect("Conversion to CString failed unexpectedly");
@@ -41,8 +46,12 @@ impl ExecutionEngine {
             LLVMGetFunctionAddress(self.execution_engine, c_string.as_ptr())
         };
 
+        // REVIEW: Can also return 0 if no targets are initialized.
+        // One option might be to set a global to true if any at all of the targets have been
+        // initialized (maybe we could figure out which config in particular is the trigger)
+        // and if not return an "NoTargetsInitialized" error, instead of not found.
         if address == 0 {
-            return Err(format!("ExecutionEngineError: Could not find function {}", fn_name));
+            return Err(GetFunctionAddressError::FunctionNotFound);
         }
 
         Ok(address)
@@ -80,4 +89,25 @@ impl Drop for ExecutionEngine {
             LLVMDisposeExecutionEngine(self.execution_engine);
         }
     }
+}
+
+#[test]
+fn test_get_function_address_errors() {
+    use context::Context;
+    use targets::{InitializationConfig, Target};
+
+    let context = Context::create();
+    let module = context.create_module("errors_abound");
+    let execution_engine = module.create_execution_engine(false).unwrap();
+
+    assert_eq!(execution_engine.get_function_address("errors"), Err(GetFunctionAddressError::JITNotEnabled));
+
+    // FIXME: The following results in an invalid memory access somehow. Commenting out EE drop stops it from happenening
+    // which is weird because both created EEs are separate instances
+
+    // Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+
+    // let execution_engine = module.create_execution_engine(true).unwrap();
+
+    // assert_eq!(execution_engine.get_function_address("errors"), Err(GetFunctionAddressError::FunctionNotFound));
 }
