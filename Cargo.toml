@@ -10,4 +10,9 @@ license = "Apache-2.0"
 categories = ["development-tools::ffi"]
 
 [dependencies]
+enum-methods = "0.0.5"
 llvm-sys = "37.0.5" # TODO: Configure based on feature toggle. GH#1
+
+[badges]
+travis-ci = { repository = "TheDan64/inkwell" }
+codecov = { repository = "TheDan64/inkwell" }

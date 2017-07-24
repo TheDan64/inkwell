@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate enum_methods;
 extern crate llvm_sys;
 
 pub mod basic_block;

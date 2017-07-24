@@ -53,9 +53,10 @@ impl Builder {
             LLVMBuildCall(self.builder, function.as_value_ref(), args.as_mut_ptr(), args.len() as u32, c_string.as_ptr())
         };
 
-        // REVIEW: Untested
-        unsafe {
-            LLVMSetTailCall(value, tail_call as i32)
+        if tail_call {
+            unsafe {
+                LLVMSetTailCall(value, true as i32)
+            }
         }
 
         BasicValueEnum::new(value)
@@ -145,8 +146,6 @@ impl Builder {
         PointerValue::new(value)
     }
 
-    // REVIEW: Untested
-    // REVIEW: Why does free return? Seems like original pointer? Ever useful?
     pub fn build_free(&self, ptr: &PointerValue) -> InstructionValue {
         let val = unsafe {
             LLVMBuildFree(self.builder, ptr.as_value_ref())
@@ -465,7 +464,6 @@ impl Builder {
         IntValue::new(val)
     }
 
-    // REVIEW: Should this be type_: &BasicType or is &PointerType correct?
     pub fn build_int_to_ptr(&self, int: &IntValue, ptr_type: &PointerType, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -531,7 +529,7 @@ fn test_instructions() {
     use values::InstructionOpcode::*;
 
     let context = Context::create();
-    let module = context.create_module("sum");
+    let module = context.create_module("testing");
     let builder = context.create_builder();
 
     let void_type = context.void_type();
