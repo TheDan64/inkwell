@@ -422,7 +422,7 @@ impl Target {
     }
 
     pub fn initialize_bpf(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeBPFTarget, LLVMInitializeBPFTargetInfo, LLVMInitializeBPFTargetMC, LLVMInitializeBPFDisassembler, LLVMInitializeBPFAsmPrinter};
+        use llvm_sys::target::{LLVMInitializeBPFTarget, LLVMInitializeBPFTargetInfo, LLVMInitializeBPFTargetMC, LLVMInitializeBPFAsmPrinter};
 
         unsafe {
             if config.base {
@@ -437,7 +437,7 @@ impl Target {
                 LLVMInitializeBPFAsmPrinter()
             }
 
-            // Not linking correctly
+            // TODO: Added in 4.0
             // if config.disassembler {
             //     LLVMInitializeBPFDisassembler()
             // }

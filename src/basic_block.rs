@@ -104,6 +104,37 @@ impl fmt::Debug for BasicBlock {
 }
 
 #[test]
+fn test_get_basic_blocks() {
+    use context::Context;
+
+    let context = Context::create();
+    let module = context.create_module("test");
+
+    let bool_type = context.bool_type();
+    let fn_type = bool_type.fn_type(&[], false);
+
+    let function = module.add_function("testing", &fn_type);
+
+    assert_eq!(function.get_name(), &*CString::new("testing").unwrap());
+    assert_eq!(function.get_return_type().into_int_type().get_bit_width(), 1);
+
+    assert!(function.get_last_basic_block().is_none());
+    assert_eq!(function.get_basic_blocks().len(), 0);
+
+    let basic_block = context.append_basic_block(&function, "entry");
+
+    let last_basic_block = function.get_last_basic_block()
+                                   .expect("Did not find expected basic block");
+
+    assert_eq!(last_basic_block.basic_block, basic_block.basic_block);
+
+    let basic_blocks = function.get_basic_blocks();
+
+    assert_eq!(basic_blocks.len(), 1);
+    assert_eq!(basic_blocks[0].basic_block, basic_block.basic_block);
+}
+
+#[test]
 fn test_basic_block_ordering() {
     use context::Context;
 
