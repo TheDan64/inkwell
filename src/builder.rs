@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf, LLVMSetTailCall, LLVMBuildExtractElement, LLVMBuildInsertElement, LLVMBuildIntToPtr, LLVMBuildPtrToInt};
+use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf, LLVMSetTailCall, LLVMBuildExtractElement, LLVMBuildInsertElement, LLVMBuildIntToPtr, LLVMBuildPtrToInt, LLVMInsertIntoBuilderWithName, LLVMClearInsertionPosition};
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LLVMAtomicOrdering};
 
@@ -157,6 +157,14 @@ impl Builder {
     pub fn insert_instruction(&self, value: &InstructionValue) {
         unsafe {
             LLVMInsertIntoBuilder(self.builder, value.as_value_ref());
+        }
+    }
+
+    pub fn insert_instruction_with_name(&self, instruction: &InstructionValue, name: &str) {
+        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+
+        unsafe {
+            LLVMInsertIntoBuilderWithName(self.builder, instruction.as_value_ref(), c_string.as_ptr())
         }
     }
 
@@ -483,6 +491,12 @@ impl Builder {
 
         IntValue::new(value)
     }
+
+    pub fn clear_insertion_position(&self) {
+        unsafe {
+            LLVMClearInsertionPosition(self.builder)
+        }
+    }
 }
 
 impl Drop for Builder {
@@ -504,7 +518,7 @@ fn test_build_call() {
     let f32_type = context.f32_type();
     let fn_type = f32_type.fn_type(&[], false);
 
-    let function = module.add_function("get_pi", &fn_type);
+    let function = module.add_function("get_pi", &fn_type, None);
     let basic_block = context.append_basic_block(&function, "entry");
 
     builder.position_at_end(&basic_block);
@@ -513,7 +527,7 @@ fn test_build_call() {
 
     builder.build_return(Some(&pi));
 
-    let function2 = module.add_function("wrapper", &fn_type);
+    let function2 = module.add_function("wrapper", &fn_type, None);
     let basic_block2 = context.append_basic_block(&function2, "entry");
 
     builder.position_at_end(&basic_block2);
@@ -538,7 +552,7 @@ fn test_instructions() {
     let f32_ptr_type = f32_type.ptr_type(0);
     let fn_type = void_type.fn_type(&[&f32_ptr_type], false);
 
-    let function = module.add_function("free_f32", &fn_type);
+    let function = module.add_function("free_f32", &fn_type, None);
     let basic_block = context.append_basic_block(&function, "entry");
 
     builder.position_at_end(&basic_block);

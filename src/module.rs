@@ -1,8 +1,9 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer, LLVMWriteBitcodeToFD};
-use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMCreateFunctionPassManagerForModule, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetDataLayout, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction};
+use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMCreateFunctionPassManagerForModule, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetDataLayout, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage};
 use llvm_sys::execution_engine::{LLVMCreateExecutionEngineForModule, LLVMLinkInInterpreter, LLVMLinkInMCJIT};
 use llvm_sys::prelude::LLVMModuleRef;
+use llvm_sys::LLVMLinkage;
 
 use std::ffi::{CString, CStr};
 use std::fs::File;
@@ -17,6 +18,74 @@ use memory_buffer::MemoryBuffer;
 use pass_manager::PassManager;
 use types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
 use values::{BasicValue, FunctionValue, PointerValue};
+
+// REVIEW: Maybe this should go into it's own module?
+#[derive(Debug, PartialEq)]
+pub enum Linkage {
+    AppendingLinkage,
+    AvailableExternallyLinkage,
+    CommonLinkage,
+    DLLExportLinkage,
+    DLLImportLinkage,
+    ExternalLinkage,
+    ExternalWeakLinkage,
+    GhostLinkage,
+    InternalLinkage,
+    LinkerPrivateLinkage,
+    LinkerPrivateWeakLinkage,
+    LinkOnceAnyLinkage,
+    LinkOnceODRAutoHideLinkage,
+    LinkOnceODRLinkage,
+    PrivateLinkage,
+    WeakAnyLinkage,
+    WeakODRLinkage,
+}
+
+impl Linkage {
+    pub(crate) fn new(linkage: LLVMLinkage) -> Self {
+        match linkage {
+            LLVMLinkage::LLVMAppendingLinkage => Linkage::AppendingLinkage,
+            LLVMLinkage::LLVMAvailableExternallyLinkage => Linkage::AvailableExternallyLinkage,
+            LLVMLinkage::LLVMCommonLinkage => Linkage::CommonLinkage,
+            LLVMLinkage::LLVMDLLExportLinkage => Linkage::DLLExportLinkage,
+            LLVMLinkage::LLVMDLLImportLinkage => Linkage::DLLImportLinkage,
+            LLVMLinkage::LLVMExternalLinkage => Linkage::ExternalLinkage,
+            LLVMLinkage::LLVMExternalWeakLinkage => Linkage::ExternalWeakLinkage,
+            LLVMLinkage::LLVMGhostLinkage => Linkage::GhostLinkage,
+            LLVMLinkage::LLVMInternalLinkage => Linkage::InternalLinkage,
+            LLVMLinkage::LLVMLinkerPrivateLinkage => Linkage::LinkerPrivateLinkage,
+            LLVMLinkage::LLVMLinkerPrivateWeakLinkage => Linkage::LinkerPrivateWeakLinkage,
+            LLVMLinkage::LLVMLinkOnceAnyLinkage => Linkage::LinkOnceAnyLinkage,
+            LLVMLinkage::LLVMLinkOnceODRAutoHideLinkage => Linkage::LinkOnceODRAutoHideLinkage,
+            LLVMLinkage::LLVMLinkOnceODRLinkage => Linkage::LinkOnceODRLinkage,
+            LLVMLinkage::LLVMPrivateLinkage => Linkage::PrivateLinkage,
+            LLVMLinkage::LLVMWeakAnyLinkage => Linkage::WeakAnyLinkage,
+            LLVMLinkage::LLVMWeakODRLinkage => Linkage::WeakODRLinkage,
+        }
+    }
+
+    fn as_llvm_linkage(&self) -> LLVMLinkage {
+        match *self {
+            Linkage::AppendingLinkage => LLVMLinkage::LLVMAppendingLinkage,
+            Linkage::AvailableExternallyLinkage => LLVMLinkage::LLVMAvailableExternallyLinkage,
+            Linkage::CommonLinkage => LLVMLinkage::LLVMCommonLinkage,
+            Linkage::DLLExportLinkage => LLVMLinkage::LLVMDLLExportLinkage,
+            Linkage::DLLImportLinkage => LLVMLinkage::LLVMDLLImportLinkage,
+            Linkage::ExternalLinkage => LLVMLinkage::LLVMExternalLinkage,
+            Linkage::ExternalWeakLinkage => LLVMLinkage::LLVMExternalWeakLinkage,
+            Linkage::GhostLinkage => LLVMLinkage::LLVMGhostLinkage,
+            Linkage::InternalLinkage => LLVMLinkage::LLVMInternalLinkage,
+            Linkage::LinkerPrivateLinkage => LLVMLinkage::LLVMLinkerPrivateLinkage,
+            Linkage::LinkerPrivateWeakLinkage => LLVMLinkage::LLVMLinkerPrivateWeakLinkage,
+            Linkage::LinkOnceAnyLinkage => LLVMLinkage::LLVMLinkOnceAnyLinkage,
+            Linkage::LinkOnceODRAutoHideLinkage => LLVMLinkage::LLVMLinkOnceODRAutoHideLinkage,
+            Linkage::LinkOnceODRLinkage => LLVMLinkage::LLVMLinkOnceODRLinkage,
+            Linkage::PrivateLinkage => LLVMLinkage::LLVMPrivateLinkage,
+            Linkage::WeakAnyLinkage => LLVMLinkage::LLVMWeakAnyLinkage,
+            Linkage::WeakODRLinkage => LLVMLinkage::LLVMWeakODRLinkage,
+        }
+    }
+}
 
 pub struct Module {
     pub(crate) module: LLVMModuleRef,
@@ -41,16 +110,19 @@ impl Module {
         Module::new(module)
     }
 
-    pub fn add_function(&self, name: &str, return_type: &FunctionType) -> FunctionValue {
+    // TODO: Worth documenting that LLVM will default linkage to ExternalLinkage (at least in 3.7)
+    pub fn add_function(&self, name: &str, return_type: &FunctionType, linkage: Option<&Linkage>) -> FunctionValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMAddFunction(self.module, c_string.as_ptr(), return_type.as_type_ref())
         };
 
-        // unsafe {
-        //     LLVMSetLinkage(value, LLVMCommonLinkage);
-        // }
+        if let Some(linkage) = linkage {
+            unsafe {
+                LLVMSetLinkage(value, linkage.as_llvm_linkage());
+            }
+        }
 
         FunctionValue::new(value)
     }
@@ -297,7 +369,7 @@ fn test_write_bitcode_to_path() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
 
-    module.add_function("my_fn", &fn_type);
+    module.add_function("my_fn", &fn_type, None);
     module.write_bitcode_to_path(&path);
 
     let mut contents = Vec::new();
@@ -330,7 +402,7 @@ fn test_write_bitcode_to_path() {
 //     let void_type = context.void_type();
 //     let fn_type = void_type.fn_type(&[], false);
 
-//     module.add_function("my_fn", &fn_type);
+//     module.add_function("my_fn", &fn_type, None);
 //     module.write_bitcode_to_file(&file, true, false);
 
 //     let mut contents = Vec::new();

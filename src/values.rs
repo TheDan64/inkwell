@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind, LLVMGetNextFunction, LLVMGetPreviousFunction, LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMDumpValue, LLVMCountBasicBlocks, LLVMIsAInstruction, LLVMGetInstructionOpcode};
+use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind, LLVMGetNextFunction, LLVMGetPreviousFunction, LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMDumpValue, LLVMCountBasicBlocks, LLVMIsAInstruction, LLVMGetInstructionOpcode, LLVMGetLinkage};
 use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMTypeKind};
 
@@ -8,6 +8,7 @@ use std::fmt;
 use std::mem::forget;
 
 use basic_block::BasicBlock;
+use module::Linkage;
 use types::{AnyTypeEnum, ArrayType, BasicTypeEnum, PointerType, FloatType, IntType, StructType, VectorType};
 
 mod private {
@@ -154,6 +155,14 @@ impl FunctionValue {
         FunctionValue {
             fn_value: Value::new(value)
         }
+    }
+
+    pub fn get_linkage(&self) -> Linkage {
+        let linkage = unsafe {
+            LLVMGetLinkage(self.as_value_ref())
+        };
+
+        Linkage::new(linkage)
     }
 
     pub fn is_null(&self) -> bool {
@@ -1075,4 +1084,20 @@ impl BasicValueEnum {
 
         BasicTypeEnum::new(type_)
     }
+}
+
+#[test]
+fn test_linkage() {
+    use context::Context;
+    use module::Linkage::*;
+
+    let context = Context::create();
+    let module = context.create_module("testing");
+
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+
+    let function = module.add_function("free_f32", &fn_type, None);
+
+    assert_eq!(function.get_linkage(), ExternalLinkage);
 }
