@@ -7,7 +7,7 @@ use std::fmt;
 use std::mem::forget;
 
 use context::{Context, ContextRef};
-use values::{AsValueRef, ArrayValue, BasicValue, FloatValue, FunctionValue, IntValue, PointerValue, StructValue, VectorValue};
+use values::{ArrayValue, BasicValue, FloatValue, FunctionValue, IntValue, PointerValue, StructValue, VectorValue};
 
 mod private {
     // This is an ugly privacy hack so that Type can stay private to this module
@@ -38,7 +38,6 @@ impl Type {
         }
     }
 
-    // NOTE: AnyType
     fn print_to_stderr(&self) {
         unsafe {
             LLVMDumpType(self.type_);

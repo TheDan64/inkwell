@@ -19,12 +19,12 @@ use inkwell::context::Context;
 use inkwell::targets::{InitializationConfig, Target};
 use std::mem::transmute;
 
-Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+Target::initialize_native(&InitializationConfig::default())?;
 
 let context = Context::create();
 let module = context.create_module("sum");
 let builder = context.create_builder();
-let execution_engine = module.create_execution_engine(true).unwrap();
+let execution_engine = module.create_execution_engine(true)?;
 
 let i64_type = context.i64_type();
 let fn_type = i64_type.fn_type(&[&i64_type, &i64_type, &i64_type], false);
@@ -34,16 +34,16 @@ let basic_block = context.append_basic_block(&function, "entry");
 
 builder.position_at_end(&basic_block);
 
-let x = function.get_nth_param(0).unwrap().into_int_value();
-let y = function.get_nth_param(1).unwrap().into_int_value();
-let z = function.get_nth_param(2).unwrap().into_int_value();
+let x = function.get_nth_param(0)?.into_int_value();
+let y = function.get_nth_param(1)?.into_int_value();
+let z = function.get_nth_param(2)?.into_int_value();
 
 let sum = builder.build_int_add(&x, &y, "sum");
 let sum = builder.build_int_add(&sum, &z, "sum");
 
 builder.build_return(Some(&sum));
 
-let addr = execution_engine.get_function_address("sum").unwrap();
+let addr = execution_engine.get_function_address("sum")?;
 
 let sum: extern "C" fn(u64, u64, u64) -> u64 = unsafe { transmute(addr) };
 

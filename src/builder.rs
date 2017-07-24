@@ -3,7 +3,7 @@ use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LLVMAtomicOrdering};
 
 use basic_block::BasicBlock;
-use values::{AnyValue, AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, FloatValue, IntValue, PointerValue, Value, VectorValue};
+use values::{AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, FloatValue, IntValue, PointerValue, VectorValue, InstructionValue};
 use types::{AsTypeRef, AnyType, BasicType, PointerType, IntType};
 
 use std::ffi::CString;
@@ -21,8 +21,7 @@ impl Builder {
         }
     }
 
-    // Known acceptable return Values: IntValue, FloatValue
-    pub fn build_return(&self, value: Option<&BasicValue>) -> Value {
+    pub fn build_return(&self, value: Option<&BasicValue>) -> InstructionValue {
         // let value = unsafe {
         //     value.map_or(LLVMBuildRetVoid(self.builder), |value| LLVMBuildRet(self.builder, value.value))
         // };
@@ -34,10 +33,7 @@ impl Builder {
             }
         };
 
-        // REVIEW: Void doesn't seem to make much sense but it's the type of return statements (3.7)
-        // I think 3.8/3.9+ introduces LLVMValueKind which does have an InstructionValue, which might
-        // be more correct to replicate, even in earlier versions?
-        Value::new(value)
+        InstructionValue::new(value)
     }
 
     pub fn build_call(&self, function: &FunctionValue, args: &[&BasicValue], name: &str, tail_call: bool) -> BasicValueEnum {
@@ -88,12 +84,12 @@ impl Builder {
         PhiValue::new(value)
     }
 
-    pub fn build_store(&self, value: &AnyValue, ptr: &PointerValue) -> Value {
+    pub fn build_store(&self, ptr: &PointerValue, value: &BasicValue) -> InstructionValue {
         let value = unsafe {
             LLVMBuildStore(self.builder, value.as_value_ref(), ptr.as_value_ref())
         };
 
-        Value::new(value)
+        InstructionValue::new(value)
     }
 
     pub fn build_load(&self, ptr: &PointerValue, name: &str) -> BasicValueEnum {
@@ -151,15 +147,15 @@ impl Builder {
 
     // REVIEW: Untested
     // REVIEW: Why does free return? Seems like original pointer? Ever useful?
-    pub fn build_free(&self, ptr: &PointerValue) -> Value {
+    pub fn build_free(&self, ptr: &PointerValue) -> InstructionValue {
         let val = unsafe {
             LLVMBuildFree(self.builder, ptr.as_value_ref())
         };
 
-        Value::new(val)
+        InstructionValue::new(val)
     }
 
-    pub fn insert_instruction(&self, value: &Value) {
+    pub fn insert_instruction(&self, value: &InstructionValue) {
         unsafe {
             LLVMInsertIntoBuilder(self.builder, value.as_value_ref());
         }
@@ -333,20 +329,20 @@ impl Builder {
         IntValue::new(value)
     }
 
-    pub fn build_unconditional_branch(&self, destination_block: &BasicBlock) -> Value {
+    pub fn build_unconditional_branch(&self, destination_block: &BasicBlock) -> InstructionValue {
         let value = unsafe {
             LLVMBuildBr(self.builder, destination_block.basic_block)
         };
 
-        Value::new(value)
+        InstructionValue::new(value)
     }
 
-    pub fn build_conditional_branch(&self, comparison: &IntValue, then_block: &BasicBlock, else_block: &BasicBlock) -> Value {
+    pub fn build_conditional_branch(&self, comparison: &IntValue, then_block: &BasicBlock, else_block: &BasicBlock) -> InstructionValue {
         let value = unsafe {
             LLVMBuildCondBr(self.builder, comparison.as_value_ref(), then_block.basic_block, else_block.basic_block)
         };
 
-        Value::new(value)
+        InstructionValue::new(value)
     }
 
     // REVIEW: Untested
@@ -399,14 +395,14 @@ impl Builder {
         BasicValueEnum::new(value)
     }
 
-    pub fn build_insert_value(&self, value: &BasicValue, ptr: &PointerValue, index: u32, name: &str) -> Value { // BasicValueEnum?
+    pub fn build_insert_value(&self, value: &BasicValue, ptr: &PointerValue, index: u32, name: &str) -> InstructionValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildInsertValue(self.builder, value.as_value_ref(), ptr.as_value_ref(), index, c_string.as_ptr())
         };
 
-        Value::new(value)
+        InstructionValue::new(value)
     }
 
     pub fn build_extract_element(&self, vector: &VectorValue, index: &IntValue, name: &str) -> BasicValueEnum {
@@ -429,28 +425,26 @@ impl Builder {
         BasicValueEnum::new(value)
     }
 
-    // REVIEW: Untested
-    pub fn build_unreachable(&self) -> Value {
+    pub fn build_unreachable(&self) -> InstructionValue {
         let val = unsafe {
             LLVMBuildUnreachable(self.builder)
         };
 
-        Value::new(val)
+        InstructionValue::new(val)
     }
 
-    // REVIEW: Untested
+    // REVIEW: Not sure if this should return InstructionValue or an actual value
     // TODO: Better name for num?
-    pub fn build_fence(&self, atmoic_ordering: LLVMAtomicOrdering, num: i32, name: &str) -> Value {
+    pub fn build_fence(&self, atmoic_ordering: LLVMAtomicOrdering, num: i32, name: &str) -> InstructionValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let val = unsafe {
             LLVMBuildFence(self.builder, atmoic_ordering, num, c_string.as_ptr())
         };
 
-        Value::new(val)
+        InstructionValue::new(val)
     }
 
-    // REVIEW: Untested
     pub fn build_is_null(&self, ptr: &PointerValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -461,7 +455,6 @@ impl Builder {
         IntValue::new(val)
     }
 
-    // REVIEW: Untested
     pub fn build_is_not_null(&self, ptr: &PointerValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -530,4 +523,41 @@ fn test_build_call() {
     let pi2 = builder.build_call(&function, &[], "get_pi", false);
 
     builder.build_return(Some(&pi2));
+}
+
+#[test]
+fn test_instructions() {
+    use context::Context;
+    use values::InstructionOpcode::*;
+
+    let context = Context::create();
+    let module = context.create_module("sum");
+    let builder = context.create_builder();
+
+    let void_type = context.void_type();
+    let i64_type = context.i64_type();
+    let f32_type = context.f32_type();
+    let f32_ptr_type = f32_type.ptr_type(0);
+    let fn_type = void_type.fn_type(&[&f32_ptr_type], false);
+
+    let function = module.add_function("free_f32", &fn_type);
+    let basic_block = context.append_basic_block(&function, "entry");
+
+    builder.position_at_end(&basic_block);
+
+    let arg1 = function.get_first_param().unwrap().into_pointer_value();
+
+    let f32_val = f32_type.const_float(3.14);
+
+    let store_instruction = builder.build_store(&arg1, &f32_val);
+    let ptr_val = builder.build_ptr_to_int(&arg1, &i64_type, "ptr_val");
+    let ptr = builder.build_int_to_ptr(&ptr_val, &f32_ptr_type, "ptr");
+    let free_instruction = builder.build_free(&arg1);
+    let return_instruction = builder.build_return(None);
+
+    assert_eq!(store_instruction.get_opcode(), Store);
+    assert_eq!(ptr_val.as_instruction().unwrap().get_opcode(), PtrToInt);
+    assert_eq!(ptr.as_instruction().unwrap().get_opcode(), IntToPtr);
+    assert_eq!(free_instruction.get_opcode(), Call);
+    assert_eq!(return_instruction.get_opcode(), Return);
 }
