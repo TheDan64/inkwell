@@ -102,3 +102,42 @@ impl fmt::Debug for BasicBlock {
         write!(f, "BasicBlock {{\n    address: {:?}\n    is_const: {:?}\n    llvm_value: {:?}\n    llvm_type: {:?}\n}}", self.basic_block, is_const, llvm_value, llvm_type)
     }
 }
+
+#[test]
+fn test_basic_block_ordering() {
+    use context::Context;
+
+    let context = Context::create();
+    let module = context.create_module("test");
+
+    let i128_type = context.i128_type();
+    let fn_type = i128_type.fn_type(&[], false);
+
+    let function = module.add_function("testing", &fn_type);
+
+    let basic_block = context.append_basic_block(&function, "entry");
+    let basic_block4 = context.insert_basic_block_after(&basic_block, "block4");
+    let basic_block2 = context.insert_basic_block_after(&basic_block, "block2");
+    let basic_block3 = context.prepend_basic_block(&basic_block4, "block3");
+
+    let basic_blocks = function.get_basic_blocks();
+
+    assert_eq!(basic_blocks.len(), 4);
+    assert_eq!(basic_blocks[0].basic_block, basic_block.basic_block);
+    assert_eq!(basic_blocks[1].basic_block, basic_block2.basic_block);
+    assert_eq!(basic_blocks[2].basic_block, basic_block3.basic_block);
+    assert_eq!(basic_blocks[3].basic_block, basic_block4.basic_block);
+
+    basic_block3.move_before(&basic_block2);
+    basic_block.move_after(&basic_block4);
+
+    let basic_block5 = basic_block.prepend_basic_block("block5");
+    let basic_blocks = function.get_basic_blocks();
+
+    assert_eq!(basic_blocks.len(), 5);
+    assert_eq!(basic_blocks[0].basic_block, basic_block3.basic_block);
+    assert_eq!(basic_blocks[1].basic_block, basic_block2.basic_block);
+    assert_eq!(basic_blocks[2].basic_block, basic_block4.basic_block);
+    assert_eq!(basic_blocks[3].basic_block, basic_block5.basic_block);
+    assert_eq!(basic_blocks[4].basic_block, basic_block.basic_block);
+}
