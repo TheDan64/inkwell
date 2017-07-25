@@ -404,7 +404,6 @@ impl Builder {
         InstructionValue::new(value)
     }
 
-    // REVIEW: Untested
     pub fn build_int_neg(&self, value: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -415,7 +414,6 @@ impl Builder {
         IntValue::new(value)
     }
 
-    // REVIEW: Untested
     pub fn build_float_neg(&self, value: &FloatValue, name: &str) -> FloatValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 

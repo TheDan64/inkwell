@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind, LLVMGetNextFunction, LLVMGetPreviousFunction, LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMDumpValue, LLVMCountBasicBlocks, LLVMIsAInstruction, LLVMGetInstructionOpcode, LLVMGetLinkage, LLVMDeleteFunction, LLVMGetLastParam, LLVMGetEntryBasicBlock, LLVMAppendBasicBlock};
+use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind, LLVMGetNextFunction, LLVMGetPreviousFunction, LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMDumpValue, LLVMCountBasicBlocks, LLVMIsAInstruction, LLVMGetInstructionOpcode, LLVMGetLinkage, LLVMDeleteFunction, LLVMGetLastParam, LLVMGetEntryBasicBlock, LLVMAppendBasicBlock, LLVMConstNeg, LLVMConstFNeg, LLVMConstFAdd, LLVMConstAdd, LLVMConstSub, LLVMConstFSub, LLVMConstMul, LLVMConstFMul, LLVMConstFDiv, LLVMConstNot, LLVMConstNSWAdd, LLVMConstNUWAdd, LLVMConstNUWSub, LLVMConstNSWSub, LLVMConstNUWMul, LLVMConstNSWMul, LLVMConstUDiv, LLVMConstSDiv, LLVMConstExactSDiv, LLVMConstURem, LLVMConstSRem, LLVMConstFRem, LLVMConstAnd, LLVMConstOr, LLVMConstXor};
 use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMTypeKind};
 
@@ -482,6 +482,161 @@ impl IntValue {
     pub fn as_instruction(&self) -> Option<InstructionValue> {
         self.int_value.as_instruction()
     }
+
+    pub fn const_not(&self) -> Self {
+        let value = unsafe {
+            LLVMConstNot(self.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_neg(&self) -> Self {
+        let value = unsafe {
+            LLVMConstNeg(self.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    // TODO: operator overloading to call this
+    pub fn const_add(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstAdd(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_nsw_add(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstNSWAdd(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_nuw_add(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstNUWAdd(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    // TODO: operator overloading to call this
+    pub fn const_sub(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstSub(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_nsw_sub(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstNSWSub(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_nuw_sub(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstNUWSub(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    // TODO: operator overloading to call this
+    pub fn const_mul(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstMul(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_nsw_mul(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstNSWMul(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_nuw_mul(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstNUWMul(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_unsigned_div(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstUDiv(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_signed_div(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstSDiv(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_exact_signed_div(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstExactSDiv(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_unsigned_remainder(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstURem(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_signed_remainder(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstSRem(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_and(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstAnd(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_or(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstOr(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_xor(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstXor(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
 }
 
 impl AsValueRef for IntValue {
@@ -536,6 +691,58 @@ impl FloatValue {
 
     pub fn as_instruction(&self) -> Option<InstructionValue> {
         self.float_value.as_instruction()
+    }
+
+    pub fn const_neg(&self) -> Self {
+        let value = unsafe {
+            LLVMConstFNeg(self.as_value_ref())
+        };
+
+        FloatValue::new(value)
+    }
+
+    // TODO: operator overloading to call this
+    pub fn const_add(&self, rhs: &FloatValue) -> Self {
+        let value = unsafe {
+            LLVMConstFAdd(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        FloatValue::new(value)
+    }
+
+    // TODO: operator overloading to call this
+    pub fn const_sub(&self, rhs: &FloatValue) -> Self {
+        let value = unsafe {
+            LLVMConstFSub(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        FloatValue::new(value)
+    }
+
+    // TODO: operator overloading to call this
+    pub fn const_mul(&self, rhs: &FloatValue) -> Self {
+        let value = unsafe {
+            LLVMConstFMul(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        FloatValue::new(value)
+    }
+
+    // TODO: operator overloading to call this
+    pub fn const_div(&self, rhs: &FloatValue) -> Self {
+        let value = unsafe {
+            LLVMConstFDiv(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        FloatValue::new(value)
+    }
+
+    pub fn const_remainder(&self, rhs: &FloatValue) -> Self {
+        let value = unsafe {
+            LLVMConstFRem(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        FloatValue::new(value)
     }
 }
 
