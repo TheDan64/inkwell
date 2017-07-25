@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind, LLVMGetNextFunction, LLVMGetPreviousFunction, LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMDumpValue, LLVMCountBasicBlocks, LLVMIsAInstruction, LLVMGetInstructionOpcode, LLVMGetLinkage};
+use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind, LLVMGetNextFunction, LLVMGetPreviousFunction, LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMDumpValue, LLVMCountBasicBlocks, LLVMIsAInstruction, LLVMGetInstructionOpcode, LLVMGetLinkage, LLVMDeleteFunction, LLVMGetLastParam, LLVMGetEntryBasicBlock, LLVMAppendBasicBlock};
 use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMTypeKind};
 
@@ -77,7 +77,6 @@ impl Value {
         }
     }
 
-    // REVIEW: Untested
     // REVIEW: Is incoming_values really ArrayValue? Or an &[AnyValue]?
     fn add_incoming(&self, incoming_values: &AnyValue, incoming_basic_block: &BasicBlock, count: u32) {
         let value = &mut [incoming_values.as_value_ref()];
@@ -88,7 +87,6 @@ impl Value {
         }
     }
 
-    // REVIEW: Untested
     fn is_undef(&self) -> bool {
         unsafe {
             LLVMIsUndef(self.value) == 1
@@ -235,6 +233,30 @@ impl FunctionValue {
         Some(BasicValueEnum::new(param))
     }
 
+    pub fn get_last_param(&self) -> Option<BasicValueEnum> {
+        let param = unsafe {
+            LLVMGetLastParam(self.as_value_ref())
+        };
+
+        if param.is_null() {
+            return None;
+        }
+
+        Some(BasicValueEnum::new(param))
+    }
+
+    pub fn get_entry_basic_block(&self) -> Option<BasicBlock> {
+        let bb = unsafe {
+            LLVMGetEntryBasicBlock(self.as_value_ref())
+        };
+
+        if bb.is_null() {
+            return None;
+        }
+
+        Some(BasicBlock::new(bb))
+    }
+
     pub fn get_first_basic_block(&self) -> Option<BasicBlock> {
         let bb = unsafe {
             LLVMGetFirstBasicBlock(self.as_value_ref())
@@ -245,6 +267,16 @@ impl FunctionValue {
         }
 
         Some(BasicBlock::new(bb))
+    }
+
+    pub fn append_basic_block(&self, name: &str) -> BasicBlock {
+        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+
+        let bb = unsafe {
+            LLVMAppendBasicBlock(self.as_value_ref(), c_string.as_ptr())
+        };
+
+        BasicBlock::new(bb)
     }
 
     pub fn get_nth_param(&self, nth: u32) -> Option<BasicValueEnum> {
@@ -320,17 +352,22 @@ impl FunctionValue {
         self.fn_value.get_name()
     }
 
-    // REVIEW: Untested
     pub fn view_function_config(&self) {
         unsafe {
             LLVMViewFunctionCFG(self.as_value_ref())
         }
     }
 
-    // REVIEW: Untested
     pub fn view_function_config_only(&self) {
         unsafe {
             LLVMViewFunctionCFGOnly(self.as_value_ref())
+        }
+    }
+
+    // TODO: Look for ways to use after delete
+    pub fn delete(self) {
+        unsafe {
+            LLVMDeleteFunction(self.as_value_ref())
         }
     }
 }

@@ -1,6 +1,6 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer, LLVMWriteBitcodeToFD};
-use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMCreateFunctionPassManagerForModule, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetDataLayout, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage};
+use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMCreateFunctionPassManagerForModule, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetDataLayout, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace};
 use llvm_sys::execution_engine::{LLVMCreateExecutionEngineForModule, LLVMLinkInInterpreter, LLVMLinkInMCJIT};
 use llvm_sys::prelude::LLVMModuleRef;
 use llvm_sys::LLVMLinkage;
@@ -244,14 +244,17 @@ impl Module {
     }
 
     // REVIEW: Is this really always a pointer? It would make sense...
-    pub fn add_global(&self, type_: &BasicType, init_value: Option<&BasicValue>, name: &str) -> PointerValue {
+    pub fn add_global(&self, type_: &BasicType, initial_value: Option<&BasicValue>, address_space: Option<u32>, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMAddGlobal(self.module, type_.as_type_ref(), c_string.as_ptr())
+            match address_space {
+                Some(address_space) => LLVMAddGlobalInAddressSpace(self.module, type_.as_type_ref(), c_string.as_ptr(), address_space),
+                None => LLVMAddGlobal(self.module, type_.as_type_ref(), c_string.as_ptr()),
+            }
         };
 
-        if let Some(init_val) = init_value {
+        if let Some(init_val) = initial_value {
             unsafe {
                 LLVMSetInitializer(value, init_val.as_value_ref())
             }

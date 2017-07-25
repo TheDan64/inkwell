@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMInsertBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDeleteBasicBlock};
+use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMInsertBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDeleteBasicBlock, LLVMGetPreviousBasicBlock};
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
 
 use values::{BasicValueEnum, FunctionValue};
@@ -29,6 +29,18 @@ impl BasicBlock {
         };
 
         FunctionValue::new(value)
+    }
+
+    pub fn get_previous_basic_block(&self) -> Option<BasicBlock> {
+        let bb = unsafe {
+            LLVMGetPreviousBasicBlock(self.basic_block)
+        };
+
+        if bb.is_null() {
+            return None;
+        }
+
+        Some(BasicBlock::new(bb))
     }
 
     pub fn get_next_basic_block(&self) -> Option<BasicBlock> {
@@ -79,8 +91,7 @@ impl BasicBlock {
     }
 
     // REVIEW: Could potentially be unsafe if there are existing references. Might need a global ref counter
-    // keeping private for now
-    fn delete(self) {
+    pub fn delete(self) {
         unsafe {
             LLVMDeleteBasicBlock(self.basic_block)
         }
@@ -171,4 +182,10 @@ fn test_basic_block_ordering() {
     assert_eq!(basic_blocks[2].basic_block, basic_block4.basic_block);
     assert_eq!(basic_blocks[3].basic_block, basic_block5.basic_block);
     assert_eq!(basic_blocks[4].basic_block, basic_block.basic_block);
+
+    function.append_basic_block("block6");
+
+    let bb1 = function.get_entry_basic_block().unwrap();
+
+    assert_eq!(bb1.basic_block, basic_block3.basic_block);
 }

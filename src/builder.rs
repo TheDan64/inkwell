@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf, LLVMSetTailCall, LLVMBuildExtractElement, LLVMBuildInsertElement, LLVMBuildIntToPtr, LLVMBuildPtrToInt, LLVMInsertIntoBuilderWithName, LLVMClearInsertionPosition};
+use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf, LLVMSetTailCall, LLVMBuildExtractElement, LLVMBuildInsertElement, LLVMBuildIntToPtr, LLVMBuildPtrToInt, LLVMInsertIntoBuilderWithName, LLVMClearInsertionPosition, LLVMCreateBuilder, LLVMPositionBuilder, LLVMPositionBuilderBefore, LLVMBuildAggregateRet, LLVMBuildStructGEP, LLVMBuildInBoundsGEP, LLVMBuildPtrDiff};
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LLVMAtomicOrdering};
 
@@ -21,6 +21,14 @@ impl Builder {
         }
     }
 
+    pub fn create() -> Self {
+        let builder = unsafe {
+            LLVMCreateBuilder()
+        };
+
+        Builder::new(builder)
+    }
+
     pub fn build_return(&self, value: Option<&BasicValue>) -> InstructionValue {
         // let value = unsafe {
         //     value.map_or(LLVMBuildRetVoid(self.builder), |value| LLVMBuildRet(self.builder, value.value))
@@ -31,6 +39,17 @@ impl Builder {
                 Some(v) => LLVMBuildRet(self.builder, v.as_value_ref()),
                 None => LLVMBuildRetVoid(self.builder),
             }
+        };
+
+        InstructionValue::new(value)
+    }
+
+    pub fn build_aggregate_return(&self, values: &[&BasicValue]) -> InstructionValue {
+        let mut args: Vec<LLVMValueRef> = values.iter()
+                                                .map(|val| val.as_value_ref())
+                                                .collect();
+        let value = unsafe {
+            LLVMBuildAggregateRet(self.builder, args.as_mut_ptr(), args.len() as u32)
         };
 
         InstructionValue::new(value)
@@ -73,6 +92,39 @@ impl Builder {
         };
 
         PointerValue::new(value)
+    }
+
+    pub fn build_in_bounds_gep(&self, ptr: &PointerValue, ordered_indexes: &[&IntValue], name: &str) -> PointerValue {
+        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+
+        let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
+                                                                 .map(|val| val.as_value_ref())
+                                                                 .collect();
+        let value = unsafe {
+            LLVMBuildInBoundsGEP(self.builder, ptr.as_value_ref(), index_values.as_mut_ptr(), index_values.len() as u32, c_string.as_ptr())
+        };
+
+        PointerValue::new(value)
+    }
+
+    pub fn build_struct_gep(&self, ptr: &PointerValue, index: u32, name: &str) -> PointerValue {
+        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+
+        let value = unsafe {
+            LLVMBuildStructGEP(self.builder, ptr.as_value_ref(), index, c_string.as_ptr())
+        };
+
+        PointerValue::new(value)
+    }
+
+    pub fn build_ptr_diff(&self, lhs_ptr: &PointerValue, rhs_ptr: &PointerValue, name: &str) -> IntValue {
+        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+
+        let value = unsafe {
+            LLVMBuildPtrDiff(self.builder, lhs_ptr.as_value_ref(), rhs_ptr.as_value_ref(), c_string.as_ptr())
+        };
+
+        IntValue::new(value)
     }
 
     pub fn build_phi(&self, type_: &AnyType, name: &str) -> PhiValue {
@@ -382,6 +434,20 @@ impl Builder {
         };
 
         IntValue::new(value)
+    }
+
+    // REVIEW: What if instruction and basic_block are completely unrelated?
+    // It'd be great if we could get the BB from the instruction behind the scenes
+    pub fn position_at(&self, basic_block: &BasicBlock, instruction: &InstructionValue) {
+        unsafe {
+            LLVMPositionBuilder(self.builder, basic_block.basic_block, instruction.as_value_ref())
+        }
+    }
+
+    pub fn position_before(&self, instruction: &InstructionValue) {
+        unsafe {
+            LLVMPositionBuilderBefore(self.builder, instruction.as_value_ref())
+        }
     }
 
     pub fn position_at_end(&self, basic_block: &BasicBlock) {
