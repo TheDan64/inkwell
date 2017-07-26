@@ -1,11 +1,11 @@
-use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructSetBody, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext};
-use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef};
+use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructSetBody, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext};
+use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef};
 
 use basic_block::BasicBlock;
 use builder::Builder;
 use module::Module;
 use types::{BasicType, FloatType, IntType, StructType, VoidType};
-use values::{AsValueRef, FunctionValue};
+use values::{AsValueRef, BasicValue, FunctionValue, StructValue};
 
 use std::ffi::CString;
 use std::mem::forget;
@@ -14,7 +14,7 @@ use std::ops::Deref;
 // From Docs: A single context is not thread safe.
 // However, different contexts can execute on different threads simultaneously.
 pub struct Context {
-    context: LLVMContextRef,
+    pub(crate) context: LLVMContextRef,
 }
 
 impl Context {
@@ -221,6 +221,18 @@ impl Context {
         };
 
         BasicBlock::new(bb)
+    }
+
+    pub fn const_struct(&self, values: &[&BasicValue], packed: bool) -> StructValue {
+        let mut args: Vec<LLVMValueRef> = values.iter()
+                                                .map(|val| val.as_value_ref())
+                                                .collect();
+        let value = unsafe {
+            LLVMConstStructInContext(self.context, args.as_mut_ptr(), args.len() as u32, packed as i32)
+        };
+
+        StructValue::new(value)
+
     }
 }
 

@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMAlignOf, LLVMArrayType, LLVMConstArray, LLVMConstInt, LLVMConstNamedStruct, LLVMConstReal, LLVMCountParamTypes, LLVMDumpType, LLVMFunctionType, LLVMGetParamTypes, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMIsFunctionVarArg, LLVMPointerType, LLVMPrintTypeToString, LLVMStructGetTypeAtIndex, LLVMTypeIsSized, LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMIntType, LLVMGetArrayLength, LLVMSizeOf, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMGetIntTypeWidth, LLVMVoidType, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetPointerAddressSpace, LLVMVectorType, LLVMGetVectorSize, LLVMConstVector, LLVMPPCFP128Type, LLVMGetStructName, LLVMConstAllOnes, LLVMConstPointerNull, LLVMConstNull};
+use llvm_sys::core::{LLVMAlignOf, LLVMArrayType, LLVMConstArray, LLVMConstInt, LLVMConstNamedStruct, LLVMConstReal, LLVMCountParamTypes, LLVMDumpType, LLVMFunctionType, LLVMGetParamTypes, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMIsFunctionVarArg, LLVMPointerType, LLVMPrintTypeToString, LLVMStructGetTypeAtIndex, LLVMTypeIsSized, LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMIntType, LLVMGetArrayLength, LLVMSizeOf, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMGetIntTypeWidth, LLVMVoidType, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetPointerAddressSpace, LLVMVectorType, LLVMGetVectorSize, LLVMConstVector, LLVMPPCFP128Type, LLVMGetStructName, LLVMConstAllOnes, LLVMConstPointerNull, LLVMConstNull, LLVMConstStruct};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use llvm_sys::LLVMTypeKind;
 
@@ -514,7 +514,6 @@ impl StructType {
         }
     }
 
-    // REVIEW: Untested
     // TODO: Would be great to be able to smartly be able to do this by field name
     // TODO: LLVM 3.7+ only
     pub fn get_type_at_field_index(&self, index: u32) -> Option<BasicTypeEnum> {
@@ -530,16 +529,27 @@ impl StructType {
         Some(BasicTypeEnum::new(type_))
     }
 
-    // REVIEW: Untested
-    // TODO: Better name for num. What's it for?
-    pub fn const_struct(&self, value: &BasicValue, num: u32) -> StructValue {
-        let value = &mut [value.as_value_ref()];
-
-        let val = unsafe {
-            LLVMConstNamedStruct(self.as_type_ref(), value.as_mut_ptr(), num)
+    // REVIEW: What's the difference between these two??
+    pub fn const_named_struct(&self, values: &[&BasicValue]) -> StructValue {
+        let mut args: Vec<LLVMValueRef> = values.iter()
+                                                .map(|val| val.as_value_ref())
+                                                .collect();
+        let value = unsafe {
+            LLVMConstNamedStruct(self.as_type_ref(), args.as_mut_ptr(), args.len() as u32)
         };
 
-        StructValue::new(val)
+        StructValue::new(value)
+    }
+
+    pub fn const_struct(values: &[&BasicValue], packed: bool) -> StructValue {
+        let mut args: Vec<LLVMValueRef> = values.iter()
+                                                .map(|val| val.as_value_ref())
+                                                .collect();
+        let value = unsafe {
+            LLVMConstStruct(args.as_mut_ptr(), args.len() as u32, packed as i32)
+        };
+
+        StructValue::new(value)
     }
 
     pub fn const_null_ptr(&self) -> PointerValue {

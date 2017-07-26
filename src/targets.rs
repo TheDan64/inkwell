@@ -1,10 +1,11 @@
 use llvm_sys::core::LLVMDisposeMessage;
-use llvm_sys::target::{LLVMTargetDataRef, LLVMCopyStringRepOfTargetData, LLVMSizeOfTypeInBits, LLVMCreateTargetData, LLVMAddTargetData, LLVMByteOrder, LLVMPointerSize, LLVMByteOrdering, LLVMStoreSizeOfType, LLVMABISizeOfType, LLVMABIAlignmentOfType, LLVMCallFrameAlignmentOfType, LLVMPreferredAlignmentOfType, LLVMPreferredAlignmentOfGlobal, LLVMElementAtOffset, LLVMOffsetOfElement, LLVMDisposeTargetData, LLVMPointerSizeForAS};
+use llvm_sys::target::{LLVMTargetDataRef, LLVMCopyStringRepOfTargetData, LLVMSizeOfTypeInBits, LLVMCreateTargetData, LLVMAddTargetData, LLVMByteOrder, LLVMPointerSize, LLVMByteOrdering, LLVMStoreSizeOfType, LLVMABISizeOfType, LLVMABIAlignmentOfType, LLVMCallFrameAlignmentOfType, LLVMPreferredAlignmentOfType, LLVMPreferredAlignmentOfGlobal, LLVMElementAtOffset, LLVMOffsetOfElement, LLVMDisposeTargetData, LLVMPointerSizeForAS, LLVMIntPtrType, LLVMIntPtrTypeForAS, LLVMIntPtrTypeInContext, LLVMIntPtrTypeForASInContext};
 use llvm_sys::target_machine::{LLVMGetFirstTarget, LLVMTargetRef, LLVMGetNextTarget, LLVMGetTargetFromName, LLVMGetTargetFromTriple, LLVMGetTargetName, LLVMGetTargetDescription, LLVMTargetHasJIT, LLVMTargetHasTargetMachine, LLVMTargetHasAsmBackend, LLVMTargetMachineRef, LLVMDisposeTargetMachine, LLVMGetTargetMachineTarget, LLVMGetTargetMachineTriple, LLVMSetTargetMachineAsmVerbosity, LLVMCreateTargetMachine, LLVMGetTargetMachineCPU, LLVMGetTargetMachineFeatureString, LLVMGetDefaultTargetTriple, LLVMAddAnalysisPasses, LLVMCodeGenOptLevel, LLVMCodeModel, LLVMRelocMode};
 
+use context::Context;
 use data_layout::DataLayout;
 use pass_manager::PassManager;
-use types::{AnyType, AsTypeRef, StructType};
+use types::{AnyType, AsTypeRef, StructType, PointerType};
 use values::AnyValue;
 
 use std::default::Default;
@@ -733,6 +734,38 @@ impl TargetData {
         TargetData {
             target_data: target_data
         }
+    }
+
+    pub fn int_ptr_type(&self) -> PointerType {
+        let ptr_type = unsafe {
+            LLVMIntPtrType(self.target_data)
+        };
+
+        PointerType::new(ptr_type)
+    }
+
+    pub fn int_ptr_type_for_as(&self, as_: u32) -> PointerType {
+        let ptr_type = unsafe {
+            LLVMIntPtrTypeForAS(self.target_data, as_)
+        };
+
+        PointerType::new(ptr_type)
+    }
+
+    pub fn int_ptr_type_in_context(&self, context: &Context) -> PointerType {
+        let ptr_type = unsafe {
+            LLVMIntPtrTypeInContext(context.context, self.target_data)
+        };
+
+        PointerType::new(ptr_type)
+    }
+
+    pub fn int_ptr_type_for_as_in_context(&self, context: &Context, as_: u32) -> PointerType {
+        let ptr_type = unsafe {
+            LLVMIntPtrTypeForASInContext(context.context, self.target_data, as_)
+        };
+
+        PointerType::new(ptr_type)
     }
 
     pub fn get_data_layout(&self) -> DataLayout {

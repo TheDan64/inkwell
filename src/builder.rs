@@ -81,6 +81,7 @@ impl Builder {
         BasicValueEnum::new(value)
     }
 
+    // REVIEW: Doesn't GEP work on array too?
     pub fn build_gep(&self, ptr: &PointerValue, ordered_indexes: &[&IntValue], name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -94,6 +95,7 @@ impl Builder {
         PointerValue::new(value)
     }
 
+    // REVIEW: Doesn't GEP work on array too?
     pub fn build_in_bounds_gep(&self, ptr: &PointerValue, ordered_indexes: &[&IntValue], name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 

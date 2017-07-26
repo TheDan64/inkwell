@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind, LLVMGetNextFunction, LLVMGetPreviousFunction, LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMDumpValue, LLVMCountBasicBlocks, LLVMIsAInstruction, LLVMGetInstructionOpcode, LLVMGetLinkage, LLVMDeleteFunction, LLVMGetLastParam, LLVMGetEntryBasicBlock, LLVMAppendBasicBlock, LLVMConstNeg, LLVMConstFNeg, LLVMConstFAdd, LLVMConstAdd, LLVMConstSub, LLVMConstFSub, LLVMConstMul, LLVMConstFMul, LLVMConstFDiv, LLVMConstNot, LLVMConstNSWAdd, LLVMConstNUWAdd, LLVMConstNUWSub, LLVMConstNSWSub, LLVMConstNUWMul, LLVMConstNSWMul, LLVMConstUDiv, LLVMConstSDiv, LLVMConstExactSDiv, LLVMConstURem, LLVMConstSRem, LLVMConstFRem, LLVMConstAnd, LLVMConstOr, LLVMConstXor};
+use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind, LLVMGetNextFunction, LLVMGetPreviousFunction, LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMDumpValue, LLVMCountBasicBlocks, LLVMIsAInstruction, LLVMGetInstructionOpcode, LLVMGetLinkage, LLVMDeleteFunction, LLVMGetLastParam, LLVMGetEntryBasicBlock, LLVMAppendBasicBlock, LLVMConstNeg, LLVMConstFNeg, LLVMConstFAdd, LLVMConstAdd, LLVMConstSub, LLVMConstFSub, LLVMConstMul, LLVMConstFMul, LLVMConstFDiv, LLVMConstNot, LLVMConstNSWAdd, LLVMConstNUWAdd, LLVMConstNUWSub, LLVMConstNSWSub, LLVMConstNUWMul, LLVMConstNSWMul, LLVMConstUDiv, LLVMConstSDiv, LLVMConstExactSDiv, LLVMConstURem, LLVMConstSRem, LLVMConstFRem, LLVMConstAnd, LLVMConstOr, LLVMConstXor, LLVMConstIntCast, LLVMConstFPCast, LLVMConstExtractElement, LLVMConstInsertElement, LLVMConstNSWNeg, LLVMConstNUWNeg};
 use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMTypeKind};
 
@@ -9,7 +9,7 @@ use std::mem::forget;
 
 use basic_block::BasicBlock;
 use module::Linkage;
-use types::{AnyTypeEnum, ArrayType, BasicTypeEnum, PointerType, FloatType, IntType, StructType, VectorType};
+use types::{AsTypeRef, AnyTypeEnum, ArrayType, BasicTypeEnum, PointerType, FloatType, IntType, StructType, VectorType};
 
 mod private {
     // This is an ugly privacy hack so that Type can stay private to this module
@@ -499,6 +499,22 @@ impl IntValue {
         IntValue::new(value)
     }
 
+    pub fn const_nsw_neg(&self) -> Self {
+        let value = unsafe {
+            LLVMConstNSWNeg(self.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_nuw_neg(&self) -> Self {
+        let value = unsafe {
+            LLVMConstNUWNeg(self.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
     // TODO: operator overloading to call this
     pub fn const_add(&self, rhs: &IntValue) -> Self {
         let value = unsafe {
@@ -637,6 +653,15 @@ impl IntValue {
 
         IntValue::new(value)
     }
+
+    // TODO: Could infer is_signed from type (one day)
+    pub fn const_cast(&self, int_type: &IntType, is_signed: bool) -> Self {
+        let value = unsafe {
+            LLVMConstIntCast(self.as_value_ref(), int_type.as_type_ref(), is_signed as i32)
+        };
+
+        IntValue::new(value)
+    }
 }
 
 impl AsValueRef for IntValue {
@@ -740,6 +765,14 @@ impl FloatValue {
     pub fn const_remainder(&self, rhs: &FloatValue) -> Self {
         let value = unsafe {
             LLVMConstFRem(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        FloatValue::new(value)
+    }
+
+    pub fn const_cast(&self, float_type: &FloatType) -> Self {
+        let value = unsafe {
+            LLVMConstFPCast(self.as_value_ref(), float_type.as_type_ref())
         };
 
         FloatValue::new(value)
@@ -1061,6 +1094,22 @@ impl VectorValue {
     pub fn as_instruction(&self) -> Option<InstructionValue> {
         self.vec_value.as_instruction()
     }
+
+    pub fn const_extract_element(&self, index: &IntValue) -> BasicValueEnum {
+        let value = unsafe {
+            LLVMConstExtractElement(self.as_value_ref(), index.as_value_ref())
+        };
+
+        BasicValueEnum::new(value)
+    }
+
+    pub fn const_insert_element(&self, index: &IntValue, value: &BasicValue) -> BasicValueEnum {
+        let value = unsafe {
+            LLVMConstInsertElement(self.as_value_ref(), value.as_value_ref(), index.as_value_ref())
+        };
+
+        BasicValueEnum::new(value)
+    }
 }
 
 impl AsValueRef for VectorValue {
@@ -1070,6 +1119,8 @@ impl AsValueRef for VectorValue {
 }
 
 // REVIEW: Maybe this should go into it's own opcode module?
+// REVIEW: This should maybe be split up into InstructionOpcode and ConstOpcode?
+// see LLVMGetConstOpcode
 #[derive(Debug, PartialEq)]
 pub enum InstructionOpcode {
     Add,
