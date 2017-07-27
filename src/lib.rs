@@ -1,3 +1,4 @@
+extern crate either;
 #[macro_use]
 extern crate enum_methods;
 extern crate llvm_sys;

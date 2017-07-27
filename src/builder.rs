@@ -1,3 +1,4 @@
+use either::Either;
 use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf, LLVMSetTailCall, LLVMBuildExtractElement, LLVMBuildInsertElement, LLVMBuildIntToPtr, LLVMBuildPtrToInt, LLVMInsertIntoBuilderWithName, LLVMClearInsertionPosition, LLVMCreateBuilder, LLVMPositionBuilder, LLVMPositionBuilderBefore, LLVMBuildAggregateRet, LLVMBuildStructGEP, LLVMBuildInBoundsGEP, LLVMBuildPtrDiff};
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LLVMAtomicOrdering};
@@ -55,7 +56,7 @@ impl Builder {
         InstructionValue::new(value)
     }
 
-    pub fn build_call(&self, function: &FunctionValue, args: &[&BasicValue], name: &str, tail_call: bool) -> BasicValueEnum {
+    pub fn build_call(&self, function: &FunctionValue, args: &[&BasicValue], name: &str, tail_call: bool) -> Either<BasicValueEnum, InstructionValue> {
         // LLVM gets upset when void calls are named because they don't return anything
         let name = unsafe {
             match LLVMGetTypeKind(LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(function.as_value_ref())))) {
@@ -78,7 +79,12 @@ impl Builder {
             }
         }
 
-        BasicValueEnum::new(value)
+        unsafe {
+            match LLVMGetTypeKind(LLVMTypeOf(value)) {
+                LLVMTypeKind::LLVMVoidTypeKind => Either::Right(InstructionValue::new(value)),
+                _ => Either::Left(BasicValueEnum::new(value)),
+            }
+        }
     }
 
     // REVIEW: Doesn't GEP work on array too?
@@ -598,7 +604,7 @@ fn test_build_call() {
 
     builder.position_at_end(&basic_block2);
 
-    let pi2 = builder.build_call(&function, &[], "get_pi", false);
+    let pi2 = builder.build_call(&function, &[], "get_pi", false).left().unwrap();
 
     builder.build_return(Some(&pi2));
 }

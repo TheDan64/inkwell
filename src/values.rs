@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind, LLVMGetNextFunction, LLVMGetPreviousFunction, LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMDumpValue, LLVMCountBasicBlocks, LLVMIsAInstruction, LLVMGetInstructionOpcode, LLVMGetLinkage, LLVMDeleteFunction, LLVMGetLastParam, LLVMGetEntryBasicBlock, LLVMAppendBasicBlock, LLVMConstNeg, LLVMConstFNeg, LLVMConstFAdd, LLVMConstAdd, LLVMConstSub, LLVMConstFSub, LLVMConstMul, LLVMConstFMul, LLVMConstFDiv, LLVMConstNot, LLVMConstNSWAdd, LLVMConstNUWAdd, LLVMConstNUWSub, LLVMConstNSWSub, LLVMConstNUWMul, LLVMConstNSWMul, LLVMConstUDiv, LLVMConstSDiv, LLVMConstExactSDiv, LLVMConstURem, LLVMConstSRem, LLVMConstFRem, LLVMConstAnd, LLVMConstOr, LLVMConstXor, LLVMConstIntCast, LLVMConstFPCast, LLVMConstExtractElement, LLVMConstInsertElement, LLVMConstNSWNeg, LLVMConstNUWNeg};
+use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind, LLVMGetNextFunction, LLVMGetPreviousFunction, LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMDumpValue, LLVMCountBasicBlocks, LLVMIsAInstruction, LLVMGetInstructionOpcode, LLVMGetLinkage, LLVMDeleteFunction, LLVMGetLastParam, LLVMGetEntryBasicBlock, LLVMAppendBasicBlock, LLVMConstNeg, LLVMConstFNeg, LLVMConstFAdd, LLVMConstAdd, LLVMConstSub, LLVMConstFSub, LLVMConstMul, LLVMConstFMul, LLVMConstFDiv, LLVMConstNot, LLVMConstNSWAdd, LLVMConstNUWAdd, LLVMConstNUWSub, LLVMConstNSWSub, LLVMConstNUWMul, LLVMConstNSWMul, LLVMConstUDiv, LLVMConstSDiv, LLVMConstExactSDiv, LLVMConstURem, LLVMConstSRem, LLVMConstFRem, LLVMConstAnd, LLVMConstOr, LLVMConstXor, LLVMConstIntCast, LLVMConstFPCast, LLVMConstExtractElement, LLVMConstInsertElement, LLVMConstNSWNeg, LLVMConstNUWNeg, LLVMIsTailCall};
 use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMTypeKind};
 
@@ -1123,6 +1123,7 @@ impl AsValueRef for VectorValue {
 // see LLVMGetConstOpcode
 #[derive(Debug, PartialEq)]
 pub enum InstructionOpcode {
+    // Actual Instructions:
     Add,
     AddrSpaceCast,
     Alloca,
@@ -1287,6 +1288,14 @@ impl InstructionValue {
 
         InstructionOpcode::new(opcode)
     }
+
+    // REVIEW: See if necessary to check opcode == Call first.
+    // Does it always return false otherwise?
+    pub fn is_tail_call(&self) -> bool {
+        unsafe {
+            LLVMIsTailCall(self.as_value_ref()) == 1
+        }
+    }
 }
 
 impl AsValueRef for InstructionValue {
@@ -1345,10 +1354,8 @@ enum_value_set! {AnyValueEnum: ArrayValue, IntValue, FloatValue, PhiValue, Funct
 enum_value_set! {BasicValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue, VectorValue}
 
 trait_value_set! {AggregateValue: ArrayValue, AggregateValueEnum, StructValue}
-trait_value_set! {AnyValue: AnyValueEnum, BasicValueEnum, AggregateValueEnum, ArrayValue, IntValue, FloatValue, PhiValue, PointerValue, FunctionValue, StructValue, VectorValue, Value} // TODO: Remove Value
+trait_value_set! {AnyValue: AnyValueEnum, BasicValueEnum, AggregateValueEnum, ArrayValue, IntValue, FloatValue, PhiValue, PointerValue, FunctionValue, StructValue, VectorValue}
 trait_value_set! {BasicValue: ArrayValue, BasicValueEnum, AggregateValueEnum, IntValue, FloatValue, StructValue, PointerValue, VectorValue}
-
-// REVIEW: into/as/is functions are getting rediculious. Need macros or enum-methods crate
 
 impl BasicValueEnum {
     pub(crate) fn new(value: LLVMValueRef) -> BasicValueEnum {
@@ -1367,7 +1374,7 @@ impl BasicValueEnum {
             LLVMTypeKind::LLVMStructTypeKind => BasicValueEnum::StructValue(StructValue::new(value)),
             LLVMTypeKind::LLVMPointerTypeKind => BasicValueEnum::PointerValue(PointerValue::new(value)),
             LLVMTypeKind::LLVMArrayTypeKind => BasicValueEnum::ArrayValue(ArrayValue::new(value)),
-            LLVMTypeKind::LLVMVectorTypeKind => panic!("TODO: Unsupported type: Vector"),
+            LLVMTypeKind::LLVMVectorTypeKind => BasicValueEnum::VectorValue(VectorValue::new(value)),
             _ => unreachable!("Unsupported type"),
         }
     }
@@ -1378,6 +1385,17 @@ impl BasicValueEnum {
         };
 
         BasicTypeEnum::new(type_)
+    }
+
+    pub fn as_instruction(&self) -> Option<InstructionValue> {
+        match *self {
+            BasicValueEnum::ArrayValue(ref val) => val.as_instruction(),
+            BasicValueEnum::IntValue(ref val) => val.as_instruction(),
+            BasicValueEnum::FloatValue(ref val) => val.as_instruction(),
+            BasicValueEnum::StructValue(ref val) => val.as_instruction(),
+            BasicValueEnum::PointerValue(ref val) => val.as_instruction(),
+            BasicValueEnum::VectorValue(ref val) => val.as_instruction(),
+        }
     }
 }
 
@@ -1392,7 +1410,29 @@ fn test_linkage() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
 
-    let function = module.add_function("free_f32", &fn_type, None);
+    let function = module.add_function("do_nada", &fn_type, None);
 
     assert_eq!(function.get_linkage(), ExternalLinkage);
+}
+
+#[test]
+fn test_tail_call() {
+    use context::Context;
+
+    let context = Context::create();
+    let module = context.create_module("testing");
+    let builder = context.create_builder();
+
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+
+    let function = module.add_function("do_nothing", &fn_type, None);
+
+    let call_instruction = builder.build_call(&function, &[], "to_infinity_and_beyond", false);
+
+    assert_eq!(call_instruction.right().unwrap().is_tail_call(), false);
+
+    let call_instruction = builder.build_call(&function, &[], "to_infinity_and_beyond", true);
+
+    assert_eq!(call_instruction.right().unwrap().is_tail_call(), true);
 }
