@@ -274,41 +274,11 @@ impl Drop for ContextRef {
 }
 
 #[test]
-fn test_no_context_double_free() {
-    let context = Context::create();
-    let int = context.i8_type();
-
-    {
-        int.get_context();
-    }
-}
-
-#[test]
-fn test_no_context_double_free2() {
-    let context = Context::create();
-    let int = context.i8_type();
-    let context2 = int.get_context();
-
-    fn move_(_: Context) {}
-
-    move_(context);
-
-    context2.i8_type().const_int(0, false);
-}
-
-#[test]
-fn test_no_context_double_free3() {
-    Context::get_global_context();
-    Context::get_global_context();
-}
-
-#[test]
 fn test_get_context_from_contextless_value() {
     let int = IntType::i8_type();
-    let global_context = unsafe {
-        LLVMGetGlobalContext()
-    };
+    let global_context = Context::get_global_context();
 
     assert!(!(*int.get_context()).context.is_null());
-    assert!((*int.get_context()).context == global_context);
+
+    assert!((*int.get_context()).context == global_context.context.as_ref().unwrap().context);
 }
