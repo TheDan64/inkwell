@@ -783,7 +783,6 @@ impl TargetData {
         }
     }
 
-    // REVIEW: Untested
     pub fn create(str_repr: &str) -> TargetData {
         let c_string = CString::new(str_repr).expect("Conversion to CString failed unexpectedly");
 
@@ -794,7 +793,6 @@ impl TargetData {
         TargetData::new(target_data)
     }
 
-    // REVIEW: Untested
     pub fn add_target_data(&self, pass_manager: &PassManager) {
         unsafe {
             LLVMAddTargetData(self.target_data, pass_manager.pass_manager)
@@ -854,7 +852,6 @@ impl TargetData {
         }
     }
 
-    // REVIEW: Untested
     pub fn get_preferred_alignment_of_global(&self, value: &AnyValue) -> u32 {
         unsafe {
             LLVMPreferredAlignmentOfGlobal(self.target_data, value.as_value_ref())

@@ -101,7 +101,7 @@ impl Type {
         }
     }
 
-    // REVIEW: Untested; Return IntValue?
+    // REVIEW: Return IntValue?
     fn get_alignment(&self) -> IntValue {
         let val = unsafe {
             LLVMAlignOf(self.type_)

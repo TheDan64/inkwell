@@ -281,7 +281,6 @@ impl Module {
         }
     }
 
-    // REVIEW: Untested
     pub fn write_bitcode_to_memory(&self) -> MemoryBuffer {
         let memory_buffer = unsafe {
             LLVMWriteBitcodeToMemoryBuffer(self.module)
