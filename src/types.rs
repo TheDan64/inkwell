@@ -25,6 +25,7 @@ pub(crate) use self::private::AsTypeRef;
 // Worth noting that types seem to be singletons. At the very least, primitives are.
 // Though this is likely only true per thread since LLVM claims to not be very thread-safe.
 // TODO: Make not public if possible
+#[derive(PartialEq, Eq)]
 struct Type {
     type_: LLVMTypeRef,
 }
@@ -155,6 +156,7 @@ impl fmt::Debug for Type {
     }
 }
 
+#[derive(PartialEq, Eq)]
 pub struct FunctionType {
     fn_type: Type,
 }
@@ -168,8 +170,7 @@ impl FunctionType {
         }
     }
 
-    // REVIEW: Not working
-    fn is_var_arg(&self) -> bool {
+    pub fn is_var_arg(&self) -> bool {
         unsafe {
             LLVMIsFunctionVarArg(self.fn_type.type_) != 0
         }
@@ -233,7 +234,7 @@ impl AsTypeRef for FunctionType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct IntType {
     int_type: Type,
 }
@@ -383,7 +384,7 @@ impl AsTypeRef for IntType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct FloatType {
     float_type: Type,
 }
@@ -500,7 +501,7 @@ impl AsTypeRef for FloatType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct StructType {
     struct_type: Type,
 }
@@ -669,7 +670,7 @@ impl AsTypeRef for StructType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct VoidType {
     void_type: Type,
 }
@@ -726,7 +727,7 @@ impl AsTypeRef for VoidType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct PointerType {
     ptr_type: Type,
 }
@@ -797,7 +798,7 @@ impl AsTypeRef for PointerType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct ArrayType {
     array_type: Type,
 }
@@ -879,9 +880,9 @@ impl AsTypeRef for ArrayType {
     }
 }
 
-#[derive(Debug)]
 // REVIEW: vec_type() is impl for IntType & FloatType. Need to
 // find out if it is valid for other types too. Maybe PointerType?
+#[derive(Debug, PartialEq, Eq)]
 pub struct VectorType {
     vec_type: Type,
 }
@@ -1049,24 +1050,3 @@ impl BasicTypeEnum {
 }
 
 // REVIEW: Possible to impl Debug for AnyType?
-
-#[test]
-fn test_function_type() {
-    let context = Context::create();
-    let int = context.i8_type();
-    let float = context.f32_type();
-    let fn_type = int.fn_type(&[&int, &int, &float], false);
-
-    assert!(!fn_type.is_var_arg());
-
-    let param_types = fn_type.get_param_types();
-
-    assert_eq!(param_types.len(), 3);
-    assert_eq!(param_types[0].as_int_type().as_type_ref(), int.as_type_ref());
-    assert_eq!(param_types[1].as_int_type().as_type_ref(), int.as_type_ref());
-    assert_eq!(param_types[2].as_float_type().as_type_ref(), float.as_type_ref());
-
-    let fn_type = int.fn_type(&[&int, &float], true);
-
-    assert!(fn_type.is_var_arg());
-}

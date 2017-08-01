@@ -24,6 +24,7 @@ mod private {
 
 pub(crate) use self::private::AsValueRef;
 
+#[derive(PartialEq, Eq)]
 struct Value {
     value: LLVMValueRef,
 }
@@ -138,6 +139,7 @@ impl fmt::Debug for Value {
     }
 }
 
+#[derive(PartialEq, Eq)]
 pub struct FunctionValue {
     fn_value: Value,
 }
@@ -435,7 +437,7 @@ impl Iterator for ParamValueIter {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct IntValue {
     int_value: Value,
 }
@@ -670,7 +672,7 @@ impl AsValueRef for IntValue {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct FloatValue {
     float_value: Value
 }
@@ -785,7 +787,7 @@ impl AsValueRef for FloatValue {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct StructValue {
     struct_value: Value
 }
@@ -840,7 +842,7 @@ impl AsValueRef for StructValue {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct PointerValue {
     ptr_value: Value
 }
@@ -895,7 +897,7 @@ impl AsValueRef for PointerValue {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct PhiValue {
     phi_value: Value
 }
@@ -949,6 +951,7 @@ impl AsValueRef for Value { // TODO: Remove
     }
 }
 
+#[derive(PartialEq, Eq)]
 pub struct ArrayValue {
     array_value: Value
 }
@@ -1027,7 +1030,7 @@ impl fmt::Debug for ArrayValue {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct VectorValue {
     vec_value: Value,
 }
@@ -1263,7 +1266,7 @@ impl InstructionOpcode {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct InstructionValue {
     instruction_value: Value,
 }

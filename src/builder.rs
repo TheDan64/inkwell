@@ -32,6 +32,7 @@ impl Builder {
 
     // REVIEW: Would probably make this API a bit simpler by taking Into<Option<&BasicValue>>
     // So that you could just do build_return(&value) or build_return(None)
+    // Is that frowned upon?
     pub fn build_return(&self, value: Option<&BasicValue>) -> InstructionValue {
         // let value = unsafe {
         //     value.map_or(LLVMBuildRetVoid(self.builder), |value| LLVMBuildRet(self.builder, value.value))
@@ -185,7 +186,6 @@ impl Builder {
         PointerValue::new(value)
     }
 
-    // REVIEW: Is this still a PointerValue (as opposed to an ArrayValue?)
     pub fn build_heap_allocated_array(&self, type_: &BasicType, size: &IntValue, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -196,7 +196,6 @@ impl Builder {
         PointerValue::new(value)
     }
 
-    // REVIEW: Is this still a PointerValue (as opposed to an ArrayValue?)
     pub fn build_stack_allocated_array(&self, type_: &BasicType, size: &IntValue, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -239,6 +238,7 @@ impl Builder {
     }
 
     // TODO: Possibly make this generic over sign via struct metadata or subtypes
+    // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_unsigned_div(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -250,6 +250,7 @@ impl Builder {
     }
 
     // TODO: Possibly make this generic over sign via struct metadata or subtypes
+    // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_signed_div(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -261,6 +262,7 @@ impl Builder {
     }
 
     // TODO: Possibly make this generic over sign via struct metadata or subtypes
+    // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_unsigned_rem(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -273,6 +275,7 @@ impl Builder {
 
 
     // TODO: Possibly make this generic over sign via struct metadata or subtypes
+    // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_signed_rem(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 

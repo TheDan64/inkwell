@@ -13,6 +13,7 @@ use std::ops::Deref;
 
 // From Docs: A single context is not thread safe.
 // However, different contexts can execute on different threads simultaneously.
+#[derive(Debug, PartialEq, Eq)]
 pub struct Context {
     pub(crate) context: LLVMContextRef,
 }
@@ -247,6 +248,7 @@ impl Drop for Context {
 // Alternate strategy would be to just define ownership parameter
 // on Context, and only call destructor if true. Not sure of pros/cons
 // compared to this approach other than not needing Deref trait's ugly syntax
+#[derive(Debug, PartialEq, Eq)]
 pub struct ContextRef {
     context: Option<Context>,
 }
@@ -271,14 +273,4 @@ impl Drop for ContextRef {
     fn drop(&mut self) {
         forget(self.context.take());
     }
-}
-
-#[test]
-fn test_get_context_from_contextless_value() {
-    let int = IntType::i8_type();
-    let global_context = Context::get_global_context();
-
-    assert!(!(*int.get_context()).context.is_null());
-
-    assert!((*int.get_context()).context == global_context.context.as_ref().unwrap().context);
 }
