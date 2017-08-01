@@ -207,6 +207,7 @@ impl Builder {
         PointerValue::new(value)
     }
 
+    // SubType: <P>(&self, ptr: &PointerValue<P>) -> InstructionValue {
     pub fn build_free(&self, ptr: &PointerValue) -> InstructionValue {
         let val = unsafe {
             LLVMBuildFree(self.builder, ptr.as_value_ref())
@@ -364,6 +365,7 @@ impl Builder {
         FloatValue::new(value)
     }
 
+    // SubType: <L, R>(&self, lhs: &IntValue<L>, rhs: &IntType<R>, name: &str) -> IntValue<R> {
     pub fn build_int_cast(&self, int: &IntValue, int_type: &IntType, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -384,6 +386,7 @@ impl Builder {
         FloatValue::new(value)
     }
 
+    // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_add(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -395,6 +398,7 @@ impl Builder {
     }
 
     // REVIEW: Possibly incorperate into build_int_add via flag param
+    // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_nsw_add(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -406,6 +410,7 @@ impl Builder {
     }
 
     // REVIEW: Possibly incorperate into build_int_add via flag param
+    // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_nuw_add(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -416,6 +421,7 @@ impl Builder {
         IntValue::new(value)
     }
 
+    // SubType: <F>(&self, lhs: &FloatValue<F>, rhs: &FloatValue<F>, name: &str) -> FloatValue<F> {
     pub fn build_float_add(&self, lhs: &FloatValue, rhs: &FloatValue, name: &str) -> FloatValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -426,6 +432,7 @@ impl Builder {
         FloatValue::new(value)
     }
 
+    // SubType: (&self, lhs: &IntValue<bool>, rhs: &IntValue<bool>, name: &str) -> IntValue<bool> {
     pub fn build_xor(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -436,6 +443,7 @@ impl Builder {
         IntValue::new(value)
     }
 
+    // SubType: (&self, lhs: &IntValue<bool>, rhs: &IntValue<bool>, name: &str) -> IntValue<bool> {
     pub fn build_and(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -446,6 +454,7 @@ impl Builder {
         IntValue::new(value)
     }
 
+    // SubType: (&self, lhs: &IntValue<bool>, rhs: &IntValue<bool>, name: &str) -> IntValue<bool> {
     pub fn build_or(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -456,6 +465,7 @@ impl Builder {
         IntValue::new(value)
     }
 
+    // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_sub(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -478,6 +488,7 @@ impl Builder {
     }
 
     // REVIEW: Possibly incorperate into build_int_sub via flag param
+    // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_nuw_sub(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -488,6 +499,7 @@ impl Builder {
         IntValue::new(value)
     }
 
+    // SubType: <F>(&self, lhs: &FloatValue<F>, rhs: &FloatValue<F>, name: &str) -> FloatValue<F> {
     pub fn build_float_sub(&self, lhs: &FloatValue, rhs: &FloatValue, name: &str) -> FloatValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -498,6 +510,7 @@ impl Builder {
         FloatValue::new(value)
     }
 
+    // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_mul(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -509,6 +522,7 @@ impl Builder {
     }
 
     // REVIEW: Possibly incorperate into build_int_mul via flag param
+    // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_nsw_mul(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -520,6 +534,7 @@ impl Builder {
     }
 
     // REVIEW: Possibly incorperate into build_int_mul via flag param
+    // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_nuw_mul(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -530,6 +545,7 @@ impl Builder {
         IntValue::new(value)
     }
 
+    // SubType: <F>(&self, lhs: &FloatValue<F>, rhs: &FloatValue<F>, name: &str) -> FloatValue<F> {
     pub fn build_float_mul(&self, lhs: &FloatValue, rhs: &FloatValue, name: &str) -> FloatValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -550,6 +566,7 @@ impl Builder {
         BasicValueEnum::new(value)
     }
 
+    // SubType: <F, T>(&self, from: &PointerValue<F>, to: &PointerType<T>, name: &str) -> PointerValue<T> {
     pub fn build_pointer_cast(&self, from: &PointerValue, to: &PointerType, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -560,6 +577,7 @@ impl Builder {
         PointerValue::new(value)
     }
 
+    // SubType: <I>(&self, op, lhs: &IntValue<I>, rhs: &IntValue<I>, name) -> IntValue<bool> { ?
     pub fn build_int_compare(&self, op: LLVMIntPredicate, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -570,6 +588,7 @@ impl Builder {
         IntValue::new(value)
     }
 
+    // SubType: <F>(&self, op, lhs: &FloatValue<F>, rhs: &FloatValue<F>, name) -> IntValue<bool> { ?
     pub fn build_float_compare(&self, op: LLVMRealPredicate, lhs: &FloatValue, rhs: &FloatValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -596,6 +615,7 @@ impl Builder {
         InstructionValue::new(value)
     }
 
+    // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<I> {
     pub fn build_int_neg(&self, value: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -607,6 +627,7 @@ impl Builder {
     }
 
     // REVIEW: Possibly incorperate into build_int_neg via flag and subtypes
+    // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<I> {
     pub fn build_int_nsw_neg(&self, value: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -617,6 +638,7 @@ impl Builder {
         IntValue::new(value)
     }
 
+    // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<I> {
     pub fn build_int_nuw_neg(&self, value: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -627,6 +649,7 @@ impl Builder {
         IntValue::new(value)
     }
 
+    // SubType: <F>(&self, value: &FloatValue<F>, name) -> FloatValue<F> {
     pub fn build_float_neg(&self, value: &FloatValue, name: &str) -> FloatValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -637,6 +660,7 @@ impl Builder {
         FloatValue::new(value)
     }
 
+    // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<bool> { ?
     pub fn build_not(&self, value: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -729,6 +753,7 @@ impl Builder {
         InstructionValue::new(val)
     }
 
+    // SubType: <P>(&self, ptr: &PointerValue<P>, name) -> IntValue<bool> {
     pub fn build_is_null(&self, ptr: &PointerValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -739,6 +764,7 @@ impl Builder {
         IntValue::new(val)
     }
 
+    // SubType: <P>(&self, ptr: &PointerValue<P>, name) -> IntValue<bool> {
     pub fn build_is_not_null(&self, ptr: &PointerValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -749,6 +775,7 @@ impl Builder {
         IntValue::new(val)
     }
 
+    // SubType: <I, P>(&self, int: &IntValue<I>, ptr_type: &PointerType<P>, name) -> PointerValue<P> {
     pub fn build_int_to_ptr(&self, int: &IntValue, ptr_type: &PointerType, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -759,6 +786,7 @@ impl Builder {
         PointerValue::new(value)
     }
 
+    // SubType: <I, P>(&self, ptr: &PointerValue<P>, int_type: &IntType<I>, name) -> IntValue<I> {
     pub fn build_ptr_to_int(&self, ptr: &PointerValue, int_type: &IntType, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
