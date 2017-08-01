@@ -30,6 +30,8 @@ impl Builder {
         Builder::new(builder)
     }
 
+    // REVIEW: Would probably make this API a bit simpler by taking Into<Option<&BasicValue>>
+    // So that you could just do build_return(&value) or build_return(None)
     pub fn build_return(&self, value: Option<&BasicValue>) -> InstructionValue {
         // let value = unsafe {
         //     value.map_or(LLVMBuildRetVoid(self.builder), |value| LLVMBuildRet(self.builder, value.value))
