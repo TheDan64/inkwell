@@ -49,8 +49,17 @@ fn test_basic_block_ordering() {
     function.append_basic_block("block6");
 
     let bb1 = function.get_entry_basic_block().unwrap();
+    let bb4 = basic_block5.get_previous_basic_block().unwrap();
 
     assert_eq!(bb1, basic_block3);
+    assert_eq!(bb4, basic_block4);
+    assert!(basic_block3.get_previous_basic_block().is_none());
+
+    bb4.delete();
+
+    let bb2 = basic_block5.get_previous_basic_block().unwrap();
+
+    assert_eq!(bb2, basic_block2);
 }
 
 #[test]
