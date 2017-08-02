@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructSetBody, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext};
+use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext};
 use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef};
 
 use basic_block::BasicBlock;
@@ -169,25 +169,22 @@ impl Context {
     }
 
     // REVIEW: AnyType but VoidType? FunctionType?
-    // REVIEW: Changed field_types signature, untested
-    pub fn struct_type(&self, field_types: &[&BasicType], packed: bool, name: &str) -> StructType {
+    pub fn struct_type(&self, field_types: &[&BasicType], packed: bool) -> StructType {
         let mut field_types: Vec<LLVMTypeRef> = field_types.iter()
                                                            .map(|val| val.as_type_ref())
                                                            .collect();
-        let struct_type = if name.is_empty() {
-            unsafe {
-                LLVMStructTypeInContext(self.context, field_types.as_mut_ptr(), field_types.len() as u32, packed as i32)
-            }
-        } else {
-            let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+        let struct_type = unsafe {
+            LLVMStructTypeInContext(self.context, field_types.as_mut_ptr(), field_types.len() as u32, packed as i32)
+        };
 
-            unsafe {
-                let struct_type = LLVMStructCreateNamed(self.context, c_string.as_ptr());
+        StructType::new(struct_type)
+    }
 
-                LLVMStructSetBody(struct_type, field_types.as_mut_ptr(), field_types.len() as u32, packed as i32);
+    pub fn opaque_struct_type(&self, name: &str) -> StructType {
+        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
-                struct_type
-            }
+        let struct_type = unsafe {
+            LLVMStructCreateNamed(self.context, c_string.as_ptr())
         };
 
         StructType::new(struct_type)

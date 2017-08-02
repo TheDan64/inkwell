@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMAlignOf, LLVMArrayType, LLVMConstArray, LLVMConstInt, LLVMConstNamedStruct, LLVMConstReal, LLVMCountParamTypes, LLVMDumpType, LLVMFunctionType, LLVMGetParamTypes, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMIsFunctionVarArg, LLVMPointerType, LLVMPrintTypeToString, LLVMStructGetTypeAtIndex, LLVMTypeIsSized, LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMIntType, LLVMGetArrayLength, LLVMSizeOf, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMGetIntTypeWidth, LLVMVoidType, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetPointerAddressSpace, LLVMVectorType, LLVMGetVectorSize, LLVMConstVector, LLVMPPCFP128Type, LLVMGetStructName, LLVMConstAllOnes, LLVMConstPointerNull, LLVMConstNull, LLVMConstStruct};
+use llvm_sys::core::{LLVMAlignOf, LLVMArrayType, LLVMConstArray, LLVMConstInt, LLVMConstNamedStruct, LLVMConstReal, LLVMCountParamTypes, LLVMDumpType, LLVMFunctionType, LLVMGetParamTypes, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMIsFunctionVarArg, LLVMPointerType, LLVMPrintTypeToString, LLVMStructGetTypeAtIndex, LLVMTypeIsSized, LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMIntType, LLVMGetArrayLength, LLVMSizeOf, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMGetIntTypeWidth, LLVMVoidType, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetPointerAddressSpace, LLVMVectorType, LLVMGetVectorSize, LLVMConstVector, LLVMPPCFP128Type, LLVMGetStructName, LLVMConstAllOnes, LLVMConstPointerNull, LLVMConstNull, LLVMConstStruct, LLVMStructSetBody};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use llvm_sys::LLVMTypeKind;
 
@@ -661,6 +661,23 @@ impl StructType {
 
     pub fn get_undef(&self) -> StructValue {
         StructValue::new(self.struct_type.get_undef())
+    }
+
+    // REVIEW: SubTypes should allow this to only be implemented for StructType<Opaque> one day
+    // but would have to return StructType<Tys>
+    // REVIEW: What happens if called with &[]? Should that still be opaque? Does the call break?
+    pub fn set_body(&self, field_types: &[&BasicType], packed: bool) -> bool {
+        let is_opaque = self.is_opaque();
+        let mut field_types: Vec<LLVMTypeRef> = field_types.iter()
+                                                           .map(|val| val.as_type_ref())
+                                                           .collect();
+        if is_opaque {
+            unsafe {
+                LLVMStructSetBody(self.as_type_ref(), field_types.as_mut_ptr(), field_types.len() as u32, packed as i32);
+            }
+        }
+
+        is_opaque
     }
 }
 

@@ -69,8 +69,8 @@ fn test_target_data() {
     let i64_type = context.i64_type();
     let f32_type = context.f32_type();
     let f64_type = context.f64_type();
-    let struct_type = context.struct_type(&[&i32_type, &i64_type, &f64_type, &f32_type], false, "struct1");
-    let struct_type2 = context.struct_type(&[&f32_type, &i32_type, &i64_type, &f64_type], false, "struct2");
+    let struct_type = context.struct_type(&[&i32_type, &i64_type, &f64_type, &f32_type], false);
+    let struct_type2 = context.struct_type(&[&f32_type, &i32_type, &i64_type, &f64_type], false);
 
     let _ = target_data.get_data_layout(); // TODO: See if you can test data_layout
 

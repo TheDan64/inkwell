@@ -10,19 +10,34 @@ fn test_struct_type() {
     let int_vector = int.vec_type(100);
     let float = context.f32_type();
     let float_array = float.array_type(3);
-    let av_struct = context.struct_type(&[&int_vector, &float_array], false, "");
+    let av_struct = context.struct_type(&[&int_vector, &float_array], false);
 
     assert!(!av_struct.is_packed());
     assert!(!av_struct.is_opaque());
     assert!(av_struct.is_sized());
     assert!(av_struct.get_name().is_none());
 
-    let av_struct = context.struct_type(&[&int_vector, &float_array], true, "av_struct");
+    let av_struct = context.struct_type(&[&int_vector, &float_array], true);
 
     assert!(av_struct.is_packed());
     assert!(!av_struct.is_opaque());
     assert!(av_struct.is_sized());
-    assert_eq!(av_struct.get_name(), Some(&*CString::new("av_struct").unwrap()));
+    // REVIEW: Is there a way to name a non opaque struct?
+    assert!(av_struct.get_name().is_none());
+
+    let opaque_struct = context.opaque_struct_type("opaque_struct");
+
+    assert!(!opaque_struct.is_packed());
+    assert!(opaque_struct.is_opaque());
+    assert!(!opaque_struct.is_sized());
+    assert_eq!(opaque_struct.get_name(), Some(&*CString::new("opaque_struct").unwrap()));
+
+    assert!(opaque_struct.set_body(&[&int_vector, &float_array], true));
+
+    assert!(opaque_struct.is_packed());
+    assert!(!opaque_struct.is_opaque());
+    assert!(opaque_struct.is_sized());
+    assert_eq!(opaque_struct.get_name(), Some(&*CString::new("opaque_struct").unwrap()));
 }
 
 #[test]
