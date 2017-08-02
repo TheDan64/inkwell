@@ -466,7 +466,7 @@ impl FloatType {
         FloatType::new(float_type)
     }
 
-    pub fn i128_type() -> Self {
+    pub fn f128_type() -> Self {
         let float_type = unsafe {
             LLVMFP128Type()
         };
@@ -807,6 +807,10 @@ impl PointerType {
     pub fn get_undef(&self) -> PointerValue {
         PointerValue::new(self.ptr_type.get_undef())
     }
+
+    pub fn vec_type(&self, size: u32) -> VectorType {
+        self.ptr_type.vec_type(size)
+    }
 }
 
 impl AsTypeRef for PointerType {
@@ -960,6 +964,10 @@ impl VectorType {
 
     pub fn get_undef(&self) -> VectorValue {
         VectorValue::new(self.vec_type.get_undef())
+    }
+
+    pub fn is_sized(&self) -> bool {
+        self.vec_type.is_sized()
     }
 }
 

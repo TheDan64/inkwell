@@ -1,6 +1,7 @@
 extern crate inkwell;
 
 use self::inkwell::context::Context;
+use self::inkwell::types::{FloatType, IntType, VoidType};
 use std::ffi::CString;
 
 #[test]
@@ -59,4 +60,71 @@ fn test_function_type() {
     let fn_type = int.fn_type(&[&int, &float], true);
 
     assert!(fn_type.is_var_arg());
+}
+
+#[test]
+fn test_sized_types() {
+    let void_type = VoidType::void_type();
+    let bool_type = IntType::bool_type();
+    let i8_type = IntType::i8_type();
+    let i16_type = IntType::i16_type();
+    let i32_type = IntType::i32_type();
+    let i64_type = IntType::i64_type();
+    let i128_type = IntType::i128_type();
+    let f16_type = FloatType::f16_type();
+    let f32_type = FloatType::f32_type();
+    let f64_type = FloatType::f64_type();
+    let f128_type = FloatType::f128_type();
+
+    // REVIEW: Should these maybe just be constant functions instead of bothering to calling LLVM?
+
+    assert!(!void_type.is_sized());
+    assert!(bool_type.is_sized());
+    assert!(i8_type.is_sized());
+    assert!(i16_type.is_sized());
+    assert!(i32_type.is_sized());
+    assert!(i64_type.is_sized());
+    assert!(i128_type.is_sized());
+    assert!(f16_type.is_sized());
+    assert!(f32_type.is_sized());
+    assert!(f64_type.is_sized());
+    assert!(f128_type.is_sized());
+
+    assert!(void_type.ptr_type(0).is_sized());
+    assert!(bool_type.ptr_type(0).is_sized());
+    assert!(i8_type.ptr_type(0).is_sized());
+    assert!(i16_type.ptr_type(0).is_sized());
+    assert!(i32_type.ptr_type(0).is_sized());
+    assert!(i64_type.ptr_type(0).is_sized());
+    assert!(i128_type.ptr_type(0).is_sized());
+    assert!(f16_type.ptr_type(0).is_sized());
+    assert!(f32_type.ptr_type(0).is_sized());
+    assert!(f64_type.ptr_type(0).is_sized());
+    assert!(f128_type.ptr_type(0).is_sized());
+
+    // REVIEW: You can't have array of void right?
+    assert!(void_type.ptr_type(0).array_type(42).is_sized());
+    assert!(bool_type.array_type(42).is_sized());
+    assert!(i8_type.array_type(42).is_sized());
+    assert!(i16_type.array_type(42).is_sized());
+    assert!(i32_type.array_type(42).is_sized());
+    assert!(i64_type.array_type(42).is_sized());
+    assert!(i128_type.array_type(42).is_sized());
+    assert!(f16_type.array_type(42).is_sized());
+    assert!(f32_type.array_type(42).is_sized());
+    assert!(f64_type.array_type(42).is_sized());
+    assert!(f128_type.array_type(42).is_sized());
+
+    // REVIEW: You can't have array of void right?
+    assert!(void_type.ptr_type(0).vec_type(42).is_sized());
+    assert!(bool_type.vec_type(42).is_sized());
+    assert!(i8_type.vec_type(42).is_sized());
+    assert!(i16_type.vec_type(42).is_sized());
+    assert!(i32_type.vec_type(42).is_sized());
+    assert!(i64_type.vec_type(42).is_sized());
+    assert!(i128_type.vec_type(42).is_sized());
+    assert!(f16_type.vec_type(42).is_sized());
+    assert!(f32_type.vec_type(42).is_sized());
+    assert!(f64_type.vec_type(42).is_sized());
+    assert!(f128_type.vec_type(42).is_sized());
 }
