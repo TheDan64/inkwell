@@ -229,7 +229,7 @@ impl Builder {
         }
     }
 
-    pub fn get_insert_block(&self) -> BasicBlock {
+    pub fn get_insert_block(&self) -> Option<BasicBlock> {
         let bb = unsafe {
             LLVMGetInsertBlock(self.builder)
         };

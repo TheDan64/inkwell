@@ -8,11 +8,20 @@ use std::ffi::CString;
 fn test_basic_block_ordering() {
     let context = Context::create();
     let module = context.create_module("test");
+    let builder = context.create_builder();
+
+    assert!(builder.get_insert_block().is_none());
 
     let i128_type = context.i128_type();
     let fn_type = i128_type.fn_type(&[], false);
 
     let function = module.add_function("testing", &fn_type, None);
+
+    // REVIEW: Possibly LLVM bug - gives a basic block ptr that isn't
+    // actually a basic block instead of returning nullptr. Simplest solution
+    // may be to just return None if LLVMIsABB doesn't pass
+    // assert!(function.get_entry_basic_block().is_none());
+    // assert!(function.get_first_basic_block().is_none());
 
     let basic_block = context.append_basic_block(&function, "entry");
     let basic_block4 = context.insert_basic_block_after(&basic_block, "block4");
@@ -60,6 +69,10 @@ fn test_basic_block_ordering() {
     let bb2 = basic_block5.get_previous_basic_block().unwrap();
 
     assert_eq!(bb2, basic_block2);
+
+    let bb3 = function.get_first_basic_block().unwrap();
+
+    assert_eq!(bb3, basic_block3);
 }
 
 #[test]

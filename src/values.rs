@@ -31,7 +31,7 @@ struct Value {
 
 impl Value {
     pub(crate) fn new(value: LLVMValueRef) -> Value {
-        assert!(!value.is_null());
+        debug_assert!(!value.is_null(), "This should never happen since containing struct should check null ptrs");
 
         Value {
             value: value
@@ -145,16 +145,16 @@ pub struct FunctionValue {
 }
 
 impl FunctionValue {
-    pub(crate) fn new(value: LLVMValueRef) -> FunctionValue {
-        assert!(!value.is_null());
+    pub(crate) fn new(value: LLVMValueRef) -> Option<Self> {
+        if value.is_null() {
+            return None;
+        }
 
         unsafe {
             assert!(!LLVMIsAFunction(value).is_null())
         }
 
-        FunctionValue {
-            fn_value: Value::new(value)
-        }
+        Some(FunctionValue { fn_value: Value::new(value) })
     }
 
     pub fn get_linkage(&self) -> Linkage {
@@ -204,11 +204,7 @@ impl FunctionValue {
             LLVMGetNextFunction(self.as_value_ref())
         };
 
-        if function.is_null() {
-            return None;
-        }
-
-        Some(FunctionValue::new(function))
+        FunctionValue::new(function)
     }
 
     pub fn get_previous_function(&self) -> Option<Self> {
@@ -216,11 +212,7 @@ impl FunctionValue {
             LLVMGetPreviousFunction(self.as_value_ref())
         };
 
-        if function.is_null() {
-            return None;
-        }
-
-        Some(FunctionValue::new(function))
+        FunctionValue::new(function)
     }
 
     pub fn get_first_param(&self) -> Option<BasicValueEnum> {
@@ -247,28 +239,28 @@ impl FunctionValue {
         Some(BasicValueEnum::new(param))
     }
 
+    // REVIEW: Odd behavior, a function with no BBs returns a ptr
+    // that isn't actually a basic_block and seems to get corrupted
+    // Should check filed LLVM bugs - maybe just return None since
+    // we can catch it with "LLVMIsABasicBlock"
     pub fn get_entry_basic_block(&self) -> Option<BasicBlock> {
         let bb = unsafe {
             LLVMGetEntryBasicBlock(self.as_value_ref())
         };
 
-        if bb.is_null() {
-            return None;
-        }
-
-        Some(BasicBlock::new(bb))
+        BasicBlock::new(bb)
     }
 
+    // REVIEW: Odd behavior, a function with no BBs returns a ptr
+    // that isn't actually a basic_block and seems to get corrupted
+    // Should check filed LLVM bugs - maybe just return None since
+    // we can catch it with "LLVMIsABasicBlock"
     pub fn get_first_basic_block(&self) -> Option<BasicBlock> {
         let bb = unsafe {
             LLVMGetFirstBasicBlock(self.as_value_ref())
         };
 
-        if bb.is_null() {
-            return None;
-        }
-
-        Some(BasicBlock::new(bb))
+        BasicBlock::new(bb)
     }
 
     pub fn append_basic_block(&self, name: &str) -> BasicBlock {
@@ -278,7 +270,7 @@ impl FunctionValue {
             LLVMAppendBasicBlock(self.as_value_ref(), c_string.as_ptr())
         };
 
-        BasicBlock::new(bb)
+        BasicBlock::new(bb).expect("Appending basic block should never fail")
     }
 
     pub fn get_nth_param(&self, nth: u32) -> Option<BasicValueEnum> {
@@ -320,7 +312,7 @@ impl FunctionValue {
             Vec::from_raw_parts(ptr, count as usize, count as usize)
         };
 
-        raw_vec.iter().map(|val| BasicBlock::new(*val)).collect()
+        raw_vec.iter().map(|val| BasicBlock::new(*val).unwrap()).collect()
     }
 
     pub fn get_return_type(&self) -> BasicTypeEnum {
@@ -343,11 +335,7 @@ impl FunctionValue {
             LLVMGetLastBasicBlock(self.fn_value.value)
         };
 
-        if bb.is_null() {
-            return None;
-        }
-
-        Some(BasicBlock::new(bb))
+        BasicBlock::new(bb)
     }
 
     pub fn get_name(&self) -> &CStr {
@@ -444,6 +432,8 @@ pub struct IntValue {
 
 impl IntValue {
     pub(crate) fn new(value: LLVMValueRef) -> Self {
+        assert!(!value.is_null());
+
         IntValue {
             int_value: Value::new(value),
         }
@@ -679,6 +669,8 @@ pub struct FloatValue {
 
 impl FloatValue {
     pub(crate) fn new(value: LLVMValueRef) -> Self {
+        assert!(!value.is_null());
+
         FloatValue {
             float_value: Value::new(value),
         }
@@ -794,6 +786,8 @@ pub struct StructValue {
 
 impl StructValue {
     pub(crate) fn new(value: LLVMValueRef) -> Self {
+        assert!(!value.is_null());
+
         StructValue {
             struct_value: Value::new(value),
         }
@@ -849,6 +843,8 @@ pub struct PointerValue {
 
 impl PointerValue {
     pub(crate) fn new(value: LLVMValueRef) -> Self {
+        assert!(!value.is_null());
+
         PointerValue {
             ptr_value: Value::new(value),
         }
@@ -904,6 +900,8 @@ pub struct PhiValue {
 
 impl PhiValue {
     pub(crate) fn new(value: LLVMValueRef) -> Self {
+        assert!(!value.is_null());
+
         PhiValue {
             phi_value: Value::new(value),
         }
@@ -958,6 +956,8 @@ pub struct ArrayValue {
 
 impl ArrayValue {
     pub(crate) fn new(value: LLVMValueRef) -> Self {
+        assert!(!value.is_null());
+
         ArrayValue {
             array_value: Value::new(value),
         }

@@ -6,22 +6,24 @@ use values::{BasicValueEnum, FunctionValue};
 use std::fmt;
 use std::ffi::{CStr, CString};
 
+// Apparently BasicBlocks count as LabelTypeKinds, which is
+// why they're allow to be casted to values?
 #[derive(PartialEq, Eq)]
 pub struct BasicBlock {
     pub(crate) basic_block: LLVMBasicBlockRef,
 }
 
 impl BasicBlock {
-    pub(crate) fn new(basic_block: LLVMBasicBlockRef) -> BasicBlock {
-        assert!(!basic_block.is_null());
+    pub(crate) fn new(basic_block: LLVMBasicBlockRef) -> Option<Self> {
+        if basic_block.is_null() {
+            return None;
+        }
 
         unsafe {
             assert!(!LLVMIsABasicBlock(basic_block as LLVMValueRef).is_null()) // NOTE: There is a LLVMBasicBlockAsValue but it might be the same as casting
         }
 
-        BasicBlock {
-            basic_block: basic_block
-        }
+        Some(BasicBlock { basic_block })
     }
 
     pub fn get_parent(&self) -> FunctionValue {
@@ -29,7 +31,7 @@ impl BasicBlock {
             LLVMGetBasicBlockParent(self.basic_block)
         };
 
-        FunctionValue::new(value)
+        FunctionValue::new(value).expect("A BasicBlock should always have a parent FunctionValue")
     }
 
     pub fn get_previous_basic_block(&self) -> Option<BasicBlock> {
@@ -37,11 +39,7 @@ impl BasicBlock {
             LLVMGetPreviousBasicBlock(self.basic_block)
         };
 
-        if bb.is_null() {
-            return None;
-        }
-
-        Some(BasicBlock::new(bb))
+        BasicBlock::new(bb)
     }
 
     pub fn get_next_basic_block(&self) -> Option<BasicBlock> {
@@ -49,11 +47,7 @@ impl BasicBlock {
             LLVMGetNextBasicBlock(self.basic_block)
         };
 
-        if bb.is_null() {
-            return None;
-        }
-
-        Some(BasicBlock::new(bb))
+        BasicBlock::new(bb)
     }
 
     // REVIEW: What if terminator is an instuction?
@@ -88,7 +82,7 @@ impl BasicBlock {
             LLVMInsertBasicBlock(self.basic_block, c_string.as_ptr())
         };
 
-        BasicBlock::new(bb)
+        BasicBlock::new(bb).expect("Prepending basic block should never fail")
     }
 
     // REVIEW: Could potentially be unsafe if there are existing references. Might need a global ref counter

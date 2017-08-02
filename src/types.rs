@@ -216,7 +216,7 @@ impl FunctionType {
 
     // REVIEW: Can you do undef for functions?
     pub fn get_undef(&self) -> FunctionValue {
-        FunctionValue::new(self.fn_type.get_undef())
+        FunctionValue::new(self.fn_type.get_undef()).expect("Should always get an undef value")
     }
 }
 

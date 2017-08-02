@@ -200,7 +200,7 @@ impl Context {
             LLVMAppendBasicBlockInContext(self.context, function.as_value_ref(), c_string.as_ptr())
         };
 
-        BasicBlock::new(bb)
+        BasicBlock::new(bb).expect("Appending basic block should never fail")
     }
 
     pub fn insert_basic_block_after(&self, basic_block: &BasicBlock, name: &str) -> BasicBlock {
@@ -221,7 +221,7 @@ impl Context {
             LLVMInsertBasicBlockInContext(self.context, basic_block.basic_block, c_string.as_ptr())
         };
 
-        BasicBlock::new(bb)
+        BasicBlock::new(bb).expect("Prepending basic block should never fail")
     }
 
     pub fn const_struct(&self, values: &[&BasicValue], packed: bool) -> StructValue {

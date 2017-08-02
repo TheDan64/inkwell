@@ -124,7 +124,7 @@ impl Module {
             }
         }
 
-        FunctionValue::new(value)
+        FunctionValue::new(value).expect("add_function should always succeed in adding a new function")
     }
 
     pub fn get_context(&self) -> ContextRef {
@@ -140,11 +140,7 @@ impl Module {
             LLVMGetFirstFunction(self.module)
         };
 
-        if function.is_null() {
-            return None;
-        }
-
-        Some(FunctionValue::new(function))
+        FunctionValue::new(function)
     }
 
     pub fn get_last_function(&self) -> Option<FunctionValue> {
@@ -152,11 +148,7 @@ impl Module {
             LLVMGetLastFunction(self.module)
         };
 
-        if function.is_null() {
-            return None;
-        }
-
-        Some(FunctionValue::new(function))
+        FunctionValue::new(function)
     }
 
     pub fn get_function(&self, name: &str) -> Option<FunctionValue> {
@@ -166,11 +158,7 @@ impl Module {
             LLVMGetNamedFunction(self.module, c_string.as_ptr())
         };
 
-        if value.is_null() {
-            return None;
-        }
-
-        Some(FunctionValue::new(value))
+        FunctionValue::new(value)
     }
 
     pub fn get_type(&self, name: &str) -> Option<BasicTypeEnum> {
