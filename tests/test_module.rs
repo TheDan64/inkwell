@@ -61,3 +61,25 @@ fn test_write_bitcode_to_path() {
 
 //     remove_file(&path).unwrap();
 // }
+
+#[test]
+fn test_get_function() {
+    let context = Context::create();
+    let module = context.create_module("my_module");
+
+    assert_eq!(*module.get_context(), context);
+    assert!(module.get_first_function().is_none());
+    assert!(module.get_last_function().is_none());
+    assert!(module.get_function("some_fn").is_none());
+
+    let void_type = context.void_type();
+    let some_fn_type = void_type.fn_type(&[], false);
+    let some_fn = module.add_function("some_fn", &some_fn_type, None);
+    let first_fn = module.get_first_function().unwrap();
+    let last_fn = module.get_last_function().unwrap();
+    let named_fn = module.get_function("some_fn").unwrap();
+
+    assert_eq!(first_fn, some_fn);
+    assert_eq!(last_fn, some_fn);
+    assert_eq!(named_fn, some_fn);
+}

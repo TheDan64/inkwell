@@ -196,6 +196,7 @@ impl Module {
         }
     }
 
+    // REVIEW: Can we link this to Target.from_name or Target.from_triple / etc?
     pub fn get_target(&self) -> &CStr {
         unsafe {
             CStr::from_ptr(LLVMGetTarget(self.module))
@@ -317,10 +318,14 @@ impl Module {
         code == 0
     }
 
-    pub fn get_data_layout(&self) -> &CStr {
-        unsafe {
-            CStr::from_ptr(LLVMGetDataLayout(self.module))
-        }
+    // REVIEW: Why does LLVM give us a *const i8 here, but *mut i8
+    // for DataLayout in targets.rs?
+    pub fn get_data_layout(&self) -> DataLayout {
+        let data_layout = unsafe {
+            LLVMGetDataLayout(self.module)
+        };
+
+        DataLayout::new(data_layout as *mut i8)
     }
 
     pub fn set_data_layout(&self, data_layout: DataLayout) {
