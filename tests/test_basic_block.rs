@@ -1,6 +1,7 @@
 extern crate inkwell;
 
 use self::inkwell::context::Context;
+use self::inkwell::values::InstructionOpcode;
 
 use std::ffi::CString;
 
@@ -102,4 +103,25 @@ fn test_get_basic_blocks() {
 
     assert_eq!(basic_blocks.len(), 1);
     assert_eq!(basic_blocks[0], basic_block);
+}
+
+#[test]
+fn test_get_terminator() {
+    let context = Context::create();
+    let module = context.create_module("test");
+    let builder = context.create_builder();
+
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+
+    let function = module.add_function("testing", &fn_type, None);
+    let basic_block = context.append_basic_block(&function, "entry");
+
+    builder.position_at_end(&basic_block);
+
+    assert!(basic_block.get_terminator().is_none());
+
+    builder.build_return(None);
+
+    assert_eq!(basic_block.get_terminator().unwrap().get_opcode(), InstructionOpcode::Return);
 }

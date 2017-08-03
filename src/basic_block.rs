@@ -1,7 +1,7 @@
 use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMInsertBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDeleteBasicBlock, LLVMGetPreviousBasicBlock};
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
 
-use values::{BasicValueEnum, FunctionValue};
+use values::{FunctionValue, InstructionValue};
 
 use std::fmt;
 use std::ffi::{CStr, CString};
@@ -50,8 +50,9 @@ impl BasicBlock {
         BasicBlock::new(bb)
     }
 
-    // REVIEW: What if terminator is an instuction?
-    pub fn get_terminator(&self) -> Option<BasicValueEnum> {
+    // REVIEW: If we wanted the return type could be Either<BasicValueEnum, InstructionValue>
+    // if getting a value over an instruction is preferable
+    pub fn get_terminator(&self) -> Option<InstructionValue> {
         let value = unsafe {
             LLVMGetBasicBlockTerminator(self.basic_block)
         };
@@ -60,7 +61,7 @@ impl BasicBlock {
             return None;
         }
 
-        Some(BasicValueEnum::new(value))
+        Some(InstructionValue::new(value))
     }
 
     pub fn move_before(&self, basic_block: &BasicBlock) {
