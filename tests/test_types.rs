@@ -1,7 +1,7 @@
 extern crate inkwell;
 
 use self::inkwell::context::Context;
-use self::inkwell::types::{FloatType, IntType, VoidType};
+use self::inkwell::types::{FloatType, IntType, StructType, VoidType};
 use std::ffi::CString;
 
 #[test]
@@ -75,6 +75,7 @@ fn test_sized_types() {
     let f32_type = FloatType::f32_type();
     let f64_type = FloatType::f64_type();
     let f128_type = FloatType::f128_type();
+    let struct_type = StructType::struct_type(&[&i8_type, &f128_type], false);
 
     // REVIEW: Should these maybe just be constant functions instead of bothering to calling LLVM?
 
@@ -89,6 +90,7 @@ fn test_sized_types() {
     assert!(f32_type.is_sized());
     assert!(f64_type.is_sized());
     assert!(f128_type.is_sized());
+    assert!(struct_type.is_sized());
 
     assert!(void_type.ptr_type(0).is_sized());
     assert!(bool_type.ptr_type(0).is_sized());
@@ -101,6 +103,7 @@ fn test_sized_types() {
     assert!(f32_type.ptr_type(0).is_sized());
     assert!(f64_type.ptr_type(0).is_sized());
     assert!(f128_type.ptr_type(0).is_sized());
+    assert!(struct_type.ptr_type(0).is_sized());
 
     // REVIEW: You can't have array of void right?
     assert!(void_type.ptr_type(0).array_type(42).is_sized());
@@ -114,6 +117,7 @@ fn test_sized_types() {
     assert!(f32_type.array_type(42).is_sized());
     assert!(f64_type.array_type(42).is_sized());
     assert!(f128_type.array_type(42).is_sized());
+    assert!(struct_type.array_type(0).is_sized());
 
     // REVIEW: You can't have array of void right?
     assert!(void_type.ptr_type(0).vec_type(42).is_sized());
@@ -127,4 +131,5 @@ fn test_sized_types() {
     assert!(f32_type.vec_type(42).is_sized());
     assert!(f64_type.vec_type(42).is_sized());
     assert!(f128_type.vec_type(42).is_sized());
+    assert!(struct_type.vec_type(42).is_sized());
 }

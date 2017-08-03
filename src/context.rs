@@ -113,11 +113,7 @@ impl Context {
         // REVIEW: The docs says there's a LLVMInt128TypeInContext, but
         // it might only be in a newer version
 
-        let i128_type = unsafe {
-            LLVMIntTypeInContext(self.context, 128)
-        };
-
-        IntType::new(i128_type)
+        self.custom_width_int_type(128)
     }
 
     pub fn custom_width_int_type(&self, bits: u32) -> IntType {

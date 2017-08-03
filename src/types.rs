@@ -70,6 +70,7 @@ impl Type {
     }
 
     // REVIEW: Is this actually AnyType except FunctionType? VoidType? Can you make a FunctionType from a FunctionType???
+    // Probably should just be BasicType
     fn fn_type(&self, param_types: &[&AnyType], is_var_args: bool) -> FunctionType {
         let mut param_types: Vec<LLVMTypeRef> = param_types.iter()
                                                            .map(|val| val.as_type_ref())
@@ -615,7 +616,9 @@ impl StructType {
         }
     }
 
+    // REVIEW: Is there an equivalent method to make opaque?
     // REVIEW: No way to set name like in context.struct_type() method?
+    // DOC: This method will not create an opaque struct, even if empty array is passed!
     pub fn struct_type(field_types: &[&BasicType], packed: bool) -> Self {
         let mut field_types: Vec<LLVMTypeRef> = field_types.iter()
                                                            .map(|val| val.as_type_ref())
@@ -678,6 +681,10 @@ impl StructType {
         }
 
         is_opaque
+    }
+
+    pub fn vec_type(&self, size: u32) -> VectorType {
+        self.struct_type.vec_type(size)
     }
 }
 
