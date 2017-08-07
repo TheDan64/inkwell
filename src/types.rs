@@ -293,11 +293,7 @@ impl IntType {
         // REVIEW: The docs says there's a LLVMInt128Type, but
         // it might only be in a newer version
 
-        let type_ = unsafe {
-            LLVMIntType(128)
-        };
-
-        IntType::new(type_)
+        Self::custom_width_int_type(128)
     }
 
     pub fn custom_width_int_type(bits: u32) -> Self {

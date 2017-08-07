@@ -50,7 +50,7 @@ impl BasicBlock {
         BasicBlock::new(bb)
     }
 
-    // REVIEW: If we wanted the return type could be Either<BasicValueEnum, InstructionValue>
+    // REVIEW: If we wanted the return type could be Option<Either<BasicValueEnum, InstructionValue>>
     // if getting a value over an instruction is preferable
     pub fn get_terminator(&self) -> Option<InstructionValue> {
         let value = unsafe {

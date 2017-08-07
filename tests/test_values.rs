@@ -2,7 +2,7 @@ extern crate inkwell;
 
 use self::inkwell::context::Context;
 use self::inkwell::module::Linkage::*;
-use self::inkwell::types::VectorType;
+use self::inkwell::types::{StructType, VectorType};
 use self::inkwell::values::InstructionOpcode::*;
 
 use std::ffi::CString;
@@ -236,4 +236,85 @@ fn test_set_get_name() {
     assert_eq!(vec_param.get_name(), &*CString::new("my_val6").unwrap());
 
     // TODO: Test globals, supposedly constant globals work?
+}
+
+#[test]
+fn test_undef() {
+    let context = Context::create();
+    let bool_type = context.bool_type();
+    let i8_type = context.i8_type();
+    let i16_type = context.i16_type();
+    let i32_type = context.i32_type();
+    let i64_type = context.i64_type();
+    let i128_type = context.i128_type();
+    let f16_type = context.f16_type();
+    let f32_type = context.f32_type();
+    let f64_type = context.f64_type();
+    let f128_type = context.f128_type();
+    let array_type = f64_type.array_type(42);
+    let f128_ppc_type = context.f128_type_ppc();
+
+    let bool_val = bool_type.const_int(0, false);
+    let i8_val = i8_type.const_int(0, false);
+    let i16_val = i16_type.const_int(0, false);
+    let i32_val = i32_type.const_int(0, false);
+    let i64_val = i64_type.const_int(0, false);
+    let i128_val = i128_type.const_int(0, false);
+    let f16_val = f16_type.const_float(0.0);
+    let f32_val = f32_type.const_float(0.0);
+    let f64_val = f64_type.const_float(0.0);
+    let f128_val = f128_type.const_float(0.0);
+    let ptr_val = bool_type.const_null_ptr();
+    let array_val = array_type.const_array(&[&f64_val]);
+    let struct_val = context.const_struct(&[&i8_val, &f128_val], false);
+    let vec_val = VectorType::const_vector(&[&i8_val]);
+    let f128_ppc_val = f128_ppc_type.const_float(0.0);
+
+    assert!(!bool_val.is_undef());
+    assert!(!i8_val.is_undef());
+    assert!(!i16_val.is_undef());
+    assert!(!i32_val.is_undef());
+    assert!(!i64_val.is_undef());
+    assert!(!i128_val.is_undef());
+    assert!(!f16_val.is_undef());
+    assert!(!f32_val.is_undef());
+    assert!(!f64_val.is_undef());
+    assert!(!f128_val.is_undef());
+    assert!(!ptr_val.is_undef());
+    assert!(!array_val.is_undef());
+    assert!(!struct_val.is_undef());
+    assert!(!vec_val.is_undef());
+    assert!(!f128_ppc_val.is_undef());
+
+    let bool_undef = bool_type.get_undef();
+    let i8_undef = i8_type.get_undef();
+    let i16_undef = i16_type.get_undef();
+    let i32_undef = i32_type.get_undef();
+    let i64_undef = i64_type.get_undef();
+    let i128_undef = i128_type.get_undef();
+    let f16_undef = f16_type.get_undef();
+    let f32_undef = f32_type.get_undef();
+    let f64_undef = f64_type.get_undef();
+    let f128_undef = f128_type.get_undef();
+    let ptr_undef = bool_type.ptr_type(0).get_undef();
+    let array_undef = array_type.get_undef();
+    let struct_undef = StructType::struct_type(&[&bool_type], false).get_undef();
+    let vec_undef = bool_type.vec_type(1).get_undef();
+    let f128_ppc_undef = f128_ppc_type.get_undef();
+
+    assert!(bool_undef.is_undef());
+    assert!(i8_undef.is_undef());
+    assert!(i16_undef.is_undef());
+    assert!(i32_undef.is_undef());
+    assert!(i64_undef.is_undef());
+    assert!(i128_undef.is_undef());
+    assert!(f16_undef.is_undef());
+    assert!(f32_undef.is_undef());
+    assert!(f64_undef.is_undef());
+    assert!(f128_undef.is_undef());
+    assert!(ptr_undef.is_undef());
+    assert!(array_undef.is_undef());
+    assert!(struct_undef.is_undef());
+    assert!(vec_undef.is_undef());
+    assert!(f128_ppc_undef.is_undef());
 }

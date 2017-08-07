@@ -110,7 +110,7 @@ impl Module {
         Module::new(module)
     }
 
-    // TODO: Worth documenting that LLVM will default linkage to ExternalLinkage (at least in 3.7)
+    // TODOC: LLVM will default linkage to ExternalLinkage (at least in 3.7)
     pub fn add_function(&self, name: &str, return_type: &FunctionType, linkage: Option<&Linkage>) -> FunctionValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
