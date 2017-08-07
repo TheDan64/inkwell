@@ -238,7 +238,8 @@ impl Builder {
     }
 
     // TODO: Possibly make this generic over sign via struct metadata or subtypes
-    // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
+    // SubType: <I: IntSubType>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
+    //     if I::sign() == Unsigned { LLVMBuildUDiv() } else { LLVMBuildSDiv() }
     pub fn build_int_unsigned_div(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 

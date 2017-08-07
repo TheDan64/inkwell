@@ -124,7 +124,7 @@ fn test_set_get_name() {
     let f64_type = context.f64_type();
     let f128_type = context.f128_type();
     let array_type = f64_type.array_type(42);
-    let f128_ppc_type = context.f128_type_ppc();
+    let ppc_f128_type = context.ppc_f128_type();
 
     let bool_val = bool_type.const_int(0, false);
     let i8_val = i8_type.const_int(0, false);
@@ -140,7 +140,7 @@ fn test_set_get_name() {
     let array_val = array_type.const_array(&[&f64_val]);
     let struct_val = context.const_struct(&[&i8_val, &f128_val], false);
     let vec_val = VectorType::const_vector(&[&i8_val]);
-    let f128_ppc_val = f128_ppc_type.const_float(0.0);
+    let ppc_f128_val = ppc_f128_type.const_float(0.0);
 
     assert_eq!(bool_val.get_name(), &*CString::new("").unwrap());
     assert_eq!(i8_val.get_name(), &*CString::new("").unwrap());
@@ -156,7 +156,7 @@ fn test_set_get_name() {
     assert_eq!(array_val.get_name(), &*CString::new("").unwrap());
     assert_eq!(struct_val.get_name(), &*CString::new("").unwrap());
     assert_eq!(vec_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(f128_ppc_val.get_name(), &*CString::new("").unwrap());
+    assert_eq!(ppc_f128_val.get_name(), &*CString::new("").unwrap());
 
     // LLVM Gem: You can't set names on constant values, so this doesn't do anything:
     bool_val.set_name("my_val");
@@ -173,7 +173,7 @@ fn test_set_get_name() {
     array_val.set_name("my_val12");
     struct_val.set_name("my_val13");
     vec_val.set_name("my_val14");
-    f128_ppc_val.set_name("my_val14");
+    ppc_f128_val.set_name("my_val14");
 
     assert_eq!(bool_val.get_name(), &*CString::new("").unwrap());
     assert_eq!(i8_val.get_name(), &*CString::new("").unwrap());
@@ -189,7 +189,7 @@ fn test_set_get_name() {
     assert_eq!(array_val.get_name(), &*CString::new("").unwrap());
     assert_eq!(struct_val.get_name(), &*CString::new("").unwrap());
     assert_eq!(vec_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(f128_ppc_val.get_name(), &*CString::new("").unwrap());
+    assert_eq!(ppc_f128_val.get_name(), &*CString::new("").unwrap());
 
     let void_type = context.void_type();
     let ptr_type = bool_type.ptr_type(0);
@@ -252,7 +252,7 @@ fn test_undef() {
     let f64_type = context.f64_type();
     let f128_type = context.f128_type();
     let array_type = f64_type.array_type(42);
-    let f128_ppc_type = context.f128_type_ppc();
+    let ppc_f128_type = context.ppc_f128_type();
 
     let bool_val = bool_type.const_int(0, false);
     let i8_val = i8_type.const_int(0, false);
@@ -268,7 +268,7 @@ fn test_undef() {
     let array_val = array_type.const_array(&[&f64_val]);
     let struct_val = context.const_struct(&[&i8_val, &f128_val], false);
     let vec_val = VectorType::const_vector(&[&i8_val]);
-    let f128_ppc_val = f128_ppc_type.const_float(0.0);
+    let ppc_f128_val = ppc_f128_type.const_float(0.0);
 
     assert!(!bool_val.is_undef());
     assert!(!i8_val.is_undef());
@@ -284,7 +284,7 @@ fn test_undef() {
     assert!(!array_val.is_undef());
     assert!(!struct_val.is_undef());
     assert!(!vec_val.is_undef());
-    assert!(!f128_ppc_val.is_undef());
+    assert!(!ppc_f128_val.is_undef());
 
     let bool_undef = bool_type.get_undef();
     let i8_undef = i8_type.get_undef();
@@ -300,7 +300,7 @@ fn test_undef() {
     let array_undef = array_type.get_undef();
     let struct_undef = StructType::struct_type(&[&bool_type], false).get_undef();
     let vec_undef = bool_type.vec_type(1).get_undef();
-    let f128_ppc_undef = f128_ppc_type.get_undef();
+    let ppc_f128_undef = ppc_f128_type.get_undef();
 
     assert!(bool_undef.is_undef());
     assert!(i8_undef.is_undef());
@@ -316,5 +316,52 @@ fn test_undef() {
     assert!(array_undef.is_undef());
     assert!(struct_undef.is_undef());
     assert!(vec_undef.is_undef());
-    assert!(f128_ppc_undef.is_undef());
+    assert!(ppc_f128_undef.is_undef());
+}
+
+#[test]
+fn test_consecutive_fns() {
+    let context = Context::create();
+    let module = context.create_module("fns");
+
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+
+    let function = module.add_function("fn", &fn_type, None);
+
+    assert!(function.get_previous_function().is_none());
+    assert!(function.get_next_function().is_none());
+
+    let function2 = module.add_function("fn2", &fn_type, None);
+
+    assert_ne!(function, function2);
+
+    assert!(function.get_previous_function().is_none());
+    assert_eq!(function.get_next_function().unwrap(), function2);
+
+    assert_eq!(function2.get_previous_function().unwrap(), function);
+    assert!(function2.get_next_function().is_none());
+}
+
+#[test]
+fn test_verify_fn() {
+    let context = Context::create();
+    let builder = context.create_builder();
+    let module = context.create_module("fns");
+
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+
+    let function = module.add_function("fn", &fn_type, None);
+
+    assert!(!function.verify(false));
+
+    let basic_block = context.append_basic_block(&function, "entry");
+
+    builder.position_at_end(&basic_block);
+    builder.build_return(None);
+
+    assert!(function.verify(false));
+
+    // TODO: Verify other verify modes
 }

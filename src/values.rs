@@ -1,6 +1,6 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
 use llvm_sys::core::{LLVMAddIncoming, LLVMCountParams, LLVMGetBasicBlocks, LLVMGetElementType, LLVMGetFirstBasicBlock, LLVMGetFirstParam, LLVMGetLastBasicBlock, LLVMGetNextParam, LLVMGetParam, LLVMGetReturnType, LLVMGetValueName, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsAFunction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMGetTypeKind, LLVMGetNextFunction, LLVMGetPreviousFunction, LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMDumpValue, LLVMCountBasicBlocks, LLVMIsAInstruction, LLVMGetInstructionOpcode, LLVMGetLinkage, LLVMDeleteFunction, LLVMGetLastParam, LLVMGetEntryBasicBlock, LLVMAppendBasicBlock, LLVMConstNeg, LLVMConstFNeg, LLVMConstFAdd, LLVMConstAdd, LLVMConstSub, LLVMConstFSub, LLVMConstMul, LLVMConstFMul, LLVMConstFDiv, LLVMConstNot, LLVMConstNSWAdd, LLVMConstNUWAdd, LLVMConstNUWSub, LLVMConstNSWSub, LLVMConstNUWMul, LLVMConstNSWMul, LLVMConstUDiv, LLVMConstSDiv, LLVMConstExactSDiv, LLVMConstURem, LLVMConstSRem, LLVMConstFRem, LLVMConstAnd, LLVMConstOr, LLVMConstXor, LLVMConstIntCast, LLVMConstFPCast, LLVMConstExtractElement, LLVMConstInsertElement, LLVMConstNSWNeg, LLVMConstNUWNeg, LLVMIsTailCall};
-use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
+use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef, LLVMTypeRef};
 use llvm_sys::{LLVMOpcode, LLVMTypeKind};
 
 use std::ffi::{CString, CStr};
@@ -9,7 +9,7 @@ use std::mem::forget;
 
 use basic_block::BasicBlock;
 use module::Linkage;
-use types::{AsTypeRef, AnyTypeEnum, ArrayType, BasicTypeEnum, PointerType, FloatType, IntType, StructType, VectorType};
+use types::{AsTypeRef, ArrayType, BasicTypeEnum, PointerType, FloatType, IntType, StructType, VectorType};
 
 mod private {
     // This is an ugly privacy hack so that Type can stay private to this module
@@ -98,12 +98,10 @@ impl Value {
         }
     }
 
-    fn get_type(&self) -> AnyTypeEnum {
-        let type_ = unsafe {
+    fn get_type(&self) -> LLVMTypeRef {
+        unsafe {
             LLVMTypeOf(self.value)
-        };
-
-        AnyTypeEnum::new(type_)
+        }
     }
 
     fn print_to_string(&self) -> &CStr {
@@ -186,7 +184,8 @@ impl FunctionValue {
     }
 
     // TODO: Maybe support LLVMAbortProcessAction?
-    pub fn verify(&self, print: bool) {
+    // FIXME: Better error returns, code 1 is error
+    pub fn verify(&self, print: bool) -> bool {
         let action = if print {
             LLVMVerifierFailureAction::LLVMPrintMessageAction
         } else {
@@ -197,12 +196,10 @@ impl FunctionValue {
             LLVMVerifyFunction(self.fn_value.value, action)
         };
 
-        if code == 1 {
-            panic!("LLVMGenError")
-        }
+        code != 1
     }
 
-    // If there's a demand, could easily create a module.get_functions() -> Iterator
+    // REVIEW: If there's a demand, could easily create a module.get_functions() -> Iterator
     pub fn get_next_function(&self) -> Option<Self> {
         let function = unsafe {
             LLVMGetNextFunction(self.as_value_ref())
@@ -452,11 +449,7 @@ impl IntValue {
     }
 
     pub fn get_type(&self) -> IntType {
-        let int_type = unsafe {
-            LLVMTypeOf(self.as_value_ref())
-        };
-
-        IntType::new(int_type)
+        IntType::new(self.int_value.get_type())
     }
 
     pub fn is_null(&self) -> bool {
@@ -689,11 +682,7 @@ impl FloatValue {
     }
 
     pub fn get_type(&self) -> FloatType {
-        let float_type = unsafe {
-            LLVMTypeOf(self.as_value_ref())
-        };
-
-        FloatType::new(float_type)
+        FloatType::new(self.float_value.get_type())
     }
 
     pub fn is_null(&self) -> bool {
@@ -806,11 +795,7 @@ impl StructValue {
     }
 
     pub fn get_type(&self) -> StructType {
-        let struct_type = unsafe {
-            LLVMTypeOf(self.as_value_ref())
-        };
-
-        StructType::new(struct_type)
+        StructType::new(self.struct_value.get_type())
     }
 
     pub fn is_null(&self) -> bool {
@@ -863,11 +848,7 @@ impl PointerValue {
     }
 
     pub fn get_type(&self) -> PointerType {
-        let pointer_type = unsafe {
-            LLVMTypeOf(self.as_value_ref())
-        };
-
-        PointerType::new(pointer_type)
+        PointerType::new(self.ptr_value.get_type())
     }
 
     pub fn is_null(&self) -> bool {
@@ -976,11 +957,7 @@ impl ArrayValue {
     }
 
     pub fn get_type(&self) -> ArrayType {
-        let array_type = unsafe {
-            LLVMTypeOf(self.as_value_ref())
-        };
-
-        ArrayType::new(array_type)
+        ArrayType::new(self.array_value.get_type())
     }
 
     pub fn is_null(&self) -> bool {
@@ -1083,11 +1060,7 @@ impl VectorValue {
     }
 
     pub fn get_type(&self) -> VectorType {
-        let vec_type = unsafe {
-            LLVMTypeOf(self.as_value_ref())
-        };
-
-        VectorType::new(vec_type)
+        VectorType::new(self.vec_value.get_type())
     }
 
     pub fn is_null(&self) -> bool {

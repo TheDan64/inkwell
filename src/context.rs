@@ -156,7 +156,7 @@ impl Context {
         FloatType::new(f128_type)
     }
 
-    pub fn f128_type_ppc(&self) -> FloatType {
+    pub fn ppc_f128_type(&self) -> FloatType {
         let f128_type = unsafe {
             LLVMPPCFP128TypeInContext(self.context)
         };

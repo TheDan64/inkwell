@@ -471,7 +471,7 @@ impl FloatType {
         FloatType::new(float_type)
     }
 
-    pub fn f128_type_ppc() -> Self {
+    pub fn ppc_f128_type() -> Self {
         let float_type = unsafe {
             LLVMPPCFP128Type()
         };
