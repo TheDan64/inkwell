@@ -1,15 +1,18 @@
-use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext};
+use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMDisposeMessage};
 use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef};
+use llvm_sys::ir_reader::LLVMParseIRInContext;
 
 use basic_block::BasicBlock;
 use builder::Builder;
+use memory_buffer::MemoryBuffer;
 use module::Module;
 use types::{BasicType, FloatType, IntType, StructType, VoidType};
 use values::{AsValueRef, BasicValue, FunctionValue, StructValue};
 
-use std::ffi::CString;
-use std::mem::forget;
+use std::ffi::{CStr, CString};
+use std::mem::{forget, uninitialized};
 use std::ops::Deref;
+use std::ptr;
 
 // From Docs: A single context is not thread safe.
 // However, different contexts can execute on different threads simultaneously.
@@ -59,6 +62,31 @@ impl Context {
         };
 
         Module::new(module)
+    }
+
+    pub fn create_module_from_ir(&self, memory_buffer: &MemoryBuffer) -> Result<Module, String> {
+        let module = ptr::null_mut();
+        let err_str = ptr::null_mut();
+
+        let code = unsafe {
+            LLVMParseIRInContext(self.context, memory_buffer.memory_buffer, module, err_str)
+        };
+
+        if code == 0 {
+            unsafe {
+                return Ok(Module::new(*module));
+            }
+        }
+
+        let rust_str = unsafe {
+            let rust_str = CStr::from_ptr(*err_str).to_string_lossy().into_owned();
+
+            LLVMDisposeMessage(*err_str);
+
+            rust_str
+        };
+
+        Err(rust_str)
     }
 
     pub fn void_type(&self) -> VoidType {

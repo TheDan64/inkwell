@@ -1,10 +1,11 @@
-use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule};
+use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction};
 
 use module::Module;
 use targets::TargetData;
 use values::{AsValueRef, FunctionValue};
 
 use std::ffi::CString;
+use std::ptr;
 
 #[derive(Debug, PartialEq)]
 pub enum GetFunctionAddressError {
@@ -63,6 +64,23 @@ impl ExecutionEngine {
         };
 
         TargetData::new(target_data)
+    }
+
+    pub fn find_function(&self, fn_name: &str) -> Option<FunctionValue> {
+        let c_string = CString::new(fn_name).expect("Conversion to CString failed unexpectedly");
+        let function = ptr::null_mut();
+
+        let code = unsafe {
+            LLVMFindFunction(self.execution_engine, c_string.as_ptr(), function)
+        };
+
+        if code == 1 {
+            unsafe {
+                return FunctionValue::new(*function)
+            }
+        };
+
+        None
     }
 
     pub fn run_function(&self, function: FunctionValue) {

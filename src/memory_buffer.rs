@@ -9,9 +9,8 @@ use std::mem::zeroed;
 use std::path::Path;
 use std::ptr;
 
-// REVIEW: This whole module is very untested
 pub struct MemoryBuffer {
-    memory_buffer: LLVMMemoryBufferRef
+    pub(crate) memory_buffer: LLVMMemoryBufferRef
 }
 
 impl MemoryBuffer {
