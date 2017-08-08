@@ -24,7 +24,7 @@ fn test_write_bitcode_to_path() {
 
     file.read_to_end(&mut contents).expect("Unable to verify written file");
 
-    assert!(contents.len() > 0);
+    assert!(!contents.is_empty());
 
     remove_file(&path).unwrap();
 }
