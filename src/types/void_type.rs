@@ -2,7 +2,7 @@ use llvm_sys::core::LLVMVoidType;
 use llvm_sys::prelude::LLVMTypeRef;
 
 use context::ContextRef;
-use types::private::AsTypeRef;
+use types::traits::AsTypeRef;
 use types::{Type, BasicType, FunctionType, PointerType};
 use values::PointerValue;
 

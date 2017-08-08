@@ -6,7 +6,7 @@ use std::fmt;
 use std::mem::forget;
 
 use context::ContextRef;
-use types::private::AsTypeRef;
+use types::traits::AsTypeRef;
 use types::{Type, BasicTypeEnum};
 use values::FunctionValue;
 

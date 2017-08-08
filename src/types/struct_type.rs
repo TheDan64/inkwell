@@ -5,7 +5,7 @@ use std::ffi::CStr;
 use std::mem::forget;
 
 use context::ContextRef;
-use types::private::AsTypeRef;
+use types::traits::AsTypeRef;
 use types::{Type, BasicType, BasicTypeEnum, ArrayType, PointerType, FunctionType, VectorType};
 use values::{BasicValue, StructValue, PointerValue};
 

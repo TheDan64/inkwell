@@ -3,7 +3,7 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use std::ffi::CStr;
 
-use types::private::AsTypeRef;
+use types::traits::AsTypeRef;
 use types::Type;
 use values::{BasicValue, PointerValue, VectorValue};
 

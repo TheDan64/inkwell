@@ -4,7 +4,7 @@ use llvm_sys::prelude::LLVMTypeRef;
 use std::ffi::CStr;
 
 use context::ContextRef;
-use types::private::AsTypeRef;
+use types::traits::AsTypeRef;
 use types::{Type, BasicType, ArrayType, FunctionType, VectorType};
 use values::PointerValue;
 
