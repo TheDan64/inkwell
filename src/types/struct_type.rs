@@ -25,8 +25,19 @@ impl StructType {
 
     // TODO: Would be great to be able to smartly be able to do this by field name
     // TODO: LLVM 3.7+ only
-    pub fn get_type_at_field_index(&self, index: u32) -> Option<BasicTypeEnum> {
-        // REVIEW: This should only be used on Struct Types, so add a StructType?
+    pub fn get_field_type_at_index(&self, index: u32) -> Option<BasicTypeEnum> {
+        // LLVM doesn't seem to just return null if opaque.
+        // TODO: One day, with SubTypes (& maybe specialization?) we could just
+        // impl this method for non opaque structs only
+        if self.is_opaque() {
+            return None;
+        }
+
+        // OOB indexing seems to be unchecked and UB
+        if index >= self.count_fields() {
+            return None;
+        }
+
         let type_ = unsafe {
             LLVMStructGetTypeAtIndex(self.struct_type.type_, index)
         };
@@ -137,8 +148,7 @@ impl StructType {
         StructType::new(struct_type)
     }
 
-    // REVIEW: Method name
-    pub fn count_field_types(&self) -> u32 {
+    pub fn count_fields(&self) -> u32 {
         unsafe {
             LLVMCountStructElementTypes(self.as_type_ref())
         }
@@ -146,7 +156,7 @@ impl StructType {
 
     // REVIEW: Method name
     pub fn get_field_types(&self) -> Vec<BasicTypeEnum> {
-        let count = self.count_field_types();
+        let count = self.count_fields();
         let mut raw_vec: Vec<LLVMTypeRef> = Vec::with_capacity(count as usize);
         let ptr = raw_vec.as_mut_ptr();
 

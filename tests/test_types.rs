@@ -17,6 +17,17 @@ fn test_struct_type() {
     assert!(!av_struct.is_opaque());
     assert!(av_struct.is_sized());
     assert!(av_struct.get_name().is_none());
+    assert_eq!(*av_struct.get_context(), context);
+    assert_eq!(av_struct.count_fields(), 2);
+
+    let field_1 = av_struct.get_field_type_at_index(0).unwrap();
+    let field_2 = av_struct.get_field_type_at_index(1).unwrap();
+
+    assert!(field_1.is_vector_type());
+    assert!(field_2.is_array_type());
+    assert!(av_struct.get_field_type_at_index(2).is_none());
+    assert!(av_struct.get_field_type_at_index(200).is_none());
+    assert_eq!(av_struct.get_field_types(), vec![field_1, field_2]);
 
     let av_struct = context.struct_type(&[&int_vector, &float_array], true);
 
@@ -25,6 +36,17 @@ fn test_struct_type() {
     assert!(av_struct.is_sized());
     // REVIEW: Is there a way to name a non opaque struct?
     assert!(av_struct.get_name().is_none());
+    assert_eq!(*av_struct.get_context(), context);
+    assert_eq!(av_struct.count_fields(), 2);
+
+    let field_1 = av_struct.get_field_type_at_index(0).unwrap();
+    let field_2 = av_struct.get_field_type_at_index(1).unwrap();
+
+    assert!(field_1.is_vector_type());
+    assert!(field_2.is_array_type());
+    assert!(av_struct.get_field_type_at_index(2).is_none());
+    assert!(av_struct.get_field_type_at_index(200).is_none());
+    assert_eq!(av_struct.get_field_types(), vec![field_1, field_2]);
 
     let opaque_struct = context.opaque_struct_type("opaque_struct");
 
@@ -32,13 +54,33 @@ fn test_struct_type() {
     assert!(opaque_struct.is_opaque());
     assert!(!opaque_struct.is_sized());
     assert_eq!(opaque_struct.get_name(), Some(&*CString::new("opaque_struct").unwrap()));
+    assert_eq!(*opaque_struct.get_context(), context);
+    assert_eq!(opaque_struct.count_fields(), 0);
+    assert!(opaque_struct.get_field_type_at_index(0).is_none());
+    assert!(opaque_struct.get_field_type_at_index(1).is_none());
+    assert!(opaque_struct.get_field_type_at_index(2).is_none());
+    assert!(opaque_struct.get_field_type_at_index(200).is_none());
+    assert!(opaque_struct.get_field_types().is_empty());
 
     assert!(opaque_struct.set_body(&[&int_vector, &float_array], true));
 
-    assert!(opaque_struct.is_packed());
-    assert!(!opaque_struct.is_opaque());
-    assert!(opaque_struct.is_sized());
-    assert_eq!(opaque_struct.get_name(), Some(&*CString::new("opaque_struct").unwrap()));
+    let no_longer_opaque_struct = opaque_struct;
+
+    assert!(no_longer_opaque_struct.is_packed());
+    assert!(!no_longer_opaque_struct.is_opaque());
+    assert!(no_longer_opaque_struct.is_sized());
+    assert_eq!(no_longer_opaque_struct.get_name(), Some(&*CString::new("opaque_struct").unwrap()));
+    assert_eq!(*no_longer_opaque_struct.get_context(), context);
+    assert_eq!(no_longer_opaque_struct.count_fields(), 2);
+
+    let field_1 = no_longer_opaque_struct.get_field_type_at_index(0).unwrap();
+    let field_2 = no_longer_opaque_struct.get_field_type_at_index(1).unwrap();
+
+    assert!(field_1.is_vector_type());
+    assert!(field_2.is_array_type());
+    assert!(no_longer_opaque_struct.get_field_type_at_index(2).is_none());
+    assert!(no_longer_opaque_struct.get_field_type_at_index(200).is_none());
+    assert_eq!(no_longer_opaque_struct.get_field_types(), vec![field_1, field_2]);
 }
 
 #[test]

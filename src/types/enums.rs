@@ -7,7 +7,7 @@ use types::traits::AsTypeRef;
 
 macro_rules! enum_type_set {
     ($enum_name:ident: $($args:ident),*) => (
-        #[derive(Debug, EnumAsGetters, EnumIntoGetters, EnumIsA)]
+        #[derive(Debug, EnumAsGetters, EnumIntoGetters, EnumIsA, PartialEq, Eq)]
         pub enum $enum_name {
             $(
                 $args($args),
@@ -84,7 +84,11 @@ impl BasicTypeEnum {
             LLVMTypeKind::LLVMPointerTypeKind => BasicTypeEnum::PointerType(PointerType::new(type_)),
             LLVMTypeKind::LLVMArrayTypeKind => BasicTypeEnum::ArrayType(ArrayType::new(type_)),
             LLVMTypeKind::LLVMVectorTypeKind => BasicTypeEnum::VectorType(VectorType::new(type_)),
-            _ => unreachable!("Unsupported type"),
+            LLVMTypeKind::LLVMMetadataTypeKind => unreachable!("Unsupported type: Metadata"),
+            LLVMTypeKind::LLVMX86_MMXTypeKind => unreachable!("Unsupported type: MMX"),
+            LLVMTypeKind::LLVMLabelTypeKind => unreachable!("Unsupported type: Label"),
+            LLVMTypeKind::LLVMVoidTypeKind => unreachable!("Unsupported type: VoidType"),
+            LLVMTypeKind::LLVMFunctionTypeKind => unreachable!("Unsupported type: FunctionType"),
         }
     }
 }
