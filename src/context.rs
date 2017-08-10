@@ -10,7 +10,7 @@ use types::{BasicType, FloatType, IntType, StructType, VoidType};
 use values::{AsValueRef, BasicValue, FunctionValue, StructValue};
 
 use std::ffi::{CStr, CString};
-use std::mem::{forget, uninitialized};
+use std::mem::forget;
 use std::ops::Deref;
 use std::ptr;
 

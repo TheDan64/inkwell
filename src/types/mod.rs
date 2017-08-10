@@ -144,6 +144,8 @@ impl Type {
     // For example, void is not sized. This may only be useful on Type Traits/Enums
     // where the actual type is unknown (trait) or yet undetermined (enum)
     fn size(&self) -> IntValue {
+        debug_assert!(self.is_sized());
+
         let int_value = unsafe {
             LLVMSizeOf(self.type_)
         };

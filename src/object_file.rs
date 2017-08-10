@@ -211,7 +211,7 @@ impl Relocation {
 
     pub fn get_symbols(&self) -> SymbolIterator {
         let symbol_iterator = unsafe {
-            // REVIEW: Is this just returning a single Smybol (given the name) and not a full iterator?
+            // REVIEW: Is this just returning a single Symbol (given the name) and not a full iterator?
             LLVMGetRelocationSymbol(self.relocation)
         };
 

@@ -125,6 +125,10 @@ impl IntType {
         self.int_type.is_sized()
     }
 
+    pub fn size(&self) -> IntValue {
+        self.int_type.size()
+    }
+
     pub fn ptr_type(&self, address_space: u32) -> PointerType {
         self.int_type.ptr_type(address_space)
     }

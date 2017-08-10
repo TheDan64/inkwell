@@ -8,7 +8,7 @@ use std::mem::forget;
 use context::ContextRef;
 use types::traits::AsTypeRef;
 use types::{Type, BasicTypeEnum};
-use values::FunctionValue;
+// use values::FunctionValue;
 
 #[derive(PartialEq, Eq)]
 pub struct FunctionType {
@@ -69,16 +69,18 @@ impl FunctionType {
     }
 
     // REVIEW: Can you do undef for functions?
-    pub fn get_undef(&self) -> FunctionValue {
-        FunctionValue::new(self.fn_type.get_undef()).expect("Should always get an undef value")
-    }
+    // Seems to "work" - no UB or SF so far but fails
+    // LLVMIsAFunction() check. Commenting out for further research
+    // pub fn get_undef(&self) -> FunctionValue {
+    //     FunctionValue::new(self.fn_type.get_undef()).expect("Should always get an undef value")
+    // }
 }
 
 impl fmt::Debug for FunctionType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let llvm_type = self.print_to_string();
 
-        write!(f, "FunctionType {{\n    address: {:?}\n    llvm_type: {:?}\n}}", self.fn_type.type_, llvm_type)
+        write!(f, "FunctionType {{\n    address: {:?}\n    llvm_type: {:?}\n}}", self.as_type_ref(), llvm_type)
     }
 }
 

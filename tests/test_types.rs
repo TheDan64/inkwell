@@ -1,8 +1,9 @@
 extern crate inkwell;
 
+use std::ffi::CString;
+
 use self::inkwell::context::Context;
 use self::inkwell::types::{FloatType, IntType, StructType, VoidType};
-use std::ffi::CString;
 
 #[test]
 fn test_struct_type() {
@@ -91,6 +92,7 @@ fn test_function_type() {
     let fn_type = int.fn_type(&[&int, &int, &float], false);
 
     assert!(!fn_type.is_var_arg());
+    assert_eq!(*fn_type.get_context(), context);
 
     let param_types = fn_type.get_param_types();
 
@@ -102,6 +104,7 @@ fn test_function_type() {
     let fn_type = int.fn_type(&[&int, &float], true);
 
     assert!(fn_type.is_var_arg());
+    assert_eq!(*fn_type.get_context(), context);
 }
 
 #[test]
@@ -119,6 +122,13 @@ fn test_sized_types() {
     let f128_type = FloatType::f128_type();
     let ppc_f128_type = FloatType::ppc_f128_type();
     let struct_type = StructType::struct_type(&[&i8_type, &f128_type], false);
+    let struct_type2 = StructType::struct_type(&[], false);
+    let struct_type3 = StructType::struct_type(&[&i8_type, &f128_type], true);
+    let struct_type4 = StructType::struct_type(&[], true);
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_type2 = i8_type.fn_type(&[], false);
+    let fn_type3 = void_type.fn_type(&[&i32_type, &struct_type], false);
+    let fn_type4 = i8_type.fn_type(&[&struct_type, &i32_type], false);
 
     // REVIEW: Should these maybe just be constant functions instead of bothering to calling LLVM?
 
@@ -135,6 +145,13 @@ fn test_sized_types() {
     assert!(f128_type.is_sized());
     assert!(ppc_f128_type.is_sized());
     assert!(struct_type.is_sized());
+    assert!(struct_type2.is_sized());
+    assert!(struct_type3.is_sized());
+    assert!(struct_type4.is_sized());
+    assert!(!fn_type.is_sized());
+    assert!(!fn_type2.is_sized());
+    assert!(!fn_type3.is_sized());
+    assert!(!fn_type4.is_sized());
 
     assert!(void_type.ptr_type(0).is_sized());
     assert!(bool_type.ptr_type(0).is_sized());
@@ -149,6 +166,9 @@ fn test_sized_types() {
     assert!(f128_type.ptr_type(0).is_sized());
     assert!(ppc_f128_type.ptr_type(0).is_sized());
     assert!(struct_type.ptr_type(0).is_sized());
+    assert!(struct_type2.ptr_type(0).is_sized());
+    assert!(struct_type3.ptr_type(0).is_sized());
+    assert!(struct_type4.ptr_type(0).is_sized());
 
     // REVIEW: You can't have array of void right?
     assert!(void_type.ptr_type(0).array_type(42).is_sized());
@@ -164,6 +184,9 @@ fn test_sized_types() {
     assert!(f128_type.array_type(42).is_sized());
     assert!(ppc_f128_type.array_type(42).is_sized());
     assert!(struct_type.array_type(0).is_sized());
+    assert!(struct_type2.array_type(0).is_sized());
+    assert!(struct_type3.array_type(0).is_sized());
+    assert!(struct_type4.array_type(0).is_sized());
 
     // REVIEW: You can't have array of void right?
     assert!(void_type.ptr_type(0).vec_type(42).is_sized());
@@ -179,4 +202,16 @@ fn test_sized_types() {
     assert!(f128_type.vec_type(42).is_sized());
     assert!(ppc_f128_type.vec_type(42).is_sized());
     assert!(struct_type.vec_type(42).is_sized());
+    assert!(struct_type2.vec_type(42).is_sized());
+    assert!(struct_type3.vec_type(42).is_sized());
+    assert!(struct_type4.vec_type(42).is_sized());
+}
+
+#[test]
+fn test_vec_type() {
+    let context = Context::create();
+    let int = context.i8_type();
+    let vec_type = int.vec_type(42);
+
+    assert_eq!(vec_type.size(), 42);
 }

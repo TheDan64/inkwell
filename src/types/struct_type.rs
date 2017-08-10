@@ -33,7 +33,7 @@ impl StructType {
             return None;
         }
 
-        // OOB indexing seems to be unchecked and UB
+        // OOB indexing seems to be unchecked and therefore is UB
         if index >= self.count_fields() {
             return None;
         }
@@ -41,10 +41,6 @@ impl StructType {
         let type_ = unsafe {
             LLVMStructGetTypeAtIndex(self.struct_type.type_, index)
         };
-
-        if type_.is_null() {
-            return None;
-        }
 
         Some(BasicTypeEnum::new(type_))
     }

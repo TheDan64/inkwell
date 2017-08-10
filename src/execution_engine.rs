@@ -36,6 +36,7 @@ impl ExecutionEngine {
 
     /// WARNING: The returned address *will* be invalid if the EE drops first
     /// Do not attempt to transmute it to a function if the ExecutionEngine is gone
+    // TODOC: Initializing a target MUST occur before creating the EE or else it will not count
     pub fn get_function_address(&self, fn_name: &str) -> Result<u64, GetFunctionAddressError> {
         if !self.jit_mode {
             return Err(GetFunctionAddressError::JITNotEnabled);
@@ -66,6 +67,7 @@ impl ExecutionEngine {
         TargetData::new(target_data)
     }
 
+    // FIXME: Seems to not work at all
     pub fn find_function(&self, fn_name: &str) -> Option<FunctionValue> {
         let c_string = CString::new(fn_name).expect("Conversion to CString failed unexpectedly");
         let function = ptr::null_mut();
