@@ -6,7 +6,7 @@ use std::ffi::CStr;
 use context::ContextRef;
 use types::traits::AsTypeRef;
 use types::{Type, PointerType, FunctionType, BasicType, ArrayType, VectorType};
-use values::{FloatValue, PointerValue};
+use values::{FloatValue, PointerValue, IntValue};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct FloatType {
@@ -54,8 +54,13 @@ impl FloatType {
         FloatValue::new(null)
     }
 
+    // REVIEW: Always true -> const fn?
     pub fn is_sized(&self) -> bool {
         self.float_type.is_sized()
+    }
+
+    pub fn size_of(&self) -> IntValue {
+        self.float_type.size_of()
     }
 
     pub fn get_context(&self) -> ContextRef {

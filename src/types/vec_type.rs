@@ -5,7 +5,7 @@ use std::ffi::CStr;
 
 use types::traits::AsTypeRef;
 use types::Type;
-use values::{BasicValue, PointerValue, VectorValue};
+use values::{BasicValue, PointerValue, VectorValue, IntValue};
 
 // REVIEW: vec_type() is impl for IntType & FloatType. Need to
 // find out if it is valid for other types too. Maybe PointerType?
@@ -23,7 +23,23 @@ impl VectorType {
         }
     }
 
-    pub fn size(&self) -> u32 {
+    // REVIEW: Can be unsized if inner type is opaque struct
+    pub fn is_sized(&self) -> bool {
+        self.vec_type.is_sized()
+    }
+
+    // TODO: impl only for VectorType<!StructType<Opaque>>
+    // REVIEW: What about Opaque struct hiding in deeper levels?
+    // like VectorType<ArrayType<StructType<Opaque>>>?
+    pub fn size_of(&self) -> Option<IntValue> {
+        if self.is_sized() {
+            return Some(self.vec_type.size_of())
+        }
+
+        None
+    }
+
+    pub fn get_size(&self) -> u32 {
         unsafe {
             LLVMGetVectorSize(self.as_type_ref())
         }
@@ -70,10 +86,6 @@ impl VectorType {
 
     pub fn get_undef(&self) -> VectorValue {
         VectorValue::new(self.vec_type.get_undef())
-    }
-
-    pub fn is_sized(&self) -> bool {
-        self.vec_type.is_sized()
     }
 }
 

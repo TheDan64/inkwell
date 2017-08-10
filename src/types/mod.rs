@@ -133,17 +133,18 @@ impl Type {
         ContextRef::new(Context::new(context))
     }
 
+    // REVIEW: This should be known at compile time, maybe as a const fn?
+    // On an enum or trait, this would not be known at compile time (unless
+    // enum has only sized types for example)
     fn is_sized(&self) -> bool {
         unsafe {
             LLVMTypeIsSized(self.type_) == 1
         }
     }
 
-    // REVIEW: Option<IntValue>? What happens when type is unsized? We could return 0?
-    // Also, is this even useful? Sized or not should be known at compile time?
-    // For example, void is not sized. This may only be useful on Type Traits/Enums
-    // where the actual type is unknown (trait) or yet undetermined (enum)
-    fn size(&self) -> IntValue {
+    // REVIEW: Option<IntValue>? If we want to provide it on enums that
+    // contain unsized types
+    fn size_of(&self) -> IntValue {
         debug_assert!(self.is_sized());
 
         let int_value = unsafe {

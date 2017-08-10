@@ -6,7 +6,7 @@ use std::ffi::CStr;
 use context::ContextRef;
 use types::traits::AsTypeRef;
 use types::{Type, BasicType, PointerType, FunctionType};
-use values::{BasicValue, ArrayValue, PointerValue};
+use values::{BasicValue, ArrayValue, PointerValue, IntValue};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct ArrayType {
@@ -22,8 +22,18 @@ impl ArrayType {
         }
     }
 
+    // REVIEW: Can be unsized if inner type is opaque struct
     pub fn is_sized(&self) -> bool {
         self.array_type.is_sized()
+    }
+
+    // TODO: impl only for ArrayType<!StructType<Opaque>>
+    pub fn size_of(&self) -> Option<IntValue> {
+        if self.is_sized() {
+            return Some(self.array_type.size_of())
+        }
+
+        None
     }
 
     pub fn ptr_type(&self, address_space: u32) -> PointerType {

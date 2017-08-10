@@ -121,12 +121,13 @@ impl IntType {
         self.int_type.get_context()
     }
 
+    // REVIEW: Always true -> const fn?
     pub fn is_sized(&self) -> bool {
         self.int_type.is_sized()
     }
 
-    pub fn size(&self) -> IntValue {
-        self.int_type.size()
+    pub fn size_of(&self) -> IntValue {
+        self.int_type.size_of()
     }
 
     pub fn ptr_type(&self, address_space: u32) -> PointerType {

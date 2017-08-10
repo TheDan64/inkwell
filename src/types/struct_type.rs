@@ -7,7 +7,7 @@ use std::mem::forget;
 use context::ContextRef;
 use types::traits::AsTypeRef;
 use types::{Type, BasicType, BasicTypeEnum, ArrayType, PointerType, FunctionType, VectorType};
-use values::{BasicValue, StructValue, PointerValue};
+use values::{BasicValue, StructValue, PointerValue, IntValue};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct StructType {
@@ -80,8 +80,19 @@ impl StructType {
         StructValue::new(null)
     }
 
+    // REVIEW: Can be false if opaque. To make a const fn, we'd have to have
+    // have separate impls for Struct<Opaque> and StructType<T*>
     pub fn is_sized(&self) -> bool {
         self.struct_type.is_sized()
+    }
+
+    // TODO: impl it only for StructType<T*>
+    pub fn size_of(&self) -> Option<IntValue> {
+        if self.is_sized() {
+            return Some(self.struct_type.size_of());
+        }
+
+        None
     }
 
     pub fn get_context(&self) -> ContextRef {

@@ -6,7 +6,7 @@ use std::ffi::CStr;
 use context::ContextRef;
 use types::traits::AsTypeRef;
 use types::{Type, BasicType, ArrayType, FunctionType, VectorType};
-use values::PointerValue;
+use values::{PointerValue, IntValue};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct PointerType {
@@ -24,6 +24,10 @@ impl PointerType {
 
     pub fn is_sized(&self) -> bool {
         self.ptr_type.is_sized()
+    }
+
+    pub fn size_of(&self) -> IntValue {
+        self.ptr_type.size_of()
     }
 
     pub fn ptr_type(&self, address_space: u32) -> PointerType {

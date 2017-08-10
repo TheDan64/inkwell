@@ -22,6 +22,7 @@ impl VoidType {
         }
     }
 
+    // REVIEW: Always false -> const fn?
     pub fn is_sized(&self) -> bool {
         self.void_type.is_sized()
     }

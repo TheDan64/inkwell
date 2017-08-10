@@ -109,6 +109,7 @@ fn test_function_type() {
 
 #[test]
 fn test_sized_types() {
+    let context = Context::get_global_context();
     let void_type = VoidType::void_type();
     let bool_type = IntType::bool_type();
     let i8_type = IntType::i8_type();
@@ -125,6 +126,7 @@ fn test_sized_types() {
     let struct_type2 = StructType::struct_type(&[], false);
     let struct_type3 = StructType::struct_type(&[&i8_type, &f128_type], true);
     let struct_type4 = StructType::struct_type(&[], true);
+    let opaque_struct_type = context.opaque_struct_type("opaque");
     let fn_type = void_type.fn_type(&[], false);
     let fn_type2 = i8_type.fn_type(&[], false);
     let fn_type3 = void_type.fn_type(&[&i32_type, &struct_type], false);
@@ -148,6 +150,7 @@ fn test_sized_types() {
     assert!(struct_type2.is_sized());
     assert!(struct_type3.is_sized());
     assert!(struct_type4.is_sized());
+    assert!(!opaque_struct_type.is_sized());
     assert!(!fn_type.is_sized());
     assert!(!fn_type2.is_sized());
     assert!(!fn_type3.is_sized());
@@ -169,6 +172,7 @@ fn test_sized_types() {
     assert!(struct_type2.ptr_type(0).is_sized());
     assert!(struct_type3.ptr_type(0).is_sized());
     assert!(struct_type4.ptr_type(0).is_sized());
+    assert!(opaque_struct_type.ptr_type(0).is_sized());
 
     // REVIEW: You can't have array of void right?
     assert!(void_type.ptr_type(0).array_type(42).is_sized());
@@ -187,6 +191,7 @@ fn test_sized_types() {
     assert!(struct_type2.array_type(0).is_sized());
     assert!(struct_type3.array_type(0).is_sized());
     assert!(struct_type4.array_type(0).is_sized());
+    assert!(!opaque_struct_type.array_type(0).is_sized());
 
     // REVIEW: You can't have array of void right?
     assert!(void_type.ptr_type(0).vec_type(42).is_sized());
@@ -205,6 +210,7 @@ fn test_sized_types() {
     assert!(struct_type2.vec_type(42).is_sized());
     assert!(struct_type3.vec_type(42).is_sized());
     assert!(struct_type4.vec_type(42).is_sized());
+    assert!(!opaque_struct_type.vec_type(42).is_sized());
 }
 
 #[test]
@@ -213,5 +219,5 @@ fn test_vec_type() {
     let int = context.i8_type();
     let vec_type = int.vec_type(42);
 
-    assert_eq!(vec_type.size(), 42);
+    assert_eq!(vec_type.get_size(), 42);
 }
