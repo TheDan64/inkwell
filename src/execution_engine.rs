@@ -5,14 +5,15 @@ use targets::TargetData;
 use values::{AsValueRef, FunctionValue};
 
 use std::ffi::CString;
-use std::ptr;
+use std::mem::zeroed;
 
-#[derive(Debug, PartialEq)]
-pub enum GetFunctionAddressError {
+#[derive(Debug, PartialEq, Eq)]
+pub enum FunctionLookupError {
     JITNotEnabled,
     FunctionNotFound, // 404!
 }
 
+#[derive(PartialEq, Eq)]
 pub struct ExecutionEngine {
     execution_engine: LLVMExecutionEngineRef,
     jit_mode: bool,
@@ -37,9 +38,10 @@ impl ExecutionEngine {
     /// WARNING: The returned address *will* be invalid if the EE drops first
     /// Do not attempt to transmute it to a function if the ExecutionEngine is gone
     // TODOC: Initializing a target MUST occur before creating the EE or else it will not count
-    pub fn get_function_address(&self, fn_name: &str) -> Result<u64, GetFunctionAddressError> {
+    // TODOC: Can still add functions after EE has been created
+    pub fn get_function_address(&self, fn_name: &str) -> Result<u64, FunctionLookupError> {
         if !self.jit_mode {
-            return Err(GetFunctionAddressError::JITNotEnabled);
+            return Err(FunctionLookupError::JITNotEnabled);
         }
 
         let c_string = CString::new(fn_name).expect("Conversion to CString failed unexpectedly");
@@ -53,7 +55,7 @@ impl ExecutionEngine {
         // initialized (maybe we could figure out which config in particular is the trigger)
         // and if not return an "NoTargetsInitialized" error, instead of not found.
         if address == 0 {
-            return Err(GetFunctionAddressError::FunctionNotFound);
+            return Err(FunctionLookupError::FunctionNotFound);
         }
 
         Ok(address)
@@ -67,22 +69,26 @@ impl ExecutionEngine {
         TargetData::new(target_data)
     }
 
-    // FIXME: Seems to not work at all
-    pub fn find_function(&self, fn_name: &str) -> Option<FunctionValue> {
+    // REVIEW: Can also find nothing if no targeting is initialized. Maybe best to
+    // do have a global flag for anything initialized. Catch is that it must be initialized
+    // before EE is created
+    pub fn get_function_value(&self, fn_name: &str) -> Result<FunctionValue, FunctionLookupError> {
+        if !self.jit_mode {
+            return Err(FunctionLookupError::JITNotEnabled);
+        }
+
         let c_string = CString::new(fn_name).expect("Conversion to CString failed unexpectedly");
-        let function = ptr::null_mut();
+        let mut function = unsafe { zeroed() };
 
         let code = unsafe {
-            LLVMFindFunction(self.execution_engine, c_string.as_ptr(), function)
+            LLVMFindFunction(self.execution_engine, c_string.as_ptr(), &mut function)
         };
 
-        if code == 1 {
-            unsafe {
-                return FunctionValue::new(*function)
-            }
+        if code == 0 {
+            return FunctionValue::new(function).ok_or(FunctionLookupError::FunctionNotFound)
         };
 
-        None
+        Err(FunctionLookupError::FunctionNotFound)
     }
 
     pub fn run_function(&self, function: FunctionValue) {
