@@ -1,11 +1,11 @@
-use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction};
+use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction, LLVMLinkInMCJIT, LLVMLinkInInterpreter, LLVMRemoveModule};
 
 use module::Module;
 use targets::TargetData;
 use values::{AsValueRef, FunctionValue};
 
 use std::ffi::CString;
-use std::mem::zeroed;
+use std::mem::{uninitialized, zeroed};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum FunctionLookupError {
@@ -16,6 +16,7 @@ pub enum FunctionLookupError {
 #[derive(PartialEq, Eq)]
 pub struct ExecutionEngine {
     execution_engine: LLVMExecutionEngineRef,
+    pub(crate) modules: Vec<Module>,
     jit_mode: bool,
 }
 
@@ -25,14 +26,59 @@ impl ExecutionEngine {
 
         ExecutionEngine {
             execution_engine: execution_engine,
+            modules: vec![],
             jit_mode: jit_mode,
         }
     }
 
-    pub fn add_module(&self, module: &Module) {
+    pub fn link_in_mc_jit() {
+        unsafe {
+            LLVMLinkInMCJIT()
+        }
+    }
+
+    pub fn link_in_interpreter() {
+        unsafe {
+            LLVMLinkInInterpreter();
+        }
+    }
+
+    // TODOC: EE must *own* modules and deal out references
+    pub fn add_module(&mut self, module: Module) -> &Module {
         unsafe {
             LLVMAddModule(self.execution_engine, module.module)
         }
+
+        self.modules.push(module);
+
+        &self.modules[self.modules.len() - 1]
+    }
+
+    pub fn remove_module(&mut self, module: &Module) -> Result<Module, String> {
+        let mut new_module = unsafe { uninitialized() };
+        let mut err_str = unsafe { zeroed() };
+
+        let code = unsafe {
+            LLVMRemoveModule(self.execution_engine, module.module, &mut new_module, err_str)
+        };
+
+        // REVIEW: This might end up a hashtable for better performance
+        let mut index = None;
+
+        for (i, owned_module) in self.modules.iter().enumerate() {
+            if module == owned_module {
+                index = Some(i);
+            }
+        }
+
+        self.modules.remove(index.unwrap());
+
+        Ok(Module::new(new_module))
+    }
+
+    // FIXME: Workaround until we can think of a better API
+    pub fn get_module_at(&self, index: usize) -> &Module {
+        &self.modules[index]
     }
 
     /// WARNING: The returned address *will* be invalid if the EE drops first

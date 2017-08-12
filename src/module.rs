@@ -1,7 +1,7 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer, LLVMWriteBitcodeToFD};
 use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMCreateFunctionPassManagerForModule, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetDataLayout, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace};
-use llvm_sys::execution_engine::{LLVMCreateExecutionEngineForModule, LLVMLinkInInterpreter, LLVMLinkInMCJIT};
+use llvm_sys::execution_engine::{LLVMCreateExecutionEngineForModule, LLVMLinkInInterpreter, LLVMLinkInMCJIT, LLVMCreateJITCompilerForModule, LLVMCreateMCJITCompilerForModule};
 use llvm_sys::prelude::LLVMModuleRef;
 use llvm_sys::LLVMLinkage;
 
@@ -87,6 +87,7 @@ impl Linkage {
     }
 }
 
+#[derive(PartialEq, Eq)]
 pub struct Module {
     pub(crate) module: LLVMModuleRef,
 }
@@ -191,7 +192,10 @@ impl Module {
         }
     }
 
-    pub fn create_execution_engine(&self, jit_mode: bool) -> Result<ExecutionEngine, String> {
+    // TODOC: EE must *own* modules and deal out references
+    // REVIEW: I'm wondering if this should form be disallowed altogether in favor of the explicit
+    // EE types. Having to call these global methods beforehand is a huge hassle but seems avoidable
+    pub fn create_execution_engine(self, jit_mode: bool) -> Result<ExecutionEngine, String> {
         let mut execution_engine = unsafe { uninitialized() };
         let mut err_str = unsafe { zeroed() };
 
@@ -221,7 +225,40 @@ impl Module {
             return Err(rust_str);
         }
 
-        Ok(ExecutionEngine::new(execution_engine, jit_mode))
+        let mut execution_engine = ExecutionEngine::new(execution_engine, jit_mode);
+
+        execution_engine.modules.push(self);
+
+        Ok(execution_engine)
+    }
+
+    // TODOC: EE must *own* modules and deal out references
+    pub fn create_jit_execution_engine(self) -> Result<ExecutionEngine, String> {
+        let mut execution_engine = unsafe { uninitialized() };
+        let mut err_str = unsafe { zeroed() };
+        let opt_level = 1; // TODO: Param
+
+        let code = unsafe {
+            LLVMCreateJITCompilerForModule(&mut execution_engine, self.module, opt_level, &mut err_str) // Should take ownership of module
+        };
+
+        if code == 1 {
+            let rust_str = unsafe {
+                let rust_str = CStr::from_ptr(err_str).to_string_lossy().into_owned();
+
+                LLVMDisposeMessage(&mut *err_str);
+
+                rust_str
+            };
+
+            return Err(rust_str);
+        }
+
+        let mut execution_engine = ExecutionEngine::new(execution_engine, true);
+
+        execution_engine.modules.push(self);
+
+        Ok(execution_engine)
     }
 
     pub fn create_function_pass_manager(&self) -> PassManager {
