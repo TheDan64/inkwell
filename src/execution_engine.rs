@@ -1,10 +1,11 @@
+use llvm_sys::core::LLVMDisposeMessage;
 use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction, LLVMLinkInMCJIT, LLVMLinkInInterpreter, LLVMRemoveModule};
 
 use module::Module;
 use targets::TargetData;
 use values::{AsValueRef, FunctionValue};
 
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::mem::{uninitialized, zeroed};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -13,7 +14,7 @@ pub enum FunctionLookupError {
     FunctionNotFound, // 404!
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct ExecutionEngine {
     execution_engine: LLVMExecutionEngineRef,
     pub(crate) modules: Vec<Module>,
@@ -59,8 +60,20 @@ impl ExecutionEngine {
         let mut err_str = unsafe { zeroed() };
 
         let code = unsafe {
-            LLVMRemoveModule(self.execution_engine, module.module, &mut new_module, err_str)
+            LLVMRemoveModule(self.execution_engine, module.module, &mut new_module, &mut err_str)
         };
+
+        if code == 1 {
+            let rust_str = unsafe {
+                let rust_str = CStr::from_ptr(err_str).to_string_lossy().into_owned();
+
+                LLVMDisposeMessage(err_str);
+
+                rust_str
+            };
+
+            return Err(rust_str);
+        }
 
         // REVIEW: This might end up a hashtable for better performance
         let mut index = None;
@@ -71,7 +84,10 @@ impl ExecutionEngine {
             }
         }
 
-        self.modules.remove(index.unwrap());
+        match index {
+            Some(idx) => self.modules.remove(idx),
+            None => return Err("Module does not belong to this ExecutionEngine".into()),
+        };
 
         Ok(Module::new(new_module))
     }

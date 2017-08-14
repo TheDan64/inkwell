@@ -41,7 +41,7 @@ fn test_null_checked_ptr_ops() {
     let context = Context::create();
     let module = context.create_module("unsafe");
     let builder = context.create_builder();
-    let execution_engine = module.create_execution_engine(true).unwrap();
+    let execution_engine = module.create_jit_execution_engine(0).unwrap();
     let module = execution_engine.get_module_at(0);
 
     // Here we're going to create a function that looks roughly like:

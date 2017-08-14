@@ -87,7 +87,7 @@ impl Linkage {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Module {
     pub(crate) module: LLVMModuleRef,
 }
@@ -193,50 +193,12 @@ impl Module {
     }
 
     // TODOC: EE must *own* modules and deal out references
-    // REVIEW: I'm wondering if this should form be disallowed altogether in favor of the explicit
-    // EE types. Having to call these global methods beforehand is a huge hassle but seems avoidable
-    pub fn create_execution_engine(self, jit_mode: bool) -> Result<ExecutionEngine, String> {
+    pub fn create_jit_execution_engine(self, opt_level: u32) -> Result<ExecutionEngine, String> {
+        // TODO: If not INITIALIZED_TARGETING then return error
+        // REVIEW: Maybe need an enum: CreateExecutionEngineError {TargetingNotEnabled, LLVMError(String)}
+
         let mut execution_engine = unsafe { uninitialized() };
         let mut err_str = unsafe { zeroed() };
-
-        if jit_mode {
-            unsafe {
-                LLVMLinkInMCJIT();
-            }
-        }
-
-        unsafe {
-            LLVMLinkInInterpreter();
-        }
-
-        let code = unsafe {
-            LLVMCreateExecutionEngineForModule(&mut execution_engine, self.module, &mut err_str) // Should take ownership of module
-        };
-
-        if code == 1 {
-            let rust_str = unsafe {
-                let rust_str = CStr::from_ptr(err_str).to_string_lossy().into_owned();
-
-                LLVMDisposeMessage(err_str);
-
-                rust_str
-            };
-
-            return Err(rust_str);
-        }
-
-        let mut execution_engine = ExecutionEngine::new(execution_engine, jit_mode);
-
-        execution_engine.modules.push(self);
-
-        Ok(execution_engine)
-    }
-
-    // TODOC: EE must *own* modules and deal out references
-    pub fn create_jit_execution_engine(self) -> Result<ExecutionEngine, String> {
-        let mut execution_engine = unsafe { uninitialized() };
-        let mut err_str = unsafe { zeroed() };
-        let opt_level = 1; // TODO: Param
 
         let code = unsafe {
             LLVMCreateJITCompilerForModule(&mut execution_engine, self.module, opt_level, &mut err_str) // Should take ownership of module

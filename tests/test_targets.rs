@@ -1,7 +1,7 @@
 extern crate inkwell;
 
 use self::inkwell::context::Context;
-use self::inkwell::targets::ByteOrdering;
+use self::inkwell::targets::{ByteOrdering, InitializationConfig, Target};
 
 // REVIEW: Inconsistently failing on different tries :(
 // #[test]
@@ -60,9 +60,11 @@ use self::inkwell::targets::ByteOrdering;
 
 #[test]
 fn test_target_data() {
+    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+
     let context = Context::create();
     let module = context.create_module("sum");
-    let execution_engine = module.create_execution_engine(true).unwrap();
+    let execution_engine = module.create_jit_execution_engine(0).unwrap();
     let target_data = execution_engine.get_target_data();
 
     let i32_type = context.i32_type();
@@ -102,14 +104,14 @@ fn test_target_data() {
     assert_eq!(target_data.get_abi_size(&struct_type2), 24);
 
     assert_eq!(target_data.get_abi_alignment(&i32_type), 4);
-    // assert_eq!(target_data.get_abi_alignment(&i64_type), 8); // REVIEW: Inconsistently errors, sometimes equals 4 on the same machine
+    assert_eq!(target_data.get_abi_alignment(&i64_type), 8);
     assert_eq!(target_data.get_abi_alignment(&f32_type), 4);
     assert_eq!(target_data.get_abi_alignment(&f64_type), 8);
     assert_eq!(target_data.get_abi_alignment(&struct_type), 8);
     assert_eq!(target_data.get_abi_alignment(&struct_type2), 8);
 
     assert_eq!(target_data.get_call_frame_alignment(&i32_type), 4);
-    // assert_eq!(target_data.get_call_frame_alignment(&i64_type), 8); // REVIEW: Inconsistently errors, sometimes equals 4 on the same machine
+    assert_eq!(target_data.get_call_frame_alignment(&i64_type), 8);
     assert_eq!(target_data.get_call_frame_alignment(&f32_type), 4);
     assert_eq!(target_data.get_call_frame_alignment(&f64_type), 8);
     assert_eq!(target_data.get_call_frame_alignment(&struct_type), 8);
@@ -124,31 +126,32 @@ fn test_target_data() {
 
     // REVIEW: offset in bytes? Rename to byte_offset_of_element?
     assert_eq!(target_data.offset_of_element(&struct_type, 0), 0);
-    // assert_eq!(target_data.offset_of_element(&struct_type, 1), 8); // REVIEW: Inconsistently errors, sometimes equals 1 on the same machine
+    assert_eq!(target_data.offset_of_element(&struct_type, 1), 8);
     assert_eq!(target_data.offset_of_element(&struct_type, 2), 16);
     assert_eq!(target_data.offset_of_element(&struct_type, 3), 24);
-    // assert_eq!(target_data.offset_of_element(&struct_type, 4), 32); // FIXME: Out of bounds returns bad data, maybe LLVM bug?
+    assert_eq!(target_data.offset_of_element(&struct_type, 4), 0); // OoB
+    // assert_eq!(target_data.offset_of_element(&struct_type, 10), 0); // OoB; Sometimes returns 1
 
     assert_eq!(target_data.element_at_offset(&struct_type, 0), 0);
-    // assert_eq!(target_data.element_at_offset(&struct_type, 4), 0); // REVIEW: Inconsistently errors, sometimes equals 4 on the same machine
+    assert_eq!(target_data.element_at_offset(&struct_type, 4), 0);
     assert_eq!(target_data.element_at_offset(&struct_type, 8), 1);
     assert_eq!(target_data.element_at_offset(&struct_type, 16), 2);
     assert_eq!(target_data.element_at_offset(&struct_type, 24), 3);
-    assert_eq!(target_data.element_at_offset(&struct_type, 32), 3);
-    assert_eq!(target_data.element_at_offset(&struct_type, 4200), 3); // Odd but seems to cap at max element number
+    assert_eq!(target_data.element_at_offset(&struct_type, 32), 3); // OoB
+    assert_eq!(target_data.element_at_offset(&struct_type, 4200), 3); // OoB; Odd as it seems to cap at max element number
 
     assert_eq!(target_data.offset_of_element(&struct_type2, 0), 0);
     assert_eq!(target_data.offset_of_element(&struct_type2, 1), 4);
     assert_eq!(target_data.offset_of_element(&struct_type2, 2), 8);
     assert_eq!(target_data.offset_of_element(&struct_type2, 3), 16);
-    // assert_eq!(target_data.offset_of_element(&struct_type2, 4), 0); // Maybe ok because of the element positioning? REVIEW: Inconsistently errors, sometimes equals 1 on the same machine
-    // assert_eq!(target_data.offset_of_element(&struct_type2, 5), 0); // Maybe ok because of the element positioning? REVIEW: Inconsistently errors, sometimes equals garbage data large int value on the same machine
+    assert_eq!(target_data.offset_of_element(&struct_type2, 4), 32); // OoB
+    assert_eq!(target_data.offset_of_element(&struct_type2, 5), 17179869192); // OoB; Garbage data
 
     assert_eq!(target_data.element_at_offset(&struct_type2, 0), 0);
     assert_eq!(target_data.element_at_offset(&struct_type2, 2), 0);
     assert_eq!(target_data.element_at_offset(&struct_type2, 4), 1);
     assert_eq!(target_data.element_at_offset(&struct_type2, 8), 2);
     assert_eq!(target_data.element_at_offset(&struct_type2, 16), 3);
-    assert_eq!(target_data.element_at_offset(&struct_type2, 32), 3);
-    assert_eq!(target_data.element_at_offset(&struct_type2, 4200), 3); // Odd but seems to cap at max element number
+    assert_eq!(target_data.element_at_offset(&struct_type2, 32), 3); // OoB
+    assert_eq!(target_data.element_at_offset(&struct_type2, 4200), 3); // OoB; Odd but seems to cap at max element number
 }

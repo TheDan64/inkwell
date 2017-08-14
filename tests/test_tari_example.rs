@@ -11,7 +11,7 @@ fn test_tari_example() {
     let context = Context::create();
     let module = context.create_module("sum");
     let builder = context.create_builder();
-    let execution_engine = module.create_execution_engine(true).unwrap();
+    let execution_engine = module.create_jit_execution_engine(0).unwrap();
     let module = execution_engine.get_module_at(0);
 
     let i64_type = context.i64_type();

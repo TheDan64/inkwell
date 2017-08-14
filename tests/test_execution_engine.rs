@@ -12,13 +12,15 @@ fn test_get_function_address() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
 
-    assert_eq!(module.create_jit_execution_engine().err(), Some("Unable to find target for this triple (no targets are registered)".into()));
+    let ee = module.create_jit_execution_engine(0);
+
+    assert_eq!(ee.err(), Some("Unable to find target for this triple (no targets are registered)".into()));
 
     let module = context.create_module("errors_abound");
 
     Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
 
-    let execution_engine = module.create_jit_execution_engine().unwrap();
+    let execution_engine = module.create_jit_execution_engine(0).unwrap();
 
     assert_eq!(execution_engine.get_function_address("errors"), Err(FunctionLookupError::FunctionNotFound));
 
@@ -29,7 +31,7 @@ fn test_get_function_address() {
     builder.position_at_end(&basic_block);
     builder.build_return(None);
 
-    let execution_engine = module.create_jit_execution_engine().unwrap();
+    let execution_engine = module.create_jit_execution_engine(0).unwrap();
 
     assert_eq!(execution_engine.get_function_address("errors"), Err(FunctionLookupError::FunctionNotFound));
 
@@ -41,7 +43,7 @@ fn test_get_function_address() {
 //     let context = Context::create();
 //     let builder = context.create_builder();
 //     let module = context.create_module("errors_abound");
-//     let mut execution_engine = module.create_jit_execution_engine().unwrap();
+//     let mut execution_engine = module.create_jit_execution_engine(0).unwrap();
 //     let module = execution_engine.get_module_at(0);
 //     let void_type = context.void_type();
 //     let fn_type = void_type.fn_type(&[], false);
@@ -58,7 +60,7 @@ fn test_get_function_address() {
 
 //     Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
 
-//     let execution_engine = module.create_jit_execution_engine().unwrap();
+//     let execution_engine = module.create_jit_execution_engine(0).unwrap();
 
 //     assert_eq!(execution_engine.get_function_value("errors"), Err(FunctionLookupError::FunctionNotFound));
 
