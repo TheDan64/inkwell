@@ -6,7 +6,7 @@ use targets::TargetData;
 use values::{AsValueRef, FunctionValue};
 
 use std::ffi::{CStr, CString};
-use std::mem::{uninitialized, zeroed};
+use std::mem::{forget, uninitialized, zeroed};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum FunctionLookupError {
@@ -173,6 +173,12 @@ impl ExecutionEngine {
 
 impl Drop for ExecutionEngine {
     fn drop(&mut self) {
+        // Modules are owned by the EE and will be discarded by the EE
+        // so we don't want owned modules to drop. There might be a more concise
+        // way to do this... Alternatively, Module could have an owned field, and not
+        // call LLVMDisposeModule on drop
+        forget(self.modules.drain(0..).collect::<Vec<_>>());
+
         unsafe {
             LLVMDisposeExecutionEngine(self.execution_engine);
         }

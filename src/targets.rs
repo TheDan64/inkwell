@@ -608,18 +608,18 @@ impl Target {
 
     pub fn from_triple(triple: &str) -> Result<Target, String> {
         let c_string = CString::new(triple).expect("Conversion to CString failed unexpectedly");
-        let target = ptr::null_mut();
-        let err_str = unsafe { zeroed() };
+        let mut target = ptr::null_mut();
+        let mut err_str = unsafe { zeroed() };
 
         let code = unsafe {
-            LLVMGetTargetFromTriple(c_string.as_ptr(), target, err_str)
+            LLVMGetTargetFromTriple(c_string.as_ptr(), &mut target, &mut err_str)
         };
 
         if code == 1 { // REVIEW: 1 is error value
             let rust_str = unsafe {
-                let rust_str = CStr::from_ptr(*err_str).to_string_lossy().into_owned();
+                let rust_str = CStr::from_ptr(err_str).to_string_lossy().into_owned();
 
-                LLVMDisposeMessage(*err_str);
+                LLVMDisposeMessage(err_str);
 
                 rust_str
             };
@@ -627,9 +627,7 @@ impl Target {
             return Err(rust_str);
         }
 
-        unsafe {
-            Ok(Target::new(*target))
-        }
+        Ok(Target::new(target))
     }
 
     pub fn has_jit(&self) -> bool {

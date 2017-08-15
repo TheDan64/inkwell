@@ -1,6 +1,6 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer, LLVMWriteBitcodeToFD};
-use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMCreateFunctionPassManagerForModule, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetDataLayout, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace};
+use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMCreateFunctionPassManagerForModule, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetDataLayout, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString};
 use llvm_sys::execution_engine::{LLVMCreateJITCompilerForModule, LLVMCreateMCJITCompilerForModule};
 use llvm_sys::prelude::LLVMModuleRef;
 use llvm_sys::LLVMLinkage;
@@ -207,7 +207,7 @@ impl Module {
             let rust_str = unsafe {
                 let rust_str = CStr::from_ptr(err_str).to_string_lossy().into_owned();
 
-                LLVMDisposeMessage(&mut *err_str);
+                LLVMDisposeMessage(err_str);
 
                 rust_str
             };
@@ -277,7 +277,7 @@ impl Module {
     }
 
     pub fn verify(&self, print: bool) -> bool {
-        let err_str: *mut *mut i8 = unsafe { zeroed() };
+        let mut err_str = unsafe { zeroed() };
 
         let action = if print {
             LLVMVerifierFailureAction::LLVMPrintMessageAction
@@ -286,18 +286,18 @@ impl Module {
         };
 
         let code = unsafe {
-            LLVMVerifyModule(self.module, action, err_str)
+            LLVMVerifyModule(self.module, action, &mut err_str)
         };
 
         if code == 1 && !err_str.is_null() {
             unsafe {
                 if print {
-                    let rust_str = CStr::from_ptr(*err_str).to_str().unwrap();
+                    let rust_str = CStr::from_ptr(err_str).to_str().unwrap();
 
                     println!("{}", rust_str); // FIXME: Should probably be stderr?
                 }
 
-                LLVMDisposeMessage(*err_str);
+                LLVMDisposeMessage(err_str);
             }
         }
 
@@ -325,6 +325,12 @@ impl Module {
             LLVMDumpModule(self.module);
         }
     }
+
+    pub fn print_to_string(&self) -> &CStr {
+        unsafe {
+            CStr::from_ptr(LLVMPrintModuleToString(self.module))
+        }
+    }
 }
 
 impl Clone for Module {
@@ -337,11 +343,10 @@ impl Clone for Module {
     }
 }
 
-// FIXME: Causes segfault in test(s)
-// impl Drop for Module {
-//     fn drop(&mut self) {
-//         unsafe {
-//             LLVMDisposeModule(self.module)
-//         }
-//     }
-// }
+impl Drop for Module {
+    fn drop(&mut self) {
+        unsafe {
+            LLVMDisposeModule(self.module)
+        }
+    }
+}

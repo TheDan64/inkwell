@@ -65,23 +65,21 @@ impl Context {
     }
 
     pub fn create_module_from_ir(&self, memory_buffer: &MemoryBuffer) -> Result<Module, String> {
-        let module = ptr::null_mut();
-        let err_str = ptr::null_mut();
+        let mut module = ptr::null_mut();
+        let mut err_str = ptr::null_mut();
 
         let code = unsafe {
-            LLVMParseIRInContext(self.context, memory_buffer.memory_buffer, module, err_str)
+            LLVMParseIRInContext(self.context, memory_buffer.memory_buffer, &mut module, &mut err_str)
         };
 
         if code == 0 {
-            unsafe {
-                return Ok(Module::new(*module));
-            }
+            return Ok(Module::new(module));
         }
 
         let rust_str = unsafe {
-            let rust_str = CStr::from_ptr(*err_str).to_string_lossy().into_owned();
+            let rust_str = CStr::from_ptr(err_str).to_string_lossy().into_owned();
 
-            LLVMDisposeMessage(*err_str);
+            LLVMDisposeMessage(err_str);
 
             rust_str
         };
