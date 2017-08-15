@@ -125,11 +125,12 @@ fn test_target_data() {
     assert_eq!(target_data.get_preferred_alignment(&struct_type2), 8);
 
     // REVIEW: offset in bytes? Rename to byte_offset_of_element?
+    // FIXME: All OoB should probably be None
     assert_eq!(target_data.offset_of_element(&struct_type, 0), 0);
     assert_eq!(target_data.offset_of_element(&struct_type, 1), 8);
     assert_eq!(target_data.offset_of_element(&struct_type, 2), 16);
     assert_eq!(target_data.offset_of_element(&struct_type, 3), 24);
-    assert_eq!(target_data.offset_of_element(&struct_type, 4), 0); // OoB
+    // assert_eq!(target_data.offset_of_element(&struct_type, 4), 0); // OoB; Sometimes bad data
     // assert_eq!(target_data.offset_of_element(&struct_type, 10), 0); // OoB; Sometimes returns 1
 
     assert_eq!(target_data.element_at_offset(&struct_type, 0), 0);
@@ -144,8 +145,8 @@ fn test_target_data() {
     assert_eq!(target_data.offset_of_element(&struct_type2, 1), 4);
     assert_eq!(target_data.offset_of_element(&struct_type2, 2), 8);
     assert_eq!(target_data.offset_of_element(&struct_type2, 3), 16);
-    assert_eq!(target_data.offset_of_element(&struct_type2, 4), 32); // OoB
-    assert_eq!(target_data.offset_of_element(&struct_type2, 5), 17179869192); // OoB; Garbage data
+    // assert_eq!(target_data.offset_of_element(&struct_type2, 4), 32); // OoB
+    // assert_eq!(target_data.offset_of_element(&struct_type2, 5), 17179869192); // OoB; Garbage data
 
     assert_eq!(target_data.element_at_offset(&struct_type2, 0), 0);
     assert_eq!(target_data.element_at_offset(&struct_type2, 2), 0);

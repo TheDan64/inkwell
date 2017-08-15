@@ -12,7 +12,6 @@ use std::default::Default;
 use std::ffi::{CStr, CString};
 use std::mem::zeroed;
 use std::ptr;
-use std::sync::atomic::{AtomicBool, ATOMIC_BOOL_INIT};
 
 pub enum CodeGenOptLevel {
     Less,
@@ -58,8 +57,6 @@ impl Default for InitializationConfig {
         }
     }
 }
-
-static INITIALIZED_TARGETING: AtomicBool = ATOMIC_BOOL_INIT; // FIXME: Better name
 
 pub struct Target {
     target: LLVMTargetRef,

@@ -1,15 +1,15 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer, LLVMWriteBitcodeToFD};
 use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMCreateFunctionPassManagerForModule, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetDataLayout, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace};
-use llvm_sys::execution_engine::{LLVMCreateExecutionEngineForModule, LLVMLinkInInterpreter, LLVMLinkInMCJIT, LLVMCreateJITCompilerForModule, LLVMCreateMCJITCompilerForModule};
+use llvm_sys::execution_engine::{LLVMCreateJITCompilerForModule, LLVMCreateMCJITCompilerForModule};
 use llvm_sys::prelude::LLVMModuleRef;
 use llvm_sys::LLVMLinkage;
 
 use std::ffi::{CString, CStr};
 use std::fs::File;
 use std::mem::{uninitialized, zeroed};
-use std::path::Path;
 use std::os::unix::io::AsRawFd;
+use std::path::Path;
 
 use context::{Context, ContextRef};
 use data_layout::DataLayout;
@@ -193,10 +193,9 @@ impl Module {
     }
 
     // TODOC: EE must *own* modules and deal out references
+    // REVIEW: Looking at LLVM source, opt_level seems to be casted into a targets::CodeGenOptLevel
+    // or LLVM equivalent anyway
     pub fn create_jit_execution_engine(self, opt_level: u32) -> Result<ExecutionEngine, String> {
-        // TODO: If not INITIALIZED_TARGETING then return error
-        // REVIEW: Maybe need an enum: CreateExecutionEngineError {TargetingNotEnabled, LLVMError(String)}
-
         let mut execution_engine = unsafe { uninitialized() };
         let mut err_str = unsafe { zeroed() };
 
