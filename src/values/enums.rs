@@ -4,7 +4,7 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use types::BasicTypeEnum;
 use values::traits::AsValueRef;
-use values::{IntValue, FunctionValue, PointerValue, VectorValue, ArrayValue, StructValue, FloatValue, PhiValue, InstructionValue};
+use values::{IntValue, FunctionValue, PointerValue, VectorValue, ArrayValue, StructValue, FloatValue, PhiValue, InstructionValue, MetadataValue};
 
 macro_rules! enum_value_set {
     ($enum_name:ident: $($args:ident),*) => (
@@ -41,6 +41,7 @@ macro_rules! enum_value_set {
 enum_value_set! {AggregateValueEnum: ArrayValue, StructValue}
 enum_value_set! {AnyValueEnum: ArrayValue, IntValue, FloatValue, PhiValue, FunctionValue, PointerValue, StructValue, VectorValue}
 enum_value_set! {BasicValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue, VectorValue}
+enum_value_set! {BasicMetadataValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue, VectorValue, MetadataValue}
 
 impl BasicValueEnum {
     pub(crate) fn new(value: LLVMValueRef) -> BasicValueEnum {
@@ -80,6 +81,30 @@ impl BasicValueEnum {
             BasicValueEnum::StructValue(ref val) => val.as_instruction(),
             BasicValueEnum::PointerValue(ref val) => val.as_instruction(),
             BasicValueEnum::VectorValue(ref val) => val.as_instruction(),
+        }
+    }
+}
+
+impl BasicMetadataValueEnum {
+    pub(crate) fn new(value: LLVMValueRef) -> BasicMetadataValueEnum {
+        let type_kind = unsafe {
+            LLVMGetTypeKind(LLVMTypeOf(value))
+        };
+
+        match type_kind {
+            LLVMTypeKind::LLVMFloatTypeKind |
+            LLVMTypeKind::LLVMFP128TypeKind |
+            LLVMTypeKind::LLVMDoubleTypeKind |
+            LLVMTypeKind::LLVMHalfTypeKind |
+            LLVMTypeKind::LLVMX86_FP80TypeKind |
+            LLVMTypeKind::LLVMPPC_FP128TypeKind => BasicMetadataValueEnum::FloatValue(FloatValue::new(value)),
+            LLVMTypeKind::LLVMIntegerTypeKind => BasicMetadataValueEnum::IntValue(IntValue::new(value)),
+            LLVMTypeKind::LLVMStructTypeKind => BasicMetadataValueEnum::StructValue(StructValue::new(value)),
+            LLVMTypeKind::LLVMPointerTypeKind => BasicMetadataValueEnum::PointerValue(PointerValue::new(value)),
+            LLVMTypeKind::LLVMArrayTypeKind => BasicMetadataValueEnum::ArrayValue(ArrayValue::new(value)),
+            LLVMTypeKind::LLVMVectorTypeKind => BasicMetadataValueEnum::VectorValue(VectorValue::new(value)),
+            LLVMTypeKind::LLVMMetadataTypeKind => BasicMetadataValueEnum::MetadataValue(MetadataValue::new(value)),
+            _ => unreachable!("Unsupported type"),
         }
     }
 }

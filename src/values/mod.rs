@@ -12,7 +12,7 @@ mod traits;
 mod vec_value;
 
 pub use values::array_value::ArrayValue;
-pub use values::enums::{AnyValueEnum, AggregateValueEnum, BasicValueEnum};
+pub use values::enums::{AnyValueEnum, AggregateValueEnum, BasicValueEnum, BasicMetadataValueEnum};
 pub use values::float_value::FloatValue;
 pub use values::fn_value::FunctionValue;
 pub use values::instruction_value::{InstructionValue, InstructionOpcode};

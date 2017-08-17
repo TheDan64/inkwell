@@ -2,7 +2,7 @@ use llvm_sys::core::{LLVMMDNode, LLVMMDString, LLVMIsAMDNode, LLVMIsAMDString, L
 use llvm_sys::prelude::LLVMValueRef;
 
 use values::traits::AsValueRef;
-use values::{BasicValue, BasicValueEnum, Value};
+use values::{BasicValue, BasicMetadataValueEnum, Value};
 
 use std::ffi::{CString, CStr};
 use std::fmt;
@@ -86,7 +86,7 @@ impl MetadataValue {
     }
 
     // SubTypes: Node only one day
-    pub fn get_node_values(&self) -> Vec<BasicValueEnum> {
+    pub fn get_node_values(&self) -> Vec<BasicMetadataValueEnum> {
         if self.is_string() {
             return Vec::new();
         }
@@ -103,7 +103,15 @@ impl MetadataValue {
             from_raw_parts(ptr, count as usize)
         };
 
-        slice.iter().map(|val| BasicValueEnum::new(*val)).collect()
+        slice.iter().map(|val| BasicMetadataValueEnum::new(*val)).collect()
+    }
+
+    pub fn print_to_string(&self) -> &CStr {
+        self.metadata_value.print_to_string()
+    }
+
+    pub fn print_to_stderr(&self) {
+        self.metadata_value.print_to_stderr()
     }
 }
 
@@ -118,9 +126,9 @@ impl fmt::Debug for MetadataValue {
         write!(f, "MetadataValue {{\n    ")?;
 
         if self.is_string() {
-            write!(f, "String: {:?}", self.get_string_value().unwrap())?;
+            write!(f, "value: {:?}", self.get_string_value().unwrap())?;
         } else {
-            write!(f, "Node: {:?}", self.get_node_values())?;
+            write!(f, "values:: {:?}", self.get_node_values())?;
         }
 
         write!(f, "\n}}")

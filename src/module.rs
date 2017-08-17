@@ -1,15 +1,16 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer, LLVMWriteBitcodeToFD};
-use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMCreateFunctionPassManagerForModule, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetDataLayout, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString};
+use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMCreateFunctionPassManagerForModule, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetDataLayout, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands};
 use llvm_sys::execution_engine::{LLVMCreateJITCompilerForModule, LLVMCreateMCJITCompilerForModule};
-use llvm_sys::prelude::LLVMModuleRef;
+use llvm_sys::prelude::{LLVMValueRef, LLVMModuleRef};
 use llvm_sys::LLVMLinkage;
 
 use std::ffi::{CString, CStr};
 use std::fs::File;
-use std::mem::{uninitialized, zeroed};
+use std::mem::{forget, uninitialized, zeroed};
 use std::os::unix::io::AsRawFd;
 use std::path::Path;
+use std::slice::from_raw_parts;
 
 use context::{Context, ContextRef};
 use data_layout::DataLayout;
@@ -17,7 +18,7 @@ use execution_engine::ExecutionEngine;
 use memory_buffer::MemoryBuffer;
 use pass_manager::PassManager;
 use types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
-use values::{BasicValue, FunctionValue, PointerValue};
+use values::{AsValueRef, BasicValue, FunctionValue, PointerValue, MetadataValue, BasicMetadataValueEnum};
 
 // REVIEW: Maybe this should go into it's own module?
 #[derive(Debug, PartialEq)]
@@ -330,6 +331,45 @@ impl Module {
         unsafe {
             CStr::from_ptr(LLVMPrintModuleToString(self.module))
         }
+    }
+
+    // REVIEW: Should module take ownership of metadata?
+    // REVIEW: Should we return a MetadataValue for the global since it's its own value?
+    // it would be the last item in get_global_metadata I believe
+    pub fn add_global_metadata(&self, name: &str, metadata: &MetadataValue) {
+        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+
+        unsafe {
+            LLVMAddNamedMetadataOperand(self.module, c_string.as_ptr(), metadata.as_value_ref())
+        }
+    }
+    // REVIEW: Better name?
+    pub fn get_global_metadata_size(&self, name: &str) -> u32 {
+        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+
+        unsafe {
+            LLVMGetNamedMetadataNumOperands(self.module, c_string.as_ptr())
+        }
+    }
+
+    // TODOC: Always returns a metadatanode, which may contain 1 string or multiple values as its get_node_values()
+    // SubTypes: -> Vec<MetadataValue<Node>>
+    pub fn get_global_metadata(&self, name: &str) -> Vec<MetadataValue> {
+        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+        let count = self.get_global_metadata_size(name);
+
+        let mut raw_vec: Vec<LLVMValueRef> = Vec::with_capacity(count as usize);
+        let ptr = raw_vec.as_mut_ptr();
+
+        forget(raw_vec);
+
+        let slice = unsafe {
+            LLVMGetNamedMetadataOperands(self.module, c_string.as_ptr(), ptr);
+
+            from_raw_parts(ptr, count as usize)
+        };
+
+        slice.iter().map(|val| MetadataValue::new(*val)).collect()
     }
 }
 
