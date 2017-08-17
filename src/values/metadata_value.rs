@@ -1,0 +1,128 @@
+use llvm_sys::core::{LLVMMDNode, LLVMMDString, LLVMIsAMDNode, LLVMIsAMDString, LLVMGetMDString, LLVMGetMDNodeNumOperands, LLVMGetMDNodeOperands};
+use llvm_sys::prelude::LLVMValueRef;
+
+use values::traits::AsValueRef;
+use values::{BasicValue, BasicValueEnum, Value};
+
+use std::ffi::{CString, CStr};
+use std::fmt;
+use std::mem::forget;
+use std::slice::from_raw_parts;
+
+#[derive(PartialEq, Eq)]
+pub struct MetadataValue {
+    metadata_value: Value,
+}
+
+impl MetadataValue {
+    pub(crate) fn new(value: LLVMValueRef) -> Self {
+        assert!(!value.is_null());
+
+        unsafe {
+            assert!(!LLVMIsAMDNode(value).is_null() || !LLVMIsAMDString(value).is_null());
+        }
+
+        MetadataValue {
+            metadata_value: Value::new(value),
+        }
+    }
+
+    // SubTypes: This can probably go away with subtypes
+    pub fn is_node(&self) -> bool {
+        unsafe {
+            LLVMIsAMDNode(self.as_value_ref()) == self.as_value_ref()
+        }
+    }
+
+    // SubTypes: This can probably go away with subtypes
+    pub fn is_string(&self) -> bool {
+        unsafe {
+            LLVMIsAMDString(self.as_value_ref()) == self.as_value_ref()
+        }
+    }
+
+    pub fn create_node(values: &[&BasicValue]) -> Self {
+        let mut tuple_values: Vec<LLVMValueRef> = values.iter()
+                                                        .map(|val| val.as_value_ref())
+                                                        .collect();
+        let metadata_value = unsafe {
+            LLVMMDNode(tuple_values.as_mut_ptr(), tuple_values.len() as u32)
+        };
+
+        MetadataValue::new(metadata_value)
+    }
+
+    pub fn create_string(string: &str) -> Self {
+        let c_string = CString::new(string).expect("Conversion to CString failed unexpectedly");
+
+        let metadata_value = unsafe {
+            LLVMMDString(c_string.as_ptr(), string.len() as u32)
+        };
+
+        MetadataValue::new(metadata_value)
+    }
+
+    pub fn get_string_value(&self) -> Option<&CStr> {
+        if self.is_node() {
+            return None;
+        }
+
+        let mut len = 0;
+        let c_str = unsafe {
+            CStr::from_ptr(LLVMGetMDString(self.as_value_ref(), &mut len))
+        };
+
+        Some(c_str)
+    }
+
+    // SubTypes: Node only one day
+    fn get_node_size(&self) -> u32 {
+        if self.is_string() {
+            return 0;
+        }
+        unsafe {
+            LLVMGetMDNodeNumOperands(self.as_value_ref())
+        }
+    }
+
+    // SubTypes: Node only one day
+    pub fn get_node_values(&self) -> Vec<BasicValueEnum> {
+        if self.is_string() {
+            return Vec::new();
+        }
+
+        let count = self.get_node_size();
+        let mut raw_vec: Vec<LLVMValueRef> = Vec::with_capacity(count as usize);
+        let ptr = raw_vec.as_mut_ptr();
+
+        forget(raw_vec);
+
+        let slice = unsafe {
+            LLVMGetMDNodeOperands(self.as_value_ref(), ptr);
+
+            from_raw_parts(ptr, count as usize)
+        };
+
+        slice.iter().map(|val| BasicValueEnum::new(*val)).collect()
+    }
+}
+
+impl AsValueRef for MetadataValue {
+    fn as_value_ref(&self) -> LLVMValueRef {
+        self.metadata_value.value
+    }
+}
+
+impl fmt::Debug for MetadataValue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "MetadataValue {{\n    ")?;
+
+        if self.is_string() {
+            write!(f, "String: {:?}", self.get_string_value().unwrap())?;
+        } else {
+            write!(f, "Node: {:?}", self.get_node_values())?;
+        }
+
+        write!(f, "\n}}")
+    }
+}

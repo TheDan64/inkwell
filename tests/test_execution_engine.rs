@@ -43,6 +43,7 @@ fn test_get_function_address() {
 //     let context = Context::create();
 //     let builder = context.create_builder();
 //     let module = context.create_module("errors_abound");
+//     // let mut execution_engine = ExecutionEngine::create_jit_from_module(module, 0);
 //     let mut execution_engine = module.create_jit_execution_engine(0).unwrap();
 //     let module = execution_engine.get_module_at(0);
 //     let void_type = context.void_type();

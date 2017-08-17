@@ -26,7 +26,7 @@ impl FunctionType {
 
     pub fn is_var_arg(&self) -> bool {
         unsafe {
-            LLVMIsFunctionVarArg(self.fn_type.type_) != 0
+            LLVMIsFunctionVarArg(self.as_type_ref()) != 0
         }
     }
 
@@ -38,7 +38,7 @@ impl FunctionType {
         forget(raw_vec);
 
         let raw_vec = unsafe {
-            LLVMGetParamTypes(self.fn_type.type_, ptr);
+            LLVMGetParamTypes(self.as_type_ref(), ptr);
 
             Vec::from_raw_parts(ptr, count as usize, count as usize)
         };
@@ -48,7 +48,7 @@ impl FunctionType {
 
     pub fn count_param_types(&self) -> u32 {
         unsafe {
-            LLVMCountParamTypes(self.fn_type.type_)
+            LLVMCountParamTypes(self.as_type_ref())
         }
     }
 

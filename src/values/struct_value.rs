@@ -4,7 +4,7 @@ use std::ffi::CStr;
 
 use types::StructType;
 use values::traits::AsValueRef;
-use values::{InstructionValue, Value};
+use values::{InstructionValue, Value, MetadataValue};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct StructValue {
@@ -50,6 +50,18 @@ impl StructValue {
 
     pub fn as_instruction(&self) -> Option<InstructionValue> {
         self.struct_value.as_instruction()
+    }
+
+    pub fn has_metadata(&self) -> bool {
+        self.struct_value.has_metadata()
+    }
+
+    pub fn get_metadata(&self, kind_id: u32) -> Option<MetadataValue> {
+        self.struct_value.get_metadata(kind_id)
+    }
+
+    pub fn set_metadata(&self, metadata: &MetadataValue, kind_id: u32) {
+        self.struct_value.set_metadata(metadata, kind_id)
     }
 }
 

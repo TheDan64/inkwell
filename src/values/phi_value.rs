@@ -7,6 +7,7 @@ use basic_block::BasicBlock;
 use values::traits::AsValueRef;
 use values::{BasicValue, InstructionValue, Value};
 
+// REVIEW: Metadata for phi values?
 #[derive(Debug, PartialEq, Eq)]
 pub struct PhiValue {
     phi_value: Value

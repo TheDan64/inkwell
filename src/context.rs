@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMDisposeMessage};
+use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMDisposeMessage, LLVMMDNodeInContext, LLVMMDStringInContext};
 use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef};
 use llvm_sys::ir_reader::LLVMParseIRInContext;
 
@@ -7,7 +7,7 @@ use builder::Builder;
 use memory_buffer::MemoryBuffer;
 use module::Module;
 use types::{BasicType, FloatType, IntType, StructType, VoidType};
-use values::{AsValueRef, BasicValue, FunctionValue, StructValue};
+use values::{AsValueRef, BasicValue, FunctionValue, StructValue, MetadataValue};
 
 use std::ffi::{CStr, CString};
 use std::mem::forget;
@@ -252,7 +252,28 @@ impl Context {
         };
 
         StructValue::new(value)
+    }
 
+    // REVIEW: Maybe more helpful to beginners to call this metadata_tuple?
+    pub fn metadata_node(&self, values: &[&BasicValue]) -> MetadataValue {
+        let mut tuple_values: Vec<LLVMValueRef> = values.iter()
+                                                        .map(|val| val.as_value_ref())
+                                                        .collect();
+        let metadata_value = unsafe {
+            LLVMMDNodeInContext(self.context, tuple_values.as_mut_ptr(), tuple_values.len() as u32)
+        };
+
+        MetadataValue::new(metadata_value)
+    }
+
+    pub fn metadata_string(&self, string: &str) -> MetadataValue {
+        let c_string = CString::new(string).expect("Conversion to CString failed unexpectedly");
+
+        let metadata_value = unsafe {
+            LLVMMDStringInContext(self.context, c_string.as_ptr(), string.len() as u32)
+        };
+
+        MetadataValue::new(metadata_value)
     }
 }
 

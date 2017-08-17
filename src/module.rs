@@ -294,7 +294,7 @@ impl Module {
                 if print {
                     let rust_str = CStr::from_ptr(err_str).to_str().unwrap();
 
-                    println!("{}", rust_str); // FIXME: Should probably be stderr?
+                    eprintln!("{}", rust_str);
                 }
 
                 LLVMDisposeMessage(err_str);

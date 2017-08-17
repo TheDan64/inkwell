@@ -10,7 +10,7 @@ use basic_block::BasicBlock;
 use module::Linkage;
 use types::{BasicTypeEnum, FunctionType};
 use values::traits::AsValueRef;
-use values::{BasicValueEnum, Value};
+use values::{BasicValueEnum, Value, MetadataValue};
 
 #[derive(PartialEq, Eq)]
 pub struct FunctionValue {
@@ -235,6 +235,18 @@ impl FunctionValue {
 
     pub fn get_type(&self) -> FunctionType {
         FunctionType::new(self.fn_value.get_type())
+    }
+
+    pub fn has_metadata(&self) -> bool {
+        self.fn_value.has_metadata()
+    }
+
+    pub fn get_metadata(&self, kind_id: u32) -> Option<MetadataValue> {
+        self.fn_value.get_metadata(kind_id)
+    }
+
+    pub fn set_metadata(&self, metadata: &MetadataValue, kind_id: u32) {
+        self.fn_value.set_metadata(metadata, kind_id)
     }
 }
 

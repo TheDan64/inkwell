@@ -34,7 +34,7 @@ macro_rules! enum_value_set {
         )*
 
         // REVIEW: Possible encompassing methods to implement:
-        // as_instruction, is_sized
+        // as_instruction, is_sized, get/set metadata
     );
 }
 

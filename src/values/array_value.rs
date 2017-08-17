@@ -6,7 +6,7 @@ use std::fmt;
 
 use types::ArrayType;
 use values::traits::AsValueRef;
-use values::{Value, InstructionValue};
+use values::{Value, InstructionValue, MetadataValue};
 
 #[derive(PartialEq, Eq)]
 pub struct ArrayValue {
@@ -52,6 +52,18 @@ impl ArrayValue {
 
     pub fn as_instruction(&self) -> Option<InstructionValue> {
         self.array_value.as_instruction()
+    }
+
+    pub fn has_metadata(&self) -> bool {
+        self.array_value.has_metadata()
+    }
+
+    pub fn get_metadata(&self, kind_id: u32) -> Option<MetadataValue> {
+        self.array_value.get_metadata(kind_id)
+    }
+
+    pub fn set_metadata(&self, metadata: &MetadataValue, kind_id: u32) {
+        self.array_value.set_metadata(metadata, kind_id)
     }
 }
 

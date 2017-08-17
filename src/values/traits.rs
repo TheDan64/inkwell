@@ -18,7 +18,7 @@ macro_rules! trait_value_set {
         )*
 
         // REVIEW: Possible encompassing methods to implement:
-        // as_instruction, is_sized
+        // as_instruction, is_sized, ge/set metadata methods
     );
 }
 

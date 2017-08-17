@@ -4,6 +4,7 @@ mod float_value;
 mod fn_value;
 mod instruction_value;
 mod int_value;
+mod metadata_value;
 mod phi_value;
 mod ptr_value;
 mod struct_value;
@@ -16,6 +17,7 @@ pub use values::float_value::FloatValue;
 pub use values::fn_value::FunctionValue;
 pub use values::instruction_value::{InstructionValue, InstructionOpcode};
 pub use values::int_value::IntValue;
+pub use values::metadata_value::MetadataValue;
 pub use values::phi_value::PhiValue;
 pub use values::ptr_value::PointerValue;
 pub use values::struct_value::StructValue;
@@ -23,7 +25,7 @@ pub use values::traits::{AnyValue, AggregateValue, BasicValue};
 pub use values::vec_value::VectorValue;
 pub(crate) use values::traits::AsValueRef;
 
-use llvm_sys::core::{LLVMGetValueName, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMDumpValue, LLVMIsAInstruction};
+use llvm_sys::core::{LLVMGetValueName, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMDumpValue, LLVMIsAInstruction, LLVMGetMetadata, LLVMHasMetadata, LLVMSetMetadata};
 use llvm_sys::prelude::{LLVMValueRef, LLVMTypeRef};
 
 use std::ffi::{CString, CStr};
@@ -108,6 +110,31 @@ impl Value {
     fn print_to_stderr(&self) {
         unsafe {
             LLVMDumpValue(self.value)
+        }
+    }
+
+    fn has_metadata(&self) -> bool {
+        unsafe {
+            LLVMHasMetadata(self.value) == 1
+        }
+    }
+
+    // SubTypes: Should be able to abstract kind into two MetadataValue subtypes?
+    fn get_metadata(&self, kind_id: u32) -> Option<MetadataValue> {
+        let metadata_value = unsafe {
+            LLVMGetMetadata(self.value, kind_id)
+        };
+
+        if metadata_value.is_null() {
+            return None;
+        }
+
+        Some(MetadataValue::new(metadata_value))
+    }
+
+    fn set_metadata(&self, metadata: &MetadataValue, kind_id: u32) {
+        unsafe {
+            LLVMSetMetadata(self.value, kind_id, metadata.as_value_ref())
         }
     }
 

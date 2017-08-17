@@ -5,9 +5,10 @@ use llvm_sys::prelude::LLVMValueRef;
 use values::traits::AsValueRef;
 use values::Value;
 
+// REVIEW: Metadata on instructions?
 // REVIEW: This should maybe be split up into InstructionOpcode and ConstOpcode?
 // see LLVMGetConstOpcode
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum InstructionOpcode {
     // Actual Instructions:
     Add,
