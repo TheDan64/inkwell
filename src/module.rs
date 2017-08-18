@@ -336,27 +336,29 @@ impl Module {
     // REVIEW: Should module take ownership of metadata?
     // REVIEW: Should we return a MetadataValue for the global since it's its own value?
     // it would be the last item in get_global_metadata I believe
-    pub fn add_global_metadata(&self, name: &str, metadata: &MetadataValue) {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+    // TODOC: Appends your metadata to a global MetadataValue<Node> indexed by key
+    pub fn add_global_metadata(&self, key: &str, metadata: &MetadataValue) {
+        let c_string = CString::new(key).expect("Conversion to CString failed unexpectedly");
 
         unsafe {
             LLVMAddNamedMetadataOperand(self.module, c_string.as_ptr(), metadata.as_value_ref())
         }
     }
     // REVIEW: Better name?
-    pub fn get_global_metadata_size(&self, name: &str) -> u32 {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+    // TODOC: Gets the size of the metadata node indexed by key
+    pub fn get_global_metadata_size(&self, key: &str) -> u32 {
+        let c_string = CString::new(key).expect("Conversion to CString failed unexpectedly");
 
         unsafe {
             LLVMGetNamedMetadataNumOperands(self.module, c_string.as_ptr())
         }
     }
 
-    // TODOC: Always returns a metadatanode, which may contain 1 string or multiple values as its get_node_values()
+    // TODOC: Always returns a metadata node indexed by key, which may contain 1 string or multiple values as its get_node_values()
     // SubTypes: -> Vec<MetadataValue<Node>>
-    pub fn get_global_metadata(&self, name: &str) -> Vec<MetadataValue> {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
-        let count = self.get_global_metadata_size(name);
+    pub fn get_global_metadata(&self, key: &str) -> Vec<MetadataValue> {
+        let c_string = CString::new(key).expect("Conversion to CString failed unexpectedly");
+        let count = self.get_global_metadata_size(key);
 
         let mut raw_vec: Vec<LLVMValueRef> = Vec::with_capacity(count as usize);
         let ptr = raw_vec.as_mut_ptr();

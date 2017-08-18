@@ -119,7 +119,8 @@ impl Value {
         }
     }
 
-    // SubTypes: Should be able to abstract kind into two MetadataValue subtypes?
+    // SubTypes: -> Option<MetadataValue<Node>>
+    // TODOC: This always returns a metadata node, which can be used to get its node values
     fn get_metadata(&self, kind_id: u32) -> Option<MetadataValue> {
         let metadata_value = unsafe {
             LLVMGetMetadata(self.value, kind_id)

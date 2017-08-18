@@ -226,11 +226,11 @@ impl FunctionValue {
         }
     }
 
-    // TODO: Look for ways to use after delete
-    pub fn delete(self) {
-        unsafe {
-            LLVMDeleteFunction(self.as_value_ref())
-        }
+    // FIXME: Look for ways to prevent use after delete
+    pub unsafe fn delete(self) {
+        // unsafe {
+        LLVMDeleteFunction(self.as_value_ref())
+        // }
     }
 
     pub fn get_type(&self) -> FunctionType {

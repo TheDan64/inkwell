@@ -391,6 +391,7 @@ fn test_metadata() {
     let f128_type = context.f128_type();
     let array_type = f64_type.array_type(42);
     let ppc_f128_type = context.ppc_f128_type();
+    let fn_type = bool_type.fn_type(&[&i64_type, &array_type], false);
 
     let bool_val = bool_type.const_int(0, false);
     let i8_val = i8_type.const_int(0, false);
@@ -403,10 +404,11 @@ fn test_metadata() {
     let f64_val = f64_type.const_float(0.0);
     let f128_val = f128_type.const_float(0.0);
     let ppc_f128_val = ppc_f128_type.const_float(0.0);
-    // let ptr_val = bool_type.ptr_type(0).get_undef();
+    let ptr_val = bool_type.ptr_type(0).const_null();
     let array_val = array_type.const_array(&[&f64_val]);
     let struct_val = context.const_struct(&[&i8_val, &f128_val], false);
-    // let vec_val = VectorType::const_vector(&[&i8_val]);
+    let vec_val = VectorType::const_vector(&[&i8_val]);
+    let fn_val = module.add_function("my_fn", &fn_type, None);
 
     let md_node = MetadataValue::create_node(&[&bool_val, &f32_val]);
 
@@ -439,48 +441,99 @@ fn test_metadata() {
     // and see if they should be allowed to have metadata? Also, while we're at it we should
     // try with undef
 
+    // REVIEW: initial has_metadata seems inconsistent. Some have it. Some don't for kind_id 0. Some sometimes have it.
+    // furthermore, when they do have it, it is a SF when printing out. Unclear what can be done here. Maybe just disallow index 0?
     // assert!(bool_val.has_metadata());
     // assert!(i8_val.has_metadata());
     // assert!(i16_val.has_metadata());
     // assert!(i32_val.has_metadata());
     // assert!(i64_val.has_metadata());
-    // assert!(i128_val.has_metadata());
+    // assert!(!i128_val.has_metadata());
     // assert!(!f16_val.has_metadata());
     // assert!(!f32_val.has_metadata());
     // assert!(!f64_val.has_metadata());
     // assert!(!f128_val.has_metadata());
     // assert!(!ppc_f128_val.has_metadata());
     // assert!(ptr_val.has_metadata());
-    // assert!(!array_val.has_metadata());
+    // assert!(array_val.has_metadata());
     // assert!(struct_val.has_metadata());
-    // assert!(vec_val.has_metadata());
+    // assert!(!vec_val.has_metadata());
+    // assert!(!fn_val.has_metadata());
 
-    // let bool_metadata = bool_val.get_metadata(0).unwrap();
-    // let i8_metadata = i8_val.get_metadata(0).unwrap();
-    // let i16_metadata = i16_val.get_metadata(0).unwrap();
-    // let i32_metadata = i32_val.get_metadata(0).unwrap();
-    // let i64_metadata = i64_val.get_metadata(0).unwrap();
-    // let i128_metadata = i128_val.get_metadata(0).unwrap(); // This conflicts the has check
+    bool_val.set_metadata(&md_string, 3);
 
-    // FIXME: These are all viewed as null/uninitialized and will be UB/break
-    // try again with real values
-    // let ptr_metadata = ptr_val.get_metadata(0).unwrap();
-    // let array_metadata = array_val.get_metadata(0).unwrap();
-    // let struct_metadata = struct_val.get_metadata(0).unwrap();
+    assert!(bool_val.has_metadata());
+    assert!(bool_val.get_metadata(1).is_none());
+    assert!(bool_val.get_metadata(2).is_none());
 
-    // assert!(bool_val.get_metadata(0).is_none());
-    // assert!(i8_val.get_metadata(0).is_none());
-    // assert!(i16_val.get_metadata(0).is_none());
-    // assert!(i32_val.get_metadata(0).is_none());
-    // assert!(i64_val.get_metadata(0).is_none());
-    // assert!(i128_val.get_metadata(0).is_none());
-    // assert!(f16_val.get_metadata(0).is_none());
-    // assert!(f32_val.get_metadata(0).is_none());
-    // assert!(f64_val.get_metadata(0).is_none());
-    // assert!(f128_val.get_metadata(0).is_none());
-    // assert!(ppc_f128_val.get_metadata(0).is_none());
-    // assert!(ptr_val.get_metadata(0).is_none());
-    // assert!(array_val.get_metadata(0).is_none());
-    // assert!(struct_val.get_metadata(0).is_none());
-    // assert!(vec_val.get_metadata(0).is_none());
+    let md_node_values = bool_val.get_metadata(3).unwrap().get_node_values();
+
+    assert_eq!(md_node_values.len(), 1);
+    assert_eq!(md_node_values[0].as_metadata_value().get_string_value(), md_string.get_string_value());
+
+    f128_val.set_metadata(&md_node, 3);
+
+    assert!(f128_val.has_metadata());
+    assert!(f128_val.get_metadata(1).is_none());
+    assert!(f128_val.get_metadata(2).is_none());
+
+    let md_node_values = f128_val.get_metadata(3).unwrap().get_node_values();
+
+    assert_eq!(md_node_values.len(), 2);
+    assert_eq!(md_node_values[0].as_int_value(), &bool_val);
+    assert_eq!(md_node_values[1].as_float_value(), &f32_val);
+
+    array_val.set_metadata(&md_string, 2);
+
+    assert!(array_val.has_metadata());
+    assert!(array_val.get_metadata(1).is_none());
+
+    let md_node_values = array_val.get_metadata(2).unwrap().get_node_values();
+
+    assert_eq!(md_node_values.len(), 1);
+    assert_eq!(md_node_values[0].as_metadata_value().get_string_value(), md_string.get_string_value());
+
+    struct_val.set_metadata(&md_node, 4);
+
+    assert!(struct_val.has_metadata());
+    assert!(struct_val.get_metadata(1).is_none());
+    assert!(struct_val.get_metadata(2).is_none());
+    assert!(struct_val.get_metadata(3).is_none());
+
+    let md_node_values = struct_val.get_metadata(4).unwrap().get_node_values();
+
+    assert_eq!(md_node_values.len(), 2);
+    assert_eq!(md_node_values[0].as_int_value(), &bool_val);
+    assert_eq!(md_node_values[1].as_float_value(), &f32_val);
+
+    vec_val.set_metadata(&md_string, 1);
+
+    assert!(vec_val.has_metadata());
+
+    let md_node_values = vec_val.get_metadata(1).unwrap().get_node_values();
+
+    assert_eq!(md_node_values.len(), 1);
+    assert_eq!(md_node_values[0].as_metadata_value().get_string_value(), md_string.get_string_value());
+
+    fn_val.set_metadata(&md_node, 4);
+
+    assert!(fn_val.has_metadata());
+    assert!(fn_val.get_metadata(1).is_none());
+    assert!(fn_val.get_metadata(2).is_none());
+    assert!(fn_val.get_metadata(3).is_none());
+
+    let md_node_values = fn_val.get_metadata(4).unwrap().get_node_values();
+
+    assert_eq!(md_node_values.len(), 2);
+    assert_eq!(md_node_values[0].as_int_value(), &bool_val);
+    assert_eq!(md_node_values[1].as_float_value(), &f32_val);
+
+    ptr_val.set_metadata(&md_string, 1);
+
+    assert!(ptr_val.has_metadata());
+
+    let md_node_values = ptr_val.get_metadata(1).unwrap().get_node_values();
+
+    assert_eq!(md_node_values.len(), 1);
+    assert_eq!(md_node_values[0].as_metadata_value().get_string_value(), md_string.get_string_value());
 }

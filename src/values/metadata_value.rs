@@ -76,16 +76,18 @@ impl MetadataValue {
     }
 
     // SubTypes: Node only one day
-    fn get_node_size(&self) -> u32 {
+    pub fn get_node_size(&self) -> u32 {
         if self.is_string() {
             return 0;
         }
+
         unsafe {
             LLVMGetMDNodeNumOperands(self.as_value_ref())
         }
     }
 
     // SubTypes: Node only one day
+    // REVIEW: BasicMetadataValueEnum only if you can put metadata in metadata...
     pub fn get_node_values(&self) -> Vec<BasicMetadataValueEnum> {
         if self.is_string() {
             return Vec::new();
@@ -124,12 +126,15 @@ impl AsValueRef for MetadataValue {
 impl fmt::Debug for MetadataValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "MetadataValue {{\n    ")?;
+        write!(f, "address: {:?}\n", self.as_value_ref())?;
 
         if self.is_string() {
-            write!(f, "value: {:?}", self.get_string_value().unwrap())?;
+            write!(f, "value: {:?}\n", self.get_string_value().unwrap())?;
         } else {
-            write!(f, "values:: {:?}", self.get_node_values())?;
+            write!(f, "values: {:?}\n", self.get_node_values())?;
         }
+
+        write!(f, "repr: {:?}", self.print_to_string())?;
 
         write!(f, "\n}}")
     }
