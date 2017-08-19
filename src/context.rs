@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMDisposeMessage, LLVMMDNodeInContext, LLVMMDStringInContext};
+use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMDisposeMessage, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMGetMDKindIDInContext};
 use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef};
 use llvm_sys::ir_reader::LLVMParseIRInContext;
 
@@ -274,6 +274,12 @@ impl Context {
         };
 
         MetadataValue::new(metadata_value)
+    }
+
+    pub fn get_kind_id(&self, key: &str) -> u32 {
+        unsafe {
+            LLVMGetMDKindIDInContext(self.context, key.as_ptr() as *const i8, key.len() as u32)
+        }
     }
 }
 

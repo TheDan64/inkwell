@@ -33,7 +33,7 @@ impl StructType {
             return None;
         }
 
-        // OOB indexing seems to be unchecked and therefore is UB
+        // OoB indexing seems to be unchecked and therefore is UB
         if index >= self.count_fields() {
             return None;
         }

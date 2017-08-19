@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMMDNode, LLVMMDString, LLVMIsAMDNode, LLVMIsAMDString, LLVMGetMDString, LLVMGetMDNodeNumOperands, LLVMGetMDNodeOperands};
+use llvm_sys::core::{LLVMMDNode, LLVMMDString, LLVMIsAMDNode, LLVMIsAMDString, LLVMGetMDString, LLVMGetMDNodeNumOperands, LLVMGetMDNodeOperands, LLVMGetMDKindID};
 use llvm_sys::prelude::LLVMValueRef;
 
 use values::traits::AsValueRef;
@@ -106,6 +106,14 @@ impl MetadataValue {
         };
 
         slice.iter().map(|val| BasicMetadataValueEnum::new(*val)).collect()
+    }
+
+    // What is this even useful for
+    pub fn get_kind_id(key: &str) -> u32 {
+        unsafe {
+            // REVIEW: Why does str give us *u8 but LLVM wants *i8?
+            LLVMGetMDKindID(key.as_ptr() as *const i8, key.len() as u32)
+        }
     }
 
     pub fn print_to_string(&self) -> &CStr {

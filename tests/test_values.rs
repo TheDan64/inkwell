@@ -372,6 +372,71 @@ fn test_metadata() {
     let context = Context::create();
     let module = context.create_module("my_mod");
 
+    // TODOC: From looking at the source, seem to be a bunch of predefined ones
+    // and then afterwards it assigns a new value for newly requested keys.
+    // REVIEW: So Maybe we could/should change the above to an enum input:
+    // enum {Debug, Tbaa, ..., Custom(Cow)} which evaluates to the predefined value
+    // or a new lookup
+
+    // Custom first, so we are sure to start at the first new slot
+    // TODO: This value will vary per LLVM version
+    let first_new_slot = 14;
+
+    assert_eq!(context.get_kind_id("foo"), first_new_slot);
+    assert_eq!(MetadataValue::get_kind_id("foo"), first_new_slot);
+    assert_eq!(context.get_kind_id("bar"), first_new_slot + 1);
+    assert_eq!(MetadataValue::get_kind_id("bar"), first_new_slot + 1);
+
+    // Predefined
+    assert_eq!(context.get_kind_id("dbg"), 0);
+    assert_eq!(MetadataValue::get_kind_id("dbg"), 0);
+    assert_eq!(context.get_kind_id("tbaa"), 1);
+    assert_eq!(MetadataValue::get_kind_id("tbaa"), 1);
+    assert_eq!(context.get_kind_id("prof"), 2);
+    assert_eq!(MetadataValue::get_kind_id("prof"), 2);
+    assert_eq!(context.get_kind_id("fpmath"), 3);
+    assert_eq!(MetadataValue::get_kind_id("fpmath"), 3);
+    assert_eq!(context.get_kind_id("range"), 4);
+    assert_eq!(MetadataValue::get_kind_id("range"), 4);
+    assert_eq!(context.get_kind_id("tbaa.struct"), 5);
+    assert_eq!(MetadataValue::get_kind_id("tbaa.struct"), 5);
+    assert_eq!(context.get_kind_id("invariant.load"), 6);
+    assert_eq!(MetadataValue::get_kind_id("invariant.load"), 6);
+    assert_eq!(context.get_kind_id("alias.scope"), 7);
+    assert_eq!(MetadataValue::get_kind_id("alias.scope"), 7);
+    assert_eq!(context.get_kind_id("noalias"), 8);
+    assert_eq!(MetadataValue::get_kind_id("noalias"), 8);
+    assert_eq!(context.get_kind_id("nontemporal"), 9);
+    assert_eq!(MetadataValue::get_kind_id("nontemporal"), 9);
+    assert_eq!(context.get_kind_id("llvm.mem.parallel_loop_access"), 10);
+    assert_eq!(MetadataValue::get_kind_id("llvm.mem.parallel_loop_access"), 10);
+    assert_eq!(context.get_kind_id("nonnull"), 11);
+    assert_eq!(MetadataValue::get_kind_id("nonnull"), 11);
+    assert_eq!(context.get_kind_id("dereferenceable"), 12);
+    assert_eq!(MetadataValue::get_kind_id("dereferenceable"), 12);
+    assert_eq!(context.get_kind_id("dereferenceable_or_null"), 13);
+    assert_eq!(MetadataValue::get_kind_id("dereferenceable_or_null"), 13);
+
+    // TODO: Predefined, but only newer versions we don't support yet
+    // assert_eq!(context.get_kind_id("make.implicit"), 14);
+    // assert_eq!(MetadataValue::get_kind_id("make.implicit"), 14);
+    // assert_eq!(context.get_kind_id("unpredictable"), 15);
+    // assert_eq!(MetadataValue::get_kind_id("unpredictable"), 15);
+    // assert_eq!(context.get_kind_id("invariant.group"), 16);
+    // assert_eq!(MetadataValue::get_kind_id("invariant.group"), 16);
+    // assert_eq!(context.get_kind_id("align"), 16);
+    // assert_eq!(MetadataValue::get_kind_id("align"), 16);
+    // assert_eq!(context.get_kind_id("llvm.loop"), 17);
+    // assert_eq!(MetadataValue::get_kind_id("llvm.loop"), 17);
+    // assert_eq!(context.get_kind_id("type"), 18);
+    // assert_eq!(MetadataValue::get_kind_id("type"), 18);
+    // assert_eq!(context.get_kind_id("section_prefix"), 19);
+    // assert_eq!(MetadataValue::get_kind_id("section_prefix"), 19);
+    // assert_eq!(context.get_kind_id("absolute_symbol"), 20);
+    // assert_eq!(MetadataValue::get_kind_id("absolute_symbol"), 20);
+    // assert_eq!(context.get_kind_id("associated"), 21);
+    // assert_eq!(MetadataValue::get_kind_id("associated"), 21);
+
     assert_eq!(module.get_global_metadata_size("my_string_md"), 0);
     assert_eq!(module.get_global_metadata("my_string_md").len(), 0);
 
