@@ -13,12 +13,14 @@ use std::ffi::{CStr, CString};
 use std::mem::zeroed;
 use std::ptr;
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum CodeGenOptLevel {
     Less,
     Default,
     Aggressive,
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum CodeModel {
     Default,
     JITDefault,
@@ -28,6 +30,7 @@ pub enum CodeModel {
     Large,
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum RelocMode {
     Default,
     Static,
@@ -36,6 +39,7 @@ pub enum RelocMode {
 }
 
 // TODO: Doc: Base gets you TargetMachine support, machine_code gets you asm_backend
+#[derive(Debug, PartialEq, Eq)]
 pub struct InitializationConfig {
     pub asm_parser: bool,
     pub asm_printer: bool,
@@ -715,7 +719,7 @@ impl Drop for TargetMachine {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ByteOrdering {
     BigEndian,
     LittleEndian,

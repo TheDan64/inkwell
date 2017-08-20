@@ -6,7 +6,7 @@ use targets::TargetData;
 use values::{AsValueRef, FunctionValue};
 
 use std::ffi::{CStr, CString};
-use std::mem::{swap, forget, uninitialized, zeroed};
+use std::mem::{forget, uninitialized, zeroed};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum FunctionLookupError {
