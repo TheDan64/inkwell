@@ -125,13 +125,12 @@ fn test_target_data() {
     assert_eq!(target_data.get_preferred_alignment(&struct_type2), 8);
 
     // REVIEW: offset in bytes? Rename to byte_offset_of_element?
-    // FIXME: All OoB should probably be None
-    assert_eq!(target_data.offset_of_element(&struct_type, 0), 0);
-    assert_eq!(target_data.offset_of_element(&struct_type, 1), 8);
-    assert_eq!(target_data.offset_of_element(&struct_type, 2), 16);
-    assert_eq!(target_data.offset_of_element(&struct_type, 3), 24);
-    // assert_eq!(target_data.offset_of_element(&struct_type, 4), 0); // OoB; Sometimes bad data
-    // assert_eq!(target_data.offset_of_element(&struct_type, 10), 0); // OoB; Sometimes returns 1
+    assert_eq!(target_data.offset_of_element(&struct_type, 0), Some(0));
+    assert_eq!(target_data.offset_of_element(&struct_type, 1), Some(8));
+    assert_eq!(target_data.offset_of_element(&struct_type, 2), Some(16));
+    assert_eq!(target_data.offset_of_element(&struct_type, 3), Some(24));
+    assert!(target_data.offset_of_element(&struct_type, 4).is_none()); // OoB
+    assert!(target_data.offset_of_element(&struct_type, 10).is_none()); // OoB
 
     assert_eq!(target_data.element_at_offset(&struct_type, 0), 0);
     assert_eq!(target_data.element_at_offset(&struct_type, 4), 0);
@@ -139,14 +138,14 @@ fn test_target_data() {
     assert_eq!(target_data.element_at_offset(&struct_type, 16), 2);
     assert_eq!(target_data.element_at_offset(&struct_type, 24), 3);
     assert_eq!(target_data.element_at_offset(&struct_type, 32), 3); // OoB
-    assert_eq!(target_data.element_at_offset(&struct_type, 4200), 3); // OoB; Odd as it seems to cap at max element number
+    assert_eq!(target_data.element_at_offset(&struct_type, ::std::u64::MAX), 3); // OoB; Odd as it seems to cap at max element number
 
-    assert_eq!(target_data.offset_of_element(&struct_type2, 0), 0);
-    assert_eq!(target_data.offset_of_element(&struct_type2, 1), 4);
-    assert_eq!(target_data.offset_of_element(&struct_type2, 2), 8);
-    assert_eq!(target_data.offset_of_element(&struct_type2, 3), 16);
-    // assert_eq!(target_data.offset_of_element(&struct_type2, 4), 32); // OoB
-    // assert_eq!(target_data.offset_of_element(&struct_type2, 5), 17179869192); // OoB; Garbage data
+    assert_eq!(target_data.offset_of_element(&struct_type2, 0), Some(0));
+    assert_eq!(target_data.offset_of_element(&struct_type2, 1), Some(4));
+    assert_eq!(target_data.offset_of_element(&struct_type2, 2), Some(8));
+    assert_eq!(target_data.offset_of_element(&struct_type2, 3), Some(16));
+    assert!(target_data.offset_of_element(&struct_type2, 4).is_none()); // OoB
+    assert!(target_data.offset_of_element(&struct_type2, 5).is_none()); // OoB
 
     assert_eq!(target_data.element_at_offset(&struct_type2, 0), 0);
     assert_eq!(target_data.element_at_offset(&struct_type2, 2), 0);
@@ -154,5 +153,5 @@ fn test_target_data() {
     assert_eq!(target_data.element_at_offset(&struct_type2, 8), 2);
     assert_eq!(target_data.element_at_offset(&struct_type2, 16), 3);
     assert_eq!(target_data.element_at_offset(&struct_type2, 32), 3); // OoB
-    assert_eq!(target_data.element_at_offset(&struct_type2, 4200), 3); // OoB; Odd but seems to cap at max element number
+    assert_eq!(target_data.element_at_offset(&struct_type2, ::std::u64::MAX), 3); // OoB; TODOC: Odd but seems to cap at max element number
 }

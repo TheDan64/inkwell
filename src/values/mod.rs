@@ -17,7 +17,7 @@ pub use values::float_value::FloatValue;
 pub use values::fn_value::FunctionValue;
 pub use values::instruction_value::{InstructionValue, InstructionOpcode};
 pub use values::int_value::IntValue;
-pub use values::metadata_value::MetadataValue;
+pub use values::metadata_value::{MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID};
 pub use values::phi_value::PhiValue;
 pub use values::ptr_value::PointerValue;
 pub use values::struct_value::StructValue;

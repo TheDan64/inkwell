@@ -860,16 +860,20 @@ impl TargetData {
         }
     }
 
-    pub fn element_at_offset(&self, type_: &StructType, offset: u64) -> u32 {
+    pub fn element_at_offset(&self, struct_type: &StructType, offset: u64) -> u32 {
         unsafe {
-            LLVMElementAtOffset(self.target_data, type_.as_type_ref(), offset)
+            LLVMElementAtOffset(self.target_data, struct_type.as_type_ref(), offset)
         }
     }
 
     // FIXME: Out of bounds returns bad data, should return Option<u64>
-    pub fn offset_of_element(&self, type_: &StructType, element: u32) -> u64 {
+    pub fn offset_of_element(&self, struct_type: &StructType, element: u32) -> Option<u64> {
+        if element > struct_type.count_fields() - 1 {
+            return None;
+        }
+
         unsafe {
-            LLVMOffsetOfElement(self.target_data, type_.as_type_ref(), element)
+            Some(LLVMOffsetOfElement(self.target_data, struct_type.as_type_ref(), element))
         }
     }
 }

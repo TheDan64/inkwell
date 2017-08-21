@@ -20,7 +20,7 @@ fn test_build_call() {
 
     builder.position_at_end(&basic_block);
 
-    let pi = f32_type.const_float(3.14);
+    let pi = f32_type.const_float(::std::f64::consts::PI);
 
     builder.build_return(Some(&pi));
 

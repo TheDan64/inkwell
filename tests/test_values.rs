@@ -4,7 +4,7 @@ use self::inkwell::context::Context;
 use self::inkwell::module::Linkage::*;
 use self::inkwell::types::{StructType, VectorType};
 use self::inkwell::values::InstructionOpcode::*;
-use self::inkwell::values::MetadataValue;
+use self::inkwell::values::{MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID};
 
 use std::ffi::CString;
 
@@ -40,7 +40,7 @@ fn test_instructions() {
 
     let arg1 = function.get_first_param().unwrap().into_pointer_value();
 
-    let f32_val = f32_type.const_float(3.14);
+    let f32_val = f32_type.const_float(::std::f64::consts::PI);
 
     let store_instruction = builder.build_store(&arg1, &f32_val);
     let ptr_val = builder.build_ptr_to_int(&arg1, &i64_type, "ptr_val");
@@ -378,14 +378,10 @@ fn test_metadata() {
     // enum {Debug, Tbaa, ..., Custom(Cow)} which evaluates to the predefined value
     // or a new lookup
 
-    // Custom first, so we are sure to start at the first new slot
-    // TODO: This value will vary per LLVM version
-    let first_new_slot = 14;
-
-    assert_eq!(context.get_kind_id("foo"), first_new_slot);
-    assert_eq!(MetadataValue::get_kind_id("foo"), first_new_slot);
-    assert_eq!(context.get_kind_id("bar"), first_new_slot + 1);
-    assert_eq!(MetadataValue::get_kind_id("bar"), first_new_slot + 1);
+    assert_eq!(context.get_kind_id("foo"), FIRST_CUSTOM_METADATA_KIND_ID);
+    assert_eq!(MetadataValue::get_kind_id("foo"), FIRST_CUSTOM_METADATA_KIND_ID);
+    assert_eq!(context.get_kind_id("bar"), FIRST_CUSTOM_METADATA_KIND_ID + 1);
+    assert_eq!(MetadataValue::get_kind_id("bar"), FIRST_CUSTOM_METADATA_KIND_ID + 1);
 
     // Predefined
     assert_eq!(context.get_kind_id("dbg"), 0);
@@ -446,29 +442,29 @@ fn test_metadata() {
 
     let bool_type = context.bool_type();
     let i8_type = context.i8_type();
-    let i16_type = context.i16_type();
-    let i32_type = context.i32_type();
+    // let i16_type = context.i16_type();
+    // let i32_type = context.i32_type();
     let i64_type = context.i64_type();
-    let i128_type = context.i128_type();
-    let f16_type = context.f16_type();
+    // let i128_type = context.i128_type();
+    // let f16_type = context.f16_type();
     let f32_type = context.f32_type();
     let f64_type = context.f64_type();
     let f128_type = context.f128_type();
     let array_type = f64_type.array_type(42);
-    let ppc_f128_type = context.ppc_f128_type();
+    // let ppc_f128_type = context.ppc_f128_type();
     let fn_type = bool_type.fn_type(&[&i64_type, &array_type], false);
 
     let bool_val = bool_type.const_int(0, false);
     let i8_val = i8_type.const_int(0, false);
-    let i16_val = i16_type.const_int(0, false);
-    let i32_val = i32_type.const_int(0, false);
-    let i64_val = i64_type.const_int(0, false);
-    let i128_val = i128_type.const_int(0, false);
-    let f16_val = f16_type.const_float(0.0);
+    // let i16_val = i16_type.const_int(0, false);
+    // let i32_val = i32_type.const_int(0, false);
+    // let i64_val = i64_type.const_int(0, false);
+    // let i128_val = i128_type.const_int(0, false);
+    // let f16_val = f16_type.const_float(0.0);
     let f32_val = f32_type.const_float(0.0);
     let f64_val = f64_type.const_float(0.0);
     let f128_val = f128_type.const_float(0.0);
-    let ppc_f128_val = ppc_f128_type.const_float(0.0);
+    // let ppc_f128_val = ppc_f128_type.const_float(0.0);
     let ptr_val = bool_type.ptr_type(0).const_null();
     let array_val = array_type.const_array(&[&f64_val]);
     let struct_val = context.const_struct(&[&i8_val, &f128_val], false);

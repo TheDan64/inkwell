@@ -9,6 +9,8 @@ use std::fmt;
 use std::mem::forget;
 use std::slice::from_raw_parts;
 
+pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 14; // TODO: Varies by version
+
 #[derive(PartialEq, Eq)]
 pub struct MetadataValue {
     metadata_value: Value,

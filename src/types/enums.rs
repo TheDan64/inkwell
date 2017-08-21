@@ -46,11 +46,11 @@ impl AnyTypeEnum {
 
         match type_kind {
             LLVMTypeKind::LLVMVoidTypeKind => AnyTypeEnum::VoidType(VoidType::new(type_)),
-            LLVMTypeKind::LLVMHalfTypeKind => AnyTypeEnum::FloatType(FloatType::new(type_)),
-            LLVMTypeKind::LLVMFloatTypeKind => AnyTypeEnum::FloatType(FloatType::new(type_)),
-            LLVMTypeKind::LLVMDoubleTypeKind => AnyTypeEnum::FloatType(FloatType::new(type_)),
-            LLVMTypeKind::LLVMX86_FP80TypeKind => AnyTypeEnum::FloatType(FloatType::new(type_)),
-            LLVMTypeKind::LLVMFP128TypeKind => AnyTypeEnum::FloatType(FloatType::new(type_)),
+            LLVMTypeKind::LLVMHalfTypeKind |
+            LLVMTypeKind::LLVMFloatTypeKind |
+            LLVMTypeKind::LLVMDoubleTypeKind |
+            LLVMTypeKind::LLVMX86_FP80TypeKind |
+            LLVMTypeKind::LLVMFP128TypeKind |
             LLVMTypeKind::LLVMPPC_FP128TypeKind => AnyTypeEnum::FloatType(FloatType::new(type_)),
             LLVMTypeKind::LLVMLabelTypeKind => panic!("FIXME: Unsupported type: Label"),
             LLVMTypeKind::LLVMIntegerTypeKind => AnyTypeEnum::IntType(IntType::new(type_)),
