@@ -14,10 +14,11 @@ pub enum FunctionLookupError {
     FunctionNotFound, // 404!
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug)]
 pub struct ExecutionEngine {
     execution_engine: LLVMExecutionEngineRef,
     pub(crate) modules: Vec<Module>,
+    target_data: Option<TargetData>,
     jit_mode: bool,
 }
 
@@ -25,9 +26,14 @@ impl ExecutionEngine {
     pub(crate) fn new(execution_engine: LLVMExecutionEngineRef, jit_mode: bool) -> ExecutionEngine {
         assert!(!execution_engine.is_null());
 
+        let target_data = unsafe {
+            LLVMGetExecutionEngineTargetData(execution_engine)
+        };
+
         ExecutionEngine {
             execution_engine: execution_engine,
             modules: vec![],
+            target_data: Some(TargetData::new(target_data)),
             jit_mode: jit_mode,
         }
     }
@@ -123,12 +129,10 @@ impl ExecutionEngine {
         Ok(address)
     }
 
-    pub fn get_target_data(&self) -> TargetData {
-        let target_data = unsafe {
-            LLVMGetExecutionEngineTargetData(self.execution_engine)
-        };
-
-        TargetData::new(target_data)
+    // REVIEW: Not sure if an EE's target data can change.. if so we might want to update the value
+    // when making this call
+    pub fn get_target_data(&self) -> &TargetData {
+        self.target_data.as_ref().unwrap()
     }
 
     // REVIEW: Can also find nothing if no targeting is initialized. Maybe best to
@@ -178,6 +182,8 @@ impl Drop for ExecutionEngine {
         for module in self.modules.drain(..) {
             forget(module);
         }
+
+        forget(self.target_data.take());
 
         unsafe {
             LLVMDisposeExecutionEngine(self.execution_engine);

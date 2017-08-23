@@ -3,6 +3,8 @@ extern crate inkwell;
 use self::inkwell::context::Context;
 use self::inkwell::targets::{ByteOrdering, InitializationConfig, Target};
 
+use std::ffi::CString;
+
 // REVIEW: Inconsistently failing on different tries :(
 // #[test]
 // fn test_target() {
@@ -65,7 +67,17 @@ fn test_target_data() {
     let context = Context::create();
     let module = context.create_module("sum");
     let execution_engine = module.create_jit_execution_engine(0).unwrap();
+    let module = execution_engine.get_module_at(0);
     let target_data = execution_engine.get_target_data();
+
+    let data_layout = target_data.get_data_layout(); // TODO: See if you can test data_layout
+
+    assert_eq!(data_layout.as_str(), &*CString::new("e-m:e-i64:64-f80:128-n8:16:32:64-S128").unwrap());
+    assert_eq!(module.get_data_layout().as_str(), &*CString::new("").unwrap());
+
+    module.set_data_layout(&data_layout);
+
+    assert_eq!(*module.get_data_layout(), data_layout);
 
     let i32_type = context.i32_type();
     let i64_type = context.i64_type();
@@ -73,8 +85,6 @@ fn test_target_data() {
     let f64_type = context.f64_type();
     let struct_type = context.struct_type(&[&i32_type, &i64_type, &f64_type, &f32_type], false);
     let struct_type2 = context.struct_type(&[&f32_type, &i32_type, &i64_type, &f64_type], false);
-
-    let _ = target_data.get_data_layout(); // TODO: See if you can test data_layout
 
     assert_eq!(target_data.get_bit_size(&i32_type), 32);
     assert_eq!(target_data.get_bit_size(&i64_type), 64);

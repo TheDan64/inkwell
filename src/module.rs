@@ -21,7 +21,7 @@ use types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
 use values::{AsValueRef, BasicValue, FunctionValue, PointerValue, MetadataValue, BasicMetadataValueEnum};
 
 // REVIEW: Maybe this should go into it's own module?
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Linkage {
     AppendingLinkage,
     AvailableExternallyLinkage,
@@ -91,15 +91,20 @@ impl Linkage {
 #[derive(Debug, PartialEq, Eq)]
 pub struct Module {
     pub(crate) module: LLVMModuleRef,
+    data_layout: Option<DataLayout>,
 }
 
 impl Module {
     pub(crate) fn new(module: LLVMModuleRef) -> Self {
         assert!(!module.is_null());
 
-        Module {
-            module: module
-        }
+        let mut module = Module {
+            module: module,
+            data_layout: None,
+        };
+
+        module.data_layout = Some(DataLayout::new(module.get_raw_data_layout()));
+        module
     }
 
     pub fn create(name: &str) -> Self {
@@ -305,19 +310,26 @@ impl Module {
         code == 0
     }
 
-    // REVIEW: Why does LLVM give us a *const i8 here, but *mut i8
-    // for DataLayout in targets.rs?
-    pub fn get_data_layout(&self) -> DataLayout {
-        let data_layout = unsafe {
-            LLVMGetDataLayout(self.module)
-        };
-
-        DataLayout::new(data_layout as *mut i8)
+    // LLVMGetDataLayoutStr was adding in 3.9+ and might be more correct according to llvm-sys
+    fn get_raw_data_layout(&self) -> *mut i8 {
+        unsafe {
+            LLVMGetDataLayout(self.module) as *mut _
+        }
     }
 
-    pub fn set_data_layout(&self, data_layout: DataLayout) {
+    // REVIEW: Maybe this swapping business could be replaced with Cell since it seems like internal mutability
+    pub fn get_data_layout(&self) -> &DataLayout {
+        let data_layout = self.data_layout.as_ref().expect("Contents should always exist until Drop");
+
         unsafe {
-            LLVMSetDataLayout(self.module, data_layout.data_layout)
+            data_layout.dispose_and_replace(self.get_raw_data_layout());
+        }
+        data_layout
+    }
+
+    pub fn set_data_layout(&self, data_layout: &DataLayout) {
+        unsafe {
+            LLVMSetDataLayout(self.module, data_layout.data_layout.get())
         }
     }
 
@@ -385,8 +397,12 @@ impl Clone for Module {
     }
 }
 
+// Module owns the data layout string, so LLVMDisposeModule will deallocate it for us,
+// so we must call forget to avoid dropping it ourselves
 impl Drop for Module {
     fn drop(&mut self) {
+        forget(self.data_layout.take());
+
         unsafe {
             LLVMDisposeModule(self.module)
         }

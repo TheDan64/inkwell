@@ -62,6 +62,7 @@ impl Default for InitializationConfig {
     }
 }
 
+#[derive(Debug)]
 pub struct Target {
     target: LLVMTargetRef,
 }
@@ -426,6 +427,7 @@ impl Target {
         }
     }
 
+    // TODOC: Disassembler only supported in LLVM 4.0+
     pub fn initialize_bpf(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeBPFTarget, LLVMInitializeBPFTargetInfo, LLVMInitializeBPFTargetMC, LLVMInitializeBPFAsmPrinter};
 
@@ -653,6 +655,7 @@ impl Target {
     }
 }
 
+#[derive(Debug)]
 pub struct TargetMachine {
     target_machine: LLVMTargetMachineRef,
 }
@@ -725,6 +728,7 @@ pub enum ByteOrdering {
     LittleEndian,
 }
 
+#[derive(Debug)]
 pub struct TargetData {
     pub(crate) target_data: LLVMTargetDataRef,
 }
@@ -795,6 +799,7 @@ impl TargetData {
         TargetData::new(target_data)
     }
 
+    // REVIEW: Maybe this should be pass_manager.add_target_data()?
     pub fn add_target_data(&self, pass_manager: &PassManager) {
         unsafe {
             LLVMAddTargetData(self.target_data, pass_manager.pass_manager)
@@ -866,7 +871,6 @@ impl TargetData {
         }
     }
 
-    // FIXME: Out of bounds returns bad data, should return Option<u64>
     pub fn offset_of_element(&self, struct_type: &StructType, element: u32) -> Option<u64> {
         if element > struct_type.count_fields() - 1 {
             return None;
@@ -879,10 +883,10 @@ impl TargetData {
 }
 
 // FIXME: Make sure this doesn't SegFault:
-// impl Drop for TargetData {
-//     fn drop(&mut self) {
-//         unsafe {
-//             LLVMDisposeTargetData(self.target_data)
-//         }
-//     }
-// }
+impl Drop for TargetData {
+    fn drop(&mut self) {
+        unsafe {
+            LLVMDisposeTargetData(self.target_data)
+        }
+    }
+}

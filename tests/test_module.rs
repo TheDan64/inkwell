@@ -83,3 +83,10 @@ fn test_get_function() {
     assert_eq!(last_fn, some_fn);
     assert_eq!(named_fn, some_fn);
 }
+
+#[test]
+fn test_owned_data_layout_disposed_safely() {
+    let context = Context::create();
+
+    context.create_module("test");
+}
