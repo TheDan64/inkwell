@@ -70,7 +70,7 @@ fn test_target_data() {
     let module = execution_engine.get_module_at(0);
     let target_data = execution_engine.get_target_data();
 
-    let data_layout = target_data.get_data_layout(); // TODO: See if you can test data_layout
+    let data_layout = target_data.get_data_layout();
 
     assert_eq!(data_layout.as_str(), &*CString::new("e-m:e-i64:64-f80:128-n8:16:32:64-S128").unwrap());
     assert_eq!(module.get_data_layout().as_str(), &*CString::new("").unwrap());

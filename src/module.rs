@@ -310,27 +310,28 @@ impl Module {
         code == 0
     }
 
-    // LLVMGetDataLayoutStr was adding in 3.9+ and might be more correct according to llvm-sys
+    // REVIEW: LLVMGetDataLayoutStr was added in 3.9+ and might be more correct according to llvm-sys
     fn get_raw_data_layout(&self) -> *mut i8 {
         unsafe {
             LLVMGetDataLayout(self.module) as *mut _
         }
     }
 
-    // REVIEW: Maybe this swapping business could be replaced with Cell since it seems like internal mutability
     pub fn get_data_layout(&self) -> &DataLayout {
-        let data_layout = self.data_layout.as_ref().expect("Contents should always exist until Drop");
-
-        unsafe {
-            data_layout.dispose_and_replace(self.get_raw_data_layout());
-        }
-        data_layout
+        self.data_layout.as_ref().expect("Contents should always exist until Drop")
     }
 
+    // REVIEW: Ensure the replaced string ptr still gets cleaned up by the module (I think it does)
+    // valgrind might come in handy once non jemalloc allocators stabilize
     pub fn set_data_layout(&self, data_layout: &DataLayout) {
         unsafe {
-            LLVMSetDataLayout(self.module, data_layout.data_layout.get())
+            LLVMSetDataLayout(self.module, data_layout.data_layout.get());
         }
+
+        self.data_layout.as_ref()
+                        .expect("Contents should always exist until Drop")
+                        .data_layout
+                        .set(self.get_raw_data_layout());
     }
 
     pub fn print_to_stderr(&self) {

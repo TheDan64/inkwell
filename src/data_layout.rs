@@ -17,7 +17,7 @@ impl DataLayout {
         assert!(!data_layout.is_null());
 
         DataLayout {
-            data_layout: Cell::new(data_layout)
+            data_layout: Cell::new(data_layout),
         }
     }
 
@@ -25,14 +25,6 @@ impl DataLayout {
         unsafe {
             CStr::from_ptr(self.data_layout.get())
         }
-    }
-
-    pub(crate) fn dispose_and_replace(&self, ptr: *mut i8) {
-        unsafe {
-            // LLVMDisposeMessage(self.data_layout.get());
-        }
-
-        self.data_layout.set(ptr);
     }
 }
 
@@ -45,7 +37,7 @@ impl PartialEq for DataLayout {
 impl fmt::Debug for DataLayout {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "DataLayout {{\n    ")?;
-        write!(f, "address: {:?}\n    ", self.data_layout);
+        write!(f, "address: {:?}\n    ", self.data_layout.get());
         write!(f, "repr: {:?}\n}}", self.as_str())
     }
 }
