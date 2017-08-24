@@ -318,7 +318,7 @@ impl Module {
     }
 
     pub fn get_data_layout(&self) -> &DataLayout {
-        self.data_layout.as_ref().expect("Contents should always exist until Drop")
+        self.data_layout.as_ref().expect("DataLayout should always exist until Drop")
     }
 
     // REVIEW: Ensure the replaced string ptr still gets cleaned up by the module (I think it does)
@@ -329,7 +329,7 @@ impl Module {
         }
 
         self.data_layout.as_ref()
-                        .expect("Contents should always exist until Drop")
+                        .expect("DataLayout should always exist until Drop")
                         .data_layout
                         .set(self.get_raw_data_layout());
     }
@@ -402,7 +402,7 @@ impl Clone for Module {
 // so we must call forget to avoid dropping it ourselves
 impl Drop for Module {
     fn drop(&mut self) {
-        forget(self.data_layout.take());
+        forget(self.data_layout.take().expect("DataLayout should always exist until Drop"));
 
         unsafe {
             LLVMDisposeModule(self.module)

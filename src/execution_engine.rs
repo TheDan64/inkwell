@@ -183,7 +183,7 @@ impl Drop for ExecutionEngine {
             forget(module);
         }
 
-        forget(self.target_data.take());
+        forget(self.target_data.take().expect("TargetData should always exist until Drop"));
 
         unsafe {
             LLVMDisposeExecutionEngine(self.execution_engine);
