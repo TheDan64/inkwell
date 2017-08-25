@@ -1,13 +1,111 @@
-use llvm_sys::core::{LLVMDisposePassManager, LLVMInitializeFunctionPassManager};
+use llvm_sys::core::{LLVMDisposePassManager, LLVMInitializeFunctionPassManager, LLVMFinalizeFunctionPassManager, LLVMRunFunctionPassManager, LLVMRunPassManager, LLVMCreatePassManager, LLVMCreateFunctionPassManagerForModule};
 use llvm_sys::prelude::LLVMPassManagerRef;
 use llvm_sys::target::LLVMAddTargetData;
 use llvm_sys::transforms::ipo::{LLVMAddArgumentPromotionPass, LLVMAddConstantMergePass, LLVMAddDeadArgEliminationPass, LLVMAddFunctionAttrsPass, LLVMAddFunctionInliningPass, LLVMAddAlwaysInlinerPass, LLVMAddGlobalDCEPass, LLVMAddGlobalOptimizerPass, LLVMAddIPConstantPropagationPass, LLVMAddIPSCCPPass, LLVMAddInternalizePass, LLVMAddStripDeadPrototypesPass, LLVMAddPruneEHPass, LLVMAddStripSymbolsPass};
+use llvm_sys::transforms::pass_manager_builder::{LLVMPassManagerBuilderRef, LLVMPassManagerBuilderCreate, LLVMPassManagerBuilderDispose, LLVMPassManagerBuilderSetOptLevel, LLVMPassManagerBuilderSetSizeLevel, LLVMPassManagerBuilderSetDisableUnitAtATime, LLVMPassManagerBuilderSetDisableUnrollLoops, LLVMPassManagerBuilderSetDisableSimplifyLibCalls, LLVMPassManagerBuilderUseInlinerWithThreshold, LLVMPassManagerBuilderPopulateFunctionPassManager, LLVMPassManagerBuilderPopulateModulePassManager, LLVMPassManagerBuilderPopulateLTOPassManager};
 use llvm_sys::transforms::scalar::{LLVMAddAggressiveDCEPass, LLVMAddMemCpyOptPass, LLVMAddBitTrackingDCEPass, LLVMAddAlignmentFromAssumptionsPass, LLVMAddCFGSimplificationPass, LLVMAddDeadStoreEliminationPass, LLVMAddScalarizerPass, LLVMAddMergedLoadStoreMotionPass, LLVMAddGVNPass, LLVMAddIndVarSimplifyPass, LLVMAddInstructionCombiningPass, LLVMAddJumpThreadingPass, LLVMAddLICMPass, LLVMAddLoopDeletionPass, LLVMAddLoopIdiomPass, LLVMAddLoopRotatePass, LLVMAddLoopRerollPass, LLVMAddLoopUnrollPass, LLVMAddLoopUnswitchPass, LLVMAddPartiallyInlineLibCallsPass, LLVMAddLowerSwitchPass, LLVMAddPromoteMemoryToRegisterPass, LLVMAddSCCPPass, LLVMAddScalarReplAggregatesPass, LLVMAddScalarReplAggregatesPassSSA, LLVMAddScalarReplAggregatesPassWithThreshold, LLVMAddSimplifyLibCallsPass, LLVMAddTailCallEliminationPass, LLVMAddConstantPropagationPass, LLVMAddDemoteMemoryToRegisterPass, LLVMAddVerifierPass, LLVMAddCorrelatedValuePropagationPass, LLVMAddEarlyCSEPass, LLVMAddLowerExpectIntrinsicPass, LLVMAddTypeBasedAliasAnalysisPass, LLVMAddScopedNoAliasAAPass, LLVMAddBasicAliasAnalysisPass, LLVMAddReassociatePass};
 use llvm_sys::transforms::vectorize::{LLVMAddBBVectorizePass, LLVMAddLoopVectorizePass, LLVMAddSLPVectorizePass};
 
-use targets::TargetData;
+use module::Module;
+use targets::{CodeGenOptLevel, TargetData};
+use values::{AsValueRef, FunctionValue};
 
-// REVIEW: Could possbily use the builder pattern for setting which passes to use
+// REVIEW: Opt Level might be identical to targets::Option<CodeGenOptLevel>
+// REVIEW: size_level 0-2 according to llvmlite
+pub struct PassManagerBuilder {
+    pass_manager_builder: LLVMPassManagerBuilderRef,
+}
+
+impl PassManagerBuilder {
+    fn new(pass_manager_builder: LLVMPassManagerBuilderRef) -> Self {
+        assert!(!pass_manager_builder.is_null());
+
+        PassManagerBuilder {
+            pass_manager_builder: pass_manager_builder,
+        }
+    }
+
+    pub fn create() -> Self {
+        let pass_manager_builder = unsafe {
+            LLVMPassManagerBuilderCreate()
+        };
+
+        PassManagerBuilder::new(pass_manager_builder)
+    }
+
+    pub fn set_optimization_level(&self, opt_level: Option<&CodeGenOptLevel>) {
+        let opt_level = match opt_level {
+            Some(level) => level.as_u32(),
+            None => 0
+        };
+
+        unsafe {
+            LLVMPassManagerBuilderSetOptLevel(self.pass_manager_builder, opt_level)
+        }
+    }
+
+    // REVIEW: Valid input 0-2 according to llvmlite
+    pub fn set_size_level(&self, size_level: u32) {
+        unsafe {
+            LLVMPassManagerBuilderSetSizeLevel(self.pass_manager_builder, size_level)
+        }
+    }
+
+    pub fn set_disable_unit_at_a_time(&self, disable: bool) {
+        unsafe {
+            LLVMPassManagerBuilderSetDisableUnitAtATime(self.pass_manager_builder, disable as i32)
+        }
+    }
+
+    pub fn set_disable_unroll_loops(&self, disable: bool) {
+        unsafe {
+            LLVMPassManagerBuilderSetDisableUnrollLoops(self.pass_manager_builder, disable as i32)
+        }
+    }
+
+    pub fn set_disable_simplify_lib_calls(&self, disable: bool) {
+        unsafe {
+            LLVMPassManagerBuilderSetDisableSimplifyLibCalls(self.pass_manager_builder, disable as i32)
+        }
+    }
+
+    pub fn set_inliner_with_threshold(&self, threshold: u32) {
+        unsafe {
+            LLVMPassManagerBuilderUseInlinerWithThreshold(self.pass_manager_builder, threshold)
+        }
+    }
+
+    // SubType: pass_manager: &PassManager<FunctionValue>
+    pub fn populate_function_pass_manager(&self, pass_manager: &PassManager) {
+        unsafe {
+            LLVMPassManagerBuilderPopulateFunctionPassManager(self.pass_manager_builder, pass_manager.pass_manager)
+        }
+    }
+
+    // SubType: pass_manager: &PassManager<Module>
+    pub fn populate_module_pass_manager(&self, pass_manager: &PassManager) {
+        unsafe {
+            LLVMPassManagerBuilderPopulateModulePassManager(self.pass_manager_builder, pass_manager.pass_manager)
+        }
+    }
+
+    // SubType: Need LTO subtype?
+    pub fn populate_lto_pass_manager(&self, pass_manager: &PassManager, internalize: bool, run_inliner: bool) {
+        unsafe {
+            LLVMPassManagerBuilderPopulateLTOPassManager(self.pass_manager_builder, pass_manager.pass_manager, internalize as i32, run_inliner as i32)
+        }
+    }
+}
+
+impl Drop for PassManagerBuilder {
+    fn drop(&mut self) {
+        unsafe {
+            LLVMPassManagerBuilderDispose(self.pass_manager_builder)
+        }
+    }
+}
+
+// SubTypes: PassManager<Module>, PassManager<FunctionValue>
 pub struct PassManager {
     pub(crate) pass_manager: LLVMPassManagerRef,
 }
@@ -21,6 +119,24 @@ impl PassManager {
         }
     }
 
+    // SubTypes: PassManager<Module>::create()
+    pub fn create_for_module() -> Self {
+        let pass_manager = unsafe {
+            LLVMCreatePassManager()
+        };
+
+        PassManager::new(pass_manager)
+    }
+
+    // SubTypes: PassManager<FunctionValue>::create()
+    pub fn create_for_function(module: &Module) -> Self {
+        let pass_manager = unsafe {
+            LLVMCreateFunctionPassManagerForModule(module.module)
+        };
+
+        PassManager::new(pass_manager)
+    }
+
     // return true means some pass modified the module, not an error occurred
     pub fn initialize(&self) -> bool {
         unsafe {
@@ -28,7 +144,25 @@ impl PassManager {
         }
     }
 
-    pub fn add_target_data(&self, target_data: TargetData) {
+    pub fn finalize(&self) -> bool {
+        unsafe {
+            LLVMFinalizeFunctionPassManager(self.pass_manager) == 1
+        }
+    }
+
+    pub fn run_on_function(&self, fn_value: &FunctionValue) -> bool {
+        unsafe {
+            LLVMRunFunctionPassManager(self.pass_manager, fn_value.as_value_ref()) == 1
+        }
+    }
+
+    pub fn run_on_module(&self, module: &Module) -> bool {
+        unsafe {
+            LLVMRunPassManager(self.pass_manager, module.module) == 1
+        }
+    }
+
+    pub fn add_target_data(&self, target_data: &TargetData) {
         unsafe {
             LLVMAddTargetData(target_data.target_data, self.pass_manager)
         }
@@ -131,7 +265,6 @@ impl PassManager {
         }
     }
 
-    // REVIEW: If slp stands for sleep, we should spell it out in full
     pub fn add_slp_vectorize_pass(&self) {
         unsafe {
             LLVMAddSLPVectorizePass(self.pass_manager)
@@ -217,6 +350,7 @@ impl PassManager {
             LLVMAddLICMPass(self.pass_manager)
         }
     }
+
     pub fn add_loop_deletion_pass(&self) {
         unsafe {
             LLVMAddLoopDeletionPass(self.pass_manager)

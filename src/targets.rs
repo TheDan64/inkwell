@@ -20,6 +20,16 @@ pub enum CodeGenOptLevel {
     Aggressive,
 }
 
+impl CodeGenOptLevel {
+    pub(crate) fn as_u32(&self) -> u32 {
+        match self {
+            Less => 1,
+            Default => 2,
+            Aggressive => 3,
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum CodeModel {
     Default,

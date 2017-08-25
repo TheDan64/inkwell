@@ -228,14 +228,6 @@ impl Module {
         Ok(execution_engine)
     }
 
-    pub fn create_function_pass_manager(&self) -> PassManager {
-        let pass_manager = unsafe {
-            LLVMCreateFunctionPassManagerForModule(self.module)
-        };
-
-        PassManager::new(pass_manager)
-    }
-
     // REVIEW: Is this really always a pointer? It would make sense...
     pub fn add_global(&self, type_: &BasicType, initial_value: Option<&BasicValue>, address_space: Option<u32>, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");

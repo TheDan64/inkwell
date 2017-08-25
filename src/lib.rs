@@ -26,6 +26,15 @@ pub fn enable_llvm_pretty_stack_trace() {
     }
 }
 
+// TODO: Move
+pub fn is_multithreaded() -> bool {
+    use llvm_sys::core::LLVMIsMultithreaded;
+
+    unsafe {
+        LLVMIsMultithreaded() == 1
+    }
+}
+
 // TODO: Move to better location?
 // REVIEW: Not sure how safe this is. What happens when you make an llvm call after
 // shutdown_llvm has been called?
