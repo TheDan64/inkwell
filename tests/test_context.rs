@@ -28,15 +28,15 @@ fn test_no_context_double_free2() {
 
 #[test]
 fn test_no_context_double_free3() {
-    Context::get_global_context();
-    Context::get_global_context();
+    Context::get_global();
+    Context::get_global();
 }
 
 #[test]
 fn test_get_context_from_contextless_value() {
     let int = IntType::i8_type();
     let context = Context::create();
-    let global_context = Context::get_global_context();
+    let global_context = Context::get_global();
 
     assert_eq!(int.get_context(), global_context);
     assert_ne!(*int.get_context(), context);

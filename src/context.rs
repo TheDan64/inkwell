@@ -38,7 +38,7 @@ impl Context {
         Context::new(context)
     }
 
-    pub fn get_global_context() -> ContextRef {
+    pub fn get_global() -> ContextRef {
         let context = unsafe {
             LLVMGetGlobalContext()
         };

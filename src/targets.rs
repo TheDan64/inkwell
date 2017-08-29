@@ -4,7 +4,7 @@ use llvm_sys::target_machine::{LLVMGetFirstTarget, LLVMTargetRef, LLVMGetNextTar
 
 use context::Context;
 use data_layout::DataLayout;
-use pass_manager::PassManager;
+use passes::PassManager;
 use types::{AnyType, AsTypeRef, StructType, PointerType};
 use values::AnyValue;
 

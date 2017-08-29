@@ -1,7 +1,7 @@
 extern crate inkwell;
 
 use self::inkwell::context::Context;
-use self::inkwell::pass_manager::{PassManagerBuilder, PassManager};
+use self::inkwell::passes::{PassManagerBuilder, PassManager, PassRegistry};
 use self::inkwell::targets::CodeGenOptLevel::Aggressive;
 
 #[test]
@@ -89,4 +89,22 @@ fn test_pass_manager_builder() {
     builder.set_disable_simplify_lib_calls(true);
 
     // TODO: Run on various type of pass managers
+}
+
+#[test]
+fn test_pass_registry() {
+    let pass_registry = PassRegistry::get_global();
+
+    pass_registry.initialize_core();
+    pass_registry.initialize_transform_utils();
+    pass_registry.initialize_scalar_opts();
+    pass_registry.initialize_obj_carc_opts();
+    pass_registry.initialize_vectorization();
+    pass_registry.initialize_inst_combine();
+    pass_registry.initialize_ipo();
+    pass_registry.initialize_instrumentation();
+    pass_registry.initialize_analysis();
+    pass_registry.initialize_ipa();
+    pass_registry.initialize_codegen();
+    pass_registry.initialize_target();
 }

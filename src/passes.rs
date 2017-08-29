@@ -1,5 +1,6 @@
-use llvm_sys::core::{LLVMDisposePassManager, LLVMInitializeFunctionPassManager, LLVMFinalizeFunctionPassManager, LLVMRunFunctionPassManager, LLVMRunPassManager, LLVMCreatePassManager, LLVMCreateFunctionPassManagerForModule};
-use llvm_sys::prelude::LLVMPassManagerRef;
+use llvm_sys::core::{LLVMDisposePassManager, LLVMInitializeFunctionPassManager, LLVMFinalizeFunctionPassManager, LLVMRunFunctionPassManager, LLVMRunPassManager, LLVMCreatePassManager, LLVMCreateFunctionPassManagerForModule, LLVMGetGlobalPassRegistry};
+use llvm_sys::initialization::{LLVMInitializeCore, LLVMInitializeTransformUtils, LLVMInitializeScalarOpts, LLVMInitializeObjCARCOpts, LLVMInitializeVectorization, LLVMInitializeInstCombine, LLVMInitializeIPO, LLVMInitializeInstrumentation, LLVMInitializeAnalysis, LLVMInitializeIPA, LLVMInitializeCodeGen, LLVMInitializeTarget};
+use llvm_sys::prelude::{LLVMPassManagerRef, LLVMPassRegistryRef};
 use llvm_sys::target::LLVMAddTargetData;
 use llvm_sys::transforms::ipo::{LLVMAddArgumentPromotionPass, LLVMAddConstantMergePass, LLVMAddDeadArgEliminationPass, LLVMAddFunctionAttrsPass, LLVMAddFunctionInliningPass, LLVMAddAlwaysInlinerPass, LLVMAddGlobalDCEPass, LLVMAddGlobalOptimizerPass, LLVMAddIPConstantPropagationPass, LLVMAddIPSCCPPass, LLVMAddInternalizePass, LLVMAddStripDeadPrototypesPass, LLVMAddPruneEHPass, LLVMAddStripSymbolsPass};
 use llvm_sys::transforms::pass_manager_builder::{LLVMPassManagerBuilderRef, LLVMPassManagerBuilderCreate, LLVMPassManagerBuilderDispose, LLVMPassManagerBuilderSetOptLevel, LLVMPassManagerBuilderSetSizeLevel, LLVMPassManagerBuilderSetDisableUnitAtATime, LLVMPassManagerBuilderSetDisableUnrollLoops, LLVMPassManagerBuilderSetDisableSimplifyLibCalls, LLVMPassManagerBuilderUseInlinerWithThreshold, LLVMPassManagerBuilderPopulateFunctionPassManager, LLVMPassManagerBuilderPopulateModulePassManager, LLVMPassManagerBuilderPopulateLTOPassManager};
@@ -519,6 +520,101 @@ impl Drop for PassManager {
     fn drop(&mut self) {
         unsafe {
             LLVMDisposePassManager(self.pass_manager)
+        }
+    }
+}
+
+pub struct PassRegistry {
+    pass_registry: LLVMPassRegistryRef,
+}
+
+impl PassRegistry {
+    pub fn new(pass_registry: LLVMPassRegistryRef) -> PassRegistry {
+        assert!(!pass_registry.is_null());
+
+        PassRegistry {
+            pass_registry,
+        }
+    }
+
+    pub fn get_global() -> PassRegistry {
+        let pass_registry = unsafe {
+            LLVMGetGlobalPassRegistry()
+        };
+
+        PassRegistry::new(pass_registry)
+    }
+
+    pub fn initialize_core(&self) {
+        unsafe {
+            LLVMInitializeCore(self.pass_registry)
+        }
+    }
+
+    pub fn initialize_transform_utils(&self) {
+        unsafe {
+            LLVMInitializeTransformUtils(self.pass_registry)
+        }
+    }
+
+    pub fn initialize_scalar_opts(&self) {
+        unsafe {
+            LLVMInitializeScalarOpts(self.pass_registry)
+        }
+    }
+
+    pub fn initialize_obj_carc_opts(&self) {
+        unsafe {
+            LLVMInitializeObjCARCOpts(self.pass_registry)
+        }
+    }
+
+    pub fn initialize_vectorization(&self) {
+        unsafe {
+            LLVMInitializeVectorization(self.pass_registry)
+        }
+    }
+
+    pub fn initialize_inst_combine(&self) {
+        unsafe {
+            LLVMInitializeInstCombine(self.pass_registry)
+        }
+    }
+
+    // Let us begin our initial public offering
+    pub fn initialize_ipo(&self) {
+        unsafe {
+            LLVMInitializeIPO(self.pass_registry)
+        }
+    }
+
+    pub fn initialize_instrumentation(&self) {
+        unsafe {
+            LLVMInitializeInstrumentation(self.pass_registry)
+        }
+    }
+
+    pub fn initialize_analysis(&self) {
+        unsafe {
+            LLVMInitializeAnalysis(self.pass_registry)
+        }
+    }
+
+    pub fn initialize_ipa(&self) {
+        unsafe {
+            LLVMInitializeIPA(self.pass_registry)
+        }
+    }
+
+    pub fn initialize_codegen(&self) {
+        unsafe {
+            LLVMInitializeCodeGen(self.pass_registry)
+        }
+    }
+
+    pub fn initialize_target(&self) {
+        unsafe {
+            LLVMInitializeTarget(self.pass_registry)
         }
     }
 }
