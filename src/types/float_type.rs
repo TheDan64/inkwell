@@ -1,7 +1,7 @@
-use llvm_sys::core::{LLVMConstReal, LLVMConstNull, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMPPCFP128Type};
+use llvm_sys::core::{LLVMConstReal, LLVMConstNull, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMPPCFP128Type, LLVMConstRealOfString};
 use llvm_sys::prelude::LLVMTypeRef;
 
-use std::ffi::CStr;
+use std::ffi::{CString, CStr};
 
 use context::ContextRef;
 use types::traits::AsTypeRef;
@@ -37,6 +37,18 @@ impl FloatType {
     pub fn const_float(&self, value: f64) -> FloatValue {
         let value = unsafe {
             LLVMConstReal(self.float_type.type_, value)
+        };
+
+        FloatValue::new(value)
+    }
+
+    // REVIEW: What happens when string is invalid? Nullptr?
+    // REVIEW: Difference of LLVMConstRealOfStringAndSize?
+    pub fn const_float_from_string(&self, string: &str) -> FloatValue {
+        let c_string = CString::new(string).expect("Conversion to CString failed unexpectedly");
+
+        let value = unsafe {
+            LLVMConstRealOfString(self.as_type_ref(), c_string.as_ptr())
         };
 
         FloatValue::new(value)

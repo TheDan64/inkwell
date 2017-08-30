@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMConstNot, LLVMConstNeg, LLVMConstNSWNeg, LLVMConstNUWNeg, LLVMConstAdd, LLVMConstNSWAdd, LLVMConstNUWAdd, LLVMConstSub, LLVMConstNSWSub, LLVMConstNUWSub, LLVMConstMul, LLVMConstNSWMul, LLVMConstNUWMul, LLVMConstUDiv, LLVMConstSDiv, LLVMConstSRem, LLVMConstURem, LLVMConstIntCast, LLVMConstXor, LLVMConstOr, LLVMConstAnd, LLVMConstExactSDiv, LLVMConstShl, LLVMConstLShr, LLVMConstAShr, LLVMConstUIToFP, LLVMConstSIToFP, LLVMConstIntToPtr};
+use llvm_sys::core::{LLVMConstNot, LLVMConstNeg, LLVMConstNSWNeg, LLVMConstNUWNeg, LLVMConstAdd, LLVMConstNSWAdd, LLVMConstNUWAdd, LLVMConstSub, LLVMConstNSWSub, LLVMConstNUWSub, LLVMConstMul, LLVMConstNSWMul, LLVMConstNUWMul, LLVMConstUDiv, LLVMConstSDiv, LLVMConstSRem, LLVMConstURem, LLVMConstIntCast, LLVMConstXor, LLVMConstOr, LLVMConstAnd, LLVMConstExactSDiv, LLVMConstShl, LLVMConstLShr, LLVMConstAShr, LLVMConstUIToFP, LLVMConstSIToFP, LLVMConstIntToPtr, LLVMConstTrunc, LLVMConstSExt, LLVMConstZExt, LLVMConstTruncOrBitCast, LLVMConstSExtOrBitCast, LLVMConstZExtOrBitCast, LLVMConstBitCast};
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
@@ -282,6 +282,66 @@ impl IntValue {
         };
 
         PointerValue::new(value)
+    }
+
+    pub fn const_truncate(&self, int_type: &IntType) -> IntValue {
+        let value = unsafe {
+            LLVMConstTrunc(self.as_value_ref(), int_type.as_type_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    // TODO: More descriptive name
+    pub fn const_s_extend(&self, int_type: &IntType) -> IntValue {
+        let value = unsafe {
+            LLVMConstSExt(self.as_value_ref(), int_type.as_type_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    // TODO: More descriptive name
+    pub fn const_z_ext(&self, int_type: &IntType) -> IntValue {
+        let value = unsafe {
+            LLVMConstZExt(self.as_value_ref(), int_type.as_type_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_truncate_or_bit_cast(&self, int_type: &IntType) -> IntValue {
+        let value = unsafe {
+            LLVMConstTruncOrBitCast(self.as_value_ref(), int_type.as_type_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    // TODO: More descriptive name
+    pub fn const_s_extend_or_bit_cast(&self, int_type: &IntType) -> IntValue {
+        let value = unsafe {
+            LLVMConstSExtOrBitCast(self.as_value_ref(), int_type.as_type_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    // TODO: More descriptive name
+    pub fn const_z_ext_or_bit_cast(&self, int_type: &IntType) -> IntValue {
+        let value = unsafe {
+            LLVMConstZExtOrBitCast(self.as_value_ref(), int_type.as_type_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_bit_cast(&self, int_type: &IntType) -> IntValue {
+        let value = unsafe {
+            LLVMConstBitCast(self.as_value_ref(), int_type.as_type_ref())
+        };
+
+        IntValue::new(value)
     }
 
     pub fn has_metadata(&self) -> bool {

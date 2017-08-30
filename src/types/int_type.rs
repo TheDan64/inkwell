@@ -1,7 +1,7 @@
-use llvm_sys::core::{LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMConstInt, LLVMConstNull, LLVMConstAllOnes, LLVMIntType, LLVMGetIntTypeWidth};
+use llvm_sys::core::{LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMConstInt, LLVMConstNull, LLVMConstAllOnes, LLVMIntType, LLVMGetIntTypeWidth, LLVMConstIntOfString};
 use llvm_sys::prelude::LLVMTypeRef;
 
-use std::ffi::CStr;
+use std::ffi::{CString, CStr};
 
 use context::ContextRef;
 use types::traits::AsTypeRef;
@@ -80,6 +80,18 @@ impl IntType {
     pub fn const_int(&self, value: u64, sign_extend: bool) -> IntValue {
         let value = unsafe {
             LLVMConstInt(self.as_type_ref(), value, sign_extend as i32)
+        };
+
+        IntValue::new(value)
+    }
+
+    // REVIEW: What happens when string is invalid? Nullptr?
+    // REVIEW: Difference of LLVMConstIntOfStringAndSize?
+    pub fn const_int_from_string(&self, string: &str, radix: u8) -> IntValue {
+        let c_string = CString::new(string).expect("Conversion to CString failed unexpectedly");
+
+        let value = unsafe {
+            LLVMConstIntOfString(self.as_type_ref(), c_string.as_ptr(), radix)
         };
 
         IntValue::new(value)

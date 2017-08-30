@@ -1,14 +1,14 @@
+use llvm_sys::core::{LLVMConstGEP, LLVMConstInBoundsGEP, LLVMConstPtrToInt, LLVMConstPointerCast, LLVMConstAddrSpaceCast};
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
 
-use types::PointerType;
-use values::traits::AsValueRef;
-use values::{InstructionValue, Value, MetadataValue};
+use types::{AsTypeRef, IntType, PointerType};
+use values::{AsValueRef, InstructionValue, IntValue, Value, MetadataValue};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct PointerValue {
-    ptr_value: Value
+    ptr_value: Value,
 }
 
 impl PointerValue {
@@ -62,6 +62,53 @@ impl PointerValue {
 
     pub fn set_metadata(&self, metadata: &MetadataValue, kind_id: u32) {
         self.ptr_value.set_metadata(metadata, kind_id)
+    }
+
+    // REVIEW: Should this be on array value too?
+    pub fn const_gep(&self, ordered_indexes: &[&IntValue]) -> PointerValue {
+        let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
+                                                                 .map(|val| val.as_value_ref())
+                                                                 .collect();
+        let value = unsafe {
+            LLVMConstGEP(self.as_value_ref(), index_values.as_mut_ptr(), index_values.len() as u32)
+        };
+
+        PointerValue::new(value)
+    }
+
+    pub fn const_in_bounds_gep(&self, ordered_indexes: &[&IntValue]) -> PointerValue {
+        let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
+                                                                 .map(|val| val.as_value_ref())
+                                                                 .collect();
+        let value = unsafe {
+            LLVMConstInBoundsGEP(self.as_value_ref(), index_values.as_mut_ptr(), index_values.len() as u32)
+        };
+
+        PointerValue::new(value)
+    }
+
+    pub fn const_to_int(&self, int_type: &IntType) -> IntValue {
+        let value = unsafe {
+            LLVMConstPtrToInt(self.as_value_ref(), int_type.as_type_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_cast(&self, ptr_type: &PointerType) -> PointerValue {
+        let value = unsafe {
+            LLVMConstPointerCast(self.as_value_ref(), ptr_type.as_type_ref())
+        };
+
+        PointerValue::new(value)
+    }
+
+    pub fn const_address_space_cast(&self, ptr_type: &PointerType) -> PointerValue {
+        let value = unsafe {
+            LLVMConstAddrSpaceCast(self.as_value_ref(), ptr_type.as_type_ref())
+        };
+
+        PointerValue::new(value)
     }
 }
 

@@ -1,12 +1,11 @@
-use llvm_sys::core::{LLVMConstFNeg, LLVMConstFAdd, LLVMConstFSub, LLVMConstFMul, LLVMConstFDiv, LLVMConstFRem, LLVMConstFPCast};
+use llvm_sys::core::{LLVMConstFNeg, LLVMConstFAdd, LLVMConstFSub, LLVMConstFMul, LLVMConstFDiv, LLVMConstFRem, LLVMConstFPCast, LLVMConstFPToUI, LLVMConstFPToSI, LLVMConstFPTrunc, LLVMConstFPExt};
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
 
-use types::FloatType;
-use types::AsTypeRef;
+use types::{AsTypeRef, FloatType, IntType};
 use values::traits::AsValueRef;
-use values::{InstructionValue, Value, MetadataValue};
+use values::{InstructionValue, IntValue, Value, MetadataValue};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct FloatValue {
@@ -109,6 +108,38 @@ impl FloatValue {
     pub fn const_cast(&self, float_type: &FloatType) -> Self {
         let value = unsafe {
             LLVMConstFPCast(self.as_value_ref(), float_type.as_type_ref())
+        };
+
+        FloatValue::new(value)
+    }
+
+    pub fn const_to_unsigned_int(&self, int_type: &IntType) -> IntValue {
+        let value = unsafe {
+            LLVMConstFPToUI(self.as_value_ref(), int_type.as_type_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_to_signed_int(&self, int_type: &IntType) -> IntValue {
+        let value = unsafe {
+            LLVMConstFPToSI(self.as_value_ref(), int_type.as_type_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_truncate(&self, float_type: &FloatType) -> FloatValue {
+        let value = unsafe {
+            LLVMConstFPTrunc(self.as_value_ref(), float_type.as_type_ref())
+        };
+
+        FloatValue::new(value)
+    }
+
+    pub fn const_extend(&self, float_type: &FloatType) -> FloatValue {
+        let value = unsafe {
+            LLVMConstFPExt(self.as_value_ref(), float_type.as_type_ref())
         };
 
         FloatValue::new(value)
