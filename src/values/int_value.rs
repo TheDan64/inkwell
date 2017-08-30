@@ -1,11 +1,11 @@
-use llvm_sys::core::{LLVMConstNot, LLVMConstNeg, LLVMConstNSWNeg, LLVMConstNUWNeg, LLVMConstAdd, LLVMConstNSWAdd, LLVMConstNUWAdd, LLVMConstSub, LLVMConstNSWSub, LLVMConstNUWSub, LLVMConstMul, LLVMConstNSWMul, LLVMConstNUWMul, LLVMConstUDiv, LLVMConstSDiv, LLVMConstSRem, LLVMConstURem, LLVMConstIntCast, LLVMConstXor, LLVMConstOr, LLVMConstAnd, LLVMConstExactSDiv};
+use llvm_sys::core::{LLVMConstNot, LLVMConstNeg, LLVMConstNSWNeg, LLVMConstNUWNeg, LLVMConstAdd, LLVMConstNSWAdd, LLVMConstNUWAdd, LLVMConstSub, LLVMConstNSWSub, LLVMConstNUWSub, LLVMConstMul, LLVMConstNSWMul, LLVMConstNUWMul, LLVMConstUDiv, LLVMConstSDiv, LLVMConstSRem, LLVMConstURem, LLVMConstIntCast, LLVMConstXor, LLVMConstOr, LLVMConstAnd, LLVMConstExactSDiv, LLVMConstShl, LLVMConstLShr, LLVMConstAShr, LLVMConstUIToFP, LLVMConstSIToFP, LLVMConstIntToPtr};
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
 
-use types::{AsTypeRef, IntType};
+use types::{AsTypeRef, FloatType, PointerType, IntType};
 use values::traits::AsValueRef;
-use values::{InstructionValue, Value, MetadataValue};
+use values::{FloatValue, InstructionValue, PointerValue, Value, MetadataValue};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct IntValue {
@@ -231,6 +231,57 @@ impl IntValue {
         };
 
         IntValue::new(value)
+    }
+
+    // TODO: Give shift methods more descriptive names
+    pub fn const_shl(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstShl(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_rshr(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstLShr(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_ashr(&self, rhs: &IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstAShr(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    // SubType: const_to_float impl only for unsigned types
+    pub fn const_unsigned_to_float(&self, float_type: &FloatType) -> FloatValue {
+        let value = unsafe {
+            LLVMConstUIToFP(self.as_value_ref(), float_type.as_type_ref())
+        };
+
+        FloatValue::new(value)
+    }
+
+    // SubType: const_to_float impl only for signed types
+    pub fn const_signed_to_float(&self, float_type: &FloatType) -> FloatValue {
+        let value = unsafe {
+            LLVMConstSIToFP(self.as_value_ref(), float_type.as_type_ref())
+        };
+
+        FloatValue::new(value)
+    }
+
+    pub fn const_to_pointer(&self, ptr_type: &PointerType) -> PointerValue {
+        let value = unsafe {
+            LLVMConstIntToPtr(self.as_value_ref(), ptr_type.as_type_ref())
+        };
+
+        PointerValue::new(value)
     }
 
     pub fn has_metadata(&self) -> bool {

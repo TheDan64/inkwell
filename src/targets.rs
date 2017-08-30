@@ -717,6 +717,7 @@ impl TargetMachine {
         }
     }
 
+    // TODO: Move to PassManager?
     pub fn add_analysis_passes(&self, pass_manager: &PassManager) {
         unsafe {
             LLVMAddAnalysisPasses(self.target_machine, pass_manager.pass_manager)
