@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMTypeOf, LLVMGetPreviousFunction, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetBasicBlocks, LLVMGetReturnType, LLVMAppendBasicBlock, LLVMDeleteFunction, LLVMGetElementType, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetEntryBasicBlock};
+use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMTypeOf, LLVMGetPreviousFunction, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetBasicBlocks, LLVMGetReturnType, LLVMAppendBasicBlock, LLVMDeleteFunction, LLVMGetElementType, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetEntryBasicBlock, LLVMGetPersonalityFn, LLVMSetPersonalityFn, LLVMGetIntrinsicID, LLVMGetFunctionCallConv, LLVMSetFunctionCallConv, LLVMGetGC, LLVMSetGC};
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
 
 use std::ffi::{CStr, CString};
@@ -247,6 +247,60 @@ impl FunctionValue {
 
     pub fn set_metadata(&self, metadata: &MetadataValue, kind_id: u32) {
         self.fn_value.set_metadata(metadata, kind_id)
+    }
+
+    // TODOC: How this works as an exception handler
+    // TODO: LLVM 3.9+
+    // pub fn has_personality_function(&self) -> bool {
+    //     unsafe {
+    //         LLVMHasPersonalityFunction(self.as_value_ref())
+    //     }
+    // }
+
+    pub fn get_personality_function(&self) -> Option<FunctionValue> {
+        let value = unsafe {
+            LLVMGetPersonalityFn(self.as_value_ref())
+        };
+
+        FunctionValue::new(value)
+    }
+
+    pub fn set_personality_function(&self, personality_fn: &FunctionValue) {
+        unsafe {
+            LLVMSetPersonalityFn(self.as_value_ref(), personality_fn.as_value_ref())
+        }
+    }
+
+    pub fn get_intrinsic_id(&self) -> u32 {
+        unsafe {
+            LLVMGetIntrinsicID(self.as_value_ref())
+        }
+    }
+
+    pub fn get_call_conventions(&self) -> u32 {
+        unsafe {
+            LLVMGetFunctionCallConv(self.as_value_ref())
+        }
+    }
+
+    pub fn set_call_conventions(&self, call_conventions: u32) {
+        unsafe {
+            LLVMSetFunctionCallConv(self.as_value_ref(), call_conventions)
+        }
+    }
+
+    pub fn get_gc(&self) -> &CStr {
+        unsafe {
+            CStr::from_ptr(LLVMGetGC(self.as_value_ref()))
+        }
+    }
+
+    pub fn set_gc(&self, gc: &str) {
+        let c_string = CString::new(gc).expect("Conversion to CString failed unexpectedly");
+
+        unsafe {
+            LLVMSetGC(self.as_value_ref(), c_string.as_ptr())
+        }
     }
 }
 

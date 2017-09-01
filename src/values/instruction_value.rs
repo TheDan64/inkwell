@@ -1,7 +1,8 @@
-use llvm_sys::core::{LLVMGetInstructionOpcode, LLVMIsTailCall};
+use llvm_sys::core::{LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent};
 use llvm_sys::LLVMOpcode;
 use llvm_sys::prelude::LLVMValueRef;
 
+use basic_block::BasicBlock;
 use values::traits::AsValueRef;
 use values::Value;
 
@@ -174,6 +175,50 @@ impl InstructionValue {
         };
 
         InstructionOpcode::new(opcode)
+    }
+
+    pub fn get_previous_instruction(&self) -> Option<Self> {
+        let value = unsafe {
+            LLVMGetPreviousInstruction(self.as_value_ref())
+        };
+
+        if value.is_null() {
+            return None;
+        }
+
+        Some(InstructionValue::new(value))
+    }
+
+    pub fn get_next_instruction(&self) -> Option<Self> {
+        let value = unsafe {
+            LLVMGetNextInstruction(self.as_value_ref())
+        };
+
+        if value.is_null() {
+            return None;
+        }
+
+        Some(InstructionValue::new(value))
+    }
+
+    // REVIEW: Potentially unsafe if parent BB or grandparent fn were removed?
+    // REVIEW: Is this actually an erase and should be (self)?
+    pub fn remove_from_basic_block(&self) {
+        unsafe {
+            LLVMInstructionEraseFromParent(self.as_value_ref())
+        }
+    }
+
+    // REVIEW: Potentially unsafe is parent BB or grandparent fn was deleted
+    // REVIEW: Should this *not* be an option? Parent should always exist,
+    // but I doubt LLVM returns null if the parent BB (or grandparent FN)
+    // was deleted... Invalid memory is more likely
+    pub fn get_parent(&self) -> Option<BasicBlock> {
+        let value = unsafe {
+            LLVMGetInstructionParent(self.as_value_ref())
+        };
+
+        BasicBlock::new(value)
     }
 
     // REVIEW: See if necessary to check opcode == Call first.

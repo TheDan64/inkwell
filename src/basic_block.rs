@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMInsertBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDeleteBasicBlock, LLVMGetPreviousBasicBlock};
+use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMInsertBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDeleteBasicBlock, LLVMGetPreviousBasicBlock, LLVMRemoveBasicBlockFromParent, LLVMGetFirstInstruction, LLVMGetLastInstruction};
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
 
 use values::{FunctionValue, InstructionValue};
@@ -86,11 +86,42 @@ impl BasicBlock {
         BasicBlock::new(bb).expect("Prepending basic block should never fail")
     }
 
-    // REVIEW: Could potentially be unsafe if there are existing references. Might need a global ref counter
-    pub fn delete(self) {
-        unsafe {
-            LLVMDeleteBasicBlock(self.basic_block)
+    pub fn get_first_instruction(&self) -> Option<InstructionValue> {
+        let value = unsafe {
+            LLVMGetFirstInstruction(self.basic_block)
+        };
+
+        if value.is_null() {
+            return None;
         }
+
+        Some(InstructionValue::new(value))
+    }
+
+    pub fn get_last_instruction(&self) -> Option<InstructionValue> {
+        let value = unsafe {
+            LLVMGetLastInstruction(self.basic_block)
+        };
+
+        if value.is_null() {
+            return None;
+        }
+
+        Some(InstructionValue::new(value))
+    }
+
+    // REVIEW: Potentially unsafe if parent was deleted
+    pub fn remove_from_function(&self) {
+        unsafe {
+            LLVMRemoveBasicBlockFromParent(self.basic_block)
+        }
+    }
+
+    // REVIEW: Could potentially be unsafe if there are existing references. Might need a global ref counter
+    pub unsafe fn delete(self) {
+        // unsafe {
+        LLVMDeleteBasicBlock(self.basic_block)
+        // }
     }
 }
 
