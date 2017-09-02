@@ -65,7 +65,9 @@ fn test_basic_block_ordering() {
     assert_eq!(bb4, basic_block4);
     assert!(basic_block3.get_previous_basic_block().is_none());
 
-    bb4.delete();
+    unsafe {
+        bb4.delete();
+    }
 
     let bb2 = basic_block5.get_previous_basic_block().unwrap();
 
