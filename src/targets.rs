@@ -22,10 +22,10 @@ pub enum CodeGenOptLevel {
 
 impl CodeGenOptLevel {
     pub(crate) fn as_u32(&self) -> u32 {
-        match self {
-            Less => 1,
-            Default => 2,
-            Aggressive => 3,
+        match *self {
+            CodeGenOptLevel::Less => 1,
+            CodeGenOptLevel::Default => 2,
+            CodeGenOptLevel::Aggressive => 3,
         }
     }
 }

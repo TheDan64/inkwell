@@ -1,5 +1,6 @@
-use llvm_sys::core::{LLVMConstFNeg, LLVMConstFAdd, LLVMConstFSub, LLVMConstFMul, LLVMConstFDiv, LLVMConstFRem, LLVMConstFPCast, LLVMConstFPToUI, LLVMConstFPToSI, LLVMConstFPTrunc, LLVMConstFPExt};
+use llvm_sys::core::{LLVMConstFNeg, LLVMConstFAdd, LLVMConstFSub, LLVMConstFMul, LLVMConstFDiv, LLVMConstFRem, LLVMConstFPCast, LLVMConstFPToUI, LLVMConstFPToSI, LLVMConstFPTrunc, LLVMConstFPExt, LLVMConstFCmp};
 use llvm_sys::prelude::LLVMValueRef;
+use llvm_sys::LLVMRealPredicate;
 
 use std::ffi::CStr;
 
@@ -155,6 +156,15 @@ impl FloatValue {
 
     pub fn set_metadata(&self, metadata: &MetadataValue, kind_id: u32) {
         self.float_value.set_metadata(metadata, kind_id)
+    }
+
+    // FIXME: Don't take llvm-sys op enum
+    pub fn const_float_compare(&self, op: LLVMRealPredicate, rhs: &FloatValue) -> IntValue {
+        let value = unsafe {
+            LLVMConstFCmp(op, self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
     }
 }
 

@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent};
+use llvm_sys::core::{LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone};
 use llvm_sys::LLVMOpcode;
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -227,6 +227,16 @@ impl InstructionValue {
         unsafe {
             LLVMIsTailCall(self.as_value_ref()) == 1
         }
+    }
+}
+
+impl Clone for InstructionValue {
+    fn clone(&self) -> Self {
+        let value = unsafe {
+            LLVMInstructionClone(self.as_value_ref())
+        };
+
+        InstructionValue::new(value)
     }
 }
 

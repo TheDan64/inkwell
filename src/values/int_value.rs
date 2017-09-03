@@ -1,5 +1,6 @@
-use llvm_sys::core::{LLVMConstNot, LLVMConstNeg, LLVMConstNSWNeg, LLVMConstNUWNeg, LLVMConstAdd, LLVMConstNSWAdd, LLVMConstNUWAdd, LLVMConstSub, LLVMConstNSWSub, LLVMConstNUWSub, LLVMConstMul, LLVMConstNSWMul, LLVMConstNUWMul, LLVMConstUDiv, LLVMConstSDiv, LLVMConstSRem, LLVMConstURem, LLVMConstIntCast, LLVMConstXor, LLVMConstOr, LLVMConstAnd, LLVMConstExactSDiv, LLVMConstShl, LLVMConstLShr, LLVMConstAShr, LLVMConstUIToFP, LLVMConstSIToFP, LLVMConstIntToPtr, LLVMConstTrunc, LLVMConstSExt, LLVMConstZExt, LLVMConstTruncOrBitCast, LLVMConstSExtOrBitCast, LLVMConstZExtOrBitCast, LLVMConstBitCast};
+use llvm_sys::core::{LLVMConstNot, LLVMConstNeg, LLVMConstNSWNeg, LLVMConstNUWNeg, LLVMConstAdd, LLVMConstNSWAdd, LLVMConstNUWAdd, LLVMConstSub, LLVMConstNSWSub, LLVMConstNUWSub, LLVMConstMul, LLVMConstNSWMul, LLVMConstNUWMul, LLVMConstUDiv, LLVMConstSDiv, LLVMConstSRem, LLVMConstURem, LLVMConstIntCast, LLVMConstXor, LLVMConstOr, LLVMConstAnd, LLVMConstExactSDiv, LLVMConstShl, LLVMConstLShr, LLVMConstAShr, LLVMConstUIToFP, LLVMConstSIToFP, LLVMConstIntToPtr, LLVMConstTrunc, LLVMConstSExt, LLVMConstZExt, LLVMConstTruncOrBitCast, LLVMConstSExtOrBitCast, LLVMConstZExtOrBitCast, LLVMConstBitCast, LLVMConstICmp};
 use llvm_sys::prelude::LLVMValueRef;
+use llvm_sys::LLVMIntPredicate;
 
 use std::ffi::CStr;
 
@@ -354,6 +355,15 @@ impl IntValue {
 
     pub fn set_metadata(&self, metadata: &MetadataValue, kind_id: u32) {
         self.int_value.set_metadata(metadata, kind_id)
+    }
+
+    // FIXME: Don't take llvm-sys op enum
+    pub fn const_int_compare(&self, op: LLVMIntPredicate, rhs: &IntValue) -> IntValue {
+        let value = unsafe {
+            LLVMConstICmp(op, self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
     }
 }
 
