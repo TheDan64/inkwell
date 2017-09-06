@@ -37,7 +37,7 @@ impl PartialEq for DataLayout {
 impl fmt::Debug for DataLayout {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "DataLayout {{\n    ")?;
-        write!(f, "address: {:?}\n    ", self.data_layout.get());
+        write!(f, "address: {:?}\n    ", self.data_layout.get())?;
         write!(f, "repr: {:?}\n}}", self.as_str())
     }
 }

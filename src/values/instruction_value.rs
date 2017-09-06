@@ -6,7 +6,7 @@ use basic_block::BasicBlock;
 use values::traits::AsValueRef;
 use values::Value;
 
-// REVIEW: Metadata on instructions?
+// REVIEW: Split up into structs for SubTypes on InstructionValues?
 // REVIEW: This should maybe be split up into InstructionOpcode and ConstOpcode?
 // see LLVMGetConstOpcode
 #[derive(Debug, PartialEq, Eq)]

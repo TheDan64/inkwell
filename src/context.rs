@@ -30,6 +30,15 @@ impl Context {
         }
     }
 
+    /// Creates a new `Context`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// ```
     pub fn create() -> Self {
         let context = unsafe {
             LLVMContextCreate()
@@ -38,6 +47,15 @@ impl Context {
         Context::new(context)
     }
 
+    /// Creates a `ContextRef` which references the global context singleton.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::get_global();
+    /// ```
     pub fn get_global() -> ContextRef {
         let context = unsafe {
             LLVMGetGlobalContext()
@@ -46,6 +64,16 @@ impl Context {
         ContextRef::new(Context::new(context))
     }
 
+    /// Creates a new `Builder` for a `Context`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let builder = context.create_builder();
+    /// ```
     pub fn create_builder(&self) -> Builder {
         let builder = unsafe {
             LLVMCreateBuilderInContext(self.context)
@@ -54,6 +82,16 @@ impl Context {
         Builder::new(builder)
     }
 
+    /// Creates a new `Module` for a `Context`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    /// ```
     pub fn create_module(&self, name: &str) -> Module {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
