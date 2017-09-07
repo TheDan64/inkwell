@@ -13,6 +13,7 @@ categories = ["development-tools::ffi"]
 [dependencies]
 either = "1.1.0"
 enum-methods = "0.0.6"
+libc = "*"
 llvm-sys = "37.0.5" # TODO: Configure based on feature toggle. GH#1
 
 [badges]

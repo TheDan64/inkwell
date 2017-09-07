@@ -1,4 +1,5 @@
 use llvm_sys::core::{LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMConstInt, LLVMConstNull, LLVMConstAllOnes, LLVMIntType, LLVMGetIntTypeWidth, LLVMConstIntOfString};
+use llvm_sys::execution_engine::LLVMCreateGenericValueOfInt;
 use llvm_sys::prelude::LLVMTypeRef;
 
 use std::ffi::{CString, CStr};
@@ -6,7 +7,7 @@ use std::ffi::{CString, CStr};
 use context::ContextRef;
 use types::traits::AsTypeRef;
 use types::{Type, ArrayType, BasicType, VectorType, PointerType, FunctionType};
-use values::{IntValue, PointerValue};
+use values::{GenericValue, IntValue, PointerValue};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct IntType {
@@ -162,6 +163,14 @@ impl IntType {
 
     pub fn get_undef(&self) -> IntValue {
         IntValue::new(self.int_type.get_undef())
+    }
+
+    pub fn create_generic_value(&self, value: u64, is_signed: bool) -> GenericValue {
+        let value = unsafe {
+            LLVMCreateGenericValueOfInt(self.as_type_ref(), value, is_signed as i32)
+        };
+
+        GenericValue::new(value)
     }
 }
 

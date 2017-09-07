@@ -1,6 +1,7 @@
 extern crate either;
 #[macro_use]
 extern crate enum_methods;
+extern crate libc;
 extern crate llvm_sys;
 
 pub mod basic_block;

@@ -1,4 +1,5 @@
 use llvm_sys::core::{LLVMConstReal, LLVMConstNull, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMPPCFP128Type, LLVMConstRealOfString};
+use llvm_sys::execution_engine::LLVMCreateGenericValueOfFloat;
 use llvm_sys::prelude::LLVMTypeRef;
 
 use std::ffi::{CString, CStr};
@@ -6,7 +7,7 @@ use std::ffi::{CString, CStr};
 use context::ContextRef;
 use types::traits::AsTypeRef;
 use types::{Type, PointerType, FunctionType, BasicType, ArrayType, VectorType};
-use values::{FloatValue, PointerValue, IntValue};
+use values::{FloatValue, GenericValue, PointerValue, IntValue};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct FloatType {
@@ -133,6 +134,14 @@ impl FloatType {
 
     pub fn get_undef(&self) -> FloatValue {
         FloatValue::new(self.float_type.get_undef())
+    }
+
+    pub fn create_generic_value(&self, value: f64) -> GenericValue {
+        let value = unsafe {
+            LLVMCreateGenericValueOfFloat(self.as_type_ref(), value)
+        };
+
+        GenericValue::new(value)
     }
 }
 
