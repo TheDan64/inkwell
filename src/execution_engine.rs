@@ -1,9 +1,9 @@
 use llvm_sys::core::LLVMDisposeMessage;
-use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction, LLVMLinkInMCJIT, LLVMLinkInInterpreter, LLVMRemoveModule};
+use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction, LLVMLinkInMCJIT, LLVMLinkInInterpreter, LLVMRemoveModule, LLVMGenericValueRef};
 
 use module::Module;
 use targets::TargetData;
-use values::{AsValueRef, FunctionValue};
+use values::{AsValueRef, FunctionValue, GenericValue};
 
 use std::ffi::{CStr, CString};
 use std::mem::{forget, uninitialized, zeroed};
@@ -157,15 +157,19 @@ impl ExecutionEngine {
         Err(FunctionLookupError::FunctionNotFound)
     }
 
-    pub fn run_function(&self, function: FunctionValue) {
-        let mut args = vec![]; // TODO: Support args
+    // TODOC: Marked as unsafe because input function could very well do something unsafe. It's up to the caller
+    // to ensure that doesn't happen by defining their function correctly.
+    pub unsafe fn run_function(&self, function: &FunctionValue, args: &[&GenericValue]) -> GenericValue {
+        let mut args: Vec<LLVMGenericValueRef> = args.iter()
+                                                     .map(|val| val.generic_value)
+                                                     .collect();
 
-        unsafe {
-            LLVMRunFunction(self.execution_engine, function.as_value_ref(), args.len() as u32, args.as_mut_ptr()); // REVIEW: usize to u32 ok??
-        }
+        let value = LLVMRunFunction(self.execution_engine, function.as_value_ref(), args.len() as u32, args.as_mut_ptr()); // REVIEW: usize to u32 ok??
+
+        GenericValue::new(value)
     }
 
-    pub fn run_function_as_main(&self, function: FunctionValue) {
+    pub fn run_function_as_main(&self, function: &FunctionValue) {
         let args = vec![]; // TODO: Support argc, argv
         let env_p = vec![]; // REVIEW: No clue what this is
 

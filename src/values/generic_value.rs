@@ -5,7 +5,7 @@ use types::{AsTypeRef, FloatType};
 
 // SubTypes: GenericValue<IntValue, FloatValue, or PointerValue>
 pub struct GenericValue {
-    generic_value: LLVMGenericValueRef,
+    pub(crate) generic_value: LLVMGenericValueRef,
 }
 
 impl GenericValue {
@@ -24,7 +24,7 @@ impl GenericValue {
         }
     }
 
-    // SubType: create_generic_value() -> GenericValue<PointerValue>
+    // SubType: create_generic_value() -> GenericValue<PointerValue, T>
     // REVIEW: How safe is this really?
     pub unsafe fn create_generic_value_of_pointer<T>(value: &mut T) -> Self {
         let value = unsafe {
@@ -35,14 +35,14 @@ impl GenericValue {
     }
 
     // SubType: impl only for GenericValue<IntValue>
-    pub fn into_int(self, is_signed: bool) -> u64 {
+    pub fn as_int(&self, is_signed: bool) -> u64 {
         unsafe {
             LLVMGenericValueToInt(self.generic_value, is_signed as i32)
         }
     }
 
     // SubType: impl only for GenericValue<FloatValue>
-    pub fn into_float(self, float_type: &FloatType) -> f64 {
+    pub fn as_float(&self, float_type: &FloatType) -> f64 {
         unsafe {
             LLVMGenericValueToFloat(float_type.as_type_ref(), self.generic_value)
         }
