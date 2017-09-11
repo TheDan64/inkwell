@@ -23,6 +23,20 @@ impl IntType {
         }
     }
 
+    /// Gets the `IntType` representing 1 bit width. Will be automatically assigned the global context.
+    ///
+    /// To use your own context, see [inkwell::context::bool_type()](../../inkwell/context/struct.Context.html#method.bool_type)
+    ///
+    /// # Example
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::types::IntType;
+    ///
+    /// let bool_type = IntType::bool_type();
+    ///
+    /// assert_eq!(bool_type.get_bit_width(), 1);
+    /// assert_eq!(bool_type.get_context(), Context::get_global());
+    /// ```
     pub fn bool_type() -> Self {
         let type_ = unsafe {
             LLVMInt1Type()
@@ -31,6 +45,20 @@ impl IntType {
         IntType::new(type_)
     }
 
+    /// Gets the `IntType` representing 8 bit width. Will be automatically assigned the global context.
+    ///
+    /// To use your own context, see [inkwell::context::i8_type()](../../inkwell/context/struct.Context.html#method.i8_type)
+    ///
+    /// # Example
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::types::IntType;
+    ///
+    /// let i8_type = IntType::i8_type();
+    ///
+    /// assert_eq!(i8_type.get_bit_width(), 8);
+    /// assert_eq!(i8_type.get_context(), Context::get_global());
+    /// ```
     pub fn i8_type() -> Self {
         let type_ = unsafe {
             LLVMInt8Type()
@@ -39,6 +67,20 @@ impl IntType {
         IntType::new(type_)
     }
 
+    /// Gets the `IntType` representing 16 bit width. Will be automatically assigned the global context.
+    ///
+    /// To use your own context, see [inkwell::context::i16_type()](../../inkwell/context/struct.Context.html#method.i16_type)
+    ///
+    /// # Example
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::types::IntType;
+    ///
+    /// let i16_type = IntType::i16_type();
+    ///
+    /// assert_eq!(i16_type.get_bit_width(), 16);
+    /// assert_eq!(i16_type.get_context(), Context::get_global());
+    /// ```
     pub fn i16_type() -> Self {
         let type_ = unsafe {
             LLVMInt16Type()
@@ -47,6 +89,20 @@ impl IntType {
         IntType::new(type_)
     }
 
+    /// Gets the `IntType` representing 32 bit width. Will be automatically assigned the global context.
+    ///
+    /// To use your own context, see [inkwell::context::i32_type()](../../inkwell/context/struct.Context.html#method.i32_type)
+    ///
+    /// # Example
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::types::IntType;
+    ///
+    /// let i32_type = IntType::i32_type();
+    ///
+    /// assert_eq!(i32_type.get_bit_width(), 32);
+    /// assert_eq!(i32_type.get_context(), Context::get_global());
+    /// ```
     pub fn i32_type() -> Self {
         let type_ = unsafe {
             LLVMInt32Type()
@@ -55,6 +111,20 @@ impl IntType {
         IntType::new(type_)
     }
 
+    /// Gets the `IntType` representing 64 bit width. Will be automatically assigned the global context.
+    ///
+    /// To use your own context, see [inkwell::context::i64_type()](../../inkwell/context/struct.Context.html#method.i64_type)
+    ///
+    /// # Example
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::types::IntType;
+    ///
+    /// let i64_type = IntType::i64_type();
+    ///
+    /// assert_eq!(i64_type.get_bit_width(), 64);
+    /// assert_eq!(i64_type.get_context(), Context::get_global());
+    /// ```
     pub fn i64_type() -> Self {
         let type_ = unsafe {
             LLVMInt64Type()
@@ -63,6 +133,20 @@ impl IntType {
         IntType::new(type_)
     }
 
+    /// Gets the `IntType` representing 128 bit width. Will be automatically assigned the global context.
+    ///
+    /// To use your own context, see [inkwell::context::i128_type()](../../inkwell/context/struct.Context.html#method.i128_type)
+    ///
+    /// # Example
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::types::IntType;
+    ///
+    /// let i128_type = IntType::i128_type();
+    ///
+    /// assert_eq!(i128_type.get_bit_width(), 128);
+    /// assert_eq!(i128_type.get_context(), Context::get_global());
+    /// ```
     pub fn i128_type() -> Self {
         // REVIEW: The docs says there's a LLVMInt128Type, but
         // it might only be in a newer version
@@ -70,6 +154,20 @@ impl IntType {
         Self::custom_width_int_type(128)
     }
 
+    /// Gets the `IntType` representing a custom bit width. Will be automatically assigned the global context.
+    ///
+    /// To use your own context, see [inkwell::context::custom_width_int_type()](../../inkwell/context/struct.Context.html#method.custom_width_int_type)
+    ///
+    /// # Example
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::types::IntType;
+    ///
+    /// let i42_type = IntType::custom_width_int_type(42);
+    ///
+    /// assert_eq!(i42_type.get_bit_width(), 42);
+    /// assert_eq!(i42_type.get_context(), Context::get_global());
+    /// ```
     pub fn custom_width_int_type(bits: u32) -> Self {
         let type_ = unsafe {
             LLVMIntType(bits)
