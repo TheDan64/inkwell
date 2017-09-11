@@ -127,3 +127,22 @@ fn test_get_terminator() {
 
     assert_eq!(basic_block.get_terminator().unwrap().get_opcode(), InstructionOpcode::Return);
 }
+
+#[test]
+fn test_no_parent() {
+    let context = Context::create();
+    let module = context.create_module("test");
+
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+
+    let function = module.add_function("testing", &fn_type, None);
+    let basic_block = context.append_basic_block(&function, "entry");
+
+    assert_eq!(basic_block.get_parent().unwrap(), function);
+
+    // TODO: Test if this method is unsafe if parent function was hard deleted
+    basic_block.remove_from_function();
+
+    assert!(basic_block.get_parent().is_none());
+}

@@ -132,7 +132,7 @@ impl ExecutionEngine {
     // REVIEW: Not sure if an EE's target data can change.. if so we might want to update the value
     // when making this call
     pub fn get_target_data(&self) -> &TargetData {
-        self.target_data.as_ref().unwrap()
+        self.target_data.as_ref().expect("TargetData should always exist until Drop")
     }
 
     // REVIEW: Can also find nothing if no targeting is initialized. Maybe best to

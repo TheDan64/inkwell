@@ -260,11 +260,14 @@ impl Context {
         BasicBlock::new(bb).expect("Appending basic block should never fail")
     }
 
+    // REVIEW: What happens when using these methods and the BasicBlock doesn't have a parent?
+    // Should they be callable at all? Needs testing to see what LLVM will do, I suppose. See below unwrap.
+    // Maybe need SubTypes: BasicBlock<HasParent>, BasicBlock<Orphan>?
     pub fn insert_basic_block_after(&self, basic_block: &BasicBlock, name: &str) -> BasicBlock {
         match basic_block.get_next_basic_block() {
             Some(next_basic_block) => self.prepend_basic_block(&next_basic_block, name),
             None => {
-                let parent_fn = basic_block.get_parent();
+                let parent_fn = basic_block.get_parent().unwrap();
 
                 self.append_basic_block(&parent_fn, name)
             },

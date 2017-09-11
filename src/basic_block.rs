@@ -26,12 +26,12 @@ impl BasicBlock {
         Some(BasicBlock { basic_block })
     }
 
-    pub fn get_parent(&self) -> FunctionValue {
+    pub fn get_parent(&self) -> Option<FunctionValue> {
         let value = unsafe {
             LLVMGetBasicBlockParent(self.basic_block)
         };
 
-        FunctionValue::new(value).expect("A BasicBlock should always have a parent FunctionValue")
+        FunctionValue::new(value)
     }
 
     pub fn get_previous_basic_block(&self) -> Option<BasicBlock> {
