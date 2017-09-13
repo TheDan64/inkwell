@@ -121,11 +121,16 @@ fn test_get_terminator() {
 
     builder.position_at_end(&basic_block);
 
+    // REVIEW: What's the difference between a terminator and last instruction?
     assert!(basic_block.get_terminator().is_none());
+    assert!(basic_block.get_first_instruction().is_none());
+    assert!(basic_block.get_last_instruction().is_none());
 
     builder.build_return(None);
 
     assert_eq!(basic_block.get_terminator().unwrap().get_opcode(), InstructionOpcode::Return);
+    assert_eq!(basic_block.get_first_instruction().unwrap().get_opcode(), InstructionOpcode::Return);
+    assert_eq!(basic_block.get_last_instruction().unwrap().get_opcode(), InstructionOpcode::Return);
 }
 
 #[test]
