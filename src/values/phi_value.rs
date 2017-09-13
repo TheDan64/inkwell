@@ -1,5 +1,5 @@
 use llvm_sys::core::LLVMAddIncoming;
-use llvm_sys::prelude::LLVMValueRef;
+use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 
 use std::ffi::CStr;
 
@@ -22,13 +22,15 @@ impl PhiValue {
         }
     }
 
-    // REVIEW: Is incoming_values really ArrayValue? Or an &[BasicValue]?
-    fn add_incoming(&self, incoming_values: &BasicValue, incoming_basic_block: &BasicBlock, count: u32) {
-        let value = &mut [incoming_values.as_value_ref()];
-        let basic_block = &mut [incoming_basic_block.basic_block];
+    fn add_incoming(&self, incoming: &[(&BasicValue, &BasicBlock)]) {
+        let (mut values, mut basic_blocks): (Vec<LLVMValueRef>, Vec<LLVMBasicBlockRef>) = {
+            incoming.iter()
+                    .map(|&(v, bb)| (v.as_value_ref(), bb.basic_block))
+                    .unzip()
+        };
 
         unsafe {
-            LLVMAddIncoming(self.as_value_ref(), value.as_mut_ptr(), basic_block.as_mut_ptr(), count);
+            LLVMAddIncoming(self.as_value_ref(), values.as_mut_ptr(), basic_blocks.as_mut_ptr(), incoming.len() as u32);
         }
     }
 

@@ -111,11 +111,12 @@ impl BasicBlock {
     }
 
     // REVIEW: Potentially unsafe if parent was deleted
-    // REVIEW: Seems to be UB if used when already detatched from a parent...
-    // Could remidy this by checking get_parent() until we have SubTypes
+    // SubTypes: Don't need to call get_parent for a BasicBlock<HasParent>
     pub fn remove_from_function(&self) {
-        unsafe {
-            LLVMRemoveBasicBlockFromParent(self.basic_block)
+        if let Some(_) = self.get_parent() {
+            unsafe {
+                LLVMRemoveBasicBlockFromParent(self.basic_block)
+            }
         }
     }
 

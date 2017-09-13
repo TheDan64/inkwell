@@ -149,5 +149,15 @@ fn test_no_parent() {
     // TODO: Test if this method is unsafe if parent function was hard deleted
     basic_block.remove_from_function();
 
+    // The problem here is that calling the function more than once becomes UB
+    // for some reason so we have to manually check for the parent function (in the call)
+    // until we have SubTypes to solve this at compile time by doing something like:
+    // impl BasicBlock<HasParent> { fn remove_from_function(self) -> BasicBlock<Orphan> }
+    // though having to take ownership does raise some flags for when you just want to make
+    // everything borrowable. I'm not sure it's possible to swap in place since they have
+    // different subtypes
+    basic_block.remove_from_function();
+    basic_block.remove_from_function();
+
     assert!(basic_block.get_parent().is_none());
 }
