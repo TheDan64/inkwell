@@ -1,11 +1,11 @@
-use llvm_sys::core::LLVMAddIncoming;
+use llvm_sys::core::{LLVMAddIncoming, LLVMCountIncoming, LLVMGetIncomingBlock, LLVMGetIncomingValue};
 use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 
 use std::ffi::CStr;
 
 use basic_block::BasicBlock;
 use values::traits::AsValueRef;
-use values::{BasicValue, InstructionValue, Value};
+use values::{BasicValue, BasicValueEnum, InstructionValue, Value};
 
 // REVIEW: Metadata for phi values?
 #[derive(Debug, PartialEq, Eq)]
@@ -22,7 +22,7 @@ impl PhiValue {
         }
     }
 
-    fn add_incoming(&self, incoming: &[(&BasicValue, &BasicBlock)]) {
+    pub fn add_incoming(&self, incoming: &[(&BasicValue, &BasicBlock)]) {
         let (mut values, mut basic_blocks): (Vec<LLVMValueRef>, Vec<LLVMBasicBlockRef>) = {
             incoming.iter()
                     .map(|&(v, bb)| (v.as_value_ref(), bb.basic_block))
@@ -32,6 +32,27 @@ impl PhiValue {
         unsafe {
             LLVMAddIncoming(self.as_value_ref(), values.as_mut_ptr(), basic_blocks.as_mut_ptr(), incoming.len() as u32);
         }
+    }
+
+    pub fn count_incoming(&self) -> u32 {
+        unsafe {
+            LLVMCountIncoming(self.as_value_ref())
+        }
+    }
+
+    pub fn get_incoming(&self, index: u32) -> Option<(BasicValueEnum, BasicBlock)> {
+        if index >= self.count_incoming() {
+            return None;
+        }
+
+        let basic_block = unsafe {
+            LLVMGetIncomingBlock(self.as_value_ref(), index)
+        };
+        let value = unsafe {
+            LLVMGetIncomingValue(self.as_value_ref(), index)
+        };
+
+        Some((BasicValueEnum::new(value), BasicBlock::new(basic_block).expect("Invalid BasicBlock")))
     }
 
     pub fn get_name(&self) -> &CStr {
