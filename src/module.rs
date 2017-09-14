@@ -396,7 +396,7 @@ impl Drop for Module {
         forget(self.data_layout.take().expect("DataLayout should always exist until Drop"));
 
         unsafe {
-            LLVMDisposeModule(self.module)
+            LLVMDisposeModule(self.module);
         }
     }
 }

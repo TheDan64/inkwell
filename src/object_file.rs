@@ -12,6 +12,7 @@ pub struct ObjectFile {
 
 impl ObjectFile {
     pub(crate) fn new(object_file: LLVMObjectFileRef) -> Self {
+        println!("{:?}", object_file);
         assert!(!object_file.is_null());
 
         ObjectFile {

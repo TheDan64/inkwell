@@ -94,7 +94,8 @@ impl MemoryBuffer {
         MemoryBuffer::new(memory_buffer)
     }
 
-    // REVIEW: I'm assuming this is borrowed data, but maybe it should be CString?
+    // REVIEW: I'm assuming this is borrowed data, but maybe it should be String?
+    // or is it a byte array?
     pub fn as_slice(&self) -> &CStr {
         unsafe {
             let c_str = LLVMGetBufferStart(self.memory_buffer);
@@ -121,7 +122,7 @@ impl MemoryBuffer {
 impl Drop for MemoryBuffer {
     fn drop(&mut self) {
         unsafe {
-            LLVMDisposeMemoryBuffer(self.memory_buffer)
+            LLVMDisposeMemoryBuffer(self.memory_buffer);
         }
     }
 }

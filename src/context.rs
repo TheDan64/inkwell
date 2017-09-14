@@ -102,13 +102,19 @@ impl Context {
         Module::new(module)
     }
 
-    pub fn create_module_from_ir(&self, memory_buffer: &MemoryBuffer) -> Result<Module, String> {
+    // REVIEW: I haven't yet been able to find docs or other wrappers that confirm, but my suspicion
+    // is that the method needs to take ownership of the MemoryBuffer... otherwise I see what looks like
+    // a double free in valgrind when the MemoryBuffer drops and the resulting object file returns a null ptr
+    // so we are `forget`ting MemoryBuffer here for now until we can confirm this is the correct thing to do
+    pub fn create_module_from_ir(&self, memory_buffer: MemoryBuffer) -> Result<Module, String> {
         let mut module = ptr::null_mut();
         let mut err_str = ptr::null_mut();
 
         let code = unsafe {
             LLVMParseIRInContext(self.context, memory_buffer.memory_buffer, &mut module, &mut err_str)
         };
+
+        forget(memory_buffer);
 
         if code == 0 {
             return Ok(Module::new(module));
@@ -296,6 +302,7 @@ impl Context {
     }
 
     // REVIEW: Maybe more helpful to beginners to call this metadata_tuple?
+    // REVIEW: Seems to be unassgned to anything
     pub fn metadata_node(&self, values: &[&BasicValue]) -> MetadataValue {
         let mut tuple_values: Vec<LLVMValueRef> = values.iter()
                                                         .map(|val| val.as_value_ref())
@@ -307,6 +314,7 @@ impl Context {
         MetadataValue::new(metadata_value)
     }
 
+    // REVIEW: Seems to be unassgned to anything
     pub fn metadata_string(&self, string: &str) -> MetadataValue {
         let c_string = CString::new(string).expect("Conversion to CString failed unexpectedly");
 

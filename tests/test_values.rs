@@ -597,4 +597,11 @@ fn test_metadata() {
 
     assert_eq!(md_node_values.len(), 1);
     assert_eq!(md_node_values[0].as_metadata_value().get_string_value(), md_string.get_string_value());
+
+    // New Context Metadata
+    let context_metadata_node = context.metadata_node(&[&bool_val]);
+    let context_metadata_string = context.metadata_string("my_context_metadata");
+
+    assert!(context_metadata_node.is_node());
+    assert!(context_metadata_string.is_string());
 }
