@@ -104,8 +104,8 @@ impl Context {
 
     // REVIEW: I haven't yet been able to find docs or other wrappers that confirm, but my suspicion
     // is that the method needs to take ownership of the MemoryBuffer... otherwise I see what looks like
-    // a double free in valgrind when the MemoryBuffer drops and the resulting object file returns a null ptr
-    // so we are `forget`ting MemoryBuffer here for now until we can confirm this is the correct thing to do
+    // a double free in valgrind when the MemoryBuffer drops so we are `forget`ting MemoryBuffer here
+    // for now until we can confirm this is the correct thing to do
     pub fn create_module_from_ir(&self, memory_buffer: MemoryBuffer) -> Result<Module, String> {
         let mut module = ptr::null_mut();
         let mut err_str = ptr::null_mut();
