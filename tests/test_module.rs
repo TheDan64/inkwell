@@ -1,6 +1,7 @@
 extern crate inkwell;
 
 use self::inkwell::context::Context;
+use self::inkwell::memory_buffer::MemoryBuffer;
 use std::env::temp_dir;
 use std::fs::{File, remove_file};
 use std::io::Read;
@@ -114,4 +115,15 @@ fn test_write_and_load_memory_buffer() {
     let module2 = context.create_module_from_ir(memory_buffer).unwrap();
 
     assert_eq!(module2.get_function("my_fn").unwrap().print_to_string(), function.print_to_string());
+}
+
+#[test]
+fn test_garbage_ir_fails_create_module_from_ir() {
+    let context = Context::create();
+    let memory_buffer = MemoryBuffer::create_from_memory_range("garbage ir data", "my_ir");
+
+    // REVIEW: Why isn't this "garbage ir data"?
+    assert_eq!(memory_buffer.as_slice().to_str().unwrap(), "");
+    assert!(memory_buffer.get_size() > 0);
+    assert!(context.create_module_from_ir(memory_buffer).is_err());
 }
