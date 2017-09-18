@@ -438,6 +438,8 @@ fn test_metadata() {
 
     let md_string = MetadataValue::create_string("lots of metadata here");
 
+    assert_eq!(md_string.get_node_size(), 0);
+    assert_eq!(md_string.get_node_values().len(), 0);
     assert_eq!(md_string.get_string_value().unwrap(), &*CString::new("lots of metadata here").unwrap());
 
     let bool_type = context.bool_type();
@@ -475,6 +477,7 @@ fn test_metadata() {
 
     let node_values = md_node.get_node_values();
 
+    assert_eq!(md_node.get_string_value(), None);
     assert_eq!(node_values.len(), 2);
     assert_eq!(node_values[0].as_int_value(), &bool_val);
     assert_eq!(node_values[1].as_float_value(), &f32_val);
@@ -604,4 +607,34 @@ fn test_metadata() {
 
     assert!(context_metadata_node.is_node());
     assert!(context_metadata_string.is_string());
+}
+
+#[test]
+fn test_floats() {
+    let context = Context::create();
+
+    let f32_type = context.f32_type();
+    let f64_type = context.f64_type();
+    let f128_type = context.f128_type();
+    let i64_type = context.i32_type();
+
+    let f64_pi = f64_type.const_float(::std::f64::consts::PI);
+
+    let f32_pi = f64_pi.const_truncate(&f32_type);
+    let f128_pi = f64_pi.const_extend(&f128_type);
+    let i64_pi = f64_pi.const_to_signed_int(&i64_type);
+    let u64_pi = f64_pi.const_to_unsigned_int(&i64_type);
+    let f128_pi_cast = f64_pi.const_cast(&f128_type);
+
+    assert_eq!(i64_pi.get_type(), i64_type);
+    assert_eq!(u64_pi.get_type(), i64_type);
+    assert_eq!(f32_pi.get_type(), f32_type);
+    assert_eq!(f128_pi.get_type(), f128_type);
+    assert_eq!(f128_pi_cast.get_type(), f128_type);
+
+    assert_eq!(f32_pi.as_instruction().unwrap().get_opcode(), FPTrunc);
+    assert_eq!(f128_pi.as_instruction().unwrap().get_opcode(), FPExt);
+    assert_eq!(i64_pi.as_instruction().unwrap().get_opcode(), FPToSI);
+    assert_eq!(u64_pi.as_instruction().unwrap().get_opcode(), FPToUI);
+    assert_eq!(f128_pi_cast.as_instruction().unwrap().get_opcode(), BitCast);
 }
