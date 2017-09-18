@@ -106,6 +106,20 @@ impl Module {
         module
     }
 
+    /// Creates a named `Module`. Will be automatically assigned the global context.
+    ///
+    /// To use your own `Context`, see [inkwell::context::create_module()](../context/struct.Context.html#method.create_module)
+    ///
+    /// # Example
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::module::Module;
+    ///
+    /// let context = Context::get_global();
+    /// let module = Module::create("my_module");
+    ///
+    /// assert_eq!(module.get_context(), context);
+    /// ```
     pub fn create(name: &str) -> Self {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 

@@ -2,6 +2,7 @@ extern crate inkwell;
 
 use self::inkwell::context::Context;
 use self::inkwell::memory_buffer::MemoryBuffer;
+use self::inkwell::module::Module;
 use std::env::temp_dir;
 use std::fs::{File, remove_file};
 use std::io::Read;
@@ -126,4 +127,17 @@ fn test_garbage_ir_fails_create_module_from_ir() {
     assert_eq!(memory_buffer.as_slice().to_str().unwrap(), "");
     assert!(memory_buffer.get_size() > 0);
     assert!(context.create_module_from_ir(memory_buffer).is_err());
+}
+
+#[test]
+fn test_get_type() {
+    let context = Context::get_global();
+    let module = Module::create("my_module");
+
+    assert_eq!(module.get_context(), context);
+    assert!(module.get_type("foo").is_none());
+
+    let foo = context.opaque_struct_type("foo");
+
+    assert_eq!(module.get_type("foo").unwrap().into_struct_type(), foo);
 }
