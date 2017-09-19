@@ -79,16 +79,42 @@ fn test_init_all_passes_for_module() {
 
 #[test]
 fn test_pass_manager_builder() {
-    let builder = PassManagerBuilder::create();
+    let pass_manager_builder = PassManagerBuilder::create();
 
-    builder.set_optimization_level(Some(&Aggressive));
-    builder.set_size_level(2);
-    builder.set_inliner_with_threshold(42);
-    builder.set_disable_unit_at_a_time(true);
-    builder.set_disable_unroll_loops(true);
-    builder.set_disable_simplify_lib_calls(true);
+    pass_manager_builder.set_optimization_level(Some(&Aggressive));
+    pass_manager_builder.set_size_level(2);
+    pass_manager_builder.set_inliner_with_threshold(42);
+    pass_manager_builder.set_disable_unit_at_a_time(true);
+    pass_manager_builder.set_disable_unroll_loops(true);
+    pass_manager_builder.set_disable_simplify_lib_calls(true);
 
-    // TODO: Run on various type of pass managers
+    let context = Context::create();
+    let module = context.create_module("my_module");
+
+    let fn_pass_manager = PassManager::create_for_function(&module);
+
+    pass_manager_builder.populate_function_pass_manager(&fn_pass_manager);
+
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_value = module.add_function("my_fn", &fn_type, None);
+    let builder = context.create_builder();
+    let entry = context.append_basic_block(&fn_value, "entry");
+
+    builder.position_at_end(&entry);
+    builder.build_return(None);
+
+    // TODO: Test with actual changes? Would be true in that case
+    assert!(!fn_pass_manager.run_on_function(&fn_value));
+
+    let module_pass_manager = PassManager::create_for_module();
+
+    pass_manager_builder.populate_module_pass_manager(&module_pass_manager);
+
+    // REVIEW: Seems like no changes were made, why does it return true?
+    assert!(module_pass_manager.run_on_module(&module));
+
+    // TODO: Populate LTO pass manager?
 }
 
 #[test]
