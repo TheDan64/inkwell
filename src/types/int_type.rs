@@ -23,7 +23,7 @@ impl IntType {
         }
     }
 
-    /// Gets the `IntType` representing 1 bit width. Will be automatically assigned the global context.
+    /// Gets the `IntType` representing 1 bit width. It will be automatically assigned the global context.
     ///
     /// To use your own `Context`, see [inkwell::context::bool_type()](../context/struct.Context.html#method.bool_type)
     ///
@@ -45,7 +45,7 @@ impl IntType {
         IntType::new(type_)
     }
 
-    /// Gets the `IntType` representing 8 bit width. Will be automatically assigned the global context.
+    /// Gets the `IntType` representing 8 bit width. It will be automatically assigned the global context.
     ///
     /// To use your own `Context`, see [inkwell::context::i8_type()](../context/struct.Context.html#method.i8_type)
     ///
@@ -67,7 +67,7 @@ impl IntType {
         IntType::new(type_)
     }
 
-    /// Gets the `IntType` representing 16 bit width. Will be automatically assigned the global context.
+    /// Gets the `IntType` representing 16 bit width. It will be automatically assigned the global context.
     ///
     /// To use your own `Context`, see [inkwell::context::i16_type()](../context/struct.Context.html#method.i16_type)
     ///
@@ -89,7 +89,7 @@ impl IntType {
         IntType::new(type_)
     }
 
-    /// Gets the `IntType` representing 32 bit width. Will be automatically assigned the global context.
+    /// Gets the `IntType` representing 32 bit width. It will be automatically assigned the global context.
     ///
     /// To use your own `Context`, see [inkwell::context::i32_type()](../context/struct.Context.html#method.i32_type)
     ///
@@ -111,7 +111,7 @@ impl IntType {
         IntType::new(type_)
     }
 
-    /// Gets the `IntType` representing 64 bit width. Will be automatically assigned the global context.
+    /// Gets the `IntType` representing 64 bit width. It will be automatically assigned the global context.
     ///
     /// To use your own `Context`, see [inkwell::context::i64_type()](../context/struct.Context.html#method.i64_type)
     ///
@@ -133,7 +133,7 @@ impl IntType {
         IntType::new(type_)
     }
 
-    /// Gets the `IntType` representing 128 bit width. Will be automatically assigned the global context.
+    /// Gets the `IntType` representing 128 bit width. It will be automatically assigned the global context.
     ///
     /// To use your own `Context`, see [inkwell::context::i128_type()](../context/struct.Context.html#method.i128_type)
     ///
@@ -154,7 +154,7 @@ impl IntType {
         Self::custom_width_int_type(128)
     }
 
-    /// Gets the `IntType` representing a custom bit width. Will be automatically assigned the global context.
+    /// Gets the `IntType` representing a custom bit width. It will be automatically assigned the global context.
     ///
     /// To use your own `Context`, see [inkwell::context::custom_width_int_type()](../context/struct.Context.html#method.custom_width_int_type)
     ///
@@ -176,6 +176,23 @@ impl IntType {
         IntType::new(type_)
     }
 
+    /// Creates an `IntValue` repesenting a constant value of this `IntType`. It will be automatically assigned this `IntType`'s `Context`.
+    ///
+    /// # Example
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::types::IntType;
+    ///
+    /// // Global Context
+    /// let i32_type = IntType::i32_type();
+    /// let i32_value = i32_type.const_int(42, false);
+    ///
+    /// // Custom Context
+    /// let context = Context::create();
+    /// let i32_type = context.i32_type();
+    /// let i32_value = i32_type.const_int(42, false);
+    /// ```
+    // TODOC: Maybe better explain sign extension
     pub fn const_int(&self, value: u64, sign_extend: bool) -> IntValue {
         let value = unsafe {
             LLVMConstInt(self.as_type_ref(), value, sign_extend as i32)
@@ -196,6 +213,22 @@ impl IntType {
         IntValue::new(value)
     }
 
+    /// Creates an `IntValue` representing a constant value of all one bits of this `IntType`. It will be automatically assigned this `IntType`'s `Context`.
+    ///
+    /// # Example
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::types::IntType;
+    ///
+    /// // Global Context
+    /// let i32_type = IntType::i32_type();
+    /// let i32_ptr_value = i32_type.const_all_ones();
+    ///
+    /// // Custom Context
+    /// let context = Context::create();
+    /// let i32_type = context.i32_type();
+    /// let i32_ptr_value = i32_type.const_all_ones();
+    /// ```
     pub fn const_all_ones(&self) -> IntValue {
         let value = unsafe {
             LLVMConstAllOnes(self.as_type_ref())
@@ -204,6 +237,22 @@ impl IntType {
         IntValue::new(value)
     }
 
+    /// Creates a `PointerValue` representing a constant value of zero (null pointer) pointing to this `IntType`. It will be automatically assigned this `IntType`'s `Context`.
+    ///
+    /// # Example
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::types::IntType;
+    ///
+    /// // Global Context
+    /// let i32_type = IntType::i32_type();
+    /// let i32_value = i32_type.const_null_ptr();
+    ///
+    /// // Custom Context
+    /// let context = Context::create();
+    /// let i32_type = context.i32_type();
+    /// let i32_value = i32_type.const_null_ptr();
+    /// ```
     pub fn const_null_ptr(&self) -> PointerValue {
         self.int_type.const_null_ptr()
     }
