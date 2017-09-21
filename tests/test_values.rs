@@ -640,3 +640,23 @@ fn test_floats() {
     assert!(u64_pi.as_instruction().is_none());
     assert!(f128_pi_cast.as_instruction().is_none());
 }
+
+#[test]
+fn test_function_value_no_params() {
+    let context = Context::create();
+    let module = context.create_module("my_mod");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_value = module.add_function("no_params", &fn_type, None);
+
+    // REVIEW: According to this, fn_value.get_type() is a void ptr??
+    // assert_eq!(fn_value.get_type(), fn_type);
+    assert_eq!(fn_value.count_params(), 0);
+    assert_eq!(fn_value.params().collect::<Vec<_>>().len(), 0);
+    assert!(fn_value.get_first_param().is_none());
+    assert!(fn_value.get_last_param().is_none());
+    assert!(fn_value.get_nth_param(0).is_none());
+    assert!(fn_value.get_personality_function().is_none());
+    assert!(!fn_value.is_null());
+    assert!(!fn_value.is_undef());
+}

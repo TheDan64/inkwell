@@ -47,9 +47,9 @@ fn test_null_checked_ptr_ops() {
     // Here we're going to create a function that looks roughly like:
     // fn check_null_index1(ptr: *const i8) -> i8 {
     //     if ptr.is_null() {
-    //         return -1;
+    //         -1
     //     } else {
-    //         return ptr[1];
+    //         ptr[1]
     //     }
     // }
 
@@ -97,4 +97,152 @@ fn test_null_checked_ptr_ops() {
     let array = &[100i8, 42i8];
 
     assert_eq!(check_null_index1(array.as_ptr()), 42i8);
+}
+
+#[test]
+fn test_binary_ops() {
+    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+
+    let context = Context::create();
+    let module = context.create_module("unsafe");
+    let builder = context.create_builder();
+    let execution_engine = module.create_jit_execution_engine(0).unwrap();
+    let module = execution_engine.get_module_at(0);
+
+    // Here we're going to create an and function which looks roughly like:
+    // fn and(left: bool, right: bool) -> bool {
+    //     left && right
+    // }
+
+    let bool_type = context.bool_type();
+    let fn_type = bool_type.fn_type(&[&bool_type, &bool_type], false);
+    let fn_value = module.add_function("and", &fn_type, None);
+    let entry = fn_value.append_basic_block("entry");
+
+    builder.position_at_end(&entry);
+
+    let left = fn_value.get_first_param().unwrap().into_int_value();
+    let right = fn_value.get_last_param().unwrap().into_int_value();
+
+    let and = builder.build_and(&left, &right, "and_op");
+
+    builder.build_return(Some(&and));
+
+    // Here we're going to create an or function which looks roughly like:
+    // fn or(left: bool, right: bool) -> bool {
+    //     left || right
+    // }
+
+    let fn_value = module.add_function("or", &fn_type, None);
+    let entry = fn_value.append_basic_block("entry");
+
+    builder.position_at_end(&entry);
+
+    let left = fn_value.get_first_param().unwrap().into_int_value();
+    let right = fn_value.get_last_param().unwrap().into_int_value();
+
+    let or = builder.build_or(&left, &right, "or_op");
+
+    builder.build_return(Some(&or));
+
+    // Here we're going to create a xor function which looks roughly like:
+    // fn xor(left: bool, right: bool) -> bool {
+    //     left || right
+    // }
+
+    let fn_value = module.add_function("xor", &fn_type, None);
+    let entry = fn_value.append_basic_block("entry");
+
+    builder.position_at_end(&entry);
+
+    let left = fn_value.get_first_param().unwrap().into_int_value();
+    let right = fn_value.get_last_param().unwrap().into_int_value();
+
+    let xor = builder.build_xor(&left, &right, "xor_op");
+
+    builder.build_return(Some(&xor));
+
+    let addr = execution_engine.get_function_address("and").unwrap();
+    let and: extern "C" fn(bool, bool) -> bool = unsafe { transmute(addr) };
+    let addr = execution_engine.get_function_address("or").unwrap();
+    let or: extern "C" fn(bool, bool) -> bool = unsafe { transmute(addr) };
+    let addr = execution_engine.get_function_address("xor").unwrap();
+    let xor: extern "C" fn(bool, bool) -> bool = unsafe { transmute(addr) };
+
+    assert!(!and(false, false));
+    assert!(!and(true, false));
+    assert!(!and(false, true));
+    assert!(and(true, true));
+
+    assert!(!or(false, false));
+    assert!(or(true, false));
+    assert!(or(false, true));
+    assert!(or(true, true));
+
+    assert!(!xor(false, false));
+    assert!(xor(true, false));
+    assert!(xor(false, true));
+    assert!(!xor(true, true));
+}
+
+#[test]
+fn test_switch() {
+    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+
+    let context = Context::create();
+    let module = context.create_module("unsafe");
+    let builder = context.create_builder();
+    let execution_engine = module.create_jit_execution_engine(0).unwrap();
+    let module = execution_engine.get_module_at(0);
+
+    // Here we're going to create a function which looks roughly like:
+    // fn switch(val: u8) -> u8 {
+    //     if val == 0 {
+    //         1
+    //     }
+    //     else if val == 42 {
+    //         255
+    //     }
+    //     else {
+    //         val * 2
+    //     }
+    // }
+
+    let i8_type = context.i8_type();
+    let fn_type = i8_type.fn_type(&[&i8_type], false);
+    let fn_value = module.add_function("switch", &fn_type, None);
+    let i8_zero = i8_type.const_int(0, false);
+    let i8_one = i8_type.const_int(1, false);
+    let i8_two = i8_type.const_int(2, false);
+    let i8_42 = i8_type.const_int(42, false);
+    let i8_255 = i8_type.const_int(255, false);
+    let entry = fn_value.append_basic_block("entry");
+    let check = fn_value.append_basic_block("check");
+    let elif = fn_value.append_basic_block("elif");
+    let else_ = fn_value.append_basic_block("else");
+    let value = fn_value.get_first_param().unwrap().into_int_value();
+
+    builder.position_at_end(&entry);
+    builder.build_switch(&value, &else_, &[(&i8_zero, &check), (&i8_42, &elif)]);
+
+    builder.position_at_end(&check);
+    builder.build_return(Some(&i8_one));
+
+    builder.position_at_end(&elif);
+    builder.build_return(Some(&i8_255));
+
+    builder.position_at_end(&else_);
+
+    let double = builder.build_int_mul(&value, &i8_two, "double");
+
+    builder.build_return(Some(&double));
+
+    let addr = execution_engine.get_function_address("switch").unwrap();
+    let switch: extern "C" fn(u8) -> u8 = unsafe { transmute(addr) };
+
+    assert_eq!(switch(0), 1);
+    assert_eq!(switch(1), 2);
+    assert_eq!(switch(3), 6);
+    assert_eq!(switch(10), 20);
+    assert_eq!(switch(42), 255);
 }

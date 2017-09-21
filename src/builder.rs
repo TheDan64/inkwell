@@ -118,6 +118,7 @@ impl Builder {
         PointerValue::new(value)
     }
 
+    // REVIEW: Shouldn't this take a StructValue? Or does it still need to be PointerValue<StructValue>?
     pub fn build_struct_gep(&self, ptr: &PointerValue, index: u32, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -138,7 +139,7 @@ impl Builder {
         IntValue::new(value)
     }
 
-    pub fn build_phi(&self, type_: &AnyType, name: &str) -> PhiValue {
+    pub fn build_phi(&self, type_: &BasicType, name: &str) -> PhiValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
