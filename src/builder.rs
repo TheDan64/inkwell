@@ -1,5 +1,5 @@
 use either::Either;
-use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf, LLVMSetTailCall, LLVMBuildExtractElement, LLVMBuildInsertElement, LLVMBuildIntToPtr, LLVMBuildPtrToInt, LLVMInsertIntoBuilderWithName, LLVMClearInsertionPosition, LLVMCreateBuilder, LLVMPositionBuilder, LLVMPositionBuilderBefore, LLVMBuildAggregateRet, LLVMBuildStructGEP, LLVMBuildInBoundsGEP, LLVMBuildPtrDiff, LLVMBuildNSWAdd, LLVMBuildNUWAdd, LLVMBuildNSWSub, LLVMBuildNUWSub, LLVMBuildNSWMul, LLVMBuildNUWMul, LLVMBuildSDiv, LLVMBuildSRem, LLVMBuildURem, LLVMBuildFRem, LLVMBuildNSWNeg, LLVMBuildNUWNeg, LLVMBuildFPToUI, LLVMBuildFPToSI, LLVMBuildSIToFP, LLVMBuildUIToFP, LLVMBuildFPTrunc, LLVMBuildFPExt, LLVMBuildIntCast, LLVMBuildFPCast, LLVMBuildSExtOrBitCast, LLVMBuildZExtOrBitCast, LLVMBuildTruncOrBitCast, LLVMBuildSwitch, LLVMAddCase};
+use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf, LLVMSetTailCall, LLVMBuildExtractElement, LLVMBuildInsertElement, LLVMBuildIntToPtr, LLVMBuildPtrToInt, LLVMInsertIntoBuilderWithName, LLVMClearInsertionPosition, LLVMCreateBuilder, LLVMPositionBuilder, LLVMPositionBuilderBefore, LLVMBuildAggregateRet, LLVMBuildStructGEP, LLVMBuildInBoundsGEP, LLVMBuildPtrDiff, LLVMBuildNSWAdd, LLVMBuildNUWAdd, LLVMBuildNSWSub, LLVMBuildNUWSub, LLVMBuildNSWMul, LLVMBuildNUWMul, LLVMBuildSDiv, LLVMBuildSRem, LLVMBuildURem, LLVMBuildFRem, LLVMBuildNSWNeg, LLVMBuildNUWNeg, LLVMBuildFPToUI, LLVMBuildFPToSI, LLVMBuildSIToFP, LLVMBuildUIToFP, LLVMBuildFPTrunc, LLVMBuildFPExt, LLVMBuildIntCast, LLVMBuildFPCast, LLVMBuildSExtOrBitCast, LLVMBuildZExtOrBitCast, LLVMBuildTruncOrBitCast, LLVMBuildSwitch, LLVMAddCase, LLVMBuildShl, LLVMBuildAShr, LLVMBuildLShr};
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LLVMAtomicOrdering};
 
@@ -495,6 +495,132 @@ impl Builder {
 
         let value = unsafe {
             LLVMBuildOr(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
+        };
+
+        IntValue::new(value)
+    }
+
+    /// Builds an `IntValue` containing the result of a logical left shift instruction.
+    ///
+    /// # Example
+    /// A logical left shift is an operation in which an integer value's bits are shifted left by N number of positions.
+    ///
+    /// ```rust
+    /// assert_eq!(0b0000_0001 << 0, 0b0000_0001);
+    /// assert_eq!(0b0000_0001 << 1, 0b0000_0010);
+    /// assert_eq!(0b0000_0011 << 2, 0b0000_1100);
+    /// ```
+    ///
+    /// In Rust, a function that could do this for 8bit values looks like:
+    ///
+    /// ```rust
+    /// fn left_shift(value: u8, n: u8) -> u8 {
+    ///     value << n
+    /// }
+    /// ```
+    ///
+    /// And in Inkwell, the corresponding function would look roughly like:
+    ///
+    /// ```rust
+    /// use inkwell::context::Context;
+    ///
+    /// // Setup
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    /// let builder = context.create_builder();
+    /// let i8_type = context.i8_type();
+    /// let fn_type = i8_type.fn_type(&[&i8_type, &i8_type], false);
+    ///
+    /// // Function Definition
+    /// let function = module.add_function("left_shift", &fn_type, None);
+    /// let value = function.get_first_param().unwrap().into_int_value();
+    /// let n = function.get_nth_param(1).unwrap().into_int_value();
+    /// let entry_block = function.append_basic_block("entry");
+    ///
+    /// builder.position_at_end(&entry_block);
+    ///
+    /// let shift = builder.build_left_shift(&value, &n, "left_shift"); // value << n
+    ///
+    /// builder.build_return(Some(&shift));
+    /// ```
+    pub fn build_left_shift(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+
+        let value = unsafe {
+            LLVMBuildShl(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
+        };
+
+        IntValue::new(value)
+    }
+
+    /// Builds an `IntValue` containing the result of a right shift instruction.
+    ///
+    /// # Example
+    /// A right shift is an operation in which an integer value's bits are shifted right by N number of positions.
+    /// It may either be logical and have its leftmost N bit(s) filled with zeros or sign extended and filled with ones
+    /// if the leftmost bit was one.
+    ///
+    /// ```rust
+    /// // Logical Right Shift
+    /// assert_eq!(0b1100_0000 >> 2, 0b0011_0000);
+    /// assert_eq!(0b0000_0010 >> 1, 0b0000_0001);
+    /// assert_eq!(0b0000_1100 >> 2, 0b0000_0011);
+    ///
+    /// // Sign Extended Right Shift
+    /// assert_eq!(0b0100_0000i8 >> 2, 0b0001_0000);
+    /// assert_eq!(0b1110_0000i8 >> 1, 0b1111_0000);
+    /// assert_eq!(0b1100_0000i8 >> 2, 0b1111_0000);
+    /// ```
+    ///
+    /// In Rust, functions that could do this for 8bit values look like:
+    ///
+    /// ```rust
+    /// fn logical_right_shift(value: u8, n: u8) -> u8 {
+    ///     value >> n
+    /// }
+    ///
+    /// fn sign_extended_right_shift(value: i8, n: u8) -> i8 {
+    ///     value >> n
+    /// }
+    /// ```
+    /// Notice that, in Rust (and most other languages), whether or not a value is sign extended depends wholly on whether
+    /// or not the type is signed (ie an i8 is a signed 8 bit value). LLVM does not make this distinction for you.
+    ///
+    /// In Inkwell, the corresponding functions would look roughly like:
+    ///
+    /// ```rust
+    /// use inkwell::context::Context;
+    ///
+    /// // Setup
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    /// let builder = context.create_builder();
+    /// let i8_type = context.i8_type();
+    /// let fn_type = i8_type.fn_type(&[&i8_type, &i8_type], false);
+    ///
+    /// // Function Definition
+    /// let function = module.add_function("right_shift", &fn_type, None);
+    /// let value = function.get_first_param().unwrap().into_int_value();
+    /// let n = function.get_nth_param(1).unwrap().into_int_value();
+    /// let entry_block = function.append_basic_block("entry");
+    ///
+    /// builder.position_at_end(&entry_block);
+    ///
+    /// // Whether or not your right shift is sign extended (true) or logical (false) depends
+    /// // on the boolean input parameter:
+    /// let shift = builder.build_right_shift(&value, &n, false, "right_shift"); // value >> n
+    ///
+    /// builder.build_return(Some(&shift));
+    /// ```
+    pub fn build_right_shift(&self, lhs: &IntValue, rhs: &IntValue, sign_extend: bool, name: &str) -> IntValue {
+        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+
+        let value = unsafe {
+            if sign_extend {
+                LLVMBuildAShr(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
+            } else {
+                LLVMBuildLShr(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
+            }
         };
 
         IntValue::new(value)

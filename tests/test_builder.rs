@@ -199,11 +199,9 @@ fn test_switch() {
     // fn switch(val: u8) -> u8 {
     //     if val == 0 {
     //         1
-    //     }
-    //     else if val == 42 {
+    //     } else if val == 42 {
     //         255
-    //     }
-    //     else {
+    //     } else {
     //         val * 2
     //     }
     // }
@@ -245,4 +243,100 @@ fn test_switch() {
     assert_eq!(switch(3), 6);
     assert_eq!(switch(10), 20);
     assert_eq!(switch(42), 255);
+}
+
+#[test]
+fn test_bit_shifts() {
+    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+
+    let context = Context::create();
+    let module = context.create_module("unsafe");
+    let builder = context.create_builder();
+    let execution_engine = module.create_jit_execution_engine(0).unwrap();
+    let module = execution_engine.get_module_at(0);
+
+    // Here we're going to create a function which looks roughly like:
+    // fn left_shift(value: u8, bits: u8) -> u8 {
+    //     value << bits
+    // }
+    let i8_type = context.i8_type();
+    let fn_type = i8_type.fn_type(&[&i8_type, &i8_type], false);
+    let fn_value = module.add_function("left_shift", &fn_type, None);
+    let value = fn_value.get_first_param().unwrap().into_int_value();
+    let bits = fn_value.get_nth_param(1).unwrap().into_int_value();
+
+    let entry = fn_value.append_basic_block("entry");
+
+    builder.position_at_end(&entry);
+
+    let shift = builder.build_left_shift(&value, &bits, "shl");
+
+    builder.build_return(Some(&shift));
+
+    // Here we're going to create a function which looks roughly like:
+    // fn right_shift(value: u8, bits: u8) -> u8 {
+    //     value >> bits
+    // }
+    let fn_value = module.add_function("right_shift", &fn_type, None);
+    let value = fn_value.get_first_param().unwrap().into_int_value();
+    let bits = fn_value.get_nth_param(1).unwrap().into_int_value();
+
+    let entry = fn_value.append_basic_block("entry");
+
+    builder.position_at_end(&entry);
+
+    let shift = builder.build_right_shift(&value, &bits, false, "shr");
+
+    builder.build_return(Some(&shift));
+
+    // Here we're going to create a function which looks roughly like:
+    // fn right_shift(value: u8, bits: u8) -> u8 {
+    //     value >> bits
+    // }
+    let fn_value = module.add_function("right_shift_sign_extend", &fn_type, None);
+    let value = fn_value.get_first_param().unwrap().into_int_value();
+    let bits = fn_value.get_nth_param(1).unwrap().into_int_value();
+
+    let entry = fn_value.append_basic_block("entry");
+
+    builder.position_at_end(&entry);
+
+    let shift = builder.build_right_shift(&value, &bits, true, "shr");
+
+    builder.build_return(Some(&shift));
+
+    let addr = execution_engine.get_function_address("left_shift").unwrap();
+    let left_shift: extern "C" fn(u8, u8) -> u8 = unsafe { transmute(addr) };
+    let addr = execution_engine.get_function_address("right_shift").unwrap();
+    let right_shift: extern "C" fn(u8, u8) -> u8 = unsafe { transmute(addr) };
+    let addr = execution_engine.get_function_address("right_shift_sign_extend").unwrap();
+    let right_shift_sign_extend: extern "C" fn(i8, u8) -> i8 = unsafe { transmute(addr) };
+
+    assert_eq!(left_shift(0, 0), 0);
+    assert_eq!(left_shift(0, 4), 0);
+    assert_eq!(left_shift(1, 0), 1);
+    assert_eq!(left_shift(1, 1), 2);
+    assert_eq!(left_shift(1, 2), 4);
+    assert_eq!(left_shift(1, 3), 8);
+    assert_eq!(left_shift(64, 1), 128);
+
+    assert_eq!(right_shift(128, 1), 64);
+    assert_eq!(right_shift(8, 3), 1);
+    assert_eq!(right_shift(4, 2), 1);
+    assert_eq!(right_shift(2, 1), 1);
+    assert_eq!(right_shift(1, 0), 1);
+    assert_eq!(right_shift(0, 4), 0);
+    assert_eq!(right_shift(0, 0), 0);
+
+    assert_eq!(right_shift_sign_extend(8, 3), 1);
+    assert_eq!(right_shift_sign_extend(4, 2), 1);
+    assert_eq!(right_shift_sign_extend(2, 1), 1);
+    assert_eq!(right_shift_sign_extend(1, 0), 1);
+    assert_eq!(right_shift_sign_extend(0, 4), 0);
+    assert_eq!(right_shift_sign_extend(0, 0), 0);
+    assert_eq!(right_shift_sign_extend(-127, 1), -64);
+    assert_eq!(right_shift_sign_extend(-127, 8), -1);
+    assert_eq!(right_shift_sign_extend(-65, 3), -9);
+    assert_eq!(right_shift_sign_extend(-64, 3), -8);
+    assert_eq!(right_shift_sign_extend(-63, 3), -8);
 }
