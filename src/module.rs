@@ -17,7 +17,7 @@ use data_layout::DataLayout;
 use execution_engine::ExecutionEngine;
 use memory_buffer::MemoryBuffer;
 use types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
-use values::{AsValueRef, BasicValue, FunctionValue, PointerValue, MetadataValue, BasicMetadataValueEnum};
+use values::{AsValueRef, BasicValue, FunctionValue, PointerValue, MetadataValue};
 
 // REVIEW: Maybe this should go into it's own module?
 #[derive(Debug, PartialEq, Eq)]

@@ -5,7 +5,7 @@ use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LL
 
 use basic_block::BasicBlock;
 use values::{AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, FloatValue, IntValue, PointerValue, VectorValue, InstructionValue};
-use types::{AsTypeRef, AnyType, BasicType, PointerType, IntType, FloatType};
+use types::{AsTypeRef, BasicType, PointerType, IntType, FloatType};
 
 use std::ffi::CString;
 
@@ -505,7 +505,7 @@ impl Builder {
     /// # Example
     /// A logical left shift is an operation in which an integer value's bits are shifted left by N number of positions.
     ///
-    /// ```rust
+    /// ```rust,no_run
     /// assert_eq!(0b0000_0001 << 0, 0b0000_0001);
     /// assert_eq!(0b0000_0001 << 1, 0b0000_0010);
     /// assert_eq!(0b0000_0011 << 2, 0b0000_1100);
@@ -513,7 +513,7 @@ impl Builder {
     ///
     /// In Rust, a function that could do this for 8bit values looks like:
     ///
-    /// ```rust
+    /// ```rust,no_run
     /// fn left_shift(value: u8, n: u8) -> u8 {
     ///     value << n
     /// }
@@ -521,7 +521,7 @@ impl Builder {
     ///
     /// And in Inkwell, the corresponding function would look roughly like:
     ///
-    /// ```rust
+    /// ```rust,no_run
     /// use inkwell::context::Context;
     ///
     /// // Setup
@@ -560,7 +560,7 @@ impl Builder {
     /// It may either be logical and have its leftmost N bit(s) filled with zeros or sign extended and filled with ones
     /// if the leftmost bit was one.
     ///
-    /// ```rust
+    /// ```rust,no_run
     /// // Logical Right Shift
     /// assert_eq!(0b1100_0000 >> 2, 0b0011_0000);
     /// assert_eq!(0b0000_0010 >> 1, 0b0000_0001);
@@ -574,7 +574,7 @@ impl Builder {
     ///
     /// In Rust, functions that could do this for 8bit values look like:
     ///
-    /// ```rust
+    /// ```rust,no_run
     /// fn logical_right_shift(value: u8, n: u8) -> u8 {
     ///     value >> n
     /// }
@@ -588,7 +588,7 @@ impl Builder {
     ///
     /// In Inkwell, the corresponding functions would look roughly like:
     ///
-    /// ```rust
+    /// ```rust,no_run
     /// use inkwell::context::Context;
     ///
     /// // Setup
