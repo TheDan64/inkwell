@@ -1,6 +1,7 @@
 extern crate inkwell;
 
 use self::inkwell::context::Context;
+use self::inkwell::builder::Builder;
 use self::inkwell::targets::{InitializationConfig, Target};
 
 use std::ptr::null;
@@ -339,4 +340,11 @@ fn test_bit_shifts() {
     assert_eq!(right_shift_sign_extend(-65, 3), -9);
     assert_eq!(right_shift_sign_extend(-64, 3), -8);
     assert_eq!(right_shift_sign_extend(-63, 3), -8);
+}
+
+#[test]
+fn test_global_builder() {
+    // Unfortunately LLVM doesn't provide us with a get_context method like it does for
+    // modules and types, so we can't assert it actualy is of the same global context...
+    Builder::create();
 }
