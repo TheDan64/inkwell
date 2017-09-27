@@ -1,8 +1,9 @@
 use either::Either;
 use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf, LLVMSetTailCall, LLVMBuildExtractElement, LLVMBuildInsertElement, LLVMBuildIntToPtr, LLVMBuildPtrToInt, LLVMInsertIntoBuilderWithName, LLVMClearInsertionPosition, LLVMCreateBuilder, LLVMPositionBuilder, LLVMPositionBuilderBefore, LLVMBuildAggregateRet, LLVMBuildStructGEP, LLVMBuildInBoundsGEP, LLVMBuildPtrDiff, LLVMBuildNSWAdd, LLVMBuildNUWAdd, LLVMBuildNSWSub, LLVMBuildNUWSub, LLVMBuildNSWMul, LLVMBuildNUWMul, LLVMBuildSDiv, LLVMBuildSRem, LLVMBuildURem, LLVMBuildFRem, LLVMBuildNSWNeg, LLVMBuildNUWNeg, LLVMBuildFPToUI, LLVMBuildFPToSI, LLVMBuildSIToFP, LLVMBuildUIToFP, LLVMBuildFPTrunc, LLVMBuildFPExt, LLVMBuildIntCast, LLVMBuildFPCast, LLVMBuildSExtOrBitCast, LLVMBuildZExtOrBitCast, LLVMBuildTruncOrBitCast, LLVMBuildSwitch, LLVMAddCase, LLVMBuildShl, LLVMBuildAShr, LLVMBuildLShr};
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
-use llvm_sys::{LLVMOpcode, LLVMIntPredicate, LLVMTypeKind, LLVMRealPredicate, LLVMAtomicOrdering};
+use llvm_sys::{LLVMOpcode, LLVMTypeKind, LLVMAtomicOrdering};
 
+use {IntPredicate, FloatPredicate};
 use basic_block::BasicBlock;
 use values::{AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, FloatValue, IntValue, PointerValue, VectorValue, InstructionValue};
 use types::{AsTypeRef, BasicType, PointerType, IntType, FloatType};
@@ -740,11 +741,11 @@ impl Builder {
 
     // SubType: <I>(&self, op, lhs: &IntValue<I>, rhs: &IntValue<I>, name) -> IntValue<bool> { ?
     // FIXME: Don't take llvm-sys op enum
-    pub fn build_int_compare(&self, op: LLVMIntPredicate, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    pub fn build_int_compare(&self, op: &IntPredicate, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildICmp(self.builder, op, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
+            LLVMBuildICmp(self.builder, op.as_llvm_predicate(), lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
         IntValue::new(value)
@@ -752,11 +753,11 @@ impl Builder {
 
     // SubType: <F>(&self, op, lhs: &FloatValue<F>, rhs: &FloatValue<F>, name) -> IntValue<bool> { ?
     // FIXME: Don't take llvm-sys op enum
-    pub fn build_float_compare(&self, op: LLVMRealPredicate, lhs: &FloatValue, rhs: &FloatValue, name: &str) -> IntValue {
+    pub fn build_float_compare(&self, op: &FloatPredicate, lhs: &FloatValue, rhs: &FloatValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildFCmp(self.builder, op, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
+            LLVMBuildFCmp(self.builder, op.as_llvm_predicate(), lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
         IntValue::new(value)

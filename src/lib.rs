@@ -17,6 +17,8 @@ pub mod targets;
 pub mod types;
 pub mod values;
 
+use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate};
+
 // TODO: Probably move into error handling module
 pub fn enable_llvm_pretty_stack_trace() {
     // use llvm_sys::error_handling::LLVMEnablePrettyStackTrace; // v3.8
@@ -46,6 +48,81 @@ pub fn shutdown_llvm() {
         LLVMShutdown()
     }
 }
+
+// REVIEW: Maybe this belongs in some sort of prelude?
+pub enum IntPredicate {
+    EQ,
+    NE,
+    UGT,
+    UGE,
+    ULT,
+    ULE,
+    SGT,
+    SGE,
+    SLT,
+    SLE,
+}
+
+impl IntPredicate {
+    pub(crate) fn as_llvm_predicate(&self) -> LLVMIntPredicate {
+        match *self {
+            IntPredicate::EQ => LLVMIntPredicate::LLVMIntEQ,
+            IntPredicate::NE => LLVMIntPredicate::LLVMIntNE,
+            IntPredicate::UGT => LLVMIntPredicate::LLVMIntUGT,
+            IntPredicate::UGE => LLVMIntPredicate::LLVMIntUGE,
+            IntPredicate::ULT => LLVMIntPredicate::LLVMIntULT,
+            IntPredicate::ULE => LLVMIntPredicate::LLVMIntULE,
+            IntPredicate::SGT => LLVMIntPredicate::LLVMIntSGT,
+            IntPredicate::SGE => LLVMIntPredicate::LLVMIntSGE,
+            IntPredicate::SLT => LLVMIntPredicate::LLVMIntSLT,
+            IntPredicate::SLE => LLVMIntPredicate::LLVMIntSLE,
+        }
+    }
+}
+
+// REVIEW: Maybe this belongs in some sort of prelude?
+pub enum FloatPredicate {
+    PredicateFalse,
+    OEQ,
+    OGT,
+    OGE,
+    OLT,
+    OLE,
+    ONE,
+    ORD,
+    UNO,
+    UEQ,
+    UGT,
+    UGE,
+    ULT,
+    ULE,
+    UNE,
+    PredicateTrue,
+}
+
+impl FloatPredicate {
+    pub(crate) fn as_llvm_predicate(&self) -> LLVMRealPredicate {
+        match *self {
+            FloatPredicate::PredicateFalse => LLVMRealPredicate::LLVMRealPredicateFalse,
+            FloatPredicate::OEQ => LLVMRealPredicate::LLVMRealOEQ,
+            FloatPredicate::OGT => LLVMRealPredicate::LLVMRealOGT,
+            FloatPredicate::OGE => LLVMRealPredicate::LLVMRealOGE,
+            FloatPredicate::OLT => LLVMRealPredicate::LLVMRealOLT,
+            FloatPredicate::OLE => LLVMRealPredicate::LLVMRealOLE,
+            FloatPredicate::ONE => LLVMRealPredicate::LLVMRealONE,
+            FloatPredicate::ORD => LLVMRealPredicate::LLVMRealORD,
+            FloatPredicate::UNO => LLVMRealPredicate::LLVMRealUNO,
+            FloatPredicate::UEQ => LLVMRealPredicate::LLVMRealUEQ,
+            FloatPredicate::UGT => LLVMRealPredicate::LLVMRealUGT,
+            FloatPredicate::UGE => LLVMRealPredicate::LLVMRealUGE,
+            FloatPredicate::ULT => LLVMRealPredicate::LLVMRealULT,
+            FloatPredicate::ULE => LLVMRealPredicate::LLVMRealULE,
+            FloatPredicate::UNE => LLVMRealPredicate::LLVMRealUNE,
+            FloatPredicate::PredicateTrue => LLVMRealPredicate::LLVMRealPredicateTrue,
+        }
+    }
+}
+
 
 // Misc Notes
 // Always pass a c_string.as_ptr() call into the function call directly and never

@@ -1,9 +1,9 @@
 use llvm_sys::core::{LLVMConstFNeg, LLVMConstFAdd, LLVMConstFSub, LLVMConstFMul, LLVMConstFDiv, LLVMConstFRem, LLVMConstFPCast, LLVMConstFPToUI, LLVMConstFPToSI, LLVMConstFPTrunc, LLVMConstFPExt, LLVMConstFCmp};
 use llvm_sys::prelude::LLVMValueRef;
-use llvm_sys::LLVMRealPredicate;
 
 use std::ffi::CStr;
 
+use FloatPredicate;
 use types::{AsTypeRef, FloatType, IntType};
 use values::traits::AsValueRef;
 use values::{InstructionValue, IntValue, Value, MetadataValue};
@@ -159,9 +159,9 @@ impl FloatValue {
     }
 
     // FIXME: Don't take llvm-sys op enum
-    pub fn const_float_compare(&self, op: LLVMRealPredicate, rhs: &FloatValue) -> IntValue {
+    pub fn const_float_compare(&self, op: &FloatPredicate, rhs: &FloatValue) -> IntValue {
         let value = unsafe {
-            LLVMConstFCmp(op, self.as_value_ref(), rhs.as_value_ref())
+            LLVMConstFCmp(op.as_llvm_predicate(), self.as_value_ref(), rhs.as_value_ref())
         };
 
         IntValue::new(value)

@@ -110,10 +110,10 @@ impl BasicBlock {
         Some(InstructionValue::new(value))
     }
 
-    // REVIEW: Potentially unsafe if parent was deleted
     // SubTypes: Don't need to call get_parent for a BasicBlock<HasParent>
     pub fn remove_from_function(&self) {
-        if let Some(_) = self.get_parent() {
+        // This method is UB if the parent no longer exists, so we must check for parent (or encode into type system)
+        if self.get_parent().is_some() {
             unsafe {
                 LLVMRemoveBasicBlockFromParent(self.basic_block)
             }

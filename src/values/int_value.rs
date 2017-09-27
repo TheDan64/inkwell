@@ -1,9 +1,9 @@
 use llvm_sys::core::{LLVMConstNot, LLVMConstNeg, LLVMConstNSWNeg, LLVMConstNUWNeg, LLVMConstAdd, LLVMConstNSWAdd, LLVMConstNUWAdd, LLVMConstSub, LLVMConstNSWSub, LLVMConstNUWSub, LLVMConstMul, LLVMConstNSWMul, LLVMConstNUWMul, LLVMConstUDiv, LLVMConstSDiv, LLVMConstSRem, LLVMConstURem, LLVMConstIntCast, LLVMConstXor, LLVMConstOr, LLVMConstAnd, LLVMConstExactSDiv, LLVMConstShl, LLVMConstLShr, LLVMConstAShr, LLVMConstUIToFP, LLVMConstSIToFP, LLVMConstIntToPtr, LLVMConstTrunc, LLVMConstSExt, LLVMConstZExt, LLVMConstTruncOrBitCast, LLVMConstSExtOrBitCast, LLVMConstZExtOrBitCast, LLVMConstBitCast, LLVMConstICmp};
 use llvm_sys::prelude::LLVMValueRef;
-use llvm_sys::LLVMIntPredicate;
 
 use std::ffi::CStr;
 
+use IntPredicate;
 use types::{AsTypeRef, FloatType, PointerType, IntType};
 use values::traits::AsValueRef;
 use values::{FloatValue, InstructionValue, PointerValue, Value, MetadataValue};
@@ -358,9 +358,9 @@ impl IntValue {
     }
 
     // FIXME: Don't take llvm-sys op enum
-    pub fn const_int_compare(&self, op: LLVMIntPredicate, rhs: &IntValue) -> IntValue {
+    pub fn const_int_compare(&self, op: &IntPredicate, rhs: &IntValue) -> IntValue {
         let value = unsafe {
-            LLVMConstICmp(op, self.as_value_ref(), rhs.as_value_ref())
+            LLVMConstICmp(op.as_llvm_predicate(), self.as_value_ref(), rhs.as_value_ref())
         };
 
         IntValue::new(value)
