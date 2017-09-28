@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMConstInt, LLVMConstNull, LLVMConstAllOnes, LLVMIntType, LLVMGetIntTypeWidth, LLVMConstIntOfString};
+use llvm_sys::core::{LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMConstInt, LLVMConstNull, LLVMConstAllOnes, LLVMIntType, LLVMGetIntTypeWidth, LLVMConstIntOfStringAndSize, LLVMConstIntOfArbitraryPrecision};
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfInt;
 use llvm_sys::prelude::LLVMTypeRef;
 
@@ -201,13 +201,19 @@ impl IntType {
         IntValue::new(value)
     }
 
-    // REVIEW: What happens when string is invalid? Nullptr?
-    // REVIEW: Difference of LLVMConstIntOfStringAndSize?
-    pub fn const_int_from_string(&self, string: &str, radix: u8) -> IntValue {
-        let c_string = CString::new(string).expect("Conversion to CString failed unexpectedly");
-
+    // TODOC: LLVM will parse as best as it can, without any error for invalid input
+    // ie ("012", 2) => int 1
+    pub fn const_int_from_string(&self, slice: &str, radix: u8) -> IntValue {
         let value = unsafe {
-            LLVMConstIntOfString(self.as_type_ref(), c_string.as_ptr(), radix)
+            LLVMConstIntOfStringAndSize(self.as_type_ref(), slice.as_ptr() as *const i8, slice.len() as u32, radix)
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_int_arbitrary_precision(&self, words: &[u64]) -> IntValue {
+        let value = unsafe {
+            LLVMConstIntOfArbitraryPrecision(self.as_type_ref(), words.len() as u32, words.as_ptr())
         };
 
         IntValue::new(value)

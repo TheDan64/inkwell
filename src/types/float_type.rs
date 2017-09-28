@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMConstReal, LLVMConstNull, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMPPCFP128Type, LLVMConstRealOfString};
+use llvm_sys::core::{LLVMConstReal, LLVMConstNull, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMPPCFP128Type, LLVMConstRealOfStringAndSize};
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfFloat;
 use llvm_sys::prelude::LLVMTypeRef;
 
@@ -44,12 +44,9 @@ impl FloatType {
     }
 
     // REVIEW: What happens when string is invalid? Nullptr?
-    // REVIEW: Difference of LLVMConstRealOfStringAndSize?
-    pub fn const_float_from_string(&self, string: &str) -> FloatValue {
-        let c_string = CString::new(string).expect("Conversion to CString failed unexpectedly");
-
+    pub fn const_float_from_string(&self, slice: &str) -> FloatValue {
         let value = unsafe {
-            LLVMConstRealOfString(self.as_type_ref(), c_string.as_ptr())
+            LLVMConstRealOfStringAndSize(self.as_type_ref(), slice.as_ptr() as *const i8, slice.len() as u32)
         };
 
         FloatValue::new(value)

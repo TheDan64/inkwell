@@ -99,6 +99,10 @@ impl ExecutionEngine {
     }
 
     // FIXME: Workaround until we can think of a better API
+    // Ideally, we'd provide this as a hashmap from module name to module, but this may not be
+    // possible since you can create modules, ie via create_module_from_ir, which either do not
+    // have a name, or at least LLVM provides no way to obtain its name. Also, possible collisions
+    // depending on how loose, if at all, LLVM is with module names belonging to execution engines
     pub fn get_module_at(&self, index: usize) -> &Module {
         &self.modules[index]
     }

@@ -7,7 +7,7 @@
 
 **I**t's a **N**ew **K**ind of **W**rapper for **E**xposing **LL**VM (*S*afely)
 
-Inkwell aims to help you pen your own programming languages by safely wrapping llvm-sys. It provides a more strongly typed interface than LLVM itself so that certain types of errors can be caught at compile time instead of at LLVM's runtime. The ultimate goal is to make LLVM safer from the rust end and a bit easier to learn and use.
+Inkwell aims to help you pen your own programming languages by safely wrapping llvm-sys. It provides a more strongly typed interface than the underlying LLVM API so that certain types of errors can be caught at compile time instead of at LLVM's runtime. This means we are trying to replicate LLVM IR's strong typing as closely as possible. The ultimate goal is to make LLVM safer from the rust end and a bit easier to learn (via documentation) and use.
 
 ## Documentation
 

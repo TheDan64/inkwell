@@ -660,3 +660,26 @@ fn test_function_value_no_params() {
     assert!(!fn_value.is_null());
     assert!(!fn_value.is_undef());
 }
+
+#[test]
+fn test_int_from_string() {
+    let context = Context::create();
+    let i8_type = context.i8_type();
+    let i8_val = i8_type.const_int_from_string("0121", 10);
+
+    assert_eq!(i8_val.print_to_string(), &*CString::new("i8 121").unwrap());
+
+    let i8_val = i8_type.const_int_from_string("0121", 3);
+
+    assert_eq!(i8_val.print_to_string(), &*CString::new("i8 16").unwrap());
+
+    // LLVM will not throw an error, just parse until it can parse no more (and
+    // possibly spit out something completely unexpected):
+    let i8_val = i8_type.const_int_from_string("0121", 2);
+
+    assert_eq!(i8_val.print_to_string(), &*CString::new("i8 3").unwrap());
+
+    let i8_val = i8_type.const_int_from_string("ABCD", 2);
+
+    assert_eq!(i8_val.print_to_string(), &*CString::new("i8 -15").unwrap());
+}
