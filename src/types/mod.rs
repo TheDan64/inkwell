@@ -34,7 +34,7 @@ use values::{IntValue, PointerValue};
 // Worth noting that types seem to be singletons. At the very least, primitives are.
 // Though this is likely only true per thread since LLVM claims to not be very thread-safe.
 // REVIEW: Maybe move this into its own module?
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 struct Type {
     type_: LLVMTypeRef,
 }

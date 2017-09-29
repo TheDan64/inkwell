@@ -8,7 +8,7 @@ use values::PointerValue;
 
 use std::ffi::CStr;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct VoidType {
     void_type: Type,
 }

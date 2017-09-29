@@ -53,6 +53,17 @@ fn test_instructions() {
     assert_eq!(ptr.as_instruction().unwrap().get_opcode(), IntToPtr);
     assert_eq!(free_instruction.get_opcode(), Call);
     assert_eq!(return_instruction.get_opcode(), Return);
+
+    // test instruction cloning
+    let instruction_clone = return_instruction.clone();
+
+    assert_eq!(instruction_clone.get_opcode(), return_instruction.get_opcode());
+    assert_ne!(instruction_clone, return_instruction);
+
+    // test copying
+    let instruction_clone_copy = instruction_clone;
+
+    assert_eq!(instruction_clone, instruction_clone_copy);
 }
 
 #[test]
@@ -682,4 +693,15 @@ fn test_int_from_string() {
     let i8_val = i8_type.const_int_from_string("ABCD", 2);
 
     assert_eq!(i8_val.print_to_string(), &*CString::new("i8 -15").unwrap());
+}
+
+#[test]
+fn test_value_copies() {
+    let context = Context::create();
+    let i8_type = context.i8_type();
+
+    let i8_value = i8_type.const_int(12, false);
+    let i8_value_copy = i8_value;
+
+    assert_eq!(i8_value, i8_value_copy);
 }
