@@ -683,3 +683,14 @@ fn test_int_from_string() {
 
     assert_eq!(i8_val.print_to_string(), &*CString::new("i8 -15").unwrap());
 }
+
+#[test]
+fn test_value_copies() {
+    let context = Context::create();
+    let i8_type = context.i8_type();
+
+    let i8_value = i8_type.const_int(12, false);
+    let i8_value_copy = i8_value;
+
+    assert_eq!(i8_value, i8_value_copy);
+}
