@@ -53,6 +53,17 @@ fn test_instructions() {
     assert_eq!(ptr.as_instruction().unwrap().get_opcode(), IntToPtr);
     assert_eq!(free_instruction.get_opcode(), Call);
     assert_eq!(return_instruction.get_opcode(), Return);
+
+    // test instruction cloning
+    let instruction_clone = return_instruction.clone();
+
+    assert_eq!(instruction_clone.get_opcode(), return_instruction.get_opcode());
+    assert_ne!(instruction_clone, return_instruction);
+
+    // test copying
+    let instruction_clone_copy = instruction_clone;
+
+    assert_eq!(instruction_clone, instruction_clone_copy);
 }
 
 #[test]
