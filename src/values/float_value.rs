@@ -8,7 +8,7 @@ use types::{AsTypeRef, FloatType, IntType};
 use values::traits::AsValueRef;
 use values::{InstructionValue, IntValue, Value, MetadataValue};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct FloatValue {
     float_value: Value
 }

@@ -9,7 +9,7 @@ use types::traits::AsTypeRef;
 use types::{Type, PointerType, FunctionType, BasicType, ArrayType, VectorType};
 use values::{FloatValue, GenericValue, PointerValue, IntValue};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct FloatType {
     float_type: Type,
 }

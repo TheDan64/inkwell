@@ -10,7 +10,7 @@ use types::traits::AsTypeRef;
 use types::{Type, BasicTypeEnum};
 // use values::FunctionValue;
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub struct FunctionType {
     fn_type: Type,
 }

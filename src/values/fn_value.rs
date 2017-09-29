@@ -12,7 +12,7 @@ use types::{BasicTypeEnum, FunctionType};
 use values::traits::AsValueRef;
 use values::{BasicValueEnum, Value, MetadataValue};
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub struct FunctionValue {
     fn_value: Value,
 }

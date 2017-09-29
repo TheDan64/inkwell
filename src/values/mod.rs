@@ -33,7 +33,7 @@ use llvm_sys::prelude::{LLVMValueRef, LLVMTypeRef};
 use std::ffi::{CString, CStr};
 use std::fmt;
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 struct Value {
     value: LLVMValueRef,
 }

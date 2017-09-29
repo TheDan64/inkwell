@@ -8,7 +8,7 @@ use types::ArrayType;
 use values::traits::AsValueRef;
 use values::{Value, InstructionValue, MetadataValue};
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub struct ArrayValue {
     array_value: Value
 }

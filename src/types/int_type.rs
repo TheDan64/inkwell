@@ -9,7 +9,7 @@ use types::traits::AsTypeRef;
 use types::{Type, ArrayType, BasicType, VectorType, PointerType, FunctionType};
 use values::{GenericValue, IntValue, PointerValue};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct IntType {
     int_type: Type,
 }

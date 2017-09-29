@@ -9,7 +9,7 @@ use values::{BasicValue, PointerValue, VectorValue, IntValue};
 
 // REVIEW: vec_type() is impl for IntType & FloatType. Need to
 // find out if it is valid for other types too. Maybe PointerType?
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct VectorType {
     vec_type: Type,
 }
