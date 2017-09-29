@@ -221,3 +221,12 @@ fn test_vec_type() {
 
     assert_eq!(vec_type.get_size(), 42);
 }
+
+#[test]
+fn test_type_copies() {
+    let context = Context::create();
+    let i8_type = context.i8_type();
+    let i8_type_copy = i8_type;
+
+    assert_eq!(i8_type, i8_type_copy);
+}
