@@ -8,7 +8,7 @@ use types::traits::AsTypeRef;
 use types::{Type, BasicType, ArrayType, FunctionType, VectorType};
 use values::{PointerValue, IntValue};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct PointerType {
     ptr_type: Type,
 }

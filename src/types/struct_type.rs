@@ -9,7 +9,7 @@ use types::traits::AsTypeRef;
 use types::{Type, BasicType, BasicTypeEnum, ArrayType, PointerType, FunctionType, VectorType};
 use values::{BasicValue, StructValue, PointerValue, IntValue};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct StructType {
     struct_type: Type,
 }

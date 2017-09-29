@@ -8,7 +8,7 @@ use values::traits::AsValueRef;
 use values::{BasicValue, BasicValueEnum, InstructionValue, Value};
 
 // REVIEW: Metadata for phi values?
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct PhiValue {
     phi_value: Value
 }

@@ -7,7 +7,7 @@ use types::{VectorType};
 use values::traits::AsValueRef;
 use values::{BasicValueEnum, BasicValue, InstructionValue, Value, IntValue, MetadataValue};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct VectorValue {
     vec_value: Value,
 }

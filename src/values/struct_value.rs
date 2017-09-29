@@ -6,7 +6,7 @@ use types::StructType;
 use values::traits::AsValueRef;
 use values::{InstructionValue, Value, MetadataValue};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct StructValue {
     struct_value: Value
 }

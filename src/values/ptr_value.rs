@@ -6,7 +6,7 @@ use std::ffi::CStr;
 use types::{AsTypeRef, IntType, PointerType};
 use values::{AsValueRef, InstructionValue, IntValue, Value, MetadataValue};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct PointerValue {
     ptr_value: Value,
 }
