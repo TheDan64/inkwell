@@ -151,7 +151,7 @@ impl InstructionOpcode {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Copy)]
 pub struct InstructionValue {
     instruction_value: Value,
 }
@@ -231,6 +231,8 @@ impl InstructionValue {
 }
 
 impl Clone for InstructionValue {
+    /// Creates a clone of this `InstructionValue`, and returns it.
+    /// The clone will have no parent, and no name.
     fn clone(&self) -> Self {
         let value = unsafe {
             LLVMInstructionClone(self.as_value_ref())
