@@ -19,3 +19,6 @@ llvm-sys = "37.0.5" # TODO: Configure based on feature toggle. GH#1
 [badges]
 travis-ci = { repository = "TheDan64/inkwell" }
 codecov = { repository = "TheDan64/inkwell" }
+
+[profile.dev]
+codegen-units=32 # TODO: Remove when default in rust, cuts compile time ~50%
