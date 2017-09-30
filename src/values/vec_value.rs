@@ -98,6 +98,10 @@ impl VectorValue {
     pub fn set_metadata(&self, metadata: &MetadataValue, kind_id: u32) {
         self.vec_value.set_metadata(metadata, kind_id)
     }
+
+    pub fn replace_all_uses_with(&self, other: &VectorValue) {
+        self.vec_value.replace_all_uses_with(other.as_value_ref())
+    }
 }
 
 impl AsValueRef for VectorValue {

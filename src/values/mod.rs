@@ -27,7 +27,7 @@ pub use values::traits::{AnyValue, AggregateValue, BasicValue};
 pub use values::vec_value::VectorValue;
 pub(crate) use values::traits::AsValueRef;
 
-use llvm_sys::core::{LLVMGetValueName, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMDumpValue, LLVMIsAInstruction, LLVMGetMetadata, LLVMHasMetadata, LLVMSetMetadata};
+use llvm_sys::core::{LLVMGetValueName, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMDumpValue, LLVMIsAInstruction, LLVMGetMetadata, LLVMHasMetadata, LLVMSetMetadata, LLVMReplaceAllUsesWith};
 use llvm_sys::prelude::{LLVMValueRef, LLVMTypeRef};
 
 use std::ffi::{CString, CStr};
@@ -138,6 +138,14 @@ impl Value {
     fn set_metadata(&self, metadata: &MetadataValue, kind_id: u32) {
         unsafe {
             LLVMSetMetadata(self.value, kind_id, metadata.as_value_ref())
+        }
+    }
+
+    // REVIEW: I think this is memory safe, though it may result in an IR error
+    // if used incorrectly, which is OK.
+    fn replace_all_uses_with(&self, other: LLVMValueRef) {
+        unsafe {
+            LLVMReplaceAllUsesWith(self.value, other)
         }
     }
 

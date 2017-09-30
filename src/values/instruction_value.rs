@@ -228,6 +228,11 @@ impl InstructionValue {
             LLVMIsTailCall(self.as_value_ref()) == 1
         }
     }
+
+    pub fn replace_all_uses_with(&self, other: &InstructionValue) {
+        self.instruction_value.replace_all_uses_with(other.as_value_ref())
+    }
+
 }
 
 impl Clone for InstructionValue {

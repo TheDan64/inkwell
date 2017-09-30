@@ -365,6 +365,10 @@ impl IntValue {
 
         IntValue::new(value)
     }
+
+    pub fn replace_all_uses_with(&self, other: &IntValue) {
+        self.int_value.replace_all_uses_with(other.as_value_ref())
+    }
 }
 
 impl AsValueRef for IntValue {

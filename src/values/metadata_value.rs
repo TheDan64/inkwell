@@ -125,6 +125,10 @@ impl MetadataValue {
     pub fn print_to_stderr(&self) {
         self.metadata_value.print_to_stderr()
     }
+
+    pub fn replace_all_uses_with(&self, other: &MetadataValue) {
+        self.metadata_value.replace_all_uses_with(other.as_value_ref())
+    }
 }
 
 impl AsValueRef for MetadataValue {
