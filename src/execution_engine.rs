@@ -1,9 +1,9 @@
 use llvm_sys::core::LLVMDisposeMessage;
-use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction, LLVMLinkInMCJIT, LLVMLinkInInterpreter, LLVMRemoveModule, LLVMGenericValueRef};
+use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMAddGlobalMapping, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction, LLVMLinkInMCJIT, LLVMLinkInInterpreter, LLVMRemoveModule, LLVMGenericValueRef};
 
 use module::Module;
 use targets::TargetData;
-use values::{AsValueRef, FunctionValue, GenericValue};
+use values::{AsValueRef, AnyValue, FunctionValue, GenericValue};
 
 use std::ffi::{CStr, CString};
 use std::mem::{forget, uninitialized, zeroed};
@@ -47,6 +47,12 @@ impl ExecutionEngine {
     pub fn link_in_interpreter() {
         unsafe {
             LLVMLinkInInterpreter();
+        }
+    }
+
+    pub fn add_global_mapping(&mut self, global: &AnyValue, addr: *const ()) {
+        unsafe {
+            LLVMAddGlobalMapping(self.execution_engine, global.as_value_ref(), addr as *mut ::libc::c_void)
         }
     }
 
