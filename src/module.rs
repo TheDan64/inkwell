@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
-use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer, LLVMWriteBitcodeToFD};
+use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
 use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetDataLayout, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal};
 use llvm_sys::execution_engine::{LLVMCreateJITCompilerForModule, LLVMCreateMCJITCompilerForModule};
 use llvm_sys::prelude::{LLVMValueRef, LLVMModuleRef};
@@ -8,7 +8,6 @@ use llvm_sys::LLVMLinkage;
 use std::ffi::{CString, CStr};
 use std::fs::File;
 use std::mem::{forget, uninitialized, zeroed};
-use std::os::unix::io::AsRawFd;
 use std::path::Path;
 use std::slice::from_raw_parts;
 
@@ -270,12 +269,22 @@ impl Module {
     }
 
     // See GH issue #6
-    fn write_bitcode_to_file(&self, file: &File, should_close: bool, unbuffered: bool) -> bool {
+    #[cfg(unix)]
+    pub fn write_bitcode_to_file(&self, file: &File, should_close: bool, unbuffered: bool) -> bool {
+        use std::os::unix::io::AsRawFd;
+        use llvm_sys::bit_writer::LLVMWriteBitcodeToFD;
+
         // REVIEW: as_raw_fd docs suggest it only works in *nix
         // Also, should_close should maybe be hardcoded to true?
         unsafe {
             LLVMWriteBitcodeToFD(self.module, file.as_raw_fd(), should_close as i32, unbuffered as i32) == 0
         }
+    }
+
+    #[cfg(windows)]
+    #[allow(unused_variables)]
+    pub fn write_bitcode_to_file(&self, file: &File, should_close: bool, unbuffered: bool) -> bool {
+        false
     }
 
     pub fn write_bitcode_to_memory(&self) -> MemoryBuffer {
