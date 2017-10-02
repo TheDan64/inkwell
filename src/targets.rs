@@ -6,7 +6,7 @@ use context::Context;
 use data_layout::DataLayout;
 use passes::PassManager;
 use types::{AnyType, AsTypeRef, StructType, PointerType};
-use values::AnyValue;
+use values::{AsValueRef, GlobalValue};
 
 use std::default::Default;
 use std::ffi::{CStr, CString};
@@ -870,7 +870,7 @@ impl TargetData {
         }
     }
 
-    pub fn get_preferred_alignment_of_global(&self, value: &AnyValue) -> u32 {
+    pub fn get_preferred_alignment_of_global(&self, value: &GlobalValue) -> u32 {
         unsafe {
             LLVMPreferredAlignmentOfGlobal(self.target_data, value.as_value_ref())
         }

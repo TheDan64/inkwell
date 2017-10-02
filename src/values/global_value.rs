@@ -1,11 +1,12 @@
-use llvm_sys::core::{LLVMGetVisibility, LLVMSetVisibility, LLVMGetSection, LLVMSetSection, LLVMIsExternallyInitialized, LLVMSetExternallyInitialized, LLVMDeleteGlobal, LLVMIsGlobalConstant, LLVMSetGlobalConstant, LLVMGetPreviousGlobal, LLVMGetNextGlobal, LLVMHasUnnamedAddr, LLVMSetUnnamedAddr};
+use llvm_sys::LLVMThreadLocalMode;
+use llvm_sys::core::{LLVMGetVisibility, LLVMSetVisibility, LLVMGetSection, LLVMSetSection, LLVMIsExternallyInitialized, LLVMSetExternallyInitialized, LLVMDeleteGlobal, LLVMIsGlobalConstant, LLVMSetGlobalConstant, LLVMGetPreviousGlobal, LLVMGetNextGlobal, LLVMHasUnnamedAddr, LLVMSetUnnamedAddr, LLVMIsThreadLocal, LLVMSetThreadLocal, LLVMGetThreadLocalMode, LLVMSetThreadLocalMode, LLVMGetInitializer, LLVMSetInitializer, LLVMIsDeclaration, LLVMGetDLLStorageClass, LLVMSetDLLStorageClass};
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::{CString, CStr};
 
-use GlobalVisibility;
+use {GlobalVisibility, ThreadLocalMode, DLLStorageClass};
 use values::traits::AsValueRef;
-use values::{BasicValueEnum, Value};
+use values::{BasicValueEnum, BasicValue, Value};
 
 // REVIEW: GlobalValues may always be PointerValues, in which case we can
 // simplify from BasicValueEnum down to PointerValue
@@ -45,6 +46,77 @@ impl GlobalValue {
         }
 
         Some(GlobalValue::new(value))
+    }
+
+    pub fn get_dll_storage_class(&self) -> DLLStorageClass {
+        let dll_storage_class = unsafe {
+            LLVMGetDLLStorageClass(self.as_value_ref())
+        };
+
+        DLLStorageClass::new(dll_storage_class)
+    }
+
+    pub fn set_dll_storage_class(&self , dll_storage_class: &DLLStorageClass) {
+        unsafe {
+            LLVMSetDLLStorageClass(self.as_value_ref(), dll_storage_class.as_llvm_class())
+        }
+    }
+
+    pub fn get_initializer(&self) -> Option<BasicValueEnum> {
+        let value = unsafe {
+            LLVMGetInitializer(self.as_value_ref())
+        };
+
+        if value.is_null() {
+            return None;
+        }
+
+        Some(BasicValueEnum::new(value))
+    }
+
+    pub fn set_initializer(&self, value: &BasicValue) {
+        unsafe {
+            LLVMSetInitializer(self.as_value_ref(), value.as_value_ref())
+        }
+    }
+
+    pub fn is_thread_local(&self) -> bool {
+        unsafe {
+            LLVMIsThreadLocal(self.as_value_ref()) == 1
+        }
+    }
+
+    pub fn set_thread_local(&self, is_thread_local: bool) {
+        unsafe {
+            LLVMSetThreadLocal(self.as_value_ref(), is_thread_local as i32)
+        }
+    }
+
+    pub fn get_thread_local_mode(&self) -> Option<ThreadLocalMode> {
+        let thread_local_mode = unsafe {
+            LLVMGetThreadLocalMode(self.as_value_ref())
+        };
+
+        ThreadLocalMode::new(thread_local_mode)
+    }
+
+    // REVIEW: Does this have any bad behavior if it isn't thread local or just a noop?
+    // or should it call self.set_thread_local(true)?
+    pub fn set_thread_local_mode(&self, thread_local_mode: Option<&ThreadLocalMode>) {
+        let thread_local_mode = match thread_local_mode {
+            Some(mode) => mode.as_llvm_mode(),
+            None => LLVMThreadLocalMode::LLVMNotThreadLocal,
+        };
+
+        unsafe {
+            LLVMSetThreadLocalMode(self.as_value_ref(), thread_local_mode)
+        }
+    }
+
+    pub fn is_declaration(&self) -> bool {
+        unsafe {
+            LLVMIsDeclaration(self.as_value_ref()) == 1
+        }
     }
 
     pub fn has_unnamed_addr(&self) -> bool {
@@ -94,7 +166,7 @@ impl GlobalValue {
             LLVMGetVisibility(self.as_value_ref())
         };
 
-        GlobalVisibility::from_llvm_visibility(visibility)
+        GlobalVisibility::new(visibility)
     }
 
     pub fn get_section(&self) -> &CStr {

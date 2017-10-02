@@ -17,7 +17,7 @@ pub mod targets;
 pub mod types;
 pub mod values;
 
-use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility};
+use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility, LLVMThreadLocalMode, LLVMDLLStorageClass};
 
 // TODO: Probably move into error handling module
 pub fn enable_llvm_pretty_stack_trace() {
@@ -50,6 +50,7 @@ pub fn shutdown_llvm() {
 }
 
 // REVIEW: Maybe this belongs in some sort of prelude?
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum IntPredicate {
     EQ,
     NE,
@@ -81,6 +82,7 @@ impl IntPredicate {
 }
 
 // REVIEW: Maybe this belongs in some sort of prelude?
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum FloatPredicate {
     PredicateFalse,
     OEQ,
@@ -124,6 +126,7 @@ impl FloatPredicate {
 }
 
 // REVIEW: Maybe this belongs in some sort of prelude?
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GlobalVisibility {
     Default,
     Hidden,
@@ -131,6 +134,14 @@ pub enum GlobalVisibility {
 }
 
 impl GlobalVisibility {
+    pub(crate) fn new(visibility: LLVMVisibility) -> Self {
+        match visibility {
+            LLVMVisibility::LLVMDefaultVisibility => GlobalVisibility::Default,
+            LLVMVisibility::LLVMHiddenVisibility => GlobalVisibility::Hidden,
+            LLVMVisibility::LLVMProtectedVisibility => GlobalVisibility::Protected,
+        }
+    }
+
     pub(crate) fn as_llvm_visibility(&self) -> LLVMVisibility {
         match *self {
             GlobalVisibility::Default => LLVMVisibility::LLVMDefaultVisibility,
@@ -138,12 +149,59 @@ impl GlobalVisibility {
             GlobalVisibility::Protected => LLVMVisibility::LLVMProtectedVisibility,
         }
     }
+}
 
-    pub(crate) fn from_llvm_visibility(visibility: LLVMVisibility) -> Self {
-        match visibility {
-            LLVMVisibility::LLVMDefaultVisibility => GlobalVisibility::Default,
-            LLVMVisibility::LLVMHiddenVisibility => GlobalVisibility::Hidden,
-            LLVMVisibility::LLVMProtectedVisibility => GlobalVisibility::Protected,
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ThreadLocalMode {
+    GeneralDynamicTLSModel,
+    LocalDynamicTLSModel,
+    InitialExecTLSModel,
+    LocalExecTLSModel,
+}
+
+impl ThreadLocalMode {
+    pub(crate) fn new(thread_local_mode: LLVMThreadLocalMode) -> Option<Self> {
+        match thread_local_mode {
+            LLVMThreadLocalMode::LLVMGeneralDynamicTLSModel => Some(ThreadLocalMode::GeneralDynamicTLSModel),
+            LLVMThreadLocalMode::LLVMLocalDynamicTLSModel => Some(ThreadLocalMode::LocalDynamicTLSModel),
+            LLVMThreadLocalMode::LLVMInitialExecTLSModel => Some(ThreadLocalMode::InitialExecTLSModel),
+            LLVMThreadLocalMode::LLVMLocalExecTLSModel => Some(ThreadLocalMode::LocalExecTLSModel),
+            LLVMThreadLocalMode::LLVMNotThreadLocal => None
+        }
+    }
+
+    pub(crate) fn as_llvm_mode(&self) -> LLVMThreadLocalMode {
+        match *self {
+            ThreadLocalMode::GeneralDynamicTLSModel => LLVMThreadLocalMode::LLVMGeneralDynamicTLSModel,
+            ThreadLocalMode::LocalDynamicTLSModel => LLVMThreadLocalMode::LLVMLocalDynamicTLSModel,
+            ThreadLocalMode::InitialExecTLSModel => LLVMThreadLocalMode::LLVMInitialExecTLSModel,
+            ThreadLocalMode::LocalExecTLSModel => LLVMThreadLocalMode::LLVMLocalExecTLSModel,
+            // None => LLVMThreadLocalMode::LLVMNotThreadLocal,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DLLStorageClass {
+    Default,
+    Import,
+    Export,
+}
+
+impl DLLStorageClass {
+    pub(crate) fn new(dll_storage_class: LLVMDLLStorageClass) -> Self {
+        match dll_storage_class {
+            LLVMDLLStorageClass::LLVMDefaultStorageClass => DLLStorageClass::Default,
+            LLVMDLLStorageClass::LLVMDLLImportStorageClass => DLLStorageClass::Import,
+            LLVMDLLStorageClass::LLVMDLLExportStorageClass => DLLStorageClass::Export,
+        }
+    }
+
+    pub(crate) fn as_llvm_class(&self) -> LLVMDLLStorageClass {
+        match *self {
+            DLLStorageClass::Default => LLVMDLLStorageClass::LLVMDefaultStorageClass,
+            DLLStorageClass::Import => LLVMDLLStorageClass::LLVMDLLImportStorageClass,
+            DLLStorageClass::Export => LLVMDLLStorageClass::LLVMDLLExportStorageClass,
         }
     }
 }
