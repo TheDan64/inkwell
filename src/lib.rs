@@ -17,7 +17,7 @@ pub mod targets;
 pub mod types;
 pub mod values;
 
-use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate};
+use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility};
 
 // TODO: Probably move into error handling module
 pub fn enable_llvm_pretty_stack_trace() {
@@ -123,6 +123,30 @@ impl FloatPredicate {
     }
 }
 
+// REVIEW: Maybe this belongs in some sort of prelude?
+pub enum GlobalVisibility {
+    Default,
+    Hidden,
+    Protected,
+}
+
+impl GlobalVisibility {
+    pub(crate) fn as_llvm_visibility(&self) -> LLVMVisibility {
+        match *self {
+            GlobalVisibility::Default => LLVMVisibility::LLVMDefaultVisibility,
+            GlobalVisibility::Hidden => LLVMVisibility::LLVMHiddenVisibility,
+            GlobalVisibility::Protected => LLVMVisibility::LLVMProtectedVisibility,
+        }
+    }
+
+    pub(crate) fn from_llvm_visibility(visibility: LLVMVisibility) -> Self {
+        match visibility {
+            LLVMVisibility::LLVMDefaultVisibility => GlobalVisibility::Default,
+            LLVMVisibility::LLVMHiddenVisibility => GlobalVisibility::Hidden,
+            LLVMVisibility::LLVMProtectedVisibility => GlobalVisibility::Protected,
+        }
+    }
+}
 
 // Misc Notes
 // Always pass a c_string.as_ptr() call into the function call directly and never

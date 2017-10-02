@@ -2,7 +2,7 @@ use llvm_sys::core::{LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, L
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfInt;
 use llvm_sys::prelude::LLVMTypeRef;
 
-use std::ffi::{CString, CStr};
+use std::ffi::CStr;
 
 use context::ContextRef;
 use types::traits::AsTypeRef;
