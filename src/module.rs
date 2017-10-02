@@ -1,6 +1,6 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer, LLVMWriteBitcodeToFD};
-use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetDataLayout, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal};
+use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetDataLayout, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal};
 use llvm_sys::execution_engine::{LLVMCreateJITCompilerForModule, LLVMCreateMCJITCompilerForModule};
 use llvm_sys::prelude::{LLVMValueRef, LLVMModuleRef};
 use llvm_sys::LLVMLinkage;
@@ -20,7 +20,7 @@ use types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
 use values::{AsValueRef, BasicValue, FunctionValue, GlobalValue, MetadataValue};
 
 // REVIEW: Maybe this should go into it's own module?
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Linkage {
     AppendingLinkage,
     AvailableExternallyLinkage,
@@ -241,7 +241,7 @@ impl Module {
         Ok(execution_engine)
     }
 
-    pub fn add_global(&self, type_: &BasicType, initial_value: Option<&BasicValue>, address_space: Option<u32>, name: &str) -> GlobalValue {
+    pub fn add_global(&self, type_: &BasicType, address_space: Option<u32>, name: &str) -> GlobalValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -250,12 +250,6 @@ impl Module {
                 None => LLVMAddGlobal(self.module, type_.as_type_ref(), c_string.as_ptr()),
             }
         };
-
-        if let Some(init_val) = initial_value {
-            unsafe {
-                LLVMSetInitializer(value, init_val.as_value_ref())
-            }
-        }
 
         GlobalValue::new(value)
     }
