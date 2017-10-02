@@ -1,4 +1,3 @@
-#![feature(box_syntax)]
 //! This is an example of the [Kaleidoscope tutorial](https://llvm.org/docs/tutorial/)
 //! made in Rust, using Inkwell.
 //! Currently, all features up to the [4th chapter](https://llvm.org/docs/tutorial/LangImpl04.html)
@@ -706,7 +705,12 @@ impl<'a> Parser<'a> {
         match self.parse_expr() {
             Ok(expr) => {
                 Ok(Function {
-                    prototype: Prototype { name: ANONYMOUS_FUNCTION_NAME.to_string(), args: vec![], is_op: false, prec: 0 },
+                    prototype: Prototype {
+                        name: ANONYMOUS_FUNCTION_NAME.to_string(),
+                        args: vec![],
+                        is_op: false,
+                        prec: 0
+                    },
                     body: expr,
                     is_anon: true
                 })
@@ -1136,14 +1140,17 @@ pub fn main() {
         if is_anonymous {
             let mut ee = module.create_jit_execution_engine(0).unwrap();
 
-            if let Some(fun) = printd_fn {
-                println!("Setting global mapping for {:p} {:p} {:p}", &printd, &mut printd, *printd);
-                ee.add_global_mapping(&fun, unsafe { std::mem::transmute(&mut printd) });
-            }
+            // 2017-02-10 <6A> I still can't add my own functions with either add_global_mapping or add_symbol.
+            //                 However, importing extern functions such as cos(x) or sin(x) works.
 
-            if let Some(fun) = putchard_fn {
-                ee.add_global_mapping(&fun, unsafe { std::mem::transmute(&putchard) });
-            }
+            // if let Some(fun) = printd_fn {
+            //     println!("Setting global mapping for {:p} {:p} {:p}", &printd, &mut printd, *printd);
+            //     ee.add_global_mapping(&fun, unsafe { std::mem::transmute(&mut printd) });
+            // }
+
+            // if let Some(fun) = putchard_fn {
+            //     ee.add_global_mapping(&fun, unsafe { std::mem::transmute(&putchard) });
+            // }
 
             let addr = match ee.get_function_address(name.as_str()) {
                 Ok(addr) => addr,
