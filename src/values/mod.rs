@@ -3,6 +3,7 @@ mod enums;
 mod float_value;
 mod fn_value;
 mod generic_value;
+mod global_value;
 mod instruction_value;
 mod int_value;
 mod metadata_value;
@@ -17,6 +18,7 @@ pub use values::enums::{AnyValueEnum, AggregateValueEnum, BasicValueEnum, BasicM
 pub use values::float_value::FloatValue;
 pub use values::fn_value::FunctionValue;
 pub use values::generic_value::GenericValue;
+pub use values::global_value::GlobalValue;
 pub use values::instruction_value::{InstructionValue, InstructionOpcode};
 pub use values::int_value::IntValue;
 pub use values::metadata_value::{MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID};
@@ -27,7 +29,7 @@ pub use values::traits::{AnyValue, AggregateValue, BasicValue};
 pub use values::vec_value::VectorValue;
 pub(crate) use values::traits::AsValueRef;
 
-use llvm_sys::core::{LLVMGetValueName, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetGlobalConstant, LLVMSetValueName, LLVMTypeOf, LLVMDumpValue, LLVMIsAInstruction, LLVMGetMetadata, LLVMHasMetadata, LLVMSetMetadata};
+use llvm_sys::core::{LLVMGetValueName, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetValueName, LLVMTypeOf, LLVMDumpValue, LLVMIsAInstruction, LLVMGetMetadata, LLVMHasMetadata, LLVMSetMetadata, LLVMReplaceAllUsesWith};
 use llvm_sys::prelude::{LLVMValueRef, LLVMTypeRef};
 
 use std::ffi::{CString, CStr};
@@ -64,12 +66,6 @@ impl Value {
     fn is_null(&self) -> bool {
         unsafe {
             LLVMIsNull(self.value) == 1
-        }
-    }
-
-    fn set_global_constant(&self, num: i32) { // REVIEW: Need better name for this arg
-        unsafe {
-            LLVMSetGlobalConstant(self.value, num)
         }
     }
 
@@ -138,6 +134,14 @@ impl Value {
     fn set_metadata(&self, metadata: &MetadataValue, kind_id: u32) {
         unsafe {
             LLVMSetMetadata(self.value, kind_id, metadata.as_value_ref())
+        }
+    }
+
+    // REVIEW: I think this is memory safe, though it may result in an IR error
+    // if used incorrectly, which is OK.
+    fn replace_all_uses_with(&self, other: LLVMValueRef) {
+        unsafe {
+            LLVMReplaceAllUsesWith(self.value, other)
         }
     }
 

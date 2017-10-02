@@ -79,6 +79,14 @@ impl PhiValue {
     pub fn as_instruction(&self) -> Option<InstructionValue> {
         self.phi_value.as_instruction()
     }
+
+    pub fn replace_all_uses_with(&self, other: &PhiValue) {
+        self.phi_value.replace_all_uses_with(other.as_value_ref())
+    }
+
+    pub fn as_basic_value(&self) -> BasicValueEnum {
+        BasicValueEnum::new(self.as_value_ref())
+    }
 }
 
 impl AsValueRef for PhiValue {

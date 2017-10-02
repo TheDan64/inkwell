@@ -2,7 +2,7 @@ use llvm_sys::core::{LLVMConstReal, LLVMConstNull, LLVMHalfType, LLVMFloatType, 
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfFloat;
 use llvm_sys::prelude::LLVMTypeRef;
 
-use std::ffi::{CString, CStr};
+use std::ffi::CStr;
 
 use context::ContextRef;
 use types::traits::AsTypeRef;

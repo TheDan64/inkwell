@@ -302,6 +302,10 @@ impl FunctionValue {
             LLVMSetGC(self.as_value_ref(), c_string.as_ptr())
         }
     }
+
+    pub fn replace_all_uses_with(&self, other: &FunctionValue) {
+        self.fn_value.replace_all_uses_with(other.as_value_ref())
+    }
 }
 
 impl AsValueRef for FunctionValue {

@@ -110,6 +110,10 @@ impl PointerValue {
 
         PointerValue::new(value)
     }
+
+    pub fn replace_all_uses_with(&self, other: &PointerValue) {
+        self.ptr_value.replace_all_uses_with(other.as_value_ref())
+    }
 }
 
 impl AsValueRef for PointerValue {

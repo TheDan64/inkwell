@@ -166,6 +166,10 @@ impl FloatValue {
 
         IntValue::new(value)
     }
+
+    pub fn replace_all_uses_with(&self, other: &FloatValue) {
+        self.float_value.replace_all_uses_with(other.as_value_ref())
+    }
 }
 
 impl AsValueRef for FloatValue {

@@ -1,6 +1,6 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer, LLVMWriteBitcodeToFD};
-use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetDataLayout, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands};
+use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetDataLayout, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal};
 use llvm_sys::execution_engine::{LLVMCreateJITCompilerForModule, LLVMCreateMCJITCompilerForModule};
 use llvm_sys::prelude::{LLVMValueRef, LLVMModuleRef};
 use llvm_sys::LLVMLinkage;
@@ -17,7 +17,7 @@ use data_layout::DataLayout;
 use execution_engine::ExecutionEngine;
 use memory_buffer::MemoryBuffer;
 use types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
-use values::{AsValueRef, BasicValue, FunctionValue, PointerValue, MetadataValue};
+use values::{AsValueRef, BasicValue, FunctionValue, GlobalValue, MetadataValue};
 
 // REVIEW: Maybe this should go into it's own module?
 #[derive(Debug, PartialEq, Eq)]
@@ -241,8 +241,7 @@ impl Module {
         Ok(execution_engine)
     }
 
-    // REVIEW: Is this really always a pointer? It would make sense...
-    pub fn add_global(&self, type_: &BasicType, initial_value: Option<&BasicValue>, address_space: Option<u32>, name: &str) -> PointerValue {
+    pub fn add_global(&self, type_: &BasicType, initial_value: Option<&BasicValue>, address_space: Option<u32>, name: &str) -> GlobalValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -258,7 +257,7 @@ impl Module {
             }
         }
 
-        PointerValue::new(value)
+        GlobalValue::new(value)
     }
 
     pub fn write_bitcode_to_path(&self, path: &Path) -> bool {
@@ -390,6 +389,43 @@ impl Module {
         };
 
         slice.iter().map(|val| MetadataValue::new(*val)).collect()
+    }
+
+    pub fn get_first_global(&self) -> Option<GlobalValue> {
+        let value = unsafe {
+            LLVMGetFirstGlobal(self.module)
+        };
+
+        if value.is_null() {
+            return None;
+        }
+
+        Some(GlobalValue::new(value))
+    }
+
+    pub fn get_last_global(&self) -> Option<GlobalValue> {
+        let value = unsafe {
+            LLVMGetLastGlobal(self.module)
+        };
+
+        if value.is_null() {
+            return None;
+        }
+
+        Some(GlobalValue::new(value))
+    }
+
+    pub fn get_named_global(&self, name: &str) -> Option<GlobalValue> {
+        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+        let value = unsafe {
+            LLVMGetNamedGlobal(self.module, c_string.as_ptr())
+        };
+
+        if value.is_null() {
+            return None;
+        }
+
+        Some(GlobalValue::new(value))
     }
 }
 
