@@ -5,20 +5,22 @@
 
 extern crate inkwell;
 
+use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::io::{self, Write};
 use std::iter::Peekable;
 use std::str::Chars;
 use std::ops::DerefMut;
 
-use inkwell::FloatPredicate;
-use inkwell::builder::Builder;
-use inkwell::context::Context;
-use inkwell::module::Module;
-use inkwell::passes::PassManager;
-use inkwell::targets::{InitializationConfig, Target};
-use inkwell::types::BasicType;
-use inkwell::values::{BasicValue, FloatValue, FunctionValue, PhiValue};
+use self::inkwell::basic_block::BasicBlock;
+use self::inkwell::builder::Builder;
+use self::inkwell::context::Context;
+use self::inkwell::module::Module;
+use self::inkwell::passes::PassManager;
+use self::inkwell::targets::{InitializationConfig, Target};
+use self::inkwell::types::BasicType;
+use self::inkwell::values::{BasicValue, FloatValue, FunctionValue, PointerValue};
+use self::inkwell::FloatPredicate;
 
 use Token::*;
 
@@ -41,6 +43,7 @@ pub enum Token {
     If, Then, Else,
     For, In,
     Unary, Binary,
+    Var,
 
     Ident(String),
     Number(f64),
@@ -82,6 +85,7 @@ impl<'a> Lexer<'a> {
     }
 
     /// Lexes and returns the next `Token` from the source code.
+    #[allow(unused_variables)]
     pub fn lex(&mut self) -> LexResult {
         let chars = self.chars.deref_mut();
         let src = self.input;
@@ -186,6 +190,7 @@ impl<'a> Lexer<'a> {
                     "in" => Ok(Token::In),
                     "unary" => Ok(Token::Unary),
                     "binary" => Ok(Token::Binary),
+                    "var" => Ok(Token::Var),
 
                     ident => Ok(Token::Ident(ident.to_string()))
                 }
@@ -251,6 +256,11 @@ pub enum Expr {
         end: Box<Expr>,
         step: Option<Box<Expr>>,
         body: Box<Expr>
+    },
+
+    VarIn {
+        variables: Vec<(String, Option<Expr>)>,
+        body: Box<Expr>
     }
 }
 
@@ -278,6 +288,7 @@ pub struct Parser<'a> {
     prec: &'a mut HashMap<char, i32>
 }
 
+#[allow(unused_must_use)]
 impl<'a> Parser<'a> {
     /// Creates a new parser, given an input `str` and a `HashMap` binding
     /// an operator and its precedence in binary expressions.
@@ -687,6 +698,54 @@ impl<'a> Parser<'a> {
         })
     }
 
+    /// Parses a var..in expression.
+    fn parse_var_expr(&mut self) -> Result<Expr, &'static str> {
+        // eat 'var' token
+        self.advance()?;
+
+        let mut variables = Vec::new();
+
+        // parse variables
+        loop {
+            let name = match self.curr() {
+                Ident(name) => name,
+                _ => return Err("Expected identifier in 'var..in' declaration.")
+            };
+
+            self.advance()?;
+
+            // read (optional) initializer
+            let initializer = match self.curr() {
+                Op('=') => Some({
+                    self.advance()?;
+                    self.parse_expr()?
+                }),
+
+                _ => None
+            };
+
+            variables.push((name, initializer));
+
+            match self.curr() {
+                Op(',') => {
+                    self.advance()?;
+                },
+                In => {
+                    self.advance()?;
+                    break;
+                }
+                _ => {
+                    return Err("Expected comma or 'in' keyword in variable declaration.")
+                }
+            }
+        }
+
+        // parse body
+        let body = self.parse_expr()?;
+
+        Ok(Expr::VarIn { variables: variables, body: Box::new(body) })
+    }
+
     /// Parses a primary expression (an identifier, a number or a parenthesized expression).
     fn parse_primary(&mut self) -> Result<Expr, &'static str> {
         match self.curr() {
@@ -695,6 +754,7 @@ impl<'a> Parser<'a> {
             LParen => self.parse_paren_expr(),
             If => self.parse_conditional_expr(),
             For => self.parse_for_expr(),
+            Var => self.parse_var_expr(),
             _ => Err("Unknown expression.")
         }
     }
@@ -734,67 +794,128 @@ pub struct Compiler<'a> {
     pub module: &'a Module,
     pub function: &'a Function,
     pub fn_value: FunctionValue,
-    pub variables: HashMap<String, FloatValue>
-}
-
-fn to_float_value(phi: PhiValue) -> FloatValue {
-    unsafe { std::mem::transmute(phi) }
+    pub variables: HashMap<String, PointerValue>
 }
 
 impl<'a> Compiler<'a> {
     /// Gets a defined function given its name.
-    pub fn get_function(&self, name: &str) -> Option<FunctionValue> {
+    fn get_function(&self, name: &str) -> Option<FunctionValue> {
         self.module.get_function(name)
+    }
+
+    /// Cretes a new stack allocation instruction in the entry block of the function.
+    fn create_entry_block_alloca(&self, name: &str, entry: Option<&BasicBlock>) -> PointerValue {
+        let builder = self.context.create_builder();
+
+        // let entry = match entry {
+        //     Some(entry) => entry,
+        //     None => 
+        // };
+        let owned_entry = self.fn_value.get_entry_basic_block();
+        let entry = owned_entry.as_ref().or(entry).unwrap();
+        
+        match entry.get_first_instruction() {
+            Some(first_instr) => builder.position_before(&first_instr),
+            None => builder.position_at_end(entry)
+        }
+        
+        builder.build_stack_allocation(&self.context.f64_type(), name)
     }
 
     /// Compiles the specified `Expr` into an LLVM `BasicValue`.
     /// Note: This method currently returns a `Box`, since it returns either `PhiValue` or `FloatValue`.
-    pub fn compile_expr(&mut self, expr: &Expr) -> Result<FloatValue, &'static str> {
+    fn compile_expr(&mut self, expr: &Expr) -> Result<FloatValue, &'static str> {
         match expr {
             &Expr::Number(nb) => Ok(self.context.f64_type().const_float(nb)),
 
             &Expr::Variable(ref name) => {
                 match self.variables.get(name.as_str()) {
-                    Some(var) => Ok(*var),
+                    Some(var) => Ok(self.builder.build_load(&var, name.as_str()).into_float_value()),
                     None => Err("Could not find a matching variable.")
                 }
             },
 
+            &Expr::VarIn { ref variables, ref body } => {
+                let mut old_bindings = Vec::new();
+
+                for &(ref var_name, ref initializer) in variables {
+                    let var_name = var_name.as_str();
+
+                    let initial_val = match initializer {
+                        &Some(ref init) => self.compile_expr(&init)?,
+                        &None => self.context.f64_type().const_float(0.)
+                    };
+
+                    let alloca = self.create_entry_block_alloca(var_name, None);
+
+                    self.builder.build_store(&alloca, &initial_val);
+                    
+                    if let Some(old_binding) = self.variables.remove(var_name) {
+                        old_bindings.push(old_binding);
+                    }
+
+                    self.variables.insert(var_name.to_string(), alloca);
+                }
+
+                let body = self.compile_expr(&body)?;
+
+                for binding in old_bindings {
+                    self.variables.insert(binding.get_name().to_str().unwrap().to_string(), binding);
+                }
+
+                Ok(body)
+            },
+
             &Expr::Binary { op, ref left, ref right } => {
-                let lhs = self.compile_expr(&left)?;
-                let rhs = self.compile_expr(&right)?;
+                if op == '=' {
+                    // handle assignement
+                    let var_name = match left.borrow() {
+                        &Expr::Variable(ref var_name) => var_name,
+                        _ => {
+                            return Err("Expected variable as left-hand operator of assignement.");
+                        }
+                    };
 
-                match op {
-                    '+' => Ok(self.builder.build_float_add(&lhs, &rhs, "tmpadd")),
-                    '-' => Ok(self.builder.build_float_sub(&lhs, &rhs, "tmpsub")),
-                    '*' => Ok(self.builder.build_float_mul(&lhs, &rhs, "tmpmul")),
-                    '/' => Ok(self.builder.build_float_div(&lhs, &rhs, "tmpdiv")),
+                    let var_val = self.compile_expr(&right)?;
+                    let var = self.variables.get(var_name.as_str()).ok_or("")?;
 
-                    '<' => Ok({
-                        let cmp = self.builder.build_float_compare(&FloatPredicate::ULT, &lhs, &rhs, "tmpcmp");
+                    Ok(unsafe { std::mem::transmute(self.builder.build_store(&var, &var_val)) })
+                } else {
+                    let lhs = self.compile_expr(&left)?;
+                    let rhs = self.compile_expr(&right)?;
 
-                        self.builder.build_unsigned_int_to_float(&cmp, &self.context.f64_type(), "tmpbool")
-                    }),
-                    '>' => Ok({
-                        let cmp = self.builder.build_float_compare(&FloatPredicate::ULT, &rhs, &lhs, "tmpcmp");
+                    match op {
+                        '+' => Ok(self.builder.build_float_add(&lhs, &rhs, "tmpadd")),
+                        '-' => Ok(self.builder.build_float_sub(&lhs, &rhs, "tmpsub")),
+                        '*' => Ok(self.builder.build_float_mul(&lhs, &rhs, "tmpmul")),
+                        '/' => Ok(self.builder.build_float_div(&lhs, &rhs, "tmpdiv")),
 
-                        self.builder.build_unsigned_int_to_float(&cmp, &self.context.f64_type(), "tmpbool")
-                    }),
+                        '<' => Ok({
+                            let cmp = self.builder.build_float_compare(&FloatPredicate::ULT, &lhs, &rhs, "tmpcmp");
 
-                    custom => {
-                        let mut name = String::from("binary");
+                            self.builder.build_unsigned_int_to_float(&cmp, &self.context.f64_type(), "tmpbool")
+                        }),
+                        '>' => Ok({
+                            let cmp = self.builder.build_float_compare(&FloatPredicate::ULT, &rhs, &lhs, "tmpcmp");
 
-                        name.push(custom);
+                            self.builder.build_unsigned_int_to_float(&cmp, &self.context.f64_type(), "tmpbool")
+                        }),
 
-                        match self.get_function(name.as_str()) {
-                            Some(fun) => {
-                                match self.builder.build_call(&fun, &[ &lhs, &rhs ], "tmpbin", false).left() {
-                                    Some(value) => Ok(value.into_float_value()),
-                                    None => Err("Invalid call produced.")
-                                }
-                            },
+                        custom => {
+                            let mut name = String::from("binary");
 
-                            None => Err("Undefined binary operator.")
+                            name.push(custom);
+
+                            match self.get_function(name.as_str()) {
+                                Some(fun) => {
+                                    match self.builder.build_call(&fun, &[ &lhs, &rhs ], "tmpbin", false).left() {
+                                        Some(value) => Ok(value.into_float_value()),
+                                        None => Err("Invalid call produced.")
+                                    }
+                                },
+
+                                None => Err("Undefined binary operator.")
+                            }
                         }
                     }
                 }
@@ -859,7 +980,7 @@ impl<'a> Compiler<'a> {
                     (&else_val, &else_bb)
                 ]);
 
-                Ok(to_float_value(phi))
+                Ok(unsafe { std::mem::transmute(phi) })
             },
 
             &Expr::For { ref var_name, ref start, ref end, ref step, ref body } => {
@@ -867,26 +988,24 @@ impl<'a> Compiler<'a> {
                 let zero_const = self.context.f64_type().const_float(0.0);
 
                 let start = self.compile_expr(&start)?;
-                let preheader_bb = self.builder.get_insert_block().unwrap();
-                let loop_bb = self.context.append_basic_block(&parent, "loop");
+                let start_alloca = self.create_entry_block_alloca(var_name, None);
+
+                self.builder.build_store(&start_alloca, &start);
 
                 // go from current block to loop block
-                self.builder.build_unconditional_branch(&loop_bb);
+                let loop_bb = self.context.append_basic_block(&parent, "loop");
 
+                self.builder.build_unconditional_branch(&loop_bb);
                 self.builder.position_at_end(&loop_bb);
 
-                let variable = self.builder.build_phi(&self.context.f64_type(), var_name);
-                
-                variable.add_incoming(&[
-                    (&start, &preheader_bb)
-                ]);
+                let variable = self.create_entry_block_alloca(var_name, None);
 
                 let old_val = match self.variables.get(var_name.as_str()) {
                     Some(val) => Some(*val),
                     None => None
                 };
 
-                self.variables.insert(var_name.to_owned(), to_float_value(variable));
+                self.variables.insert(var_name.to_owned(), variable);
 
                 self.compile_expr(&body)?;
 
@@ -895,26 +1014,23 @@ impl<'a> Compiler<'a> {
                     &None => self.context.f64_type().const_float(1.0)
                 };
 
-                let variable_f = to_float_value(variable);
-                let next_var = self.builder.build_float_add(&variable_f, &step, "nextvar");
-
                 let end_cond = self.compile_expr(&end)?;
-                let end_cond = self.builder.build_float_compare(&FloatPredicate::ONE, &end_cond, &zero_const, "loopcond");
 
-                let loop_end_bb = self.builder.get_insert_block().unwrap();
+                let curr_var = self.builder.build_load(&start_alloca, var_name);
+                let next_var = self.builder.build_float_add(&curr_var.as_float_value(), &step, "nextvar");
+
+                self.builder.build_store(&unsafe { std::mem::transmute(next_var) }, &start_alloca);
+
+                let end_cond = self.builder.build_float_compare(&FloatPredicate::ONE, &end_cond, &zero_const, "loopcond");
                 let after_bb = self.context.append_basic_block(&parent, "afterloop");
 
                 self.builder.build_conditional_branch(&end_cond, &loop_bb, &after_bb);
                 self.builder.position_at_end(&after_bb);
 
-                variable.add_incoming(&[
-                    (&next_var, &loop_end_bb)
-                ]);
-
-                self.variables.remove(var_name);
-
                 if let Some(val) = old_val {
                     self.variables.insert(var_name.to_owned(), val);
+                } else {
+                    self.variables.remove(var_name);
                 }
 
                 Ok(zero_const)
@@ -948,20 +1064,20 @@ impl<'a> Compiler<'a> {
 
         self.builder.position_at_end(&entry);
 
-        // build variables map
-        {
-            // this is in its own scope to borrow as shortly as possible
-            let variables = &mut self.variables;
-
-            variables.reserve(proto.args.len());
-
-            for (i, arg) in function.params().enumerate() {
-                variables.insert(proto.args[i].clone(), arg.into_float_value());
-            }
-        }
-
-        // update fields
+        // update fn field
         self.fn_value = function;
+
+        // build variables map
+        self.variables.reserve(proto.args.len());
+
+        for (i, arg) in function.params().enumerate() {
+            let arg_name = proto.args[i].as_str();
+            let alloca = self.create_entry_block_alloca(arg_name, Some(&entry));
+
+            self.builder.build_store(&alloca, &arg);
+
+            self.variables.insert(proto.args[i].clone(), alloca);
+        }
 
         // compile body
         let body = self.compile_expr(&self.function.body)?;
@@ -971,6 +1087,8 @@ impl<'a> Compiler<'a> {
         // return the whole thing after verification and optimization
         if function.verify(true) {
             self.fpm.run_on_function(&function);
+            
+            function.verify(true);
 
             Ok(function)
         } else {
@@ -1048,6 +1166,9 @@ pub fn main() {
     fpm.add_gvn_pass();
     fpm.add_cfg_simplification_pass();
     fpm.add_basic_alias_analysis_pass();
+    fpm.add_promote_memory_to_register_pass();
+    fpm.add_instruction_combining_pass();
+    fpm.add_reassociate_pass();
 
     fpm.initialize();
 
@@ -1067,6 +1188,7 @@ pub fn main() {
         // Build precedence map
         let mut prec = HashMap::with_capacity(4);
 
+        prec.insert('=', 2);
         prec.insert('<', 10);
         prec.insert('+', 20);
         prec.insert('-', 20);
@@ -1080,24 +1202,24 @@ pub fn main() {
 
         // make module
         let module = context.create_module("tmp");
-        let mut printd_fn = None;
-        let mut putchard_fn = None;
+
+        //let mut printd_fn = None;
+        //let mut putchard_fn = None;
 
         for prev in previous_exprs.iter() {
-            let fun = Compiler::compile(&context, &builder, &fpm, &module, prev).expect("Cannot re-add previously compiled function.");
+            Compiler::compile(&context, &builder, &fpm, &module, prev).expect("Cannot re-add previously compiled function.");
 
-            match fun.get_name().to_str().unwrap() {
-                "printd" => {
-                    println!("Setting printd to {:?}", fun);
-                    printd_fn = Some(fun);
-                },
+            // match fun.get_name().to_str().unwrap() {
+            //     "printd" => {
+            //         printd_fn = Some(fun);
+            //     },
 
-                "putchard" => {
-                    putchard_fn = Some(fun);
-                },
+            //     "putchard" => {
+            //         putchard_fn = Some(fun);
+            //     },
 
-                _ => ()
-            }
+            //     _ => ()
+            // }
         }
 
         let (name, is_anonymous) = match Parser::new(input, &mut prec).parse() {
@@ -1117,7 +1239,7 @@ pub fn main() {
 
                         let fn_name = function.get_name().to_str().unwrap();
 
-                        if fn_name.starts_with(ANONYMOUS_FUNCTION_NAME) {
+                        if fn_name == ANONYMOUS_FUNCTION_NAME {
                             (fn_name.to_string(), true)
                         } else {
                             previous_exprs.push(fun);
@@ -1138,7 +1260,7 @@ pub fn main() {
         };
 
         if is_anonymous {
-            let mut ee = module.create_jit_execution_engine(0).unwrap();
+            let ee = module.create_jit_execution_engine(0).unwrap();
 
             // 2017-02-10 <6A> I still can't add my own functions with either add_global_mapping or add_symbol.
             //                 However, importing extern functions such as cos(x) or sin(x) works.
