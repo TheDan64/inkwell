@@ -1254,7 +1254,7 @@ pub fn main() {
         let mut input = String::new();
         io::stdin().read_line(&mut input).expect("Could not read from standard input.");
 
-        if input.starts_with("exit") {
+        if input.starts_with("exit") || input.starts_with("quit") {
             break;
         } else if input.chars().all(char::is_whitespace) {
             continue;
@@ -1272,7 +1272,7 @@ pub fn main() {
 
         // Parse and (optionally) display input
         if display_lexer_output {
-            println!("Attempting to parse lexed input: {:?}", Lexer::new(input.as_str()).collect::<Vec<Token>>());
+            println!("-> Attempting to parse lexed input: \n{:?}\n", Lexer::new(input.as_str()).collect::<Vec<Token>>());
         }
 
         // make module
@@ -1302,8 +1302,14 @@ pub fn main() {
 
         let (name, is_anonymous) = match Parser::new(input, &mut prec).parse() {
             Ok(fun) => {
+                let is_anon = fun.is_anon;
+
                 if display_parser_output {
-                    println!("-> Expression parsed: {:?}", fun);
+                    if is_anon {
+                        println!("-> Expression parsed: \n{:?}\n", fun.body);
+                    } else {
+                        println!("-> Function parsed: \n{:?}\n", fun);
+                    }
                 }
                 
                 match Compiler::compile(&context, &builder, &fpm, &module, &fun) {
@@ -1315,15 +1321,12 @@ pub fn main() {
                             function.print_to_stderr();
                         }
 
-                        let fn_name = function.get_name().to_str().unwrap();
-
-                        if fn_name == ANONYMOUS_FUNCTION_NAME {
-                            (fn_name.to_string(), true)
-                        } else {
+                        if !is_anon {
+                            // only add it now to ensure it is correct
                             previous_exprs.push(fun);
-
-                            (fn_name.to_string(), false)
                         }
+
+                        (function.get_name().to_str().unwrap().to_string(), is_anon)
                     },
                     Err(err) => {
                         println!("!> Error compiling function: {}", err);
