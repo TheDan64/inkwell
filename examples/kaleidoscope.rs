@@ -322,21 +322,33 @@ impl<'a> Parser<'a> {
 
     /// Parses the content of the parser.
     pub fn parse(&mut self) -> Result<Function, &'static str> {
-        match self.curr() {
+        let result = match self.current()? {
             Def => self.parse_def(),
             Extern => self.parse_extern(),
             _ => self.parse_toplevel_expr()
+        };
+
+        match result {
+            Ok(result) => {
+                if !self.at_end() {
+                    Err("Unexpected token after parsed expression.")
+                } else {
+                    Ok(result)
+                }
+            },
+
+            err => err
         }
     }
 
     /// Returns the current `Token`, without performing safety checks beforehand.
-    pub fn curr(&self) -> Token {
+    fn curr(&self) -> Token {
         self.tokens[self.pos].clone()
     }
 
     /// Returns the current `Token`, or an error that
     /// indicates that the end of the file has been unexpectedly reached if it is the case.
-    pub fn current(&self) -> Result<Token, &'static str> {
+    fn current(&self) -> Result<Token, &'static str> {
         if self.pos >= self.tokens.len() {
             Err("Unexpected end of file.")
         } else {
@@ -347,7 +359,7 @@ impl<'a> Parser<'a> {
     /// Advances the position, and returns an empty `Result` whose error
     /// indicates that the end of the file has been unexpectedly reached.
     /// This allows to use the `self.advance()?;` syntax.
-    pub fn advance(&mut self) -> Result<(), &'static str> {
+    fn advance(&mut self) -> Result<(), &'static str> {
         let npos = self.pos + 1;
 
         self.pos = npos;
@@ -361,8 +373,8 @@ impl<'a> Parser<'a> {
 
     /// Returns a value indicating whether or not the `Parser`
     /// has reached the end of the input.
-    pub fn at_end(&self) -> bool {
-        self.pos > self.tokens.len() - 2
+    fn at_end(&self) -> bool {
+        self.pos >= self.tokens.len()
     }
 
     /// Returns the precedence of the current `Token`, or 0 if it is not recognized as a binary operator.
@@ -388,7 +400,7 @@ impl<'a> Parser<'a> {
 
                 let op = match self.curr() {
                     Op(ch) => ch,
-                    _ => { return Err("Expected operator in custom operator declaration."); }
+                    _ => return Err("Expected operator in custom operator declaration.")
                 };
 
                 self.advance()?;
@@ -415,7 +427,7 @@ impl<'a> Parser<'a> {
 
                 let op = match self.curr() {
                     Op(ch) => ch,
-                    _ => { return Err("Expected operator in custom operator declaration."); }
+                    _ => return Err("Expected operator in custom operator declaration.")
                 };
 
                 let mut name = String::from("unary");
@@ -427,19 +439,25 @@ impl<'a> Parser<'a> {
                 (name, true, 0)
             },
 
-            _ => { return Err("Expected identifier in prototype declaration.") }
+            _ => return Err("Expected identifier in prototype declaration.")
         };
 
         match self.curr() {
             LParen => (),
-            _ => { return Err("Expected '(' character in prototype declaration.") }
+            _ => return Err("Expected '(' character in prototype declaration.")
         }
 
         self.advance()?;
 
         if let RParen = self.curr() {
             self.advance();
-            return Ok(Prototype { name: id, args: vec![], is_op: is_operator, prec: precedence });
+
+            return Ok(Prototype {
+                name: id,
+                args: vec![],
+                is_op: is_operator,
+                prec: precedence
+            });
         }
 
         let mut args = vec![];
@@ -447,7 +465,7 @@ impl<'a> Parser<'a> {
         loop {
             match self.curr() {
                 Ident(name) => args.push(name),
-                _ => { return Err("Expected identifier in parameter declaration.") }
+                _ => return Err("Expected identifier in parameter declaration.")
             }
 
             self.advance()?;
@@ -460,11 +478,16 @@ impl<'a> Parser<'a> {
                 Comma => {
                     self.advance();   
                 },
-                _ => { return Err("Expected ',' or ')' character in prototype declaration.") }
+                _ => return Err("Expected ',' or ')' character in prototype declaration.")
             }
         }
 
-        Ok(Prototype { name: id, args: args, is_op: is_operator, prec: precedence })
+        Ok(Prototype {
+            name: id,
+            args: args,
+            is_op: is_operator,
+            prec: precedence
+        })
     }
 
     /// Parses a user-defined function.
@@ -479,7 +502,11 @@ impl<'a> Parser<'a> {
         let body = self.parse_expr()?;
 
         // Return new function
-        Ok(Function { prototype: proto, body: body, is_anon: false })
+        Ok(Function {
+            prototype: proto,
+            body: body,
+            is_anon: false
+        })
     }
 
     /// Parses an external function declaration.
@@ -491,7 +518,11 @@ impl<'a> Parser<'a> {
         let proto = self.parse_prototype()?;
 
         // Return signature of extern function
-        Ok(Function { prototype: proto, body: Expr::Number(std::f64::NAN), is_anon: false })
+        Ok(Function {
+            prototype: proto,
+            body: Expr::Number(std::f64::NAN),
+            is_anon: false
+        })
     }
 
     /// Parses any expression.
@@ -518,7 +549,7 @@ impl<'a> Parser<'a> {
     fn parse_paren_expr(&mut self) -> Result<Expr, &'static str> {
         match self.current()? {
             LParen => (),
-            _ => { return Err("Expected '(' character at start of parenthesized expression.") }
+            _ => return Err("Expected '(' character at start of parenthesized expression.")
         }
 
         self.advance()?;
@@ -527,7 +558,7 @@ impl<'a> Parser<'a> {
 
         match self.current()? {
             RParen => (),
-            _ => { return Err("Expected ')' character at end of parenthesized expression.") }
+            _ => return Err("Expected ')' character at end of parenthesized expression.")
         }
 
         self.advance();
@@ -539,7 +570,7 @@ impl<'a> Parser<'a> {
     fn parse_id_expr(&mut self) -> Result<Expr, &'static str> {
         let id = match self.curr() {
             Ident(id) => id,
-            _ => { return Err("Expected identifier."); }
+            _ => return Err("Expected identifier.")
         };
 
         if let Err(_) = self.advance() {
@@ -562,7 +593,7 @@ impl<'a> Parser<'a> {
                     match self.current()? {
                         Comma => (),
                         RParen => break,
-                        _ => { return Err("Expected ',' character in function call."); }
+                        _ => return Err("Expected ',' character in function call.")
                     }
 
                     self.advance()?;
@@ -584,14 +615,17 @@ impl<'a> Parser<'a> {
                 self.advance()?;
                 ch
             },
-            _ => { return self.parse_primary(); }
+            _ => return self.parse_primary()
         };
 
         let mut name = String::from("unary");
 
         name.push(op);
 
-        Ok(Expr::Call { fn_name: name, args: vec![ self.parse_unary_expr()? ] })
+        Ok(Expr::Call {
+            fn_name: name,
+            args: vec![ self.parse_unary_expr()? ]
+        })
     }
 
     /// Parses a binary expression, given its left-hand expression.
@@ -607,7 +641,7 @@ impl<'a> Parser<'a> {
 
             let op = match self.curr() {
                 Op(op) => op,
-                _ => { return Err("Invalid operator."); }
+                _ => return Err("Invalid operator.")
             };
 
             self.advance()?;
@@ -637,16 +671,16 @@ impl<'a> Parser<'a> {
 
         // eat 'then' token
         match self.current() {
-            Ok(Then) => { self.advance()? },
-            _ => { return Err("Expected 'then' keyword."); }
+            Ok(Then) => self.advance()?,
+            _ => return Err("Expected 'then' keyword.")
         }
 
         let then = self.parse_expr()?;
 
         // eat 'else' token
         match self.current() {
-            Ok(Else) => { self.advance()? },
-            _ => { return Err("Expected 'else' keyword."); }
+            Ok(Else) => self.advance()?,
+            _ => return Err("Expected 'else' keyword.")
         }
 
         let otherwise = self.parse_expr()?;
@@ -665,7 +699,7 @@ impl<'a> Parser<'a> {
 
         let name = match self.curr() {
             Ident(n) => n,
-            _ => { return Err("Expected identifier in for loop."); }
+            _ => return Err("Expected identifier in for loop.")
         };
 
         // eat identifier
@@ -673,16 +707,16 @@ impl<'a> Parser<'a> {
 
         // eat '=' token
         match self.curr() {
-            Op('=') => { self.advance()?; },
-            _ => { return Err("Expected '=' character in for loop."); }
+            Op('=') => self.advance()?,
+            _ => return Err("Expected '=' character in for loop.")
         }
 
         let start = self.parse_expr()?;
 
         // eat ',' token
         match self.current()? {
-            Comma => { self.advance()?; },
-            _ => { return Err("Expected ',' character in for loop."); }
+            Comma => self.advance()?,
+            _ => return Err("Expected ',' character in for loop.")
         }
 
         let end = self.parse_expr()?;
@@ -700,8 +734,8 @@ impl<'a> Parser<'a> {
 
         // eat 'in' token
         match self.current()? {
-            In => { self.advance()?; },
-            _ => { return Err("Expected 'in' keyword in for loop."); }
+            In => self.advance()?,
+            _ => return Err("Expected 'in' keyword in for loop.")
         }
 
         let body = self.parse_expr()?;
@@ -744,7 +778,7 @@ impl<'a> Parser<'a> {
             variables.push((name, initializer));
 
             match self.curr() {
-                Op(',') => {
+                Comma => {
                     self.advance()?;
                 },
                 In => {
@@ -760,7 +794,10 @@ impl<'a> Parser<'a> {
         // parse body
         let body = self.parse_expr()?;
 
-        Ok(Expr::VarIn { variables: variables, body: Box::new(body) })
+        Ok(Expr::VarIn {
+            variables: variables,
+            body: Box::new(body)
+        })
     }
 
     /// Parses a primary expression (an identifier, a number or a parenthesized expression).
@@ -1210,7 +1247,8 @@ pub fn main() {
     let mut previous_exprs = Vec::new();
 
     loop {
-        print_flush!(" > ");
+        println!();
+        print_flush!("?> ");
 
         // Read input from stdin
         let mut input = String::new();
@@ -1218,6 +1256,8 @@ pub fn main() {
 
         if input.starts_with("exit") {
             break;
+        } else if input.chars().all(char::is_whitespace) {
+            continue;
         }
 
         // Build precedence map
@@ -1263,7 +1303,7 @@ pub fn main() {
         let (name, is_anonymous) = match Parser::new(input, &mut prec).parse() {
             Ok(fun) => {
                 if display_parser_output {
-                    println!("Expression parsed: {:?}", fun);
+                    println!("-> Expression parsed: {:?}", fun);
                 }
                 
                 match Compiler::compile(&context, &builder, &fpm, &module, &fun) {
@@ -1271,7 +1311,7 @@ pub fn main() {
                         if display_compiler_output {
                             // Not printing a new line since LLVM automatically
                             // prefixes the generated string with one
-                            print_flush!("Expression compiled to IR:");
+                            print_flush!("-> Expression compiled to IR:");
                             function.print_to_stderr();
                         }
 
@@ -1286,13 +1326,13 @@ pub fn main() {
                         }
                     },
                     Err(err) => {
-                        println!("Error compiling function: {}", err);
+                        println!("!> Error compiling function: {}", err);
                         continue;
                     }
                 }
             },
             Err(err) => {
-                println!("Error parsing expression: {}", err);
+                println!("!> Error parsing expression: {}", err);
                 continue;
             }
         };
@@ -1300,21 +1340,10 @@ pub fn main() {
         if is_anonymous {
             let ee = module.create_jit_execution_engine(0).unwrap();
 
-            // Not working ATM; see comment above.
-
-            // if let Some(fun) = printd_fn {
-            //     println!("Setting global mapping for {:p} {:p} {:p}", &printd, &mut printd, *printd);
-            //     ee.add_global_mapping(&fun, unsafe { std::mem::transmute(&mut printd) });
-            // }
-
-            // if let Some(fun) = putchard_fn {
-            //     ee.add_global_mapping(&fun, unsafe { std::mem::transmute(&putchard) });
-            // }
-
             let addr = match ee.get_function_address(name.as_str()) {
                 Ok(addr) => addr,
                 Err(err) => {
-                    println!("Error during execution: {:?}", err);
+                    println!("!> Error during execution: {:?}", err);
                     continue;
                 }
             };
@@ -1322,7 +1351,6 @@ pub fn main() {
             let compiled_fn: extern "C" fn() -> f64 = unsafe { std::mem::transmute(addr) };
 
             println!("=> {}", compiled_fn());
-            println!();
         }
     }
 }
