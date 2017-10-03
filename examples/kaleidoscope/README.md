@@ -32,7 +32,7 @@ For example, running with all three switches may lead to the following output:
 [Number(1), Op('+'), Number(2), Op('*'), Number(2)]
 
 -> Expression parsed:
-Function { prototype: Prototype { name: "anonymous", args: [], is_op: false, prec: 0 }, body: Binary { op: '+', left: Number(1), right: Binary { op: '*', left: Number(2), right: Number(2) } }, is_anon: true }
+Binary { op: '+', left: Number(1), right: Binary { op: '*', left: Number(2), right: Number(2) } }
 
 -> Expression compiled to IR:
 define double @anonymous() {
