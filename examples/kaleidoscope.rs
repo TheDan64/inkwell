@@ -1,7 +1,16 @@
 //! This is an example of the [Kaleidoscope tutorial](https://llvm.org/docs/tutorial/)
 //! made in Rust, using Inkwell.
-//! Currently, all features up to the [4th chapter](https://llvm.org/docs/tutorial/LangImpl04.html)
+//! Currently, all features up to the [7th chapter](https://llvm.org/docs/tutorial/LangImpl07.html)
 //! are available.
+//! This example is supposed to be ran as a executable, which launches a REPL.
+//! The source code is in the following order:
+//! - Lexer,
+//! - Parser,
+//! - Compiler,
+//! - Program.
+//! 
+//! Both the `Parser` and the `Compiler` may fail, in which case they would return
+//! an error represented by `Result<T, &'static str>`, for easier error reporting.
 
 extern crate inkwell;
 
@@ -34,20 +43,24 @@ const ANONYMOUS_FUNCTION_NAME: &str = "anonymous";
 /// Represents a primitive syntax token.
 #[derive(Debug, Clone)]
 pub enum Token {
-    EOF,
-    Comment,
-    LParen,
-    RParen,
+    Binary,
     Comma,
-    Def, Extern,
-    If, Then, Else,
-    For, In,
-    Unary, Binary,
-    Var,
-
+    Comment,
+    Def,
+    Else,
+    EOF,
+    Extern,
+    For,
     Ident(String),
+    If,
+    In,
+    LParen,
     Number(f64),
-    Op(char)
+    Op(char),
+    RParen,
+    Then,
+    Unary,
+    Var
 }
 
 /// Defines an error encountered by the `Lexer`.
@@ -94,6 +107,9 @@ impl<'a> Lexer<'a> {
 
         // Skip whitespaces
         loop {
+            // Note: the following lines are in their own scope to
+            // limit how long 'chars' is borrowed, and in order to allow
+            // it to be borrowed again in the loop by 'chars.next()'.
             {
                 let ch = chars.peek();
 
@@ -108,10 +124,8 @@ impl<'a> Lexer<'a> {
                 }
             }
 
-            {
-                chars.next();
-                pos += 1;
-            }
+            chars.next();
+            pos += 1;
         }
 
         let start = pos;
@@ -230,9 +244,6 @@ impl<'a> Iterator for Lexer<'a> {
 /// Defines a primitive expression.
 #[derive(Debug)]
 pub enum Expr {
-    Number(f64),
-    Variable(String),
-
     Binary { 
         op: char,
         left: Box<Expr>,
@@ -257,6 +268,10 @@ pub enum Expr {
         step: Option<Box<Expr>>,
         body: Box<Expr>
     },
+
+    Number(f64),
+
+    Variable(String),
 
     VarIn {
         variables: Vec<(String, Option<Expr>)>,
@@ -288,6 +303,8 @@ pub struct Parser<'a> {
     prec: &'a mut HashMap<char, i32>
 }
 
+// I'm ignoring the 'must_use' lint in order to call 'self.advance' without checking
+// the result when an EOF is acceptable.
 #[allow(unused_must_use)]
 impl<'a> Parser<'a> {
     /// Creates a new parser, given an input `str` and a `HashMap` binding
@@ -793,25 +810,29 @@ pub struct Compiler<'a> {
     pub fpm: &'a PassManager,
     pub module: &'a Module,
     pub function: &'a Function,
-    pub fn_value: FunctionValue,
-    pub variables: HashMap<String, PointerValue>
+
+    variables: HashMap<String, PointerValue>,
+    fn_value_opt: Option<FunctionValue>
 }
 
 impl<'a> Compiler<'a> {
     /// Gets a defined function given its name.
+    #[inline]
     fn get_function(&self, name: &str) -> Option<FunctionValue> {
         self.module.get_function(name)
+    }
+
+    /// Returns the `FunctionValue` representing the function being compiled.
+    #[inline]
+    fn fn_value(&self) -> FunctionValue {
+        self.fn_value_opt.unwrap()
     }
 
     /// Cretes a new stack allocation instruction in the entry block of the function.
     fn create_entry_block_alloca(&self, name: &str, entry: Option<&BasicBlock>) -> PointerValue {
         let builder = self.context.create_builder();
-
-        // let entry = match entry {
-        //     Some(entry) => entry,
-        //     None => 
-        // };
-        let owned_entry = self.fn_value.get_entry_basic_block();
+        
+        let owned_entry = self.fn_value().get_entry_basic_block();
         let entry = owned_entry.as_ref().or(entry).unwrap();
         
         match entry.get_first_instruction() {
@@ -877,9 +898,11 @@ impl<'a> Compiler<'a> {
                     };
 
                     let var_val = self.compile_expr(&right)?;
-                    let var = self.variables.get(var_name.as_str()).ok_or("")?;
+                    let var = self.variables.get(var_name.as_str()).ok_or("Undefined variable.")?;
+                    
+                    self.builder.build_store(&var, &var_val);
 
-                    Ok(unsafe { std::mem::transmute(self.builder.build_store(&var, &var_val)) })
+                    Ok(var_val)
                 } else {
                     let lhs = self.compile_expr(&left)?;
                     let rhs = self.compile_expr(&right)?;
@@ -942,7 +965,7 @@ impl<'a> Compiler<'a> {
             },
 
             &Expr::Conditional { ref cond, ref consequence, ref alternative } => {
-                let parent = self.fn_value;
+                let parent = self.fn_value();
                 let zero_const = self.context.f64_type().const_float(0.0);
 
                 // create condition by comparing without 0.0 and returning an int
@@ -980,15 +1003,14 @@ impl<'a> Compiler<'a> {
                     (&else_val, &else_bb)
                 ]);
 
-                Ok(unsafe { std::mem::transmute(phi) })
+                Ok(phi.as_basic_value().into_float_value())
             },
 
             &Expr::For { ref var_name, ref start, ref end, ref step, ref body } => {
-                let parent = self.fn_value;
-                let zero_const = self.context.f64_type().const_float(0.0);
+                let parent = self.fn_value();
 
-                let start = self.compile_expr(&start)?;
                 let start_alloca = self.create_entry_block_alloca(var_name, None);
+                let start = self.compile_expr(&start)?;
 
                 self.builder.build_store(&start_alloca, &start);
 
@@ -998,42 +1020,40 @@ impl<'a> Compiler<'a> {
                 self.builder.build_unconditional_branch(&loop_bb);
                 self.builder.position_at_end(&loop_bb);
 
-                let variable = self.create_entry_block_alloca(var_name, None);
+                let old_val = self.variables.remove(var_name.as_str());
 
-                let old_val = match self.variables.get(var_name.as_str()) {
-                    Some(val) => Some(*val),
-                    None => None
-                };
+                self.variables.insert(var_name.to_owned(), start_alloca);
 
-                self.variables.insert(var_name.to_owned(), variable);
-
+                // emit body
                 self.compile_expr(&body)?;
 
+                // emit step
                 let step = match step {
                     &Some(ref step) => self.compile_expr(&step)?,
                     &None => self.context.f64_type().const_float(1.0)
                 };
 
+                // compile end condition
                 let end_cond = self.compile_expr(&end)?;
 
                 let curr_var = self.builder.build_load(&start_alloca, var_name);
                 let next_var = self.builder.build_float_add(&curr_var.as_float_value(), &step, "nextvar");
 
-                self.builder.build_store(&unsafe { std::mem::transmute(next_var) }, &start_alloca);
+                self.builder.build_store(&start_alloca, &next_var);
 
-                let end_cond = self.builder.build_float_compare(&FloatPredicate::ONE, &end_cond, &zero_const, "loopcond");
+                let end_cond = self.builder.build_float_compare(&FloatPredicate::ONE, &end_cond, &self.context.f64_type().const_float(0.0), "loopcond");
                 let after_bb = self.context.append_basic_block(&parent, "afterloop");
 
                 self.builder.build_conditional_branch(&end_cond, &loop_bb, &after_bb);
                 self.builder.position_at_end(&after_bb);
 
+                self.variables.remove(var_name);
+
                 if let Some(val) = old_val {
                     self.variables.insert(var_name.to_owned(), val);
-                } else {
-                    self.variables.remove(var_name);
                 }
 
-                Ok(zero_const)
+                Ok(self.context.f64_type().const_float(0.0))
             }
         }
     }
@@ -1065,7 +1085,7 @@ impl<'a> Compiler<'a> {
         self.builder.position_at_end(&entry);
 
         // update fn field
-        self.fn_value = function;
+        self.fn_value_opt = Some(function);
 
         // build variables map
         self.variables.reserve(proto.args.len());
@@ -1083,12 +1103,13 @@ impl<'a> Compiler<'a> {
         let body = self.compile_expr(&self.function.body)?;
 
         self.builder.build_return(Some(&body));
+        
+        function.print_to_stderr();
 
         // return the whole thing after verification and optimization
         if function.verify(true) {
             self.fpm.run_on_function(&function);
-            
-            function.verify(true);
+
 
             Ok(function)
         } else {
@@ -1100,6 +1121,7 @@ impl<'a> Compiler<'a> {
         }
     }
 
+    /// Compiles the specified `Function` in the given `Context` and using the specified `Builder`, `PassManager`, and `Module`.
     pub fn compile(context: &'a Context, builder: &'a Builder, pass_manager: &'a PassManager, module: &'a Module, function: &Function) -> Result<FunctionValue, &'static str> {
         let mut compiler = Compiler {
             context: context,
@@ -1107,7 +1129,7 @@ impl<'a> Compiler<'a> {
             fpm: pass_manager,
             module: module,
             function: function,
-            fn_value: unsafe { std::mem::transmute(0usize) },
+            fn_value_opt: None,
             variables: HashMap::new()
         };
 
@@ -1130,24 +1152,40 @@ macro_rules! print_flush {
     };
 }
 
-pub extern fn putchard(x: f64) -> f64 {
-    print_flush!("{}", x as u8 as char);
-    x
-}
+// Greg <6A>: 2017-10-03
+// The two following functions are supposed to be found by the JIT
+// using the 'extern' keyword, but it currently does not work on my machine.
+// I tried using add_symbol, add_global_mapping, and simple extern declaration,
+// but nothing worked.
+// However, extern functions such as cos(x) and sin(x) can be imported without any problem.
+// Other lines related to this program can be found further down.
 
-pub extern fn printd(x: f64) -> f64 {
-    println!("Fn called");
-    println!("{}", x);
-    x
-}
+// pub extern "C" fn putchard(x: f64) -> f64 {
+//     print_flush!("{}", x as u8 as char);
+//     x
+// }
+
+// pub extern "C" fn printd(x: f64) -> f64 {
+//     println!("Fn called");
+//     println!("{}", x);
+//     x
+// }
 
 /// Entry point of the program; acts as a REPL.
 pub fn main() {
     // use self::inkwell::support::add_symbol;
+    let mut display_lexer_output = false;
+    let mut display_parser_output = false;
+    let mut display_compiler_output = false;
 
-    let show_lexed_input = true;
-    let show_parsed_input = false;
-    let show_compiled_input = true;
+    for arg in std::env::args() {
+        match arg.as_str() {
+            "--dl" => display_lexer_output = true,
+            "--dp" => display_parser_output = true,
+            "--dc" => display_compiler_output = true,
+            _ => ()
+        }
+    }
 
     Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target.");
 
@@ -1175,7 +1213,7 @@ pub fn main() {
     let mut previous_exprs = Vec::new();
 
     loop {
-        print_flush!("> ");
+        print_flush!(" > ");
 
         // Read input from stdin
         let mut input = String::new();
@@ -1196,7 +1234,7 @@ pub fn main() {
         prec.insert('/', 40);
 
         // Parse and (optionally) display input
-        if show_lexed_input {
+        if display_lexer_output {
             println!("Attempting to parse lexed input: {:?}", Lexer::new(input.as_str()).collect::<Vec<Token>>());
         }
 
@@ -1206,9 +1244,12 @@ pub fn main() {
         //let mut printd_fn = None;
         //let mut putchard_fn = None;
 
+        // recompile every previously parsed function into the new module
         for prev in previous_exprs.iter() {
             Compiler::compile(&context, &builder, &fpm, &module, prev).expect("Cannot re-add previously compiled function.");
 
+            // Not working; see comment above.
+            //
             // match fun.get_name().to_str().unwrap() {
             //     "printd" => {
             //         printd_fn = Some(fun);
@@ -1224,13 +1265,13 @@ pub fn main() {
 
         let (name, is_anonymous) = match Parser::new(input, &mut prec).parse() {
             Ok(fun) => {
-                if show_parsed_input {
+                if display_parser_output {
                     println!("Expression parsed: {:?}", fun);
                 }
                 
                 match Compiler::compile(&context, &builder, &fpm, &module, &fun) {
                     Ok(function) => { 
-                        if show_compiled_input {
+                        if display_compiler_output {
                             // Not printing a new line since LLVM automatically
                             // prefixes the generated string with one
                             print_flush!("Expression compiled to IR:");
@@ -1262,8 +1303,7 @@ pub fn main() {
         if is_anonymous {
             let ee = module.create_jit_execution_engine(0).unwrap();
 
-            // 2017-02-10 <6A> I still can't add my own functions with either add_global_mapping or add_symbol.
-            //                 However, importing extern functions such as cos(x) or sin(x) works.
+            // Not working ATM; see comment above.
 
             // if let Some(fun) = printd_fn {
             //     println!("Setting global mapping for {:p} {:p} {:p}", &printd, &mut printd, *printd);
@@ -1284,7 +1324,8 @@ pub fn main() {
 
             let compiled_fn: extern "C" fn() -> f64 = unsafe { std::mem::transmute(addr) };
 
-            println!("Result: {}", compiled_fn());
+            println!("=> {}", compiled_fn());
+            println!();
         }
     }
 }
