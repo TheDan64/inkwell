@@ -1103,13 +1103,10 @@ impl<'a> Compiler<'a> {
         let body = self.compile_expr(&self.function.body)?;
 
         self.builder.build_return(Some(&body));
-        
-        function.print_to_stderr();
 
         // return the whole thing after verification and optimization
         if function.verify(true) {
             self.fpm.run_on_function(&function);
-
 
             Ok(function)
         } else {
