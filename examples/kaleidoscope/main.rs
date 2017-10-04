@@ -24,7 +24,7 @@ use std::ops::DerefMut;
 use self::inkwell::basic_block::BasicBlock;
 use self::inkwell::builder::Builder;
 use self::inkwell::context::Context;
-use self::inkwell::module::Module;
+use self::inkwell::module::{Module, OptimizationLevel};
 use self::inkwell::passes::PassManager;
 use self::inkwell::targets::{InitializationConfig, Target};
 use self::inkwell::types::BasicType;
@@ -1341,7 +1341,7 @@ pub fn main() {
         };
 
         if is_anonymous {
-            let ee = module.create_jit_execution_engine(0).unwrap();
+            let ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
             let addr = match ee.get_function_address(name.as_str()) {
                 Ok(addr) => addr,
