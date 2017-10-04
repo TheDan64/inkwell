@@ -125,6 +125,19 @@ impl FloatPredicate {
     }
 }
 
+
+/// Defines the optimization level used to compile a `Module`.
+/// 
+/// # Remarks
+/// See also: http://llvm.org/doxygen/CodeGen_8h_source.html
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+pub enum OptimizationLevel {
+    None       = 0,
+    Less       = 1,
+    Default    = 2,
+    Aggressive = 3
+}
+
 // REVIEW: Maybe this belongs in some sort of prelude?
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum GlobalVisibility {

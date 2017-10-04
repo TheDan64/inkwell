@@ -11,12 +11,13 @@ use std::mem::{forget, uninitialized, zeroed};
 use std::path::Path;
 use std::slice::from_raw_parts;
 
+use OptimizationLevel;
 use context::{Context, ContextRef};
 use data_layout::DataLayout;
 use execution_engine::ExecutionEngine;
 use memory_buffer::MemoryBuffer;
 use types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
-use values::{AsValueRef, BasicValue, FunctionValue, GlobalValue, MetadataValue};
+use values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
 
 // REVIEW: Maybe this should go into it's own module?
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -38,18 +39,6 @@ pub enum Linkage {
     PrivateLinkage,
     WeakAnyLinkage,
     WeakODRLinkage,
-}
-
-/// Defines the optimization level used to compile a `Module`.
-/// 
-/// # Remarks
-/// See also: http://llvm.org/doxygen/CodeGen_8h_source.html
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
-pub enum OptimizationLevel {
-    None       = 0,
-    Less       = 1,
-    Default    = 2,
-    Aggressive = 3
 }
 
 /// Defines the address space in which a global will be inserted.
@@ -206,10 +195,9 @@ impl Module {
     /// 
     /// let local_context = Context::create();
     /// let local_module = local_context.create_module("my_module");
-    /// let local_context = ContextRef::new(local_context);
     /// 
-    /// assert_eq!(local_module.get_context(), local_context);
-    /// assert_ne!(local_context, global_context);
+    /// assert_eq!(*local_module.get_context(), local_context);
+    /// assert_ne!(local_context, *global_context);
     /// ```
     pub fn get_context(&self) -> ContextRef {
         let context = unsafe {
@@ -278,9 +266,10 @@ impl Module {
     /// Consumes this `Module`, and creates a JIT `ExecutionEngine` from it.
     /// 
     /// # Example
-    /// ```
+    /// ```no_run
+    /// use inkwell::OptimizationLevel;
     /// use inkwell::context::Context;
-    /// use inkwell::module::{Module, OptimizationLevel};
+    /// use inkwell::module::Module;
     /// use inkwell::targets::{InitializationConfig, Target};
     /// 
     /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");

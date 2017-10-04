@@ -1,8 +1,8 @@
 extern crate inkwell;
 
+use self::inkwell::OptimizationLevel;
 use self::inkwell::context::Context;
 use self::inkwell::execution_engine::FunctionLookupError;
-use self::inkwell::module::OptimizationLevel;
 use self::inkwell::targets::{InitializationConfig, Target};
 
 #[test]

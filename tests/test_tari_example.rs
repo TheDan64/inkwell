@@ -1,7 +1,7 @@
 extern crate inkwell;
 
+use self::inkwell::OptimizationLevel;
 use self::inkwell::context::Context;
-use self::inkwell::module::OptimizationLevel;
 use self::inkwell::targets::{InitializationConfig, Target};
 use std::mem::transmute;
 

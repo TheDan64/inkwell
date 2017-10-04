@@ -2,6 +2,7 @@ use llvm_sys::core::LLVMDisposeMessage;
 use llvm_sys::target::{LLVMTargetDataRef, LLVMCopyStringRepOfTargetData, LLVMSizeOfTypeInBits, LLVMCreateTargetData, LLVMAddTargetData, LLVMByteOrder, LLVMPointerSize, LLVMByteOrdering, LLVMStoreSizeOfType, LLVMABISizeOfType, LLVMABIAlignmentOfType, LLVMCallFrameAlignmentOfType, LLVMPreferredAlignmentOfType, LLVMPreferredAlignmentOfGlobal, LLVMElementAtOffset, LLVMOffsetOfElement, LLVMDisposeTargetData, LLVMPointerSizeForAS, LLVMIntPtrType, LLVMIntPtrTypeForAS, LLVMIntPtrTypeInContext, LLVMIntPtrTypeForASInContext};
 use llvm_sys::target_machine::{LLVMGetFirstTarget, LLVMTargetRef, LLVMGetNextTarget, LLVMGetTargetFromName, LLVMGetTargetFromTriple, LLVMGetTargetName, LLVMGetTargetDescription, LLVMTargetHasJIT, LLVMTargetHasTargetMachine, LLVMTargetHasAsmBackend, LLVMTargetMachineRef, LLVMDisposeTargetMachine, LLVMGetTargetMachineTarget, LLVMGetTargetMachineTriple, LLVMSetTargetMachineAsmVerbosity, LLVMCreateTargetMachine, LLVMGetTargetMachineCPU, LLVMGetTargetMachineFeatureString, LLVMGetDefaultTargetTriple, LLVMAddAnalysisPasses, LLVMCodeGenOptLevel, LLVMCodeModel, LLVMRelocMode};
 
+use OptimizationLevel;
 use context::Context;
 use data_layout::DataLayout;
 use passes::PassManager;
@@ -12,23 +13,6 @@ use std::default::Default;
 use std::ffi::{CStr, CString};
 use std::mem::zeroed;
 use std::ptr;
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum CodeGenOptLevel {
-    Less,
-    Default,
-    Aggressive,
-}
-
-impl CodeGenOptLevel {
-    pub(crate) fn as_u32(&self) -> u32 {
-        match *self {
-            CodeGenOptLevel::Less => 1,
-            CodeGenOptLevel::Default => 2,
-            CodeGenOptLevel::Aggressive => 3,
-        }
-    }
-}
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum CodeModel {
@@ -541,15 +525,15 @@ impl Target {
         }
     }
 
-    pub fn create_target_machine(&self, triple: &str, cpu: &str, features: &str, level: Option<CodeGenOptLevel>, reloc_mode: RelocMode, code_model: CodeModel) -> Option<TargetMachine> {
+    pub fn create_target_machine(&self, triple: &str, cpu: &str, features: &str, level: Option<OptimizationLevel>, reloc_mode: RelocMode, code_model: CodeModel) -> Option<TargetMachine> {
         let triple = CString::new(triple).expect("Conversion to CString failed unexpectedly");
         let cpu = CString::new(cpu).expect("Conversion to CString failed unexpectedly");
         let features = CString::new(features).expect("Conversion to CString failed unexpectedly");
         let level = match level {
-            None => LLVMCodeGenOptLevel::LLVMCodeGenLevelNone,
-            Some(CodeGenOptLevel::Less) => LLVMCodeGenOptLevel::LLVMCodeGenLevelLess,
-            Some(CodeGenOptLevel::Default) => LLVMCodeGenOptLevel::LLVMCodeGenLevelDefault,
-            Some(CodeGenOptLevel::Aggressive) => LLVMCodeGenOptLevel::LLVMCodeGenLevelAggressive,
+            Some(OptimizationLevel::None) | None => LLVMCodeGenOptLevel::LLVMCodeGenLevelNone,
+            Some(OptimizationLevel::Less) => LLVMCodeGenOptLevel::LLVMCodeGenLevelLess,
+            Some(OptimizationLevel::Default) => LLVMCodeGenOptLevel::LLVMCodeGenLevelDefault,
+            Some(OptimizationLevel::Aggressive) => LLVMCodeGenOptLevel::LLVMCodeGenLevelAggressive,
         };
         let code_model = match code_model {
             CodeModel::Default => LLVMCodeModel::LLVMCodeModelDefault,

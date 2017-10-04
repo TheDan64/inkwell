@@ -24,12 +24,12 @@ use std::ops::DerefMut;
 use self::inkwell::basic_block::BasicBlock;
 use self::inkwell::builder::Builder;
 use self::inkwell::context::Context;
-use self::inkwell::module::{Module, OptimizationLevel};
+use self::inkwell::module::Module;
 use self::inkwell::passes::PassManager;
 use self::inkwell::targets::{InitializationConfig, Target};
 use self::inkwell::types::BasicType;
 use self::inkwell::values::{BasicValue, FloatValue, FunctionValue, PointerValue};
-use self::inkwell::FloatPredicate;
+use self::inkwell::{OptimizationLevel, FloatPredicate};
 
 use Token::*;
 
