@@ -98,7 +98,6 @@ impl<'a> Lexer<'a> {
     }
 
     /// Lexes and returns the next `Token` from the source code.
-    #[allow(unused_variables)]
     pub fn lex(&mut self) -> LexResult {
         let chars = self.chars.deref_mut();
         let src = self.input;
@@ -157,12 +156,12 @@ impl<'a> Lexer<'a> {
                 Ok(Token::Comment)
             },
 
-            ch @ '.' | ch @ '0' ... '9' => {
+            '.' | '0' ... '9' => {
                 // Parse number literal
                 loop {
                     let ch = match chars.peek() {
                         Some(ch) => *ch,
-                        None => { return Ok(Token::EOF); }
+                        None => return Ok(Token::EOF)
                     };
 
                     // Parse float.
@@ -182,7 +181,7 @@ impl<'a> Lexer<'a> {
                 loop {
                     let ch = match chars.peek() {
                         Some(ch) => *ch,
-                        None => { return Ok(Token::EOF); }
+                        None => return Ok(Token::EOF)
                     };
 
                     // A word-like identifier only contains underscores and alphanumeric characters.
