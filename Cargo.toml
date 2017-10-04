@@ -16,6 +16,10 @@ enum-methods = "0.0.7"
 libc = "*"
 llvm-sys = "37.0.5" # TODO: Configure based on feature toggle. GH#1
 
+[[example]]
+name = "kaleidoscope"
+path = "examples/kaleidoscope/main.rs"
+
 [badges]
 travis-ci = { repository = "TheDan64/inkwell" }
 codecov = { repository = "TheDan64/inkwell" }

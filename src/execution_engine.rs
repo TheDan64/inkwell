@@ -50,6 +50,12 @@ impl ExecutionEngine {
         }
     }
 
+    // pub fn add_global_mapping(&mut self, global: &AnyValue, addr: *const ()) {
+    //     unsafe {
+    //         LLVMAddGlobalMapping(self.execution_engine, global.as_value_ref(), addr as *mut ::libc::c_void)
+    //     }
+    // }
+
     // TODOC: EE must *own* modules and deal out references
     pub fn add_module(&mut self, module: Module) -> &Module {
         unsafe {
