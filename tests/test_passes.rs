@@ -2,7 +2,7 @@ extern crate inkwell;
 
 use self::inkwell::context::Context;
 use self::inkwell::passes::{PassManagerBuilder, PassManager, PassRegistry};
-use self::inkwell::targets::CodeGenOptLevel::Aggressive;
+use self::inkwell::OptimizationLevel::Aggressive;
 
 #[test]
 fn test_init_all_passes_for_module() {
@@ -81,7 +81,7 @@ fn test_init_all_passes_for_module() {
 fn test_pass_manager_builder() {
     let pass_manager_builder = PassManagerBuilder::create();
 
-    pass_manager_builder.set_optimization_level(Some(&Aggressive));
+    pass_manager_builder.set_optimization_level(Aggressive);
     pass_manager_builder.set_size_level(2);
     pass_manager_builder.set_inliner_with_threshold(42);
     pass_manager_builder.set_disable_unit_at_a_time(true);

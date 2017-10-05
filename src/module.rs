@@ -11,12 +11,13 @@ use std::mem::{forget, uninitialized, zeroed};
 use std::path::Path;
 use std::slice::from_raw_parts;
 
+use OptimizationLevel;
 use context::{Context, ContextRef};
 use data_layout::DataLayout;
 use execution_engine::ExecutionEngine;
 use memory_buffer::MemoryBuffer;
 use types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
-use values::{AsValueRef, BasicValue, FunctionValue, GlobalValue, MetadataValue};
+use values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
 
 // REVIEW: Maybe this should go into it's own module?
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -38,6 +39,19 @@ pub enum Linkage {
     PrivateLinkage,
     WeakAnyLinkage,
     WeakODRLinkage,
+}
+
+/// Defines the address space in which a global will be inserted.
+/// 
+/// # Remarks
+/// See also: http://llvm.org/doxygen/NVPTXBaseInfo_8h_source.html
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+pub enum AddressSpace {
+    Generic = 0,
+    Global  = 1,
+    Shared  = 3,
+    Const   = 4,
+    Local   = 5
 }
 
 impl Linkage {
@@ -86,6 +100,8 @@ impl Linkage {
     }
 }
 
+/// Represents a reference to an LLVM `Module`.
+/// The underlying module will be disposed when dropping this object.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Module {
     pub(crate) module: LLVMModuleRef,
@@ -129,12 +145,31 @@ impl Module {
         Module::new(module)
     }
 
-    // TODOC: LLVM will default linkage to ExternalLinkage (at least in 3.7)
-    pub fn add_function(&self, name: &str, return_type: &FunctionType, linkage: Option<&Linkage>) -> FunctionValue {
+    /// Creates a function given its `name` and `ty`, adds it to the `Module`
+    /// and returns it.
+    /// 
+    /// An optional `linkage` can be specified, without which the default value
+    /// `Linkage::ExternalLinkage` will be used.
+    /// 
+    /// # Example
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::module::{Module, Linkage};
+    /// 
+    /// let context = Context::get_global();
+    /// let module = Module::create("my_module");
+    /// 
+    /// let fn_type = context.f32_type().fn_type(&[], false);
+    /// let fn_val = module.add_function("my_function", &fn_type, None);
+    /// 
+    /// assert_eq!(fn_val.get_name().to_str(), Ok("my_function"));
+    /// assert_eq!(fn_val.get_linkage(), Linkage::ExternalLinkage);
+    /// ```
+    pub fn add_function(&self, name: &str, ty: &FunctionType, linkage: Option<&Linkage>) -> FunctionValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMAddFunction(self.module, c_string.as_ptr(), return_type.as_type_ref())
+            LLVMAddFunction(self.module, c_string.as_ptr(), ty.as_type_ref())
         };
 
         if let Some(linkage) = linkage {
@@ -146,6 +181,24 @@ impl Module {
         FunctionValue::new(value).expect("add_function should always succeed in adding a new function")
     }
 
+    /// Gets the `Context` from which this `Module` originates.
+    /// 
+    /// # Example
+    /// ```
+    /// use inkwell::context::{Context, ContextRef};
+    /// use inkwell::module::Module;
+    /// 
+    /// let global_context = Context::get_global();
+    /// let global_module = Module::create("my_global_module");
+    /// 
+    /// assert_eq!(global_module.get_context(), global_context);
+    /// 
+    /// let local_context = Context::create();
+    /// let local_module = local_context.create_module("my_module");
+    /// 
+    /// assert_eq!(*local_module.get_context(), local_context);
+    /// assert_ne!(local_context, *global_context);
+    /// ```
     pub fn get_context(&self) -> ContextRef {
         let context = unsafe {
             LLVMGetModuleContext(self.module)
@@ -210,15 +263,29 @@ impl Module {
         }
     }
 
-    // TODOC: EE must *own* modules and deal out references
-    // REVIEW: Looking at LLVM source, opt_level seems to be casted into a targets::CodeGenOptLevel
-    // or LLVM equivalent anyway
-    pub fn create_jit_execution_engine(self, opt_level: u32) -> Result<ExecutionEngine, String> {
+    /// Consumes this `Module`, and creates a JIT `ExecutionEngine` from it.
+    /// 
+    /// # Example
+    /// ```no_run
+    /// use inkwell::OptimizationLevel;
+    /// use inkwell::context::Context;
+    /// use inkwell::module::Module;
+    /// use inkwell::targets::{InitializationConfig, Target};
+    /// 
+    /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+    ///
+    /// let context = Context::get_global();
+    /// let module = Module::create("my_module");
+    /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    ///
+    /// assert_eq!(execution_engine.get_module_at(0).get_context(), context);
+    /// ```
+    pub fn create_jit_execution_engine(self, opt_level: OptimizationLevel) -> Result<ExecutionEngine, String> {
         let mut execution_engine = unsafe { uninitialized() };
         let mut err_str = unsafe { zeroed() };
 
         let code = unsafe {
-            LLVMCreateJITCompilerForModule(&mut execution_engine, self.module, opt_level, &mut err_str) // Should take ownership of module
+            LLVMCreateJITCompilerForModule(&mut execution_engine, self.module, opt_level as u32, &mut err_str) // Should take ownership of module
         };
 
         if code == 1 {
@@ -240,12 +307,12 @@ impl Module {
         Ok(execution_engine)
     }
 
-    pub fn add_global(&self, type_: &BasicType, address_space: Option<u32>, name: &str) -> GlobalValue {
+    pub fn add_global(&self, type_: &BasicType, address_space: Option<AddressSpace>, name: &str) -> GlobalValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             match address_space {
-                Some(address_space) => LLVMAddGlobalInAddressSpace(self.module, type_.as_type_ref(), c_string.as_ptr(), address_space),
+                Some(address_space) => LLVMAddGlobalInAddressSpace(self.module, type_.as_type_ref(), c_string.as_ptr(), address_space as u32),
                 None => LLVMAddGlobal(self.module, type_.as_type_ref(), c_string.as_ptr()),
             }
         };
@@ -289,7 +356,17 @@ impl Module {
         MemoryBuffer::new(memory_buffer)
     }
 
+    /// Ensures that the current `Module` is valid, and returns a `bool`
+    /// that describes whether or not it is.
+    /// 
+    /// * `print` - Whether or not a message describing the error should be printed
+    ///   to stderr, in case of failure.
+    /// 
+    /// # Remarks
+    /// See also: http://llvm.org/doxygen/Analysis_2Analysis_8cpp_source.html
     pub fn verify(&self, print: bool) -> bool {
+        // REVIEW <6A>: Maybe, instead of printing the module to stderr with `print`,
+        // we should return Result<(), String> that contains an error string?
         let mut err_str = unsafe { zeroed() };
 
         let action = if print {
@@ -341,12 +418,14 @@ impl Module {
                         .set(self.get_raw_data_layout());
     }
 
+    /// Prints the content of the `Module` to stderr.
     pub fn print_to_stderr(&self) {
         unsafe {
             LLVMDumpModule(self.module);
         }
     }
 
+    /// Prints the content of the `Module` to a string.
     pub fn print_to_string(&self) -> &CStr {
         unsafe {
             CStr::from_ptr(LLVMPrintModuleToString(self.module))

@@ -349,7 +349,7 @@ pub struct ContextRef {
 }
 
 impl ContextRef {
-    pub fn new(context: Context) -> Self {
+    pub(crate) fn new(context: Context) -> Self {
         ContextRef {
             context: Some(context),
         }

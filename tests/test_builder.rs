@@ -1,5 +1,6 @@
 extern crate inkwell;
 
+use self::inkwell::OptimizationLevel;
 use self::inkwell::context::Context;
 use self::inkwell::builder::Builder;
 use self::inkwell::targets::{InitializationConfig, Target};
@@ -42,7 +43,7 @@ fn test_null_checked_ptr_ops() {
     let context = Context::create();
     let module = context.create_module("unsafe");
     let builder = context.create_builder();
-    let execution_engine = module.create_jit_execution_engine(0).unwrap();
+    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     let module = execution_engine.get_module_at(0);
 
     // Here we're going to create a function that looks roughly like:
@@ -107,7 +108,7 @@ fn test_binary_ops() {
     let context = Context::create();
     let module = context.create_module("unsafe");
     let builder = context.create_builder();
-    let execution_engine = module.create_jit_execution_engine(0).unwrap();
+    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     let module = execution_engine.get_module_at(0);
 
     // Here we're going to create an and function which looks roughly like:
@@ -193,7 +194,7 @@ fn test_switch() {
     let context = Context::create();
     let module = context.create_module("unsafe");
     let builder = context.create_builder();
-    let execution_engine = module.create_jit_execution_engine(0).unwrap();
+    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     let module = execution_engine.get_module_at(0);
 
     // Here we're going to create a function which looks roughly like:
@@ -253,7 +254,7 @@ fn test_bit_shifts() {
     let context = Context::create();
     let module = context.create_module("unsafe");
     let builder = context.create_builder();
-    let execution_engine = module.create_jit_execution_engine(0).unwrap();
+    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     let module = execution_engine.get_module_at(0);
 
     // Here we're going to create a function which looks roughly like:

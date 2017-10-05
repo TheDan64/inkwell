@@ -7,8 +7,9 @@ use llvm_sys::transforms::pass_manager_builder::{LLVMPassManagerBuilderRef, LLVM
 use llvm_sys::transforms::scalar::{LLVMAddAggressiveDCEPass, LLVMAddMemCpyOptPass, LLVMAddBitTrackingDCEPass, LLVMAddAlignmentFromAssumptionsPass, LLVMAddCFGSimplificationPass, LLVMAddDeadStoreEliminationPass, LLVMAddScalarizerPass, LLVMAddMergedLoadStoreMotionPass, LLVMAddGVNPass, LLVMAddIndVarSimplifyPass, LLVMAddInstructionCombiningPass, LLVMAddJumpThreadingPass, LLVMAddLICMPass, LLVMAddLoopDeletionPass, LLVMAddLoopIdiomPass, LLVMAddLoopRotatePass, LLVMAddLoopRerollPass, LLVMAddLoopUnrollPass, LLVMAddLoopUnswitchPass, LLVMAddPartiallyInlineLibCallsPass, LLVMAddLowerSwitchPass, LLVMAddPromoteMemoryToRegisterPass, LLVMAddSCCPPass, LLVMAddScalarReplAggregatesPass, LLVMAddScalarReplAggregatesPassSSA, LLVMAddScalarReplAggregatesPassWithThreshold, LLVMAddSimplifyLibCallsPass, LLVMAddTailCallEliminationPass, LLVMAddConstantPropagationPass, LLVMAddDemoteMemoryToRegisterPass, LLVMAddVerifierPass, LLVMAddCorrelatedValuePropagationPass, LLVMAddEarlyCSEPass, LLVMAddLowerExpectIntrinsicPass, LLVMAddTypeBasedAliasAnalysisPass, LLVMAddScopedNoAliasAAPass, LLVMAddBasicAliasAnalysisPass, LLVMAddReassociatePass};
 use llvm_sys::transforms::vectorize::{LLVMAddBBVectorizePass, LLVMAddLoopVectorizePass, LLVMAddSLPVectorizePass};
 
+use OptimizationLevel;
 use module::Module;
-use targets::{CodeGenOptLevel, TargetData};
+use targets::TargetData;
 use values::{AsValueRef, FunctionValue};
 
 // REVIEW: Opt Level might be identical to targets::Option<CodeGenOptLevel>
@@ -34,14 +35,9 @@ impl PassManagerBuilder {
         PassManagerBuilder::new(pass_manager_builder)
     }
 
-    pub fn set_optimization_level(&self, opt_level: Option<&CodeGenOptLevel>) {
-        let opt_level = match opt_level {
-            Some(level) => level.as_u32(),
-            None => 0
-        };
-
+    pub fn set_optimization_level(&self, opt_level: OptimizationLevel) {
         unsafe {
-            LLVMPassManagerBuilderSetOptLevel(self.pass_manager_builder, opt_level)
+            LLVMPassManagerBuilderSetOptLevel(self.pass_manager_builder, opt_level as u32)
         }
     }
 

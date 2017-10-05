@@ -29,7 +29,7 @@ use self::inkwell::passes::PassManager;
 use self::inkwell::targets::{InitializationConfig, Target};
 use self::inkwell::types::BasicType;
 use self::inkwell::values::{BasicValue, FloatValue, FunctionValue, PointerValue};
-use self::inkwell::FloatPredicate;
+use self::inkwell::{OptimizationLevel, FloatPredicate};
 
 use Token::*;
 
@@ -98,7 +98,6 @@ impl<'a> Lexer<'a> {
     }
 
     /// Lexes and returns the next `Token` from the source code.
-    #[allow(unused_variables)]
     pub fn lex(&mut self) -> LexResult {
         let chars = self.chars.deref_mut();
         let src = self.input;
@@ -157,12 +156,12 @@ impl<'a> Lexer<'a> {
                 Ok(Token::Comment)
             },
 
-            ch @ '.' | ch @ '0' ... '9' => {
+            '.' | '0' ... '9' => {
                 // Parse number literal
                 loop {
                     let ch = match chars.peek() {
                         Some(ch) => *ch,
-                        None => { return Ok(Token::EOF); }
+                        None => return Ok(Token::EOF)
                     };
 
                     // Parse float.
@@ -182,7 +181,7 @@ impl<'a> Lexer<'a> {
                 loop {
                     let ch = match chars.peek() {
                         Some(ch) => *ch,
-                        None => { return Ok(Token::EOF); }
+                        None => return Ok(Token::EOF)
                     };
 
                     // A word-like identifier only contains underscores and alphanumeric characters.
@@ -1341,7 +1340,7 @@ pub fn main() {
         };
 
         if is_anonymous {
-            let ee = module.create_jit_execution_engine(0).unwrap();
+            let ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
             let addr = match ee.get_function_address(name.as_str()) {
                 Ok(addr) => addr,

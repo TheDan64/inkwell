@@ -1,5 +1,6 @@
 extern crate inkwell;
 
+use self::inkwell::OptimizationLevel;
 use self::inkwell::context::Context;
 use self::inkwell::targets::{InitializationConfig, Target};
 use std::mem::transmute;
@@ -11,7 +12,7 @@ fn test_tari_example() {
     let context = Context::create();
     let module = context.create_module("sum");
     let builder = context.create_builder();
-    let execution_engine = module.create_jit_execution_engine(0).unwrap();
+    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     let module = execution_engine.get_module_at(0);
 
     let i64_type = context.i64_type();
