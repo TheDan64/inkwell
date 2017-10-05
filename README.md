@@ -10,13 +10,34 @@
 
 Inkwell aims to help you pen your own programming languages by safely wrapping llvm-sys. It provides a more strongly typed interface than the underlying LLVM API so that certain types of errors can be caught at compile time instead of at LLVM's runtime. This means we are trying to replicate LLVM IR's strong typing as closely as possible. The ultimate goal is to make LLVM safer from the rust end and a bit easier to learn (via documentation) and use.
 
+## Requirements
+
+* Any Rust version released in the last year or so
+* Rust Stable, Beta, or Nightly
+* LLVM 3.7 (3.6 and 3.8+ support is planned: [#1](https://github.com/TheDan64/inkwell/issues/1))
+
+## Usage
+
+You'll need to point your Cargo.toml to the master branch of Inkwell like so:
+
+```toml
+[dependencies]
+inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "master" }
+```
+
+In the root of your source code you will likely have to add an extern crate to begin using Inkwell:
+
+```rust
+extern crate inkwell;
+```
+
 ## Documentation
 
 [docs.rs](https://docs.rs/crate/inkwell/) documentation is planned but not yet complete. See [#2](https://github.com/TheDan64/inkwell/issues/2) for the tracking issue.
 
-### Example
+## Examples
 
-Here's [tari's llvm-sys example](https://bitbucket.org/tari/llvm-sys.rs/src/ea4ac92a171da2c1851806b91e531ed3a0b41091/examples/jit-function.rs) written in safe code<sup>1</sup> with Inkwell:
+### Tari's [llvm-sys example](https://bitbucket.org/tari/llvm-sys.rs/src/ea4ac92a171da2c1851806b91e531ed3a0b41091/examples/jit-function.rs) written in safe code<sup>1</sup> with Inkwell:
 
 ```rust
 use inkwell::context::Context;
@@ -61,6 +82,12 @@ assert_eq!(sum(x, y, z), x + y + z);
 
 <sup>1</sup> Casting the LLVM JIT function address into a rust function does require a single unsafe transmute, since Inkwell doesn't know what the function signature is. Maybe we can do something about this in the future? In theory, fn_type does contain all the needed info, so whether or not we can do this automagically depends on what rust is capable of. Converting structs, pointers, and other types could be tricky but might be seen as a form of deserialization. See [#5](https://github.com/TheDan64/inkwell/issues/5) for the tracking issue.
 
-## Building
+### LLVM's [Kaleidoscope Tutorial](https://llvm.org/docs/tutorial/index.html)
 
-Inkwell requires LLVM to be installed when building. Currently only LLVM 3.7 is supported, though multi-version support is planned. See [#1](https://github.com/TheDan64/inkwell/issues/1) for the tracking issue. Inkwell currently compiles on stable, though this may be subject to change in the future.
+Can be found in the examples directory.
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+Please make sure to update tests as appropriate.
