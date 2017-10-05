@@ -525,15 +525,15 @@ impl Target {
         }
     }
 
-    pub fn create_target_machine(&self, triple: &str, cpu: &str, features: &str, level: Option<OptimizationLevel>, reloc_mode: RelocMode, code_model: CodeModel) -> Option<TargetMachine> {
+    pub fn create_target_machine(&self, triple: &str, cpu: &str, features: &str, level: OptimizationLevel, reloc_mode: RelocMode, code_model: CodeModel) -> Option<TargetMachine> {
         let triple = CString::new(triple).expect("Conversion to CString failed unexpectedly");
         let cpu = CString::new(cpu).expect("Conversion to CString failed unexpectedly");
         let features = CString::new(features).expect("Conversion to CString failed unexpectedly");
         let level = match level {
-            Some(OptimizationLevel::None) | None => LLVMCodeGenOptLevel::LLVMCodeGenLevelNone,
-            Some(OptimizationLevel::Less) => LLVMCodeGenOptLevel::LLVMCodeGenLevelLess,
-            Some(OptimizationLevel::Default) => LLVMCodeGenOptLevel::LLVMCodeGenLevelDefault,
-            Some(OptimizationLevel::Aggressive) => LLVMCodeGenOptLevel::LLVMCodeGenLevelAggressive,
+            OptimizationLevel::None => LLVMCodeGenOptLevel::LLVMCodeGenLevelNone,
+            OptimizationLevel::Less => LLVMCodeGenOptLevel::LLVMCodeGenLevelLess,
+            OptimizationLevel::Default => LLVMCodeGenOptLevel::LLVMCodeGenLevelDefault,
+            OptimizationLevel::Aggressive => LLVMCodeGenOptLevel::LLVMCodeGenLevelAggressive,
         };
         let code_model = match code_model {
             CodeModel::Default => LLVMCodeModel::LLVMCodeModelDefault,

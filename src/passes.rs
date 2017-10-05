@@ -35,14 +35,9 @@ impl PassManagerBuilder {
         PassManagerBuilder::new(pass_manager_builder)
     }
 
-    pub fn set_optimization_level(&self, opt_level: Option<OptimizationLevel>) {
-        let opt_level = match opt_level {
-            Some(level) => level as u32,
-            None => 0u32
-        };
-
+    pub fn set_optimization_level(&self, opt_level: OptimizationLevel) {
         unsafe {
-            LLVMPassManagerBuilderSetOptLevel(self.pass_manager_builder, opt_level)
+            LLVMPassManagerBuilderSetOptLevel(self.pass_manager_builder, opt_level as u32)
         }
     }
 

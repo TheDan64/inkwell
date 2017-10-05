@@ -130,12 +130,20 @@ impl FloatPredicate {
 /// 
 /// # Remarks
 /// See also: http://llvm.org/doxygen/CodeGen_8h_source.html
+#[repr(u32)]
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum OptimizationLevel {
     None       = 0,
     Less       = 1,
     Default    = 2,
     Aggressive = 3
+}
+
+impl Default for OptimizationLevel {
+    /// Returns the default value for `OptimizationLevel`, namely `OptimizationLevel::Default`.
+    fn default() -> Self {
+        OptimizationLevel::Default
+    }
 }
 
 // REVIEW: Maybe this belongs in some sort of prelude?
