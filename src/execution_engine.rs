@@ -1,9 +1,9 @@
 use llvm_sys::core::LLVMDisposeMessage;
-use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction, LLVMLinkInMCJIT, LLVMLinkInInterpreter, LLVMRemoveModule, LLVMGenericValueRef};
+use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction, LLVMLinkInMCJIT, LLVMLinkInInterpreter, LLVMRemoveModule, LLVMGenericValueRef, LLVMFreeMachineCodeForFunction, LLVMGetPointerToGlobal};
 
 use module::Module;
 use targets::TargetData;
-use values::{AsValueRef, FunctionValue, GenericValue};
+use values::{AsValueRef, FunctionValue, GenericValue, GlobalValue};
 
 use std::ffi::{CStr, CString};
 use std::mem::{forget, uninitialized, zeroed};
@@ -26,6 +26,7 @@ impl ExecutionEngine {
     pub(crate) fn new(execution_engine: LLVMExecutionEngineRef, jit_mode: bool) -> ExecutionEngine {
         assert!(!execution_engine.is_null());
 
+        // REVIEW: Will we have to do this for LLVMGetExecutionEngineTargetMachine too?
         let target_data = unsafe {
             LLVMGetExecutionEngineTargetData(execution_engine)
         };
@@ -185,6 +186,12 @@ impl ExecutionEngine {
 
         unsafe {
             LLVMRunFunctionAsMain(self.execution_engine, function.as_value_ref(), args.len() as u32, args.as_ptr(), env_p.as_ptr()); // REVIEW: usize to u32 cast ok??
+        }
+    }
+
+    pub fn free_fn_machine_code(&self, function: &FunctionValue) {
+        unsafe {
+            LLVMFreeMachineCodeForFunction(self.execution_engine, function.as_value_ref())
         }
     }
 }

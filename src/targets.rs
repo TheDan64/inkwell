@@ -1,10 +1,12 @@
 use llvm_sys::core::LLVMDisposeMessage;
 use llvm_sys::target::{LLVMTargetDataRef, LLVMCopyStringRepOfTargetData, LLVMSizeOfTypeInBits, LLVMCreateTargetData, LLVMAddTargetData, LLVMByteOrder, LLVMPointerSize, LLVMByteOrdering, LLVMStoreSizeOfType, LLVMABISizeOfType, LLVMABIAlignmentOfType, LLVMCallFrameAlignmentOfType, LLVMPreferredAlignmentOfType, LLVMPreferredAlignmentOfGlobal, LLVMElementAtOffset, LLVMOffsetOfElement, LLVMDisposeTargetData, LLVMPointerSizeForAS, LLVMIntPtrType, LLVMIntPtrTypeForAS, LLVMIntPtrTypeInContext, LLVMIntPtrTypeForASInContext};
-use llvm_sys::target_machine::{LLVMGetFirstTarget, LLVMTargetRef, LLVMGetNextTarget, LLVMGetTargetFromName, LLVMGetTargetFromTriple, LLVMGetTargetName, LLVMGetTargetDescription, LLVMTargetHasJIT, LLVMTargetHasTargetMachine, LLVMTargetHasAsmBackend, LLVMTargetMachineRef, LLVMDisposeTargetMachine, LLVMGetTargetMachineTarget, LLVMGetTargetMachineTriple, LLVMSetTargetMachineAsmVerbosity, LLVMCreateTargetMachine, LLVMGetTargetMachineCPU, LLVMGetTargetMachineFeatureString, LLVMGetDefaultTargetTriple, LLVMAddAnalysisPasses, LLVMCodeGenOptLevel, LLVMCodeModel, LLVMRelocMode};
+use llvm_sys::target_machine::{LLVMGetFirstTarget, LLVMTargetRef, LLVMGetNextTarget, LLVMGetTargetFromName, LLVMGetTargetFromTriple, LLVMGetTargetName, LLVMGetTargetDescription, LLVMTargetHasJIT, LLVMTargetHasTargetMachine, LLVMTargetHasAsmBackend, LLVMTargetMachineRef, LLVMDisposeTargetMachine, LLVMGetTargetMachineTarget, LLVMGetTargetMachineTriple, LLVMSetTargetMachineAsmVerbosity, LLVMCreateTargetMachine, LLVMGetTargetMachineCPU, LLVMGetTargetMachineFeatureString, LLVMGetDefaultTargetTriple, LLVMAddAnalysisPasses, LLVMCodeGenOptLevel, LLVMCodeModel, LLVMRelocMode, LLVMCodeGenFileType, LLVMTargetMachineEmitToMemoryBuffer, LLVMTargetMachineEmitToFile};
 
 use OptimizationLevel;
 use context::Context;
 use data_layout::DataLayout;
+use memory_buffer::MemoryBuffer;
+use module::Module;
 use passes::PassManager;
 use types::{AnyType, AsTypeRef, StructType, PointerType};
 use values::{AsValueRef, GlobalValue};
@@ -12,6 +14,7 @@ use values::{AsValueRef, GlobalValue};
 use std::default::Default;
 use std::ffi::{CStr, CString};
 use std::mem::zeroed;
+use std::path::Path;
 use std::ptr;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -30,6 +33,22 @@ pub enum RelocMode {
     Static,
     PIC,
     DynamicNoPic,
+}
+
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum FileType {
+    Assembly,
+    Object,
+}
+
+impl FileType {
+    fn as_llvm_file_type(&self) -> LLVMCodeGenFileType {
+        match *self {
+            FileType::Assembly => LLVMCodeGenFileType::LLVMAssemblyFile,
+            FileType::Object => LLVMCodeGenFileType::LLVMObjectFile,
+        }
+    }
 }
 
 // TODO: Doc: Base gets you TargetMachine support, machine_code gets you asm_backend
@@ -706,6 +725,53 @@ impl TargetMachine {
         unsafe {
             LLVMAddAnalysisPasses(self.target_machine, pass_manager.pass_manager)
         }
+    }
+
+    pub fn write_to_memory_buffer(&self, module: &Module, file_type: FileType) -> Result<MemoryBuffer, String> {
+        let mut memory_buffer = ptr::null_mut();
+        let mut err_str = unsafe { zeroed() };
+        let return_code = unsafe {
+            LLVMTargetMachineEmitToMemoryBuffer(self.target_machine, module.module, file_type.as_llvm_file_type(), &mut err_str, &mut memory_buffer)
+        };
+
+        // TODO: Verify 1 is error code (LLVM can be inconsistent)
+        if return_code == 1 {
+            let rust_str = unsafe {
+                let rust_str = CStr::from_ptr(err_str).to_string_lossy().into_owned();
+
+                LLVMDisposeMessage(err_str);
+
+                rust_str
+            };
+
+            return Err(rust_str);
+        }
+
+        Ok(MemoryBuffer::new(memory_buffer))
+    }
+
+    pub fn write_to_file(&self, module: &Module, file_type: FileType, path: &Path) -> Result<(), String> {
+        let path = path.to_str().expect("Did not find a valid Unicode path string");
+        let mut err_str = unsafe { zeroed() };
+        let return_code = unsafe {
+            // REVIEW: Why does LLVM need a mutable reference to path...?
+            LLVMTargetMachineEmitToFile(self.target_machine, module.module, path.as_ptr() as *mut i8, file_type.as_llvm_file_type(), &mut err_str)
+        };
+
+        // TODO: Verify 1 is error code (LLVM can be inconsistent)
+        if return_code == 1 {
+            let rust_str = unsafe {
+                let rust_str = CStr::from_ptr(err_str).to_string_lossy().into_owned();
+
+                LLVMDisposeMessage(err_str);
+
+                rust_str
+            };
+
+            return Err(rust_str);
+        }
+
+        Ok(())
     }
 }
 

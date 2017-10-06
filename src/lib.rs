@@ -18,6 +18,9 @@ pub mod types;
 pub mod values;
 
 use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility, LLVMThreadLocalMode, LLVMDLLStorageClass};
+use llvm_sys::support::LLVMLoadLibraryPermanently;
+
+use std::ffi::CString;
 
 // TODO: Probably move into error handling module
 pub fn enable_llvm_pretty_stack_trace() {
@@ -35,6 +38,15 @@ pub fn is_multithreaded() -> bool {
 
     unsafe {
         LLVMIsMultithreaded() == 1
+    }
+}
+
+// TODO: Move
+pub fn load_library_permanently(filename: &str) -> bool {
+    let filename = CString::new(filename).expect("Conversion to CString failed unexpectedly");
+
+    unsafe {
+        LLVMLoadLibraryPermanently(filename.as_ptr()) == 1
     }
 }
 
@@ -127,7 +139,7 @@ impl FloatPredicate {
 
 
 /// Defines the optimization level used to compile a `Module`.
-/// 
+///
 /// # Remarks
 /// See also: http://llvm.org/doxygen/CodeGen_8h_source.html
 #[repr(u32)]
