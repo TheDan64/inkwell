@@ -1,6 +1,6 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
-use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetDataLayout, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal};
+use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetInitializer, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetDataLayout, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile, LLVMSetModuleInlineAsm};
 use llvm_sys::execution_engine::{LLVMCreateJITCompilerForModule, LLVMCreateMCJITCompilerForModule};
 use llvm_sys::prelude::{LLVMValueRef, LLVMModuleRef};
 use llvm_sys::LLVMLinkage;
@@ -42,7 +42,7 @@ pub enum Linkage {
 }
 
 /// Defines the address space in which a global will be inserted.
-/// 
+///
 /// # Remarks
 /// See also: http://llvm.org/doxygen/NVPTXBaseInfo_8h_source.html
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -147,21 +147,21 @@ impl Module {
 
     /// Creates a function given its `name` and `ty`, adds it to the `Module`
     /// and returns it.
-    /// 
+    ///
     /// An optional `linkage` can be specified, without which the default value
     /// `Linkage::ExternalLinkage` will be used.
-    /// 
+    ///
     /// # Example
     /// ```
     /// use inkwell::context::Context;
     /// use inkwell::module::{Module, Linkage};
-    /// 
+    ///
     /// let context = Context::get_global();
     /// let module = Module::create("my_module");
-    /// 
+    ///
     /// let fn_type = context.f32_type().fn_type(&[], false);
     /// let fn_val = module.add_function("my_function", &fn_type, None);
-    /// 
+    ///
     /// assert_eq!(fn_val.get_name().to_str(), Ok("my_function"));
     /// assert_eq!(fn_val.get_linkage(), Linkage::ExternalLinkage);
     /// ```
@@ -182,20 +182,20 @@ impl Module {
     }
 
     /// Gets the `Context` from which this `Module` originates.
-    /// 
+    ///
     /// # Example
     /// ```
     /// use inkwell::context::{Context, ContextRef};
     /// use inkwell::module::Module;
-    /// 
+    ///
     /// let global_context = Context::get_global();
     /// let global_module = Module::create("my_global_module");
-    /// 
+    ///
     /// assert_eq!(global_module.get_context(), global_context);
-    /// 
+    ///
     /// let local_context = Context::create();
     /// let local_module = local_context.create_module("my_module");
-    /// 
+    ///
     /// assert_eq!(*local_module.get_context(), local_context);
     /// assert_ne!(local_context, *global_context);
     /// ```
@@ -264,14 +264,14 @@ impl Module {
     }
 
     /// Consumes this `Module`, and creates a JIT `ExecutionEngine` from it.
-    /// 
+    ///
     /// # Example
     /// ```no_run
     /// use inkwell::OptimizationLevel;
     /// use inkwell::context::Context;
     /// use inkwell::module::Module;
     /// use inkwell::targets::{InitializationConfig, Target};
-    /// 
+    ///
     /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
     ///
     /// let context = Context::get_global();
@@ -358,10 +358,10 @@ impl Module {
 
     /// Ensures that the current `Module` is valid, and returns a `bool`
     /// that describes whether or not it is.
-    /// 
+    ///
     /// * `print` - Whether or not a message describing the error should be printed
     ///   to stderr, in case of failure.
-    /// 
+    ///
     /// # Remarks
     /// See also: http://llvm.org/doxygen/Analysis_2Analysis_8cpp_source.html
     pub fn verify(&self, print: bool) -> bool {
@@ -429,6 +429,38 @@ impl Module {
     pub fn print_to_string(&self) -> &CStr {
         unsafe {
             CStr::from_ptr(LLVMPrintModuleToString(self.module))
+        }
+    }
+
+    /// Prints the content of the `Module` to a file.
+    pub fn print_to_file(&self, path: &Path) -> Result<(), String> {
+        let path = path.to_str().expect("Did not find a valid Unicode path string");
+        let mut err_str = unsafe { zeroed() };
+        let return_code = unsafe {
+            LLVMPrintModuleToFile(self.module, path.as_ptr() as *const i8, &mut err_str)
+        };
+
+        // TODO: Verify 1 is error code (LLVM can be inconsistent)
+        if return_code == 1 {
+            let rust_str = unsafe {
+                let rust_str = CStr::from_ptr(err_str).to_string_lossy().into_owned();
+
+                LLVMDisposeMessage(err_str);
+
+                rust_str
+            };
+
+            return Err(rust_str);
+        }
+
+        Ok(())
+    }
+
+    pub fn set_inline_assembly(&self, asm: &str) {
+        let c_string = CString::new(asm).expect("Conversion to CString failed unexpectedly");
+
+        unsafe {
+            LLVMSetModuleInlineAsm(self.module, c_string.as_ptr())
         }
     }
 
