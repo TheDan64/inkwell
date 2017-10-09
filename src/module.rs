@@ -207,6 +207,24 @@ impl Module {
         ContextRef::new(Context::new(context))
     }
 
+    /// Gets the first `FunctionValue` defined in this `Module`.
+    ///
+    /// # Example
+    /// ```rust
+    /// use inkwell::context::Context;
+    /// use inkwell::module::Module;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_mod");
+    ///
+    /// assert!(module.get_first_function().is_none());
+    ///
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let fn_value = module.add_function("my_fn", &fn_type, None);
+    ///
+    /// assert_eq!(fn_value, module.get_first_function().unwrap());
+    /// ```
     pub fn get_first_function(&self) -> Option<FunctionValue> {
         let function = unsafe {
             LLVMGetFirstFunction(self.module)
@@ -215,6 +233,24 @@ impl Module {
         FunctionValue::new(function)
     }
 
+    /// Gets the last `FunctionValue` defined in this `Module`.
+    ///
+    /// # Example
+    /// ```rust
+    /// use inkwell::context::Context;
+    /// use inkwell::module::Module;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_mod");
+    ///
+    /// assert!(module.get_last_function().is_none());
+    ///
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let fn_value = module.add_function("my_fn", &fn_type, None);
+    ///
+    /// assert_eq!(fn_value, module.get_last_function().unwrap());
+    /// ```
     pub fn get_last_function(&self) -> Option<FunctionValue> {
         let function = unsafe {
             LLVMGetLastFunction(self.module)
@@ -223,6 +259,24 @@ impl Module {
         FunctionValue::new(function)
     }
 
+    /// Gets a `FunctionValue` defined in this `Module` by its name.
+    ///
+    /// # Example
+    /// ```rust
+    /// use inkwell::context::Context;
+    /// use inkwell::module::Module;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_mod");
+    ///
+    /// assert!(module.get_function("my_fn").is_none());
+    ///
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let fn_value = module.add_function("my_fn", &fn_type, None);
+    ///
+    /// assert_eq!(fn_value, module.get_function("my_fn").unwrap());
+    /// ```
     pub fn get_function(&self, name: &str) -> Option<FunctionValue> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -529,7 +583,7 @@ impl Module {
         Some(GlobalValue::new(value))
     }
 
-    pub fn get_named_global(&self, name: &str) -> Option<GlobalValue> {
+    pub fn get_global(&self, name: &str) -> Option<GlobalValue> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
         let value = unsafe {
             LLVMGetNamedGlobal(self.module, c_string.as_ptr())
