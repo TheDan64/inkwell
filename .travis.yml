@@ -7,22 +7,12 @@ rust:
   - beta
   - nightly
 
-matrix:
-  allow_failures:
-    - rust: nightly
-  fast_finish: true
-
-env:
-  global:
-  - RUSTFLAGS="-C link-dead-code"
-
+# Shared Packages
 addons:
   apt:
     sources:
       - ubuntu-toolchain-r-test
-      - llvm-toolchain-precise-3.7
     packages:
-      - llvm-3.7-dev
       - libelf-dev
       - lib32z1-dev
       - libedit-dev
@@ -30,8 +20,32 @@ addons:
       - binutils-dev
       - libiberty-dev
 
-before_install:
-  - export PATH=/usr/lib/llvm-3.7/bin/:$HOME/.local/bin:$PATH
+matrix:
+  allow_failures:
+    - rust: nightly
+  fast_finish: true
+  include:
+    # LLVM 3.6
+    - addons:
+        apt:
+          sources:
+            - llvm-toolchain-precise-3.6
+          packages:
+            - llvm-3.6-dev
+      before_install:
+        - export PATH=/usr/lib/llvm-3.6/bin/:$HOME/.local/bin:$PATH
+    # LLVM 3.7
+    - addons:
+        apt:
+          sources:
+            - llvm-toolchain-precise-3.7
+          packages:
+            - llvm-3.7-dev
+      before_install:
+        - export PATH=/usr/lib/llvm-3.7/bin/:$HOME/.local/bin:$PATH
+env:
+  global:
+    - RUSTFLAGS="-C link-dead-code target-cpu=native"
 
 after_success: |
   wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
