@@ -1193,16 +1193,15 @@ macro_rules! print_flush {
 // However, extern functions such as cos(x) and sin(x) can be imported without any problem.
 // Other lines related to this program can be found further down.
 
-// pub extern "C" fn putchard(x: f64) -> f64 {
-//     print_flush!("{}", x as u8 as char);
-//     x
-// }
+pub extern fn putchard(x: f64) -> f64 {
+    print_flush!("{}", x as u8 as char);
+    x
+}
 
-// pub extern "C" fn printd(x: f64) -> f64 {
-//     println!("Fn called");
-//     println!("{}", x);
-//     x
-// }
+pub extern fn printd(x: f64) -> f64 {
+    println!("{}", x);
+    x
+}
 
 /// Entry point of the program; acts as a REPL.
 pub fn main() {
@@ -1222,9 +1221,6 @@ pub fn main() {
 
     Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target.");
 
-    // add_symbol("printd", &printd, printd as *const ());
-    // add_symbol("putchard", &putchard, putchard as *const ());
-    
     let context = Context::create();
     let module = context.create_module("repl");
     let builder = context.create_builder();
@@ -1277,26 +1273,9 @@ pub fn main() {
         // make module
         let module = context.create_module("tmp");
 
-        //let mut printd_fn = None;
-        //let mut putchard_fn = None;
-
         // recompile every previously parsed function into the new module
         for prev in previous_exprs.iter() {
             Compiler::compile(&context, &builder, &fpm, &module, prev).expect("Cannot re-add previously compiled function.");
-
-            // Not working; see comment above.
-            //
-            // match fun.get_name().to_str().unwrap() {
-            //     "printd" => {
-            //         printd_fn = Some(fun);
-            //     },
-
-            //     "putchard" => {
-            //         putchard_fn = Some(fun);
-            //     },
-
-            //     _ => ()
-            // }
         }
 
         let (name, is_anonymous) = match Parser::new(input, &mut prec).parse() {
