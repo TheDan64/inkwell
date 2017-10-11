@@ -54,7 +54,7 @@ impl ExecutionEngine {
     /// Maps the specified value to an address.
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::targets::{InitializationConfig, Target};
     /// use inkwell::context::Context;
     /// use inkwell::OptimizationLevel;
@@ -84,13 +84,13 @@ impl ExecutionEngine {
     /// builder.build_return(Some(&retv));
     ///
     /// let mut ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-    /// ee.add_global_mapping(&extf, sumf as *mut _);
+    /// ee.add_global_mapping(&extf, sumf as usize);
     ///
     /// let result = unsafe { ee.run_function(&f, &[]) }.as_float(&ft);
     ///
     /// assert_eq!(result, 128.);
     /// ```
-    pub fn add_global_mapping(&mut self, value: &AnyValue, addr: *const ()) {
+    pub fn add_global_mapping(&mut self, value: &AnyValue, addr: usize) {
         unsafe {
             LLVMAddGlobalMapping(self.execution_engine, value.as_value_ref(), addr as *mut _)
         }
