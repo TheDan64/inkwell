@@ -2,24 +2,6 @@ language: rust
 
 sudo: false
 
-rust:
-  - stable
-  - beta
-  - nightly
-
-# Shared Packages
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - libelf-dev
-      - lib32z1-dev
-      - libedit-dev
-      - libdw-dev
-      - binutils-dev
-      - libiberty-dev
-
 matrix:
   allow_failures:
     - rust: nightly
@@ -30,22 +12,43 @@ matrix:
         apt:
           sources:
             - llvm-toolchain-precise-3.6
+            - ubuntu-toolchain-r-test
           packages:
+            - libelf-dev
+            - lib32z1-dev
+            - libedit-dev
+            - libdw-dev
+            - binutils-dev
+            - libiberty-dev
             - llvm-3.6-dev
       before_install:
         - export PATH=/usr/lib/llvm-3.6/bin/:$HOME/.local/bin:$PATH
+      env:
+        - NAME="LLVM 3.6"
+      rust: stable
     # LLVM 3.7
     - addons:
         apt:
           sources:
             - llvm-toolchain-precise-3.7
+            - ubuntu-toolchain-r-test
           packages:
+            - libelf-dev
+            - lib32z1-dev
+            - libedit-dev
+            - libdw-dev
+            - binutils-dev
+            - libiberty-dev
             - llvm-3.7-dev
       before_install:
         - export PATH=/usr/lib/llvm-3.7/bin/:$HOME/.local/bin:$PATH
+      env:
+        - NAME="LLVM 3.7"
+      rust: stable
+
 env:
   global:
-    - RUSTFLAGS="-C link-dead-code target-cpu=native"
+    - RUSTFLAGS="-C link-dead-code -C target-cpu=native"
 
 after_success: |
   wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
