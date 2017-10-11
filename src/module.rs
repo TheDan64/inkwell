@@ -210,7 +210,7 @@ impl Module {
     /// Gets the first `FunctionValue` defined in this `Module`.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::Module;
     ///
@@ -236,7 +236,7 @@ impl Module {
     /// Gets the last `FunctionValue` defined in this `Module`.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::Module;
     ///
@@ -262,7 +262,7 @@ impl Module {
     /// Gets a `FunctionValue` defined in this `Module` by its name.
     ///
     /// # Example
-    /// ```rust
+    /// ```rust,no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::Module;
     ///
