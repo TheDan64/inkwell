@@ -1,9 +1,9 @@
 use llvm_sys::core::LLVMDisposeMessage;
-use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction, LLVMLinkInMCJIT, LLVMLinkInInterpreter, LLVMRemoveModule, LLVMGenericValueRef, LLVMFreeMachineCodeForFunction, LLVMGetPointerToGlobal};
+use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction, LLVMLinkInMCJIT, LLVMLinkInInterpreter, LLVMRemoveModule, LLVMGenericValueRef, LLVMFreeMachineCodeForFunction, LLVMGetPointerToGlobal, LLVMAddGlobalMapping};
 
 use module::Module;
 use targets::TargetData;
-use values::{AsValueRef, FunctionValue, GenericValue, GlobalValue};
+use values::{AnyValue, AsValueRef, FunctionValue, GenericValue, GlobalValue};
 
 use std::ffi::{CStr, CString};
 use std::mem::{forget, uninitialized, zeroed};
@@ -51,11 +51,50 @@ impl ExecutionEngine {
         }
     }
 
-    // pub fn add_global_mapping(&mut self, global: &AnyValue, addr: *const ()) {
-    //     unsafe {
-    //         LLVMAddGlobalMapping(self.execution_engine, global.as_value_ref(), addr as *mut ::libc::c_void)
-    //     }
-    // }
+    /// Maps the specified value to an address.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::targets::{InitializationConfig, Target};
+    /// use inkwell::context::Context;
+    /// use inkwell::OptimizationLevel;
+    ///
+    /// Target::initialize_native(&InitializationConfig::default()).unwrap();
+    ///
+    /// extern fn sumf(a: f64, b: f64) -> f64 {
+    ///     a + b
+    /// }
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("test");
+    /// let builder = context.create_builder();
+    ///
+    /// let ft = context.f64_type();
+    /// let fnt = ft.fn_type(&[], false);
+    ///
+    /// let f = module.add_function("test_fn", &fnt, None);
+    /// let b = context.append_basic_block(&f, "entry");
+    /// builder.position_at_end(&b);
+    ///
+    /// let extf = module.add_function("sumf", &ft.fn_type(&[ &ft, &ft ], false), None);
+    ///
+    /// let argf = ft.const_float(64.);
+    /// let retv = builder.build_call(&extf, &[ &argf, &argf ], "retv", false).left().unwrap().into_float_value();
+    ///
+    /// builder.build_return(Some(&retv));
+    ///
+    /// let mut ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    /// ee.add_global_mapping(&extf, sumf as usize);
+    ///
+    /// let result = unsafe { ee.run_function(&f, &[]) }.as_float(&ft);
+    ///
+    /// assert_eq!(result, 128.);
+    /// ```
+    pub fn add_global_mapping(&mut self, value: &AnyValue, addr: usize) {
+        unsafe {
+            LLVMAddGlobalMapping(self.execution_engine, value.as_value_ref(), addr as *mut _)
+        }
+    }
 
     // TODOC: EE must *own* modules and deal out references
     pub fn add_module(&mut self, module: Module) -> &Module {
