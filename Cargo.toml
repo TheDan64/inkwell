@@ -10,11 +10,15 @@ keywords = ["llvm", "safe", "wrapper"]
 license = "Apache-2.0"
 categories = ["development-tools::ffi"]
 
+[features]
+default = []
+llvm3-6 = ["llvm3_6"]
+
 [dependencies]
 either = "1.1.0"
 enum-methods = "0.0.7"
 libc = "*"
-llvm-sys = "37.0.5" # TODO: Configure based on feature toggle. GH#1
+llvm3_6 = { git = "https://github.com/serde-rs/serde", version="*", optional=true }
 
 [[example]]
 name = "kaleidoscope"

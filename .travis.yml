@@ -1,13 +1,14 @@
 language: rust
 
 sudo: false
+cache: apt
 
 matrix:
   allow_failures:
     - rust: nightly
   fast_finish: true
   include:
-    # LLVM 3.6
+    # LLVM 3.6 Stable
     - addons:
         apt:
           sources:
@@ -26,7 +27,7 @@ matrix:
       env:
         - NAME="LLVM 3.6"
       rust: stable
-    # LLVM 3.7
+    # LLVM 3.7 Stable
     - addons:
         apt:
           sources:
