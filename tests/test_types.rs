@@ -214,6 +214,72 @@ fn test_sized_types() {
 }
 
 #[test]
+fn test_const_null() {
+    let context = Context::create();
+    let void_type = context.void_type();
+    let bool_type = context.bool_type();
+    let i8_type = context.i8_type();
+    let i16_type = context.i16_type();
+    let i32_type = context.i32_type();
+    let i64_type = context.i64_type();
+    let i128_type = context.i128_type();
+    let f16_type = context.f16_type();
+    let f32_type = context.f32_type();
+    let f64_type = context.f64_type();
+    let f128_type = context.f128_type();
+    let struct_type = context.struct_type(&[&i8_type, &f128_type], false);
+    let ptr_type = f64_type.ptr_type(0);
+    let vec_type = f64_type.vec_type(42);
+    let array_type = f64_type.array_type(42);
+
+    assert!(void_type.const_null_ptr().is_null());
+    assert!(bool_type.const_null_ptr().is_null());
+    assert!(i8_type.const_null_ptr().is_null());
+    assert!(i16_type.const_null_ptr().is_null());
+    assert!(i32_type.const_null_ptr().is_null());
+    assert!(i64_type.const_null_ptr().is_null());
+    assert!(i128_type.const_null_ptr().is_null());
+    assert!(f16_type.const_null_ptr().is_null());
+    assert!(f32_type.const_null_ptr().is_null());
+    assert!(f64_type.const_null_ptr().is_null());
+    assert!(f128_type.const_null_ptr().is_null());
+    assert!(struct_type.const_null_ptr().is_null());
+    assert!(ptr_type.const_null_ptr().is_null());
+    assert!(vec_type.const_null_ptr().is_null());
+    assert!(array_type.const_null_ptr().is_null());
+
+    let bool_zero = bool_type.const_null();
+    let i8_zero = i8_type.const_null();
+    let i16_zero = i16_type.const_null();
+    let i32_zero = i32_type.const_null();
+    let i64_zero = i64_type.const_null();
+    let i128_zero = i128_type.const_null();
+    let f16_zero = f16_type.const_null();
+    let f32_zero = f32_type.const_null();
+    let f64_zero = f64_type.const_null();
+    let f128_zero = f128_type.const_null();
+    let struct_zero = struct_type.const_null();
+    let ptr_zero = ptr_type.const_null();
+    let vec_zero = vec_type.const_null();
+    let array_zero = array_type.const_null();
+
+    assert_eq!(bool_zero.print_to_string(), &*CString::new("i1 false").unwrap());
+    assert_eq!(i8_zero.print_to_string(), &*CString::new("i8 0").unwrap());
+    assert_eq!(i16_zero.print_to_string(), &*CString::new("i16 0").unwrap());
+    assert_eq!(i32_zero.print_to_string(), &*CString::new("i32 0").unwrap());
+    assert_eq!(i64_zero.print_to_string(), &*CString::new("i64 0").unwrap());
+    assert_eq!(i128_zero.print_to_string(), &*CString::new("i128 0").unwrap());
+    assert_eq!(f16_zero.print_to_string(), &*CString::new("half 0xH0000").unwrap());
+    assert_eq!(f32_zero.print_to_string(), &*CString::new("float 0.000000e+00").unwrap());
+    assert_eq!(f64_zero.print_to_string(), &*CString::new("double 0.000000e+00").unwrap());
+    assert_eq!(f128_zero.print_to_string(), &*CString::new("fp128 0xL00000000000000000000000000000000").unwrap());
+    assert_eq!(struct_zero.print_to_string(), &*CString::new("{ i8, fp128 } zeroinitializer").unwrap());
+    assert_eq!(ptr_zero.print_to_string(), &*CString::new("double* null").unwrap());
+    assert_eq!(vec_zero.print_to_string(), &*CString::new("<42 x double> zeroinitializer").unwrap());
+    assert_eq!(array_zero.print_to_string(), &*CString::new("[42 x double] zeroinitializer").unwrap());
+}
+
+#[test]
 fn test_vec_type() {
     let context = Context::create();
     let int = context.i8_type();
