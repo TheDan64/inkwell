@@ -228,6 +228,13 @@ pub enum DLLStorageClass {
     Export,
 }
 
+impl Default for DLLStorageClass {
+    /// Returns the default value for `DLLStorageClass`, namely `DLLStorageClass::Default`.
+    fn default() -> Self {
+        DLLStorageClass::Default
+    }
+}
+
 impl DLLStorageClass {
     pub(crate) fn new(dll_storage_class: LLVMDLLStorageClass) -> Self {
         match dll_storage_class {

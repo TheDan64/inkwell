@@ -56,7 +56,7 @@ impl GlobalValue {
         DLLStorageClass::new(dll_storage_class)
     }
 
-    pub fn set_dll_storage_class(&self , dll_storage_class: &DLLStorageClass) {
+    pub fn set_dll_storage_class(&self, dll_storage_class: DLLStorageClass) {
         unsafe {
             LLVMSetDLLStorageClass(self.as_value_ref(), dll_storage_class.as_llvm_class())
         }
@@ -74,6 +74,7 @@ impl GlobalValue {
         Some(BasicValueEnum::new(value))
     }
 
+    // SubType: This input type should be tied to the BasicType
     pub fn set_initializer(&self, value: &BasicValue) {
         unsafe {
             LLVMSetInitializer(self.as_value_ref(), value.as_value_ref())
@@ -86,6 +87,7 @@ impl GlobalValue {
         }
     }
 
+    // TODOC: Setting this to true is the same as setting GeneralDynamicTLSModel
     pub fn set_thread_local(&self, is_thread_local: bool) {
         unsafe {
             LLVMSetThreadLocal(self.as_value_ref(), is_thread_local as i32)
@@ -102,7 +104,7 @@ impl GlobalValue {
 
     // REVIEW: Does this have any bad behavior if it isn't thread local or just a noop?
     // or should it call self.set_thread_local(true)?
-    pub fn set_thread_local_mode(&self, thread_local_mode: Option<&ThreadLocalMode>) {
+    pub fn set_thread_local_mode(&self, thread_local_mode: Option<ThreadLocalMode>) {
         let thread_local_mode = match thread_local_mode {
             Some(mode) => mode.as_llvm_mode(),
             None => LLVMThreadLocalMode::LLVMNotThreadLocal,
@@ -113,6 +115,7 @@ impl GlobalValue {
         }
     }
 
+    // SubType: This should be moved into the type. GlobalValue<Initialized/Uninitialized>
     pub fn is_declaration(&self) -> bool {
         unsafe {
             LLVMIsDeclaration(self.as_value_ref()) == 1
@@ -155,7 +158,7 @@ impl GlobalValue {
         }
     }
 
-    pub fn set_visibility(&self, visibility: &GlobalVisibility) {
+    pub fn set_visibility(&self, visibility: GlobalVisibility) {
         unsafe {
             LLVMSetVisibility(self.as_value_ref(), visibility.as_llvm_visibility())
         }
@@ -181,10 +184,6 @@ impl GlobalValue {
         unsafe {
             LLVMSetSection(self.as_value_ref(), c_string.as_ptr())
         }
-    }
-
-    pub fn as_basic_value(&self) -> BasicValueEnum {
-        BasicValueEnum::new(self.as_value_ref())
     }
 
     pub unsafe fn delete(self) {

@@ -1,6 +1,6 @@
 extern crate inkwell;
 
-use self::inkwell::GlobalVisibility;
+use self::inkwell::{DLLStorageClass, GlobalVisibility, ThreadLocalMode};
 use self::inkwell::context::Context;
 use self::inkwell::module::AddressSpace::*;
 use self::inkwell::module::Linkage::*;
@@ -677,6 +677,7 @@ fn test_globals() {
     let context = Context::create();
     let module = context.create_module("my_mod");
     let i8_type = context.i8_type();
+    let i8_zero = i8_type.const_int(0, false);
 
     assert!(module.get_first_global().is_none());
     assert!(module.get_last_global().is_none());
@@ -693,24 +694,62 @@ fn test_globals() {
     assert!(global.is_declaration());
     assert!(!global.has_unnamed_addr());
     assert!(!global.is_externally_initialized());
+    assert_eq!(global.get_section(), &*CString::new("").unwrap());
+    assert_eq!(global.get_dll_storage_class(), DLLStorageClass::default());
     assert_eq!(global.get_visibility(), GlobalVisibility::default());
     assert_eq!(module.get_first_global().unwrap(), global);
     assert_eq!(module.get_last_global().unwrap(), global);
     assert_eq!(module.get_global("my_global").unwrap(), global);
 
+    global.set_dll_storage_class(DLLStorageClass::Import);
+    global.set_initializer(&i8_zero);
+    global.set_thread_local_mode(Some(ThreadLocalMode::InitialExecTLSModel));
+    global.set_unnamed_addr(true);
+    global.set_constant(true);
+    global.set_visibility(GlobalVisibility::Hidden);
+    global.set_section("not sure what goes here");
+
+    assert_eq!(global.get_dll_storage_class(), DLLStorageClass::Import);
+    assert_eq!(global.get_initializer().unwrap().into_int_value(), i8_zero);
+    assert_eq!(global.get_visibility(), GlobalVisibility::Hidden);
+    assert!(global.is_thread_local());
+    assert!(global.has_unnamed_addr());
+    assert!(global.is_constant());
+    assert!(!global.is_declaration());
+    assert_eq!(global.get_section(), &*CString::new("not sure what goes here").unwrap());
+
+    global.set_dll_storage_class(DLLStorageClass::Export);
+    global.set_thread_local(false);
+    global.set_visibility(GlobalVisibility::Protected);
+
+    assert!(!global.is_thread_local());
+    assert_eq!(global.get_visibility(), GlobalVisibility::Protected);
+
+    global.set_thread_local(true);
+
+    assert_eq!(global.get_dll_storage_class(), DLLStorageClass::Export);
+    assert!(global.is_thread_local());
+    assert_eq!(global.get_thread_local_mode().unwrap(), ThreadLocalMode::GeneralDynamicTLSModel);
+
+    global.set_thread_local_mode(Some(ThreadLocalMode::LocalExecTLSModel));
+
+    assert_eq!(global.get_thread_local_mode().unwrap(), ThreadLocalMode::LocalExecTLSModel);
+
     let global2 = module.add_global(&i8_type, Some(Const), "my_global2");
 
-    assert!(global2.get_initializer().is_none());
-    assert!(!global2.is_thread_local());
-    assert!(global2.get_thread_local_mode().is_none());
-    assert!(!global2.is_constant());
-    assert!(global2.is_declaration());
-    assert!(!global2.has_unnamed_addr());
-    assert!(!global2.is_externally_initialized());
-    assert_eq!(global2.get_visibility(), GlobalVisibility::default());
     assert_eq!(global2.get_previous_global().unwrap(), global);
     assert_eq!(global.get_next_global().unwrap(), global2);
     assert_eq!(module.get_first_global().unwrap(), global);
     assert_eq!(module.get_last_global().unwrap(), global2);
     assert_eq!(module.get_global("my_global2").unwrap(), global2);
+    assert!(!global.is_declaration());
+
+    global2.set_externally_initialized(true);
+
+    // REVIEW: This doesn't seem to work. LLVM bug?
+    // assert!(global.is_externally_initialized());
+
+    unsafe {
+        global.delete();
+    }
 }
