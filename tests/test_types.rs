@@ -193,7 +193,7 @@ fn test_sized_types() {
     assert!(struct_type4.array_type(0).is_sized());
     assert!(!opaque_struct_type.array_type(0).is_sized());
 
-    // REVIEW: You can't have array of void right?
+    // REVIEW: You can't have vec of void right?
     assert!(void_type.ptr_type(0).vec_type(42).is_sized());
     assert!(bool_type.vec_type(42).is_sized());
     assert!(i8_type.vec_type(42).is_sized());

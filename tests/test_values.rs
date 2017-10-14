@@ -1,6 +1,8 @@
 extern crate inkwell;
 
+use self::inkwell::GlobalVisibility;
 use self::inkwell::context::Context;
+use self::inkwell::module::AddressSpace::*;
 use self::inkwell::module::Linkage::*;
 use self::inkwell::types::{StructType, VectorType};
 use self::inkwell::values::InstructionOpcode::*;
@@ -668,4 +670,47 @@ fn test_value_copies() {
     let i8_value_copy = i8_value;
 
     assert_eq!(i8_value, i8_value_copy);
+}
+
+#[test]
+fn test_globals() {
+    let context = Context::create();
+    let module = context.create_module("my_mod");
+    let i8_type = context.i8_type();
+
+    assert!(module.get_first_global().is_none());
+    assert!(module.get_last_global().is_none());
+    assert!(module.get_global("my_global").is_none());
+
+    let global = module.add_global(&i8_type, None, "my_global");
+
+    assert!(global.get_previous_global().is_none());
+    assert!(global.get_next_global().is_none());
+    assert!(global.get_initializer().is_none());
+    assert!(!global.is_thread_local());
+    assert!(global.get_thread_local_mode().is_none());
+    assert!(!global.is_constant());
+    assert!(global.is_declaration());
+    assert!(!global.has_unnamed_addr());
+    assert!(!global.is_externally_initialized());
+    assert_eq!(global.get_visibility(), GlobalVisibility::default());
+    assert_eq!(module.get_first_global().unwrap(), global);
+    assert_eq!(module.get_last_global().unwrap(), global);
+    assert_eq!(module.get_global("my_global").unwrap(), global);
+
+    let global2 = module.add_global(&i8_type, Some(Const), "my_global2");
+
+    assert!(global2.get_initializer().is_none());
+    assert!(!global2.is_thread_local());
+    assert!(global2.get_thread_local_mode().is_none());
+    assert!(!global2.is_constant());
+    assert!(global2.is_declaration());
+    assert!(!global2.has_unnamed_addr());
+    assert!(!global2.is_externally_initialized());
+    assert_eq!(global2.get_visibility(), GlobalVisibility::default());
+    assert_eq!(global2.get_previous_global().unwrap(), global);
+    assert_eq!(global.get_next_global().unwrap(), global2);
+    assert_eq!(module.get_first_global().unwrap(), global);
+    assert_eq!(module.get_last_global().unwrap(), global2);
+    assert_eq!(module.get_global("my_global2").unwrap(), global2);
 }

@@ -166,6 +166,13 @@ pub enum GlobalVisibility {
     Protected,
 }
 
+impl Default for GlobalVisibility {
+    /// Returns the default value for `GlobalVisibility`, namely `GlobalVisibility::Default`.
+    fn default() -> Self {
+        GlobalVisibility::Default
+    }
+}
+
 impl GlobalVisibility {
     pub(crate) fn new(visibility: LLVMVisibility) -> Self {
         match visibility {
