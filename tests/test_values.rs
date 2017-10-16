@@ -712,6 +712,7 @@ fn test_globals() {
     assert_eq!(global.get_dll_storage_class(), DLLStorageClass::Import);
     assert_eq!(global.get_initializer().unwrap().into_int_value(), i8_zero);
     assert_eq!(global.get_visibility(), GlobalVisibility::Hidden);
+    assert_eq!(global.get_thread_local_mode().unwrap(), ThreadLocalMode::InitialExecTLSModel);
     assert!(global.is_thread_local());
     assert!(global.has_unnamed_addr());
     assert!(global.is_constant());
@@ -734,6 +735,14 @@ fn test_globals() {
     global.set_thread_local_mode(Some(ThreadLocalMode::LocalExecTLSModel));
 
     assert_eq!(global.get_thread_local_mode().unwrap(), ThreadLocalMode::LocalExecTLSModel);
+
+    global.set_thread_local_mode(Some(ThreadLocalMode::LocalDynamicTLSModel));
+
+    assert_eq!(global.get_thread_local_mode().unwrap(), ThreadLocalMode::LocalDynamicTLSModel);
+
+    global.set_thread_local_mode(None);
+
+    assert!(global.get_thread_local_mode().is_none());
 
     let global2 = module.add_global(&i8_type, Some(Const), "my_global2");
 
