@@ -357,7 +357,7 @@ impl IntValue {
         self.int_value.set_metadata(metadata, kind_id)
     }
 
-    // FIXME: Don't take llvm-sys op enum
+    // SubType: rhs same as lhs; return IntValue<bool>
     pub fn const_int_compare(&self, op: &IntPredicate, rhs: &IntValue) -> IntValue {
         let value = unsafe {
             LLVMConstICmp(op.as_llvm_predicate(), self.as_value_ref(), rhs.as_value_ref())

@@ -1,6 +1,6 @@
 extern crate inkwell;
 
-use self::inkwell::{DLLStorageClass, GlobalVisibility, ThreadLocalMode};
+use self::inkwell::{DLLStorageClass, FloatPredicate, GlobalVisibility, ThreadLocalMode};
 use self::inkwell::context::Context;
 use self::inkwell::module::AddressSpace::*;
 use self::inkwell::module::Linkage::*;
@@ -616,6 +616,49 @@ fn test_floats() {
     assert!(i64_pi.as_instruction().is_none());
     assert!(u64_pi.as_instruction().is_none());
     assert!(f128_pi_cast.as_instruction().is_none());
+
+    let f64_one = f64_type.const_float(1.);
+    let f64_two = f64_type.const_float(2.);
+    let neg_two = f64_two.const_neg();
+
+    assert_eq!(neg_two.print_to_string(), &*CString::new("double -2.000000e+00").unwrap());
+
+    let neg_three = neg_two.const_sub(&f64_one);
+
+    assert_eq!(neg_three.print_to_string(), &*CString::new("double -3.000000e+00").unwrap());
+
+    let pos_six = neg_three.const_mul(&neg_two);
+
+    assert_eq!(pos_six.print_to_string(), &*CString::new("double 6.000000e+00").unwrap());
+
+    let pos_eight = pos_six.const_add(&f64_two);
+
+    assert_eq!(pos_eight.print_to_string(), &*CString::new("double 8.000000e+00").unwrap());
+
+    let pos_four = pos_eight.const_div(&f64_two);
+
+    assert_eq!(pos_four.print_to_string(), &*CString::new("double 4.000000e+00").unwrap());
+
+    let rem = pos_six.const_remainder(&pos_four);
+
+    assert_eq!(rem.print_to_string(), &*CString::new("double 2.000000e+00").unwrap());
+
+    assert!(f64_one.const_compare(FloatPredicate::PredicateFalse, &f64_two).is_null());
+    assert!(!f64_one.const_compare(FloatPredicate::PredicateTrue, &f64_two).is_null());
+    assert!(f64_one.const_compare(FloatPredicate::OEQ, &f64_two).is_null());
+    assert!(f64_one.const_compare(FloatPredicate::OGT, &f64_two).is_null());
+    assert!(f64_one.const_compare(FloatPredicate::OGE, &f64_two).is_null());
+    assert!(!f64_one.const_compare(FloatPredicate::OLT, &f64_two).is_null());
+    assert!(!f64_one.const_compare(FloatPredicate::OLE, &f64_two).is_null());
+    assert!(!f64_one.const_compare(FloatPredicate::ONE, &f64_two).is_null());
+    assert!(f64_one.const_compare(FloatPredicate::UEQ, &f64_two).is_null());
+    assert!(f64_one.const_compare(FloatPredicate::UGT, &f64_two).is_null());
+    assert!(f64_one.const_compare(FloatPredicate::UGE, &f64_two).is_null());
+    assert!(!f64_one.const_compare(FloatPredicate::ULT, &f64_two).is_null());
+    assert!(!f64_one.const_compare(FloatPredicate::ULE, &f64_two).is_null());
+    assert!(!f64_one.const_compare(FloatPredicate::UNE, &f64_two).is_null());
+    assert!(!f64_one.const_compare(FloatPredicate::ORD, &f64_two).is_null());
+    assert!(f64_one.const_compare(FloatPredicate::UNO, &f64_two).is_null());
 }
 
 #[test]

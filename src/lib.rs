@@ -94,24 +94,41 @@ impl IntPredicate {
 }
 
 // REVIEW: Maybe this belongs in some sort of prelude?
+/// Defines how to compare a `left` and `right` float value.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum FloatPredicate {
-    PredicateFalse,
+    /// Returns true if `left` == `right` and neither are NaN
     OEQ,
-    OGT,
+    /// Returns true if `left` >= `right` and neither are NaN
     OGE,
-    OLT,
+    /// Returns true if `left` > `right` and neither are NaN
+    OGT,
+    /// Returns true if `left` <= `right` and neither are NaN
     OLE,
+    /// Returns true if `left` < `right` and neither are NaN
+    OLT,
+    /// Returns true if `left` != `right` and neither are NaN
     ONE,
+    /// Returns true if neither value is NaN
     ORD,
-    UNO,
-    UEQ,
-    UGT,
-    UGE,
-    ULT,
-    ULE,
-    UNE,
+    /// Always returns false
+    PredicateFalse,
+    /// Always returns true
     PredicateTrue,
+    /// Returns true if `left` == `right` or either is NaN
+    UEQ,
+    /// Returns true if `left` >= `right` or either is NaN
+    UGE,
+    /// Returns true if `left` > `right` or either is NaN
+    UGT,
+    /// Returns true if `left` <= `right` or either is NaN
+    ULE,
+    /// Returns true if `left` < `right` or either is NaN
+    ULT,
+    /// Returns true if `left` != `right` or either is NaN
+    UNE,
+    /// Returns true if either value is NaN
+    UNO,
 }
 
 impl FloatPredicate {

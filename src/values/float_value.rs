@@ -158,8 +158,8 @@ impl FloatValue {
         self.float_value.set_metadata(metadata, kind_id)
     }
 
-    // FIXME: Don't take llvm-sys op enum
-    pub fn const_float_compare(&self, op: &FloatPredicate, rhs: &FloatValue) -> IntValue {
+    // SubType: rhs same as lhs; return IntValue<bool>
+    pub fn const_compare(&self, op: FloatPredicate, rhs: &FloatValue) -> IntValue {
         let value = unsafe {
             LLVMConstFCmp(op.as_llvm_predicate(), self.as_value_ref(), rhs.as_value_ref())
         };

@@ -782,7 +782,6 @@ impl Builder {
     }
 
     // SubType: <I>(&self, op, lhs: &IntValue<I>, rhs: &IntValue<I>, name) -> IntValue<bool> { ?
-    // FIXME: Don't take llvm-sys op enum
     pub fn build_int_compare(&self, op: &IntPredicate, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -794,7 +793,6 @@ impl Builder {
     }
 
     // SubType: <F>(&self, op, lhs: &FloatValue<F>, rhs: &FloatValue<F>, name) -> IntValue<bool> { ?
-    // FIXME: Don't take llvm-sys op enum
     pub fn build_float_compare(&self, op: &FloatPredicate, lhs: &FloatValue, rhs: &FloatValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
