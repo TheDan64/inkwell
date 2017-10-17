@@ -4,6 +4,7 @@ use llvm_sys::prelude::LLVMTypeRef;
 use std::ffi::CStr;
 
 use context::ContextRef;
+use module::AddressSpace;
 use types::traits::AsTypeRef;
 use types::{Type, BasicType, ArrayType, FunctionType, VectorType};
 use values::{PointerValue, IntValue};
@@ -46,9 +47,9 @@ impl PointerType {
         self.ptr_type.array_type(size)
     }
 
-    pub fn get_address_space(&self) -> u32 {
+    pub fn get_address_space(&self) -> AddressSpace {
         unsafe {
-            LLVMGetPointerAddressSpace(self.as_type_ref())
+            LLVMGetPointerAddressSpace(self.as_type_ref()).into()
         }
     }
 

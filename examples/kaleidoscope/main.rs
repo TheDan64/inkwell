@@ -8,7 +8,7 @@
 //! - Parser,
 //! - Compiler,
 //! - Program.
-//! 
+//!
 //! Both the `Parser` and the `Compiler` may fail, in which case they would return
 //! an error represented by `Result<T, &'static str>`, for easier error reporting.
 
@@ -172,12 +172,12 @@ impl<'a> Lexer<'a> {
                     chars.next();
                     pos += 1;
                 }
-                
+
                 Ok(Token::Number(src[start..pos].parse().unwrap()))
             },
 
             'a' ... 'z' | 'A' ... 'Z' | '_' => {
-                // Parse identifier                
+                // Parse identifier
                 loop {
                     let ch = match chars.peek() {
                         Some(ch) => *ch,
@@ -243,7 +243,7 @@ impl<'a> Iterator for Lexer<'a> {
 /// Defines a primitive expression.
 #[derive(Debug)]
 pub enum Expr {
-    Binary { 
+    Binary {
         op: char,
         left: Box<Expr>,
         right: Box<Expr>
@@ -475,7 +475,7 @@ impl<'a> Parser<'a> {
                     break;
                 },
                 Comma => {
-                    self.advance();   
+                    self.advance();
                 },
                 _ => return Err("Expected ',' or ')' character in prototype declaration.")
             }
@@ -572,7 +572,7 @@ impl<'a> Parser<'a> {
             _ => return Err("Expected identifier.")
         };
 
-        if let Err(_) = self.advance() {
+        if self.advance().is_err() {
             return Ok(Expr::Variable(id));
         }
 
@@ -585,7 +585,7 @@ impl<'a> Parser<'a> {
                 }
 
                 let mut args = vec![];
-                
+
                 loop {
                     args.push(self.parse_expr()?);
 
@@ -628,9 +628,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Parses a binary expression, given its left-hand expression.
-    fn parse_binary_expr(&mut self, prec: i32, left: Expr) -> Result<Expr, &'static str> {
-        let mut left = left;
-
+    fn parse_binary_expr(&mut self, prec: i32, mut left: Expr) -> Result<Expr, &'static str> {
         loop {
             let curr_prec = self.get_tok_precedence();
 
@@ -652,7 +650,7 @@ impl<'a> Parser<'a> {
             if curr_prec < next_prec {
                 right = self.parse_binary_expr(curr_prec + 1, right)?;
             }
-            
+
             left = Expr::Binary {
                 op: op,
                 left: Box::new(left),
@@ -867,46 +865,46 @@ impl<'a> Compiler<'a> {
     /// Cretes a new stack allocation instruction in the entry block of the function.
     fn create_entry_block_alloca(&self, name: &str, entry: Option<&BasicBlock>) -> PointerValue {
         let builder = self.context.create_builder();
-        
+
         let owned_entry = self.fn_value().get_entry_basic_block();
         let entry = owned_entry.as_ref().or(entry).unwrap();
-        
+
         match entry.get_first_instruction() {
             Some(first_instr) => builder.position_before(&first_instr),
             None => builder.position_at_end(entry)
         }
-        
+
         builder.build_stack_allocation(&self.context.f64_type(), name)
     }
 
     /// Compiles the specified `Expr` into an LLVM `BasicValue`.
     /// Note: This method currently returns a `Box`, since it returns either `PhiValue` or `FloatValue`.
     fn compile_expr(&mut self, expr: &Expr) -> Result<FloatValue, &'static str> {
-        match expr {
-            &Expr::Number(nb) => Ok(self.context.f64_type().const_float(nb)),
+        match *expr {
+            Expr::Number(nb) => Ok(self.context.f64_type().const_float(nb)),
 
-            &Expr::Variable(ref name) => {
+            Expr::Variable(ref name) => {
                 match self.variables.get(name.as_str()) {
-                    Some(var) => Ok(self.builder.build_load(&var, name.as_str()).into_float_value()),
+                    Some(var) => Ok(self.builder.build_load(var, name.as_str()).into_float_value()),
                     None => Err("Could not find a matching variable.")
                 }
             },
 
-            &Expr::VarIn { ref variables, ref body } => {
+            Expr::VarIn { ref variables, ref body } => {
                 let mut old_bindings = Vec::new();
 
                 for &(ref var_name, ref initializer) in variables {
                     let var_name = var_name.as_str();
 
-                    let initial_val = match initializer {
-                        &Some(ref init) => self.compile_expr(&init)?,
-                        &None => self.context.f64_type().const_float(0.)
+                    let initial_val = match *initializer {
+                        Some(ref init) => self.compile_expr(init)?,
+                        None => self.context.f64_type().const_float(0.)
                     };
 
                     let alloca = self.create_entry_block_alloca(var_name, None);
 
                     self.builder.build_store(&alloca, &initial_val);
-                    
+
                     if let Some(old_binding) = self.variables.remove(var_name) {
                         old_bindings.push(old_binding);
                     }
@@ -914,7 +912,7 @@ impl<'a> Compiler<'a> {
                     self.variables.insert(var_name.to_string(), alloca);
                 }
 
-                let body = self.compile_expr(&body)?;
+                let body = self.compile_expr(body)?;
 
                 for binding in old_bindings {
                     self.variables.insert(binding.get_name().to_str().unwrap().to_string(), binding);
@@ -923,32 +921,31 @@ impl<'a> Compiler<'a> {
                 Ok(body)
             },
 
-            &Expr::Binary { op, ref left, ref right } => {
+            Expr::Binary { op, ref left, ref right } => {
                 if op == '=' {
                     // handle assignement
-                    let var_name = match left.borrow() {
-                        &Expr::Variable(ref var_name) => var_name,
+                    let var_name = match *left.borrow() {
+                        Expr::Variable(ref var_name) => var_name,
                         _ => {
                             return Err("Expected variable as left-hand operator of assignement.");
                         }
                     };
 
-                    let var_val = self.compile_expr(&right)?;
+                    let var_val = self.compile_expr(right)?;
                     let var = self.variables.get(var_name.as_str()).ok_or("Undefined variable.")?;
-                    
-                    self.builder.build_store(&var, &var_val);
+
+                    self.builder.build_store(var, &var_val);
 
                     Ok(var_val)
                 } else {
-                    let lhs = self.compile_expr(&left)?;
-                    let rhs = self.compile_expr(&right)?;
+                    let lhs = self.compile_expr(left)?;
+                    let rhs = self.compile_expr(right)?;
 
                     match op {
                         '+' => Ok(self.builder.build_float_add(&lhs, &rhs, "tmpadd")),
                         '-' => Ok(self.builder.build_float_sub(&lhs, &rhs, "tmpsub")),
                         '*' => Ok(self.builder.build_float_mul(&lhs, &rhs, "tmpmul")),
                         '/' => Ok(self.builder.build_float_div(&lhs, &rhs, "tmpdiv")),
-
                         '<' => Ok({
                             let cmp = self.builder.build_float_compare(&FloatPredicate::ULT, &lhs, &rhs, "tmpcmp");
 
@@ -980,7 +977,7 @@ impl<'a> Compiler<'a> {
                 }
             },
 
-            &Expr::Call { ref fn_name, ref args } => {
+            Expr::Call { ref fn_name, ref args } => {
                 match self.get_function(fn_name.as_str()) {
                     Some(fun) => {
                         let mut compiled_args = Vec::with_capacity(args.len());
@@ -1000,12 +997,12 @@ impl<'a> Compiler<'a> {
                 }
             },
 
-            &Expr::Conditional { ref cond, ref consequence, ref alternative } => {
+            Expr::Conditional { ref cond, ref consequence, ref alternative } => {
                 let parent = self.fn_value();
                 let zero_const = self.context.f64_type().const_float(0.0);
 
                 // create condition by comparing without 0.0 and returning an int
-                let cond = self.compile_expr(&cond)?;
+                let cond = self.compile_expr(cond)?;
                 let cond = self.builder.build_float_compare(&FloatPredicate::ONE, &cond, &zero_const, "ifcond");
 
                 // build branch
@@ -1017,21 +1014,21 @@ impl<'a> Compiler<'a> {
 
                 // build then block
                 self.builder.position_at_end(&then_bb);
-                let then_val = self.compile_expr(&consequence)?;
+                let then_val = self.compile_expr(consequence)?;
                 self.builder.build_unconditional_branch(&cont_bb);
 
                 let then_bb = self.builder.get_insert_block().unwrap();
 
                 // build else block
                 self.builder.position_at_end(&else_bb);
-                let else_val = self.compile_expr(&alternative)?;
+                let else_val = self.compile_expr(alternative)?;
                 self.builder.build_unconditional_branch(&cont_bb);
 
                 let else_bb = self.builder.get_insert_block().unwrap();
 
                 // emit merge block
                 self.builder.position_at_end(&cont_bb);
-                
+
                 let phi = self.builder.build_phi(&self.context.f64_type(), "iftmp");
 
                 phi.add_incoming(&[
@@ -1042,11 +1039,11 @@ impl<'a> Compiler<'a> {
                 Ok(phi.as_basic_value().into_float_value())
             },
 
-            &Expr::For { ref var_name, ref start, ref end, ref step, ref body } => {
+            Expr::For { ref var_name, ref start, ref end, ref step, ref body } => {
                 let parent = self.fn_value();
 
                 let start_alloca = self.create_entry_block_alloca(var_name, None);
-                let start = self.compile_expr(&start)?;
+                let start = self.compile_expr(start)?;
 
                 self.builder.build_store(&start_alloca, &start);
 
@@ -1061,19 +1058,19 @@ impl<'a> Compiler<'a> {
                 self.variables.insert(var_name.to_owned(), start_alloca);
 
                 // emit body
-                self.compile_expr(&body)?;
+                self.compile_expr(body)?;
 
                 // emit step
-                let step = match step {
-                    &Some(ref step) => self.compile_expr(&step)?,
-                    &None => self.context.f64_type().const_float(1.0)
+                let step = match *step {
+                    Some(ref step) => self.compile_expr(step)?,
+                    None => self.context.f64_type().const_float(1.0)
                 };
 
                 // compile end condition
-                let end_cond = self.compile_expr(&end)?;
+                let end_cond = self.compile_expr(end)?;
 
                 let curr_var = self.builder.build_load(&start_alloca, var_name);
-                let next_var = self.builder.build_float_add(&curr_var.as_float_value(), &step, "nextvar");
+                let next_var = self.builder.build_float_add(curr_var.as_float_value(), &step, "nextvar");
 
                 self.builder.build_store(&start_alloca, &next_var);
 
@@ -1274,7 +1271,7 @@ pub fn main() {
         let module = context.create_module("tmp");
 
         // recompile every previously parsed function into the new module
-        for prev in previous_exprs.iter() {
+        for prev in &previous_exprs {
             Compiler::compile(&context, &builder, &fpm, &module, prev).expect("Cannot re-add previously compiled function.");
         }
 
@@ -1289,9 +1286,9 @@ pub fn main() {
                         println!("-> Function parsed: \n{:?}\n", fun);
                     }
                 }
-                
+
                 match Compiler::compile(&context, &builder, &fpm, &module, &fun) {
-                    Ok(function) => { 
+                    Ok(function) => {
                         if display_compiler_output {
                             // Not printing a new line since LLVM automatically
                             // prefixes the generated string with one
