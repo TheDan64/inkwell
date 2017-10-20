@@ -75,9 +75,9 @@ impl PhiValue {
         self.phi_value.print_to_stderr()
     }
 
-    // REVIEW: Maybe this is should always return InstructionValue?
-    pub fn as_instruction(&self) -> Option<InstructionValue> {
-        self.phi_value.as_instruction()
+    // SubType: -> InstructionValue<Phi>
+    pub fn as_instruction(&self) -> InstructionValue {
+        self.phi_value.as_instruction().expect("PhiValue should always be a Phi InstructionValue")
     }
 
     pub fn replace_all_uses_with(&self, other: &PhiValue) {

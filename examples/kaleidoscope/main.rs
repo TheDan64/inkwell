@@ -877,8 +877,7 @@ impl<'a> Compiler<'a> {
         builder.build_stack_allocation(&self.context.f64_type(), name)
     }
 
-    /// Compiles the specified `Expr` into an LLVM `BasicValue`.
-    /// Note: This method currently returns a `Box`, since it returns either `PhiValue` or `FloatValue`.
+    /// Compiles the specified `Expr` into an LLVM `FloatValue`.
     fn compile_expr(&mut self, expr: &Expr) -> Result<FloatValue, &'static str> {
         match *expr {
             Expr::Number(nb) => Ok(self.context.f64_type().const_float(nb)),

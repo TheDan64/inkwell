@@ -805,3 +805,45 @@ fn test_globals() {
         global.delete();
     }
 }
+
+#[test]
+fn test_phi_values() {
+    let context = Context::create();
+    let builder = context.create_builder();
+    let module = context.create_module("my_mod");
+    let void_type = context.void_type();
+    let bool_type = context.bool_type();
+    let fn_type = void_type.fn_type(&[&bool_type], false);
+    let fn_value = module.add_function("my_func", &fn_type, None);
+    let entry_block = fn_value.append_basic_block("entry");
+    let then_block = fn_value.append_basic_block("then");
+    let else_block = fn_value.append_basic_block("else");
+
+    builder.position_at_end(&entry_block);
+
+    let false_val = bool_type.const_int(0, false);
+    let true_val = bool_type.const_int(1, false);
+    let phi = builder.build_phi(&bool_type, "if");
+
+    assert!(!phi.is_null());
+    assert!(!phi.is_undef());
+    assert!(phi.as_basic_value().is_int_value());
+    assert_eq!(phi.as_instruction().get_opcode(), Phi);
+    assert_eq!(phi.count_incoming(), 0);
+
+    phi.add_incoming(&[
+        (&false_val, &then_block),
+        (&true_val, &else_block),
+    ]);
+
+    assert_eq!(phi.count_incoming(), 2);
+
+    let (then_val, then_bb) = phi.get_incoming(0).unwrap();
+    let (else_val, else_bb) = phi.get_incoming(1).unwrap();
+
+    assert_eq!(then_val.into_int_value(), false_val);
+    assert_eq!(else_val.into_int_value(), true_val);
+    assert_eq!(then_bb, then_block);
+    assert_eq!(else_bb, else_block);
+    assert!(phi.get_incoming(2).is_none());
+}
