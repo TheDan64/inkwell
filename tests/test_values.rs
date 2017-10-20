@@ -191,6 +191,7 @@ fn test_set_get_name() {
     let array_param = function.get_nth_param(3).unwrap().into_array_value();
     let ptr_param = function.get_nth_param(4).unwrap().into_pointer_value();
     let vec_param = function.get_nth_param(5).unwrap().into_vector_value();
+    let phi_val = builder.build_phi(&bool_type, "phi_node");
 
     assert_eq!(int_param.get_name(), &*CString::new("").unwrap());
     assert_eq!(float_param.get_name(), &*CString::new("").unwrap());
@@ -198,6 +199,7 @@ fn test_set_get_name() {
     assert_eq!(array_param.get_name(), &*CString::new("").unwrap());
     assert_eq!(ptr_param.get_name(), &*CString::new("").unwrap());
     assert_eq!(vec_param.get_name(), &*CString::new("").unwrap());
+    assert_eq!(phi_val.get_name(), &*CString::new("phi_node").unwrap());
 
     int_param.set_name("my_val");
     float_param.set_name("my_val2");
@@ -205,6 +207,7 @@ fn test_set_get_name() {
     array_param.set_name("my_val4");
     struct_param.set_name("my_val5");
     vec_param.set_name("my_val6");
+    phi_val.set_name("phi");
 
     assert_eq!(int_param.get_name(), &*CString::new("my_val").unwrap());
     assert_eq!(float_param.get_name(), &*CString::new("my_val2").unwrap());
@@ -212,6 +215,7 @@ fn test_set_get_name() {
     assert_eq!(array_param.get_name(), &*CString::new("my_val4").unwrap());
     assert_eq!(struct_param.get_name(), &*CString::new("my_val5").unwrap());
     assert_eq!(vec_param.get_name(), &*CString::new("my_val6").unwrap());
+    assert_eq!(phi_val.get_name(), &*CString::new("phi").unwrap());
 
     // TODO: Test globals, supposedly constant globals work?
 }
@@ -830,6 +834,7 @@ fn test_phi_values() {
     assert!(phi.as_basic_value().is_int_value());
     assert_eq!(phi.as_instruction().get_opcode(), Phi);
     assert_eq!(phi.count_incoming(), 0);
+    assert_eq!(phi.print_to_string(), &*CString::new("  %if = phi i1 ").unwrap());
 
     phi.add_incoming(&[
         (&false_val, &then_block),
@@ -837,6 +842,7 @@ fn test_phi_values() {
     ]);
 
     assert_eq!(phi.count_incoming(), 2);
+    assert_eq!(phi.print_to_string(), &*CString::new("  %if = phi i1 [ false, %then ], [ true, %else ]").unwrap());
 
     let (then_val, then_bb) = phi.get_incoming(0).unwrap();
     let (else_val, else_bb) = phi.get_incoming(1).unwrap();

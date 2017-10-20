@@ -59,6 +59,11 @@ impl PhiValue {
         self.phi_value.get_name()
     }
 
+    // I believe PhiValue is never a constant, so this should always work
+    pub fn set_name(&self, name: &str) {
+        self.phi_value.set_name(name);
+    }
+
     pub fn is_null(&self) -> bool {
         self.phi_value.is_null()
     }

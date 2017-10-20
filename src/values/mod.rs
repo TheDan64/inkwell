@@ -72,7 +72,9 @@ impl Value {
     // TODOC: According to https://stackoverflow.com/questions/21593752/llvm-how-to-pass-a-name-to-constantint
     // you can't use set_name name on a constant(by can't, I mean it wont do anything), unless it's also a global.
     // So, you can set names on variables (ie a function parameter)
-    // REVIEW: It'd be great if we could encode this into the type system somehow
+    // REVIEW: It'd be great if we could encode this into the type system somehow. For example,
+    // add a ParamValue wrapper type that always have it but conditional types (IntValue<Variable>)
+    // that also have it. This isn't a huge deal though, since it hasn't proven to be UB so far
     fn set_name(&self, name: &str) {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
