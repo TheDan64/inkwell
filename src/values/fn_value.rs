@@ -135,6 +135,8 @@ impl FunctionValue {
         BasicBlock::new(bb)
     }
 
+    // TODOC: This applies the global context to the basic block. To keep the existing context
+    // prefer context.append_basic_block()
     pub fn append_basic_block(&self, name: &str) -> BasicBlock {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 

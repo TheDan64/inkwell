@@ -853,3 +853,28 @@ fn test_phi_values() {
     assert_eq!(else_bb, else_block);
     assert!(phi.get_incoming(2).is_none());
 }
+
+#[test]
+fn test_allocations() {
+    let context = Context::create();
+    let i32_type = context.i32_type();
+    let i32_three = i32_type.const_int(3, false);
+    let builder = context.create_builder();
+    let stack_ptr = builder.build_alloca(&i32_type, "stack_ptr");
+
+    assert_eq!(stack_ptr.get_type().print_to_string(), &*CString::new("i32*").unwrap());
+
+    let stack_array = builder.build_array_alloca(&i32_type, &i32_three, "stack_array");
+
+    assert_eq!(stack_array.get_type().print_to_string(), &*CString::new("i32*").unwrap());
+
+    // REVIEW: Heap allocations are not working:
+
+    // let heap_ptr = builder.build_malloc(&i32_type, "heap_ptr");
+
+    // assert_eq!(heap_ptr.get_type().print_to_string(), &*CString::new("i32*").unwrap());
+
+    // let heap_array = builder.build_array_malloc(&i32_type, &i32_three, "heap_array");
+
+    // assert_eq!(heap_array.get_type().print_to_string(), &*CString::new("i32*").unwrap());
+}

@@ -1,5 +1,7 @@
 use llvm_sys::prelude::LLVMTypeRef;
 
+use std::fmt::Debug;
+
 use types::{IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VectorType, VoidType};
 use types::enums::{AnyTypeEnum, BasicTypeEnum};
 
@@ -12,7 +14,7 @@ pub trait AsTypeRef {
 
 macro_rules! trait_type_set {
     ($trait_name:ident: $($args:ident),*) => (
-        pub trait $trait_name: AsTypeRef {}
+        pub trait $trait_name: AsTypeRef + Debug {}
 
         $(
             impl $trait_name for $args {}

@@ -874,7 +874,7 @@ impl<'a> Compiler<'a> {
             None => builder.position_at_end(entry)
         }
 
-        builder.build_stack_allocation(&self.context.f64_type(), name)
+        builder.build_alloca(&self.context.f64_type(), name)
     }
 
     /// Compiles the specified `Expr` into an LLVM `FloatValue`.
