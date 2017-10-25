@@ -7,7 +7,7 @@ use types::traits::AsTypeRef;
 
 macro_rules! enum_type_set {
     ($enum_name:ident: $($args:ident),*) => (
-        #[derive(Debug, EnumAsGetters, EnumIntoGetters, EnumIsA, PartialEq, Eq)]
+        #[derive(Debug, EnumAsGetters, EnumIntoGetters, EnumIsA, PartialEq, Eq, Clone, Copy)]
         pub enum $enum_name {
             $(
                 $args($args),
