@@ -1,8 +1,7 @@
 extern crate inkwell;
 
-use self::inkwell::{DLLStorageClass, FloatPredicate, GlobalVisibility, ThreadLocalMode};
+use self::inkwell::{DLLStorageClass, FloatPredicate, GlobalVisibility, ThreadLocalMode, AddressSpace};
 use self::inkwell::context::Context;
-use self::inkwell::module::AddressSpace::*;
 use self::inkwell::module::Linkage::*;
 use self::inkwell::types::{StructType, VectorType};
 use self::inkwell::values::InstructionOpcode::*;
@@ -32,7 +31,7 @@ fn test_instructions() {
     let void_type = context.void_type();
     let i64_type = context.i64_type();
     let f32_type = context.f32_type();
-    let f32_ptr_type = f32_type.ptr_type(0);
+    let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
     let fn_type = void_type.fn_type(&[&f32_ptr_type], false);
 
     let function = module.add_function("free_f32", &fn_type, None);
@@ -170,7 +169,7 @@ fn test_set_get_name() {
     assert_eq!(ppc_f128_val.get_name(), &*CString::new("").unwrap());
 
     let void_type = context.void_type();
-    let ptr_type = bool_type.ptr_type(0);
+    let ptr_type = bool_type.ptr_type(AddressSpace::Generic);
     let struct_type = context.struct_type(&[&bool_type], false);
     let vec_type = bool_type.vec_type(1);
 
@@ -278,7 +277,7 @@ fn test_undef() {
     let f32_undef = f32_type.get_undef();
     let f64_undef = f64_type.get_undef();
     let f128_undef = f128_type.get_undef();
-    let ptr_undef = bool_type.ptr_type(0).get_undef();
+    let ptr_undef = bool_type.ptr_type(AddressSpace::Generic).get_undef();
     let array_undef = array_type.get_undef();
     let struct_undef = StructType::struct_type(&[&bool_type], false).get_undef();
     let vec_undef = bool_type.vec_type(1).get_undef();
@@ -448,7 +447,7 @@ fn test_metadata() {
     let f64_val = f64_type.const_float(0.0);
     let f128_val = f128_type.const_float(0.0);
     // let ppc_f128_val = ppc_f128_type.const_float(0.0);
-    let ptr_val = bool_type.ptr_type(0).const_null();
+    let ptr_val = bool_type.ptr_type(AddressSpace::Generic).const_null();
     let array_val = array_type.const_array(&[&f64_val]);
     let struct_val = context.const_struct(&[&i8_val, &f128_val], false);
     let vec_val = VectorType::const_vector(&[&i8_val]);
@@ -791,7 +790,7 @@ fn test_globals() {
 
     assert!(global.get_thread_local_mode().is_none());
 
-    let global2 = module.add_global(&i8_type, Some(Const), "my_global2");
+    let global2 = module.add_global(&i8_type, Some(AddressSpace::Const), "my_global2");
 
     assert_eq!(global2.get_previous_global().unwrap(), global);
     assert_eq!(global.get_next_global().unwrap(), global2);

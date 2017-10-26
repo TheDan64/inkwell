@@ -4,6 +4,7 @@ use llvm_sys::prelude::LLVMTypeRef;
 
 use std::ffi::CStr;
 
+use AddressSpace;
 use context::ContextRef;
 use types::traits::AsTypeRef;
 use types::{Type, PointerType, FunctionType, BasicType, ArrayType, VectorType};
@@ -77,7 +78,7 @@ impl FloatType {
         self.float_type.get_context()
     }
 
-    pub fn ptr_type(&self, address_space: u32) -> PointerType {
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
         self.float_type.ptr_type(address_space)
     }
 

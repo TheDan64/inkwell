@@ -2,6 +2,7 @@ extern crate inkwell;
 
 use std::ffi::CString;
 
+use self::inkwell::AddressSpace;
 use self::inkwell::context::Context;
 use self::inkwell::types::{FloatType, IntType, StructType, VoidType};
 
@@ -156,26 +157,26 @@ fn test_sized_types() {
     assert!(!fn_type3.is_sized());
     assert!(!fn_type4.is_sized());
 
-    assert!(void_type.ptr_type(0).is_sized());
-    assert!(bool_type.ptr_type(0).is_sized());
-    assert!(i8_type.ptr_type(0).is_sized());
-    assert!(i16_type.ptr_type(0).is_sized());
-    assert!(i32_type.ptr_type(0).is_sized());
-    assert!(i64_type.ptr_type(0).is_sized());
-    assert!(i128_type.ptr_type(0).is_sized());
-    assert!(f16_type.ptr_type(0).is_sized());
-    assert!(f32_type.ptr_type(0).is_sized());
-    assert!(f64_type.ptr_type(0).is_sized());
-    assert!(f128_type.ptr_type(0).is_sized());
-    assert!(ppc_f128_type.ptr_type(0).is_sized());
-    assert!(struct_type.ptr_type(0).is_sized());
-    assert!(struct_type2.ptr_type(0).is_sized());
-    assert!(struct_type3.ptr_type(0).is_sized());
-    assert!(struct_type4.ptr_type(0).is_sized());
-    assert!(opaque_struct_type.ptr_type(0).is_sized());
+    assert!(void_type.ptr_type(AddressSpace::Generic).is_sized());
+    assert!(bool_type.ptr_type(AddressSpace::Generic).is_sized());
+    assert!(i8_type.ptr_type(AddressSpace::Generic).is_sized());
+    assert!(i16_type.ptr_type(AddressSpace::Generic).is_sized());
+    assert!(i32_type.ptr_type(AddressSpace::Generic).is_sized());
+    assert!(i64_type.ptr_type(AddressSpace::Generic).is_sized());
+    assert!(i128_type.ptr_type(AddressSpace::Generic).is_sized());
+    assert!(f16_type.ptr_type(AddressSpace::Generic).is_sized());
+    assert!(f32_type.ptr_type(AddressSpace::Generic).is_sized());
+    assert!(f64_type.ptr_type(AddressSpace::Generic).is_sized());
+    assert!(f128_type.ptr_type(AddressSpace::Generic).is_sized());
+    assert!(ppc_f128_type.ptr_type(AddressSpace::Generic).is_sized());
+    assert!(struct_type.ptr_type(AddressSpace::Generic).is_sized());
+    assert!(struct_type2.ptr_type(AddressSpace::Generic).is_sized());
+    assert!(struct_type3.ptr_type(AddressSpace::Generic).is_sized());
+    assert!(struct_type4.ptr_type(AddressSpace::Generic).is_sized());
+    assert!(opaque_struct_type.ptr_type(AddressSpace::Generic).is_sized());
 
     // REVIEW: You can't have array of void right?
-    assert!(void_type.ptr_type(0).array_type(42).is_sized());
+    assert!(void_type.ptr_type(AddressSpace::Generic).array_type(42).is_sized());
     assert!(bool_type.array_type(42).is_sized());
     assert!(i8_type.array_type(42).is_sized());
     assert!(i16_type.array_type(42).is_sized());
@@ -194,7 +195,7 @@ fn test_sized_types() {
     assert!(!opaque_struct_type.array_type(0).is_sized());
 
     // REVIEW: You can't have vec of void right?
-    assert!(void_type.ptr_type(0).vec_type(42).is_sized());
+    assert!(void_type.ptr_type(AddressSpace::Generic).vec_type(42).is_sized());
     assert!(bool_type.vec_type(42).is_sized());
     assert!(i8_type.vec_type(42).is_sized());
     assert!(i16_type.vec_type(42).is_sized());
@@ -228,7 +229,7 @@ fn test_const_null() {
     let f64_type = context.f64_type();
     let f128_type = context.f128_type();
     let struct_type = context.struct_type(&[&i8_type, &f128_type], false);
-    let ptr_type = f64_type.ptr_type(0);
+    let ptr_type = f64_type.ptr_type(AddressSpace::Generic);
     let vec_type = f64_type.vec_type(42);
     let array_type = f64_type.array_type(42);
 

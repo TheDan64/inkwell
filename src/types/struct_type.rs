@@ -4,6 +4,7 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use std::ffi::CStr;
 use std::mem::forget;
 
+use AddressSpace;
 use context::ContextRef;
 use types::traits::AsTypeRef;
 use types::{Type, BasicType, BasicTypeEnum, ArrayType, PointerType, FunctionType, VectorType};
@@ -115,7 +116,7 @@ impl StructType {
         Some(c_str)
     }
 
-    pub fn ptr_type(&self, address_space: u32) -> PointerType {
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
         self.struct_type.ptr_type(address_space)
     }
 

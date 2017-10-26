@@ -4,6 +4,7 @@ use llvm_sys::prelude::LLVMTypeRef;
 
 use std::ffi::CStr;
 
+use AddressSpace;
 use context::ContextRef;
 use types::traits::AsTypeRef;
 use types::{Type, ArrayType, BasicType, VectorType, PointerType, FunctionType};
@@ -296,7 +297,7 @@ impl IntType {
         self.int_type.size_of()
     }
 
-    pub fn ptr_type(&self, address_space: u32) -> PointerType {
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
         self.int_type.ptr_type(address_space)
     }
 

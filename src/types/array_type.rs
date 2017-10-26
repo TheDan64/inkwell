@@ -3,6 +3,7 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use std::ffi::CStr;
 
+use AddressSpace;
 use context::ContextRef;
 use types::traits::AsTypeRef;
 use types::{Type, BasicType, PointerType, FunctionType};
@@ -36,7 +37,7 @@ impl ArrayType {
         None
     }
 
-    pub fn ptr_type(&self, address_space: u32) -> PointerType {
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
         self.array_type.ptr_type(address_space)
     }
 

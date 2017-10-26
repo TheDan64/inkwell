@@ -28,6 +28,7 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use std::ffi::CStr;
 use std::fmt;
 
+use AddressSpace;
 use context::{Context, ContextRef};
 use values::{IntValue, PointerValue};
 
@@ -62,9 +63,9 @@ impl Type {
         PointerValue::new(ptr_type)
     }
 
-    fn ptr_type(&self, address_space: u32) -> PointerType {
+    fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
         let ptr_type = unsafe {
-            LLVMPointerType(self.type_, address_space)
+            LLVMPointerType(self.type_, address_space as u32)
         };
 
         PointerType::new(ptr_type)
