@@ -23,7 +23,7 @@ macro_rules! trait_value_set {
 }
 
 /// Represents an aggregate value, built on top of other values.
-pub trait AggregateValue: AnyValue {
+pub trait AggregateValue: BasicValue {
     /// Returns an enum containing a typed version of the `AggregateValue`.
     fn as_aggregate_value_enum(&self) -> AggregateValueEnum {
         AggregateValueEnum::new(self.as_value_ref())
