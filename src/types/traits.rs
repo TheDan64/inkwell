@@ -14,12 +14,26 @@ pub trait AsTypeRef {
 
 macro_rules! trait_type_set {
     ($trait_name:ident: $($args:ident),*) => (
-        pub trait $trait_name: AsTypeRef + Debug {}
-
         $(
             impl $trait_name for $args {}
         )*
     );
+}
+
+/// Represents any LLVM type.
+pub trait AnyType: AsTypeRef + Debug {
+    /// Returns an `AnyTypeEnum` that represents the current type.
+    fn as_any_type_enum(&self) -> AnyTypeEnum {
+        AnyTypeEnum::new(self.as_type_ref())
+    }
+}
+
+/// Represents a basic LLVM type, that may be used in functions and struct declarations.
+pub trait BasicType: AnyType {
+    /// Returns a `BasicTypeEnum` that represents the current type.
+    fn as_basic_type_enum(&self) -> BasicTypeEnum {
+        BasicTypeEnum::new(self.as_type_ref())
+    }
 }
 
 trait_type_set! {AnyType: AnyTypeEnum, BasicTypeEnum, IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VoidType, VectorType}
