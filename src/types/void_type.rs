@@ -1,6 +1,7 @@
 use llvm_sys::core::LLVMVoidType;
 use llvm_sys::prelude::LLVMTypeRef;
 
+use AddressSpace;
 use context::ContextRef;
 use types::traits::AsTypeRef;
 use types::{Type, BasicType, FunctionType, PointerType};
@@ -31,7 +32,7 @@ impl VoidType {
         self.void_type.get_context()
     }
 
-    pub fn ptr_type(&self, address_space: u32) -> PointerType {
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
         self.void_type.ptr_type(address_space)
     }
 

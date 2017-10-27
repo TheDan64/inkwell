@@ -61,6 +61,33 @@ pub fn shutdown_llvm() {
     }
 }
 
+/// Defines the address space in which a global will be inserted.
+///
+/// # Remarks
+/// See also: http://llvm.org/doxygen/NVPTXBaseInfo_8h_source.html
+#[repr(u32)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+pub enum AddressSpace {
+    Generic = 0,
+    Global  = 1,
+    Shared  = 3,
+    Const   = 4,
+    Local   = 5
+}
+
+impl From<u32> for AddressSpace {
+    fn from(val: u32) -> Self {
+        match val {
+            0 => AddressSpace::Generic,
+            1 => AddressSpace::Global,
+            2 => AddressSpace::Shared,
+            3 => AddressSpace::Const,
+            4 => AddressSpace::Local,
+            _ => unreachable!("Invalid value for AddressSpace"),
+        }
+    }
+}
+
 // REVIEW: Maybe this belongs in some sort of prelude?
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum IntPredicate {

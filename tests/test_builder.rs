@@ -1,6 +1,6 @@
 extern crate inkwell;
 
-use self::inkwell::OptimizationLevel;
+use self::inkwell::{AddressSpace, OptimizationLevel};
 use self::inkwell::context::Context;
 use self::inkwell::builder::Builder;
 use self::inkwell::targets::{InitializationConfig, Target};
@@ -56,7 +56,7 @@ fn test_null_checked_ptr_ops() {
     // }
 
     let i8_type = context.i8_type();
-    let i8_ptr_type = i8_type.ptr_type(0);
+    let i8_ptr_type = i8_type.ptr_type(AddressSpace::Generic);
     let i64_type = context.i64_type();
     let fn_type = i8_type.fn_type(&[&i8_ptr_type], false);
     let neg_one = i8_type.const_all_ones();

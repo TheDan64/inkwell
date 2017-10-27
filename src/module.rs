@@ -11,7 +11,7 @@ use std::mem::{forget, uninitialized, zeroed};
 use std::path::Path;
 use std::slice::from_raw_parts;
 
-use OptimizationLevel;
+use {AddressSpace, OptimizationLevel};
 use context::{Context, ContextRef};
 use data_layout::DataLayout;
 use execution_engine::ExecutionEngine;
@@ -39,32 +39,6 @@ pub enum Linkage {
     PrivateLinkage,
     WeakAnyLinkage,
     WeakODRLinkage,
-}
-
-/// Defines the address space in which a global will be inserted.
-///
-/// # Remarks
-/// See also: http://llvm.org/doxygen/NVPTXBaseInfo_8h_source.html
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
-pub enum AddressSpace {
-    Generic = 0,
-    Global  = 1,
-    Shared  = 3,
-    Const   = 4,
-    Local   = 5
-}
-
-impl From<u32> for AddressSpace {
-    fn from(val: u32) -> Self {
-        match val {
-            0 => AddressSpace::Generic,
-            1 => AddressSpace::Global,
-            2 => AddressSpace::Shared,
-            3 => AddressSpace::Const,
-            4 => AddressSpace::Local,
-            _ => unreachable!("Invalid value for AddressSpace"),
-        }
-    }
 }
 
 impl Linkage {
