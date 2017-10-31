@@ -64,7 +64,7 @@ pub fn shutdown_llvm() {
 /// Defines the address space in which a global will be inserted.
 ///
 /// # Remarks
-/// See also: http://llvm.org/doxygen/NVPTXBaseInfo_8h_source.html
+/// See also: https://llvm.org/doxygen/NVPTXBaseInfo_8h_source.html
 #[repr(u32)]
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum AddressSpace {
@@ -185,7 +185,7 @@ impl FloatPredicate {
 /// Defines the optimization level used to compile a `Module`.
 ///
 /// # Remarks
-/// See also: http://llvm.org/doxygen/CodeGen_8h_source.html
+/// See also: https://llvm.org/doxygen/CodeGen_8h_source.html
 #[repr(u32)]
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum OptimizationLevel {

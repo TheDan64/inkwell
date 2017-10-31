@@ -27,9 +27,7 @@ impl GenericValue {
     // SubType: create_generic_value() -> GenericValue<PointerValue, T>
     // REVIEW: How safe is this really?
     pub unsafe fn create_generic_value_of_pointer<T>(value: &mut T) -> Self {
-        let value = unsafe {
-            LLVMCreateGenericValueOfPointer(value as *mut _ as *mut c_void)
-        };
+        let value = LLVMCreateGenericValueOfPointer(value as *mut _ as *mut c_void);
 
         GenericValue::new(value)
     }
@@ -51,9 +49,7 @@ impl GenericValue {
     // SubType: impl only for GenericValue<PointerValue, T>
     // REVIEW: How safe is this really?
     pub unsafe fn into_pointer<T>(self) -> *mut T {
-        unsafe {
-            LLVMGenericValueToPointer(self.generic_value) as *mut T
-        }
+        LLVMGenericValueToPointer(self.generic_value) as *mut T
     }
 }
 

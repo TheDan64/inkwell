@@ -1,9 +1,9 @@
 use llvm_sys::core::LLVMDisposeMessage;
-use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction, LLVMLinkInMCJIT, LLVMLinkInInterpreter, LLVMRemoveModule, LLVMGenericValueRef, LLVMFreeMachineCodeForFunction, LLVMGetPointerToGlobal, LLVMAddGlobalMapping};
+use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction, LLVMLinkInMCJIT, LLVMLinkInInterpreter, LLVMRemoveModule, LLVMGenericValueRef, LLVMFreeMachineCodeForFunction, LLVMAddGlobalMapping};
 
 use module::Module;
 use targets::TargetData;
-use values::{AnyValue, AsValueRef, FunctionValue, GenericValue, GlobalValue};
+use values::{AnyValue, AsValueRef, FunctionValue, GenericValue};
 
 use std::ffi::{CStr, CString};
 use std::mem::{forget, uninitialized, zeroed};

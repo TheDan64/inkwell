@@ -56,6 +56,7 @@ fn test_instructions() {
     assert_eq!(return_instruction.get_opcode(), Return);
 
     // test instruction cloning
+    #[ignore(clone_on_copy)]
     let instruction_clone = return_instruction.clone();
 
     assert_eq!(instruction_clone.get_opcode(), return_instruction.get_opcode());

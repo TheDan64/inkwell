@@ -137,7 +137,7 @@ fn test_get_type() {
     assert_eq!(module.get_context(), context);
     assert!(module.get_type("foo").is_none());
 
-    let foo = context.opaque_struct_type("foo");
+    let opaque = context.opaque_struct_type("foo");
 
-    assert_eq!(module.get_type("foo").unwrap().into_struct_type(), foo);
+    assert_eq!(module.get_type("foo").unwrap().into_struct_type(), opaque);
 }

@@ -191,6 +191,7 @@ impl Builder {
     }
 
     // TODOC: Heap allocation
+    // FIXME: Not working
     pub fn build_malloc(&self, type_: &BasicType, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -202,6 +203,7 @@ impl Builder {
     }
 
     // TODOC: Heap allocation
+    // FIXME: Not working
     pub fn build_array_malloc(&self, type_: &BasicType, size: &IntValue, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -221,17 +223,18 @@ impl Builder {
         InstructionValue::new(val)
     }
 
-    pub fn insert_instruction(&self, value: &InstructionValue) {
-        unsafe {
-            LLVMInsertIntoBuilder(self.builder, value.as_value_ref());
-        }
-    }
+    pub fn insert_instruction(&self, instruction: &InstructionValue, name: Option<&str>) {
+        match name {
+            Some(name) => {
+                let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
-    pub fn insert_instruction_with_name(&self, instruction: &InstructionValue, name: &str) {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
-
-        unsafe {
-            LLVMInsertIntoBuilderWithName(self.builder, instruction.as_value_ref(), c_string.as_ptr())
+                unsafe {
+                    LLVMInsertIntoBuilderWithName(self.builder, instruction.as_value_ref(), c_string.as_ptr())
+                }
+            },
+            None => unsafe {
+                LLVMInsertIntoBuilder(self.builder, instruction.as_value_ref());
+            }
         }
     }
 

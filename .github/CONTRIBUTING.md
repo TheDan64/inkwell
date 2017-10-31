@@ -24,7 +24,7 @@ Hello there! Thank you for taking interest in Inkwell!
 ### Desired
 
 * I have ran clippy and updated portions of code pertaining to my changes
-* I will keep my code reasonably up to date via rebasing over merging whenever possible. This helps avoid unnecessary merge commits
+* I will keep my code reasonably up to date via rebasing over merging whenever possible (This helps avoid unnecessary merge commits)
 
 ## Got Questions?
 
