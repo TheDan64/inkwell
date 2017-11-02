@@ -43,8 +43,6 @@ fn test_null_checked_ptr_ops() {
     let context = Context::create();
     let module = context.create_module("unsafe");
     let builder = context.create_builder();
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-    let module = execution_engine.get_module_at(0);
 
     // Here we're going to create a function that looks roughly like:
     // fn check_null_index1(ptr: *const i8) -> i8 {
@@ -90,15 +88,60 @@ fn test_null_checked_ptr_ops() {
 
     builder.build_return(Some(&index1));
 
+    // Here we're going to create a function that looks roughly like:
+    // fn check_null_index2(ptr: *const i8) -> i8 {
+    //     if !ptr.is_null() {
+    //         ptr[1]
+    //     } else {
+    //         -1
+    //     }
+    // }
+
+    let function = module.add_function("check_null_index2", &fn_type, None);
+    let entry = context.append_basic_block(&function, "entry");
+
+    builder.position_at_end(&entry);
+
+    let ptr = function.get_first_param().unwrap().into_pointer_value();
+
+    let is_not_null = builder.build_is_not_null(&ptr, "is_not_null");
+
+    let ret_idx = function.append_basic_block("ret_idx");
+    let ret_0 = function.append_basic_block("ret_0");
+
+    builder.build_conditional_branch(&is_not_null, &ret_idx, &ret_0);
+
+    builder.position_at_end(&ret_0);
+    builder.build_return(Some(&neg_one));
+
+    builder.position_at_end(&ret_idx);
+
+    // FIXME: This might not work if compiled on non 64bit devices. Ideally we'd
+    // be able to create pointer sized ints easily
+    let ptr_as_int = builder.build_ptr_to_int(&ptr, &i64_type, "ptr_as_int");
+    let new_ptr_as_int = builder.build_int_add(&ptr_as_int, &one, "add");
+    let new_ptr = builder.build_int_to_ptr(&new_ptr_as_int, &i8_ptr_type, "int_as_ptr");
+    let index1 = builder.build_load(&new_ptr, "deref");
+
+    builder.build_return(Some(&index1));
+
+    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+
     let addr = execution_engine.get_function_address("check_null_index1").unwrap();
 
     let check_null_index1: extern "C" fn(*const i8) -> i8 = unsafe { transmute(addr) };
 
-    assert_eq!(check_null_index1(null()), -1i8);
-
     let array = &[100i8, 42i8];
 
+    assert_eq!(check_null_index1(null()), -1i8);
     assert_eq!(check_null_index1(array.as_ptr()), 42i8);
+
+    let addr2 = execution_engine.get_function_address("check_null_index2").unwrap();
+
+    let check_null_index2: extern "C" fn(*const i8) -> i8 = unsafe { transmute(addr2) };
+
+    assert_eq!(check_null_index2(null()), -1i8);
+    assert_eq!(check_null_index2(array.as_ptr()), 42i8);
 }
 
 #[test]
@@ -348,4 +391,23 @@ fn test_global_builder() {
     // Unfortunately LLVM doesn't provide us with a get_context method like it does for
     // modules and types, so we can't assert it actualy is of the same global context...
     Builder::create();
+}
+
+#[test]
+fn test_unconditional_branch() {
+    let context = Context::create();
+    let builder = context.create_builder();
+    let module = context.create_module("my_mod");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_value = module.add_function("my_fn", &fn_type, None);
+    let entry_bb = fn_value.append_basic_block("entry");
+    let skipped_bb = fn_value.append_basic_block("skipped");
+    let end_bb = fn_value.append_basic_block("end");
+
+    builder.position_at_end(&entry_bb);
+    builder.build_unconditional_branch(&end_bb);
+
+    builder.position_at_end(&skipped_bb);
+    builder.build_unreachable();
 }
