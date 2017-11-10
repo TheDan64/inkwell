@@ -5,8 +5,9 @@ use self::inkwell::context::Context;
 use self::inkwell::builder::Builder;
 use self::inkwell::targets::{InitializationConfig, Target};
 
-use std::ptr::null;
+use std::ffi::CString;
 use std::mem::transmute;
+use std::ptr::null;
 
 #[test]
 fn test_build_call() {
@@ -152,7 +153,6 @@ fn test_binary_ops() {
     let module = context.create_module("unsafe");
     let builder = context.create_builder();
     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-    let module = execution_engine.get_module_at(0);
 
     // Here we're going to create an and function which looks roughly like:
     // fn and(left: bool, right: bool) -> bool {
@@ -238,7 +238,6 @@ fn test_switch() {
     let module = context.create_module("unsafe");
     let builder = context.create_builder();
     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-    let module = execution_engine.get_module_at(0);
 
     // Here we're going to create a function which looks roughly like:
     // fn switch(val: u8) -> u8 {
@@ -298,7 +297,6 @@ fn test_bit_shifts() {
     let module = context.create_module("unsafe");
     let builder = context.create_builder();
     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-    let module = execution_engine.get_module_at(0);
 
     // Here we're going to create a function which looks roughly like:
     // fn left_shift(value: u8, bits: u8) -> u8 {
@@ -410,4 +408,40 @@ fn test_unconditional_branch() {
 
     builder.position_at_end(&skipped_bb);
     builder.build_unreachable();
+}
+
+#[test]
+fn test_no_builder_double_free() {
+    let context = Context::create();
+    let builder = context.create_builder();
+
+    drop(builder);
+    drop(context);
+}
+
+#[test]
+fn test_no_builder_double_free2() {
+    let builder = {
+        let context = Context::create();
+
+        context.create_builder()
+
+        // Original Context drops fine
+    };
+
+    // Builder continues to function with different context
+    let context = Context::create();
+    let module = context.create_module("my_mod");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_value = module.add_function("my_fn", &fn_type, None);
+    let entry = fn_value.append_basic_block("entry");
+
+    builder.position_at_end(&entry);
+    builder.build_unreachable();
+
+    assert_eq!(module.print_to_string(), &*CString::new("; ModuleID = \'my_mod\'\n\ndefine void @my_fn() {\nentry:\n  unreachable\n}\n").unwrap());
+
+    // 2nd Context drops fine
+    // Builds drops fine
 }

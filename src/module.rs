@@ -5,10 +5,12 @@ use llvm_sys::execution_engine::LLVMCreateJITCompilerForModule;
 use llvm_sys::prelude::{LLVMValueRef, LLVMModuleRef};
 use llvm_sys::LLVMLinkage;
 
+use std::cell::RefCell;
 use std::ffi::{CString, CStr};
 use std::fs::File;
 use std::mem::{forget, uninitialized, zeroed};
 use std::path::Path;
+use std::rc::Rc;
 use std::slice::from_raw_parts;
 
 use {AddressSpace, OptimizationLevel};
@@ -91,16 +93,20 @@ impl Linkage {
 /// The underlying module will be disposed when dropping this object.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Module {
-    pub(crate) module: LLVMModuleRef,
+    pub(crate) non_global_context: Option<Context>,
     data_layout: Option<DataLayout>,
+    pub(crate) module: LLVMModuleRef,
+    pub(crate) owned_by_ee: RefCell<Option<ExecutionEngine>>,
 }
 
 impl Module {
-    pub(crate) fn new(module: LLVMModuleRef) -> Self {
+    pub(crate) fn new(module: LLVMModuleRef, context: Option<&Context>) -> Self {
         assert!(!module.is_null());
 
         let mut module = Module {
             module: module,
+            non_global_context: context.map(|ctx| Context::new(ctx.context.clone())),
+            owned_by_ee: RefCell::new(None),
             data_layout: None,
         };
 
@@ -129,7 +135,7 @@ impl Module {
             LLVMModuleCreateWithName(c_string.as_ptr())
         };
 
-        Module::new(module)
+        Module::new(module, None)
     }
 
     /// Creates a function given its `name` and `ty`, adds it to the `Module`
@@ -191,7 +197,8 @@ impl Module {
             LLVMGetModuleContext(self.module)
         };
 
-        ContextRef::new(Context::new(context))
+        // REVIEW: This probably should be somehow using the existing context Rc
+        ContextRef::new(Context::new(Rc::new(context)))
     }
 
     /// Gets the first `FunctionValue` defined in this `Module`.
@@ -319,9 +326,9 @@ impl Module {
     /// let module = Module::create("my_module");
     /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     ///
-    /// assert_eq!(execution_engine.get_module_at(0).get_context(), context);
+    /// assert_eq!(module.get_context(), context);
     /// ```
-    pub fn create_jit_execution_engine(self, opt_level: OptimizationLevel) -> Result<ExecutionEngine, String> {
+    pub fn create_jit_execution_engine(&self, opt_level: OptimizationLevel) -> Result<ExecutionEngine, String> {
         let mut execution_engine = unsafe { uninitialized() };
         let mut err_str = unsafe { zeroed() };
 
@@ -341,9 +348,9 @@ impl Module {
             return Err(rust_str);
         }
 
-        let mut execution_engine = ExecutionEngine::new(execution_engine, true);
+        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), true);
 
-        execution_engine.modules.push(self);
+        *self.owned_by_ee.borrow_mut() = Some(ExecutionEngine::new(execution_engine.execution_engine.clone(), true));
 
         Ok(execution_engine)
     }
@@ -590,7 +597,7 @@ impl Clone for Module {
             LLVMCloneModule(self.module)
         };
 
-        Module::new(module)
+        Module::new(module, self.non_global_context.as_ref())
     }
 }
 
@@ -600,8 +607,12 @@ impl Drop for Module {
     fn drop(&mut self) {
         forget(self.data_layout.take().expect("DataLayout should always exist until Drop"));
 
-        unsafe {
-            LLVMDisposeModule(self.module);
+        if self.owned_by_ee.borrow_mut().take().is_none() {
+            unsafe {
+                LLVMDisposeModule(self.module);
+            }
         }
+
+        // Context & EE will drop naturally if they are unique references at this point
     }
 }

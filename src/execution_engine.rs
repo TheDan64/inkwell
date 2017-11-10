@@ -5,6 +5,7 @@ use module::Module;
 use targets::TargetData;
 use values::{AnyValue, AsValueRef, FunctionValue, GenericValue};
 
+use std::rc::Rc;
 use std::ffi::{CStr, CString};
 use std::mem::{forget, uninitialized, zeroed};
 
@@ -14,26 +15,24 @@ pub enum FunctionLookupError {
     FunctionNotFound, // 404!
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct ExecutionEngine {
-    execution_engine: LLVMExecutionEngineRef,
-    pub(crate) modules: Vec<Module>,
+    pub(crate) execution_engine: Rc<LLVMExecutionEngineRef>,
     target_data: Option<TargetData>,
     jit_mode: bool,
 }
 
 impl ExecutionEngine {
-    pub(crate) fn new(execution_engine: LLVMExecutionEngineRef, jit_mode: bool) -> ExecutionEngine {
+    pub(crate) fn new(execution_engine: Rc<LLVMExecutionEngineRef>, jit_mode: bool) -> ExecutionEngine {
         assert!(!execution_engine.is_null());
 
         // REVIEW: Will we have to do this for LLVMGetExecutionEngineTargetMachine too?
         let target_data = unsafe {
-            LLVMGetExecutionEngineTargetData(execution_engine)
+            LLVMGetExecutionEngineTargetData(*execution_engine)
         };
 
         ExecutionEngine {
             execution_engine: execution_engine,
-            modules: vec![],
             target_data: Some(TargetData::new(target_data)),
             jit_mode: jit_mode,
         }
@@ -90,29 +89,57 @@ impl ExecutionEngine {
     ///
     /// assert_eq!(result, 128.);
     /// ```
-    pub fn add_global_mapping(&mut self, value: &AnyValue, addr: usize) {
+    pub fn add_global_mapping(&self, value: &AnyValue, addr: usize) {
         unsafe {
-            LLVMAddGlobalMapping(self.execution_engine, value.as_value_ref(), addr as *mut _)
+            LLVMAddGlobalMapping(*self.execution_engine, value.as_value_ref(), addr as *mut _)
         }
     }
 
-    // TODOC: EE must *own* modules and deal out references
-    pub fn add_module(&mut self, module: Module) -> &Module {
+    /// Adds a module to an `ExecutionEngine`.
+    ///
+    /// The method will be `Ok(())` if the module does not belong to an `ExecutionEngine` already and `Err(())` otherwise.
+    ///
+    /// ```rust,no_run
+    /// use inkwell::targets::{InitializationConfig, Target};
+    /// use inkwell::context::Context;
+    /// use inkwell::OptimizationLevel;
+    ///
+    /// Target::initialize_native(&InitializationConfig::default()).unwrap();
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("test");
+    /// let mut ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    ///
+    /// assert!(ee.add_module(&module).is_err());
+    /// ```
+    pub fn add_module(&self, module: &Module) -> Result<(), ()> {
         unsafe {
-            LLVMAddModule(self.execution_engine, module.module)
+            LLVMAddModule(*self.execution_engine, module.module)
         }
 
-        self.modules.push(module);
+        if module.owned_by_ee.borrow().is_some() {
+            return Err(());
+        }
 
-        &self.modules[self.modules.len() - 1]
+        *module.owned_by_ee.borrow_mut() = Some(ExecutionEngine::new(self.execution_engine.clone(), self.jit_mode));
+
+        Ok(())
     }
 
-    pub fn remove_module(&mut self, module: &Module) -> Result<Module, String> {
+    // REVIEW: Maybe there's a way to make this just take a refence. Might require
+    // putting the ModuleRef in a cell so we can replace it with the new module value
+    pub fn remove_module(&self, module: Module) -> Result<Module, String> {
+        match *module.owned_by_ee.borrow() {
+            Some(ref ee) if *ee.execution_engine != *self.execution_engine => return Err("Module is not owned by this Execution Engine".into()),
+            None => return Err("Module is not owned by an Execution Engine".into()),
+            _ => ()
+        }
+
         let mut new_module = unsafe { uninitialized() };
         let mut err_str = unsafe { zeroed() };
 
         let code = unsafe {
-            LLVMRemoveModule(self.execution_engine, module.module, &mut new_module, &mut err_str)
+            LLVMRemoveModule(*self.execution_engine, module.module, &mut new_module, &mut err_str)
         };
 
         if code == 1 {
@@ -127,30 +154,11 @@ impl ExecutionEngine {
             return Err(rust_str);
         }
 
-        // REVIEW: This might end up a hashtable for better performance
-        let mut index = None;
+        let module = Module::new(new_module, module.non_global_context.as_ref());
 
-        for (i, owned_module) in self.modules.iter().enumerate() {
-            if module == owned_module {
-                index = Some(i);
-            }
-        }
+        *module.owned_by_ee.borrow_mut() = None;
 
-        match index {
-            Some(idx) => self.modules.remove(idx),
-            None => return Err("Module does not belong to this ExecutionEngine".into()),
-        };
-
-        Ok(Module::new(new_module))
-    }
-
-    // FIXME: Workaround until we can think of a better API
-    // Ideally, we'd provide this as a hashmap from module name to module, but this may not be
-    // possible since you can create modules, ie via create_module_from_ir, which either do not
-    // have a name, or at least LLVM provides no way to obtain its name. Also, possible collisions
-    // depending on how loose, if at all, LLVM is with module names belonging to execution engines
-    pub fn get_module_at(&self, index: usize) -> &Module {
-        &self.modules[index]
+        Ok(module)
     }
 
     /// WARNING: The returned address *will* be invalid if the EE drops first
@@ -165,7 +173,7 @@ impl ExecutionEngine {
         let c_string = CString::new(fn_name).expect("Conversion to CString failed unexpectedly");
 
         let address = unsafe {
-            LLVMGetFunctionAddress(self.execution_engine, c_string.as_ptr())
+            LLVMGetFunctionAddress(*self.execution_engine, c_string.as_ptr())
         };
 
         // REVIEW: Can also return 0 if no targets are initialized.
@@ -197,7 +205,7 @@ impl ExecutionEngine {
         let mut function = unsafe { zeroed() };
 
         let code = unsafe {
-            LLVMFindFunction(self.execution_engine, c_string.as_ptr(), &mut function)
+            LLVMFindFunction(*self.execution_engine, c_string.as_ptr(), &mut function)
         };
 
         if code == 0 {
@@ -214,7 +222,7 @@ impl ExecutionEngine {
                                                      .map(|val| val.generic_value)
                                                      .collect();
 
-        let value = LLVMRunFunction(self.execution_engine, function.as_value_ref(), args.len() as u32, args.as_mut_ptr()); // REVIEW: usize to u32 ok??
+        let value = LLVMRunFunction(*self.execution_engine, function.as_value_ref(), args.len() as u32, args.as_mut_ptr()); // REVIEW: usize to u32 ok??
 
         GenericValue::new(value)
     }
@@ -224,13 +232,13 @@ impl ExecutionEngine {
         let env_p = vec![]; // REVIEW: No clue what this is
 
         unsafe {
-            LLVMRunFunctionAsMain(self.execution_engine, function.as_value_ref(), args.len() as u32, args.as_ptr(), env_p.as_ptr()); // REVIEW: usize to u32 cast ok??
+            LLVMRunFunctionAsMain(*self.execution_engine, function.as_value_ref(), args.len() as u32, args.as_ptr(), env_p.as_ptr()); // REVIEW: usize to u32 cast ok??
         }
     }
 
     pub fn free_fn_machine_code(&self, function: &FunctionValue) {
         unsafe {
-            LLVMFreeMachineCodeForFunction(self.execution_engine, function.as_value_ref())
+            LLVMFreeMachineCodeForFunction(*self.execution_engine, function.as_value_ref())
         }
     }
 }
@@ -239,14 +247,12 @@ impl ExecutionEngine {
 // want owned modules to drop.
 impl Drop for ExecutionEngine {
     fn drop(&mut self) {
-        for module in self.modules.drain(..) {
-            forget(module);
-        }
-
         forget(self.target_data.take().expect("TargetData should always exist until Drop"));
 
-        unsafe {
-            LLVMDisposeExecutionEngine(self.execution_engine);
+        if Rc::strong_count(&self.execution_engine) == 1 {
+            unsafe {
+                LLVMDisposeExecutionEngine(*self.execution_engine);
+            }
         }
     }
 }

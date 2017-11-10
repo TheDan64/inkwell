@@ -13,20 +13,21 @@ use std::ffi::{CStr, CString};
 use std::mem::forget;
 use std::ops::Deref;
 use std::ptr;
+use std::rc::Rc;
 
 // From Docs: A single context is not thread safe.
 // However, different contexts can execute on different threads simultaneously.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Context {
-    pub(crate) context: LLVMContextRef,
+    pub(crate) context: Rc<LLVMContextRef>,
 }
 
 impl Context {
-    pub(crate) fn new(context: LLVMContextRef) -> Self {
+    pub(crate) fn new(context: Rc<LLVMContextRef>) -> Self {
         assert!(!context.is_null());
 
         Context {
-            context: context
+            context,
         }
     }
 
@@ -44,7 +45,7 @@ impl Context {
             LLVMContextCreate()
         };
 
-        Context::new(context)
+        Context::new(Rc::new(context))
     }
 
     /// Creates a `ContextRef` which references the global context singleton.
@@ -61,7 +62,7 @@ impl Context {
             LLVMGetGlobalContext()
         };
 
-        ContextRef::new(Context::new(context))
+        ContextRef::new(Context::new(Rc::new(context)))
     }
 
     /// Creates a new `Builder` for a `Context`.
@@ -76,7 +77,7 @@ impl Context {
     /// ```
     pub fn create_builder(&self) -> Builder {
         let builder = unsafe {
-            LLVMCreateBuilderInContext(self.context)
+            LLVMCreateBuilderInContext(*self.context)
         };
 
         Builder::new(builder)
@@ -96,10 +97,10 @@ impl Context {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let module = unsafe {
-            LLVMModuleCreateWithNameInContext(c_string.as_ptr(), self.context)
+            LLVMModuleCreateWithNameInContext(c_string.as_ptr(), *self.context)
         };
 
-        Module::new(module)
+        Module::new(module, Some(&self))
     }
 
     // REVIEW: I haven't yet been able to find docs or other wrappers that confirm, but my suspicion
@@ -111,13 +112,13 @@ impl Context {
         let mut err_str = ptr::null_mut();
 
         let code = unsafe {
-            LLVMParseIRInContext(self.context, memory_buffer.memory_buffer, &mut module, &mut err_str)
+            LLVMParseIRInContext(*self.context, memory_buffer.memory_buffer, &mut module, &mut err_str)
         };
 
         forget(memory_buffer);
 
         if code == 0 {
-            return Ok(Module::new(module));
+            return Ok(Module::new(module, Some(&self)));
         }
 
         let rust_str = unsafe {
@@ -133,7 +134,7 @@ impl Context {
 
     pub fn void_type(&self) -> VoidType {
         let void_type = unsafe {
-            LLVMVoidTypeInContext(self.context)
+            LLVMVoidTypeInContext(*self.context)
         };
 
         VoidType::new(void_type)
@@ -141,7 +142,7 @@ impl Context {
 
     pub fn bool_type(&self) -> IntType {
         let bool_type = unsafe {
-            LLVMInt1TypeInContext(self.context)
+            LLVMInt1TypeInContext(*self.context)
         };
 
         IntType::new(bool_type)
@@ -149,7 +150,7 @@ impl Context {
 
     pub fn i8_type(&self) -> IntType {
         let i8_type = unsafe {
-            LLVMInt8TypeInContext(self.context)
+            LLVMInt8TypeInContext(*self.context)
         };
 
         IntType::new(i8_type)
@@ -157,7 +158,7 @@ impl Context {
 
     pub fn i16_type(&self) -> IntType {
         let i16_type = unsafe {
-            LLVMInt16TypeInContext(self.context)
+            LLVMInt16TypeInContext(*self.context)
         };
 
         IntType::new(i16_type)
@@ -165,7 +166,7 @@ impl Context {
 
     pub fn i32_type(&self) -> IntType {
         let i32_type = unsafe {
-            LLVMInt32TypeInContext(self.context)
+            LLVMInt32TypeInContext(*self.context)
         };
 
         IntType::new(i32_type)
@@ -173,7 +174,7 @@ impl Context {
 
     pub fn i64_type(&self) -> IntType {
         let i64_type = unsafe {
-            LLVMInt64TypeInContext(self.context)
+            LLVMInt64TypeInContext(*self.context)
         };
 
         IntType::new(i64_type)
@@ -188,7 +189,7 @@ impl Context {
 
     pub fn custom_width_int_type(&self, bits: u32) -> IntType {
         let int_type = unsafe {
-            LLVMIntTypeInContext(self.context, bits)
+            LLVMIntTypeInContext(*self.context, bits)
         };
 
         IntType::new(int_type)
@@ -196,7 +197,7 @@ impl Context {
 
     pub fn f16_type(&self) -> FloatType {
         let f16_type = unsafe {
-            LLVMHalfTypeInContext(self.context)
+            LLVMHalfTypeInContext(*self.context)
         };
 
         FloatType::new(f16_type)
@@ -204,7 +205,7 @@ impl Context {
 
     pub fn f32_type(&self) -> FloatType {
         let f32_type = unsafe {
-            LLVMFloatTypeInContext(self.context)
+            LLVMFloatTypeInContext(*self.context)
         };
 
         FloatType::new(f32_type)
@@ -212,7 +213,7 @@ impl Context {
 
     pub fn f64_type(&self) -> FloatType {
         let f64_type = unsafe {
-            LLVMDoubleTypeInContext(self.context)
+            LLVMDoubleTypeInContext(*self.context)
         };
 
         FloatType::new(f64_type)
@@ -220,7 +221,7 @@ impl Context {
 
     pub fn f128_type(&self) -> FloatType {
         let f128_type = unsafe {
-            LLVMFP128TypeInContext(self.context)
+            LLVMFP128TypeInContext(*self.context)
         };
 
         FloatType::new(f128_type)
@@ -228,7 +229,7 @@ impl Context {
 
     pub fn ppc_f128_type(&self) -> FloatType {
         let f128_type = unsafe {
-            LLVMPPCFP128TypeInContext(self.context)
+            LLVMPPCFP128TypeInContext(*self.context)
         };
 
         FloatType::new(f128_type)
@@ -240,7 +241,7 @@ impl Context {
                                                            .map(|val| val.as_type_ref())
                                                            .collect();
         let struct_type = unsafe {
-            LLVMStructTypeInContext(self.context, field_types.as_mut_ptr(), field_types.len() as u32, packed as i32)
+            LLVMStructTypeInContext(*self.context, field_types.as_mut_ptr(), field_types.len() as u32, packed as i32)
         };
 
         StructType::new(struct_type)
@@ -250,7 +251,7 @@ impl Context {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let struct_type = unsafe {
-            LLVMStructCreateNamed(self.context, c_string.as_ptr())
+            LLVMStructCreateNamed(*self.context, c_string.as_ptr())
         };
 
         StructType::new(struct_type)
@@ -260,7 +261,7 @@ impl Context {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let bb = unsafe {
-            LLVMAppendBasicBlockInContext(self.context, function.as_value_ref(), c_string.as_ptr())
+            LLVMAppendBasicBlockInContext(*self.context, function.as_value_ref(), c_string.as_ptr())
         };
 
         BasicBlock::new(bb).expect("Appending basic block should never fail")
@@ -284,7 +285,7 @@ impl Context {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let bb = unsafe {
-            LLVMInsertBasicBlockInContext(self.context, basic_block.basic_block, c_string.as_ptr())
+            LLVMInsertBasicBlockInContext(*self.context, basic_block.basic_block, c_string.as_ptr())
         };
 
         BasicBlock::new(bb).expect("Prepending basic block should never fail")
@@ -295,7 +296,7 @@ impl Context {
                                                 .map(|val| val.as_value_ref())
                                                 .collect();
         let value = unsafe {
-            LLVMConstStructInContext(self.context, args.as_mut_ptr(), args.len() as u32, packed as i32)
+            LLVMConstStructInContext(*self.context, args.as_mut_ptr(), args.len() as u32, packed as i32)
         };
 
         StructValue::new(value)
@@ -308,7 +309,7 @@ impl Context {
                                                         .map(|val| val.as_value_ref())
                                                         .collect();
         let metadata_value = unsafe {
-            LLVMMDNodeInContext(self.context, tuple_values.as_mut_ptr(), tuple_values.len() as u32)
+            LLVMMDNodeInContext(*self.context, tuple_values.as_mut_ptr(), tuple_values.len() as u32)
         };
 
         MetadataValue::new(metadata_value)
@@ -319,7 +320,7 @@ impl Context {
         let c_string = CString::new(string).expect("Conversion to CString failed unexpectedly");
 
         let metadata_value = unsafe {
-            LLVMMDStringInContext(self.context, c_string.as_ptr(), string.len() as u32)
+            LLVMMDStringInContext(*self.context, c_string.as_ptr(), string.len() as u32)
         };
 
         MetadataValue::new(metadata_value)
@@ -327,15 +328,17 @@ impl Context {
 
     pub fn get_kind_id(&self, key: &str) -> u32 {
         unsafe {
-            LLVMGetMDKindIDInContext(self.context, key.as_ptr() as *const i8, key.len() as u32)
+            LLVMGetMDKindIDInContext(*self.context, key.as_ptr() as *const i8, key.len() as u32)
         }
     }
 }
 
 impl Drop for Context {
     fn drop(&mut self) {
-        unsafe {
-            LLVMContextDispose(self.context);
+        if Rc::strong_count(&self.context) == 1 {
+            unsafe {
+                LLVMContextDispose(*self.context);
+            }
         }
     }
 }
@@ -343,6 +346,10 @@ impl Drop for Context {
 // Alternate strategy would be to just define ownership parameter
 // on Context, and only call destructor if true. Not sure of pros/cons
 // compared to this approach other than not needing Deref trait's ugly syntax
+// REVIEW: Now that Contexts are ref counted, it may not be necessary to
+// have this ContextRef type, however Global Contexts throw a wrench in that
+// a bit as it is a special case. get_context() methods as well since they do
+// not have access to the original Rc.
 #[derive(Debug, PartialEq, Eq)]
 pub struct ContextRef {
     context: Option<Context>,
@@ -366,6 +373,7 @@ impl Deref for ContextRef {
 
 impl Drop for ContextRef {
     fn drop(&mut self) {
+        // REVIEW: If you forget an Rc type like Context, does that mean it never gets decremented?
         forget(self.context.take());
     }
 }

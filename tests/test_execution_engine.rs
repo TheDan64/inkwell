@@ -46,7 +46,6 @@ fn test_get_function_address() {
 //     let module = context.create_module("errors_abound");
 //     // let mut execution_engine = ExecutionEngine::create_jit_from_module(module, 0);
 //     let mut execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-//     let module = execution_engine.get_module_at(0);
 //     let void_type = context.void_type();
 //     let fn_type = void_type.fn_type(&[], false);
 //     let fn_value = module.add_function("func", &fn_type, None);

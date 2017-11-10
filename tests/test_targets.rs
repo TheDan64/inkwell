@@ -68,7 +68,6 @@ fn test_target_data() {
     let context = Context::create();
     let module = context.create_module("sum");
     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-    let module = execution_engine.get_module_at(0);
     let target_data = execution_engine.get_target_data();
 
     let data_layout = target_data.get_data_layout();

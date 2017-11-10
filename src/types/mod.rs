@@ -27,6 +27,7 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use std::ffi::CStr;
 use std::fmt;
+use std::rc::Rc;
 
 use AddressSpace;
 use context::{Context, ContextRef};
@@ -131,7 +132,8 @@ impl Type {
             LLVMGetTypeContext(self.type_)
         };
 
-        ContextRef::new(Context::new(context))
+        // REVIEW: This probably should be somehow using the existing context Rc
+        ContextRef::new(Context::new(Rc::new(context)))
     }
 
     // REVIEW: This should be known at compile time, maybe as a const fn?

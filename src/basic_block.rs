@@ -6,6 +6,7 @@ use values::{FunctionValue, InstructionValue};
 
 use std::fmt;
 use std::ffi::{CStr, CString};
+use std::rc::Rc;
 
 // Apparently BasicBlocks count as LabelTypeKinds, which is
 // why they're allow to be casted to values?
@@ -133,7 +134,8 @@ impl BasicBlock {
             LLVMGetTypeContext(LLVMTypeOf(LLVMBasicBlockAsValue(self.basic_block)))
         };
 
-        ContextRef::new(Context::new(context))
+        // REVIEW: This probably should be somehow using the existing context Rc
+        ContextRef::new(Context::new(Rc::new(context)))
     }
 }
 

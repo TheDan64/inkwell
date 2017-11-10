@@ -3,6 +3,9 @@ extern crate inkwell;
 use self::inkwell::context::Context;
 use self::inkwell::memory_buffer::MemoryBuffer;
 use self::inkwell::module::Module;
+use self::inkwell::OptimizationLevel;
+use self::inkwell::targets::{InitializationConfig, Target};
+
 use std::env::temp_dir;
 use std::fs::{File, remove_file};
 use std::io::Read;
@@ -131,6 +134,19 @@ fn test_garbage_ir_fails_create_module_from_ir() {
 
 #[test]
 fn test_get_type() {
+    let context = Context::create();
+    let module = context.create_module("my_module");
+
+    assert_eq!(*module.get_context(), context);
+    assert!(module.get_type("foo").is_none());
+
+    let opaque = context.opaque_struct_type("foo");
+
+    assert_eq!(module.get_type("foo").unwrap().into_struct_type(), opaque);
+}
+
+#[test]
+fn test_get_type_global_context() {
     let context = Context::get_global();
     let module = Module::create("my_module");
 
@@ -140,4 +156,30 @@ fn test_get_type() {
     let opaque = context.opaque_struct_type("foo");
 
     assert_eq!(module.get_type("foo").unwrap().into_struct_type(), opaque);
+}
+
+#[test]
+fn test_module_no_double_free() {
+    let _module = {
+        let context = Context::create();
+
+        context.create_module("my_mod")
+    };
+
+    // Context will live on in the module until here
+}
+
+#[test]
+fn test_owned_module_dropped_ee_and_context() {
+    Target::initialize_native(&InitializationConfig::default()).unwrap();
+
+    let _module = {
+        let context = Context::create();
+        let module = context.create_module("my_mod");
+
+        module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+        module
+    };
+
+    // Context and EE will live on in the module until here
 }

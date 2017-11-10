@@ -789,7 +789,7 @@ pub enum ByteOrdering {
     LittleEndian,
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct TargetData {
     pub(crate) target_data: LLVMTargetDataRef,
 }
@@ -821,7 +821,7 @@ impl TargetData {
 
     pub fn int_ptr_type_in_context(&self, context: &Context) -> PointerType {
         let ptr_type = unsafe {
-            LLVMIntPtrTypeInContext(context.context, self.target_data)
+            LLVMIntPtrTypeInContext(*context.context, self.target_data)
         };
 
         PointerType::new(ptr_type)
@@ -829,7 +829,7 @@ impl TargetData {
 
     pub fn int_ptr_type_for_as_in_context(&self, context: &Context, as_: u32) -> PointerType {
         let ptr_type = unsafe {
-            LLVMIntPtrTypeForASInContext(context.context, self.target_data, as_)
+            LLVMIntPtrTypeForASInContext(*context.context, self.target_data, as_)
         };
 
         PointerType::new(ptr_type)
