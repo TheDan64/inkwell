@@ -128,7 +128,7 @@ impl PassManager {
     // SubTypes: PassManager<FunctionValue>::create()
     pub fn create_for_function(module: &Module) -> Self {
         let pass_manager = unsafe {
-            LLVMCreateFunctionPassManagerForModule(module.module)
+            LLVMCreateFunctionPassManagerForModule(module.module.get())
         };
 
         PassManager::new(pass_manager)
@@ -155,7 +155,7 @@ impl PassManager {
 
     pub fn run_on_module(&self, module: &Module) -> bool {
         unsafe {
-            LLVMRunPassManager(self.pass_manager, module.module) == 1
+            LLVMRunPassManager(self.pass_manager, module.module.get()) == 1
         }
     }
 

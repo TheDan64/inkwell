@@ -5,7 +5,7 @@ use llvm_sys::execution_engine::LLVMCreateJITCompilerForModule;
 use llvm_sys::prelude::{LLVMValueRef, LLVMModuleRef};
 use llvm_sys::LLVMLinkage;
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::ffi::{CString, CStr};
 use std::fs::File;
 use std::mem::{forget, uninitialized, zeroed};
@@ -95,7 +95,7 @@ impl Linkage {
 pub struct Module {
     pub(crate) non_global_context: Option<Context>,
     data_layout: Option<DataLayout>,
-    pub(crate) module: LLVMModuleRef,
+    pub(crate) module: Cell<LLVMModuleRef>,
     pub(crate) owned_by_ee: RefCell<Option<ExecutionEngine>>,
 }
 
@@ -104,7 +104,7 @@ impl Module {
         assert!(!module.is_null());
 
         let mut module = Module {
-            module: module,
+            module: Cell::new(module),
             non_global_context: context.map(|ctx| Context::new(ctx.context.clone())),
             owned_by_ee: RefCell::new(None),
             data_layout: None,
@@ -162,7 +162,7 @@ impl Module {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMAddFunction(self.module, c_string.as_ptr(), ty.as_type_ref())
+            LLVMAddFunction(self.module.get(), c_string.as_ptr(), ty.as_type_ref())
         };
 
         if let Some(linkage) = linkage {
@@ -194,7 +194,7 @@ impl Module {
     /// ```
     pub fn get_context(&self) -> ContextRef {
         let context = unsafe {
-            LLVMGetModuleContext(self.module)
+            LLVMGetModuleContext(self.module.get())
         };
 
         // REVIEW: This probably should be somehow using the existing context Rc
@@ -221,7 +221,7 @@ impl Module {
     /// ```
     pub fn get_first_function(&self) -> Option<FunctionValue> {
         let function = unsafe {
-            LLVMGetFirstFunction(self.module)
+            LLVMGetFirstFunction(self.module.get())
         };
 
         FunctionValue::new(function)
@@ -247,7 +247,7 @@ impl Module {
     /// ```
     pub fn get_last_function(&self) -> Option<FunctionValue> {
         let function = unsafe {
-            LLVMGetLastFunction(self.module)
+            LLVMGetLastFunction(self.module.get())
         };
 
         FunctionValue::new(function)
@@ -275,7 +275,7 @@ impl Module {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMGetNamedFunction(self.module, c_string.as_ptr())
+            LLVMGetNamedFunction(self.module.get(), c_string.as_ptr())
         };
 
         FunctionValue::new(value)
@@ -285,7 +285,7 @@ impl Module {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let type_ = unsafe {
-            LLVMGetTypeByName(self.module, c_string.as_ptr())
+            LLVMGetTypeByName(self.module.get(), c_string.as_ptr())
         };
 
         if type_.is_null() {
@@ -300,14 +300,14 @@ impl Module {
         let c_string = CString::new(target_triple).expect("Conversion to CString failed unexpectedly");
 
         unsafe {
-            LLVMSetTarget(self.module, c_string.as_ptr())
+            LLVMSetTarget(self.module.get(), c_string.as_ptr())
         }
     }
 
     // REVIEW: Can we link this to Target.from_name or Target.from_triple / etc?
     pub fn get_target(&self) -> &CStr {
         unsafe {
-            CStr::from_ptr(LLVMGetTarget(self.module))
+            CStr::from_ptr(LLVMGetTarget(self.module.get()))
         }
     }
 
@@ -333,7 +333,7 @@ impl Module {
         let mut err_str = unsafe { zeroed() };
 
         let code = unsafe {
-            LLVMCreateJITCompilerForModule(&mut execution_engine, self.module, opt_level as u32, &mut err_str) // Should take ownership of module
+            LLVMCreateJITCompilerForModule(&mut execution_engine, self.module.get(), opt_level as u32, &mut err_str) // Should take ownership of module
         };
 
         if code == 1 {
@@ -360,8 +360,8 @@ impl Module {
 
         let value = unsafe {
             match address_space {
-                Some(address_space) => LLVMAddGlobalInAddressSpace(self.module, type_.as_type_ref(), c_string.as_ptr(), address_space as u32),
-                None => LLVMAddGlobal(self.module, type_.as_type_ref(), c_string.as_ptr()),
+                Some(address_space) => LLVMAddGlobalInAddressSpace(self.module.get(), type_.as_type_ref(), c_string.as_ptr(), address_space as u32),
+                None => LLVMAddGlobal(self.module.get(), type_.as_type_ref(), c_string.as_ptr()),
             }
         };
 
@@ -373,7 +373,7 @@ impl Module {
         let c_string = CString::new(path_str).expect("Conversion to CString failed unexpectedly");
 
         unsafe {
-            LLVMWriteBitcodeToFile(self.module, c_string.as_ptr()) == 0
+            LLVMWriteBitcodeToFile(self.module.get(), c_string.as_ptr()) == 0
         }
     }
 
@@ -386,7 +386,7 @@ impl Module {
         // REVIEW: as_raw_fd docs suggest it only works in *nix
         // Also, should_close should maybe be hardcoded to true?
         unsafe {
-            LLVMWriteBitcodeToFD(self.module, file.as_raw_fd(), should_close as i32, unbuffered as i32) == 0
+            LLVMWriteBitcodeToFD(self.module.get(), file.as_raw_fd(), should_close as i32, unbuffered as i32) == 0
         }
     }
 
@@ -398,7 +398,7 @@ impl Module {
 
     pub fn write_bitcode_to_memory(&self) -> MemoryBuffer {
         let memory_buffer = unsafe {
-            LLVMWriteBitcodeToMemoryBuffer(self.module)
+            LLVMWriteBitcodeToMemoryBuffer(self.module.get())
         };
 
         MemoryBuffer::new(memory_buffer)
@@ -424,7 +424,7 @@ impl Module {
         };
 
         let code = unsafe {
-            LLVMVerifyModule(self.module, action, &mut err_str)
+            LLVMVerifyModule(self.module.get(), action, &mut err_str)
         };
 
         if code == 1 && !err_str.is_null() {
@@ -445,7 +445,7 @@ impl Module {
     // REVIEW: LLVMGetDataLayoutStr was added in 3.9+ and might be more correct according to llvm-sys
     fn get_raw_data_layout(&self) -> *mut i8 {
         unsafe {
-            LLVMGetDataLayout(self.module) as *mut _
+            LLVMGetDataLayout(self.module.get()) as *mut _
         }
     }
 
@@ -457,7 +457,7 @@ impl Module {
     // valgrind might come in handy once non jemalloc allocators stabilize
     pub fn set_data_layout(&self, data_layout: &DataLayout) {
         unsafe {
-            LLVMSetDataLayout(self.module, data_layout.data_layout.get());
+            LLVMSetDataLayout(self.module.get(), data_layout.data_layout.get());
         }
 
         self.data_layout.as_ref()
@@ -469,14 +469,14 @@ impl Module {
     /// Prints the content of the `Module` to stderr.
     pub fn print_to_stderr(&self) {
         unsafe {
-            LLVMDumpModule(self.module);
+            LLVMDumpModule(self.module.get());
         }
     }
 
     /// Prints the content of the `Module` to a string.
     pub fn print_to_string(&self) -> &CStr {
         unsafe {
-            CStr::from_ptr(LLVMPrintModuleToString(self.module))
+            CStr::from_ptr(LLVMPrintModuleToString(self.module.get()))
         }
     }
 
@@ -485,7 +485,7 @@ impl Module {
         let path = path.to_str().expect("Did not find a valid Unicode path string");
         let mut err_str = unsafe { zeroed() };
         let return_code = unsafe {
-            LLVMPrintModuleToFile(self.module, path.as_ptr() as *const i8, &mut err_str)
+            LLVMPrintModuleToFile(self.module.get(), path.as_ptr() as *const i8, &mut err_str)
         };
 
         // TODO: Verify 1 is error code (LLVM can be inconsistent)
@@ -508,7 +508,7 @@ impl Module {
         let c_string = CString::new(asm).expect("Conversion to CString failed unexpectedly");
 
         unsafe {
-            LLVMSetModuleInlineAsm(self.module, c_string.as_ptr())
+            LLVMSetModuleInlineAsm(self.module.get(), c_string.as_ptr())
         }
     }
 
@@ -520,7 +520,7 @@ impl Module {
         let c_string = CString::new(key).expect("Conversion to CString failed unexpectedly");
 
         unsafe {
-            LLVMAddNamedMetadataOperand(self.module, c_string.as_ptr(), metadata.as_value_ref())
+            LLVMAddNamedMetadataOperand(self.module.get(), c_string.as_ptr(), metadata.as_value_ref())
         }
     }
     // REVIEW: Better name?
@@ -529,7 +529,7 @@ impl Module {
         let c_string = CString::new(key).expect("Conversion to CString failed unexpectedly");
 
         unsafe {
-            LLVMGetNamedMetadataNumOperands(self.module, c_string.as_ptr())
+            LLVMGetNamedMetadataNumOperands(self.module.get(), c_string.as_ptr())
         }
     }
 
@@ -545,7 +545,7 @@ impl Module {
         forget(raw_vec);
 
         let slice = unsafe {
-            LLVMGetNamedMetadataOperands(self.module, c_string.as_ptr(), ptr);
+            LLVMGetNamedMetadataOperands(self.module.get(), c_string.as_ptr(), ptr);
 
             from_raw_parts(ptr, count as usize)
         };
@@ -555,7 +555,7 @@ impl Module {
 
     pub fn get_first_global(&self) -> Option<GlobalValue> {
         let value = unsafe {
-            LLVMGetFirstGlobal(self.module)
+            LLVMGetFirstGlobal(self.module.get())
         };
 
         if value.is_null() {
@@ -567,7 +567,7 @@ impl Module {
 
     pub fn get_last_global(&self) -> Option<GlobalValue> {
         let value = unsafe {
-            LLVMGetLastGlobal(self.module)
+            LLVMGetLastGlobal(self.module.get())
         };
 
         if value.is_null() {
@@ -580,7 +580,7 @@ impl Module {
     pub fn get_global(&self, name: &str) -> Option<GlobalValue> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
         let value = unsafe {
-            LLVMGetNamedGlobal(self.module, c_string.as_ptr())
+            LLVMGetNamedGlobal(self.module.get(), c_string.as_ptr())
         };
 
         if value.is_null() {
@@ -594,7 +594,7 @@ impl Module {
 impl Clone for Module {
     fn clone(&self) -> Self {
         let module = unsafe {
-            LLVMCloneModule(self.module)
+            LLVMCloneModule(self.module.get())
         };
 
         Module::new(module, self.non_global_context.as_ref())
@@ -609,7 +609,7 @@ impl Drop for Module {
 
         if self.owned_by_ee.borrow_mut().take().is_none() {
             unsafe {
-                LLVMDisposeModule(self.module);
+                LLVMDisposeModule(self.module.get());
             }
         }
 

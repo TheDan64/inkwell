@@ -731,7 +731,7 @@ impl TargetMachine {
         let mut memory_buffer = ptr::null_mut();
         let mut err_str = unsafe { zeroed() };
         let return_code = unsafe {
-            LLVMTargetMachineEmitToMemoryBuffer(self.target_machine, module.module, file_type.as_llvm_file_type(), &mut err_str, &mut memory_buffer)
+            LLVMTargetMachineEmitToMemoryBuffer(self.target_machine, module.module.get(), file_type.as_llvm_file_type(), &mut err_str, &mut memory_buffer)
         };
 
         // TODO: Verify 1 is error code (LLVM can be inconsistent)
@@ -755,7 +755,7 @@ impl TargetMachine {
         let mut err_str = unsafe { zeroed() };
         let return_code = unsafe {
             // REVIEW: Why does LLVM need a mutable reference to path...?
-            LLVMTargetMachineEmitToFile(self.target_machine, module.module, path.as_ptr() as *mut i8, file_type.as_llvm_file_type(), &mut err_str)
+            LLVMTargetMachineEmitToFile(self.target_machine, module.module.get(), path.as_ptr() as *mut i8, file_type.as_llvm_file_type(), &mut err_str)
         };
 
         // TODO: Verify 1 is error code (LLVM can be inconsistent)

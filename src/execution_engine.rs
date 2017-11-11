@@ -114,7 +114,7 @@ impl ExecutionEngine {
     /// ```
     pub fn add_module(&self, module: &Module) -> Result<(), ()> {
         unsafe {
-            LLVMAddModule(*self.execution_engine, module.module)
+            LLVMAddModule(*self.execution_engine, module.module.get())
         }
 
         if module.owned_by_ee.borrow().is_some() {
@@ -126,9 +126,7 @@ impl ExecutionEngine {
         Ok(())
     }
 
-    // REVIEW: Maybe there's a way to make this just take a refence. Might require
-    // putting the ModuleRef in a cell so we can replace it with the new module value
-    pub fn remove_module(&self, module: Module) -> Result<Module, String> {
+    pub fn remove_module(&self, module: &Module) -> Result<(), String> {
         match *module.owned_by_ee.borrow() {
             Some(ref ee) if *ee.execution_engine != *self.execution_engine => return Err("Module is not owned by this Execution Engine".into()),
             None => return Err("Module is not owned by an Execution Engine".into()),
@@ -139,7 +137,7 @@ impl ExecutionEngine {
         let mut err_str = unsafe { zeroed() };
 
         let code = unsafe {
-            LLVMRemoveModule(*self.execution_engine, module.module, &mut new_module, &mut err_str)
+            LLVMRemoveModule(*self.execution_engine, module.module.get(), &mut new_module, &mut err_str)
         };
 
         if code == 1 {
@@ -154,11 +152,10 @@ impl ExecutionEngine {
             return Err(rust_str);
         }
 
-        let module = Module::new(new_module, module.non_global_context.as_ref());
-
+        module.module.set(new_module);
         *module.owned_by_ee.borrow_mut() = None;
 
-        Ok(module)
+        Ok(())
     }
 
     /// WARNING: The returned address *will* be invalid if the EE drops first
