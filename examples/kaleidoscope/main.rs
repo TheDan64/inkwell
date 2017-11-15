@@ -946,12 +946,12 @@ impl<'a> Compiler<'a> {
                         '*' => Ok(self.builder.build_float_mul(&lhs, &rhs, "tmpmul")),
                         '/' => Ok(self.builder.build_float_div(&lhs, &rhs, "tmpdiv")),
                         '<' => Ok({
-                            let cmp = self.builder.build_float_compare(&FloatPredicate::ULT, &lhs, &rhs, "tmpcmp");
+                            let cmp = self.builder.build_float_compare(FloatPredicate::ULT, &lhs, &rhs, "tmpcmp");
 
                             self.builder.build_unsigned_int_to_float(&cmp, &self.context.f64_type(), "tmpbool")
                         }),
                         '>' => Ok({
-                            let cmp = self.builder.build_float_compare(&FloatPredicate::ULT, &rhs, &lhs, "tmpcmp");
+                            let cmp = self.builder.build_float_compare(FloatPredicate::ULT, &rhs, &lhs, "tmpcmp");
 
                             self.builder.build_unsigned_int_to_float(&cmp, &self.context.f64_type(), "tmpbool")
                         }),
@@ -1002,7 +1002,7 @@ impl<'a> Compiler<'a> {
 
                 // create condition by comparing without 0.0 and returning an int
                 let cond = self.compile_expr(cond)?;
-                let cond = self.builder.build_float_compare(&FloatPredicate::ONE, &cond, &zero_const, "ifcond");
+                let cond = self.builder.build_float_compare(FloatPredicate::ONE, &cond, &zero_const, "ifcond");
 
                 // build branch
                 let then_bb = self.context.append_basic_block(&parent, "then");
@@ -1073,7 +1073,7 @@ impl<'a> Compiler<'a> {
 
                 self.builder.build_store(&start_alloca, &next_var);
 
-                let end_cond = self.builder.build_float_compare(&FloatPredicate::ONE, &end_cond, &self.context.f64_type().const_float(0.0), "loopcond");
+                let end_cond = self.builder.build_float_compare(FloatPredicate::ONE, &end_cond, &self.context.f64_type().const_float(0.0), "loopcond");
                 let after_bb = self.context.append_basic_block(&parent, "afterloop");
 
                 self.builder.build_conditional_branch(&end_cond, &loop_bb, &after_bb);
