@@ -6,10 +6,10 @@ use std::ffi::{CString, CStr};
 
 use {GlobalVisibility, ThreadLocalMode, DLLStorageClass};
 use values::traits::AsValueRef;
-use values::{BasicValueEnum, BasicValue, Value};
+use values::{BasicValueEnum, BasicValue, PointerValue, Value};
 
-// REVIEW: GlobalValues may always be PointerValues, in which case we can
-// simplify from BasicValueEnum down to PointerValue
+// REVIEW: GlobalValues are always PointerValues. With SubTypes, we should
+// compress this into a PointerValue<Global> type
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct GlobalValue {
     global_value: Value,
@@ -188,6 +188,10 @@ impl GlobalValue {
 
     pub unsafe fn delete(self) {
         LLVMDeleteGlobal(self.as_value_ref())
+    }
+
+    pub fn as_pointer_value(&self) -> PointerValue {
+        PointerValue::new(self.as_value_ref())
     }
 }
 

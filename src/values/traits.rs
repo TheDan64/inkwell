@@ -2,7 +2,7 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use std::fmt::Debug;
 
-use values::{ArrayValue, AggregateValueEnum, StructValue, BasicValueEnum, AnyValueEnum, IntValue, FloatValue, PointerValue, PhiValue, VectorValue, FunctionValue, InstructionValue};
+use values::{ArrayValue, AggregateValueEnum, GlobalValue, StructValue, BasicValueEnum, AnyValueEnum, IntValue, FloatValue, PointerValue, PhiValue, VectorValue, FunctionValue, InstructionValue};
 
 // This is an ugly privacy hack so that Type can stay private to this module
 // and so that super traits using this trait will be not be implementable
@@ -47,5 +47,5 @@ pub trait AnyValue: AsValueRef + Debug {
 }
 
 trait_value_set! {AggregateValue: ArrayValue, AggregateValueEnum, StructValue}
-trait_value_set! {AnyValue: AnyValueEnum, BasicValueEnum, AggregateValueEnum, ArrayValue, IntValue, FloatValue, PhiValue, PointerValue, FunctionValue, StructValue, VectorValue, InstructionValue}
-trait_value_set! {BasicValue: ArrayValue, BasicValueEnum, AggregateValueEnum, IntValue, FloatValue, StructValue, PointerValue, VectorValue}
+trait_value_set! {AnyValue: AnyValueEnum, BasicValueEnum, AggregateValueEnum, ArrayValue, IntValue, FloatValue, GlobalValue, PhiValue, PointerValue, FunctionValue, StructValue, VectorValue, InstructionValue}
+trait_value_set! {BasicValue: ArrayValue, BasicValueEnum, AggregateValueEnum, IntValue, FloatValue, GlobalValue, StructValue, PointerValue, VectorValue}

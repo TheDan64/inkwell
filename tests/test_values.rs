@@ -9,6 +9,8 @@ use self::inkwell::values::{MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID};
 
 use std::ffi::CString;
 
+// TODO: Test GlobalValues used as PointerValues
+
 #[test]
 fn test_linkage() {
     let context = Context::create();
