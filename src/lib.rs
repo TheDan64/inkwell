@@ -18,6 +18,7 @@ pub mod types;
 pub mod values;
 
 use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility, LLVMThreadLocalMode, LLVMDLLStorageClass};
+use llvm_sys::core::LLVMResetFatalErrorHandler;
 use llvm_sys::support::LLVMLoadLibraryPermanently;
 
 use std::ffi::CString;
@@ -58,6 +59,32 @@ pub fn shutdown_llvm() {
 
     unsafe {
         LLVMShutdown()
+    }
+}
+
+// Installs an error handler to be called before LLVM exits
+// pub fn install_fatal_error_hanlder<H: Fn(&CStr)>(handler: H) {
+//     extern "C" fn handler_wrapper(message: *const i8) {
+//         let c_string = CStr::from_ptr(message);
+
+//         handler(&c_string);
+//     }
+
+//     let handler_wrapper = |message: *const i8| {
+//         let c_string = CStr::from_ptr(message);
+
+//         handler(&c_string);
+//     };
+
+//     unsafe {
+//         LLVMInstallFatalErrorHandler(handler_wrapper as LLVMFatalErrorHandler)
+//     }
+// }
+
+/// Resets LLVM's fatal error handler back to the default
+pub fn reset_fatal_error_handler() {
+    unsafe {
+        LLVMResetFatalErrorHandler()
     }
 }
 

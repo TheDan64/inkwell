@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone};
+use llvm_sys::core::{LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile};
 use llvm_sys::LLVMOpcode;
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -233,6 +233,21 @@ impl InstructionValue {
         self.instruction_value.replace_all_uses_with(other.as_value_ref())
     }
 
+    // SubTypes: Only apply to memory access instructions
+    /// Returns whether or not a memory access instruction is volatile.
+    pub fn get_volatile(&self) -> bool {
+        unsafe {
+            LLVMGetVolatile(self.as_value_ref()) == 1
+        }
+    }
+
+    // SubTypes: Only apply to memory access instructions
+    /// Sets whether or not a memory access instruction is volatile.
+    pub fn set_volatile(&self, volatile: bool) {
+        unsafe {
+            LLVMSetVolatile(self.as_value_ref(), volatile as i32)
+        }
+    }
 }
 
 impl Clone for InstructionValue {

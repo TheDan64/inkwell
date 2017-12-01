@@ -331,6 +331,17 @@ impl Context {
             LLVMGetMDKindIDInContext(*self.context, key.as_ptr() as *const i8, key.len() as u32)
         }
     }
+
+    // LLVM 3.9+
+    // pub fn get_diagnostic_handler(&self) -> DiagnosticHandler {
+    //     let handler = unsafe {
+    //         LLVMContextGetDiagnosticHandler(self.context)
+    //     };
+
+    //     // REVIEW: Can this be null?
+
+    //     DiagnosticHandler::new(handler)
+    // }
 }
 
 impl Drop for Context {
