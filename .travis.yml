@@ -24,6 +24,7 @@ matrix:
             - llvm-3.6-dev
       before_install:
         - export PATH=/usr/lib/llvm-3.6/bin/:$HOME/.local/bin:$PATH
+        - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "36"/' Cargo.toml
       env:
         - NAME="LLVM 3.6"
       rust: stable
@@ -43,6 +44,7 @@ matrix:
             - llvm-3.7-dev
       before_install:
         - export PATH=/usr/lib/llvm-3.7/bin/:$HOME/.local/bin:$PATH
+        - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "37"/' Cargo.toml
       env:
         - NAME="LLVM 3.7"
       rust: stable
