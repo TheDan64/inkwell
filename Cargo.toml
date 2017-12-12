@@ -11,14 +11,15 @@ license = "Apache-2.0"
 categories = ["development-tools::ffi"]
 
 [features]
-default = []
-llvm3-6 = ["llvm3_6"]
+default = ["llvm3-7"]
+llvm3-6 = []
+llvm3-7 = []
 
 [dependencies]
 either = "1.1.0"
 enum-methods = "0.0.7"
 libc = "*"
-llvm3_6 = { git = "https://github.com/serde-rs/serde", version="*", optional=true }
+llvm-sys = "37"
 
 [[example]]
 name = "kaleidoscope"
