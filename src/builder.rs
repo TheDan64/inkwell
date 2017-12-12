@@ -34,7 +34,7 @@ impl Builder {
     // REVIEW: Would probably make this API a bit simpler by taking Into<Option<&BasicValue>>
     // So that you could just do build_return(&value) or build_return(None)
     // Is that frowned upon?
-    pub fn build_return(&self, value: Option<&BasicValue>) -> InstructionValue {
+    pub fn build_return<R: BasicValue>(&self, value: Option<&R>) -> InstructionValue {
         // let value = unsafe {
         //     value.map_or(LLVMBuildRetVoid(self.builder), |value| LLVMBuildRet(self.builder, value.value))
         // };
@@ -140,7 +140,7 @@ impl Builder {
         IntValue::new(value)
     }
 
-    pub fn build_phi(&self, type_: &BasicType, name: &str) -> PhiValue {
+    pub fn build_phi<T: BasicType>(&self, type_: &T, name: &str) -> PhiValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -150,7 +150,7 @@ impl Builder {
         PhiValue::new(value)
     }
 
-    pub fn build_store(&self, ptr: &PointerValue, value: &BasicValue) -> InstructionValue {
+    pub fn build_store<V: BasicValue>(&self, ptr: &PointerValue, value: &V) -> InstructionValue {
         let value = unsafe {
             LLVMBuildStore(self.builder, value.as_value_ref(), ptr.as_value_ref())
         };
@@ -169,7 +169,7 @@ impl Builder {
     }
 
     // TODOC: Stack allocation
-    pub fn build_alloca(&self, type_: &BasicType, name: &str) -> PointerValue {
+    pub fn build_alloca<T: BasicType>(&self, type_: &T, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -180,7 +180,7 @@ impl Builder {
     }
 
     // TODOC: Stack allocation
-    pub fn build_array_alloca(&self, type_: &BasicType, size: &IntValue, name: &str) -> PointerValue {
+    pub fn build_array_alloca<T: BasicType>(&self, type_: &T, size: &IntValue, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -192,7 +192,7 @@ impl Builder {
 
     // TODOC: Heap allocation
     // FIXME: Not working
-    pub fn build_malloc(&self, type_: &BasicType, name: &str) -> PointerValue {
+    pub fn build_malloc<T: BasicType>(&self, type_: &T, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -204,7 +204,7 @@ impl Builder {
 
     // TODOC: Heap allocation
     // FIXME: Not working
-    pub fn build_array_malloc(&self, type_: &BasicType, size: &IntValue, name: &str) -> PointerValue {
+    pub fn build_array_malloc<T: BasicType>(&self, type_: &T, size: &IntValue, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
