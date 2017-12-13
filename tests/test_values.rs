@@ -682,6 +682,7 @@ fn test_function_value_no_params() {
     assert!(fn_value.get_first_param().is_none());
     assert!(fn_value.get_last_param().is_none());
     assert!(fn_value.get_nth_param(0).is_none());
+    #[cfg(not(feature = "llvm3-6"))]
     assert!(fn_value.get_personality_function().is_none());
     assert!(!fn_value.is_null());
     assert!(!fn_value.is_undef());

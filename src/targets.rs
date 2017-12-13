@@ -441,6 +441,7 @@ impl Target {
     }
 
     // TODOC: Disassembler only supported in LLVM 4.0+
+    #[cfg(not(feature = "llvm3-6"))]
     pub fn initialize_bpf(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeBPFTarget, LLVMInitializeBPFTargetInfo, LLVMInitializeBPFTargetMC, LLVMInitializeBPFAsmPrinter};
 

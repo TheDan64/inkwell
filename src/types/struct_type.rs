@@ -1,4 +1,6 @@
-use llvm_sys::core::{LLVMStructGetTypeAtIndex, LLVMConstNamedStruct, LLVMConstStruct, LLVMConstNull, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMStructSetBody};
+use llvm_sys::core::{LLVMConstNamedStruct, LLVMConstStruct, LLVMConstNull, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMStructSetBody};
+#[cfg(not(feature = "llvm3-6"))]
+use llvm_sys::core::LLVMStructGetTypeAtIndex;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use std::ffi::CStr;
@@ -25,7 +27,7 @@ impl StructType {
     }
 
     // TODO: Would be great to be able to smartly be able to do this by field name
-    // TODO: LLVM 3.7+ only
+    #[cfg(not(feature = "llvm3-6"))]
     pub fn get_field_type_at_index(&self, index: u32) -> Option<BasicTypeEnum> {
         // LLVM doesn't seem to just return null if opaque.
         // TODO: One day, with SubTypes (& maybe specialization?) we could just
