@@ -30,7 +30,7 @@ matrix:
         - llvm-config --version
       env:
         - NAME="LLVM 3.6"
-        # - LLVM_PATH=/usr/share/llvm-3.6/cmake/
+        - LLVM_PATH=/usr/share/llvm-3.6/cmake/
       script:
         - cargo test --no-default-features --features "llvm3-6" --verbose
     # LLVM 3.7 Stable
@@ -53,7 +53,7 @@ matrix:
         - llvm-config --version
       env:
         - NAME="LLVM 3.7"
-        # - LLVM_PATH=/usr/share/llvm-3.7/cmake/
+        - LLVM_PATH=/usr/share/llvm-3.7/cmake/
       script:
         - cargo test --no-default-features --features "llvm3-7" --verbose
 

@@ -42,7 +42,7 @@ impl StructType {
         }
 
         let type_ = unsafe {
-            LLVMStructGetTypeAtIndex(self.struct_type.type_, index)
+            LLVMStructGetTypeAtIndex(self.as_type_ref(), index)
         };
 
         Some(BasicTypeEnum::new(type_))
@@ -132,7 +132,7 @@ impl StructType {
 
     pub fn is_packed(&self) -> bool {
         unsafe {
-            LLVMIsPackedStruct(self.struct_type.type_) == 1
+            LLVMIsPackedStruct(self.as_type_ref()) == 1
         }
     }
 
@@ -140,7 +140,7 @@ impl StructType {
     // yet assigned (empty array to struct_type)
     pub fn is_opaque(&self) -> bool {
         unsafe {
-            LLVMIsOpaqueStruct(self.struct_type.type_) == 1
+            LLVMIsOpaqueStruct(self.as_type_ref()) == 1
         }
     }
 
