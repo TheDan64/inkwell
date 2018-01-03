@@ -863,7 +863,6 @@ impl TargetData {
     }
 
     // REVIEW: Maybe this should be pass_manager.add_target_data(&target_data)?
-    #[cfg(not(feature = "llvm3-6"))]
     pub fn add_target_data(&self, pass_manager: &PassManager) {
         unsafe {
             LLVMAddTargetData(self.target_data, pass_manager.pass_manager)

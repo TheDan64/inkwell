@@ -12,6 +12,7 @@ use llvm_sys::transforms::vectorize::{LLVMAddBBVectorizePass, LLVMAddLoopVectori
 
 use OptimizationLevel;
 use module::Module;
+#[cfg(not(feature = "llvm3-6"))]
 use targets::TargetData;
 use values::{AsValueRef, FunctionValue};
 

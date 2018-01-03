@@ -185,6 +185,7 @@ impl StructType {
         self.struct_type.print_to_string()
     }
 
+    #[cfg(not(feature = "llvm3-6"))]
     pub fn print_to_stderr(&self) {
         self.struct_type.print_to_stderr()
     }

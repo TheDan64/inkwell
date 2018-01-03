@@ -25,12 +25,13 @@ matrix:
             - libiberty-dev
             - llvm-3.6-dev
       before_install:
+        # - export LLVM_VERSION_DASH=
         - export PATH=/usr/lib/llvm-3.6/bin/:$HOME/.local/bin:$PATH
         - export LLVM_PATH=/usr/share/llvm-3.6/cmake/
         - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "36"/' Cargo.toml
-        - llvm-config --version
+        - llvm-config --targets-built
       env:
-        - NAME="LLVM 3.6"
+        - LLVM_VERSION="3.6"
       script:
         - cargo test --no-default-features --features "llvm3-6" --verbose
     # LLVM 3.7 Stable
@@ -51,9 +52,8 @@ matrix:
         - export PATH=/usr/lib/llvm-3.7/bin/:$HOME/.local/bin:$PATH
         - export LLVM_PATH=/usr/share/llvm-3.7/cmake/
         - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "37"/' Cargo.toml
-        - llvm-config --version
       env:
-        - NAME="LLVM 3.7"
+        - LLVM_VERSION="3.7"
       script:
         - cargo test --no-default-features --features "llvm3-7" --verbose
 
