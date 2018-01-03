@@ -12,50 +12,50 @@ matrix:
   include:
     # LLVM 3.6 Stable
     - addons:
-      apt:
-        sources:
-          - llvm-toolchain-precise-3.6
-          - ubuntu-toolchain-r-test
-        packages:
-          - libelf-dev
-          - lib32z1-dev
-          - libedit-dev
-          - libdw-dev
-          - binutils-dev
-          - libiberty-dev
-          - llvm-3.6-dev
-      before_install:
-        - export PATH=/usr/lib/llvm-3.6/bin/:$HOME/.local/bin:$PATH
-        - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "36"/' Cargo.toml
-        - llvm-config --version
-      env:
-        - NAME="LLVM 3.6"
-        - LLVM_PATH=/usr/share/llvm-3.6/cmake/
-      script:
-        - cargo test --no-default-features --features "llvm3-6" --verbose
+        apt:
+          sources:
+            - llvm-toolchain-precise-3.6
+            - ubuntu-toolchain-r-test
+          packages:
+            - libelf-dev
+            - lib32z1-dev
+            - libedit-dev
+            - libdw-dev
+            - binutils-dev
+            - libiberty-dev
+            - llvm-3.6-dev
+        before_install:
+          - export PATH=/usr/lib/llvm-3.6/bin/:$HOME/.local/bin:$PATH
+          - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "36"/' Cargo.toml
+          - llvm-config --version
+        env:
+          - NAME="LLVM 3.6"
+          - LLVM_PATH=/usr/share/llvm-3.6/cmake/
+        script:
+          - cargo test --no-default-features --features "llvm3-6" --verbose
     # LLVM 3.7 Stable
     - addons:
-      apt:
-        sources:
-          - llvm-toolchain-precise-3.7
-          - ubuntu-toolchain-r-test
-        packages:
-          - libelf-dev
-          - lib32z1-dev
-          - libedit-dev
-          - libdw-dev
-          - binutils-dev
-          - libiberty-dev
-          - llvm-3.7-dev
-      before_install:
-        - export PATH=/usr/lib/llvm-3.7/bin/:$HOME/.local/bin:$PATH
-        - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "37"/' Cargo.toml
-        - llvm-config --version
-      env:
-        - NAME="LLVM 3.7"
-        - LLVM_PATH=/usr/share/llvm-3.7/cmake/
-      script:
-        - cargo test --no-default-features --features "llvm3-7" --verbose
+        apt:
+          sources:
+            - llvm-toolchain-precise-3.7
+            - ubuntu-toolchain-r-test
+          packages:
+            - libelf-dev
+            - lib32z1-dev
+            - libedit-dev
+            - libdw-dev
+            - binutils-dev
+            - libiberty-dev
+            - llvm-3.7-dev
+        before_install:
+          - export PATH=/usr/lib/llvm-3.7/bin/:$HOME/.local/bin:$PATH
+          - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "37"/' Cargo.toml
+          - llvm-config --version
+        env:
+          - NAME="LLVM 3.7"
+          - LLVM_PATH=/usr/share/llvm-3.7/cmake/
+        script:
+          - cargo test --no-default-features --features "llvm3-7" --verbose
 
 env:
   global:
