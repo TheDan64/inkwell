@@ -28,7 +28,8 @@ fn test_init_all_passes_for_module() {
     pass_manager.add_loop_vectorize_pass();
     pass_manager.add_slp_vectorize_pass();
     pass_manager.add_aggressive_dce_pass();
-    pass_manager.add_bit_tracking_dce_pass(); // TODO: 3.7+ only
+    #[cfg(not(feature = "llvm3-6"))]
+    pass_manager.add_bit_tracking_dce_pass();
     pass_manager.add_alignment_from_assumptions_pass();
     pass_manager.add_cfg_simplification_pass();
     pass_manager.add_dead_store_elimination_pass();

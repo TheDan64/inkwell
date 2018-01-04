@@ -25,15 +25,16 @@ matrix:
             - libiberty-dev
             - llvm-3.6-dev
       before_install:
-        # - export LLVM_VERSION_DASH=
-        - export PATH=/usr/lib/llvm-3.6/bin/:$HOME/.local/bin:$PATH
-        - export LLVM_PATH=/usr/share/llvm-3.6/cmake/
-        - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "36"/' Cargo.toml
-        - llvm-config --targets-built
+        - export LLVM_VERSION_DASH=${LLVM_VERSION/./-}
+        - export LLVM_VERSION_SHORT=${LLVM_VERSION/./}
+        - export PATH=/usr/lib/llvm-${LLVM_VERSION}/bin/:$HOME/.local/bin:$PATH
+        - export LLVM_PATH=/usr/share/llvm-${LLVM_VERSION}/cmake/
+        - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "${LLVM_VERSION_SHORT}"/' Cargo.toml
+        - cat Cargo.toml | grep llvm-sys
       env:
         - LLVM_VERSION="3.6"
       script:
-        - cargo test --no-default-features --features "llvm3-6" --verbose
+        - cargo test --no-default-features --features "llvm${LLVM_VERSION_DASH}" --verbose
     # LLVM 3.7 Stable
     - addons:
         apt:
@@ -49,13 +50,17 @@ matrix:
             - libiberty-dev
             - llvm-3.7-dev
       before_install:
-        - export PATH=/usr/lib/llvm-3.7/bin/:$HOME/.local/bin:$PATH
-        - export LLVM_PATH=/usr/share/llvm-3.7/cmake/
-        - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "37"/' Cargo.toml
+        - export LLVM_VERSION_DASH=${LLVM_VERSION/./-}
+        - export LLVM_VERSION_SHORT=${LLVM_VERSION/./}
+        - export PATH=/usr/lib/llvm-${LLVM_VERSION}/bin/:$HOME/.local/bin:$PATH
+        - export LLVM_PATH=/usr/share/llvm-${LLVM_VERSION}/cmake/
+        - cat ASD${LLVM_VERSION_SHORT}123
+        - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "'"${LLVM_VERSION_SHORT}"'"/' Cargo.toml
+        - cat Cargo.toml | grep llvm-sys
       env:
         - LLVM_VERSION="3.7"
       script:
-        - cargo test --no-default-features --features "llvm3-7" --verbose
+        - cargo test --no-default-features --features "llvm${LLVM_VERSION_DASH}" --verbose
 
 env:
   global:
