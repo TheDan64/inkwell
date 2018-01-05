@@ -29,8 +29,7 @@ matrix:
         - export LLVM_VERSION_SHORT=${LLVM_VERSION/./}
         - export PATH=/usr/lib/llvm-${LLVM_VERSION}/bin/:$HOME/.local/bin:$PATH
         - export LLVM_PATH=/usr/share/llvm-${LLVM_VERSION}/cmake/
-        - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "${LLVM_VERSION_SHORT}"/' Cargo.toml
-        - cat Cargo.toml | grep llvm-sys
+        - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "'${LLVM_VERSION_SHORT}'"/' Cargo.toml
       env:
         - LLVM_VERSION="3.6"
       script:
@@ -54,9 +53,7 @@ matrix:
         - export LLVM_VERSION_SHORT=${LLVM_VERSION/./}
         - export PATH=/usr/lib/llvm-${LLVM_VERSION}/bin/:$HOME/.local/bin:$PATH
         - export LLVM_PATH=/usr/share/llvm-${LLVM_VERSION}/cmake/
-        - cat ASD${LLVM_VERSION_SHORT}123
-        - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "'"${LLVM_VERSION_SHORT}"'"/' Cargo.toml
-        - cat Cargo.toml | grep llvm-sys
+        - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "'${LLVM_VERSION_SHORT}'"/' Cargo.toml
       env:
         - LLVM_VERSION="3.7"
       script:

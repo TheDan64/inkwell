@@ -210,6 +210,36 @@ impl Target {
         }
     }
 
+    // TODOC: Called AMDGPU in 3.7+
+    #[cfg(feature = "llvm3-6")]
+    pub fn initialize_r600(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeR600Target, LLVMInitializeR600TargetInfo, LLVMInitializeR600TargetMC, LLVMInitializeR600AsmPrinter, LLVMInitializeR600AsmParser};
+
+        unsafe {
+            if config.base {
+                LLVMInitializeR600Target()
+            }
+
+            if config.info {
+                LLVMInitializeR600TargetInfo()
+            }
+
+            if config.asm_printer {
+                LLVMInitializeR600AsmPrinter()
+            }
+
+            if config.asm_parser {
+                LLVMInitializeR600AsmParser()
+            }
+
+            if config.machine_code {
+                LLVMInitializeR600TargetMC()
+            }
+        }
+    }
+
+    // TODOC: Called R600 in 3.6
+    #[cfg(not(feature = "llvm3-6"))]
     pub fn initialize_amd_gpu(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeAMDGPUTarget, LLVMInitializeAMDGPUTargetInfo, LLVMInitializeAMDGPUTargetMC, LLVMInitializeAMDGPUAsmPrinter, LLVMInitializeAMDGPUAsmParser};
 
