@@ -5,59 +5,55 @@ cache:
   - apt
   - cargo
 
+include_base: &BASE
+  addons:
+    apt:
+      sources: &BASE_SOURCES
+        - ubuntu-toolchain-r-test
+      packages: &BASE_PACKAGES
+        - libelf-dev
+        - lib32z1-dev
+        - libedit-dev
+        - libdw-dev
+        - binutils-dev
+        - libiberty-dev
+  before_install:
+    - export LLVM_VERSION_DASH=${LLVM_VERSION/./-}
+    - export LLVM_VERSION_SHORT=${LLVM_VERSION/./}
+    - export PATH=/usr/lib/llvm-${LLVM_VERSION}/bin/:$HOME/.local/bin:$PATH
+    - export LLVM_PATH=/usr/share/llvm-${LLVM_VERSION}/cmake/
+    - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "'${LLVM_VERSION_SHORT}'"/' Cargo.toml
+  script:
+    - cargo test --no-default-features --features "llvm${LLVM_VERSION_DASH}" --verbose
+
 matrix:
   allow_failures:
     - rust: nightly
   fast_finish: true
   include:
-    # LLVM 3.6 Stable
-    - addons:
-        apt:
-          sources:
-            - llvm-toolchain-precise-3.6
-            - ubuntu-toolchain-r-test
-          packages:
-            - libelf-dev
-            - lib32z1-dev
-            - libedit-dev
-            - libdw-dev
-            - binutils-dev
-            - libiberty-dev
-            - llvm-3.6-dev
-      before_install:
-        - export LLVM_VERSION_DASH=${LLVM_VERSION/./-}
-        - export LLVM_VERSION_SHORT=${LLVM_VERSION/./}
-        - export PATH=/usr/lib/llvm-${LLVM_VERSION}/bin/:$HOME/.local/bin:$PATH
-        - export LLVM_PATH=/usr/share/llvm-${LLVM_VERSION}/cmake/
-        - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "'${LLVM_VERSION_SHORT}'"/' Cargo.toml
-      env:
+    - env:
         - LLVM_VERSION="3.6"
-      script:
-        - cargo test --no-default-features --features "llvm${LLVM_VERSION_DASH}" --verbose
-    # LLVM 3.7 Stable
-    - addons:
+      <<: *BASE
+      addons:
         apt:
           sources:
-            - llvm-toolchain-precise-3.7
-            - ubuntu-toolchain-r-test
+            - *BASE_SOURCES
+            - llvm-toolchain-precise-3.6
           packages:
-            - libelf-dev
-            - lib32z1-dev
-            - libedit-dev
-            - libdw-dev
-            - binutils-dev
-            - libiberty-dev
-            - llvm-3.7-dev
-      before_install:
-        - export LLVM_VERSION_DASH=${LLVM_VERSION/./-}
-        - export LLVM_VERSION_SHORT=${LLVM_VERSION/./}
-        - export PATH=/usr/lib/llvm-${LLVM_VERSION}/bin/:$HOME/.local/bin:$PATH
-        - export LLVM_PATH=/usr/share/llvm-${LLVM_VERSION}/cmake/
-        - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "'${LLVM_VERSION_SHORT}'"/' Cargo.toml
-      env:
+            - *BASE_PACKAGES
+            - llvm-3.6-dev
+
+    - env:
         - LLVM_VERSION="3.7"
-      script:
-        - cargo test --no-default-features --features "llvm${LLVM_VERSION_DASH}" --verbose
+      <<: *BASE
+      addons:
+        apt:
+          sources:
+            - *BASE_SOURCES
+            - llvm-toolchain-precise-3.7
+          packages:
+            - *BASE_PACKAGES
+            - llvm-3.7-dev
 
 env:
   global:
