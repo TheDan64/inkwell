@@ -391,10 +391,14 @@ fn test_metadata() {
     assert_eq!(MetadataValue::get_kind_id("llvm.mem.parallel_loop_access"), 10);
     assert_eq!(context.get_kind_id("nonnull"), 11);
     assert_eq!(MetadataValue::get_kind_id("nonnull"), 11);
-    assert_eq!(context.get_kind_id("dereferenceable"), 12);
-    assert_eq!(MetadataValue::get_kind_id("dereferenceable"), 12);
-    assert_eq!(context.get_kind_id("dereferenceable_or_null"), 13);
-    assert_eq!(MetadataValue::get_kind_id("dereferenceable_or_null"), 13);
+
+    #[cfg(not(feature = "llvm3-6"))]
+    {
+        assert_eq!(context.get_kind_id("dereferenceable"), 12);
+        assert_eq!(MetadataValue::get_kind_id("dereferenceable"), 12);
+        assert_eq!(context.get_kind_id("dereferenceable_or_null"), 13);
+        assert_eq!(MetadataValue::get_kind_id("dereferenceable_or_null"), 13);
+    }
 
     // TODO: Predefined, but only newer versions we don't support yet
     // assert_eq!(context.get_kind_id("make.implicit"), 14);
