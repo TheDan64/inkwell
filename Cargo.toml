@@ -21,6 +21,9 @@ enum-methods = "0.0.8"
 libc = "*"
 llvm-sys = "37"
 
+[build-dependencies]
+toml_edit = "0.1"
+
 [[example]]
 name = "kaleidoscope"
 path = "examples/kaleidoscope/main.rs"

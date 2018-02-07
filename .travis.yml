@@ -18,13 +18,10 @@ include_base: &BASE
         - binutils-dev
         - libiberty-dev
   before_install:
-    - export LLVM_VERSION_DASH=${LLVM_VERSION/./-}
-    - export LLVM_VERSION_SHORT=${LLVM_VERSION/./}
-    - export PATH=/usr/lib/llvm-${LLVM_VERSION}/bin/:$HOME/.local/bin:$PATH
-    - export LLVM_PATH=/usr/share/llvm-${LLVM_VERSION}/cmake/
-    - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "'${LLVM_VERSION_SHORT}'"/' Cargo.toml
+    - export PATH=/usr/lib/llvm-${INKWELL_LLVM_VERSION}/bin/:$HOME/.local/bin:$PATH
+    - export LLVM_PATH=/usr/share/llvm-${INKWELL_LLVM_VERSION}/cmake/
   script:
-    - cargo test --no-default-features --features "llvm${LLVM_VERSION_DASH}" --verbose
+    - cargo test --verbose
 
 matrix:
   allow_failures:
@@ -32,7 +29,7 @@ matrix:
   fast_finish: true
   include:
     - env:
-        - LLVM_VERSION="3.6"
+        - INKWELL_LLVM_VERSION="3.6"
       <<: *BASE
       addons:
         apt:
@@ -44,7 +41,7 @@ matrix:
             - llvm-3.6-dev
 
     - env:
-        - LLVM_VERSION="3.7"
+        - INKWELL_LLVM_VERSION="3.7"
       <<: *BASE
       addons:
         apt:
