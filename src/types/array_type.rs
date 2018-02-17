@@ -53,7 +53,7 @@ impl ArrayType {
         self.array_type.array_type(size)
     }
 
-    pub fn const_array<V: BasicValue>(&self, values: &[&V]) -> ArrayValue {
+    pub fn const_array<V: BasicValue>(&self, values: &[V]) -> ArrayValue {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();

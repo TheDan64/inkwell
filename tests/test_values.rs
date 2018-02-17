@@ -117,7 +117,7 @@ fn test_set_get_name() {
     let f64_val = f64_type.const_float(0.0);
     let f128_val = f128_type.const_float(0.0);
     let ptr_val = bool_type.const_null_ptr();
-    let array_val = array_type.const_array(&[&f64_val]);
+    let array_val = array_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[&i8_val, &f128_val], false);
     let vec_val = VectorType::const_vector(&[&i8_val]);
     let ppc_f128_val = ppc_f128_type.const_float(0.0);
@@ -249,7 +249,7 @@ fn test_undef() {
     let f64_val = f64_type.const_float(0.0);
     let f128_val = f128_type.const_float(0.0);
     let ptr_val = bool_type.const_null_ptr();
-    let array_val = array_type.const_array(&[&f64_val]);
+    let array_val = array_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[&i8_val, &f128_val], false);
     let vec_val = VectorType::const_vector(&[&i8_val]);
     let ppc_f128_val = ppc_f128_type.const_float(0.0);
@@ -451,7 +451,7 @@ fn test_metadata() {
     let f128_val = f128_type.const_float(0.0);
     // let ppc_f128_val = ppc_f128_type.const_float(0.0);
     let ptr_val = bool_type.ptr_type(AddressSpace::Generic).const_null();
-    let array_val = array_type.const_array(&[&f64_val]);
+    let array_val = array_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[&i8_val, &f128_val], false);
     let vec_val = VectorType::const_vector(&[&i8_val]);
     let fn_val = module.add_function("my_fn", &fn_type, None);
@@ -719,6 +719,28 @@ fn test_value_copies() {
     let i8_value_copy = i8_value;
 
     assert_eq!(i8_value, i8_value_copy);
+}
+
+#[test]
+fn test_global_byte_array() {
+    let context = Context::create();
+    let module = context.create_module("my_mod");
+    let my_str = "Hello, World";
+    let i8_type = context.i8_type();
+    let i8_array_type = i8_type.array_type(my_str.len() as u32);
+    let global_string = module.add_global(&i8_array_type, Some(AddressSpace::Generic), "message");
+
+    let mut chars = Vec::with_capacity(my_str.len());
+
+    for chr in my_str.bytes() {
+        chars.push(i8_type.const_int(chr as u64, false));
+    }
+
+    let const_str_array = i8_array_type.const_array(chars.as_ref());
+
+    global_string.set_initializer(&const_str_array);
+
+    // TODO: Assert something?
 }
 
 #[test]
