@@ -1,37 +1,63 @@
 language: rust
 
 sudo: false
+cache:
+  - apt
+  - cargo
 
-rust:
-  - stable
-  - beta
-  - nightly
+include_base: &BASE
+  addons:
+    apt:
+      sources: &BASE_SOURCES
+        - ubuntu-toolchain-r-test
+      packages: &BASE_PACKAGES
+        - libelf-dev
+        - lib32z1-dev
+        - libedit-dev
+        - libdw-dev
+        - binutils-dev
+        - libiberty-dev
+  before_install:
+    - export LLVM_VERSION_DASH=${LLVM_VERSION/./-}
+    - export LLVM_VERSION_SHORT=${LLVM_VERSION/./}
+    - export PATH=/usr/lib/llvm-${LLVM_VERSION}/bin/:$HOME/.local/bin:$PATH
+    - export LLVM_PATH=/usr/share/llvm-${LLVM_VERSION}/cmake/
+    - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "'${LLVM_VERSION_SHORT}'"/' Cargo.toml
+  script:
+    - cargo test --no-default-features --features "llvm${LLVM_VERSION_DASH}" --verbose
 
 matrix:
   allow_failures:
     - rust: nightly
   fast_finish: true
+  include:
+    - env:
+        - LLVM_VERSION="3.6"
+      <<: *BASE
+      addons:
+        apt:
+          sources:
+            - *BASE_SOURCES
+            - llvm-toolchain-precise-3.6
+          packages:
+            - *BASE_PACKAGES
+            - llvm-3.6-dev
+
+    - env:
+        - LLVM_VERSION="3.7"
+      <<: *BASE
+      addons:
+        apt:
+          sources:
+            - *BASE_SOURCES
+            - llvm-toolchain-precise-3.7
+          packages:
+            - *BASE_PACKAGES
+            - llvm-3.7-dev
 
 env:
   global:
-  - RUSTFLAGS="-C link-dead-code"
-
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-      - llvm-toolchain-precise-3.7
-    packages:
-      - llvm-3.7-dev
-      - libelf-dev
-      - lib32z1-dev
-      - libedit-dev
-      - libdw-dev
-      - binutils-dev
-      - libiberty-dev
-
-before_install:
-  - export PATH=/usr/lib/llvm-3.7/bin/:$HOME/.local/bin:$PATH
+    - RUSTFLAGS="-C link-dead-code -C target-cpu=native"
 
 after_success: |
   wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&

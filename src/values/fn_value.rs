@@ -1,5 +1,7 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMTypeOf, LLVMGetPreviousFunction, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetBasicBlocks, LLVMGetReturnType, LLVMAppendBasicBlock, LLVMDeleteFunction, LLVMGetElementType, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetEntryBasicBlock, LLVMGetPersonalityFn, LLVMSetPersonalityFn, LLVMGetIntrinsicID, LLVMGetFunctionCallConv, LLVMSetFunctionCallConv, LLVMGetGC, LLVMSetGC};
+use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMTypeOf, LLVMGetPreviousFunction, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetBasicBlocks, LLVMGetReturnType, LLVMAppendBasicBlock, LLVMDeleteFunction, LLVMGetElementType, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetEntryBasicBlock, LLVMGetIntrinsicID, LLVMGetFunctionCallConv, LLVMSetFunctionCallConv, LLVMGetGC, LLVMSetGC};
+#[cfg(not(feature = "llvm3-6"))]
+use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
 
 use std::ffi::{CStr, CString};
@@ -259,6 +261,7 @@ impl FunctionValue {
     //     }
     // }
 
+    #[cfg(not(feature = "llvm3-6"))]
     pub fn get_personality_function(&self) -> Option<FunctionValue> {
         let value = unsafe {
             LLVMGetPersonalityFn(self.as_value_ref())
@@ -267,6 +270,7 @@ impl FunctionValue {
         FunctionValue::new(value)
     }
 
+    #[cfg(not(feature = "llvm3-6"))]
     pub fn set_personality_function(&self, personality_fn: &FunctionValue) {
         unsafe {
             LLVMSetPersonalityFn(self.as_value_ref(), personality_fn.as_value_ref())

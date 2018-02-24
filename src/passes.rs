@@ -1,14 +1,18 @@
 use llvm_sys::core::{LLVMDisposePassManager, LLVMInitializeFunctionPassManager, LLVMFinalizeFunctionPassManager, LLVMRunFunctionPassManager, LLVMRunPassManager, LLVMCreatePassManager, LLVMCreateFunctionPassManagerForModule, LLVMGetGlobalPassRegistry};
 use llvm_sys::initialization::{LLVMInitializeCore, LLVMInitializeTransformUtils, LLVMInitializeScalarOpts, LLVMInitializeObjCARCOpts, LLVMInitializeVectorization, LLVMInitializeInstCombine, LLVMInitializeIPO, LLVMInitializeInstrumentation, LLVMInitializeAnalysis, LLVMInitializeIPA, LLVMInitializeCodeGen, LLVMInitializeTarget};
 use llvm_sys::prelude::{LLVMPassManagerRef, LLVMPassRegistryRef};
+#[cfg(not(feature = "llvm3-6"))]
 use llvm_sys::target::LLVMAddTargetData;
 use llvm_sys::transforms::ipo::{LLVMAddArgumentPromotionPass, LLVMAddConstantMergePass, LLVMAddDeadArgEliminationPass, LLVMAddFunctionAttrsPass, LLVMAddFunctionInliningPass, LLVMAddAlwaysInlinerPass, LLVMAddGlobalDCEPass, LLVMAddGlobalOptimizerPass, LLVMAddIPConstantPropagationPass, LLVMAddIPSCCPPass, LLVMAddInternalizePass, LLVMAddStripDeadPrototypesPass, LLVMAddPruneEHPass, LLVMAddStripSymbolsPass};
 use llvm_sys::transforms::pass_manager_builder::{LLVMPassManagerBuilderRef, LLVMPassManagerBuilderCreate, LLVMPassManagerBuilderDispose, LLVMPassManagerBuilderSetOptLevel, LLVMPassManagerBuilderSetSizeLevel, LLVMPassManagerBuilderSetDisableUnitAtATime, LLVMPassManagerBuilderSetDisableUnrollLoops, LLVMPassManagerBuilderSetDisableSimplifyLibCalls, LLVMPassManagerBuilderUseInlinerWithThreshold, LLVMPassManagerBuilderPopulateFunctionPassManager, LLVMPassManagerBuilderPopulateModulePassManager, LLVMPassManagerBuilderPopulateLTOPassManager};
-use llvm_sys::transforms::scalar::{LLVMAddAggressiveDCEPass, LLVMAddMemCpyOptPass, LLVMAddBitTrackingDCEPass, LLVMAddAlignmentFromAssumptionsPass, LLVMAddCFGSimplificationPass, LLVMAddDeadStoreEliminationPass, LLVMAddScalarizerPass, LLVMAddMergedLoadStoreMotionPass, LLVMAddGVNPass, LLVMAddIndVarSimplifyPass, LLVMAddInstructionCombiningPass, LLVMAddJumpThreadingPass, LLVMAddLICMPass, LLVMAddLoopDeletionPass, LLVMAddLoopIdiomPass, LLVMAddLoopRotatePass, LLVMAddLoopRerollPass, LLVMAddLoopUnrollPass, LLVMAddLoopUnswitchPass, LLVMAddPartiallyInlineLibCallsPass, LLVMAddLowerSwitchPass, LLVMAddPromoteMemoryToRegisterPass, LLVMAddSCCPPass, LLVMAddScalarReplAggregatesPass, LLVMAddScalarReplAggregatesPassSSA, LLVMAddScalarReplAggregatesPassWithThreshold, LLVMAddSimplifyLibCallsPass, LLVMAddTailCallEliminationPass, LLVMAddConstantPropagationPass, LLVMAddDemoteMemoryToRegisterPass, LLVMAddVerifierPass, LLVMAddCorrelatedValuePropagationPass, LLVMAddEarlyCSEPass, LLVMAddLowerExpectIntrinsicPass, LLVMAddTypeBasedAliasAnalysisPass, LLVMAddScopedNoAliasAAPass, LLVMAddBasicAliasAnalysisPass, LLVMAddReassociatePass};
+use llvm_sys::transforms::scalar::{LLVMAddAggressiveDCEPass, LLVMAddMemCpyOptPass, LLVMAddAlignmentFromAssumptionsPass, LLVMAddCFGSimplificationPass, LLVMAddDeadStoreEliminationPass, LLVMAddScalarizerPass, LLVMAddMergedLoadStoreMotionPass, LLVMAddGVNPass, LLVMAddIndVarSimplifyPass, LLVMAddInstructionCombiningPass, LLVMAddJumpThreadingPass, LLVMAddLICMPass, LLVMAddLoopDeletionPass, LLVMAddLoopIdiomPass, LLVMAddLoopRotatePass, LLVMAddLoopRerollPass, LLVMAddLoopUnrollPass, LLVMAddLoopUnswitchPass, LLVMAddPartiallyInlineLibCallsPass, LLVMAddLowerSwitchPass, LLVMAddPromoteMemoryToRegisterPass, LLVMAddSCCPPass, LLVMAddScalarReplAggregatesPass, LLVMAddScalarReplAggregatesPassSSA, LLVMAddScalarReplAggregatesPassWithThreshold, LLVMAddSimplifyLibCallsPass, LLVMAddTailCallEliminationPass, LLVMAddConstantPropagationPass, LLVMAddDemoteMemoryToRegisterPass, LLVMAddVerifierPass, LLVMAddCorrelatedValuePropagationPass, LLVMAddEarlyCSEPass, LLVMAddLowerExpectIntrinsicPass, LLVMAddTypeBasedAliasAnalysisPass, LLVMAddScopedNoAliasAAPass, LLVMAddBasicAliasAnalysisPass, LLVMAddReassociatePass};
+#[cfg(not(feature = "llvm3-6"))]
+use llvm_sys::transforms::scalar::LLVMAddBitTrackingDCEPass;
 use llvm_sys::transforms::vectorize::{LLVMAddBBVectorizePass, LLVMAddLoopVectorizePass, LLVMAddSLPVectorizePass};
 
 use OptimizationLevel;
 use module::Module;
+#[cfg(not(feature = "llvm3-6"))]
 use targets::TargetData;
 use values::{AsValueRef, FunctionValue};
 
@@ -159,6 +163,7 @@ impl PassManager {
         }
     }
 
+    #[cfg(not(feature = "llvm3-6"))]
     pub fn add_target_data(&self, target_data: &TargetData) {
         unsafe {
             LLVMAddTargetData(target_data.target_data, self.pass_manager)
@@ -274,7 +279,7 @@ impl PassManager {
         }
     }
 
-    // TODO: 3.7+ only
+    #[cfg(not(feature = "llvm3-6"))]
     pub fn add_bit_tracking_dce_pass(&self) {
         unsafe {
             LLVMAddBitTrackingDCEPass(self.pass_manager)

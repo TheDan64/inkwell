@@ -28,7 +28,8 @@ fn test_init_all_passes_for_module() {
     pass_manager.add_loop_vectorize_pass();
     pass_manager.add_slp_vectorize_pass();
     pass_manager.add_aggressive_dce_pass();
-    pass_manager.add_bit_tracking_dce_pass(); // TODO: 3.7+ only
+    #[cfg(not(feature = "llvm3-6"))]
+    pass_manager.add_bit_tracking_dce_pass();
     pass_manager.add_alignment_from_assumptions_pass();
     pass_manager.add_cfg_simplification_pass();
     pass_manager.add_dead_store_elimination_pass();
@@ -111,7 +112,11 @@ fn test_pass_manager_builder() {
 
     pass_manager_builder.populate_module_pass_manager(&module_pass_manager);
 
-    // REVIEW: Seems like no changes were made, why does it return true?
+    // REVIEW: Seems to return true in 3.7, even though no changes were made.
+    // In 3.6 it returns false. LLVM bug?
+    #[cfg(feature = "llvm3-6")]
+    assert!(!module_pass_manager.run_on_module(&module));
+    #[cfg(not(feature = "llvm3-6"))]
     assert!(module_pass_manager.run_on_module(&module));
 
     // TODO: Populate LTO pass manager?

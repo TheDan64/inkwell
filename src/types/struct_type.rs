@@ -1,4 +1,6 @@
-use llvm_sys::core::{LLVMStructGetTypeAtIndex, LLVMConstNamedStruct, LLVMConstStruct, LLVMConstNull, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMStructSetBody};
+use llvm_sys::core::{LLVMConstNamedStruct, LLVMConstStruct, LLVMConstNull, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMStructSetBody};
+#[cfg(not(feature = "llvm3-6"))]
+use llvm_sys::core::LLVMStructGetTypeAtIndex;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use std::ffi::CStr;
@@ -25,7 +27,7 @@ impl StructType {
     }
 
     // TODO: Would be great to be able to smartly be able to do this by field name
-    // TODO: LLVM 3.7+ only
+    #[cfg(not(feature = "llvm3-6"))]
     pub fn get_field_type_at_index(&self, index: u32) -> Option<BasicTypeEnum> {
         // LLVM doesn't seem to just return null if opaque.
         // TODO: One day, with SubTypes (& maybe specialization?) we could just
@@ -40,7 +42,7 @@ impl StructType {
         }
 
         let type_ = unsafe {
-            LLVMStructGetTypeAtIndex(self.struct_type.type_, index)
+            LLVMStructGetTypeAtIndex(self.as_type_ref(), index)
         };
 
         Some(BasicTypeEnum::new(type_))
@@ -130,7 +132,7 @@ impl StructType {
 
     pub fn is_packed(&self) -> bool {
         unsafe {
-            LLVMIsPackedStruct(self.struct_type.type_) == 1
+            LLVMIsPackedStruct(self.as_type_ref()) == 1
         }
     }
 
@@ -138,7 +140,7 @@ impl StructType {
     // yet assigned (empty array to struct_type)
     pub fn is_opaque(&self) -> bool {
         unsafe {
-            LLVMIsOpaqueStruct(self.struct_type.type_) == 1
+            LLVMIsOpaqueStruct(self.as_type_ref()) == 1
         }
     }
 
@@ -183,6 +185,7 @@ impl StructType {
         self.struct_type.print_to_string()
     }
 
+    #[cfg(not(feature = "llvm3-6"))]
     pub fn print_to_stderr(&self) {
         self.struct_type.print_to_stderr()
     }

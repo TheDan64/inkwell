@@ -14,18 +14,25 @@ Inkwell aims to help you pen your own programming languages by safely wrapping l
 
 * Any Rust version released in the last year or so
 * Rust Stable, Beta, or Nightly
-* LLVM 3.7 (3.6 and 3.8+ support is planned: [#1](https://github.com/TheDan64/inkwell/issues/1))
+* LLVM 3.6 or 3.7 (3.8+ support is planned: [#1](https://github.com/TheDan64/inkwell/issues/1))
 
 ## Usage
 
-You'll need to point your Cargo.toml to the master branch of Inkwell like so:
+You'll need to point your Cargo.toml to a branch and use a feature flag corresponding to a supported LLVM version:
 
 ```toml
 [dependencies]
-inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "master" }
+inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "llvm3-7", features = ["llvm3-7"] }
 ```
 
-In the root of your source code you will likely have to add an extern crate to begin using Inkwell:
+Supported versions:
+
+| GitHub Branch | Feature Flag |
+| :-----------: | :----------: |
+| llvm3-6       | llvm3-6      |
+| llvm3-7       | llvm3-7      |
+
+In the root of your source code you will have to add an extern crate to begin using Inkwell:
 
 ```rust
 extern crate inkwell;

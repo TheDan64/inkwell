@@ -23,6 +23,9 @@ use llvm_sys::support::LLVMLoadLibraryPermanently;
 
 use std::ffi::CString;
 
+#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+compile_error!("A LLVM feature flag must be provided. See the README for more details.");
+
 // TODO: Probably move into error handling module
 pub fn enable_llvm_pretty_stack_trace() {
     // use llvm_sys::error_handling::LLVMEnablePrettyStackTrace; // v3.8

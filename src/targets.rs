@@ -210,6 +210,36 @@ impl Target {
         }
     }
 
+    // TODOC: Called AMDGPU in 3.7+
+    #[cfg(feature = "llvm3-6")]
+    pub fn initialize_r600(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeR600Target, LLVMInitializeR600TargetInfo, LLVMInitializeR600TargetMC, LLVMInitializeR600AsmPrinter, LLVMInitializeR600AsmParser};
+
+        unsafe {
+            if config.base {
+                LLVMInitializeR600Target()
+            }
+
+            if config.info {
+                LLVMInitializeR600TargetInfo()
+            }
+
+            if config.asm_printer {
+                LLVMInitializeR600AsmPrinter()
+            }
+
+            if config.asm_parser {
+                LLVMInitializeR600AsmParser()
+            }
+
+            if config.machine_code {
+                LLVMInitializeR600TargetMC()
+            }
+        }
+    }
+
+    // TODOC: Called R600 in 3.6
+    #[cfg(not(feature = "llvm3-6"))]
     pub fn initialize_amd_gpu(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeAMDGPUTarget, LLVMInitializeAMDGPUTargetInfo, LLVMInitializeAMDGPUTargetMC, LLVMInitializeAMDGPUAsmPrinter, LLVMInitializeAMDGPUAsmParser};
 
@@ -314,6 +344,7 @@ impl Target {
         }
     }
 
+    #[cfg(not(feature = "llvm3-6"))]
     pub fn initialize_cpp_backend(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeCppBackendTarget, LLVMInitializeCppBackendTargetInfo, LLVMInitializeCppBackendTargetMC};
 
@@ -441,6 +472,7 @@ impl Target {
     }
 
     // TODOC: Disassembler only supported in LLVM 4.0+
+    #[cfg(not(feature = "llvm3-6"))]
     pub fn initialize_bpf(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeBPFTarget, LLVMInitializeBPFTargetInfo, LLVMInitializeBPFTargetMC, LLVMInitializeBPFAsmPrinter};
 
@@ -860,7 +892,7 @@ impl TargetData {
         TargetData::new(target_data)
     }
 
-    // REVIEW: Maybe this should be pass_manager.add_target_data()?
+    // REVIEW: Maybe this should be pass_manager.add_target_data(&target_data)?
     pub fn add_target_data(&self, pass_manager: &PassManager) {
         unsafe {
             LLVMAddTargetData(self.target_data, pass_manager.pass_manager)

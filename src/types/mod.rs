@@ -21,7 +21,9 @@ pub use types::vec_type::VectorType;
 pub use types::void_type::VoidType;
 pub(crate) use types::traits::AsTypeRef;
 
-use llvm_sys::core::{LLVMAlignOf, LLVMGetTypeContext, LLVMFunctionType, LLVMArrayType, LLVMDumpType, LLVMGetTypeKind, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMTypeIsSized, LLVMSizeOf, LLVMVectorType, LLVMConstPointerNull};
+#[cfg(not(feature = "llvm3-6"))]
+use llvm_sys::core::LLVMDumpType;
+use llvm_sys::core::{LLVMAlignOf, LLVMGetTypeContext, LLVMFunctionType, LLVMArrayType, LLVMGetTypeKind, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMTypeIsSized, LLVMSizeOf, LLVMVectorType, LLVMConstPointerNull};
 use llvm_sys::LLVMTypeKind;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
@@ -50,6 +52,7 @@ impl Type {
         }
     }
 
+    #[cfg(not(feature = "llvm3-6"))]
     fn print_to_stderr(&self) {
         unsafe {
             LLVMDumpType(self.type_);
