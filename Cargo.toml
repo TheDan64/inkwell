@@ -11,7 +11,7 @@ license = "Apache-2.0"
 categories = ["development-tools::ffi"]
 
 [features]
-default = ["llvm3-7"]
+default = []
 llvm3-6 = []
 llvm3-7 = []
 
@@ -20,9 +20,6 @@ either = "1.4.0"
 enum-methods = "0.0.8"
 libc = "*"
 llvm-sys = "37"
-
-[build-dependencies]
-toml_edit = "0.1"
 
 [[example]]
 name = "kaleidoscope"
