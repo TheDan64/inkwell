@@ -311,7 +311,7 @@ impl Module {
         }
     }
 
-    /// Consumes this `Module`, and creates a JIT `ExecutionEngine` from it.
+    /// Creates a JIT `ExecutionEngine` from this `Module`.
     ///
     /// # Example
     /// ```no_run

@@ -131,6 +131,7 @@ fn test_get_terminator() {
     assert_eq!(basic_block.get_terminator().unwrap().get_opcode(), InstructionOpcode::Return);
     assert_eq!(basic_block.get_first_instruction().unwrap().get_opcode(), InstructionOpcode::Return);
     assert_eq!(basic_block.get_last_instruction().unwrap().get_opcode(), InstructionOpcode::Return);
+    assert_eq!(basic_block.get_last_instruction(), basic_block.get_terminator());
 }
 
 #[test]
@@ -143,11 +144,16 @@ fn test_no_parent() {
 
     let function = module.add_function("testing", &fn_type, None);
     let basic_block = context.append_basic_block(&function, "entry");
+    let basic_block2 = context.append_basic_block(&function, "next");
 
     assert_eq!(basic_block.get_parent().unwrap(), function);
+    assert_eq!(basic_block.get_next_basic_block().unwrap(), basic_block2);
 
     // TODO: Test if this method is unsafe if parent function was hard deleted
     basic_block.remove_from_function();
+
+    assert!(basic_block.get_next_basic_block().is_none());
+    assert!(basic_block2.get_previous_basic_block().is_none());
 
     // The problem here is that calling the function more than once becomes UB
     // for some reason so we have to manually check for the parent function (in the call)
