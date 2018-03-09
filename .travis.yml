@@ -24,7 +24,7 @@ include_base: &BASE
     - export LLVM_PATH=/usr/share/llvm-${LLVM_VERSION}/cmake/
     - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "'${LLVM_VERSION_SHORT}'"/' Cargo.toml
   script:
-    - cargo build --release
+    - cargo build --no-default-features --features "llvm${LLVM_VERSION_DASH}" --release
     - cargo test --no-default-features --features "llvm${LLVM_VERSION_DASH}" --verbose --release
 
 matrix:
