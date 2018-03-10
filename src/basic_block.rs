@@ -31,7 +31,7 @@ impl BasicBlock {
     /// Obtains the `FunctionValue` that this `BasicBlock` belongs to, if any.
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::Module;
     /// use inkwell::builder::Builder;
@@ -61,7 +61,7 @@ impl BasicBlock {
     /// Gets the `BasicBlock` preceeding the current one, in its own scope, if any.
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::Module;
     /// use inkwell::builder::Builder;
@@ -95,7 +95,7 @@ impl BasicBlock {
     /// Gets the `BasicBlock` succeeding the current one, in its own scope, if any.
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::Module;
     /// use inkwell::builder::Builder;
@@ -130,7 +130,7 @@ impl BasicBlock {
     /// Prepends one `BasicBlock` before another.
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::Module;
     /// use inkwell::builder::Builder;
@@ -159,7 +159,7 @@ impl BasicBlock {
     /// Appends one `BasicBlock` after another.
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::Module;
     /// use inkwell::builder::Builder;
@@ -188,7 +188,7 @@ impl BasicBlock {
     /// Prepends a new `BasicBlock` before this one.
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::Module;
     /// use inkwell::builder::Builder;
@@ -218,7 +218,7 @@ impl BasicBlock {
     /// Obtains the first `InstructionValue` in this `BasicBlock`, if any.
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::Module;
     /// use inkwell::builder::Builder;
@@ -252,7 +252,7 @@ impl BasicBlock {
     /// Obtains the last `InstructionValue` in this `BasicBlock`, if any. A `BasicBlock` must have a last instruction to be valid.
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::Module;
     /// use inkwell::builder::Builder;
@@ -286,7 +286,7 @@ impl BasicBlock {
     /// Obtains the terminating `InstructionValue` in this `BasicBlock`, if any. A `BasicBlock` must have a terminating instruction to be valid.
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::Module;
     /// use inkwell::builder::Builder;
@@ -324,7 +324,7 @@ impl BasicBlock {
     /// Removes this `BasicBlock` from its parent `FunctionValue`. Does nothing if it has no parent.
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::Module;
     /// use inkwell::builder::Builder;
@@ -358,7 +358,7 @@ impl BasicBlock {
     /// Removes this `BasicBlock` completely from memory. This is unsafe because you could easily have other references to the same `BasicBlock`.
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::Module;
     /// use inkwell::builder::Builder;
@@ -385,7 +385,7 @@ impl BasicBlock {
     /// Obtains the `ContextRef` this `BasicBlock` belongs to.
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::Module;
     /// use inkwell::builder::Builder;
