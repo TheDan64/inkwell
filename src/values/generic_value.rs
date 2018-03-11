@@ -4,6 +4,7 @@ use llvm_sys::execution_engine::{LLVMCreateGenericValueOfPointer, LLVMDisposeGen
 use types::{AsTypeRef, FloatType};
 
 // SubTypes: GenericValue<IntValue, FloatValue, or PointerValue>
+#[derive(Debug)]
 pub struct GenericValue {
     pub(crate) generic_value: LLVMGenericValueRef,
 }

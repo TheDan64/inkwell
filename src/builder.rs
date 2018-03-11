@@ -10,6 +10,7 @@ use types::{AsTypeRef, BasicType, PointerType, IntType, FloatType};
 
 use std::ffi::CString;
 
+#[derive(Debug)]
 pub struct Builder {
     builder: LLVMBuilderRef,
 }

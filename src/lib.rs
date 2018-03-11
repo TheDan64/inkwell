@@ -1,3 +1,4 @@
+#![deny(missing_debug_implementations)]
 extern crate either;
 #[macro_use]
 extern crate enum_methods;
