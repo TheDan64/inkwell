@@ -93,6 +93,15 @@ impl fmt::Debug for ArrayValue {
             !LLVMIsAConstantDataArray(self.as_value_ref()).is_null()
         };
 
-        write!(f, "Value {{\n    name: {:?}\n    address: {:?}\n    is_const: {:?}\n    is_const_array: {:?}\n    is_const_data_array: {:?}\n    is_null: {:?}\n    llvm_value: {:?}\n    llvm_type: {:?}\n}}", name, self.as_value_ref(), is_const, is_const_array, is_const_data_array, is_null, llvm_value, llvm_type.print_to_string())
+        f.debug_struct("Value")
+            .field("name", &name)
+            .field("address", &self.as_value_ref())
+            .field("is_const", &is_const)
+            .field("is_const_array", &is_const_array)
+            .field("is_const_data_array", &is_const_data_array)
+            .field("is_null", &is_null)
+            .field("llvm_value", &llvm_value)
+            .field("llvm_type",  &llvm_type)
+            .finish()
     }
 }

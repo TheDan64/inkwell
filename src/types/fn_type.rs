@@ -82,7 +82,10 @@ impl fmt::Debug for FunctionType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let llvm_type = self.print_to_string();
 
-        write!(f, "FunctionType {{\n    address: {:?}\n    llvm_type: {:?}\n}}", self.as_type_ref(), llvm_type)
+        f.debug_struct("FunctionType")
+            .field("address", &self.as_type_ref())
+            .field("llvm_type", &llvm_type)
+            .finish()
     }
 }
 

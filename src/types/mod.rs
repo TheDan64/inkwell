@@ -171,6 +171,9 @@ impl fmt::Debug for Type {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let llvm_type = self.print_to_string();
 
-        write!(f, "Type {{\n    address: {:?}\n    llvm_type: {:?}\n}}", self.type_, llvm_type)
+        f.debug_struct("Type")
+            .field("address", &self.type_)
+            .field("llvm_type", &llvm_type)
+            .finish()
     }
 }
