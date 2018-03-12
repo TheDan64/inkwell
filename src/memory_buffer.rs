@@ -9,6 +9,7 @@ use std::mem::zeroed;
 use std::path::Path;
 use std::ptr;
 
+#[derive(Debug)]
 pub struct MemoryBuffer {
     pub(crate) memory_buffer: LLVMMemoryBufferRef
 }

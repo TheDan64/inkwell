@@ -143,17 +143,17 @@ impl AsValueRef for MetadataValue {
 
 impl fmt::Debug for MetadataValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "MetadataValue {{\n    ")?;
-        write!(f, "address: {:?}\n", self.as_value_ref())?;
+        let mut d = f.debug_struct("MetadataValue");
+        d.field("address", &self.as_value_ref());
 
         if self.is_string() {
-            write!(f, "value: {:?}\n", self.get_string_value().unwrap())?;
+            d.field("value", &self.get_string_value().unwrap());
         } else {
-            write!(f, "values: {:?}\n", self.get_node_values())?;
+            d.field("values", &self.get_node_values());
         }
 
-        write!(f, "repr: {:?}", self.print_to_string())?;
+        d.field("repr", &self.print_to_string());
 
-        write!(f, "\n}}")
+        d.finish()
     }
 }

@@ -5,7 +5,7 @@ use std::ffi::CStr;
 // REVIEW: Make sure SectionIterator's object_file ptr doesn't outlive ObjectFile
 // REVIEW: This module is very untested
 // TODO: More references to account for lifetimes
-
+#[derive(Debug)]
 pub struct ObjectFile {
     object_file: LLVMObjectFileRef
 }
@@ -44,6 +44,7 @@ impl Drop for ObjectFile {
     }
 }
 
+#[derive(Debug)]
 pub struct SectionIterator {
     section_iterator: LLVMSectionIteratorRef,
     object_file: LLVMObjectFileRef,
@@ -91,6 +92,7 @@ impl Drop for SectionIterator {
     }
 }
 
+#[derive(Debug)]
 pub struct Section {
     section: LLVMSectionIteratorRef,
     object_file: LLVMObjectFileRef,
@@ -139,6 +141,7 @@ impl Section {
     }
 }
 
+#[derive(Debug)]
 pub struct RelocationIterator {
     relocation_iterator: LLVMRelocationIteratorRef,
     section_iterator: LLVMSectionIteratorRef,
@@ -188,6 +191,7 @@ impl Drop for RelocationIterator {
     }
 }
 
+#[derive(Debug)]
 pub struct Relocation {
     relocation: LLVMRelocationIteratorRef,
     object_file: LLVMObjectFileRef,
@@ -236,6 +240,7 @@ impl Relocation {
     }
 }
 
+#[derive(Debug)]
 pub struct SymbolIterator {
     symbol_iterator: LLVMSymbolIteratorRef,
     object_file: LLVMObjectFileRef,
@@ -283,6 +288,7 @@ impl Drop for SymbolIterator {
     }
 }
 
+#[derive(Debug)]
 pub struct Symbol {
     symbol: LLVMSymbolIteratorRef,
 }

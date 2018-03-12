@@ -168,6 +168,14 @@ impl fmt::Debug for Value {
         let is_null = self.is_null();
         let is_undef = self.is_undef();
 
-        write!(f, "Value {{\n    name: {:?}\n    address: {:?}\n    is_const: {:?}\n    is_null: {:?}\n    is_undef: {:?}\n    llvm_value: {:?}\n    llvm_type: {:?}\n}}", name, self.value, is_const, is_null, is_undef, llvm_value, llvm_type)
+        f.debug_struct("Value")
+            .field("name", &name)
+            .field("address", &self.value)
+            .field("is_const", &is_const)
+            .field("is_null", &is_null)
+            .field("is_undef", &is_undef)
+            .field("llvm_value", &llvm_value)
+            .field("llvm_type", &llvm_type)
+            .finish()
     }
 }

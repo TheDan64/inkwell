@@ -18,6 +18,7 @@ use values::{AsValueRef, FunctionValue};
 
 // REVIEW: Opt Level might be identical to targets::Option<CodeGenOptLevel>
 // REVIEW: size_level 0-2 according to llvmlite
+#[derive(Debug)]
 pub struct PassManagerBuilder {
     pass_manager_builder: LLVMPassManagerBuilderRef,
 }
@@ -107,6 +108,7 @@ impl Drop for PassManagerBuilder {
 }
 
 // SubTypes: PassManager<Module>, PassManager<FunctionValue>
+#[derive(Debug)]
 pub struct PassManager {
     pub(crate) pass_manager: LLVMPassManagerRef,
 }
@@ -525,6 +527,7 @@ impl Drop for PassManager {
     }
 }
 
+#[derive(Debug)]
 pub struct PassRegistry {
     pass_registry: LLVMPassRegistryRef,
 }

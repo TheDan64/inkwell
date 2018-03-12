@@ -330,10 +330,18 @@ impl fmt::Debug for FunctionValue {
         };
         let is_null = self.is_null();
 
-        write!(f, "FunctionValue {{\n    name: {:?}\n    address: {:?}\n    is_const: {:?}\n    is_null: {:?}\n    llvm_value: {:?}\n    llvm_type: {:?}\n}}", name, self.as_value_ref(), is_const, is_null, llvm_value, llvm_type.print_to_string())
+        f.debug_struct("FunctionValue")
+            .field("name", &name)
+            .field("address", &self.as_value_ref())
+            .field("is_const", &is_const)
+            .field("is_null", &is_null)
+            .field("llvm_value", &llvm_value)
+            .field("llvm_type", &llvm_type.print_to_string())
+            .finish()
     }
 }
 
+#[derive(Debug)]
 pub struct ParamValueIter {
     param_iter_value: LLVMValueRef,
     start: bool,

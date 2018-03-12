@@ -421,6 +421,11 @@ impl fmt::Debug for BasicBlock {
             LLVMIsConstant(self.basic_block as LLVMValueRef) == 1
         };
 
-        write!(f, "BasicBlock {{\n    address: {:?}\n    is_const: {:?}\n    llvm_value: {:?}\n    llvm_type: {:?}\n}}", self.basic_block, is_const, llvm_value, llvm_type)
+        f.debug_struct("BasicBlock")
+            .field("address", &self.basic_block)
+            .field("is_const", &is_const)
+            .field("llvm_value", &llvm_value)
+            .field("llvm_type", &llvm_type)
+            .finish()
     }
 }
