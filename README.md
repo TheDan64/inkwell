@@ -40,7 +40,7 @@ extern crate inkwell;
 
 ## Documentation
 
-[docs.rs](https://docs.rs/crate/inkwell/) documentation is planned but not yet complete. See [#2](https://github.com/TheDan64/inkwell/issues/2) for the tracking issue.
+Documenation is automatically deployed [here](https://thedan64.github.io/inkwel/) based on master. These docs are not yet 100% complete and only show the latest supported LLVM version due to a rustdoc issue. See [#2](https://github.com/TheDan64/inkwell/issues/2) for more info.
 
 ## Examples
 
