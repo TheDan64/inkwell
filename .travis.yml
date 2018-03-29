@@ -55,6 +55,29 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.7-dev
+    - deploy: # Documentation build; Only latest supported LLVM version for now
+        provider: pages
+        skip-cleanup: true
+        github-token: $GITHUB_TOKEN  # Set in travis-ci.org dashboard, marked secure
+        keep-history: false
+        local-dir: target/doc/
+        on:
+          branch: master
+      script:
+        - cargo doc --no-default-features --features llvm3-7
+        - echo '<meta http-equiv="refresh" content="1; url=inkwell/index.html">' > target/doc/index.html
+      after_success:
+      rust: nightly
+      addons:
+        apt:
+          sources:
+            - *BASE_SOURCES
+            # - llvm-toolchain-precise-3.6
+            - llvm-toolchain-precise-3.7
+          packages:
+            - *BASE_PACKAGES
+            # - llvm-3.6-dev
+            - llvm-3.7-dev
 
 env:
   global:
