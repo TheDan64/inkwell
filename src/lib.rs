@@ -5,6 +5,7 @@ extern crate enum_methods;
 extern crate libc;
 extern crate llvm_sys;
 
+#[deny(missing_docs)]
 pub mod basic_block;
 pub mod builder;
 pub mod context;

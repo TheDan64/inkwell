@@ -1,3 +1,5 @@
+//! A `BasicBlock` is a container of instructions.
+
 use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMInsertBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDeleteBasicBlock, LLVMGetPreviousBasicBlock, LLVMRemoveBasicBlockFromParent, LLVMGetFirstInstruction, LLVMGetLastInstruction, LLVMGetTypeContext, LLVMBasicBlockAsValue};
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
 
@@ -8,8 +10,13 @@ use std::fmt;
 use std::ffi::{CStr, CString};
 use std::rc::Rc;
 
-// Apparently BasicBlocks count as LabelTypeKinds, which is
-// why they're allow to be casted to values?
+/// A `BasicBlock` is a container of instructions.
+///
+/// `BasicBlock`s are values because they can be referenced by instructions (ie branching and switches).
+///
+/// A well formed `BasicBlock` is a list of non terminating instructions followed by a single terminating
+/// instruction. `BasicBlock`s are allowed to be malformed prior to running validation because it may be useful
+/// when constructing or modifying a program.
 #[derive(PartialEq, Eq)]
 pub struct BasicBlock {
     pub(crate) basic_block: LLVMBasicBlockRef,
