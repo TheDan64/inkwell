@@ -1317,15 +1317,14 @@ pub fn main() {
         if is_anonymous {
             let ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
-            let addr = match ee.get_function_address(name.as_str()) {
-                Ok(addr) => addr,
+            let maybe_fn = unsafe { ee.get_function::<extern "C" fn() -> f64>(name.as_str()) };
+            let compiled_fn = match maybe_fn {
+                Ok(f) => f,
                 Err(err) => {
                     println!("!> Error during execution: {:?}", err);
                     continue;
                 }
             };
-
-            let compiled_fn: extern "C" fn() -> f64 = unsafe { std::mem::transmute(addr) };
 
             println!("=> {}", compiled_fn());
         }

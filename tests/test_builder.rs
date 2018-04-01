@@ -4,9 +4,9 @@ use self::inkwell::{AddressSpace, OptimizationLevel};
 use self::inkwell::context::Context;
 use self::inkwell::builder::Builder;
 use self::inkwell::targets::{InitializationConfig, Target};
+use self::inkwell::execution_engine::Symbol;
 
 use std::ffi::CString;
-use std::mem::transmute;
 use std::ptr::null;
 
 #[test]
@@ -128,21 +128,19 @@ fn test_null_checked_ptr_ops() {
 
     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
-    let addr = execution_engine.get_function_address("check_null_index1").unwrap();
+    unsafe {
+        let check_null_index1: Symbol<extern "C" fn(*const i8) -> i8> = execution_engine.get_function("check_null_index1").unwrap();
 
-    let check_null_index1: extern "C" fn(*const i8) -> i8 = unsafe { transmute(addr) };
+        let array = &[100i8, 42i8];
 
-    let array = &[100i8, 42i8];
+        assert_eq!(check_null_index1(null()), -1i8);
+        assert_eq!(check_null_index1(array.as_ptr()), 42i8);
 
-    assert_eq!(check_null_index1(null()), -1i8);
-    assert_eq!(check_null_index1(array.as_ptr()), 42i8);
+        let check_null_index2: Symbol<extern "C" fn(*const i8) -> i8> = execution_engine.get_function("check_null_index2").unwrap();
 
-    let addr2 = execution_engine.get_function_address("check_null_index2").unwrap();
-
-    let check_null_index2: extern "C" fn(*const i8) -> i8 = unsafe { transmute(addr2) };
-
-    assert_eq!(check_null_index2(null()), -1i8);
-    assert_eq!(check_null_index2(array.as_ptr()), 42i8);
+        assert_eq!(check_null_index2(null()), -1i8);
+        assert_eq!(check_null_index2(array.as_ptr()), 42i8);
+    }
 }
 
 #[test]
@@ -207,27 +205,28 @@ fn test_binary_ops() {
 
     builder.build_return(Some(&xor));
 
-    let addr = execution_engine.get_function_address("and").unwrap();
-    let and: extern "C" fn(bool, bool) -> bool = unsafe { transmute(addr) };
-    let addr = execution_engine.get_function_address("or").unwrap();
-    let or: extern "C" fn(bool, bool) -> bool = unsafe { transmute(addr) };
-    let addr = execution_engine.get_function_address("xor").unwrap();
-    let xor: extern "C" fn(bool, bool) -> bool = unsafe { transmute(addr) };
+    unsafe {
+        type BoolFunc = fn(bool, bool) -> bool;
 
-    assert!(!and(false, false));
-    assert!(!and(true, false));
-    assert!(!and(false, true));
-    assert!(and(true, true));
+        let and: Symbol<BoolFunc> = execution_engine.get_function("and").unwrap();
+        let or: Symbol<BoolFunc> = execution_engine.get_function("or").unwrap();
+        let xor: Symbol<BoolFunc> = execution_engine.get_function("xor").unwrap();
 
-    assert!(!or(false, false));
-    assert!(or(true, false));
-    assert!(or(false, true));
-    assert!(or(true, true));
+        assert!(!and(false, false));
+        assert!(!and(true, false));
+        assert!(!and(false, true));
+        assert!(and(true, true));
 
-    assert!(!xor(false, false));
-    assert!(xor(true, false));
-    assert!(xor(false, true));
-    assert!(!xor(true, true));
+        assert!(!or(false, false));
+        assert!(or(true, false));
+        assert!(or(false, true));
+        assert!(or(true, true));
+
+        assert!(!xor(false, false));
+        assert!(xor(true, false));
+        assert!(xor(false, true));
+        assert!(!xor(true, true));
+    }
 }
 
 #[test]
@@ -279,14 +278,15 @@ fn test_switch() {
 
     builder.build_return(Some(&double));
 
-    let addr = execution_engine.get_function_address("switch").unwrap();
-    let switch: extern "C" fn(u8) -> u8 = unsafe { transmute(addr) };
+    unsafe {
+        let switch: Symbol<extern "C" fn(u8) -> u8> = execution_engine.get_function("switch").unwrap();
 
-    assert_eq!(switch(0), 1);
-    assert_eq!(switch(1), 2);
-    assert_eq!(switch(3), 6);
-    assert_eq!(switch(10), 20);
-    assert_eq!(switch(42), 255);
+        assert_eq!(switch(0), 1);
+        assert_eq!(switch(1), 2);
+        assert_eq!(switch(3), 6);
+        assert_eq!(switch(10), 20);
+        assert_eq!(switch(42), 255);
+    }
 }
 
 #[test]
@@ -348,40 +348,39 @@ fn test_bit_shifts() {
 
     builder.build_return(Some(&shift));
 
-    let addr = execution_engine.get_function_address("left_shift").unwrap();
-    let left_shift: extern "C" fn(u8, u8) -> u8 = unsafe { transmute(addr) };
-    let addr = execution_engine.get_function_address("right_shift").unwrap();
-    let right_shift: extern "C" fn(u8, u8) -> u8 = unsafe { transmute(addr) };
-    let addr = execution_engine.get_function_address("right_shift_sign_extend").unwrap();
-    let right_shift_sign_extend: extern "C" fn(i8, u8) -> i8 = unsafe { transmute(addr) };
+    unsafe {
+        let left_shift: Symbol<extern "C" fn(u8, u8) -> u8> = execution_engine.get_function("left_shift").unwrap();
+        let right_shift: Symbol<extern "C" fn(u8, u8) -> u8>  = execution_engine.get_function("right_shift").unwrap();
+        let right_shift_sign_extend: Symbol<extern "C" fn(i8, u8) -> i8> = execution_engine.get_function("right_shift_sign_extend").unwrap();
 
-    assert_eq!(left_shift(0, 0), 0);
-    assert_eq!(left_shift(0, 4), 0);
-    assert_eq!(left_shift(1, 0), 1);
-    assert_eq!(left_shift(1, 1), 2);
-    assert_eq!(left_shift(1, 2), 4);
-    assert_eq!(left_shift(1, 3), 8);
-    assert_eq!(left_shift(64, 1), 128);
+        assert_eq!(left_shift(0, 0), 0);
+        assert_eq!(left_shift(0, 4), 0);
+        assert_eq!(left_shift(1, 0), 1);
+        assert_eq!(left_shift(1, 1), 2);
+        assert_eq!(left_shift(1, 2), 4);
+        assert_eq!(left_shift(1, 3), 8);
+        assert_eq!(left_shift(64, 1), 128);
 
-    assert_eq!(right_shift(128, 1), 64);
-    assert_eq!(right_shift(8, 3), 1);
-    assert_eq!(right_shift(4, 2), 1);
-    assert_eq!(right_shift(2, 1), 1);
-    assert_eq!(right_shift(1, 0), 1);
-    assert_eq!(right_shift(0, 4), 0);
-    assert_eq!(right_shift(0, 0), 0);
+        assert_eq!(right_shift(128, 1), 64);
+        assert_eq!(right_shift(8, 3), 1);
+        assert_eq!(right_shift(4, 2), 1);
+        assert_eq!(right_shift(2, 1), 1);
+        assert_eq!(right_shift(1, 0), 1);
+        assert_eq!(right_shift(0, 4), 0);
+        assert_eq!(right_shift(0, 0), 0);
 
-    assert_eq!(right_shift_sign_extend(8, 3), 1);
-    assert_eq!(right_shift_sign_extend(4, 2), 1);
-    assert_eq!(right_shift_sign_extend(2, 1), 1);
-    assert_eq!(right_shift_sign_extend(1, 0), 1);
-    assert_eq!(right_shift_sign_extend(0, 4), 0);
-    assert_eq!(right_shift_sign_extend(0, 0), 0);
-    assert_eq!(right_shift_sign_extend(-127, 1), -64);
-    assert_eq!(right_shift_sign_extend(-127, 8), -1);
-    assert_eq!(right_shift_sign_extend(-65, 3), -9);
-    assert_eq!(right_shift_sign_extend(-64, 3), -8);
-    assert_eq!(right_shift_sign_extend(-63, 3), -8);
+        assert_eq!(right_shift_sign_extend(8, 3), 1);
+        assert_eq!(right_shift_sign_extend(4, 2), 1);
+        assert_eq!(right_shift_sign_extend(2, 1), 1);
+        assert_eq!(right_shift_sign_extend(1, 0), 1);
+        assert_eq!(right_shift_sign_extend(0, 4), 0);
+        assert_eq!(right_shift_sign_extend(0, 0), 0);
+        assert_eq!(right_shift_sign_extend(-127, 1), -64);
+        assert_eq!(right_shift_sign_extend(-127, 8), -1);
+        assert_eq!(right_shift_sign_extend(-65, 3), -9);
+        assert_eq!(right_shift_sign_extend(-64, 3), -8);
+        assert_eq!(right_shift_sign_extend(-63, 3), -8);
+    }
 }
 
 #[test]
