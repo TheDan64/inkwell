@@ -164,6 +164,43 @@ impl ExecutionEngine {
     /// If a target hasn't already been initialized, spurious "function not 
     /// found" errors may be encountered.
     /// 
+    /// # Examples
+    /// 
+    /// 
+    /// ```rust
+    /// # use inkwell::targets::{InitializationConfig, Target};
+    /// # use inkwell::context::Context;
+    /// # use inkwell::OptimizationLevel;
+    /// # Target::initialize_native(&InitializationConfig::default()).unwrap();
+    /// let context = Context::create();
+    /// let module = context.create_module("test");
+    /// let builder = context.create_builder();
+    ///
+    /// // Set up the function signature
+    /// let double = context.f64_type();
+    /// let sig = double.fn_type(&[], false);
+    ///
+    /// // Add the function to our module
+    /// let f = module.add_function("test_fn", &sig, None);
+    /// let b = context.append_basic_block(&f, "entry");
+    /// builder.position_at_end(&b);
+    ///
+    /// // Insert a return statement
+    /// let ret = double.const_float(64.0);
+    /// builder.build_return(Some(&ret));
+    ///
+    /// // create the JIT engine
+    /// let mut ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    /// 
+    /// // fetch our JIT'd function and execute it
+    /// unsafe {
+    ///     let test_fn = ee.get_function::<fn() -> f64>("test_fn").unwrap();
+    ///     let return_value = test_fn();
+    ///     assert_eq!(return_value, 64.0);
+    /// }
+    /// ```
+    /// 
+    /// 
     /// # Safety
     /// 
     /// It is the caller's responsibility to ensure they call the function with
