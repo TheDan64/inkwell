@@ -6,8 +6,9 @@ use targets::TargetData;
 use values::{AnyValue, AsValueRef, FunctionValue, GenericValue};
 
 use std::rc::Rc;
+use std::ops::Deref;
 use std::ffi::{CStr, CString};
-use std::mem::{forget, uninitialized, zeroed};
+use std::mem::{forget, uninitialized, zeroed, transmute_copy, size_of};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum FunctionLookupError {
@@ -158,20 +159,27 @@ impl ExecutionEngine {
         Ok(())
     }
 
-    /// WARNING: The returned address *will* be invalid if the EE drops first
-    /// Do not attempt to transmute it to a function if the ExecutionEngine is gone
-    // TODOC: Initializing a target MUST occur before creating the EE or else it will not count
-    // TODOC: Can still add functions after EE has been created
-    pub fn get_function_address(&self, fn_name: &str) -> Result<u64, FunctionLookupError> {
+    /// Try to load a function from the execution engine.
+    /// 
+    /// If a target hasn't already been initialized, spurious "function not 
+    /// found" errors may be encountered.
+    /// 
+    /// # Safety
+    /// 
+    /// It is the caller's responsibility to ensure they call the function with
+    /// the correct signature and calling convention.
+    /// 
+    /// The `Symbol` wrapper ensures a function won't accidentally outlive the
+    /// execution engine it came from, but adding functions after calling this
+    /// method *may* invalidate the function pointer.
+    pub unsafe fn get_function<F>(&self, fn_name: &str) -> Result<Symbol<F>, FunctionLookupError> {
         if !self.jit_mode {
             return Err(FunctionLookupError::JITNotEnabled);
         }
 
         let c_string = CString::new(fn_name).expect("Conversion to CString failed unexpectedly");
 
-        let address = unsafe {
-            LLVMGetFunctionAddress(*self.execution_engine, c_string.as_ptr())
-        };
+        let address = LLVMGetFunctionAddress(*self.execution_engine, c_string.as_ptr());
 
         // REVIEW: Can also return 0 if no targets are initialized.
         // One option might be to set a global to true if any at all of the targets have been
@@ -181,7 +189,13 @@ impl ExecutionEngine {
             return Err(FunctionLookupError::FunctionNotFound);
         }
 
-        Ok(address)
+        assert_eq!(size_of::<F>(), size_of::<usize>(), 
+            "The type `F` must have the same size as a function pointer");
+
+        Ok(Symbol {
+            execution_engine: self.execution_engine.clone(),
+            inner: transmute_copy(&address),
+        })
     }
 
     // REVIEW: Not sure if an EE's target data can change.. if so we might want to update the value
@@ -237,6 +251,22 @@ impl ExecutionEngine {
         unsafe {
             LLVMFreeMachineCodeForFunction(*self.execution_engine, function.as_value_ref())
         }
+    }
+}
+
+/// A wrapper around a function pointer which ensures the symbol being pointed
+/// to doesn't accidentally outlive its execution engine.
+#[derive(Debug, Clone)]
+pub struct Symbol<F> {
+    pub(crate) execution_engine: Rc<LLVMExecutionEngineRef>,
+    inner: F,
+}
+
+impl<F> Deref for Symbol<F> {
+    type Target = F;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
     }
 }
 
