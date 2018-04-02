@@ -209,7 +209,9 @@ impl ExecutionEngine {
     /// The `Symbol` wrapper ensures a function won't accidentally outlive the
     /// execution engine it came from, but adding functions after calling this
     /// method *may* invalidate the function pointer.
-    pub unsafe fn get_function<F>(&self, fn_name: &str) -> Result<Symbol<F>, FunctionLookupError> {
+    pub unsafe fn get_function<F>(&self, fn_name: &str) -> Result<Symbol<F>, FunctionLookupError>
+    where F: UnsafeFunctionPointer 
+    {
         if !self.jit_mode {
             return Err(FunctionLookupError::JITNotEnabled);
         }
@@ -294,18 +296,47 @@ impl ExecutionEngine {
 /// A wrapper around a function pointer which ensures the symbol being pointed
 /// to doesn't accidentally outlive its execution engine.
 #[derive(Debug, Clone)]
-pub struct Symbol<F> {
+pub struct Symbol<F: UnsafeFunctionPointer> {
     pub(crate) execution_engine: Rc<LLVMExecutionEngineRef>,
     inner: F,
 }
 
-impl<F> Deref for Symbol<F> {
+impl<F: UnsafeFunctionPointer> Deref for Symbol<F> {
     type Target = F;
 
     fn deref(&self) -> &Self::Target {
         &self.inner
     }
 }
+
+/// Marker trait representing an unsafe function pointer (`unsafe extern "C" fn(A, B, ...) -> Output`).
+pub trait UnsafeFunctionPointer: private::Sealed {}
+
+mod private {
+    /// A sealed trait which ensures nobody outside this crate can implement
+    /// `UnsafeFunctionPointer`.
+    /// 
+    /// See https://rust-lang-nursery.github.io/api-guidelines/future-proofing.html
+    pub trait Sealed {}
+}
+
+macro_rules! impl_unsafe_fn {
+    ($( $param:ident ),*) => {
+        impl<Output, $( $param ),*> private::Sealed for unsafe extern "C" fn($( $param ),*) -> Output {}
+        impl<Output, $( $param ),*> UnsafeFunctionPointer for unsafe extern "C" fn($( $param ),*) -> Output {}
+    };
+}
+
+impl_unsafe_fn!();
+impl_unsafe_fn!(A);
+impl_unsafe_fn!(A, B);
+impl_unsafe_fn!(A, B, C);
+impl_unsafe_fn!(A, B, C, D);
+impl_unsafe_fn!(A, B, C, D, E);
+impl_unsafe_fn!(A, B, C, D, E, F);
+impl_unsafe_fn!(A, B, C, D, E, F, G);
+impl_unsafe_fn!(A, B, C, D, E, F, G, H);
+impl_unsafe_fn!(A, B, C, D, E, F, G, H, I);
 
 // Modules owned by the EE will be discarded by the EE so we don't
 // want owned modules to drop.

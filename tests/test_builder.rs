@@ -206,7 +206,7 @@ fn test_binary_ops() {
     builder.build_return(Some(&xor));
 
     unsafe {
-        type BoolFunc = fn(bool, bool) -> bool;
+        type BoolFunc = unsafe extern "C" fn(bool, bool) -> bool;
 
         let and: Symbol<BoolFunc> = execution_engine.get_function("and").unwrap();
         let or: Symbol<BoolFunc> = execution_engine.get_function("or").unwrap();
