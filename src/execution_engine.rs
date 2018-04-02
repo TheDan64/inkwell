@@ -201,7 +201,7 @@ impl ExecutionEngine {
     /// 
     /// // fetch our JIT'd function and execute it
     /// unsafe {
-    ///     let test_fn = ee.get_function::<fn() -> f64>("test_fn").unwrap();
+    ///     let test_fn = ee.get_function::<unsafe extern "C" fn() -> f64>("test_fn").unwrap();
     ///     let return_value = test_fn();
     ///     assert_eq!(return_value, 64.0);
     /// }
