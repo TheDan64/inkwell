@@ -9,6 +9,7 @@ use std::rc::Rc;
 use std::ops::Deref;
 use std::ffi::{CStr, CString};
 use std::mem::{forget, uninitialized, zeroed, transmute_copy, size_of};
+use std::fmt::{self, Debug, Formatter};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum FunctionLookupError {
@@ -164,6 +165,12 @@ impl ExecutionEngine {
     /// If a target hasn't already been initialized, spurious "function not 
     /// found" errors may be encountered.
     /// 
+    /// The [`UnsafeFunctionPointer`] trait is designed so only `unsafe extern 
+    /// "C"` functions can be retrieved via the `get_function()` method. If you
+    /// get funny type errors then it's probably because you have specified the
+    /// wrong calling convention or forgotten to specify the retrieved function
+    /// is `unsafe`.
+    /// 
     /// # Examples
     /// 
     /// 
@@ -200,7 +207,6 @@ impl ExecutionEngine {
     /// }
     /// ```
     /// 
-    /// 
     /// # Safety
     /// 
     /// It is the caller's responsibility to ensure they call the function with
@@ -209,6 +215,8 @@ impl ExecutionEngine {
     /// The `Symbol` wrapper ensures a function won't accidentally outlive the
     /// execution engine it came from, but adding functions after calling this
     /// method *may* invalidate the function pointer.
+    /// 
+    /// [`UnsafeFunctionPointer`]: trait.UnsafeFunctionPointer.html
     pub unsafe fn get_function<F>(&self, fn_name: &str) -> Result<Symbol<F>, FunctionLookupError>
     where F: UnsafeFunctionPointer 
     {
@@ -293,10 +301,24 @@ impl ExecutionEngine {
     }
 }
 
+// Modules owned by the EE will be discarded by the EE so we don't
+// want owned modules to drop.
+impl Drop for ExecutionEngine {
+    fn drop(&mut self) {
+        forget(self.target_data.take().expect("TargetData should always exist until Drop"));
+
+        if Rc::strong_count(&self.execution_engine) == 1 {
+            unsafe {
+                LLVMDisposeExecutionEngine(*self.execution_engine);
+            }
+        }
+    }
+}
+
 /// A wrapper around a function pointer which ensures the symbol being pointed
 /// to doesn't accidentally outlive its execution engine.
-#[derive(Debug, Clone)]
-pub struct Symbol<F: UnsafeFunctionPointer> {
+#[derive(Clone)]
+pub struct Symbol<F> {
     pub(crate) execution_engine: Rc<LLVMExecutionEngineRef>,
     inner: F,
 }
@@ -309,8 +331,16 @@ impl<F: UnsafeFunctionPointer> Deref for Symbol<F> {
     }
 }
 
+impl<F> Debug for Symbol<F> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        f.debug_tuple("Symbol")
+            .field(&"<unnamed>")
+            .finish()
+    }
+}
+
 /// Marker trait representing an unsafe function pointer (`unsafe extern "C" fn(A, B, ...) -> Output`).
-pub trait UnsafeFunctionPointer: private::Sealed {}
+pub trait UnsafeFunctionPointer: private::Sealed + Copy {}
 
 mod private {
     /// A sealed trait which ensures nobody outside this crate can implement
@@ -337,17 +367,8 @@ impl_unsafe_fn!(A, B, C, D, E, F);
 impl_unsafe_fn!(A, B, C, D, E, F, G);
 impl_unsafe_fn!(A, B, C, D, E, F, G, H);
 impl_unsafe_fn!(A, B, C, D, E, F, G, H, I);
+impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J);
+impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J, K);
+impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J, K, L);
+impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J, K, L, M);
 
-// Modules owned by the EE will be discarded by the EE so we don't
-// want owned modules to drop.
-impl Drop for ExecutionEngine {
-    fn drop(&mut self) {
-        forget(self.target_data.take().expect("TargetData should always exist until Drop"));
-
-        if Rc::strong_count(&self.execution_engine) == 1 {
-            unsafe {
-                LLVMDisposeExecutionEngine(*self.execution_engine);
-            }
-        }
-    }
-}

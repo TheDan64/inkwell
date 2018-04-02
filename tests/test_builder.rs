@@ -129,14 +129,14 @@ fn test_null_checked_ptr_ops() {
     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
     unsafe {
-        let check_null_index1: Symbol<extern "C" fn(*const i8) -> i8> = execution_engine.get_function("check_null_index1").unwrap();
+        let check_null_index1: Symbol<unsafe extern "C" fn(*const i8) -> i8> = execution_engine.get_function("check_null_index1").unwrap();
 
         let array = &[100i8, 42i8];
 
         assert_eq!(check_null_index1(null()), -1i8);
         assert_eq!(check_null_index1(array.as_ptr()), 42i8);
 
-        let check_null_index2: Symbol<extern "C" fn(*const i8) -> i8> = execution_engine.get_function("check_null_index2").unwrap();
+        let check_null_index2: Symbol<unsafe extern "C" fn(*const i8) -> i8> = execution_engine.get_function("check_null_index2").unwrap();
 
         assert_eq!(check_null_index2(null()), -1i8);
         assert_eq!(check_null_index2(array.as_ptr()), 42i8);
@@ -279,7 +279,7 @@ fn test_switch() {
     builder.build_return(Some(&double));
 
     unsafe {
-        let switch: Symbol<extern "C" fn(u8) -> u8> = execution_engine.get_function("switch").unwrap();
+        let switch: Symbol<unsafe extern "C" fn(u8) -> u8> = execution_engine.get_function("switch").unwrap();
 
         assert_eq!(switch(0), 1);
         assert_eq!(switch(1), 2);
@@ -349,9 +349,9 @@ fn test_bit_shifts() {
     builder.build_return(Some(&shift));
 
     unsafe {
-        let left_shift: Symbol<extern "C" fn(u8, u8) -> u8> = execution_engine.get_function("left_shift").unwrap();
-        let right_shift: Symbol<extern "C" fn(u8, u8) -> u8>  = execution_engine.get_function("right_shift").unwrap();
-        let right_shift_sign_extend: Symbol<extern "C" fn(i8, u8) -> i8> = execution_engine.get_function("right_shift_sign_extend").unwrap();
+        let left_shift: Symbol<unsafe extern "C" fn(u8, u8) -> u8> = execution_engine.get_function("left_shift").unwrap();
+        let right_shift: Symbol<unsafe extern "C" fn(u8, u8) -> u8>  = execution_engine.get_function("right_shift").unwrap();
+        let right_shift_sign_extend: Symbol<unsafe extern "C" fn(i8, u8) -> i8> = execution_engine.get_function("right_shift_sign_extend").unwrap();
 
         assert_eq!(left_shift(0, 0), 0);
         assert_eq!(left_shift(0, 4), 0);

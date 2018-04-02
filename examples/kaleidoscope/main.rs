@@ -1317,7 +1317,7 @@ pub fn main() {
         if is_anonymous {
             let ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
-            let maybe_fn = unsafe { ee.get_function::<extern "C" fn() -> f64>(name.as_str()) };
+            let maybe_fn = unsafe { ee.get_function::<unsafe extern "C" fn() -> f64>(name.as_str()) };
             let compiled_fn = match maybe_fn {
                 Ok(f) => f,
                 Err(err) => {
@@ -1326,7 +1326,9 @@ pub fn main() {
                 }
             };
 
-            println!("=> {}", compiled_fn());
+            unsafe {
+                println!("=> {}", compiled_fn());
+            }
         }
     }
 }

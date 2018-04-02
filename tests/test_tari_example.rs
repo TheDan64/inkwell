@@ -33,7 +33,8 @@ fn test_tari_example() {
     builder.build_return(Some(&sum));
 
     unsafe {
-        let sum: Symbol<extern "C" fn(u64, u64, u64) -> u64> = execution_engine.get_function("sum").unwrap();
+        type Sum = unsafe extern "C" fn(u64, u64, u64) -> u64;
+        let sum: Symbol<Sum> = execution_engine.get_function("sum").unwrap();
 
         let x = 1u64;
         let y = 2u64;
