@@ -19,7 +19,7 @@ llvm3-7 = []
 either = "1.4.0"
 enum-methods = "0.0.8"
 libc = "*"
-llvm-sys = "37"
+llvm-sys = "60"
 
 [[example]]
 name = "kaleidoscope"
