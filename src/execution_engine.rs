@@ -19,7 +19,7 @@ pub enum FunctionLookupError {
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct ExecutionEngine {
-    pub(crate) execution_engine: Rc<LLVMExecutionEngineRef>,
+    execution_engine: ExecEngineInner,
     target_data: Option<TargetData>,
     jit_mode: bool,
 }
@@ -34,7 +34,7 @@ impl ExecutionEngine {
         };
 
         ExecutionEngine {
-            execution_engine: execution_engine,
+            execution_engine: ExecEngineInner(execution_engine),
             target_data: Some(TargetData::new(target_data)),
             jit_mode: jit_mode,
         }
@@ -123,7 +123,7 @@ impl ExecutionEngine {
             return Err(());
         }
 
-        *module.owned_by_ee.borrow_mut() = Some(ExecutionEngine::new(self.execution_engine.clone(), self.jit_mode));
+        *module.owned_by_ee.borrow_mut() = Some(self.clone());
 
         Ok(())
     }
@@ -240,7 +240,7 @@ impl ExecutionEngine {
             "The type `F` must have the same size as a function pointer");
 
         Ok(Symbol {
-            execution_engine: self.execution_engine.clone(),
+            _execution_engine: self.execution_engine.clone(),
             inner: transmute_copy(&address),
         })
     }
@@ -305,13 +305,39 @@ impl ExecutionEngine {
 // want owned modules to drop.
 impl Drop for ExecutionEngine {
     fn drop(&mut self) {
-        forget(self.target_data.take().expect("TargetData should always exist until Drop"));
+        forget(
+            self.target_data
+                .take()
+                .expect("TargetData should always exist until Drop"),
+        );
+    }
+}
 
-        if Rc::strong_count(&self.execution_engine) == 1 {
+impl Clone for ExecutionEngine {
+    fn clone(&self) -> ExecutionEngine {
+        ExecutionEngine::new(self.execution_engine.0.clone(), self.jit_mode)
+    }
+}
+
+/// A smart pointer which wraps the `Drop` logic for `LLVMExecutionEngineRef`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ExecEngineInner(Rc<LLVMExecutionEngineRef>);
+
+impl Drop for ExecEngineInner {
+    fn drop(&mut self) {
+        if Rc::strong_count(&self.0) == 1 {
             unsafe {
-                LLVMDisposeExecutionEngine(*self.execution_engine);
+                LLVMDisposeExecutionEngine(*self.0);
             }
         }
+    }
+}
+
+impl Deref for ExecEngineInner {
+    type Target = LLVMExecutionEngineRef;
+
+    fn deref(&self) -> &Self::Target {
+        &*self.0
     }
 }
 
@@ -319,7 +345,7 @@ impl Drop for ExecutionEngine {
 /// to doesn't accidentally outlive its execution engine.
 #[derive(Clone)]
 pub struct Symbol<F> {
-    pub(crate) execution_engine: Rc<LLVMExecutionEngineRef>,
+    _execution_engine: ExecEngineInner,
     inner: F,
 }
 
