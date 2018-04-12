@@ -4,9 +4,12 @@ use self::inkwell::OptimizationLevel;
 use self::inkwell::context::Context;
 use self::inkwell::execution_engine::FunctionLookupError;
 use self::inkwell::targets::{InitializationConfig, Target};
+use self::inkwell::enable_llvm_pretty_stack_trace;
 
 #[test]
 fn test_get_function_address() {
+    enable_llvm_pretty_stack_trace();
+
     let context = Context::create();
     // let module = context.create_module("errors_abound");
     let builder = context.create_builder();
