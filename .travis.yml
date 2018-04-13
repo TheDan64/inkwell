@@ -75,7 +75,7 @@ matrix:
         on:
           branch: master
       script:
-        - cargo doc --no-default-features --features llvm3-7
+        - cargo doc --no-default-features --features llvm3-8
         - echo '<meta http-equiv="refresh" content="1; url=inkwell/index.html">' > target/doc/index.html
       after_success:
       rust: nightly
@@ -84,11 +84,13 @@ matrix:
           sources:
             - *BASE_SOURCES
             # - llvm-toolchain-precise-3.6
-            - llvm-toolchain-precise-3.7
+            # - llvm-toolchain-precise-3.7
+            - llvm-toolchain-precise-3.8
           packages:
             - *BASE_PACKAGES
             # - llvm-3.6-dev
-            - llvm-3.7-dev
+            # - llvm-3.7-dev
+            - llvm-3.8-dev
 
 env:
   global:
