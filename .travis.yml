@@ -94,7 +94,7 @@ matrix:
 
 env:
   global:
-    - RUSTFLAGS="-C link-dead-code -C target-cpu=native"
+    - RUSTFLAGS="-C link-dead-code -C target-cpu=native -l ffi"
 
 after_success: |
   wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
