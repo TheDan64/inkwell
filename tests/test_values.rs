@@ -400,25 +400,28 @@ fn test_metadata() {
         assert_eq!(MetadataValue::get_kind_id("dereferenceable_or_null"), 13);
     }
 
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+    {
+        assert_eq!(context.get_kind_id("make.implicit"), 14);
+        assert_eq!(MetadataValue::get_kind_id("make.implicit"), 14);
+        assert_eq!(context.get_kind_id("unpredictable"), 15);
+        assert_eq!(MetadataValue::get_kind_id("unpredictable"), 15);
+        assert_eq!(context.get_kind_id("invariant.group"), 16);
+        assert_eq!(MetadataValue::get_kind_id("invariant.group"), 16);
+        assert_eq!(context.get_kind_id("align"), 17);
+        assert_eq!(MetadataValue::get_kind_id("align"), 17);
+    }
     // TODO: Predefined, but only newer versions we don't support yet
-    // assert_eq!(context.get_kind_id("make.implicit"), 14);
-    // assert_eq!(MetadataValue::get_kind_id("make.implicit"), 14);
-    // assert_eq!(context.get_kind_id("unpredictable"), 15);
-    // assert_eq!(MetadataValue::get_kind_id("unpredictable"), 15);
-    // assert_eq!(context.get_kind_id("invariant.group"), 16);
-    // assert_eq!(MetadataValue::get_kind_id("invariant.group"), 16);
-    // assert_eq!(context.get_kind_id("align"), 16);
-    // assert_eq!(MetadataValue::get_kind_id("align"), 16);
-    // assert_eq!(context.get_kind_id("llvm.loop"), 17);
-    // assert_eq!(MetadataValue::get_kind_id("llvm.loop"), 17);
-    // assert_eq!(context.get_kind_id("type"), 18);
-    // assert_eq!(MetadataValue::get_kind_id("type"), 18);
-    // assert_eq!(context.get_kind_id("section_prefix"), 19);
-    // assert_eq!(MetadataValue::get_kind_id("section_prefix"), 19);
-    // assert_eq!(context.get_kind_id("absolute_symbol"), 20);
-    // assert_eq!(MetadataValue::get_kind_id("absolute_symbol"), 20);
-    // assert_eq!(context.get_kind_id("associated"), 21);
-    // assert_eq!(MetadataValue::get_kind_id("associated"), 21);
+    // assert_eq!(context.get_kind_id("llvm.loop"), 18);
+    // assert_eq!(MetadataValue::get_kind_id("llvm.loop"), 18);
+    // assert_eq!(context.get_kind_id("type"), 19);
+    // assert_eq!(MetadataValue::get_kind_id("type"), 19);
+    // assert_eq!(context.get_kind_id("section_prefix"), 20);
+    // assert_eq!(MetadataValue::get_kind_id("section_prefix"), 20);
+    // assert_eq!(context.get_kind_id("absolute_symbol"), 21);
+    // assert_eq!(MetadataValue::get_kind_id("absolute_symbol"), 21);
+    // assert_eq!(context.get_kind_id("associated"), 22);
+    // assert_eq!(MetadataValue::get_kind_id("associated"), 22);
 
     assert_eq!(module.get_global_metadata_size("my_string_md"), 0);
     assert_eq!(module.get_global_metadata("my_string_md").len(), 0);
@@ -686,7 +689,9 @@ fn test_function_value_no_params() {
     assert!(fn_value.get_first_param().is_none());
     assert!(fn_value.get_last_param().is_none());
     assert!(fn_value.get_nth_param(0).is_none());
-    #[cfg(not(feature = "llvm3-6"))]
+    // REVIEW: get_personality_function causes segfault in 3.8 Probably LLVM bug
+    // if so, should document
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-8")))]
     assert!(fn_value.get_personality_function().is_none());
     assert!(!fn_value.is_null());
     assert!(!fn_value.is_undef());

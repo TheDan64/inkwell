@@ -20,18 +20,19 @@ pub mod types;
 pub mod values;
 
 use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility, LLVMThreadLocalMode, LLVMDLLStorageClass};
-use llvm_sys::core::LLVMResetFatalErrorHandler;
 use llvm_sys::support::LLVMLoadLibraryPermanently;
 
 use std::ffi::CString;
 
-#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
 compile_error!("A LLVM feature flag must be provided. See the README for more details.");
 
 // TODO: Probably move into error handling module
 pub fn enable_llvm_pretty_stack_trace() {
-    // use llvm_sys::error_handling::LLVMEnablePrettyStackTrace; // v3.8
+    #[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]
     use llvm_sys::core::LLVMEnablePrettyStackTrace;
+    #[cfg(feature = "llvm3-8")]
+    use llvm_sys::error_handling::LLVMEnablePrettyStackTrace;
 
     unsafe {
         LLVMEnablePrettyStackTrace()
@@ -88,6 +89,11 @@ pub fn shutdown_llvm() {
 
 /// Resets LLVM's fatal error handler back to the default
 pub fn reset_fatal_error_handler() {
+    #[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]
+    use llvm_sys::core::LLVMResetFatalErrorHandler;
+    #[cfg(feature = "llvm3-8")]
+    use llvm_sys::error_handling::LLVMResetFatalErrorHandler;
+
     unsafe {
         LLVMResetFatalErrorHandler()
     }

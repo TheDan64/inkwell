@@ -61,7 +61,8 @@ impl AnyTypeEnum {
             LLVMTypeKind::LLVMVectorTypeKind => AnyTypeEnum::VectorType(VectorType::new(type_)),
             LLVMTypeKind::LLVMMetadataTypeKind => panic!("FIXME: Unsupported type: Metadata"),
             LLVMTypeKind::LLVMX86_MMXTypeKind => panic!("FIXME: Unsupported type: MMX"),
-            // LLVMTypeKind::LLVMTokenTypeKind => panic!("FIXME: Unsupported type: Token"), // Different version?
+            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+            LLVMTypeKind::LLVMTokenTypeKind => panic!("FIXME: Unsupported type: Token"),
         }
     }
 }
@@ -89,6 +90,8 @@ impl BasicTypeEnum {
             LLVMTypeKind::LLVMLabelTypeKind => unreachable!("Unsupported type: Label"),
             LLVMTypeKind::LLVMVoidTypeKind => unreachable!("Unsupported type: VoidType"),
             LLVMTypeKind::LLVMFunctionTypeKind => unreachable!("Unsupported type: FunctionType"),
+            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+            LLVMTypeKind::LLVMTokenTypeKind => panic!("FIXME: Unsupported type: Token"),
         }
     }
 }

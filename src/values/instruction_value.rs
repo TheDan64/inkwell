@@ -22,12 +22,16 @@ pub enum InstructionOpcode {
     BitCast,
     Br,
     Call,
-    // Later versions:
-    // CatchPad,
-    // CatchRet,
-    // CatchSwitch,
-    // CleanupPad,
-    // CleanupRet,
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+    CatchPad,
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+    CatchRet,
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+    CatchSwitch,
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+    CleanupPad,
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+    CleanupRet,
     ExtractElement,
     ExtractValue,
     FAdd,
@@ -92,12 +96,16 @@ impl InstructionOpcode {
             LLVMOpcode::LLVMBitCast => InstructionOpcode::BitCast,
             LLVMOpcode::LLVMBr => InstructionOpcode::Br,
             LLVMOpcode::LLVMCall => InstructionOpcode::Call,
-            // Newer versions:
-            // LLVMOpcode::LLVMCatchPad => InstructionOpcode::CatchPad,
-            // LLVMOpcode::LLVMCatchRet => InstructionOpcode::CatchRet,
-            // LLVMOpcode::LLVMCatchSwitch => InstructionOpcode::CatchSwitch,
-            // LLVMOpcode::LLVMCleanupPad => InstructionOpcode::CleanupPad,
-            // LLVMOpcode::LLVMCleanupRet => InstructionOpcode::CleanupRet,
+            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+            LLVMOpcode::LLVMCatchPad => InstructionOpcode::CatchPad,
+            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+            LLVMOpcode::LLVMCatchRet => InstructionOpcode::CatchRet,
+            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+            LLVMOpcode::LLVMCatchSwitch => InstructionOpcode::CatchSwitch,
+            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+            LLVMOpcode::LLVMCleanupPad => InstructionOpcode::CleanupPad,
+            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+            LLVMOpcode::LLVMCleanupRet => InstructionOpcode::CleanupRet,
             LLVMOpcode::LLVMExtractElement => InstructionOpcode::ExtractElement,
             LLVMOpcode::LLVMExtractValue => InstructionOpcode::ExtractValue,
             LLVMOpcode::LLVMFAdd => InstructionOpcode::FAdd,
@@ -162,12 +170,16 @@ impl InstructionOpcode {
             InstructionOpcode::BitCast => LLVMOpcode::LLVMBitCast,
             InstructionOpcode::Br => LLVMOpcode::LLVMBr,
             InstructionOpcode::Call => LLVMOpcode::LLVMCall,
-            // Newer versions:
-            // InstructionOpcode::CatchPad => LLVMOpcode::LLVMCatchPad,
-            // InstructionOpcode::CatchRet => LLVMOpcode::LLVMCatchRet,
-            // InstructionOpcode::CatchSwitch => LLVMOpcode::LLVMCatchSwitch,
-            // InstructionOpcode::CleanupPad => LLVMOpcode::LLVMCleanupPad,
-            // InstructionOpcode::CleanupRet => LLVMOpcode::LLVMCleanupRet,
+            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+            InstructionOpcode::CatchPad => LLVMOpcode::LLVMCatchPad,
+            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+            InstructionOpcode::CatchRet => LLVMOpcode::LLVMCatchRet,
+            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+            InstructionOpcode::CatchSwitch => LLVMOpcode::LLVMCatchSwitch,
+            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+            InstructionOpcode::CleanupPad => LLVMOpcode::LLVMCleanupPad,
+            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+            InstructionOpcode::CleanupRet => LLVMOpcode::LLVMCleanupRet,
             InstructionOpcode::ExtractElement => LLVMOpcode::LLVMExtractElement,
             InstructionOpcode::ExtractValue => LLVMOpcode::LLVMExtractValue,
             InstructionOpcode::FAdd => LLVMOpcode::LLVMFAdd,
