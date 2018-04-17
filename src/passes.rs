@@ -17,7 +17,6 @@ use targets::TargetData;
 use values::{AsValueRef, FunctionValue};
 
 // REVIEW: Opt Level might be identical to targets::Option<CodeGenOptLevel>
-// REVIEW: size_level 0-2 according to llvmlite
 #[derive(Debug)]
 pub struct PassManagerBuilder {
     pass_manager_builder: LLVMPassManagerBuilderRef,
@@ -28,7 +27,7 @@ impl PassManagerBuilder {
         assert!(!pass_manager_builder.is_null());
 
         PassManagerBuilder {
-            pass_manager_builder: pass_manager_builder,
+            pass_manager_builder,
         }
     }
 
@@ -118,7 +117,7 @@ impl PassManager {
         assert!(!pass_manager.is_null());
 
         PassManager {
-            pass_manager: pass_manager
+            pass_manager,
         }
     }
 

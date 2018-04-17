@@ -24,8 +24,6 @@ use llvm_sys::support::LLVMLoadLibraryPermanently;
 
 use std::ffi::CString;
 
-
-
 #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
 compile_error!("A LLVM feature flag must be provided. See the README for more details.");
 
