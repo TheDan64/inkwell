@@ -1,8 +1,8 @@
 //! Inkwell documentation is a work in progress.
 //!
-//! If you have any LLVM knowledge that could be used to improve these docs, we would grealy appreciate you opening an issue and/or a pull request on our [GitHub page](https://github.com/TheDan64/inkwell).
+//! If you have any LLVM knowledge that could be used to improve these docs, we would greatly appreciate you opening an issue and/or a pull request on our [GitHub page](https://github.com/TheDan64/inkwell).
 //!
-//! Due to a rustdoc issue, this documentation represents only the latest supported LLVM version. We hope that this issue will be resolved in the future so multiple versions can be documented side by side.
+//! Due to a rustdoc issue, this documentation represents only the latest supported LLVM version. We hope that this issue will be resolved in the future so that multiple versions can be documented side by side.
 
 #![deny(missing_debug_implementations)]
 extern crate either;
