@@ -41,7 +41,7 @@ extern crate inkwell;
 
 ## Documentation
 
-Documenation is automatically deployed [here](https://thedan64.github.io/inkwel/) based on master. These docs are not yet 100% complete and only show the latest supported LLVM version due to a rustdoc issue. See [#2](https://github.com/TheDan64/inkwell/issues/2) for more info.
+Documenation is automatically deployed [here](https://thedan64.github.io/inkwell/) based on master. These docs are not yet 100% complete and only show the latest supported LLVM version due to a rustdoc issue. See [#2](https://github.com/TheDan64/inkwell/issues/2) for more info.
 
 ## Examples
 
