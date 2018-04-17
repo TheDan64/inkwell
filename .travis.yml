@@ -1,6 +1,6 @@
 language: rust
 
-sudo: false
+sudo: required
 cache:
   - apt
   - cargo
@@ -17,6 +17,7 @@ include_base: &BASE
         - libdw-dev
         - binutils-dev
         - libiberty-dev
+        - libssl-dev
   before_install:
     - export LLVM_VERSION_DASH=${LLVM_VERSION/./-}
     - export LLVM_VERSION_SHORT=${LLVM_VERSION/./}
@@ -24,8 +25,8 @@ include_base: &BASE
     - export LLVM_PATH=/usr/share/llvm-${LLVM_VERSION}/cmake/
     - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "'${LLVM_VERSION_SHORT}'"/' Cargo.toml
   script:
-    - cargo build --no-default-features --features "llvm${LLVM_VERSION_DASH}" --release
-    - cargo test --no-default-features --features "llvm${LLVM_VERSION_DASH}" --verbose --release
+    - cargo build --no-default-features --features "llvm${LLVM_VERSION_DASH}"
+    - cargo test --no-default-features --features "llvm${LLVM_VERSION_DASH}" --verbose
 
 matrix:
   allow_failures:
@@ -77,7 +78,6 @@ matrix:
       script:
         - cargo doc --no-default-features --features llvm3-8
         - echo '<meta http-equiv="refresh" content="1; url=inkwell/index.html">' > target/doc/index.html
-      after_success:
       rust: nightly
       addons:
         apt:
@@ -97,19 +97,11 @@ env:
     - RUSTFLAGS="-C link-dead-code -C target-cpu=native -l ffi"
 
 after_success: |
-  wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
-  tar xzf master.tar.gz &&
-  cd kcov-master &&
-  mkdir build &&
-  cd build &&
-  cmake .. &&
-  make &&
-  make install DESTDIR=../../kcov-build &&
-  cd ../.. &&
-  rm -rf kcov-master &&
-  for file in $(find . -regextype posix-extended -regex "./target/debug/test(\w|-)+"); do mkdir -p "target/cov/$(basename $file)"; ./kcov-build/usr/local/bin/kcov --exclude-pattern=/.cargo,/usr/lib,tests --verify "target/cov/$(basename $file)" "$file"; done &&
-  bash <(curl -s https://codecov.io/bash) &&
-  echo "Uploaded code coverage"
+  if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
+    bash <(curl https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
+    cargo tarpaulin --features "llvm${LLVM_VERSION_DASH}" --ignore-tests --out Xml
+    bash <(curl -s https://codecov.io/bash)
+  fi
 
 notifications:
   email: false
