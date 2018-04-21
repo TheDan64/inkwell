@@ -17,6 +17,12 @@ pub enum FunctionLookupError {
     FunctionNotFound, // 404!
 }
 
+/// A reference-counted wrapper around LLVM's execution engine.
+/// 
+/// Cloning this object is essentially just a case of copying a couple pointers
+/// and incrementing one or two atomics, so this should be quite cheap to create
+/// copies. The underlying LLVM object will be automatically deallocated when 
+/// there are no more references to it.
 #[derive(PartialEq, Eq, Debug)]
 pub struct ExecutionEngine {
     execution_engine: ExecEngineInner,
@@ -91,7 +97,7 @@ impl ExecutionEngine {
     ///
     /// assert_eq!(result, 128.);
     /// ```
-    pub fn add_global_mapping(&mut self, value: &AnyValue, addr: usize) {
+    pub fn add_global_mapping(&self, value: &AnyValue, addr: usize) {
         unsafe {
             LLVMAddGlobalMapping(*self.execution_engine, value.as_value_ref(), addr as *mut _)
         }
@@ -114,7 +120,7 @@ impl ExecutionEngine {
     ///
     /// assert!(ee.add_module(&module).is_err());
     /// ```
-    pub fn add_module(&mut self, module: &Module) -> Result<(), ()> {
+    pub fn add_module(&self, module: &Module) -> Result<(), ()> {
         unsafe {
             LLVMAddModule(*self.execution_engine, module.module.get())
         }
@@ -128,7 +134,7 @@ impl ExecutionEngine {
         Ok(())
     }
 
-    pub fn remove_module(&mut self, module: &Module) -> Result<(), String> {
+    pub fn remove_module(&self, module: &Module) -> Result<(), String> {
         match *module.owned_by_ee.borrow() {
             Some(ref ee) if *ee.execution_engine != *self.execution_engine => return Err("Module is not owned by this Execution Engine".into()),
             None => return Err("Module is not owned by an Execution Engine".into()),
