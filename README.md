@@ -48,47 +48,81 @@ Documenation is automatically deployed [here](https://thedan64.github.io/inkwell
 ### Tari's [llvm-sys example](https://bitbucket.org/tari/llvm-sys.rs/src/ea4ac92a171da2c1851806b91e531ed3a0b41091/examples/jit-function.rs) written in safe code<sup>1</sup> with Inkwell:
 
 ```rust
-use inkwell::context::Context;
+extern crate inkwell;
+
 use inkwell::OptimizationLevel;
+use inkwell::builder::Builder;
+use inkwell::context::Context;
+use inkwell::execution_engine::{ExecutionEngine, Symbol};
+use inkwell::module::Module;
 use inkwell::targets::{InitializationConfig, Target};
-use std::mem::transmute;
+use std::error::Error;
 
-Target::initialize_native(&InitializationConfig::default())?;
+/// Convenience type alias for the `sum` function.
+///
+/// Calling `sum` is innately `unsafe` because there's no guarantee it doesn't
+/// do `unsafe` operations internally.
+type SumFunc = unsafe extern "C" fn(u64, u64, u64) -> u64;
 
-let context = Context::create();
-let module = context.create_module("sum");
-let builder = context.create_builder();
-let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None)?;
+fn main() {
+    Target::initialize_native(&InitializationConfig::default()).unwrap();
+    run().unwrap();
+}
 
-let i64_type = context.i64_type();
-let fn_type = i64_type.fn_type(&[&i64_type, &i64_type, &i64_type], false);
+fn run() -> Result<(), Box<Error>> {
+    let context = Context::create();
+    let module = context.create_module("sum");
+    let builder = context.create_builder();
+    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None)?;
 
-let function = module.add_function("sum", &fn_type, None);
-let basic_block = context.append_basic_block(&function, "entry");
+    let sum = jit_compile_sum(&context, &module, &builder, &execution_engine)
+        .ok_or("Unable to JIT compile `sum`")?;
 
-builder.position_at_end(&basic_block);
+    let x = 1u64;
+    let y = 2u64;
+    let z = 3u64;
 
-let x = function.get_nth_param(0)?.into_int_value();
-let y = function.get_nth_param(1)?.into_int_value();
-let z = function.get_nth_param(2)?.into_int_value();
+    unsafe {
+        println!("{} + {} + {} = {}", x, y, z, sum(x, y, z));
+        assert_eq!(sum(x, y, z), x + y + z);
+    }
 
-let sum = builder.build_int_add(&x, &y, "sum");
-let sum = builder.build_int_add(&sum, &z, "sum");
+    Ok(())
+}
 
-builder.build_return(Some(&sum));
+fn jit_compile_sum(
+    context: &Context,
+    module: &Module,
+    builder: &Builder,
+    execution_engine: &ExecutionEngine,
+) -> Option<Symbol<SumFunc>> {
+    let i64_type = context.i64_type();
+    let fn_type = i64_type.fn_type(&[&i64_type, &i64_type, &i64_type], false);
 
-let addr = execution_engine.get_function_address("sum")?;
+    let function = module.add_function("sum", &fn_type, None);
+    let basic_block = context.append_basic_block(&function, "entry");
 
-let sum: extern "C" fn(u64, u64, u64) -> u64 = unsafe { transmute(addr) };
+    builder.position_at_end(&basic_block);
 
-let x = 1u64;
-let y = 2u64;
-let z = 3u64;
+    let x = function.get_nth_param(0)?.into_int_value();
+    let y = function.get_nth_param(1)?.into_int_value();
+    let z = function.get_nth_param(2)?.into_int_value();
 
-assert_eq!(sum(x, y, z), x + y + z);
+    let sum = builder.build_int_add(&x, &y, "sum");
+    let sum = builder.build_int_add(&sum, &z, "sum");
+
+    builder.build_return(Some(&sum));
+
+    unsafe { execution_engine.get_function("sum").ok() }
+}
 ```
 
-<sup>1</sup> Casting the LLVM JIT function address into a rust function does require a single unsafe transmute, since Inkwell doesn't know what the function signature is. Maybe we can do something about this in the future? In theory, fn_type does contain all the needed info, so whether or not we can do this automagically depends on what rust is capable of. Converting structs, pointers, and other types could be tricky but might be seen as a form of deserialization. See [#5](https://github.com/TheDan64/inkwell/issues/5) for the tracking issue.
+<sup>1</sup> There are two uses of `unsafe` in this example because the actual
+act of compiling and executing code on the fly is innately `unsafe`. For one, 
+there is no way of verifying we are calling `get_function()` with the right function 
+signature. It is also `unsafe` to *call* the function we get because there's no
+guarantee the code itself doesn't do `unsafe` things internally (the same reason
+you need `unsafe` when calling into C).
 
 ### LLVM's [Kaleidoscope Tutorial](https://llvm.org/docs/tutorial/index.html)
 

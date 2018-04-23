@@ -350,7 +350,7 @@ impl Module {
 
         let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), true);
 
-        *self.owned_by_ee.borrow_mut() = Some(ExecutionEngine::new(execution_engine.execution_engine.clone(), true));
+        *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
 
         Ok(execution_engine)
     }

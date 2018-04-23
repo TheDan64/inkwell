@@ -6,8 +6,10 @@ use targets::TargetData;
 use values::{AnyValue, AsValueRef, FunctionValue, GenericValue};
 
 use std::rc::Rc;
+use std::ops::Deref;
 use std::ffi::{CStr, CString};
-use std::mem::{forget, uninitialized, zeroed};
+use std::mem::{forget, uninitialized, zeroed, transmute_copy, size_of};
+use std::fmt::{self, Debug, Formatter};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum FunctionLookupError {
@@ -15,9 +17,15 @@ pub enum FunctionLookupError {
     FunctionNotFound, // 404!
 }
 
+/// A reference-counted wrapper around LLVM's execution engine.
+/// 
+/// Cloning this object is essentially just a case of copying a couple pointers
+/// and incrementing one or two atomics, so this should be quite cheap to create
+/// copies. The underlying LLVM object will be automatically deallocated when 
+/// there are no more references to it.
 #[derive(PartialEq, Eq, Debug)]
 pub struct ExecutionEngine {
-    pub(crate) execution_engine: Rc<LLVMExecutionEngineRef>,
+    execution_engine: ExecEngineInner,
     target_data: Option<TargetData>,
     jit_mode: bool,
 }
@@ -32,7 +40,7 @@ impl ExecutionEngine {
         };
 
         ExecutionEngine {
-            execution_engine: execution_engine,
+            execution_engine: ExecEngineInner(execution_engine),
             target_data: Some(TargetData::new(target_data)),
             jit_mode: jit_mode,
         }
@@ -121,7 +129,7 @@ impl ExecutionEngine {
             return Err(());
         }
 
-        *module.owned_by_ee.borrow_mut() = Some(ExecutionEngine::new(self.execution_engine.clone(), self.jit_mode));
+        *module.owned_by_ee.borrow_mut() = Some(self.clone());
 
         Ok(())
     }
@@ -158,20 +166,73 @@ impl ExecutionEngine {
         Ok(())
     }
 
-    /// WARNING: The returned address *will* be invalid if the EE drops first
-    /// Do not attempt to transmute it to a function if the ExecutionEngine is gone
-    // TODOC: Initializing a target MUST occur before creating the EE or else it will not count
-    // TODOC: Can still add functions after EE has been created
-    pub fn get_function_address(&self, fn_name: &str) -> Result<u64, FunctionLookupError> {
+    /// Try to load a function from the execution engine.
+    /// 
+    /// If a target hasn't already been initialized, spurious "function not 
+    /// found" errors may be encountered.
+    /// 
+    /// The [`UnsafeFunctionPointer`] trait is designed so only `unsafe extern 
+    /// "C"` functions can be retrieved via the `get_function()` method. If you
+    /// get funny type errors then it's probably because you have specified the
+    /// wrong calling convention or forgotten to specify the retrieved function
+    /// as `unsafe`.
+    /// 
+    /// # Examples
+    /// 
+    /// 
+    /// ```rust
+    /// # use inkwell::targets::{InitializationConfig, Target};
+    /// # use inkwell::context::Context;
+    /// # use inkwell::OptimizationLevel;
+    /// # Target::initialize_native(&InitializationConfig::default()).unwrap();
+    /// let context = Context::create();
+    /// let module = context.create_module("test");
+    /// let builder = context.create_builder();
+    ///
+    /// // Set up the function signature
+    /// let double = context.f64_type();
+    /// let sig = double.fn_type(&[], false);
+    ///
+    /// // Add the function to our module
+    /// let f = module.add_function("test_fn", &sig, None);
+    /// let b = context.append_basic_block(&f, "entry");
+    /// builder.position_at_end(&b);
+    ///
+    /// // Insert a return statement
+    /// let ret = double.const_float(64.0);
+    /// builder.build_return(Some(&ret));
+    ///
+    /// // create the JIT engine
+    /// let mut ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    /// 
+    /// // fetch our JIT'd function and execute it
+    /// unsafe {
+    ///     let test_fn = ee.get_function::<unsafe extern "C" fn() -> f64>("test_fn").unwrap();
+    ///     let return_value = test_fn();
+    ///     assert_eq!(return_value, 64.0);
+    /// }
+    /// ```
+    /// 
+    /// # Safety
+    /// 
+    /// It is the caller's responsibility to ensure they call the function with
+    /// the correct signature and calling convention.
+    /// 
+    /// The `Symbol` wrapper ensures a function won't accidentally outlive the
+    /// execution engine it came from, but adding functions after calling this
+    /// method *may* invalidate the function pointer.
+    /// 
+    /// [`UnsafeFunctionPointer`]: trait.UnsafeFunctionPointer.html
+    pub unsafe fn get_function<F>(&self, fn_name: &str) -> Result<Symbol<F>, FunctionLookupError>
+    where F: UnsafeFunctionPointer 
+    {
         if !self.jit_mode {
             return Err(FunctionLookupError::JITNotEnabled);
         }
 
         let c_string = CString::new(fn_name).expect("Conversion to CString failed unexpectedly");
 
-        let address = unsafe {
-            LLVMGetFunctionAddress(*self.execution_engine, c_string.as_ptr())
-        };
+        let address = LLVMGetFunctionAddress(*self.execution_engine, c_string.as_ptr());
 
         // REVIEW: Can also return 0 if no targets are initialized.
         // One option might be to set a global to true if any at all of the targets have been
@@ -181,7 +242,13 @@ impl ExecutionEngine {
             return Err(FunctionLookupError::FunctionNotFound);
         }
 
-        Ok(address)
+        assert_eq!(size_of::<F>(), size_of::<usize>(), 
+            "The type `F` must have the same size as a function pointer");
+
+        Ok(Symbol {
+            _execution_engine: self.execution_engine.clone(),
+            inner: transmute_copy(&address),
+        })
     }
 
     // REVIEW: Not sure if an EE's target data can change.. if so we might want to update the value
@@ -226,10 +293,10 @@ impl ExecutionEngine {
 
     pub fn run_function_as_main(&self, function: &FunctionValue) {
         let args = vec![]; // TODO: Support argc, argv
-        let env_p = vec![]; // REVIEW: No clue what this is
+        let environment_variables = vec![];
 
         unsafe {
-            LLVMRunFunctionAsMain(*self.execution_engine, function.as_value_ref(), args.len() as u32, args.as_ptr(), env_p.as_ptr()); // REVIEW: usize to u32 cast ok??
+            LLVMRunFunctionAsMain(*self.execution_engine, function.as_value_ref(), args.len() as u32, args.as_ptr(), environment_variables.as_ptr()); // REVIEW: usize to u32 cast ok??
         }
     }
 
@@ -244,12 +311,96 @@ impl ExecutionEngine {
 // want owned modules to drop.
 impl Drop for ExecutionEngine {
     fn drop(&mut self) {
-        forget(self.target_data.take().expect("TargetData should always exist until Drop"));
+        forget(
+            self.target_data
+                .take()
+                .expect("TargetData should always exist until Drop"),
+        );
+    }
+}
 
-        if Rc::strong_count(&self.execution_engine) == 1 {
+impl Clone for ExecutionEngine {
+    fn clone(&self) -> ExecutionEngine {
+        ExecutionEngine::new(self.execution_engine.0.clone(), self.jit_mode)
+    }
+}
+
+/// A smart pointer which wraps the `Drop` logic for `LLVMExecutionEngineRef`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ExecEngineInner(Rc<LLVMExecutionEngineRef>);
+
+impl Drop for ExecEngineInner {
+    fn drop(&mut self) {
+        if Rc::strong_count(&self.0) == 1 {
             unsafe {
-                LLVMDisposeExecutionEngine(*self.execution_engine);
+                LLVMDisposeExecutionEngine(*self.0);
             }
         }
     }
 }
+
+impl Deref for ExecEngineInner {
+    type Target = LLVMExecutionEngineRef;
+
+    fn deref(&self) -> &Self::Target {
+        &*self.0
+    }
+}
+
+/// A wrapper around a function pointer which ensures the symbol being pointed
+/// to doesn't accidentally outlive its execution engine.
+#[derive(Clone)]
+pub struct Symbol<F> {
+    _execution_engine: ExecEngineInner,
+    inner: F,
+}
+
+impl<F: UnsafeFunctionPointer> Deref for Symbol<F> {
+    type Target = F;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+impl<F> Debug for Symbol<F> {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        f.debug_tuple("Symbol")
+            .field(&"<unnamed>")
+            .finish()
+    }
+}
+
+/// Marker trait representing an unsafe function pointer (`unsafe extern "C" fn(A, B, ...) -> Output`).
+pub trait UnsafeFunctionPointer: private::Sealed + Copy {}
+
+mod private {
+    /// A sealed trait which ensures nobody outside this crate can implement
+    /// `UnsafeFunctionPointer`.
+    /// 
+    /// See https://rust-lang-nursery.github.io/api-guidelines/future-proofing.html
+    pub trait Sealed {}
+}
+
+macro_rules! impl_unsafe_fn {
+    ($( $param:ident ),*) => {
+        impl<Output, $( $param ),*> private::Sealed for unsafe extern "C" fn($( $param ),*) -> Output {}
+        impl<Output, $( $param ),*> UnsafeFunctionPointer for unsafe extern "C" fn($( $param ),*) -> Output {}
+    };
+}
+
+impl_unsafe_fn!();
+impl_unsafe_fn!(A);
+impl_unsafe_fn!(A, B);
+impl_unsafe_fn!(A, B, C);
+impl_unsafe_fn!(A, B, C, D);
+impl_unsafe_fn!(A, B, C, D, E);
+impl_unsafe_fn!(A, B, C, D, E, F);
+impl_unsafe_fn!(A, B, C, D, E, F, G);
+impl_unsafe_fn!(A, B, C, D, E, F, G, H);
+impl_unsafe_fn!(A, B, C, D, E, F, G, H, I);
+impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J);
+impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J, K);
+impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J, K, L);
+impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J, K, L, M);
+

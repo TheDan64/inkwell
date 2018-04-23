@@ -3,6 +3,7 @@ extern crate inkwell;
 use self::inkwell::OptimizationLevel;
 use self::inkwell::context::Context;
 use self::inkwell::targets::{InitializationConfig, Target};
+use self::inkwell::execution_engine::Symbol;
 use std::mem::transmute;
 
 #[test]
@@ -31,13 +32,14 @@ fn test_tari_example() {
 
     builder.build_return(Some(&sum));
 
-    let addr = execution_engine.get_function_address("sum").unwrap();
+    unsafe {
+        type Sum = unsafe extern "C" fn(u64, u64, u64) -> u64;
+        let sum: Symbol<Sum> = execution_engine.get_function("sum").unwrap();
 
-    let sum: extern "C" fn(u64, u64, u64) -> u64 = unsafe { transmute(addr) };
+        let x = 1u64;
+        let y = 2u64;
+        let z = 3u64;
 
-    let x = 1u64;
-    let y = 2u64;
-    let z = 3u64;
-
-    assert_eq!(sum(x, y, z), x + y + z);
+        assert_eq!(sum(x, y, z), x + y + z);
+    }
 }

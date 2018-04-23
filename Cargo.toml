@@ -22,10 +22,6 @@ enum-methods = "0.0.8"
 libc = "*"
 llvm-sys = "38"
 
-[[example]]
-name = "kaleidoscope"
-path = "examples/kaleidoscope/main.rs"
-
 [badges]
 travis-ci = { repository = "TheDan64/inkwell" }
 codecov = { repository = "TheDan64/inkwell" }

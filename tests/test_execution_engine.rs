@@ -5,6 +5,8 @@ use self::inkwell::context::Context;
 use self::inkwell::execution_engine::FunctionLookupError;
 use self::inkwell::targets::{InitializationConfig, Target};
 
+type Thunk = unsafe extern "C" fn();
+
 #[test]
 fn test_get_function_address() {
     let context = Context::create();
@@ -23,7 +25,10 @@ fn test_get_function_address() {
 
     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
-    assert_eq!(execution_engine.get_function_address("errors"), Err(FunctionLookupError::FunctionNotFound));
+    unsafe {
+        assert_eq!(execution_engine.get_function::<Thunk>("errors").unwrap_err(), 
+            FunctionLookupError::FunctionNotFound);
+    }
 
     let module = context.create_module("errors_abound");
     let fn_value = module.add_function("func", &fn_type, None);
@@ -34,9 +39,12 @@ fn test_get_function_address() {
 
     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
-    assert_eq!(execution_engine.get_function_address("errors"), Err(FunctionLookupError::FunctionNotFound));
+    unsafe {
+        assert_eq!(execution_engine.get_function::<Thunk>("errors").unwrap_err(), 
+            FunctionLookupError::FunctionNotFound);
 
-    assert!(execution_engine.get_function_address("func").is_ok());
+        assert!(execution_engine.get_function::<Thunk>("func").is_ok());
+    }
 }
 
 // #[test]
