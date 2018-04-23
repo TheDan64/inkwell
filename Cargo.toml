@@ -25,6 +25,3 @@ llvm-sys = "38"
 [badges]
 travis-ci = { repository = "TheDan64/inkwell" }
 codecov = { repository = "TheDan64/inkwell" }
-
-[profile.dev]
-codegen-units=32 # TODO: Remove when default in rust, cuts compile time ~50%

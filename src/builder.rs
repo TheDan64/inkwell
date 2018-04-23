@@ -32,9 +32,10 @@ impl Builder {
         Builder::new(builder)
     }
 
-    // REVIEW: Would probably make this API a bit simpler by taking Into<Option<&BasicValue>>
-    // So that you could just do build_return(&value) or build_return(None)
+    // REVIEW: Would probably make this API a bit simpler by taking Into<Option<impl BasicValue>>
+    // So that you could just do build_return(value) or build_return(None)
     // Is that frowned upon?
+    // TODO: Option<impl BasicValue>
     pub fn build_return(&self, value: Option<&BasicValue>) -> InstructionValue {
         // let value = unsafe {
         //     value.map_or(LLVMBuildRetVoid(self.builder), |value| LLVMBuildRet(self.builder, value.value))
@@ -93,7 +94,7 @@ impl Builder {
     }
 
     // REVIEW: Doesn't GEP work on array too?
-    pub fn build_gep(&self, ptr: &PointerValue, ordered_indexes: &[&IntValue], name: &str) -> PointerValue {
+    pub fn build_gep(&self, ptr: &PointerValue, ordered_indexes: &[IntValue], name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
@@ -107,7 +108,7 @@ impl Builder {
     }
 
     // REVIEW: Doesn't GEP work on array too?
-    pub fn build_in_bounds_gep(&self, ptr: &PointerValue, ordered_indexes: &[&IntValue], name: &str) -> PointerValue {
+    pub fn build_in_bounds_gep(&self, ptr: &PointerValue, ordered_indexes: &[IntValue], name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
