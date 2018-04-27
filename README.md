@@ -22,16 +22,16 @@ You'll need to point your Cargo.toml to a branch and use a feature flag correspo
 
 ```toml
 [dependencies]
-inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "llvm3-7", features = ["llvm3-7"] }
+inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "llvm3-7" }
 ```
 
 Supported versions:
 
-| GitHub Branch | Feature Flag |
-| :-----------: | :----------: |
-| llvm3-6       | llvm3-6      |
-| llvm3-7       | llvm3-7      |
-| llvm3-8       | llvm3-8      |
+| LLVM Version | GitHub Branch |
+| :----------: | :-----------: |
+| 3.6.x        | llvm3-6       |
+| 3.7.x        | llvm3-7       |
+| 3.8.x        | llvm3-8       |
 
 In the root of your source code you will have to add an extern crate to begin using Inkwell:
 
@@ -118,8 +118,8 @@ fn jit_compile_sum(
 ```
 
 <sup>1</sup> There are two uses of `unsafe` in this example because the actual
-act of compiling and executing code on the fly is innately `unsafe`. For one, 
-there is no way of verifying we are calling `get_function()` with the right function 
+act of compiling and executing code on the fly is innately `unsafe`. For one,
+there is no way of verifying we are calling `get_function()` with the right function
 signature. It is also `unsafe` to *call* the function we get because there's no
 guarantee the code itself doesn't do `unsafe` things internally (the same reason
 you need `unsafe` when calling into C).
