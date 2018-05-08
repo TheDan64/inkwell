@@ -33,6 +33,7 @@ Supported versions:
 | 3.7.x        | llvm3-7       |
 | 3.8.x        | llvm3-8       |
 | 3.9.x        | llvm3-9       |
+| 4.0.x        | llvm4-0       |
 
 In the root of your source code you will have to add an extern crate to begin using Inkwell:
 
