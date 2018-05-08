@@ -106,6 +106,8 @@ fn test_pass_manager_builder() {
     builder.build_return(None);
 
     // TODO: Test with actual changes? Would be true in that case
+    // REVIEW: Segfaults in 4.0
+    #[cfg(not(feature = "llvm4-0"))]
     assert!(!fn_pass_manager.run_on_function(&fn_value));
 
     let module_pass_manager = PassManager::create_for_module();
@@ -113,7 +115,7 @@ fn test_pass_manager_builder() {
     pass_manager_builder.populate_module_pass_manager(&module_pass_manager);
 
     // TODOC: Seems to return true in 3.7, even though no changes were made.
-    // In 3.6 and 3.8 it returns false. Seems like an LLVM bug
+    // In 3.6, 3.8, & 3.9 it returns false. Seems like an LLVM bug
     #[cfg(not(feature = "llvm3-7"))]
     assert!(!module_pass_manager.run_on_module(&module));
     #[cfg(feature = "llvm3-7")]

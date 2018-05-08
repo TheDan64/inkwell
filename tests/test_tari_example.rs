@@ -4,7 +4,6 @@ use self::inkwell::OptimizationLevel;
 use self::inkwell::context::Context;
 use self::inkwell::targets::{InitializationConfig, Target};
 use self::inkwell::execution_engine::Symbol;
-use std::mem::transmute;
 
 #[test]
 fn test_tari_example() {

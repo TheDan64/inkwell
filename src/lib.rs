@@ -30,14 +30,14 @@ use llvm_sys::support::LLVMLoadLibraryPermanently;
 
 use std::ffi::CString;
 
-#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
+#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0")))]
 compile_error!("A LLVM feature flag must be provided. See the README for more details.");
 
 // TODO: Probably move into error handling module
 pub fn enable_llvm_pretty_stack_trace() {
     #[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]
     use llvm_sys::core::LLVMEnablePrettyStackTrace;
-    #[cfg(feature = "llvm3-8")]
+    #[cfg(any(feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0"))]
     use llvm_sys::error_handling::LLVMEnablePrettyStackTrace;
 
     unsafe {
@@ -97,7 +97,7 @@ pub fn shutdown_llvm() {
 pub fn reset_fatal_error_handler() {
     #[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]
     use llvm_sys::core::LLVMResetFatalErrorHandler;
-    #[cfg(feature = "llvm3-8")]
+    #[cfg(any(feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0"))]
     use llvm_sys::error_handling::LLVMResetFatalErrorHandler;
 
     unsafe {
