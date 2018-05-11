@@ -529,28 +529,30 @@ impl Target {
     pub fn initialize_lanai(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeLanaiTargetInfo, LLVMInitializeLanaiTarget, LLVMInitializeLanaiTargetMC, LLVMInitializeLanaiAsmPrinter, LLVMInitializeLanaiAsmParser, LLVMInitializeLanaiDisassembler};
 
-        if config.base {
-            LLVMInitializeLanaiTarget()
-        }
+        unsafe {
+            if config.base {
+                LLVMInitializeLanaiTarget()
+            }
 
-        if config.info {
-            LLVMInitializeLanaiTargetInfo()
-        }
+            if config.info {
+                LLVMInitializeLanaiTargetInfo()
+            }
 
-        if config.asm_printer {
-            LLVMInitializeLanaiAsmPrinter()
-        }
+            if config.asm_printer {
+                LLVMInitializeLanaiAsmPrinter()
+            }
 
-        if config.asm_parser {
-            LLVMInitializeLanaiAsmParser()
-        }
+            if config.asm_parser {
+                LLVMInitializeLanaiAsmParser()
+            }
 
-        if config.disassembler {
-            LLVMInitializeLanaiDisassembler()
-        }
+            if config.disassembler {
+                LLVMInitializeLanaiDisassembler()
+            }
 
-        if config.machine_code {
-            LLVMInitializeLanaiTargetMC()
+            if config.machine_code {
+                LLVMInitializeLanaiTargetMC()
+            }
         }
     }
 
@@ -558,22 +560,24 @@ impl Target {
     pub fn initialize_riscv(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeRISCVTargetInfo, LLVMInitializeRISCVTarget, LLVMInitializeRISCVTargetMC};
 
-        if config.base {
-            LLVMInitializeRISCVTarget()
-        }
+        unsafe {
+            if config.base {
+                LLVMInitializeRISCVTarget()
+            }
 
-        if config.info {
-            LLVMInitializeRISCVTargetInfo()
-        }
+            if config.info {
+                LLVMInitializeRISCVTargetInfo()
+            }
 
-        // No asm printer
+            // No asm printer
 
-        // No asm parser
+            // No asm parser
 
-        // No disassembler
+            // No disassembler
 
-        if config.machine_code {
-            LLVMInitializeRISCVTargetMC()
+            if config.machine_code {
+                LLVMInitializeRISCVTargetMC()
+            }
         }
     }
 
