@@ -511,10 +511,12 @@ impl Target {
             // No asm parser
 
             #[cfg(not(any(feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
-            if config.disassembler {
-                use llvm_sys::target::LLVMInitializeBPFDisassembler;
+            {
+                if config.disassembler {
+                    use llvm_sys::target::LLVMInitializeBPFDisassembler;
 
-                LLVMInitializeBPFDisassembler()
+                    LLVMInitializeBPFDisassembler()
+                }
             }
 
             if config.machine_code {
