@@ -77,6 +77,7 @@ impl Default for InitializationConfig {
     }
 }
 
+// NOTE: Versions verified as target-complete: 3.6, 3.7, 3.8, 3.9, 4.0
 #[derive(Debug)]
 pub struct Target {
     target: LLVMTargetRef,
@@ -237,6 +238,8 @@ impl Target {
             if config.machine_code {
                 LLVMInitializeR600TargetMC()
             }
+
+            // Disassembler Status Unknown
         }
     }
 
@@ -265,6 +268,8 @@ impl Target {
             if config.machine_code {
                 LLVMInitializeAMDGPUTargetMC()
             }
+
+            // Disassembler Status Unknown
         }
     }
 
@@ -314,6 +319,8 @@ impl Target {
                 LLVMInitializeHexagonAsmPrinter()
             }
 
+            // Asm parser status unknown
+
             if config.disassembler {
                 LLVMInitializeHexagonDisassembler()
             }
@@ -340,9 +347,13 @@ impl Target {
                 LLVMInitializeNVPTXAsmPrinter()
             }
 
+            // Asm parser status unknown
+
             if config.machine_code {
                 LLVMInitializeNVPTXTargetMC()
             }
+
+            // Disassembler status unknown
         }
     }
 
@@ -381,9 +392,13 @@ impl Target {
                 LLVMInitializeMSP430AsmPrinter()
             }
 
+            // Asm parser status unknown
+
             if config.machine_code {
                 LLVMInitializeMSP430TargetMC()
             }
+
+            // Disassembler status unknown
         }
     }
 
@@ -402,6 +417,8 @@ impl Target {
             if config.asm_printer {
                 LLVMInitializeXCoreAsmPrinter()
             }
+
+            // Asm parser status unknown
 
             if config.disassembler {
                 LLVMInitializeXCoreDisassembler()
@@ -491,14 +508,70 @@ impl Target {
                 LLVMInitializeBPFAsmPrinter()
             }
 
-            // TODO: Added in 4.0
-            // if config.disassembler {
-            //     LLVMInitializeBPFDisassembler()
-            // }
+            // No asm parser
+
+            #[cfg(not(any(feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+            if config.disassembler {
+                use llvm_sys::target::LLVMInitializeBPFDisassembler;
+
+                LLVMInitializeBPFDisassembler()
+            }
 
             if config.machine_code {
                 LLVMInitializeBPFTargetMC()
             }
+        }
+    }
+
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+    pub fn initialize_lanai(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeLanaiTargetInfo, LLVMInitializeLanaiTarget, LLVMInitializeLanaiTargetMC, LLVMInitializeLanaiAsmPrinter, LLVMInitializeLanaiAsmParser, LLVMInitializeLanaiDisassembler};
+
+        if config.base {
+            LLVMInitializeLanaiTarget()
+        }
+
+        if config.info {
+            LLVMInitializeLanaiTargetInfo()
+        }
+
+        if config.asm_printer {
+            LLVMInitializeLanaiAsmPrinter()
+        }
+
+        if config.asm_parser {
+            LLVMInitializeLanaiAsmParser()
+        }
+
+        if config.disassembler {
+            LLVMInitializeLanaiDisassembler()
+        }
+
+        if config.machine_code {
+            LLVMInitializeLanaiTargetMC()
+        }
+    }
+
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+    pub fn initialize_riscv(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeRISCVTargetInfo, LLVMInitializeRISCVTarget, LLVMInitializeRISCVTargetMC};
+
+        if config.base {
+            LLVMInitializeRISCVTarget()
+        }
+
+        if config.info {
+            LLVMInitializeRISCVTargetInfo()
+        }
+
+        // No asm printer
+
+        // No asm parser
+
+        // No disassembler
+
+        if config.machine_code {
+            LLVMInitializeRISCVTargetMC()
         }
     }
 
