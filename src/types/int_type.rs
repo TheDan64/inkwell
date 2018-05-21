@@ -311,7 +311,8 @@ impl IntType {
         self.int_type.print_to_string()
     }
 
-    #[cfg(not(feature = "llvm3-6"))]
+    // See Type::print_to_stderr note on 5.0+ status
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm5-0")))]
     pub fn print_to_stderr(&self) {
         self.int_type.print_to_stderr()
     }

@@ -556,7 +556,14 @@ impl Target {
         }
     }
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+    // REVIEW: As it turns out; RISCV was accidentally built by default in 4.0 since
+    // it was meant to be marked experimental and so it was later removed from default
+    // builds in 5.0+. Since llvm-sys doesn't officially support any experimental targets
+    // we're going to make this 4.0 only for now so that it doesn't break test builds.
+    // We can revisit this issue if someone wants RISCV support in inkwell, or if
+    // llvm-sys starts supporting expiramental llvm targets. See
+    // https://lists.llvm.org/pipermail/llvm-dev/2017-August/116347.html for more info
+    #[cfg(feature = "llvm4-0")]
     pub fn initialize_riscv(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeRISCVTargetInfo, LLVMInitializeRISCVTarget, LLVMInitializeRISCVTargetMC};
 

@@ -255,6 +255,7 @@ impl PassManager {
         }
     }
 
+    // FIXME: Deprecated in 5.0 (no-op); removed in 6.0?
     pub fn add_bb_vectorize_pass(&self) {
         unsafe {
             LLVMAddBBVectorizePass(self.pass_manager)

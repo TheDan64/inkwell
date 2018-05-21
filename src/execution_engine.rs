@@ -18,10 +18,10 @@ pub enum FunctionLookupError {
 }
 
 /// A reference-counted wrapper around LLVM's execution engine.
-/// 
+///
 /// Cloning this object is essentially just a case of copying a couple pointers
 /// and incrementing one or two atomics, so this should be quite cheap to create
-/// copies. The underlying LLVM object will be automatically deallocated when 
+/// copies. The underlying LLVM object will be automatically deallocated when
 /// there are no more references to it.
 #[derive(PartialEq, Eq, Debug)]
 pub struct ExecutionEngine {
@@ -167,19 +167,19 @@ impl ExecutionEngine {
     }
 
     /// Try to load a function from the execution engine.
-    /// 
-    /// If a target hasn't already been initialized, spurious "function not 
+    ///
+    /// If a target hasn't already been initialized, spurious "function not
     /// found" errors may be encountered.
-    /// 
-    /// The [`UnsafeFunctionPointer`] trait is designed so only `unsafe extern 
+    ///
+    /// The [`UnsafeFunctionPointer`] trait is designed so only `unsafe extern
     /// "C"` functions can be retrieved via the `get_function()` method. If you
     /// get funny type errors then it's probably because you have specified the
     /// wrong calling convention or forgotten to specify the retrieved function
     /// as `unsafe`.
-    /// 
+    ///
     /// # Examples
-    /// 
-    /// 
+    ///
+    ///
     /// ```rust
     /// # use inkwell::targets::{InitializationConfig, Target};
     /// # use inkwell::context::Context;
@@ -204,7 +204,7 @@ impl ExecutionEngine {
     ///
     /// // create the JIT engine
     /// let mut ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-    /// 
+    ///
     /// // fetch our JIT'd function and execute it
     /// unsafe {
     ///     let test_fn = ee.get_function::<unsafe extern "C" fn() -> f64>("test_fn").unwrap();
@@ -212,19 +212,19 @@ impl ExecutionEngine {
     ///     assert_eq!(return_value, 64.0);
     /// }
     /// ```
-    /// 
+    ///
     /// # Safety
-    /// 
+    ///
     /// It is the caller's responsibility to ensure they call the function with
     /// the correct signature and calling convention.
-    /// 
+    ///
     /// The `Symbol` wrapper ensures a function won't accidentally outlive the
     /// execution engine it came from, but adding functions after calling this
     /// method *may* invalidate the function pointer.
-    /// 
+    ///
     /// [`UnsafeFunctionPointer`]: trait.UnsafeFunctionPointer.html
     pub unsafe fn get_function<F>(&self, fn_name: &str) -> Result<Symbol<F>, FunctionLookupError>
-    where F: UnsafeFunctionPointer 
+    where F: UnsafeFunctionPointer
     {
         if !self.jit_mode {
             return Err(FunctionLookupError::JITNotEnabled);
@@ -235,14 +235,14 @@ impl ExecutionEngine {
         let address = LLVMGetFunctionAddress(*self.execution_engine, c_string.as_ptr());
 
         // REVIEW: Can also return 0 if no targets are initialized.
-        // One option might be to set a global to true if any at all of the targets have been
+        // One option might be to set a (thread local?) global to true if any at all of the targets have been
         // initialized (maybe we could figure out which config in particular is the trigger)
         // and if not return an "NoTargetsInitialized" error, instead of not found.
         if address == 0 {
             return Err(FunctionLookupError::FunctionNotFound);
         }
 
-        assert_eq!(size_of::<F>(), size_of::<usize>(), 
+        assert_eq!(size_of::<F>(), size_of::<usize>(),
             "The type `F` must have the same size as a function pointer");
 
         Ok(Symbol {
@@ -377,7 +377,7 @@ pub trait UnsafeFunctionPointer: private::Sealed + Copy {}
 mod private {
     /// A sealed trait which ensures nobody outside this crate can implement
     /// `UnsafeFunctionPointer`.
-    /// 
+    ///
     /// See https://rust-lang-nursery.github.io/api-guidelines/future-proofing.html
     pub trait Sealed {}
 }
@@ -403,4 +403,3 @@ impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J);
 impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J, K);
 impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J, K, L);
 impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J, K, L, M);
-

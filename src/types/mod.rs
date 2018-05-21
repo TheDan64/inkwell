@@ -52,7 +52,11 @@ impl Type {
         }
     }
 
-    #[cfg(not(feature = "llvm3-6"))]
+    // REVIEW: LLVM 5.0+ seems to have removed this function in release mode
+    // and so will fail to link when used. I've decided to remove it from 5.0+
+    // for now. We should consider removing it altogether since print_to_string
+    // could be used and manually written to stderr in rust...
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm5-0")))]
     fn print_to_stderr(&self) {
         unsafe {
             LLVMDumpType(self.type_);
@@ -160,6 +164,10 @@ impl Type {
         IntValue::new(int_value)
     }
 
+    // FIXME: LLVMPrintTypeToString actually returns an owned string according to
+    // https://github.com/llvm-mirror/llvm/blob/master/include/llvm-c/Core.h#L994
+    // We should create a LLVMString wrapper type which derefs to &CStr (or &str
+    // if safely possible?) and calls LLVMDisposeMessage on drop
     fn print_to_string(&self) -> &CStr {
         unsafe {
             CStr::from_ptr(LLVMPrintTypeToString(self.type_))
