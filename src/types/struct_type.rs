@@ -6,7 +6,7 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use std::ffi::CStr;
 use std::mem::forget;
 
-use AddressSpace;
+use {AddressSpace, LLVMString};
 use context::ContextRef;
 use types::traits::AsTypeRef;
 use types::{Type, BasicType, BasicTypeEnum, ArrayType, PointerType, FunctionType, VectorType};
@@ -181,7 +181,7 @@ impl StructType {
         raw_vec.iter().map(|val| BasicTypeEnum::new(*val)).collect()
     }
 
-    pub fn print_to_string(&self) -> &CStr {
+    pub fn print_to_string(&self) -> LLVMString {
         self.struct_type.print_to_string()
     }
 

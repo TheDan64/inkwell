@@ -8,6 +8,7 @@ use std::ffi::{CStr, CString};
 use std::mem::forget;
 use std::fmt;
 
+use LLVMString;
 use basic_block::BasicBlock;
 use module::Linkage;
 use types::{BasicTypeEnum, FunctionType};
@@ -48,7 +49,7 @@ impl FunctionValue {
         self.fn_value.is_undef()
     }
 
-    pub fn print_to_string(&self) -> &CStr {
+    pub fn print_to_string(&self) -> LLVMString {
         self.fn_value.print_to_string()
     }
 

@@ -1,9 +1,7 @@
 use llvm_sys::core::{LLVMConstArray, LLVMConstNull, LLVMGetArrayLength};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
-use std::ffi::CStr;
-
-use AddressSpace;
+use {AddressSpace, LLVMString};
 use context::ContextRef;
 use types::traits::AsTypeRef;
 use types::{Type, BasicType, PointerType, FunctionType};
@@ -82,7 +80,7 @@ impl ArrayType {
         }
     }
 
-    pub fn print_to_string(&self) -> &CStr {
+    pub fn print_to_string(&self) -> LLVMString {
         self.array_type.print_to_string()
     }
 

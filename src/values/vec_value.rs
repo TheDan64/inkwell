@@ -3,6 +3,7 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
 
+use LLVMString;
 use types::{VectorType};
 use values::traits::AsValueRef;
 use values::{BasicValueEnum, BasicValue, InstructionValue, Value, IntValue, MetadataValue};
@@ -39,7 +40,7 @@ impl VectorValue {
         IntValue::new(int_value)
     }
 
-    pub fn print_to_string(&self) -> &CStr {
+    pub fn print_to_string(&self) -> LLVMString {
         self.vec_value.print_to_string()
     }
 

@@ -1,7 +1,8 @@
-use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMDisposeMessage, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMGetMDKindIDInContext};
+use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMGetMDKindIDInContext};
 use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef};
 use llvm_sys::ir_reader::LLVMParseIRInContext;
 
+use LLVMString;
 use basic_block::BasicBlock;
 use builder::Builder;
 use memory_buffer::MemoryBuffer;
@@ -107,7 +108,7 @@ impl Context {
     // is that the method needs to take ownership of the MemoryBuffer... otherwise I see what looks like
     // a double free in valgrind when the MemoryBuffer drops so we are `forget`ting MemoryBuffer here
     // for now until we can confirm this is the correct thing to do
-    pub fn create_module_from_ir(&self, memory_buffer: MemoryBuffer) -> Result<Module, String> {
+    pub fn create_module_from_ir(&self, memory_buffer: MemoryBuffer) -> Result<Module, LLVMString> {
         let mut module = ptr::null_mut();
         let mut err_str = ptr::null_mut();
 
@@ -121,15 +122,7 @@ impl Context {
             return Ok(Module::new(module, Some(&self)));
         }
 
-        let rust_str = unsafe {
-            let rust_str = CStr::from_ptr(err_str).to_string_lossy().into_owned();
-
-            LLVMDisposeMessage(err_str);
-
-            rust_str
-        };
-
-        Err(rust_str)
+        Err(LLVMString::new(err_str))
     }
 
     pub fn void_type(&self) -> VoidType {

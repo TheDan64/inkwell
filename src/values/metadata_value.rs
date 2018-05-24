@@ -1,6 +1,7 @@
 use llvm_sys::core::{LLVMMDNode, LLVMMDString, LLVMIsAMDNode, LLVMIsAMDString, LLVMGetMDString, LLVMGetMDNodeNumOperands, LLVMGetMDNodeOperands, LLVMGetMDKindID};
 use llvm_sys::prelude::LLVMValueRef;
 
+use LLVMString;
 use values::traits::AsValueRef;
 use values::{BasicValue, BasicMetadataValueEnum, Value};
 
@@ -130,7 +131,7 @@ impl MetadataValue {
         }
     }
 
-    pub fn print_to_string(&self) -> &CStr {
+    pub fn print_to_string(&self) -> LLVMString {
         self.metadata_value.print_to_string()
     }
 

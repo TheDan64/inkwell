@@ -1,8 +1,7 @@
 use llvm_sys::core::{LLVMConstVector, LLVMConstNull, LLVMGetVectorSize};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
-use std::ffi::CStr;
-
+use LLVMString;
 use types::traits::AsTypeRef;
 use types::Type;
 use values::{BasicValue, PointerValue, VectorValue, IntValue};
@@ -76,7 +75,7 @@ impl VectorType {
         VectorValue::new(null)
     }
 
-    pub fn print_to_string(&self) -> &CStr {
+    pub fn print_to_string(&self) -> LLVMString {
         self.vec_type.print_to_string()
     }
 

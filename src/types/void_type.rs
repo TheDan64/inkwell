@@ -1,13 +1,11 @@
 use llvm_sys::core::LLVMVoidType;
 use llvm_sys::prelude::LLVMTypeRef;
 
-use AddressSpace;
+use {AddressSpace, LLVMString};
 use context::ContextRef;
 use types::traits::AsTypeRef;
 use types::{Type, BasicType, FunctionType, PointerType};
 use values::PointerValue;
-
-use std::ffi::CStr;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct VoidType {
@@ -48,7 +46,7 @@ impl VoidType {
         VoidType::new(void_type)
     }
 
-    pub fn print_to_string(&self) -> &CStr {
+    pub fn print_to_string(&self) -> LLVMString {
         self.void_type.print_to_string()
     }
 

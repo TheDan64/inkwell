@@ -2,9 +2,7 @@ use llvm_sys::core::{LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, L
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfInt;
 use llvm_sys::prelude::LLVMTypeRef;
 
-use std::ffi::CStr;
-
-use AddressSpace;
+use {AddressSpace, LLVMString};
 use context::ContextRef;
 use types::traits::AsTypeRef;
 use types::{Type, ArrayType, BasicType, VectorType, PointerType, FunctionType};
@@ -307,7 +305,7 @@ impl IntType {
         }
     }
 
-    pub fn print_to_string(&self) -> &CStr {
+    pub fn print_to_string(&self) -> LLVMString {
         self.int_type.print_to_string()
     }
 

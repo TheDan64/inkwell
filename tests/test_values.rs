@@ -649,27 +649,27 @@ fn test_floats() {
     let f64_two = f64_type.const_float(2.);
     let neg_two = f64_two.const_neg();
 
-    assert_eq!(neg_two.print_to_string(), &*CString::new("double -2.000000e+00").unwrap());
+    assert_eq!(*neg_two.print_to_string(), *CString::new("double -2.000000e+00").unwrap());
 
     let neg_three = neg_two.const_sub(&f64_one);
 
-    assert_eq!(neg_three.print_to_string(), &*CString::new("double -3.000000e+00").unwrap());
+    assert_eq!(*neg_three.print_to_string(), *CString::new("double -3.000000e+00").unwrap());
 
     let pos_six = neg_three.const_mul(&neg_two);
 
-    assert_eq!(pos_six.print_to_string(), &*CString::new("double 6.000000e+00").unwrap());
+    assert_eq!(*pos_six.print_to_string(), *CString::new("double 6.000000e+00").unwrap());
 
     let pos_eight = pos_six.const_add(&f64_two);
 
-    assert_eq!(pos_eight.print_to_string(), &*CString::new("double 8.000000e+00").unwrap());
+    assert_eq!(*pos_eight.print_to_string(), *CString::new("double 8.000000e+00").unwrap());
 
     let pos_four = pos_eight.const_div(&f64_two);
 
-    assert_eq!(pos_four.print_to_string(), &*CString::new("double 4.000000e+00").unwrap());
+    assert_eq!(*pos_four.print_to_string(), *CString::new("double 4.000000e+00").unwrap());
 
     let rem = pos_six.const_remainder(&pos_four);
 
-    assert_eq!(rem.print_to_string(), &*CString::new("double 2.000000e+00").unwrap());
+    assert_eq!(*rem.print_to_string(), *CString::new("double 2.000000e+00").unwrap());
 
     assert!(f64_one.const_compare(FloatPredicate::PredicateFalse, &f64_two).is_null());
     assert!(!f64_one.const_compare(FloatPredicate::PredicateTrue, &f64_two).is_null());
@@ -718,21 +718,21 @@ fn test_int_from_string() {
     let i8_type = context.i8_type();
     let i8_val = i8_type.const_int_from_string("0121", 10);
 
-    assert_eq!(i8_val.print_to_string(), &*CString::new("i8 121").unwrap());
+    assert_eq!(*i8_val.print_to_string(), *CString::new("i8 121").unwrap());
 
     let i8_val = i8_type.const_int_from_string("0121", 3);
 
-    assert_eq!(i8_val.print_to_string(), &*CString::new("i8 16").unwrap());
+    assert_eq!(*i8_val.print_to_string(), *CString::new("i8 16").unwrap());
 
     // LLVM will not throw an error, just parse until it can parse no more (and
     // possibly spit out something completely unexpected):
     let i8_val = i8_type.const_int_from_string("0121", 2);
 
-    assert_eq!(i8_val.print_to_string(), &*CString::new("i8 3").unwrap());
+    assert_eq!(*i8_val.print_to_string(), *CString::new("i8 3").unwrap());
 
     let i8_val = i8_type.const_int_from_string("ABCD", 2);
 
-    assert_eq!(i8_val.print_to_string(), &*CString::new("i8 -15").unwrap());
+    assert_eq!(*i8_val.print_to_string(), *CString::new("i8 -15").unwrap());
 }
 
 #[test]
@@ -885,7 +885,7 @@ fn test_phi_values() {
     assert!(phi.as_basic_value().is_int_value());
     assert_eq!(phi.as_instruction().get_opcode(), Phi);
     assert_eq!(phi.count_incoming(), 0);
-    assert_eq!(phi.print_to_string(), &*CString::new("  %if = phi i1 ").unwrap());
+    assert_eq!(*phi.print_to_string(), *CString::new("  %if = phi i1 ").unwrap());
 
     phi.add_incoming(&[
         (&false_val, &then_block),
@@ -893,7 +893,7 @@ fn test_phi_values() {
     ]);
 
     assert_eq!(phi.count_incoming(), 2);
-    assert_eq!(phi.print_to_string(), &*CString::new("  %if = phi i1 [ false, %then ], [ true, %else ]").unwrap());
+    assert_eq!(*phi.print_to_string(), *CString::new("  %if = phi i1 [ false, %then ], [ true, %else ]").unwrap());
 
     let (then_val, then_bb) = phi.get_incoming(0).unwrap();
     let (else_val, else_bb) = phi.get_incoming(1).unwrap();
@@ -913,15 +913,16 @@ fn test_allocations() {
     let builder = context.create_builder();
 
     // REVIEW: Alloca segfaults in 5.0 ...
+    // and in earlier versions too apparently?
     #[cfg(not(feature = "llvm5-0"))]
     {
         let stack_ptr = builder.build_alloca(&i32_type, "stack_ptr");
 
-        assert_eq!(stack_ptr.get_type().print_to_string(), &*CString::new("i32*").unwrap());
+        assert_eq!(*stack_ptr.get_type().print_to_string(), *CString::new("i32*").unwrap());
 
         let stack_array = builder.build_array_alloca(&i32_type, &i32_three, "stack_array");
 
-        assert_eq!(stack_array.get_type().print_to_string(), &*CString::new("i32*").unwrap());
+        assert_eq!(*stack_array.get_type().print_to_string(), *CString::new("i32*").unwrap());
     }
 
     // REVIEW: Heap allocations are not working:

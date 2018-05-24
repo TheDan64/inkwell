@@ -2,9 +2,7 @@ use llvm_sys::core::{LLVMConstReal, LLVMConstNull, LLVMHalfType, LLVMFloatType, 
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfFloat;
 use llvm_sys::prelude::LLVMTypeRef;
 
-use std::ffi::CStr;
-
-use AddressSpace;
+use {AddressSpace, LLVMString};
 use context::ContextRef;
 use types::traits::AsTypeRef;
 use types::{Type, PointerType, FunctionType, BasicType, ArrayType, VectorType};
@@ -122,7 +120,7 @@ impl FloatType {
         FloatType::new(float_type)
     }
 
-    pub fn print_to_string(&self) -> &CStr {
+    pub fn print_to_string(&self) -> LLVMString {
         self.float_type.print_to_string()
     }
 

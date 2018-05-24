@@ -2,6 +2,7 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
 
+use LLVMString;
 use types::StructType;
 use values::traits::AsValueRef;
 use values::{InstructionValue, Value, MetadataValue};
@@ -40,7 +41,7 @@ impl StructValue {
         self.struct_value.is_undef()
     }
 
-    pub fn print_to_string(&self) -> &CStr {
+    pub fn print_to_string(&self) -> LLVMString {
         self.struct_value.print_to_string()
     }
 

@@ -1,9 +1,7 @@
 use llvm_sys::core::{LLVMGetPointerAddressSpace, LLVMConstNull};
 use llvm_sys::prelude::LLVMTypeRef;
 
-use std::ffi::CStr;
-
-use AddressSpace;
+use {AddressSpace, LLVMString};
 use context::ContextRef;
 use types::traits::AsTypeRef;
 use types::{Type, BasicType, ArrayType, FunctionType, VectorType};
@@ -53,7 +51,7 @@ impl PointerType {
         }
     }
 
-    pub fn print_to_string(&self) -> &CStr {
+    pub fn print_to_string(&self) -> LLVMString {
         self.ptr_type.print_to_string()
     }
 

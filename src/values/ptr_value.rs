@@ -3,6 +3,7 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
 
+use LLVMString;
 use types::{AsTypeRef, IntType, PointerType};
 use values::{AsValueRef, InstructionValue, IntValue, Value, MetadataValue};
 
@@ -40,7 +41,7 @@ impl PointerValue {
         self.ptr_value.is_undef()
     }
 
-    pub fn print_to_string(&self) -> &CStr {
+    pub fn print_to_string(&self) -> LLVMString {
         self.ptr_value.print_to_string()
     }
 

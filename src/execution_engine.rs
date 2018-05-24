@@ -1,6 +1,6 @@
-use llvm_sys::core::LLVMDisposeMessage;
 use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction, LLVMLinkInMCJIT, LLVMLinkInInterpreter, LLVMRemoveModule, LLVMGenericValueRef, LLVMFreeMachineCodeForFunction, LLVMAddGlobalMapping};
 
+use LLVMString;
 use module::Module;
 use targets::TargetData;
 use values::{AnyValue, AsValueRef, FunctionValue, GenericValue};
@@ -11,10 +11,19 @@ use std::ffi::{CStr, CString};
 use std::mem::{forget, uninitialized, zeroed, transmute_copy, size_of};
 use std::fmt::{self, Debug, Formatter};
 
+// TODO: impl Error?
 #[derive(Debug, PartialEq, Eq)]
 pub enum FunctionLookupError {
     JITNotEnabled,
     FunctionNotFound, // 404!
+}
+
+// TODO: impl Error?
+#[derive(Debug, PartialEq, Eq)]
+pub enum RemoveModuleError {
+    ModuleNotOwned, // "Module is not owned by an Execution Engine".
+    IncorrectModuleOwner, // "Module is not owned by this Execution Engine"
+    LLVMError(LLVMString),
 }
 
 /// A reference-counted wrapper around LLVM's execution engine.
@@ -134,30 +143,22 @@ impl ExecutionEngine {
         Ok(())
     }
 
-    pub fn remove_module(&self, module: &Module) -> Result<(), String> {
+    pub fn remove_module(&self, module: &Module) -> Result<(), RemoveModuleError> {
         match *module.owned_by_ee.borrow() {
-            Some(ref ee) if *ee.execution_engine != *self.execution_engine => return Err("Module is not owned by this Execution Engine".into()),
-            None => return Err("Module is not owned by an Execution Engine".into()),
+            Some(ref ee) if *ee.execution_engine != *self.execution_engine => return Err(RemoveModuleError::IncorrectModuleOwner),
+            None => return Err(RemoveModuleError::ModuleNotOwned),
             _ => ()
         }
 
         let mut new_module = unsafe { uninitialized() };
-        let mut err_str = unsafe { zeroed() };
+        let mut err_string = unsafe { zeroed() };
 
         let code = unsafe {
-            LLVMRemoveModule(*self.execution_engine, module.module.get(), &mut new_module, &mut err_str)
+            LLVMRemoveModule(*self.execution_engine, module.module.get(), &mut new_module, &mut err_string)
         };
 
         if code == 1 {
-            let rust_str = unsafe {
-                let rust_str = CStr::from_ptr(err_str).to_string_lossy().into_owned();
-
-                LLVMDisposeMessage(err_str);
-
-                rust_str
-            };
-
-            return Err(rust_str);
+            return Err(RemoveModuleError::LLVMError(LLVMString::new(err_string)));
         }
 
         module.module.set(new_module);

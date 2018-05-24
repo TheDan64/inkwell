@@ -1,7 +1,8 @@
-use llvm_sys::core::{LLVMDisposeMessage, LLVMCreateMemoryBufferWithContentsOfFile, LLVMCreateMemoryBufferWithSTDIN, LLVMCreateMemoryBufferWithMemoryRange, LLVMCreateMemoryBufferWithMemoryRangeCopy, LLVMGetBufferStart, LLVMGetBufferSize, LLVMDisposeMemoryBuffer};
+use llvm_sys::core::{LLVMCreateMemoryBufferWithContentsOfFile, LLVMCreateMemoryBufferWithSTDIN, LLVMCreateMemoryBufferWithMemoryRange, LLVMCreateMemoryBufferWithMemoryRangeCopy, LLVMGetBufferStart, LLVMGetBufferSize, LLVMDisposeMemoryBuffer};
 use llvm_sys::prelude::LLVMMemoryBufferRef;
 use llvm_sys::object::LLVMCreateObjectFile;
 
+use LLVMString;
 use object_file::ObjectFile;
 
 use std::ffi::{CString, CStr};
@@ -23,51 +24,35 @@ impl MemoryBuffer {
         }
     }
 
-    pub fn create_from_file(path: &Path) -> Result<Self, String> {
+    pub fn create_from_file(path: &Path) -> Result<Self, LLVMString> {
         let path = path.to_str().expect("Did not find a valid Unicode path string");
         let mut memory_buffer = ptr::null_mut();
-        let mut err_str = unsafe { zeroed() };
+        let mut err_string = unsafe { zeroed() };
 
         let return_code = unsafe {
             // REVIEW: Unclear why this expects *const i8 instead of *const u8
-            LLVMCreateMemoryBufferWithContentsOfFile(path.as_ptr() as *const i8, &mut memory_buffer, &mut err_str)
+            LLVMCreateMemoryBufferWithContentsOfFile(path.as_ptr() as *const i8, &mut memory_buffer, &mut err_string)
         };
 
         // TODO: Verify 1 is error code (LLVM can be inconsistent)
         if return_code == 1 {
-            let rust_str = unsafe {
-                let rust_str = CStr::from_ptr(err_str).to_string_lossy().into_owned();
-
-                LLVMDisposeMessage(err_str);
-
-                rust_str
-            };
-
-            return Err(rust_str);
+            return Err(LLVMString::new(err_string));
         }
 
         Ok(MemoryBuffer::new(memory_buffer))
     }
 
-    pub fn create_from_stdin() -> Result<Self, String> {
+    pub fn create_from_stdin() -> Result<Self, LLVMString> {
         let mut memory_buffer = ptr::null_mut();
-        let mut err_str = unsafe { zeroed() };
+        let mut err_string = unsafe { zeroed() };
 
         let return_code = unsafe {
-            LLVMCreateMemoryBufferWithSTDIN(&mut memory_buffer, &mut err_str)
+            LLVMCreateMemoryBufferWithSTDIN(&mut memory_buffer, &mut err_string)
         };
 
         // TODO: Verify 1 is error code (LLVM can be inconsistent)
         if return_code == 1 {
-            let rust_str = unsafe {
-                let rust_str = CStr::from_ptr(err_str).to_string_lossy().into_owned();
-
-                LLVMDisposeMessage(err_str);
-
-                rust_str
-            };
-
-            return Err(rust_str);
+            return Err(LLVMString::new(err_string));
         }
 
         Ok(MemoryBuffer::new(memory_buffer))

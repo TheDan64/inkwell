@@ -1,10 +1,10 @@
 use llvm_sys::core::{LLVMGetParamTypes, LLVMIsFunctionVarArg, LLVMCountParamTypes};
 use llvm_sys::prelude::LLVMTypeRef;
 
-use std::ffi::CStr;
 use std::fmt;
 use std::mem::forget;
 
+use LLVMString;
 use context::ContextRef;
 use types::traits::AsTypeRef;
 use types::{Type, BasicTypeEnum};
@@ -61,7 +61,7 @@ impl FunctionType {
         self.fn_type.get_context()
     }
 
-    pub fn print_to_string(&self) -> &CStr {
+    pub fn print_to_string(&self) -> LLVMString {
         self.fn_type.print_to_string()
     }
 

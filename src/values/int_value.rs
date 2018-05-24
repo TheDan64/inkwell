@@ -3,7 +3,7 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
 
-use IntPredicate;
+use {IntPredicate, LLVMString};
 use types::{AsTypeRef, FloatType, PointerType, IntType};
 use values::traits::AsValueRef;
 use values::{FloatValue, InstructionValue, PointerValue, Value, MetadataValue};
@@ -42,7 +42,7 @@ impl IntValue {
         self.int_value.is_undef()
     }
 
-    pub fn print_to_string(&self) -> &CStr {
+    pub fn print_to_string(&self) -> LLVMString {
         self.int_value.print_to_string()
     }
 

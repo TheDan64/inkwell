@@ -3,6 +3,7 @@ use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 
 use std::ffi::CStr;
 
+use LLVMString;
 use basic_block::BasicBlock;
 use values::traits::AsValueRef;
 use values::{BasicValue, BasicValueEnum, InstructionValue, Value};
@@ -72,7 +73,7 @@ impl PhiValue {
         self.phi_value.is_undef()
     }
 
-    pub fn print_to_string(&self) -> &CStr {
+    pub fn print_to_string(&self) -> LLVMString {
         self.phi_value.print_to_string()
     }
 

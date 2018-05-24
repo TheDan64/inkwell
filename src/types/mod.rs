@@ -27,11 +27,10 @@ use llvm_sys::core::{LLVMAlignOf, LLVMGetTypeContext, LLVMFunctionType, LLVMArra
 use llvm_sys::LLVMTypeKind;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
-use std::ffi::CStr;
 use std::fmt;
 use std::rc::Rc;
 
-use AddressSpace;
+use {AddressSpace, LLVMString};
 use context::{Context, ContextRef};
 use values::{IntValue, PointerValue};
 
@@ -164,14 +163,12 @@ impl Type {
         IntValue::new(int_value)
     }
 
-    // FIXME: LLVMPrintTypeToString actually returns an owned string according to
-    // https://github.com/llvm-mirror/llvm/blob/master/include/llvm-c/Core.h#L994
-    // We should create a LLVMString wrapper type which derefs to &CStr (or &str
-    // if safely possible?) and calls LLVMDisposeMessage on drop
-    fn print_to_string(&self) -> &CStr {
-        unsafe {
-            CStr::from_ptr(LLVMPrintTypeToString(self.type_))
-        }
+    fn print_to_string(&self) -> LLVMString {
+        let c_string_ptr = unsafe {
+            LLVMPrintTypeToString(self.type_)
+        };
+
+        LLVMString::new(c_string_ptr)
     }
 }
 

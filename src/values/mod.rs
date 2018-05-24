@@ -35,6 +35,8 @@ use llvm_sys::prelude::{LLVMValueRef, LLVMTypeRef};
 use std::ffi::{CString, CStr};
 use std::fmt;
 
+use LLVMString;
+
 #[derive(PartialEq, Eq, Clone, Copy)]
 struct Value {
     value: LLVMValueRef,
@@ -83,6 +85,7 @@ impl Value {
         }
     }
 
+    // get_name should *not* return a LLVMString, because it is not an owned value AFAICT
     fn get_name(&self) -> &CStr {
         unsafe {
             CStr::from_ptr(LLVMGetValueName(self.value))
@@ -101,10 +104,12 @@ impl Value {
         }
     }
 
-    fn print_to_string(&self) -> &CStr {
-        unsafe {
-            CStr::from_ptr(LLVMPrintValueToString(self.value))
-        }
+    fn print_to_string(&self) -> LLVMString {
+        let c_string = unsafe {
+            LLVMPrintValueToString(self.value)
+        };
+
+        LLVMString::new(c_string)
     }
 
     fn print_to_stderr(&self) {

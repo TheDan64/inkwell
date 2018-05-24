@@ -1,11 +1,11 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
-use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDisposeMessage, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile, LLVMSetModuleInlineAsm};
+use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile, LLVMSetModuleInlineAsm};
 use llvm_sys::execution_engine::LLVMCreateJITCompilerForModule;
 use llvm_sys::prelude::{LLVMValueRef, LLVMModuleRef};
 use llvm_sys::LLVMLinkage;
 
-use std::cell::{Cell, RefCell};
+use std::cell::{Cell, RefCell, Ref};
 use std::ffi::{CString, CStr};
 use std::fs::File;
 use std::mem::{forget, uninitialized, zeroed};
@@ -13,7 +13,7 @@ use std::path::Path;
 use std::rc::Rc;
 use std::slice::from_raw_parts;
 
-use {AddressSpace, OptimizationLevel};
+use {AddressSpace, OptimizationLevel, LLVMString};
 use context::{Context, ContextRef};
 use data_layout::DataLayout;
 use execution_engine::ExecutionEngine;
@@ -93,25 +93,22 @@ impl Linkage {
 /// The underlying module will be disposed when dropping this object.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Module {
-    pub(crate) non_global_context: Option<Context>,
-    data_layout: Option<DataLayout>,
+    pub(crate) non_global_context: Option<Context>, // REVIEW: Could we just set context to the global context?
+    data_layout: RefCell<Option<DataLayout>>,
     pub(crate) module: Cell<LLVMModuleRef>,
     pub(crate) owned_by_ee: RefCell<Option<ExecutionEngine>>,
 }
 
 impl Module {
     pub(crate) fn new(module: LLVMModuleRef, context: Option<&Context>) -> Self {
-        assert!(!module.is_null());
+        debug_assert!(!module.is_null());
 
-        let mut module = Module {
+        Module {
             module: Cell::new(module),
             non_global_context: context.map(|ctx| Context::new(ctx.context.clone())),
             owned_by_ee: RefCell::new(None),
-            data_layout: None,
-        };
-
-        module.data_layout = Some(DataLayout::new(module.get_raw_data_layout()));
-        module
+            data_layout: RefCell::new(Some(Module::get_borrowed_data_layout(module))),
+        }
     }
 
     /// Creates a named `Module`. Will be automatically assigned the global context.
@@ -328,24 +325,16 @@ impl Module {
     ///
     /// assert_eq!(module.get_context(), context);
     /// ```
-    pub fn create_jit_execution_engine(&self, opt_level: OptimizationLevel) -> Result<ExecutionEngine, String> {
+    pub fn create_jit_execution_engine(&self, opt_level: OptimizationLevel) -> Result<ExecutionEngine, LLVMString> {
         let mut execution_engine = unsafe { uninitialized() };
-        let mut err_str = unsafe { zeroed() };
+        let mut err_string = unsafe { zeroed() };
 
         let code = unsafe {
-            LLVMCreateJITCompilerForModule(&mut execution_engine, self.module.get(), opt_level as u32, &mut err_str) // Should take ownership of module
+            LLVMCreateJITCompilerForModule(&mut execution_engine, self.module.get(), opt_level as u32, &mut err_string) // Should take ownership of module
         };
 
         if code == 1 {
-            let rust_str = unsafe {
-                let rust_str = CStr::from_ptr(err_str).to_string_lossy().into_owned();
-
-                LLVMDisposeMessage(err_str);
-
-                rust_str
-            };
-
-            return Err(rust_str);
+            return Err(LLVMString::new(err_string));
         }
 
         let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), true);
@@ -404,74 +393,56 @@ impl Module {
         MemoryBuffer::new(memory_buffer)
     }
 
-    /// Ensures that the current `Module` is valid, and returns a `bool`
-    /// that describes whether or not it is.
-    ///
-    /// * `print` - Whether or not a message describing the error should be printed
-    ///   to stderr, in case of failure.
+    /// Ensures that the current `Module` is valid, and returns a `Result`
+    /// that describes whether or not it is, returning a LLVM allocated string on error.
     ///
     /// # Remarks
     /// See also: http://llvm.org/doxygen/Analysis_2Analysis_8cpp_source.html
-    pub fn verify(&self, print: bool) -> bool {
-        // REVIEW <6A>: Maybe, instead of printing the module to stderr with `print`,
-        // we should return Result<(), String> that contains an error string?
+    pub fn verify(&self) -> Result<(), LLVMString> {
         let mut err_str = unsafe { zeroed() };
 
-        let action = if print {
-            LLVMVerifierFailureAction::LLVMPrintMessageAction
-        } else {
-            LLVMVerifierFailureAction::LLVMReturnStatusAction
-        };
+        let action = LLVMVerifierFailureAction::LLVMReturnStatusAction;
 
         let code = unsafe {
             LLVMVerifyModule(self.module.get(), action, &mut err_str)
         };
 
         if code == 1 && !err_str.is_null() {
-            unsafe {
-                if print {
-                    let rust_str = CStr::from_ptr(err_str).to_str().unwrap();
-
-                    eprintln!("{}", rust_str);
-                }
-
-                LLVMDisposeMessage(err_str);
-            }
+            return Err(LLVMString::new(err_str));
         }
 
-        code == 0
+        Ok(())
     }
 
-    fn get_raw_data_layout(&self) -> *mut i8 {
+    fn get_borrowed_data_layout(module: LLVMModuleRef) -> DataLayout {
         #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
-        unsafe {
+        let data_layout = unsafe {
             use llvm_sys::core::LLVMGetDataLayout;
 
-            LLVMGetDataLayout(self.module.get()) as *mut _
-        }
+            LLVMGetDataLayout(module)
+        };
         #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
-        unsafe {
+        let data_layout = unsafe {
             use llvm_sys::core::LLVMGetDataLayoutStr;
 
-            LLVMGetDataLayoutStr(self.module.get()) as *mut _
-        }
+            LLVMGetDataLayoutStr(module)
+        };
+
+        DataLayout::new_borrowed(data_layout)
     }
 
-    pub fn get_data_layout(&self) -> &DataLayout {
-        self.data_layout.as_ref().expect("DataLayout should always exist until Drop")
+    pub fn get_data_layout(&self) -> Ref<DataLayout> {
+        Ref::map(self.data_layout.borrow(), |l| l.as_ref().expect("DataLayout should always exist until Drop"))
     }
 
     // REVIEW: Ensure the replaced string ptr still gets cleaned up by the module (I think it does)
     // valgrind might come in handy once non jemalloc allocators stabilize
     pub fn set_data_layout(&self, data_layout: &DataLayout) {
         unsafe {
-            LLVMSetDataLayout(self.module.get(), data_layout.data_layout.get());
+            LLVMSetDataLayout(self.module.get(), data_layout.as_ptr());
         }
 
-        self.data_layout.as_ref()
-                        .expect("DataLayout should always exist until Drop")
-                        .data_layout
-                        .set(self.get_raw_data_layout());
+        *self.data_layout.borrow_mut() = Some(Module::get_borrowed_data_layout(self.module.get()));
     }
 
     /// Prints the content of the `Module` to stderr.
@@ -482,31 +453,25 @@ impl Module {
     }
 
     /// Prints the content of the `Module` to a string.
-    pub fn print_to_string(&self) -> &CStr {
-        unsafe {
-            CStr::from_ptr(LLVMPrintModuleToString(self.module.get()))
-        }
+    pub fn print_to_string(&self) -> LLVMString {
+        let module_string = unsafe {
+            LLVMPrintModuleToString(self.module.get())
+        };
+
+        LLVMString::new(module_string)
     }
 
     /// Prints the content of the `Module` to a file.
-    pub fn print_to_file(&self, path: &Path) -> Result<(), String> {
+    pub fn print_to_file(&self, path: &Path) -> Result<(), LLVMString> {
         let path = path.to_str().expect("Did not find a valid Unicode path string");
-        let mut err_str = unsafe { zeroed() };
+        let mut err_string = unsafe { zeroed() };
         let return_code = unsafe {
-            LLVMPrintModuleToFile(self.module.get(), path.as_ptr() as *const i8, &mut err_str)
+            LLVMPrintModuleToFile(self.module.get(), path.as_ptr() as *const i8, &mut err_string)
         };
 
         // TODO: Verify 1 is error code (LLVM can be inconsistent)
         if return_code == 1 {
-            let rust_str = unsafe {
-                let rust_str = CStr::from_ptr(err_str).to_string_lossy().into_owned();
-
-                LLVMDisposeMessage(err_str);
-
-                rust_str
-            };
-
-            return Err(rust_str);
+            return Err(LLVMString::new(err_string));
         }
 
         Ok(())
@@ -609,12 +574,10 @@ impl Clone for Module {
     }
 }
 
-// Module owns the data layout string, so LLVMDisposeModule will deallocate it for us,
-// so we must call forget to avoid dropping it ourselves
+// Module owns the data layout string, so LLVMDisposeModule will deallocate it for us.
+// which is why DataLayout must be called with `new_borrowed`
 impl Drop for Module {
     fn drop(&mut self) {
-        forget(self.data_layout.take().expect("DataLayout should always exist until Drop"));
-
         if self.owned_by_ee.borrow_mut().take().is_none() {
             unsafe {
                 LLVMDisposeModule(self.module.get());

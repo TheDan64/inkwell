@@ -90,7 +90,7 @@ fn test_get_function() {
 }
 
 #[test]
-fn test_owned_data_layout_disposed_safely() {
+fn test_module_owned_data_layout_disposed_safely() {
     let context = Context::create();
 
     context.create_module("test");

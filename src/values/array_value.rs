@@ -4,6 +4,7 @@ use llvm_sys::prelude::LLVMValueRef;
 use std::ffi::CStr;
 use std::fmt;
 
+use LLVMString;
 use types::ArrayType;
 use values::traits::AsValueRef;
 use values::{Value, InstructionValue, MetadataValue};
@@ -42,7 +43,7 @@ impl ArrayValue {
         self.array_value.is_undef()
     }
 
-    pub fn print_to_string(&self) -> &CStr {
+    pub fn print_to_string(&self) -> LLVMString {
         self.array_value.print_to_string()
     }
 

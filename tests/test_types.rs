@@ -278,33 +278,33 @@ fn test_const_null() {
     let vec_zero = vec_type.const_null();
     let array_zero = array_type.const_null();
 
-    assert_eq!(bool_zero.print_to_string(), &*CString::new("i1 false").unwrap());
+    assert_eq!(*bool_zero.print_to_string(), *CString::new("i1 false").unwrap());
     assert!(bool_zero.is_null());
-    assert_eq!(i8_zero.print_to_string(), &*CString::new("i8 0").unwrap());
+    assert_eq!(*i8_zero.print_to_string(), *CString::new("i8 0").unwrap());
     assert!(i8_zero.is_null());
-    assert_eq!(i16_zero.print_to_string(), &*CString::new("i16 0").unwrap());
+    assert_eq!(*i16_zero.print_to_string(), *CString::new("i16 0").unwrap());
     assert!(i16_zero.is_null());
-    assert_eq!(i32_zero.print_to_string(), &*CString::new("i32 0").unwrap());
+    assert_eq!(*i32_zero.print_to_string(), *CString::new("i32 0").unwrap());
     assert!(i32_zero.is_null());
-    assert_eq!(i64_zero.print_to_string(), &*CString::new("i64 0").unwrap());
+    assert_eq!(*i64_zero.print_to_string(), *CString::new("i64 0").unwrap());
     assert!(i64_zero.is_null());
-    assert_eq!(i128_zero.print_to_string(), &*CString::new("i128 0").unwrap());
+    assert_eq!(*i128_zero.print_to_string(), *CString::new("i128 0").unwrap());
     assert!(i128_zero.is_null());
-    assert_eq!(f16_zero.print_to_string(), &*CString::new("half 0xH0000").unwrap());
+    assert_eq!(*f16_zero.print_to_string(), *CString::new("half 0xH0000").unwrap());
     assert!(f16_zero.is_null());
-    assert_eq!(f32_zero.print_to_string(), &*CString::new("float 0.000000e+00").unwrap());
+    assert_eq!(*f32_zero.print_to_string(), *CString::new("float 0.000000e+00").unwrap());
     assert!(f32_zero.is_null());
-    assert_eq!(f64_zero.print_to_string(), &*CString::new("double 0.000000e+00").unwrap());
+    assert_eq!(*f64_zero.print_to_string(), *CString::new("double 0.000000e+00").unwrap());
     assert!(f64_zero.is_null());
-    assert_eq!(f128_zero.print_to_string(), &*CString::new("fp128 0xL00000000000000000000000000000000").unwrap());
+    assert_eq!(*f128_zero.print_to_string(), *CString::new("fp128 0xL00000000000000000000000000000000").unwrap());
     assert!(f128_zero.is_null());
-    assert_eq!(struct_zero.print_to_string(), &*CString::new("{ i8, fp128 } zeroinitializer").unwrap());
+    assert_eq!(*struct_zero.print_to_string(), *CString::new("{ i8, fp128 } zeroinitializer").unwrap());
     assert!(struct_zero.is_null());
-    assert_eq!(ptr_zero.print_to_string(), &*CString::new("double* null").unwrap());
+    assert_eq!(*ptr_zero.print_to_string(), *CString::new("double* null").unwrap());
     assert!(ptr_zero.is_null());
-    assert_eq!(vec_zero.print_to_string(), &*CString::new("<42 x double> zeroinitializer").unwrap());
+    assert_eq!(*vec_zero.print_to_string(), *CString::new("<42 x double> zeroinitializer").unwrap());
     assert!(vec_zero.is_null());
-    assert_eq!(array_zero.print_to_string(), &*CString::new("[42 x double] zeroinitializer").unwrap());
+    assert_eq!(*array_zero.print_to_string(), *CString::new("[42 x double] zeroinitializer").unwrap());
     assert!(array_zero.is_null());
 }
 

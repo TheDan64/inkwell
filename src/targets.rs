@@ -1,10 +1,9 @@
-use llvm_sys::core::LLVMDisposeMessage;
 #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
 use llvm_sys::target::LLVMAddTargetData;
 use llvm_sys::target::{LLVMTargetDataRef, LLVMCopyStringRepOfTargetData, LLVMSizeOfTypeInBits, LLVMCreateTargetData, LLVMByteOrder, LLVMPointerSize, LLVMByteOrdering, LLVMStoreSizeOfType, LLVMABISizeOfType, LLVMABIAlignmentOfType, LLVMCallFrameAlignmentOfType, LLVMPreferredAlignmentOfType, LLVMPreferredAlignmentOfGlobal, LLVMElementAtOffset, LLVMOffsetOfElement, LLVMDisposeTargetData, LLVMPointerSizeForAS, LLVMIntPtrType, LLVMIntPtrTypeForAS, LLVMIntPtrTypeInContext, LLVMIntPtrTypeForASInContext};
 use llvm_sys::target_machine::{LLVMGetFirstTarget, LLVMTargetRef, LLVMGetNextTarget, LLVMGetTargetFromName, LLVMGetTargetFromTriple, LLVMGetTargetName, LLVMGetTargetDescription, LLVMTargetHasJIT, LLVMTargetHasTargetMachine, LLVMTargetHasAsmBackend, LLVMTargetMachineRef, LLVMDisposeTargetMachine, LLVMGetTargetMachineTarget, LLVMGetTargetMachineTriple, LLVMSetTargetMachineAsmVerbosity, LLVMCreateTargetMachine, LLVMGetTargetMachineCPU, LLVMGetTargetMachineFeatureString, LLVMGetDefaultTargetTriple, LLVMAddAnalysisPasses, LLVMCodeGenOptLevel, LLVMCodeModel, LLVMRelocMode, LLVMCodeGenFileType, LLVMTargetMachineEmitToMemoryBuffer, LLVMTargetMachineEmitToFile};
 
-use OptimizationLevel;
+use {LLVMString, OptimizationLevel};
 use context::Context;
 use data_layout::DataLayout;
 use memory_buffer::MemoryBuffer;
@@ -745,25 +744,17 @@ impl Target {
         Target::new(target)
     }
 
-    pub fn from_triple(triple: &str) -> Result<Target, String> {
+    pub fn from_triple(triple: &str) -> Result<Target, LLVMString> {
         let c_string = CString::new(triple).expect("Conversion to CString failed unexpectedly");
         let mut target = ptr::null_mut();
-        let mut err_str = unsafe { zeroed() };
+        let mut err_string = unsafe { zeroed() };
 
         let code = unsafe {
-            LLVMGetTargetFromTriple(c_string.as_ptr(), &mut target, &mut err_str)
+            LLVMGetTargetFromTriple(c_string.as_ptr(), &mut target, &mut err_string)
         };
 
         if code == 1 { // REVIEW: 1 is error value
-            let rust_str = unsafe {
-                let rust_str = CStr::from_ptr(err_str).to_string_lossy().into_owned();
-
-                LLVMDisposeMessage(err_str);
-
-                rust_str
-            };
-
-            return Err(rust_str);
+            return Err(LLVMString::new(err_string));
         }
 
         Ok(Target::new(target))
@@ -847,48 +838,32 @@ impl TargetMachine {
         }
     }
 
-    pub fn write_to_memory_buffer(&self, module: &Module, file_type: FileType) -> Result<MemoryBuffer, String> {
+    pub fn write_to_memory_buffer(&self, module: &Module, file_type: FileType) -> Result<MemoryBuffer, LLVMString> {
         let mut memory_buffer = ptr::null_mut();
-        let mut err_str = unsafe { zeroed() };
+        let mut err_string = unsafe { zeroed() };
         let return_code = unsafe {
-            LLVMTargetMachineEmitToMemoryBuffer(self.target_machine, module.module.get(), file_type.as_llvm_file_type(), &mut err_str, &mut memory_buffer)
+            LLVMTargetMachineEmitToMemoryBuffer(self.target_machine, module.module.get(), file_type.as_llvm_file_type(), &mut err_string, &mut memory_buffer)
         };
 
         // TODO: Verify 1 is error code (LLVM can be inconsistent)
         if return_code == 1 {
-            let rust_str = unsafe {
-                let rust_str = CStr::from_ptr(err_str).to_string_lossy().into_owned();
-
-                LLVMDisposeMessage(err_str);
-
-                rust_str
-            };
-
-            return Err(rust_str);
+            return Err(LLVMString::new(err_string));
         }
 
         Ok(MemoryBuffer::new(memory_buffer))
     }
 
-    pub fn write_to_file(&self, module: &Module, file_type: FileType, path: &Path) -> Result<(), String> {
+    pub fn write_to_file(&self, module: &Module, file_type: FileType, path: &Path) -> Result<(), LLVMString> {
         let path = path.to_str().expect("Did not find a valid Unicode path string");
-        let mut err_str = unsafe { zeroed() };
+        let mut err_string = unsafe { zeroed() };
         let return_code = unsafe {
             // REVIEW: Why does LLVM need a mutable reference to path...?
-            LLVMTargetMachineEmitToFile(self.target_machine, module.module.get(), path.as_ptr() as *mut i8, file_type.as_llvm_file_type(), &mut err_str)
+            LLVMTargetMachineEmitToFile(self.target_machine, module.module.get(), path.as_ptr() as *mut i8, file_type.as_llvm_file_type(), &mut err_string)
         };
 
         // TODO: Verify 1 is error code (LLVM can be inconsistent)
         if return_code == 1 {
-            let rust_str = unsafe {
-                let rust_str = CStr::from_ptr(err_str).to_string_lossy().into_owned();
-
-                LLVMDisposeMessage(err_str);
-
-                rust_str
-            };
-
-            return Err(rust_str);
+            return Err(LLVMString::new(err_string));
         }
 
         Ok(())
@@ -960,7 +935,7 @@ impl TargetData {
             LLVMCopyStringRepOfTargetData(self.target_data)
         };
 
-        DataLayout::new(data_layout)
+        DataLayout::new_owned(data_layout)
     }
 
     // REVIEW: Does this only work if Sized?
