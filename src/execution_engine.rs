@@ -5,25 +5,79 @@ use module::Module;
 use targets::TargetData;
 use values::{AnyValue, AsValueRef, FunctionValue, GenericValue};
 
+use std::error::Error;
 use std::rc::Rc;
 use std::ops::Deref;
 use std::ffi::{CStr, CString};
+use std::fmt::{self, Debug, Display, Formatter};
 use std::mem::{forget, uninitialized, zeroed, transmute_copy, size_of};
-use std::fmt::{self, Debug, Formatter};
 
-// TODO: impl Error?
 #[derive(Debug, PartialEq, Eq)]
 pub enum FunctionLookupError {
     JITNotEnabled,
     FunctionNotFound, // 404!
 }
 
-// TODO: impl Error?
+impl Error for FunctionLookupError {
+    // This method is deprecated on nighty so it's probably not
+    // something we should worry about
+    fn description(&self) -> &str {
+        self.as_str()
+    }
+
+    fn cause(&self) -> Option<&Error> {
+        None
+    }
+}
+
+impl FunctionLookupError {
+    fn as_str(&self) -> &str {
+        match self {
+            FunctionLookupError::JITNotEnabled => "ExecutionEngine does not have JIT functionality enabled",
+            FunctionLookupError::FunctionNotFound => "Function not found in ExecutionEngine",
+        }
+    }
+}
+
+impl Display for FunctionLookupError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "FunctionLookupError({})", self.as_str())
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum RemoveModuleError {
-    ModuleNotOwned, // "Module is not owned by an Execution Engine".
-    IncorrectModuleOwner, // "Module is not owned by this Execution Engine"
+    ModuleNotOwned,
+    IncorrectModuleOwner,
     LLVMError(LLVMString),
+}
+
+impl Error for RemoveModuleError {
+    // This method is deprecated on nighty so it's probably not
+    // something we should worry about
+    fn description(&self) -> &str {
+        self.as_str()
+    }
+
+    fn cause(&self) -> Option<&Error> {
+        None
+    }
+}
+
+impl RemoveModuleError {
+    fn as_str(&self) -> &str {
+        match self {
+            RemoveModuleError::ModuleNotOwned => "Module is not owned by an Execution Engine",
+            RemoveModuleError::IncorrectModuleOwner => "Module is not owned by this Execution Engine",
+            RemoveModuleError::LLVMError(string) => string.to_str().unwrap_or("LLVMError with invalid unicode"),
+        }
+    }
+}
+
+impl Display for RemoveModuleError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "RemoveModuleError({})", self.as_str())
+    }
 }
 
 /// A reference-counted wrapper around LLVM's execution engine.

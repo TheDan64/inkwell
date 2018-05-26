@@ -350,7 +350,6 @@ impl DLLStorageClass {
     }
 }
 
-// TODO: impl Debug, Display
 /// This is also known as an LLVMMessage
 #[derive(Eq)]
 pub struct LLVMString {
