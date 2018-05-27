@@ -3,7 +3,8 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
 
-use {IntPredicate, LLVMString};
+use IntPredicate;
+use support::LLVMString;
 use types::{AsTypeRef, FloatType, PointerType, IntType};
 use values::traits::AsValueRef;
 use values::{FloatValue, InstructionValue, PointerValue, Value, MetadataValue};

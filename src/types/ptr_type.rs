@@ -1,8 +1,9 @@
 use llvm_sys::core::{LLVMGetPointerAddressSpace, LLVMConstNull};
 use llvm_sys::prelude::LLVMTypeRef;
 
-use {AddressSpace, LLVMString};
+use AddressSpace;
 use context::ContextRef;
+use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, BasicType, ArrayType, FunctionType, VectorType};
 use values::{PointerValue, IntValue};

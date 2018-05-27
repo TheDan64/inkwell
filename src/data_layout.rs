@@ -2,7 +2,7 @@ use std::ffi::CStr;
 use std::fmt;
 use std::ops::Deref;
 
-use {LLVMString, LLVMStringOrRaw};
+use support::{LLVMString, LLVMStringOrRaw};
 
 #[derive(Eq)]
 pub struct DataLayout {

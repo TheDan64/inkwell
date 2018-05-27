@@ -2,7 +2,7 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
 
-use LLVMString;
+use support::LLVMString;
 use types::StructType;
 use values::traits::AsValueRef;
 use values::{InstructionValue, Value, MetadataValue};

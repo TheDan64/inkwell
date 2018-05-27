@@ -1,7 +1,7 @@
 use llvm_sys::core::{LLVMMDNode, LLVMMDString, LLVMIsAMDNode, LLVMIsAMDString, LLVMGetMDString, LLVMGetMDNodeNumOperands, LLVMGetMDNodeOperands, LLVMGetMDKindID};
 use llvm_sys::prelude::LLVMValueRef;
 
-use LLVMString;
+use support::LLVMString;
 use values::traits::AsValueRef;
 use values::{BasicValue, BasicMetadataValueEnum, Value};
 

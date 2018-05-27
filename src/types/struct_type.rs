@@ -6,8 +6,9 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use std::ffi::CStr;
 use std::mem::forget;
 
-use {AddressSpace, LLVMString};
+use AddressSpace;
 use context::ContextRef;
+use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, BasicType, BasicTypeEnum, ArrayType, PointerType, FunctionType, VectorType};
 use values::{BasicValue, StructValue, PointerValue, IntValue};

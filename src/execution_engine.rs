@@ -1,7 +1,7 @@
 use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction, LLVMLinkInMCJIT, LLVMLinkInInterpreter, LLVMRemoveModule, LLVMGenericValueRef, LLVMFreeMachineCodeForFunction, LLVMAddGlobalMapping};
 
-use LLVMString;
 use module::Module;
+use support::LLVMString;
 use targets::TargetData;
 use values::{AnyValue, AsValueRef, FunctionValue, GenericValue};
 

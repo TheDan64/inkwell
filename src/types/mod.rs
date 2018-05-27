@@ -30,8 +30,9 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use std::fmt;
 use std::rc::Rc;
 
-use {AddressSpace, LLVMString};
+use AddressSpace;
 use context::{Context, ContextRef};
+use support::LLVMString;
 use values::{IntValue, PointerValue};
 
 // Worth noting that types seem to be singletons. At the very least, primitives are.

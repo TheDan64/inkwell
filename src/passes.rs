@@ -323,12 +323,16 @@ impl PassManager {
         }
     }
 
-    // TODO: LLVM 4.0+
-    // pub fn add_new_gvn_pass(&self) {
-    //     unsafe {
-    //         LLVMAddNewGVNPass(self.pass_manager)
-    //     }
-    // }
+    // REVIEW: Is `LLVMAddGVNPass` deprecated? Should we just seemlessly replace
+    // the old one with this one in 4.0+?
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+    pub fn add_new_gvn_pass(&self) {
+        use llvm_sys::transforms::scalar::LLVMAddNewGVNPass;
+
+        unsafe {
+            LLVMAddNewGVNPass(self.pass_manager)
+        }
+    }
 
     pub fn add_ind_var_simplify_pass(&self) {
         unsafe {
@@ -486,12 +490,14 @@ impl PassManager {
         }
     }
 
-    // TODO: LLVM 4.0+
-    // pub fn add_early_cse_mem_ssa_pass(&self) {
-    //     unsafe {
-    //         LLVMAddEarlyCSEMemSSAPass(self.pass_manager)
-    //     }
-    // }
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+    pub fn add_early_cse_mem_ssa_pass(&self) {
+        use llvm_sys::transforms::scalar::LLVMAddEarlyCSEMemSSAPass;
+
+        unsafe {
+            LLVMAddEarlyCSEMemSSAPass(self.pass_manager)
+        }
+    }
 
     pub fn add_lower_expect_intrinsic_pass(&self) {
         unsafe {

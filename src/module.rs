@@ -13,11 +13,12 @@ use std::path::Path;
 use std::rc::Rc;
 use std::slice::from_raw_parts;
 
-use {AddressSpace, OptimizationLevel, LLVMString};
+use {AddressSpace, OptimizationLevel};
 use context::{Context, ContextRef};
 use data_layout::DataLayout;
 use execution_engine::ExecutionEngine;
 use memory_buffer::MemoryBuffer;
+use support::LLVMString;
 use types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
 use values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
 

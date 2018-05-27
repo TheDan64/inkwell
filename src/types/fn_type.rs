@@ -4,8 +4,8 @@ use llvm_sys::prelude::LLVMTypeRef;
 use std::fmt;
 use std::mem::forget;
 
-use LLVMString;
 use context::ContextRef;
+use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, BasicTypeEnum};
 // use values::FunctionValue;

@@ -1,7 +1,7 @@
 use llvm_sys::core::{LLVMConstVector, LLVMConstNull, LLVMGetVectorSize};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
-use LLVMString;
+use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::Type;
 use values::{BasicValue, PointerValue, VectorValue, IntValue};

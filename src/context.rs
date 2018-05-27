@@ -2,11 +2,11 @@ use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMConte
 use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef};
 use llvm_sys::ir_reader::LLVMParseIRInContext;
 
-use LLVMString;
 use basic_block::BasicBlock;
 use builder::Builder;
 use memory_buffer::MemoryBuffer;
 use module::Module;
+use support::LLVMString;
 use types::{BasicType, FloatType, IntType, StructType, VoidType};
 use values::{AsValueRef, BasicValue, FunctionValue, StructValue, MetadataValue};
 

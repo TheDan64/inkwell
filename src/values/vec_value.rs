@@ -3,7 +3,7 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
 
-use LLVMString;
+use support::LLVMString;
 use types::{VectorType};
 use values::traits::AsValueRef;
 use values::{BasicValueEnum, BasicValue, InstructionValue, Value, IntValue, MetadataValue};

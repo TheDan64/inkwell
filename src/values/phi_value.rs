@@ -3,8 +3,8 @@ use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 
 use std::ffi::CStr;
 
-use LLVMString;
 use basic_block::BasicBlock;
+use support::LLVMString;
 use values::traits::AsValueRef;
 use values::{BasicValue, BasicValueEnum, InstructionValue, Value};
 

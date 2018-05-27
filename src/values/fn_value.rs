@@ -8,9 +8,9 @@ use std::ffi::{CStr, CString};
 use std::mem::forget;
 use std::fmt;
 
-use LLVMString;
 use basic_block::BasicBlock;
 use module::Linkage;
+use support::LLVMString;
 use types::{BasicTypeEnum, FunctionType};
 use values::traits::AsValueRef;
 use values::{BasicValueEnum, Value, MetadataValue};
@@ -255,12 +255,14 @@ impl FunctionValue {
     }
 
     // TODOC: How this works as an exception handler
-    // TODO: LLVM 3.9+
-    // pub fn has_personality_function(&self) -> bool {
-    //     unsafe {
-    //         LLVMHasPersonalityFunction(self.as_value_ref())
-    //     }
-    // }
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
+    pub fn has_personality_function(&self) -> bool {
+        use llvm_sys::core::LLVMHasPersonalityFn;
+
+        unsafe {
+            LLVMHasPersonalityFn(self.as_value_ref()) == 1
+        }
+    }
 
     #[cfg(not(feature = "llvm3-6"))]
     pub fn get_personality_function(&self) -> Option<FunctionValue> {

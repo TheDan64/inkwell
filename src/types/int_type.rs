@@ -2,8 +2,9 @@ use llvm_sys::core::{LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, L
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfInt;
 use llvm_sys::prelude::LLVMTypeRef;
 
-use {AddressSpace, LLVMString};
+use AddressSpace;
 use context::ContextRef;
+use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, ArrayType, BasicType, VectorType, PointerType, FunctionType};
 use values::{GenericValue, IntValue, PointerValue};

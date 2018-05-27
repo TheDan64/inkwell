@@ -2,13 +2,14 @@ use llvm_sys::core::{LLVMCreateMemoryBufferWithContentsOfFile, LLVMCreateMemoryB
 use llvm_sys::prelude::LLVMMemoryBufferRef;
 use llvm_sys::object::LLVMCreateObjectFile;
 
-use LLVMString;
 use object_file::ObjectFile;
+use support::LLVMString;
 
 use std::ffi::{CString, CStr};
-use std::mem::zeroed;
+use std::mem::{forget, zeroed};
 use std::path::Path;
 use std::ptr;
+use std::slice;
 
 #[derive(Debug)]
 pub struct MemoryBuffer {
@@ -58,17 +59,35 @@ impl MemoryBuffer {
         Ok(MemoryBuffer::new(memory_buffer))
     }
 
+    // REVIEW: Does this make more sense to take a byte array as input?
+    /// This will create a new `MemoryBuffer` from the given input.
+    ///
+    /// This function is likely slightly cheaper than `create_from_memory_range_copy` since it intentionally
+    /// leaks data to LLVM so that it doesn't have to reallocate. `create_from_memory_range_copy` may be removed
+    /// in the future
     pub fn create_from_memory_range(input: &str, name: &str) -> Self {
         let input_c_string = CString::new(input).expect("Conversion to CString failed unexpectedly");
         let name_c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+
 
         let memory_buffer = unsafe {
             LLVMCreateMemoryBufferWithMemoryRange(input_c_string.as_ptr(), input.len(), name_c_string.as_ptr(), false as i32)
         };
 
+        // LLVM seems to want to take ownership of input_c_string, which is why we meed to forget it
+        // This originally was discovered when not forgetting it caused a subsequent as_slice call
+        // to sometimes return partially garbage data
+        // REVIEW: Does this apply to name_c_string as well?
+        forget(input_c_string);
+
         MemoryBuffer::new(memory_buffer)
     }
 
+    /// This will create a new `MemoryBuffer` from the given input.
+    ///
+    /// This function is likely slightly more expensive than `create_from_memory_range` since it does not leak
+    /// data to LLVM, forcing LLVM to make a copy. This function may be removed in the future in favor of
+    /// `create_from_memory_range`
     pub fn create_from_memory_range_copy(input: &str, name: &str) -> Self {
         let input_c_string = CString::new(input).expect("Conversion to CString failed unexpectedly");
         let name_c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
@@ -80,13 +99,11 @@ impl MemoryBuffer {
         MemoryBuffer::new(memory_buffer)
     }
 
-    // REVIEW: I'm assuming this is borrowed data, but maybe it should be String?
-    // or is it a byte array?
-    pub fn as_slice(&self) -> &CStr {
+    pub fn as_slice(&self) -> &[u8] {
         unsafe {
-            let c_str = LLVMGetBufferStart(self.memory_buffer);
+            let start = LLVMGetBufferStart(self.memory_buffer);
 
-            CStr::from_ptr(c_str)
+            slice::from_raw_parts(start as *const _, self.get_size())
         }
     }
 

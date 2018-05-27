@@ -2,8 +2,9 @@ use llvm_sys::core::{LLVMConstReal, LLVMConstNull, LLVMHalfType, LLVMFloatType, 
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfFloat;
 use llvm_sys::prelude::LLVMTypeRef;
 
-use {AddressSpace, LLVMString};
+use AddressSpace;
 use context::ContextRef;
+use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, PointerType, FunctionType, BasicType, ArrayType, VectorType};
 use values::{FloatValue, GenericValue, PointerValue, IntValue};

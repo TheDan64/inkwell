@@ -4,7 +4,7 @@ use llvm_sys::prelude::LLVMValueRef;
 use std::ffi::CStr;
 use std::fmt;
 
-use LLVMString;
+use support::LLVMString;
 use types::ArrayType;
 use values::traits::AsValueRef;
 use values::{Value, InstructionValue, MetadataValue};
