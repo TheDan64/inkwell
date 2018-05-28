@@ -69,12 +69,11 @@ impl MemoryBuffer {
         let input_c_string = CString::new(input).expect("Conversion to CString failed unexpectedly");
         let name_c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
-
         let memory_buffer = unsafe {
             LLVMCreateMemoryBufferWithMemoryRange(input_c_string.as_ptr(), input.len(), name_c_string.as_ptr(), false as i32)
         };
 
-        // LLVM seems to want to take ownership of input_c_string, which is why we meed to forget it
+        // LLVM seems to want to take ownership of input_c_string, which is why we need to forget it
         // This originally was discovered when not forgetting it caused a subsequent as_slice call
         // to sometimes return partially garbage data
         // REVIEW: Does this apply to name_c_string as well?

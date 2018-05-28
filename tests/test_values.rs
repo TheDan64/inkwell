@@ -708,6 +708,8 @@ fn test_function_value_no_params() {
     // Probably LLVM bug if so, should document
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0")))]
     assert!(fn_value.get_personality_function().is_none());
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
+    assert!(!fn_value.has_personality_function());
     assert!(!fn_value.is_null());
     assert!(!fn_value.is_undef());
 }

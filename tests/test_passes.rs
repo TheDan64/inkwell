@@ -67,6 +67,12 @@ fn test_init_all_passes_for_module() {
     pass_manager.add_scoped_no_alias_aa_pass();
     pass_manager.add_basic_alias_analysis_pass();
 
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+    {
+        pass_manager.add_early_cse_mem_ssa_pass();
+        pass_manager.add_new_gvn_pass();
+    }
+
     assert!(!pass_manager.initialize());
     assert!(!pass_manager.finalize());
 

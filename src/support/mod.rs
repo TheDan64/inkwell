@@ -1,5 +1,6 @@
 pub mod error_handling;
 
+use libc::c_char;
 use llvm_sys::core::LLVMDisposeMessage;
 use llvm_sys::support::LLVMLoadLibraryPermanently;
 
@@ -8,14 +9,14 @@ use std::fmt::{self, Debug, Display, Formatter};
 use std::ffi::{CString, CStr};
 use std::ops::Deref;
 
-/// An owned LLVM String. Also known as an LLVM Message
+/// An owned LLVM String. Also known as a LLVM Message
 #[derive(Eq)]
 pub struct LLVMString {
-    pub(crate) ptr: *const i8,
+    pub(crate) ptr: *const c_char,
 }
 
 impl LLVMString {
-    pub(crate) fn new(ptr: *const i8) -> Self {
+    pub(crate) fn new(ptr: *const c_char) -> Self {
         LLVMString {
             ptr,
         }
@@ -84,7 +85,7 @@ impl Drop for LLVMString {
 #[derive(Eq)]
 pub(crate) enum LLVMStringOrRaw {
     Owned(LLVMString),
-    Borrowed(*const i8),
+    Borrowed(*const c_char),
 }
 
 impl LLVMStringOrRaw {
