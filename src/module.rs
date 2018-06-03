@@ -1,7 +1,7 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
 use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile, LLVMSetModuleInlineAsm};
-use llvm_sys::execution_engine::LLVMCreateJITCompilerForModule;
+use llvm_sys::execution_engine::{LLVMCreateInterpreterForModule, LLVMCreateJITCompilerForModule, LLVMCreateExecutionEngineForModule};
 use llvm_sys::prelude::{LLVMValueRef, LLVMModuleRef};
 use llvm_sys::LLVMLinkage;
 
@@ -309,6 +309,78 @@ impl Module {
         }
     }
 
+    /// Creates an `ExecutionEngine` from this `Module`.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::module::Module;
+    /// use inkwell::targets::{InitializationConfig, Target};
+    ///
+    /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+    ///
+    /// let context = Context::get_global();
+    /// let module = Module::create("my_module");
+    /// let execution_engine = module.create_execution_engine().unwrap();
+    ///
+    /// assert_eq!(module.get_context(), context);
+    /// ```
+    // SubType: ExecutionEngine<?>
+    pub fn create_execution_engine(&self) -> Result<ExecutionEngine, LLVMString> {
+        let mut execution_engine = unsafe { uninitialized() };
+        let mut err_string = unsafe { zeroed() };
+
+        let code = unsafe {
+            LLVMCreateExecutionEngineForModule(&mut execution_engine, self.module.get(), &mut err_string) // Takes ownership of module
+        };
+
+        if code == 1 {
+            return Err(LLVMString::new(err_string));
+        }
+
+        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), false);
+
+        *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
+
+        Ok(execution_engine)
+    }
+
+    /// Creates an interpreter `ExecutionEngine` from this `Module`.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::module::Module;
+    /// use inkwell::targets::{InitializationConfig, Target};
+    ///
+    /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+    ///
+    /// let context = Context::get_global();
+    /// let module = Module::create("my_module");
+    /// let execution_engine = module.create_interpreter_execution_engine().unwrap();
+    ///
+    /// assert_eq!(module.get_context(), context);
+    /// ```
+    // SubType: ExecutionEngine<Interpreter>
+    pub fn create_interpreter_execution_engine(&self) -> Result<ExecutionEngine, LLVMString> {
+        let mut execution_engine = unsafe { uninitialized() };
+        let mut err_string = unsafe { zeroed() };
+
+        let code = unsafe {
+            LLVMCreateInterpreterForModule(&mut execution_engine, self.module.get(), &mut err_string) // Takes ownership of module
+        };
+
+        if code == 1 {
+            return Err(LLVMString::new(err_string));
+        }
+
+        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), false);
+
+        *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
+
+        Ok(execution_engine)
+    }
+
     /// Creates a JIT `ExecutionEngine` from this `Module`.
     ///
     /// # Example
@@ -326,12 +398,13 @@ impl Module {
     ///
     /// assert_eq!(module.get_context(), context);
     /// ```
+    // SubType: ExecutionEngine<Jit>
     pub fn create_jit_execution_engine(&self, opt_level: OptimizationLevel) -> Result<ExecutionEngine, LLVMString> {
         let mut execution_engine = unsafe { uninitialized() };
         let mut err_string = unsafe { zeroed() };
 
         let code = unsafe {
-            LLVMCreateJITCompilerForModule(&mut execution_engine, self.module.get(), opt_level as u32, &mut err_string) // Should take ownership of module
+            LLVMCreateJITCompilerForModule(&mut execution_engine, self.module.get(), opt_level as u32, &mut err_string) // Takes ownership of module
         };
 
         if code == 1 {

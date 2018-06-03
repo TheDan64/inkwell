@@ -105,6 +105,7 @@ impl FloatType {
         FloatType::new(float_type)
     }
 
+    // IEEE 754-2008’s binary128 floats according to https://internals.rust-lang.org/t/pre-rfc-introduction-of-half-and-quadruple-precision-floats-f16-and-f128/7521
     pub fn f128_type() -> Self {
         let float_type = unsafe {
             LLVMFP128Type()
@@ -113,6 +114,7 @@ impl FloatType {
         FloatType::new(float_type)
     }
 
+    // Two 64 bits according to https://internals.rust-lang.org/t/pre-rfc-introduction-of-half-and-quadruple-precision-floats-f16-and-f128/7521
     pub fn ppc_f128_type() -> Self {
         let float_type = unsafe {
             LLVMPPCFP128Type()
