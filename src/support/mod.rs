@@ -44,13 +44,13 @@ impl Deref for LLVMString {
 
 impl Debug for LLVMString {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
-        write!(f, "{:?}", *self)
+        write!(f, "{:?}", self.deref())
     }
 }
 
 impl Display for LLVMString {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
-        write!(f, "{}", *self)
+        write!(f, "{:?}", self.deref())
     }
 }
 
