@@ -18,7 +18,7 @@ pub unsafe fn install_fatal_error_handler(handler: extern "C" fn(*const i8)) {
     #[cfg(any(feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0"))]
     use llvm_sys::error_handling::LLVMInstallFatalErrorHandler;
 
-    LLVMInstallFatalErrorHandler(handler)
+    LLVMInstallFatalErrorHandler(Some(handler))
 }
 
 /// Resets LLVM's fatal error handler back to the default

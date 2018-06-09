@@ -87,8 +87,7 @@ impl Type {
         VectorType::new(vec_type)
     }
 
-    // REVIEW: Is this actually AnyType except FunctionType? VoidType? Can you make a FunctionType from a FunctionType???
-    // Probably should just be BasicType
+    // REVIEW: Can you make a FunctionType from a FunctionType???
     fn fn_type(&self, param_types: &[&BasicType], is_var_args: bool) -> FunctionType {
         let mut param_types: Vec<LLVMTypeRef> = param_types.iter()
                                                            .map(|val| val.as_type_ref())

@@ -1,4 +1,5 @@
-use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction, LLVMLinkInMCJIT, LLVMLinkInInterpreter, LLVMRemoveModule, LLVMGenericValueRef, LLVMFreeMachineCodeForFunction, LLVMAddGlobalMapping};
+use libc::c_int;
+use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction, LLVMLinkInMCJIT, LLVMLinkInInterpreter, LLVMRemoveModule, LLVMGenericValueRef, LLVMFreeMachineCodeForFunction, LLVMAddGlobalMapping, LLVMRunStaticConstructors, LLVMRunStaticDestructors};
 
 use module::Module;
 use support::LLVMString;
@@ -285,6 +286,11 @@ impl ExecutionEngine {
             return Err(FunctionLookupError::JITNotEnabled);
         }
 
+        // LLVMGetFunctionAddress segfaults in llvm 5.0 when fn_name doesn't exist. This is a workaround
+        // to see if it exists and avoid the segfault when it doesn't
+        #[cfg(feature = "llvm5-0")]
+        self.get_function_value(fn_name)?;
+
         let c_string = CString::new(fn_name).expect("Conversion to CString failed unexpectedly");
 
         let address = LLVMGetFunctionAddress(*self.execution_engine, c_string.as_ptr());
@@ -346,18 +352,35 @@ impl ExecutionEngine {
         GenericValue::new(value)
     }
 
-    pub fn run_function_as_main(&self, function: &FunctionValue) {
-        let args = vec![]; // TODO: Support argc, argv
-        let environment_variables = vec![];
+    // TODOC: Marked as unsafe because input function could very well do something unsafe. It's up to the caller
+    // to ensure that doesn't happen by defining their function correctly.
+    // SubType: Only for JIT EEs?
+    pub unsafe fn run_function_as_main(&self, function: &FunctionValue, args: &[&str]) -> c_int {
+        let cstring_args: Vec<CString> = args.iter().map(|&arg| CString::new(arg).expect("Conversion to CString failed unexpectedly")).collect();
+        let raw_args: Vec<*const _> = cstring_args.iter().map(|arg| arg.as_ptr()).collect();
+
+        let environment_variables = vec![]; // TODO: Support envp. Likely needs to be null terminated
 
         unsafe {
-            LLVMRunFunctionAsMain(*self.execution_engine, function.as_value_ref(), args.len() as u32, args.as_ptr(), environment_variables.as_ptr()); // REVIEW: usize to u32 cast ok??
+            LLVMRunFunctionAsMain(*self.execution_engine, function.as_value_ref(), raw_args.len() as u32, raw_args.as_ptr(), environment_variables.as_ptr()) // REVIEW: usize to u32 cast ok??
         }
     }
 
     pub fn free_fn_machine_code(&self, function: &FunctionValue) {
         unsafe {
             LLVMFreeMachineCodeForFunction(*self.execution_engine, function.as_value_ref())
+        }
+    }
+
+    pub fn run_static_constructors(&self) {
+        unsafe {
+            LLVMRunStaticConstructors(*self.execution_engine)
+        }
+    }
+
+    pub fn run_static_destructors(&self) {
+        unsafe {
+            LLVMRunStaticDestructors(*self.execution_engine)
         }
     }
 }

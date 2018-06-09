@@ -2,7 +2,7 @@ use llvm_sys::prelude::LLVMTypeRef;
 
 use std::fmt::Debug;
 
-use types::{IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VectorType, VoidType};
+use types::{IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VectorType, VoidType, Type};
 use types::enums::{AnyTypeEnum, BasicTypeEnum};
 
 // This is an ugly privacy hack so that Type can stay private to this module
@@ -33,6 +33,10 @@ pub trait BasicType: AnyType {
     /// Returns a `BasicTypeEnum` that represents the current type.
     fn as_basic_type_enum(&self) -> BasicTypeEnum {
         BasicTypeEnum::new(self.as_type_ref())
+    }
+
+    fn fn_type(&self, param_types: &[&BasicType], is_var_args: bool) -> FunctionType {
+        Type::new(self.as_type_ref()).fn_type(param_types, is_var_args)
     }
 }
 

@@ -1,8 +1,8 @@
 extern crate inkwell;
 
-use self::inkwell::OptimizationLevel;
+use self::inkwell::{AddressSpace, OptimizationLevel, IntPredicate};
 use self::inkwell::context::Context;
-use self::inkwell::execution_engine::FunctionLookupError;
+use self::inkwell::execution_engine::{ExecutionEngine, FunctionLookupError};
 use self::inkwell::targets::{InitializationConfig, Target};
 
 type Thunk = unsafe extern "C" fn();
@@ -24,9 +24,6 @@ fn test_get_function_address() {
 
     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
-    // REVIEW: Here and at end of function; LLVM 5 doesn't seem to like getting a function address which does not exist
-    // and crashes/exits with "LLVM Error: (blank)"
-    #[cfg(not(feature = "llvm5-0"))]
     unsafe {
         assert_eq!(execution_engine.get_function::<Thunk>("errors").unwrap_err(),
             FunctionLookupError::FunctionNotFound);
@@ -42,8 +39,6 @@ fn test_get_function_address() {
     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
     unsafe {
-        // REVIEW: See earlier remark on get function address
-        #[cfg(not(feature = "llvm5-0"))]
         assert_eq!(execution_engine.get_function::<Thunk>("errors").unwrap_err(),
             FunctionLookupError::FunctionNotFound);
 
@@ -52,9 +47,79 @@ fn test_get_function_address() {
 }
 
 #[test]
+fn test_jit_execution_engine() {
+    let context = Context::create();
+    let module = context.create_module("main_module");
+    let builder = context.create_builder();
+    let i8_type = context.i8_type();
+    let i32_type = context.i32_type();
+    let i8_ptr_type = i8_type.ptr_type(AddressSpace::Generic);
+    let i8_ptr_ptr_type = i8_ptr_type.ptr_type(AddressSpace::Generic);
+    let one_i32 = i32_type.const_int(1, false);
+    let three_i32 = i32_type.const_int(3, false);
+    let fourtytwo_i32 = i32_type.const_int(42, false);
+    let fn_type = i32_type.fn_type(&[&i32_type, &i8_ptr_ptr_type], false);
+    let fn_value = module.add_function("main", &fn_type, None);
+    let main_argc = fn_value.get_first_param().unwrap().into_int_value();
+    // let main_argv = fn_value.get_nth_param(1).unwrap();
+    let check_argc = context.append_basic_block(&fn_value, "check_argc");
+    let check_arg3 = context.append_basic_block(&fn_value, "check_arg3");
+    let error1 = context.append_basic_block(&fn_value, "error1");
+    let success = context.append_basic_block(&fn_value, "success");
+
+    main_argc.set_name("argc");
+
+    // If anything goes wrong, jump to returning 1
+    builder.position_at_end(&error1);
+    builder.build_return(Some(&one_i32));
+
+    // If successful, jump to returning 42
+    builder.position_at_end(&success);
+    builder.build_return(Some(&fourtytwo_i32));
+
+    // See if argc == 3
+    builder.position_at_end(&check_argc);
+
+    let eq = IntPredicate::EQ;
+    let argc_check = builder.build_int_compare(eq, &main_argc, &three_i32, "argc_cmp");
+
+    builder.build_conditional_branch(&argc_check, &check_arg3, &error1);
+
+    builder.position_at_end(&check_arg3);
+    builder.build_unconditional_branch(&success);
+
+    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+
+    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).expect("Could not create Execution Engine");
+
+    let main = execution_engine.get_function_value("main").expect("Could not find main in ExecutionEngine");
+
+    let ret = unsafe {
+        execution_engine.run_function_as_main(&main, &["input", "bar"])
+    };
+
+    assert_eq!(ret, 1, "unexpected main return code: {}", ret);
+
+    let ret = unsafe {
+        execution_engine.run_function_as_main(&main, &["input", "bar", "baz"])
+    };
+
+    assert_eq!(ret, 42, "unexpected main return code: {}", ret);
+}
+
+// #[test]
+// fn test_execution_engine_empty_module() {
+//     let context = Context::create();
+//     let module = context.create_module("fooo");
+//     let builder = context.create_builder();
+
+//     let ee = module.create_jit_execution_engine(OptimizationLevel::None); // Segfault?
+// }
+
+#[test]
 fn test_execution_engine() {
     let context = Context::create();
-    let module = context.create_module("errors_abound");
+    let module = context.create_module("main_module");
 
     Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
 
@@ -64,7 +129,7 @@ fn test_execution_engine() {
 #[test]
 fn test_interpreter_execution_engine() {
     let context = Context::create();
-    let module = context.create_module("errors_abound");
+    let module = context.create_module("main_module");
 
     Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
 
