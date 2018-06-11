@@ -101,6 +101,17 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-5.0-dev
+    - env:
+        - LLVM_VERSION="6.0"
+      <<: *BASE
+      addons:
+        apt:
+          sources:
+            - *BASE_SOURCES
+            - llvm-toolchain-trusty-6.0
+          packages:
+            - *BASE_PACKAGES
+            - llvm-6.0-dev
     - deploy: # Documentation build; Only latest supported LLVM version for now
         provider: pages
         skip-cleanup: true
@@ -110,7 +121,7 @@ matrix:
         on:
           branch: master
       script:
-        - cargo doc --no-default-features --features llvm5-0
+        - cargo doc --no-default-features --features llvm6-0
         - echo '<meta http-equiv="refresh" content="1; url=inkwell/index.html">' > target/doc/index.html
       rust: nightly
       addons:
@@ -122,7 +133,8 @@ matrix:
             # - llvm-toolchain-precise-3.8
             # - llvm-toolchain-trusty-3.9
             # - llvm-toolchain-trusty-4.0
-            - llvm-toolchain-trusty-5.0
+            # - llvm-toolchain-trusty-5.0
+            - llvm-toolchain-trusty-6.0
           packages:
             - *BASE_PACKAGES
             # - llvm-3.6-dev
@@ -130,7 +142,8 @@ matrix:
             # - llvm-3.8-dev
             # - llvm-3.9-dev
             # - llvm-4.0-dev
-            - llvm-5.0-dev
+            # - llvm-5.0-dev
+            - llvm-6.0-dev
 
 env:
   global:

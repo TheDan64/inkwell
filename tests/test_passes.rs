@@ -120,11 +120,11 @@ fn test_pass_manager_builder() {
 
     pass_manager_builder.populate_module_pass_manager(&module_pass_manager);
 
-    // TODOC: Seems to return true in 3.7, even though no changes were made.
-    // In 3.6, 3.8, & 3.9 it returns false. Seems like an LLVM bug
-    #[cfg(not(feature = "llvm3-7"))]
+    // TODOC: Seems to return true in 3.7 & 6.0, even though no changes were made.
+    // In 3.6, 3.8, & 3.9 it returns false. Seems like a LLVM bug?
+    #[cfg(not(any(feature = "llvm3-7", feature = "llvm6-0")))]
     assert!(!module_pass_manager.run_on_module(&module));
-    #[cfg(feature = "llvm3-7")]
+    #[cfg(any(feature = "llvm3-7", feature = "llvm6-0"))]
     assert!(module_pass_manager.run_on_module(&module));
 
     // TODO: Populate LTO pass manager?
