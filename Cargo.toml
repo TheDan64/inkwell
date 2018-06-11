@@ -11,7 +11,7 @@ license = "Apache-2.0"
 categories = ["development-tools::ffi"]
 
 [features]
-default = []
+default = ["llvm6-0"]
 llvm3-6 = []
 llvm3-7 = []
 llvm3-8 = []
