@@ -12,4 +12,4 @@ The Inkwell team is committed to the following rules:
 
 We expect others to follow these rules as well.
 
-<small>This COC is based on [dpc's](https://github.com/dpc/public/blob/master/COC.md).</small>
+<sup><sub>This COC is based on [dpc's](https://github.com/dpc/public/blob/master/COC.md).</sup></sub>

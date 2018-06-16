@@ -361,9 +361,7 @@ impl ExecutionEngine {
 
         let environment_variables = vec![]; // TODO: Support envp. Likely needs to be null terminated
 
-        unsafe {
-            LLVMRunFunctionAsMain(*self.execution_engine, function.as_value_ref(), raw_args.len() as u32, raw_args.as_ptr(), environment_variables.as_ptr()) // REVIEW: usize to u32 cast ok??
-        }
+        LLVMRunFunctionAsMain(*self.execution_engine, function.as_value_ref(), raw_args.len() as u32, raw_args.as_ptr(), environment_variables.as_ptr()) // REVIEW: usize to u32 cast ok??
     }
 
     pub fn free_fn_machine_code(&self, function: &FunctionValue) {

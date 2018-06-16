@@ -66,7 +66,8 @@ impl PointerValue {
     }
 
     // REVIEW: Should this be on array value too?
-    pub fn const_gep(&self, ordered_indexes: &[&IntValue]) -> PointerValue {
+    /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
+    pub unsafe fn const_gep(&self, ordered_indexes: &[IntValue]) -> PointerValue {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
                                                                  .map(|val| val.as_value_ref())
                                                                  .collect();
@@ -77,7 +78,8 @@ impl PointerValue {
         PointerValue::new(value)
     }
 
-    pub fn const_in_bounds_gep(&self, ordered_indexes: &[&IntValue]) -> PointerValue {
+    /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
+    pub unsafe fn const_in_bounds_gep(&self, ordered_indexes: &[IntValue]) -> PointerValue {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
                                                                  .map(|val| val.as_value_ref())
                                                                  .collect();

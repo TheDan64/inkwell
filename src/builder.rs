@@ -94,7 +94,8 @@ impl Builder {
     }
 
     // REVIEW: Doesn't GEP work on array too?
-    pub fn build_gep(&self, ptr: &PointerValue, ordered_indexes: &[IntValue], name: &str) -> PointerValue {
+    /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
+    pub unsafe fn build_gep(&self, ptr: &PointerValue, ordered_indexes: &[IntValue], name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
@@ -108,7 +109,8 @@ impl Builder {
     }
 
     // REVIEW: Doesn't GEP work on array too?
-    pub fn build_in_bounds_gep(&self, ptr: &PointerValue, ordered_indexes: &[IntValue], name: &str) -> PointerValue {
+    /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
+    pub unsafe fn build_in_bounds_gep(&self, ptr: &PointerValue, ordered_indexes: &[IntValue], name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
@@ -122,7 +124,8 @@ impl Builder {
     }
 
     // REVIEW: Shouldn't this take a StructValue? Or does it still need to be PointerValue<StructValue>?
-    pub fn build_struct_gep(&self, ptr: &PointerValue, index: u32, name: &str) -> PointerValue {
+    /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
+    pub unsafe fn build_struct_gep(&self, ptr: &PointerValue, index: u32, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
