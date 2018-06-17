@@ -120,6 +120,9 @@ matrix:
         local-dir: target/doc/
         on:
           branch: master
+      before_install:
+        - export PATH=/usr/lib/llvm-6.0/bin/:$HOME/.local/bin:$PATH
+        - export LLVM_PATH=/usr/share/llvm-6.0/cmake/
       script:
         - cargo doc --no-default-features --features llvm6-0
         - echo '<meta http-equiv="refresh" content="1; url=inkwell/index.html">' > target/doc/index.html
