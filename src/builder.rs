@@ -5,8 +5,8 @@ use llvm_sys::{LLVMTypeKind, LLVMAtomicOrdering};
 
 use {IntPredicate, FloatPredicate};
 use basic_block::BasicBlock;
-use values::{AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, FloatValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, InstructionOpcode};
-use types::{AsTypeRef, BasicType, PointerType, IntType, FloatType, IntMathType, FloatMathType};
+use values::{AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, InstructionOpcode};
+use types::{AsTypeRef, BasicType, PointerType, IntType, IntMathType, FloatMathType};
 
 use std::ffi::CString;
 
