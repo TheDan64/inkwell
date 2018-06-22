@@ -16,7 +16,7 @@ pub use types::fn_type::FunctionType;
 pub use types::int_type::IntType;
 pub use types::ptr_type::PointerType;
 pub use types::struct_type::StructType;
-pub use types::traits::{AnyType, BasicType};
+pub use types::traits::{AnyType, BasicType, IntMathType, FloatMathType};
 pub use types::vec_type::VectorType;
 pub use types::void_type::VoidType;
 pub(crate) use types::traits::AsTypeRef;

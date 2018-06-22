@@ -3,6 +3,7 @@ use llvm_sys::prelude::LLVMValueRef;
 use std::fmt::Debug;
 
 use values::{ArrayValue, AggregateValueEnum, GlobalValue, StructValue, BasicValueEnum, AnyValueEnum, IntValue, FloatValue, PointerValue, PhiValue, VectorValue, FunctionValue, InstructionValue};
+use types::{IntMathType, FloatMathType, IntType, FloatType, VectorType};
 
 // This is an ugly privacy hack so that Type can stay private to this module
 // and so that super traits using this trait will be not be implementable
@@ -22,6 +23,19 @@ macro_rules! trait_value_set {
     );
 }
 
+macro_rules! math_trait_value_set {
+    ($trait_name:ident: $(($value_type:ident => $base_type:ident)),*) => (
+        $(
+            impl $trait_name for $value_type {
+                type BaseType = $base_type;
+                fn new(value: LLVMValueRef) -> Self {
+                    $value_type::new(value)
+                }
+            }
+        )*
+    )
+}
+
 /// Represents an aggregate value, built on top of other values.
 pub trait AggregateValue: BasicValue {
     /// Returns an enum containing a typed version of the `AggregateValue`.
@@ -39,10 +53,16 @@ pub trait BasicValue: AnyValue {
 }
 
 /// Represents a value which is permitted in integer math operations
-pub trait IntMathValue: BasicValue {}
+pub trait IntMathValue: BasicValue {
+    type BaseType: IntMathType;
+    fn new(value: LLVMValueRef) -> Self;
+}
 
 /// Represents a value which is permitted in floating point math operations
-pub trait FloatMathValue: BasicValue {}
+pub trait FloatMathValue: BasicValue {
+    type BaseType: FloatMathType;
+    fn new(value: LLVMValueRef) -> Self;
+}
 
 /// Defines any struct wrapping an LLVM value.
 pub trait AnyValue: AsValueRef + Debug {
@@ -55,5 +75,5 @@ pub trait AnyValue: AsValueRef + Debug {
 trait_value_set! {AggregateValue: ArrayValue, AggregateValueEnum, StructValue}
 trait_value_set! {AnyValue: AnyValueEnum, BasicValueEnum, AggregateValueEnum, ArrayValue, IntValue, FloatValue, GlobalValue, PhiValue, PointerValue, FunctionValue, StructValue, VectorValue, InstructionValue}
 trait_value_set! {BasicValue: ArrayValue, BasicValueEnum, AggregateValueEnum, IntValue, FloatValue, GlobalValue, StructValue, PointerValue, VectorValue}
-trait_value_set! {IntMathValue: IntValue, VectorValue}
-trait_value_set! {FloatMathValue: FloatValue, VectorValue}
+math_trait_value_set! {IntMathValue: (IntValue => IntType), (VectorValue => VectorType)}
+math_trait_value_set! {FloatMathValue: (FloatValue => FloatType), (VectorValue => VectorType)}
