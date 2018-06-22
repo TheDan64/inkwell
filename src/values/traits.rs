@@ -38,6 +38,12 @@ pub trait BasicValue: AnyValue {
     }
 }
 
+/// Represents a value which is permitted in integer math operations
+pub trait IntMathValue: BasicValue {}
+
+/// Represents a value which is permitted in floating point math operations
+pub trait FloatMathValue: BasicValue {}
+
 /// Defines any struct wrapping an LLVM value.
 pub trait AnyValue: AsValueRef + Debug {
     /// Returns an enum containing a typed version of `AnyValue`.
@@ -49,3 +55,5 @@ pub trait AnyValue: AsValueRef + Debug {
 trait_value_set! {AggregateValue: ArrayValue, AggregateValueEnum, StructValue}
 trait_value_set! {AnyValue: AnyValueEnum, BasicValueEnum, AggregateValueEnum, ArrayValue, IntValue, FloatValue, GlobalValue, PhiValue, PointerValue, FunctionValue, StructValue, VectorValue, InstructionValue}
 trait_value_set! {BasicValue: ArrayValue, BasicValueEnum, AggregateValueEnum, IntValue, FloatValue, GlobalValue, StructValue, PointerValue, VectorValue}
+trait_value_set! {IntMathValue: IntValue, VectorValue}
+trait_value_set! {FloatMathValue: FloatValue, VectorValue}
