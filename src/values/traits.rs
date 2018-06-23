@@ -3,7 +3,7 @@ use llvm_sys::prelude::LLVMValueRef;
 use std::fmt::Debug;
 
 use values::{ArrayValue, AggregateValueEnum, GlobalValue, StructValue, BasicValueEnum, AnyValueEnum, IntValue, FloatValue, PointerValue, PhiValue, VectorValue, FunctionValue, InstructionValue};
-use types::{IntMathType, FloatMathType, IntType, FloatType, VectorType};
+use types::{IntMathType, FloatMathType, PointerMathType, IntType, FloatType, PointerType, VectorType};
 
 // This is an ugly privacy hack so that Type can stay private to this module
 // and so that super traits using this trait will be not be implementable
@@ -64,6 +64,11 @@ pub trait FloatMathValue: BasicValue {
     fn new(value: LLVMValueRef) -> Self;
 }
 
+pub trait PointerMathValue: BasicValue {
+    type BaseType: PointerMathType;
+    fn new(value: LLVMValueRef) -> Self;
+}
+
 /// Defines any struct wrapping an LLVM value.
 pub trait AnyValue: AsValueRef + Debug {
     /// Returns an enum containing a typed version of `AnyValue`.
@@ -77,3 +82,4 @@ trait_value_set! {AnyValue: AnyValueEnum, BasicValueEnum, AggregateValueEnum, Ar
 trait_value_set! {BasicValue: ArrayValue, BasicValueEnum, AggregateValueEnum, IntValue, FloatValue, GlobalValue, StructValue, PointerValue, VectorValue}
 math_trait_value_set! {IntMathValue: (IntValue => IntType), (VectorValue => VectorType)}
 math_trait_value_set! {FloatMathValue: (FloatValue => FloatType), (VectorValue => VectorType)}
+math_trait_value_set! {PointerMathValue: (PointerValue => PointerType), (VectorValue => VectorType)}
