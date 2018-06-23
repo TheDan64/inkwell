@@ -254,7 +254,7 @@ impl Builder {
     // TODO: Possibly make this generic over sign via struct metadata or subtypes
     // SubType: <I: IntSubType>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     //     if I::sign() == Unsigned { LLVMBuildUDiv() } else { LLVMBuildSDiv() }
-    pub fn build_int_unsigned_div<T: IntMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_int_unsigned_div<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -266,7 +266,7 @@ impl Builder {
 
     // TODO: Possibly make this generic over sign via struct metadata or subtypes
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_signed_div<T: IntMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_int_signed_div<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -278,7 +278,7 @@ impl Builder {
 
     // TODO: Possibly make this generic over sign via struct metadata or subtypes
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_exact_signed_div<T: IntMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_int_exact_signed_div<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -290,7 +290,7 @@ impl Builder {
 
     // TODO: Possibly make this generic over sign via struct metadata or subtypes
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_unsigned_rem<T: IntMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_int_unsigned_rem<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -303,7 +303,7 @@ impl Builder {
 
     // TODO: Possibly make this generic over sign via struct metadata or subtypes
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_signed_rem<T: IntMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_int_signed_rem<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -313,7 +313,7 @@ impl Builder {
         T::new(value)
     }
 
-    pub fn build_int_s_extend<T: IntMathValue>(&self, int_value: &T, int_type: &T::BaseType, name: &str) -> T {
+    pub fn build_int_s_extend<T: IntMathValue>(&self, int_value: T, int_type: T::BaseType, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -323,7 +323,7 @@ impl Builder {
         T::new(value)
     }
 
-    pub fn build_int_s_extend_or_bit_cast<T: IntMathValue>(&self, int_value: &T, int_type: &T::BaseType, name: &str) -> T {
+    pub fn build_int_s_extend_or_bit_cast<T: IntMathValue>(&self, int_value: T, int_type: T::BaseType, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -333,7 +333,7 @@ impl Builder {
         T::new(value)
     }
 
-    pub fn build_int_z_extend<T: IntMathValue>(&self, int_value: &T, int_type: &T::BaseType, name: &str) -> T {
+    pub fn build_int_z_extend<T: IntMathValue>(&self, int_value: T, int_type: T::BaseType, name: &str) -> T {
        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
        let value = unsafe {
@@ -343,7 +343,7 @@ impl Builder {
         T::new(value)
     }
 
-    pub fn build_int_z_extend_or_bit_cast<T: IntMathValue>(&self, int_value: &T, int_type: &T::BaseType, name: &str) -> T {
+    pub fn build_int_z_extend_or_bit_cast<T: IntMathValue>(&self, int_value: T, int_type: T::BaseType, name: &str) -> T {
        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
        let value = unsafe {
@@ -353,7 +353,7 @@ impl Builder {
         T::new(value)
     }
 
-    pub fn build_int_truncate<T: IntMathValue>(&self, int_value: &T, int_type: &T::BaseType, name: &str) -> T {
+    pub fn build_int_truncate<T: IntMathValue>(&self, int_value: T, int_type: T::BaseType, name: &str) -> T {
        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
        let value = unsafe {
@@ -363,7 +363,7 @@ impl Builder {
         T::new(value)
     }
 
-    pub fn build_int_truncate_or_bit_cast<T: IntMathValue>(&self, int_value: &T, int_type: &T::BaseType, name: &str) -> T {
+    pub fn build_int_truncate_or_bit_cast<T: IntMathValue>(&self, int_value: T, int_type: T::BaseType, name: &str) -> T {
        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
        let value = unsafe {
@@ -373,7 +373,7 @@ impl Builder {
         T::new(value)
     }
 
-    pub fn build_float_rem<T: FloatMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_float_rem<T: FloatMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -384,7 +384,7 @@ impl Builder {
     }
 
     // REVIEW: Consolidate these two casts into one via subtypes
-    pub fn build_float_to_unsigned_int<T: FloatMathValue>(&self, float: &T, int_type: &<T::BaseType as FloatMathType>::MathConvType, name: &str) -> <<T::BaseType as FloatMathType>::MathConvType as IntMathType>::ValueType {
+    pub fn build_float_to_unsigned_int<T: FloatMathValue>(&self, float: T, int_type: <T::BaseType as FloatMathType>::MathConvType, name: &str) -> <<T::BaseType as FloatMathType>::MathConvType as IntMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -394,7 +394,7 @@ impl Builder {
         <<T::BaseType as FloatMathType>::MathConvType as IntMathType>::ValueType::new(value)
     }
 
-    pub fn build_float_to_signed_int<T: FloatMathValue>(&self, float: &T, int_type: &<T::BaseType as FloatMathType>::MathConvType, name: &str) -> <<T::BaseType as FloatMathType>::MathConvType as IntMathType>::ValueType {
+    pub fn build_float_to_signed_int<T: FloatMathValue>(&self, float: T, int_type: <T::BaseType as FloatMathType>::MathConvType, name: &str) -> <<T::BaseType as FloatMathType>::MathConvType as IntMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -405,7 +405,7 @@ impl Builder {
     }
 
     // REVIEW: Consolidate these two casts into one via subtypes
-    pub fn build_unsigned_int_to_float<T: IntMathValue>(&self, int: &T, float_type: &<T::BaseType as IntMathType>::MathConvType, name: &str) -> <<T::BaseType as IntMathType>::MathConvType as FloatMathType>::ValueType {
+    pub fn build_unsigned_int_to_float<T: IntMathValue>(&self, int: T, float_type: <T::BaseType as IntMathType>::MathConvType, name: &str) -> <<T::BaseType as IntMathType>::MathConvType as FloatMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -415,7 +415,7 @@ impl Builder {
         <<T::BaseType as IntMathType>::MathConvType as FloatMathType>::ValueType::new(value)
     }
 
-    pub fn build_signed_int_to_float<T: IntMathValue>(&self, int: &T, float_type: &<T::BaseType as IntMathType>::MathConvType, name: &str) -> <<T::BaseType as IntMathType>::MathConvType as FloatMathType>::ValueType {
+    pub fn build_signed_int_to_float<T: IntMathValue>(&self, int: T, float_type: <T::BaseType as IntMathType>::MathConvType, name: &str) -> <<T::BaseType as IntMathType>::MathConvType as FloatMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -425,7 +425,7 @@ impl Builder {
         <<T::BaseType as IntMathType>::MathConvType as FloatMathType>::ValueType::new(value)
     }
 
-    pub fn build_float_trunc<T: FloatMathValue>(&self, float: &T, float_type: &T::BaseType, name: &str) -> T {
+    pub fn build_float_trunc<T: FloatMathValue>(&self, float: T, float_type: T::BaseType, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -435,7 +435,7 @@ impl Builder {
         T::new(value)
     }
 
-    pub fn build_float_ext<T: FloatMathValue>(&self, float: &T, float_type: &T::BaseType, name: &str) -> T {
+    pub fn build_float_ext<T: FloatMathValue>(&self, float: T, float_type: T::BaseType, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -445,7 +445,7 @@ impl Builder {
         T::new(value)
     }
 
-    pub fn build_float_cast<T: FloatMathValue>(&self, float: &T, float_type: &T::BaseType, name: &str) -> T {
+    pub fn build_float_cast<T: FloatMathValue>(&self, float: T, float_type: T::BaseType, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -456,7 +456,7 @@ impl Builder {
     }
 
     // SubType: <L, R>(&self, lhs: &IntValue<L>, rhs: &IntType<R>, name: &str) -> IntValue<R> {
-    pub fn build_int_cast<T: IntMathValue>(&self, int: &T, int_type: &T::BaseType, name: &str) -> T {
+    pub fn build_int_cast<T: IntMathValue>(&self, int: T, int_type: T::BaseType, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -466,7 +466,7 @@ impl Builder {
         T::new(value)
     }
 
-    pub fn build_float_div<T: FloatMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_float_div<T: FloatMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -477,7 +477,7 @@ impl Builder {
     }
 
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_add<T: IntMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_int_add<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -489,7 +489,7 @@ impl Builder {
 
     // REVIEW: Possibly incorperate into build_int_add via flag param
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_nsw_add<T: IntMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_int_nsw_add<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -501,7 +501,7 @@ impl Builder {
 
     // REVIEW: Possibly incorperate into build_int_add via flag param
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_nuw_add<T: IntMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_int_nuw_add<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -512,7 +512,7 @@ impl Builder {
     }
 
     // SubType: <F>(&self, lhs: &FloatValue<F>, rhs: &FloatValue<F>, name: &str) -> FloatValue<F> {
-    pub fn build_float_add<T: FloatMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_float_add<T: FloatMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -523,7 +523,7 @@ impl Builder {
     }
 
     // SubType: (&self, lhs: &IntValue<bool>, rhs: &IntValue<bool>, name: &str) -> IntValue<bool> {
-    pub fn build_xor<T: IntMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_xor<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -534,7 +534,7 @@ impl Builder {
     }
 
     // SubType: (&self, lhs: &IntValue<bool>, rhs: &IntValue<bool>, name: &str) -> IntValue<bool> {
-    pub fn build_and<T: IntMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_and<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -545,7 +545,7 @@ impl Builder {
     }
 
     // SubType: (&self, lhs: &IntValue<bool>, rhs: &IntValue<bool>, name: &str) -> IntValue<bool> {
-    pub fn build_or<T: IntMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_or<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -598,7 +598,7 @@ impl Builder {
     ///
     /// builder.build_return(Some(&shift));
     /// ```
-    pub fn build_left_shift<T: IntMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_left_shift<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -667,7 +667,7 @@ impl Builder {
     ///
     /// builder.build_return(Some(&shift));
     /// ```
-    pub fn build_right_shift<T: IntMathValue>(&self, lhs: &T, rhs: &T, sign_extend: bool, name: &str) -> T {
+    pub fn build_right_shift<T: IntMathValue>(&self, lhs: T, rhs: T, sign_extend: bool, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -682,7 +682,7 @@ impl Builder {
     }
 
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_sub<T: IntMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_int_sub<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -693,7 +693,7 @@ impl Builder {
     }
 
     // REVIEW: Possibly incorperate into build_int_sub via flag param
-    pub fn build_int_nsw_sub<T: IntMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_int_nsw_sub<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -705,7 +705,7 @@ impl Builder {
 
     // REVIEW: Possibly incorperate into build_int_sub via flag param
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_nuw_sub<T: IntMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_int_nuw_sub<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -716,7 +716,7 @@ impl Builder {
     }
 
     // SubType: <F>(&self, lhs: &FloatValue<F>, rhs: &FloatValue<F>, name: &str) -> FloatValue<F> {
-    pub fn build_float_sub<T: FloatMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_float_sub<T: FloatMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -727,7 +727,7 @@ impl Builder {
     }
 
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_mul<T: IntMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_int_mul<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -739,7 +739,7 @@ impl Builder {
 
     // REVIEW: Possibly incorperate into build_int_mul via flag param
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_nsw_mul<T: IntMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_int_nsw_mul<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -751,7 +751,7 @@ impl Builder {
 
     // REVIEW: Possibly incorperate into build_int_mul via flag param
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_nuw_mul<T: IntMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_int_nuw_mul<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -762,7 +762,7 @@ impl Builder {
     }
 
     // SubType: <F>(&self, lhs: &FloatValue<F>, rhs: &FloatValue<F>, name: &str) -> FloatValue<F> {
-    pub fn build_float_mul<T: FloatMathValue>(&self, lhs: &T, rhs: &T, name: &str) -> T {
+    pub fn build_float_mul<T: FloatMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -783,7 +783,7 @@ impl Builder {
     }
 
     // SubType: <F, T>(&self, from: &PointerValue<F>, to: &PointerType<T>, name: &str) -> PointerValue<T> {
-    pub fn build_pointer_cast<T: PointerMathValue>(&self, from: &T, to: &T::BaseType, name: &str) -> T {
+    pub fn build_pointer_cast<T: PointerMathValue>(&self, from: T, to: T::BaseType, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -794,7 +794,10 @@ impl Builder {
     }
 
     // SubType: <I>(&self, op, lhs: &IntValue<I>, rhs: &IntValue<I>, name) -> IntValue<bool> { ?
-    pub fn build_int_compare<T: IntMathValue>(&self, op: IntPredicate, lhs: &T, rhs: &T, name: &str) -> T {
+    // Note: we need a way to get an appropriate return type, since this method's return value
+    // is always a bool (or vector of bools), not necessarily the same as the input value
+    // See https://github.com/TheDan64/inkwell/pull/47#discussion_r197599297
+    pub fn build_int_compare<T: IntMathValue>(&self, op: IntPredicate, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -805,7 +808,8 @@ impl Builder {
     }
 
     // SubType: <F>(&self, op, lhs: &FloatValue<F>, rhs: &FloatValue<F>, name) -> IntValue<bool> { ?
-    pub fn build_float_compare<T: FloatMathValue>(&self, op: FloatPredicate, lhs: &T, rhs: &T, name: &str) -> <<T::BaseType as FloatMathType>::MathConvType as IntMathType>::ValueType {
+    // Note: see comment on build_int_compare regarding return value type
+    pub fn build_float_compare<T: FloatMathValue>(&self, op: FloatPredicate, lhs: T, rhs: T, name: &str) -> <<T::BaseType as FloatMathType>::MathConvType as IntMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -972,7 +976,7 @@ impl Builder {
     }
 
     // SubType: <P>(&self, ptr: &PointerValue<P>, name) -> IntValue<bool> {
-    pub fn build_is_null<T: PointerMathValue>(&self, ptr: &T, name: &str) -> <<T::BaseType as PointerMathType>::PtrConvType as IntMathType>::ValueType {
+    pub fn build_is_null<T: PointerMathValue>(&self, ptr: T, name: &str) -> <<T::BaseType as PointerMathType>::PtrConvType as IntMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let val = unsafe {
@@ -983,7 +987,7 @@ impl Builder {
     }
 
     // SubType: <P>(&self, ptr: &PointerValue<P>, name) -> IntValue<bool> {
-    pub fn build_is_not_null<T: PointerMathValue>(&self, ptr: &T, name: &str) -> <<T::BaseType as PointerMathType>::PtrConvType as IntMathType>::ValueType {
+    pub fn build_is_not_null<T: PointerMathValue>(&self, ptr: T, name: &str) -> <<T::BaseType as PointerMathType>::PtrConvType as IntMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let val = unsafe {
@@ -994,7 +998,7 @@ impl Builder {
     }
 
     // SubType: <I, P>(&self, int: &IntValue<I>, ptr_type: &PointerType<P>, name) -> PointerValue<P> {
-    pub fn build_int_to_ptr<T: IntMathValue>(&self, int: &T, ptr_type: &<T::BaseType as IntMathType>::PtrConvType, name: &str) -> <<T::BaseType as IntMathType>::PtrConvType as PointerMathType>::ValueType {
+    pub fn build_int_to_ptr<T: IntMathValue>(&self, int: T, ptr_type: <T::BaseType as IntMathType>::PtrConvType, name: &str) -> <<T::BaseType as IntMathType>::PtrConvType as PointerMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -1005,7 +1009,7 @@ impl Builder {
     }
 
     // SubType: <I, P>(&self, ptr: &PointerValue<P>, int_type: &IntType<I>, name) -> IntValue<I> {
-    pub fn build_ptr_to_int<T: PointerMathValue>(&self, ptr: &T, int_type: &<T::BaseType as PointerMathType>::PtrConvType, name: &str) -> <<T::BaseType as PointerMathType>::PtrConvType as IntMathType>::ValueType {
+    pub fn build_ptr_to_int<T: PointerMathValue>(&self, ptr: T, int_type: <T::BaseType as PointerMathType>::PtrConvType, name: &str) -> <<T::BaseType as PointerMathType>::PtrConvType as IntMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
