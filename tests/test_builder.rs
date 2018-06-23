@@ -68,7 +68,7 @@ fn test_null_checked_ptr_ops() {
 
     let ptr = function.get_first_param().unwrap().into_pointer_value();
 
-    let is_null = builder.build_is_null(&ptr, "is_null");
+    let is_null = builder.build_is_null(ptr, "is_null");
 
     let ret_0 = function.append_basic_block("ret_0");
     let ret_idx = function.append_basic_block("ret_idx");
@@ -82,9 +82,9 @@ fn test_null_checked_ptr_ops() {
 
     // FIXME: This might not work if compiled on non 64bit devices. Ideally we'd
     // be able to create pointer sized ints easily
-    let ptr_as_int = builder.build_ptr_to_int(&ptr, &i64_type, "ptr_as_int");
-    let new_ptr_as_int = builder.build_int_add(&ptr_as_int, &one, "add");
-    let new_ptr = builder.build_int_to_ptr(&new_ptr_as_int, &i8_ptr_type, "int_as_ptr");
+    let ptr_as_int = builder.build_ptr_to_int(ptr, i64_type, "ptr_as_int");
+    let new_ptr_as_int = builder.build_int_add(ptr_as_int, one, "add");
+    let new_ptr = builder.build_int_to_ptr(new_ptr_as_int, i8_ptr_type, "int_as_ptr");
     let index1 = builder.build_load(&new_ptr, "deref");
 
     builder.build_return(Some(&index1));
@@ -105,7 +105,7 @@ fn test_null_checked_ptr_ops() {
 
     let ptr = function.get_first_param().unwrap().into_pointer_value();
 
-    let is_not_null = builder.build_is_not_null(&ptr, "is_not_null");
+    let is_not_null = builder.build_is_not_null(ptr, "is_not_null");
 
     let ret_idx = function.append_basic_block("ret_idx");
     let ret_0 = function.append_basic_block("ret_0");
@@ -119,9 +119,9 @@ fn test_null_checked_ptr_ops() {
 
     // FIXME: This might not work if compiled on non 64bit devices. Ideally we'd
     // be able to create pointer sized ints easily
-    let ptr_as_int = builder.build_ptr_to_int(&ptr, &i64_type, "ptr_as_int");
-    let new_ptr_as_int = builder.build_int_add(&ptr_as_int, &one, "add");
-    let new_ptr = builder.build_int_to_ptr(&new_ptr_as_int, &i8_ptr_type, "int_as_ptr");
+    let ptr_as_int = builder.build_ptr_to_int(ptr, i64_type, "ptr_as_int");
+    let new_ptr_as_int = builder.build_int_add(ptr_as_int, one, "add");
+    let new_ptr = builder.build_int_to_ptr(new_ptr_as_int, i8_ptr_type, "int_as_ptr");
     let index1 = builder.build_load(&new_ptr, "deref");
 
     builder.build_return(Some(&index1));
@@ -167,7 +167,7 @@ fn test_binary_ops() {
     let left = fn_value.get_first_param().unwrap().into_int_value();
     let right = fn_value.get_last_param().unwrap().into_int_value();
 
-    let and = builder.build_and(&left, &right, "and_op");
+    let and = builder.build_and(left, right, "and_op");
 
     builder.build_return(Some(&and));
 
@@ -184,7 +184,7 @@ fn test_binary_ops() {
     let left = fn_value.get_first_param().unwrap().into_int_value();
     let right = fn_value.get_last_param().unwrap().into_int_value();
 
-    let or = builder.build_or(&left, &right, "or_op");
+    let or = builder.build_or(left, right, "or_op");
 
     builder.build_return(Some(&or));
 
@@ -201,7 +201,7 @@ fn test_binary_ops() {
     let left = fn_value.get_first_param().unwrap().into_int_value();
     let right = fn_value.get_last_param().unwrap().into_int_value();
 
-    let xor = builder.build_xor(&left, &right, "xor_op");
+    let xor = builder.build_xor(left, right, "xor_op");
 
     builder.build_return(Some(&xor));
 
@@ -274,7 +274,7 @@ fn test_switch() {
 
     builder.position_at_end(&else_);
 
-    let double = builder.build_int_mul(&value, &i8_two, "double");
+    let double = builder.build_int_mul(value, i8_two, "double");
 
     builder.build_return(Some(&double));
 
@@ -312,7 +312,7 @@ fn test_bit_shifts() {
 
     builder.position_at_end(&entry);
 
-    let shift = builder.build_left_shift(&value, &bits, "shl");
+    let shift = builder.build_left_shift(value, bits, "shl");
 
     builder.build_return(Some(&shift));
 
@@ -328,7 +328,7 @@ fn test_bit_shifts() {
 
     builder.position_at_end(&entry);
 
-    let shift = builder.build_right_shift(&value, &bits, false, "shr");
+    let shift = builder.build_right_shift(value, bits, false, "shr");
 
     builder.build_return(Some(&shift));
 
@@ -344,7 +344,7 @@ fn test_bit_shifts() {
 
     builder.position_at_end(&entry);
 
-    let shift = builder.build_right_shift(&value, &bits, true, "shr");
+    let shift = builder.build_right_shift(value, bits, true, "shr");
 
     builder.build_return(Some(&shift));
 

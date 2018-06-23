@@ -594,7 +594,7 @@ impl Builder {
     ///
     /// builder.position_at_end(&entry_block);
     ///
-    /// let shift = builder.build_left_shift(&value, &n, "left_shift"); // value << n
+    /// let shift = builder.build_left_shift(value, n, "left_shift"); // value << n
     ///
     /// builder.build_return(Some(&shift));
     /// ```
@@ -663,7 +663,7 @@ impl Builder {
     ///
     /// // Whether or not your right shift is sign extended (true) or logical (false) depends
     /// // on the boolean input parameter:
-    /// let shift = builder.build_right_shift(&value, &n, false, "right_shift"); // value >> n
+    /// let shift = builder.build_right_shift(value, n, false, "right_shift"); // value >> n
     ///
     /// builder.build_return(Some(&shift));
     /// ```

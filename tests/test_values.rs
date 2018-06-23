@@ -46,8 +46,8 @@ fn test_instructions() {
     let f32_val = f32_type.const_float(::std::f64::consts::PI);
 
     let store_instruction = builder.build_store(&arg1, &f32_val);
-    let ptr_val = builder.build_ptr_to_int(&arg1, &i64_type, "ptr_val");
-    let ptr = builder.build_int_to_ptr(&ptr_val, &f32_ptr_type, "ptr");
+    let ptr_val = builder.build_ptr_to_int(arg1, i64_type, "ptr_val");
+    let ptr = builder.build_int_to_ptr(ptr_val, f32_ptr_type, "ptr");
     let free_instruction = builder.build_free(&arg1);
     let return_instruction = builder.build_return(None);
 
