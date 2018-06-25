@@ -25,7 +25,7 @@ pub use values::metadata_value::{MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID};
 pub use values::phi_value::PhiValue;
 pub use values::ptr_value::PointerValue;
 pub use values::struct_value::StructValue;
-pub use values::traits::{AnyValue, AggregateValue, BasicValue};
+pub use values::traits::{AnyValue, AggregateValue, BasicValue, IntMathValue, FloatMathValue, PointerMathValue};
 pub use values::vec_value::VectorValue;
 pub(crate) use values::traits::AsValueRef;
 

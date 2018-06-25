@@ -5,8 +5,8 @@ use llvm_sys::{LLVMTypeKind, LLVMAtomicOrdering};
 
 use {IntPredicate, FloatPredicate};
 use basic_block::BasicBlock;
-use values::{AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, FloatValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, InstructionOpcode};
-use types::{AsTypeRef, BasicType, PointerType, IntType, FloatType};
+use values::{AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode};
+use types::{AsTypeRef, BasicType, PointerType, IntMathType, FloatMathType, PointerMathType};
 
 use std::ffi::CString;
 
@@ -254,305 +254,305 @@ impl Builder {
     // TODO: Possibly make this generic over sign via struct metadata or subtypes
     // SubType: <I: IntSubType>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     //     if I::sign() == Unsigned { LLVMBuildUDiv() } else { LLVMBuildSDiv() }
-    pub fn build_int_unsigned_div(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    pub fn build_int_unsigned_div<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildUDiv(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // TODO: Possibly make this generic over sign via struct metadata or subtypes
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_signed_div(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    pub fn build_int_signed_div<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildSDiv(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // TODO: Possibly make this generic over sign via struct metadata or subtypes
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_exact_signed_div(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    pub fn build_int_exact_signed_div<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildExactSDiv(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // TODO: Possibly make this generic over sign via struct metadata or subtypes
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_unsigned_rem(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    pub fn build_int_unsigned_rem<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildURem(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
 
     // TODO: Possibly make this generic over sign via struct metadata or subtypes
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_signed_rem(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    pub fn build_int_signed_rem<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildSRem(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
-    pub fn build_int_s_extend(&self, int_value: &IntValue, int_type: &IntType, name: &str) -> IntValue {
+    pub fn build_int_s_extend<T: IntMathValue>(&self, int_value: T, int_type: T::BaseType, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildSExt(self.builder, int_value.as_value_ref(), int_type.as_type_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
-    pub fn build_int_s_extend_or_bit_cast(&self, int_value: &IntValue, int_type: &IntType, name: &str) -> IntValue {
+    pub fn build_int_s_extend_or_bit_cast<T: IntMathValue>(&self, int_value: T, int_type: T::BaseType, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildSExtOrBitCast(self.builder, int_value.as_value_ref(), int_type.as_type_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
-    pub fn build_int_z_extend(&self, int_value: &IntValue, int_type: &IntType, name: &str) -> IntValue {
+    pub fn build_int_z_extend<T: IntMathValue>(&self, int_value: T, int_type: T::BaseType, name: &str) -> T {
        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
        let value = unsafe {
             LLVMBuildZExt(self.builder, int_value.as_value_ref(), int_type.as_type_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
-    pub fn build_int_z_extend_or_bit_cast(&self, int_value: &IntValue, int_type: &IntType, name: &str) -> IntValue {
+    pub fn build_int_z_extend_or_bit_cast<T: IntMathValue>(&self, int_value: T, int_type: T::BaseType, name: &str) -> T {
        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
        let value = unsafe {
             LLVMBuildZExtOrBitCast(self.builder, int_value.as_value_ref(), int_type.as_type_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
-    pub fn build_int_truncate(&self, int_value: &IntValue, int_type: &IntType, name: &str) -> IntValue {
+    pub fn build_int_truncate<T: IntMathValue>(&self, int_value: T, int_type: T::BaseType, name: &str) -> T {
        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
        let value = unsafe {
             LLVMBuildTrunc(self.builder, int_value.as_value_ref(), int_type.as_type_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
-    pub fn build_int_truncate_or_bit_cast(&self, int_value: &IntValue, int_type: &IntType, name: &str) -> IntValue {
+    pub fn build_int_truncate_or_bit_cast<T: IntMathValue>(&self, int_value: T, int_type: T::BaseType, name: &str) -> T {
        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
        let value = unsafe {
             LLVMBuildTruncOrBitCast(self.builder, int_value.as_value_ref(), int_type.as_type_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
-    pub fn build_float_rem(&self, lhs: &FloatValue, rhs: &FloatValue, name: &str) -> FloatValue {
+    pub fn build_float_rem<T: FloatMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildFRem(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        FloatValue::new(value)
+        T::new(value)
     }
 
     // REVIEW: Consolidate these two casts into one via subtypes
-    pub fn build_float_to_unsigned_int(&self, float: &FloatValue, int_type: &IntType, name: &str) -> IntValue {
+    pub fn build_float_to_unsigned_int<T: FloatMathValue>(&self, float: T, int_type: <T::BaseType as FloatMathType>::MathConvType, name: &str) -> <<T::BaseType as FloatMathType>::MathConvType as IntMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildFPToUI(self.builder, float.as_value_ref(), int_type.as_type_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        <<T::BaseType as FloatMathType>::MathConvType as IntMathType>::ValueType::new(value)
     }
 
-    pub fn build_float_to_signed_int(&self, float: &FloatValue, int_type: &IntType, name: &str) -> IntValue {
+    pub fn build_float_to_signed_int<T: FloatMathValue>(&self, float: T, int_type: <T::BaseType as FloatMathType>::MathConvType, name: &str) -> <<T::BaseType as FloatMathType>::MathConvType as IntMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildFPToSI(self.builder, float.as_value_ref(), int_type.as_type_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        <<T::BaseType as FloatMathType>::MathConvType as IntMathType>::ValueType::new(value)
     }
 
     // REVIEW: Consolidate these two casts into one via subtypes
-    pub fn build_unsigned_int_to_float(&self, int: &IntValue, float_type: &FloatType, name: &str) -> FloatValue {
+    pub fn build_unsigned_int_to_float<T: IntMathValue>(&self, int: T, float_type: <T::BaseType as IntMathType>::MathConvType, name: &str) -> <<T::BaseType as IntMathType>::MathConvType as FloatMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildUIToFP(self.builder, int.as_value_ref(), float_type.as_type_ref(), c_string.as_ptr())
         };
 
-        FloatValue::new(value)
+        <<T::BaseType as IntMathType>::MathConvType as FloatMathType>::ValueType::new(value)
     }
 
-    pub fn build_signed_int_to_float(&self, int: &FloatValue, float_type: &FloatType, name: &str) -> FloatValue {
+    pub fn build_signed_int_to_float<T: IntMathValue>(&self, int: T, float_type: <T::BaseType as IntMathType>::MathConvType, name: &str) -> <<T::BaseType as IntMathType>::MathConvType as FloatMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildSIToFP(self.builder, int.as_value_ref(), float_type.as_type_ref(), c_string.as_ptr())
         };
 
-        FloatValue::new(value)
+        <<T::BaseType as IntMathType>::MathConvType as FloatMathType>::ValueType::new(value)
     }
 
-    pub fn build_float_trunc(&self, float: &FloatValue, float_type: &FloatType, name: &str) -> FloatValue {
+    pub fn build_float_trunc<T: FloatMathValue>(&self, float: T, float_type: T::BaseType, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildFPTrunc(self.builder, float.as_value_ref(), float_type.as_type_ref(), c_string.as_ptr())
         };
 
-        FloatValue::new(value)
+        T::new(value)
     }
 
-    pub fn build_float_ext(&self, float: &FloatValue, float_type: &FloatType, name: &str) -> FloatValue {
+    pub fn build_float_ext<T: FloatMathValue>(&self, float: T, float_type: T::BaseType, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildFPExt(self.builder, float.as_value_ref(), float_type.as_type_ref(), c_string.as_ptr())
         };
 
-        FloatValue::new(value)
+        T::new(value)
     }
 
-    pub fn build_float_cast(&self, float: &FloatValue, float_type: &FloatType, name: &str) -> FloatValue {
+    pub fn build_float_cast<T: FloatMathValue>(&self, float: T, float_type: T::BaseType, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildFPCast(self.builder, float.as_value_ref(), float_type.as_type_ref(), c_string.as_ptr())
         };
 
-        FloatValue::new(value)
+        T::new(value)
     }
 
     // SubType: <L, R>(&self, lhs: &IntValue<L>, rhs: &IntType<R>, name: &str) -> IntValue<R> {
-    pub fn build_int_cast(&self, int: &IntValue, int_type: &IntType, name: &str) -> IntValue {
+    pub fn build_int_cast<T: IntMathValue>(&self, int: T, int_type: T::BaseType, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildIntCast(self.builder, int.as_value_ref(), int_type.as_type_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
-    pub fn build_float_div(&self, lhs: &FloatValue, rhs: &FloatValue, name: &str) -> FloatValue {
+    pub fn build_float_div<T: FloatMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildFDiv(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        FloatValue::new(value)
+        T::new(value)
     }
 
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_add(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    pub fn build_int_add<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildAdd(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // REVIEW: Possibly incorperate into build_int_add via flag param
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_nsw_add(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    pub fn build_int_nsw_add<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildNSWAdd(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // REVIEW: Possibly incorperate into build_int_add via flag param
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_nuw_add(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    pub fn build_int_nuw_add<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildNUWAdd(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // SubType: <F>(&self, lhs: &FloatValue<F>, rhs: &FloatValue<F>, name: &str) -> FloatValue<F> {
-    pub fn build_float_add(&self, lhs: &FloatValue, rhs: &FloatValue, name: &str) -> FloatValue {
+    pub fn build_float_add<T: FloatMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildFAdd(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        FloatValue::new(value)
+        T::new(value)
     }
 
     // SubType: (&self, lhs: &IntValue<bool>, rhs: &IntValue<bool>, name: &str) -> IntValue<bool> {
-    pub fn build_xor(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    pub fn build_xor<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildXor(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // SubType: (&self, lhs: &IntValue<bool>, rhs: &IntValue<bool>, name: &str) -> IntValue<bool> {
-    pub fn build_and(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    pub fn build_and<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildAnd(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // SubType: (&self, lhs: &IntValue<bool>, rhs: &IntValue<bool>, name: &str) -> IntValue<bool> {
-    pub fn build_or(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    pub fn build_or<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildOr(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     /// Builds an `IntValue` containing the result of a logical left shift instruction.
@@ -594,18 +594,18 @@ impl Builder {
     ///
     /// builder.position_at_end(&entry_block);
     ///
-    /// let shift = builder.build_left_shift(&value, &n, "left_shift"); // value << n
+    /// let shift = builder.build_left_shift(value, n, "left_shift"); // value << n
     ///
     /// builder.build_return(Some(&shift));
     /// ```
-    pub fn build_left_shift(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    pub fn build_left_shift<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildShl(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     /// Builds an `IntValue` containing the result of a right shift instruction.
@@ -663,11 +663,11 @@ impl Builder {
     ///
     /// // Whether or not your right shift is sign extended (true) or logical (false) depends
     /// // on the boolean input parameter:
-    /// let shift = builder.build_right_shift(&value, &n, false, "right_shift"); // value >> n
+    /// let shift = builder.build_right_shift(value, n, false, "right_shift"); // value >> n
     ///
     /// builder.build_return(Some(&shift));
     /// ```
-    pub fn build_right_shift(&self, lhs: &IntValue, rhs: &IntValue, sign_extend: bool, name: &str) -> IntValue {
+    pub fn build_right_shift<T: IntMathValue>(&self, lhs: T, rhs: T, sign_extend: bool, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -678,98 +678,98 @@ impl Builder {
             }
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_sub(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    pub fn build_int_sub<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildSub(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // REVIEW: Possibly incorperate into build_int_sub via flag param
-    pub fn build_int_nsw_sub(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    pub fn build_int_nsw_sub<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildNSWSub(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // REVIEW: Possibly incorperate into build_int_sub via flag param
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_nuw_sub(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    pub fn build_int_nuw_sub<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildNUWSub(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // SubType: <F>(&self, lhs: &FloatValue<F>, rhs: &FloatValue<F>, name: &str) -> FloatValue<F> {
-    pub fn build_float_sub(&self, lhs: &FloatValue, rhs: &FloatValue, name: &str) -> FloatValue {
+    pub fn build_float_sub<T: FloatMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildFSub(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        FloatValue::new(value)
+        T::new(value)
     }
 
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_mul(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    pub fn build_int_mul<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildMul(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // REVIEW: Possibly incorperate into build_int_mul via flag param
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_nsw_mul(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    pub fn build_int_nsw_mul<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildNSWMul(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // REVIEW: Possibly incorperate into build_int_mul via flag param
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
-    pub fn build_int_nuw_mul(&self, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    pub fn build_int_nuw_mul<T: IntMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildNUWMul(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // SubType: <F>(&self, lhs: &FloatValue<F>, rhs: &FloatValue<F>, name: &str) -> FloatValue<F> {
-    pub fn build_float_mul(&self, lhs: &FloatValue, rhs: &FloatValue, name: &str) -> FloatValue {
+    pub fn build_float_mul<T: FloatMathValue>(&self, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildFMul(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        FloatValue::new(value)
+        T::new(value)
     }
 
     pub fn build_cast(&self, op: InstructionOpcode, from_value: &BasicValue, to_type: &BasicType, name: &str) -> BasicValueEnum {
@@ -783,36 +783,40 @@ impl Builder {
     }
 
     // SubType: <F, T>(&self, from: &PointerValue<F>, to: &PointerType<T>, name: &str) -> PointerValue<T> {
-    pub fn build_pointer_cast(&self, from: &PointerValue, to: &PointerType, name: &str) -> PointerValue {
+    pub fn build_pointer_cast<T: PointerMathValue>(&self, from: T, to: T::BaseType, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildPointerCast(self.builder, from.as_value_ref(), to.as_type_ref(), c_string.as_ptr())
         };
 
-        PointerValue::new(value)
+        T::new(value)
     }
 
     // SubType: <I>(&self, op, lhs: &IntValue<I>, rhs: &IntValue<I>, name) -> IntValue<bool> { ?
-    pub fn build_int_compare(&self, op: IntPredicate, lhs: &IntValue, rhs: &IntValue, name: &str) -> IntValue {
+    // Note: we need a way to get an appropriate return type, since this method's return value
+    // is always a bool (or vector of bools), not necessarily the same as the input value
+    // See https://github.com/TheDan64/inkwell/pull/47#discussion_r197599297
+    pub fn build_int_compare<T: IntMathValue>(&self, op: IntPredicate, lhs: T, rhs: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildICmp(self.builder, op.as_llvm_predicate(), lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // SubType: <F>(&self, op, lhs: &FloatValue<F>, rhs: &FloatValue<F>, name) -> IntValue<bool> { ?
-    pub fn build_float_compare(&self, op: FloatPredicate, lhs: &FloatValue, rhs: &FloatValue, name: &str) -> IntValue {
+    // Note: see comment on build_int_compare regarding return value type
+    pub fn build_float_compare<T: FloatMathValue>(&self, op: FloatPredicate, lhs: T, rhs: T, name: &str) -> <<T::BaseType as FloatMathType>::MathConvType as IntMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildFCmp(self.builder, op.as_llvm_predicate(), lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        <<T::BaseType as FloatMathType>::MathConvType as IntMathType>::ValueType::new(value)
     }
 
     pub fn build_unconditional_branch(&self, destination_block: &BasicBlock) -> InstructionValue {
@@ -832,59 +836,59 @@ impl Builder {
     }
 
     // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<I> {
-    pub fn build_int_neg(&self, value: &IntValue, name: &str) -> IntValue {
+    pub fn build_int_neg<T: IntMathValue>(&self, value: &T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildNeg(self.builder, value.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // REVIEW: Possibly incorperate into build_int_neg via flag and subtypes
     // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<I> {
-    pub fn build_int_nsw_neg(&self, value: &IntValue, name: &str) -> IntValue {
+    pub fn build_int_nsw_neg<T: IntMathValue>(&self, value: &T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildNSWNeg(self.builder, value.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<I> {
-    pub fn build_int_nuw_neg(&self, value: &IntValue, name: &str) -> IntValue {
+    pub fn build_int_nuw_neg<T: IntMathValue>(&self, value: &T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildNUWNeg(self.builder, value.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // SubType: <F>(&self, value: &FloatValue<F>, name) -> FloatValue<F> {
-    pub fn build_float_neg(&self, value: &FloatValue, name: &str) -> FloatValue {
+    pub fn build_float_neg<T: FloatMathValue>(&self, value: &T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildFNeg(self.builder, value.as_value_ref(), c_string.as_ptr())
         };
 
-        FloatValue::new(value)
+        T::new(value)
     }
 
     // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<bool> { ?
-    pub fn build_not(&self, value: &IntValue, name: &str) -> IntValue {
+    pub fn build_not<T: IntMathValue>(&self, value: &T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildNot(self.builder, value.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        T::new(value)
     }
 
     // REVIEW: What if instruction and basic_block are completely unrelated?
@@ -972,47 +976,47 @@ impl Builder {
     }
 
     // SubType: <P>(&self, ptr: &PointerValue<P>, name) -> IntValue<bool> {
-    pub fn build_is_null(&self, ptr: &PointerValue, name: &str) -> IntValue {
+    pub fn build_is_null<T: PointerMathValue>(&self, ptr: T, name: &str) -> <<T::BaseType as PointerMathType>::PtrConvType as IntMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let val = unsafe {
             LLVMBuildIsNull(self.builder, ptr.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(val)
+        <<T::BaseType as PointerMathType>::PtrConvType as IntMathType>::ValueType::new(val)
     }
 
     // SubType: <P>(&self, ptr: &PointerValue<P>, name) -> IntValue<bool> {
-    pub fn build_is_not_null(&self, ptr: &PointerValue, name: &str) -> IntValue {
+    pub fn build_is_not_null<T: PointerMathValue>(&self, ptr: T, name: &str) -> <<T::BaseType as PointerMathType>::PtrConvType as IntMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let val = unsafe {
             LLVMBuildIsNotNull(self.builder, ptr.as_value_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(val)
+        <<T::BaseType as PointerMathType>::PtrConvType as IntMathType>::ValueType::new(val)
     }
 
     // SubType: <I, P>(&self, int: &IntValue<I>, ptr_type: &PointerType<P>, name) -> PointerValue<P> {
-    pub fn build_int_to_ptr(&self, int: &IntValue, ptr_type: &PointerType, name: &str) -> PointerValue {
+    pub fn build_int_to_ptr<T: IntMathValue>(&self, int: T, ptr_type: <T::BaseType as IntMathType>::PtrConvType, name: &str) -> <<T::BaseType as IntMathType>::PtrConvType as PointerMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildIntToPtr(self.builder, int.as_value_ref(), ptr_type.as_type_ref(), c_string.as_ptr())
         };
 
-        PointerValue::new(value)
+        <<T::BaseType as IntMathType>::PtrConvType as PointerMathType>::ValueType::new(value)
     }
 
     // SubType: <I, P>(&self, ptr: &PointerValue<P>, int_type: &IntType<I>, name) -> IntValue<I> {
-    pub fn build_ptr_to_int(&self, ptr: &PointerValue, int_type: &IntType, name: &str) -> IntValue {
+    pub fn build_ptr_to_int<T: PointerMathValue>(&self, ptr: T, int_type: <T::BaseType as PointerMathType>::PtrConvType, name: &str) -> <<T::BaseType as PointerMathType>::PtrConvType as IntMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildPtrToInt(self.builder, ptr.as_value_ref(), int_type.as_type_ref(), c_string.as_ptr())
         };
 
-        IntValue::new(value)
+        <<T::BaseType as PointerMathType>::PtrConvType as IntMathType>::ValueType::new(value)
     }
 
     pub fn clear_insertion_position(&self) {

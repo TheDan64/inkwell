@@ -5,6 +5,7 @@ use self::inkwell::context::Context;
 use self::inkwell::builder::Builder;
 use self::inkwell::targets::{InitializationConfig, Target};
 use self::inkwell::execution_engine::Symbol;
+use self::inkwell::types::BasicType;
 
 use std::ffi::CString;
 use std::ptr::null;
@@ -68,7 +69,7 @@ fn test_null_checked_ptr_ops() {
 
     let ptr = function.get_first_param().unwrap().into_pointer_value();
 
-    let is_null = builder.build_is_null(&ptr, "is_null");
+    let is_null = builder.build_is_null(ptr, "is_null");
 
     let ret_0 = function.append_basic_block("ret_0");
     let ret_idx = function.append_basic_block("ret_idx");
@@ -82,9 +83,9 @@ fn test_null_checked_ptr_ops() {
 
     // FIXME: This might not work if compiled on non 64bit devices. Ideally we'd
     // be able to create pointer sized ints easily
-    let ptr_as_int = builder.build_ptr_to_int(&ptr, &i64_type, "ptr_as_int");
-    let new_ptr_as_int = builder.build_int_add(&ptr_as_int, &one, "add");
-    let new_ptr = builder.build_int_to_ptr(&new_ptr_as_int, &i8_ptr_type, "int_as_ptr");
+    let ptr_as_int = builder.build_ptr_to_int(ptr, i64_type, "ptr_as_int");
+    let new_ptr_as_int = builder.build_int_add(ptr_as_int, one, "add");
+    let new_ptr = builder.build_int_to_ptr(new_ptr_as_int, i8_ptr_type, "int_as_ptr");
     let index1 = builder.build_load(&new_ptr, "deref");
 
     builder.build_return(Some(&index1));
@@ -105,7 +106,7 @@ fn test_null_checked_ptr_ops() {
 
     let ptr = function.get_first_param().unwrap().into_pointer_value();
 
-    let is_not_null = builder.build_is_not_null(&ptr, "is_not_null");
+    let is_not_null = builder.build_is_not_null(ptr, "is_not_null");
 
     let ret_idx = function.append_basic_block("ret_idx");
     let ret_0 = function.append_basic_block("ret_0");
@@ -119,9 +120,9 @@ fn test_null_checked_ptr_ops() {
 
     // FIXME: This might not work if compiled on non 64bit devices. Ideally we'd
     // be able to create pointer sized ints easily
-    let ptr_as_int = builder.build_ptr_to_int(&ptr, &i64_type, "ptr_as_int");
-    let new_ptr_as_int = builder.build_int_add(&ptr_as_int, &one, "add");
-    let new_ptr = builder.build_int_to_ptr(&new_ptr_as_int, &i8_ptr_type, "int_as_ptr");
+    let ptr_as_int = builder.build_ptr_to_int(ptr, i64_type, "ptr_as_int");
+    let new_ptr_as_int = builder.build_int_add(ptr_as_int, one, "add");
+    let new_ptr = builder.build_int_to_ptr(new_ptr_as_int, i8_ptr_type, "int_as_ptr");
     let index1 = builder.build_load(&new_ptr, "deref");
 
     builder.build_return(Some(&index1));
@@ -167,7 +168,7 @@ fn test_binary_ops() {
     let left = fn_value.get_first_param().unwrap().into_int_value();
     let right = fn_value.get_last_param().unwrap().into_int_value();
 
-    let and = builder.build_and(&left, &right, "and_op");
+    let and = builder.build_and(left, right, "and_op");
 
     builder.build_return(Some(&and));
 
@@ -184,7 +185,7 @@ fn test_binary_ops() {
     let left = fn_value.get_first_param().unwrap().into_int_value();
     let right = fn_value.get_last_param().unwrap().into_int_value();
 
-    let or = builder.build_or(&left, &right, "or_op");
+    let or = builder.build_or(left, right, "or_op");
 
     builder.build_return(Some(&or));
 
@@ -201,7 +202,7 @@ fn test_binary_ops() {
     let left = fn_value.get_first_param().unwrap().into_int_value();
     let right = fn_value.get_last_param().unwrap().into_int_value();
 
-    let xor = builder.build_xor(&left, &right, "xor_op");
+    let xor = builder.build_xor(left, right, "xor_op");
 
     builder.build_return(Some(&xor));
 
@@ -274,7 +275,7 @@ fn test_switch() {
 
     builder.position_at_end(&else_);
 
-    let double = builder.build_int_mul(&value, &i8_two, "double");
+    let double = builder.build_int_mul(value, i8_two, "double");
 
     builder.build_return(Some(&double));
 
@@ -312,7 +313,7 @@ fn test_bit_shifts() {
 
     builder.position_at_end(&entry);
 
-    let shift = builder.build_left_shift(&value, &bits, "shl");
+    let shift = builder.build_left_shift(value, bits, "shl");
 
     builder.build_return(Some(&shift));
 
@@ -328,7 +329,7 @@ fn test_bit_shifts() {
 
     builder.position_at_end(&entry);
 
-    let shift = builder.build_right_shift(&value, &bits, false, "shr");
+    let shift = builder.build_right_shift(value, bits, false, "shr");
 
     builder.build_return(Some(&shift));
 
@@ -344,7 +345,7 @@ fn test_bit_shifts() {
 
     builder.position_at_end(&entry);
 
-    let shift = builder.build_right_shift(&value, &bits, true, "shr");
+    let shift = builder.build_right_shift(value, bits, true, "shr");
 
     builder.build_return(Some(&shift));
 
@@ -446,4 +447,133 @@ fn test_no_builder_double_free2() {
 
     // 2nd Context drops fine
     // Builder drops fine
+}
+
+#[test]
+fn test_vector_convert_ops() {
+    let context = Context::create();
+    let module = context.create_module("test");
+    let int8_vec_type = context.i8_type().vec_type(3);
+    let int32_vec_type = context.i32_type().vec_type(3);
+    let float32_vec_type = context.f32_type().vec_type(3);
+    let float16_vec_type = context.f16_type().vec_type(3);
+
+    // Here we're building a function that takes in a <3 x i8> and returns it casted to and from a <3 x i32>
+    // Casting to and from means we can ensure the cast build functions return a vector when one is provided.
+    let fn_type = int32_vec_type.fn_type(&[&int8_vec_type], false);
+    let fn_value = module.add_function("test_int_vec_cast", &fn_type, None);
+    let entry = fn_value.append_basic_block("entry");
+    let builder = context.create_builder();
+
+    builder.position_at_end(&entry);
+    let in_vec = fn_value.get_first_param().unwrap().into_vector_value();
+    let casted_vec = builder.build_int_cast(in_vec, int32_vec_type, "casted_vec");
+    let uncasted_vec = builder.build_int_cast(casted_vec, int8_vec_type, "uncasted_vec");
+    builder.build_return(Some(&casted_vec));
+    assert!(fn_value.verify(true));
+
+    // Here we're building a function that takes in a <3 x f32> and returns it casted to and from a <3 x f16>
+    let fn_type = float16_vec_type.fn_type(&[&float32_vec_type], false);
+    let fn_value = module.add_function("test_float_vec_cast", &fn_type, None);
+    let entry = fn_value.append_basic_block("entry");
+    let builder = context.create_builder();
+
+    builder.position_at_end(&entry);
+    let in_vec = fn_value.get_first_param().unwrap().into_vector_value();
+    let casted_vec = builder.build_float_cast(in_vec, float16_vec_type, "casted_vec");
+    let uncasted_vec = builder.build_float_cast(casted_vec, float32_vec_type, "uncasted_vec");
+    builder.build_return(Some(&casted_vec));
+    assert!(fn_value.verify(true));
+
+    // Here we're building a function that takes in a <3 x f32> and returns it casted to and from a <3 x i32>
+    let fn_type = int32_vec_type.fn_type(&[&float32_vec_type], false);
+    let fn_value = module.add_function("test_float_to_int_vec_cast", &fn_type, None);
+    let entry = fn_value.append_basic_block("entry");
+    let builder = context.create_builder();
+
+    builder.position_at_end(&entry);
+    let in_vec = fn_value.get_first_param().unwrap().into_vector_value();
+    let casted_vec = builder.build_float_to_signed_int(in_vec, int32_vec_type, "casted_vec");
+    let uncasted_vec = builder.build_signed_int_to_float(casted_vec, float32_vec_type, "uncasted_vec");
+    builder.build_return(Some(&casted_vec));
+    assert!(fn_value.verify(true));
+}
+
+#[test]
+fn test_vector_binary_ops() {
+    let context = Context::create();
+    let module = context.create_module("test");
+    let int32_vec_type = context.i32_type().vec_type(2);
+    let float32_vec_type = context.f32_type().vec_type(2);
+    let bool_vec_type = context.bool_type().vec_type(2);
+
+    // Here we're building a function that takes in three <2 x i32>s and returns them added together as a <2 x i32>
+    let fn_type = int32_vec_type.fn_type(&[&int32_vec_type, &int32_vec_type, &int32_vec_type], false);
+    let fn_value = module.add_function("test_int_vec_add", &fn_type, None);
+    let entry = fn_value.append_basic_block("entry");
+    let builder = context.create_builder();
+
+    builder.position_at_end(&entry);
+    let p1_vec = fn_value.get_first_param().unwrap().into_vector_value();
+    let p2_vec = fn_value.get_nth_param(1).unwrap().into_vector_value();
+    let p3_vec = fn_value.get_nth_param(2).unwrap().into_vector_value();
+    let added_vec = builder.build_int_add(p1_vec, p2_vec, "added_vec");
+    let added_vec = builder.build_int_add(added_vec, p3_vec, "added_vec");
+    builder.build_return(Some(&added_vec));
+    assert!(fn_value.verify(true));
+
+    // Here we're building a function that takes in three <2 x f32>s and returns x * y / z as an
+    // <2 x f32>
+    let fn_type = float32_vec_type.fn_type(&[&float32_vec_type, &float32_vec_type, &float32_vec_type], false);
+    let fn_value = module.add_function("test_float_vec_mul", &fn_type, None);
+    let entry = fn_value.append_basic_block("entry");
+    let builder = context.create_builder();
+
+    builder.position_at_end(&entry);
+    let p1_vec = fn_value.get_first_param().unwrap().into_vector_value();
+    let p2_vec = fn_value.get_nth_param(1).unwrap().into_vector_value();
+    let p3_vec = fn_value.get_nth_param(2).unwrap().into_vector_value();
+    let multiplied_vec = builder.build_float_mul(p1_vec, p2_vec, "multipled_vec");
+    let divided_vec = builder.build_float_div(multiplied_vec, p3_vec, "divided_vec");
+    builder.build_return(Some(&divided_vec));
+    assert!(fn_value.verify(true));
+
+    // Here we're building a function that takes two <2 x f32>s and a <2 x bool> and returns (x < y) * z
+    // as a <2 x bool>
+    let fn_type = bool_vec_type.fn_type(&[&float32_vec_type, &float32_vec_type, &bool_vec_type], false);
+    let fn_value = module.add_function("test_float_vec_compare", &fn_type, None);
+    let entry = fn_value.append_basic_block("entry");
+    let builder = context.create_builder();
+
+    builder.position_at_end(&entry);
+    let p1_vec = fn_value.get_first_param().unwrap().into_vector_value();
+    let p2_vec = fn_value.get_nth_param(1).unwrap().into_vector_value();
+    let p3_vec = fn_value.get_nth_param(2).unwrap().into_vector_value();
+    let compared_vec = builder.build_float_compare(self::inkwell::FloatPredicate::OLT, p1_vec, p2_vec, "compared_vec");
+    let multiplied_vec = builder.build_int_mul(compared_vec, p3_vec, "multiplied_vec");
+    builder.build_return(Some(&multiplied_vec));
+    assert!(fn_value.verify(true));
+}
+
+#[test]
+fn test_vector_pointer_ops() {
+    let context = Context::create();
+    let module = context.create_module("test");
+    let int32_vec_type = context.i32_type().vec_type(4);
+    let i8_ptr_vec_type = context.i8_type().ptr_type(AddressSpace::Generic).vec_type(4);
+    let bool_vec_type = context.bool_type().vec_type(4);
+
+    // Here we're building a function that takes a <4 x i32>, converts it to a <4 x i8*> and returns a
+    // <4 x bool> if the pointer is null
+    let fn_type = bool_vec_type.fn_type(&[&int32_vec_type], false);
+    let fn_value = module.add_function("test_ptr_null", &fn_type, None);
+    let entry = fn_value.append_basic_block("entry");
+    let builder = context.create_builder();
+
+    builder.position_at_end(&entry);
+    let in_vec = fn_value.get_first_param().unwrap().into_vector_value();
+    let ptr_vec = builder.build_int_to_ptr(in_vec, i8_ptr_vec_type, "ptr_vec");
+    let is_null_vec = builder.build_is_null(ptr_vec, "is_null_vec");
+    builder.build_return(Some(&is_null_vec));
+    assert!(fn_value.verify(true));
 }

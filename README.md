@@ -106,8 +106,8 @@ fn jit_compile_sum(
     let y = function.get_nth_param(1)?.into_int_value();
     let z = function.get_nth_param(2)?.into_int_value();
 
-    let sum = builder.build_int_add(&x, &y, "sum");
-    let sum = builder.build_int_add(&sum, &z, "sum");
+    let sum = builder.build_int_add(x, y, "sum");
+    let sum = builder.build_int_add(sum, z, "sum");
 
     builder.build_return(Some(&sum));
 

@@ -4,6 +4,7 @@ use std::fmt::Debug;
 
 use types::{IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VectorType, VoidType, Type};
 use types::enums::{AnyTypeEnum, BasicTypeEnum};
+use values::{IntMathValue, FloatMathValue, PointerMathValue, IntValue, FloatValue, PointerValue, VectorValue};
 
 // This is an ugly privacy hack so that Type can stay private to this module
 // and so that super traits using this trait will be not be implementable
@@ -40,5 +41,56 @@ pub trait BasicType: AnyType {
     }
 }
 
+/// Represents an LLVM type that can have integer math operations applied to it.
+pub trait IntMathType: BasicType {
+    type ValueType: IntMathValue;
+    type MathConvType: FloatMathType;
+    type PtrConvType: PointerMathType;
+}
+
+/// Represents an LLVM type that can have floating point math operations applied to it.
+pub trait FloatMathType: BasicType {
+    type ValueType: FloatMathValue;
+    type MathConvType: IntMathType;
+}
+
+/// Represents an LLVM type that can have pointer operations applied to it.
+pub trait PointerMathType: BasicType {
+    type ValueType: PointerMathValue;
+    type PtrConvType: IntMathType;
+}
+
 trait_type_set! {AnyType: AnyTypeEnum, BasicTypeEnum, IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VoidType, VectorType}
 trait_type_set! {BasicType: BasicTypeEnum, IntType, FloatType, PointerType, StructType, ArrayType, VectorType}
+
+impl IntMathType for IntType {
+    type ValueType = IntValue;
+    type MathConvType = FloatType;
+    type PtrConvType = PointerType;
+}
+
+impl IntMathType for VectorType {
+    type ValueType = VectorValue;
+    type MathConvType = VectorType;
+    type PtrConvType = VectorType;
+}
+
+impl FloatMathType for FloatType {
+    type ValueType = FloatValue;
+    type MathConvType = IntType;
+}
+
+impl FloatMathType for VectorType {
+    type ValueType = VectorValue;
+    type MathConvType = VectorType;
+}
+
+impl PointerMathType for PointerType {
+    type ValueType = PointerValue;
+    type PtrConvType = IntType;
+}
+
+impl PointerMathType for VectorType {
+    type ValueType = VectorValue;
+    type PtrConvType = VectorType;
+}
