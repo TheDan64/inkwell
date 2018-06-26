@@ -154,7 +154,7 @@ env:
 
 after_success: |
   if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
-    bash <(curl https://raw.githubusercontent.com/xd009642/tarpaulin/master/travis-install.sh)
+    RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin
     cargo tarpaulin --features "llvm${LLVM_VERSION_DASH}" --ignore-tests --out Xml
     bash <(curl -s https://codecov.io/bash)
   fi
