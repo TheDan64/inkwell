@@ -18,7 +18,7 @@ Inkwell aims to help you pen your own programming languages by safely wrapping l
 
 ## Usage
 
-You'll need to point your Cargo.toml to a branch and use a feature flag corresponding to a supported LLVM version:
+You'll need to point your Cargo.toml to a branch corresponding to a supported LLVM version:
 
 ```toml
 [dependencies]
