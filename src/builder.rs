@@ -6,7 +6,7 @@ use llvm_sys::{LLVMTypeKind, LLVMAtomicOrdering};
 use {IntPredicate, FloatPredicate};
 use basic_block::BasicBlock;
 use values::{AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode};
-use types::{AsTypeRef, BasicType, PointerType, IntMathType, FloatMathType, PointerMathType};
+use types::{AsTypeRef, BasicType, IntMathType, FloatMathType, PointerMathType};
 
 use std::ffi::CString;
 
@@ -101,9 +101,7 @@ impl Builder {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
                                                                  .map(|val| val.as_value_ref())
                                                                  .collect();
-        let value = unsafe {
-            LLVMBuildGEP(self.builder, ptr.as_value_ref(), index_values.as_mut_ptr(), index_values.len() as u32, c_string.as_ptr())
-        };
+        let value = LLVMBuildGEP(self.builder, ptr.as_value_ref(), index_values.as_mut_ptr(), index_values.len() as u32, c_string.as_ptr());
 
         PointerValue::new(value)
     }
@@ -116,9 +114,7 @@ impl Builder {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
                                                                  .map(|val| val.as_value_ref())
                                                                  .collect();
-        let value = unsafe {
-            LLVMBuildInBoundsGEP(self.builder, ptr.as_value_ref(), index_values.as_mut_ptr(), index_values.len() as u32, c_string.as_ptr())
-        };
+        let value = LLVMBuildInBoundsGEP(self.builder, ptr.as_value_ref(), index_values.as_mut_ptr(), index_values.len() as u32, c_string.as_ptr());
 
         PointerValue::new(value)
     }
@@ -1040,16 +1036,17 @@ impl Builder {
         InstructionValue::new(switch_value)
     }
 
-    pub fn build_global_string(&self, value: &str, name: &str) -> GlobalValue {
+    // The unsafety of this function should be fixable with subtypes. See GH #32
+    pub unsafe fn build_global_string(&self, value: &str, name: &str) -> GlobalValue {
         let c_string_value = CString::new(value).expect("Conversion to CString failed unexpectedly");
         let c_string_name = CString::new(name).expect("Conversion to CString failed unexpectedly");
-        let value = unsafe {
-            LLVMBuildGlobalString(self.builder, c_string_value.as_ptr(), c_string_name.as_ptr())
-        };
+        let value = LLVMBuildGlobalString(self.builder, c_string_value.as_ptr(), c_string_name.as_ptr());
 
         GlobalValue::new(value)
     }
 
+    // REVIEW: Does this similar fn have the same issue build_global_string does? If so, mark as unsafe
+    // and fix with subtypes.
     pub fn build_global_string_ptr(&self, value: &str, name: &str) -> GlobalValue {
         let c_string_value = CString::new(value).expect("Conversion to CString failed unexpectedly");
         let c_string_name = CString::new(name).expect("Conversion to CString failed unexpectedly");

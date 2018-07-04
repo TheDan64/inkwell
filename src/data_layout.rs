@@ -1,6 +1,5 @@
 use std::ffi::CStr;
 use std::fmt;
-use std::ops::Deref;
 
 use support::{LLVMString, LLVMStringOrRaw};
 
