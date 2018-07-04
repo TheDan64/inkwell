@@ -133,6 +133,18 @@ impl Context {
         VoidType::new(void_type)
     }
 
+    /// Gets the `IntType` representing 1 bit width. It will be assigned the current context.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let bool_type = context.bool_type();
+    ///
+    /// assert_eq!(bool_type.get_bit_width(), 1);
+    /// assert_eq!(*bool_type.get_context(), context);
+    /// ```
     pub fn bool_type(&self) -> IntType {
         let bool_type = unsafe {
             LLVMInt1TypeInContext(*self.context)
@@ -141,6 +153,18 @@ impl Context {
         IntType::new(bool_type)
     }
 
+    /// Gets the `IntType` representing 8 bit width. It will be assigned the current context.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let i8_type = context.i8_type();
+    ///
+    /// assert_eq!(i8_type.get_bit_width(), 8);
+    /// assert_eq!(*i8_type.get_context(), context);
+    /// ```
     pub fn i8_type(&self) -> IntType {
         let i8_type = unsafe {
             LLVMInt8TypeInContext(*self.context)
@@ -149,6 +173,18 @@ impl Context {
         IntType::new(i8_type)
     }
 
+    /// Gets the `IntType` representing 16 bit width. It will be assigned the current context.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let i16_type = context.i16_type();
+    ///
+    /// assert_eq!(i16_type.get_bit_width(), 16);
+    /// assert_eq!(*i16_type.get_context(), context);
+    /// ```
     pub fn i16_type(&self) -> IntType {
         let i16_type = unsafe {
             LLVMInt16TypeInContext(*self.context)
@@ -157,6 +193,18 @@ impl Context {
         IntType::new(i16_type)
     }
 
+    /// Gets the `IntType` representing 32 bit width. It will be assigned the current context.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let i32_type = context.i32_type();
+    ///
+    /// assert_eq!(i32_type.get_bit_width(), 32);
+    /// assert_eq!(*i32_type.get_context(), context);
+    /// ```
     pub fn i32_type(&self) -> IntType {
         let i32_type = unsafe {
             LLVMInt32TypeInContext(*self.context)
@@ -165,6 +213,18 @@ impl Context {
         IntType::new(i32_type)
     }
 
+    /// Gets the `IntType` representing 64 bit width. It will be assigned the current context.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let i64_type = context.i64_type();
+    ///
+    /// assert_eq!(i64_type.get_bit_width(), 64);
+    /// assert_eq!(*i64_type.get_context(), context);
+    /// ```
     pub fn i64_type(&self) -> IntType {
         let i64_type = unsafe {
             LLVMInt64TypeInContext(*self.context)
@@ -173,6 +233,18 @@ impl Context {
         IntType::new(i64_type)
     }
 
+    /// Gets the `IntType` representing 128 bit width. It will be assigned the current context.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let i128_type = context.i128_type();
+    ///
+    /// assert_eq!(i128_type.get_bit_width(), 128);
+    /// assert_eq!(*i128_type.get_context(), context);
+    /// ```
     pub fn i128_type(&self) -> IntType {
         // REVIEW: The docs says there's a LLVMInt128TypeInContext, but
         // it might only be in a newer version
@@ -180,6 +252,18 @@ impl Context {
         self.custom_width_int_type(128)
     }
 
+    /// Gets the `IntType` representing a custom bit width. It will be assigned the current context.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let i42_type = context.custom_width_int_type(42);
+    ///
+    /// assert_eq!(i42_type.get_bit_width(), 42);
+    /// assert_eq!(*i42_type.get_context(), context);
+    /// ```
     pub fn custom_width_int_type(&self, bits: u32) -> IntType {
         let int_type = unsafe {
             LLVMIntTypeInContext(*self.context, bits)
@@ -188,6 +272,19 @@ impl Context {
         IntType::new(int_type)
     }
 
+    /// Gets the `FloatType` representing a 16 bit width. It will be assigned the current context.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    ///
+    /// let f16_type = context.f16_type();
+    ///
+    /// assert_eq!(*f16_type.get_context(), context);
+    /// ```
     pub fn f16_type(&self) -> FloatType {
         let f16_type = unsafe {
             LLVMHalfTypeInContext(*self.context)
@@ -196,6 +293,19 @@ impl Context {
         FloatType::new(f16_type)
     }
 
+    /// Gets the `FloatType` representing a 32 bit width. It will be assigned the current context.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    ///
+    /// let f32_type = context.f32_type();
+    ///
+    /// assert_eq!(*f32_type.get_context(), context);
+    /// ```
     pub fn f32_type(&self) -> FloatType {
         let f32_type = unsafe {
             LLVMFloatTypeInContext(*self.context)
@@ -204,6 +314,19 @@ impl Context {
         FloatType::new(f32_type)
     }
 
+    /// Gets the `FloatType` representing a 64 bit width. It will be assigned the current context.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    ///
+    /// let f64_type = context.f64_type();
+    ///
+    /// assert_eq!(*f64_type.get_context(), context);
+    /// ```
     pub fn f64_type(&self) -> FloatType {
         let f64_type = unsafe {
             LLVMDoubleTypeInContext(*self.context)
@@ -212,6 +335,19 @@ impl Context {
         FloatType::new(f64_type)
     }
 
+    /// Gets the `FloatType` representing a 128 bit width. It will be assigned the current context.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    ///
+    /// let f128_type = context.f128_type();
+    ///
+    /// assert_eq!(*f128_type.get_context(), context);
+    /// ```
     pub fn f128_type(&self) -> FloatType {
         let f128_type = unsafe {
             LLVMFP128TypeInContext(*self.context)
@@ -220,6 +356,21 @@ impl Context {
         FloatType::new(f128_type)
     }
 
+    /// Gets the `FloatType` representing a 128 bit width. It will be assigned the current context.
+    ///
+    /// PPC is two 64 bits side by side rather than one single 128 bit float.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    ///
+    /// let f128_type = context.ppc_f128_type();
+    ///
+    /// assert_eq!(*f128_type.get_context(), context);
+    /// ```
     pub fn ppc_f128_type(&self) -> FloatType {
         let f128_type = unsafe {
             LLVMPPCFP128TypeInContext(*self.context)

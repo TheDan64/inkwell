@@ -81,6 +81,18 @@ impl FloatType {
         self.float_type.ptr_type(address_space)
     }
 
+    /// Creates a new `FloatType` which represents sixteen bits (two bytes) for the global context.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::types::FloatType;
+    ///
+    /// let f16_type = FloatType::f16_type();
+    ///
+    /// assert_eq!(f16_type.get_context(), Context::get_global());
+    /// ```
     pub fn f16_type() -> Self {
         let float_type = unsafe {
             LLVMHalfType()
@@ -89,6 +101,18 @@ impl FloatType {
         FloatType::new(float_type)
     }
 
+    /// Creates a new `FloatType` which represents thirty two bits (four bytes) for the global context.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::types::FloatType;
+    ///
+    /// let f32_type = FloatType::f32_type();
+    ///
+    /// assert_eq!(f32_type.get_context(), Context::get_global());
+    /// ```
     pub fn f32_type() -> Self {
         let float_type = unsafe {
             LLVMFloatType()
@@ -97,6 +121,18 @@ impl FloatType {
         FloatType::new(float_type)
     }
 
+    /// Creates a new `FloatType` which represents sixty four bits (eight bytes) for the global context.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::types::FloatType;
+    ///
+    /// let f64_type = FloatType::f64_type();
+    ///
+    /// assert_eq!(f64_type.get_context(), Context::get_global());
+    /// ```
     pub fn f64_type() -> Self {
         let float_type = unsafe {
             LLVMDoubleType()
@@ -105,6 +141,18 @@ impl FloatType {
         FloatType::new(float_type)
     }
 
+    /// Creates a new `FloatType` which represents one hundred and twenty eight bits (sixteen bytes) for the global context.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::types::FloatType;
+    ///
+    /// let f128_type = FloatType::f128_type();
+    ///
+    /// assert_eq!(f128_type.get_context(), Context::get_global());
+    /// ```
     // IEEE 754-2008’s binary128 floats according to https://internals.rust-lang.org/t/pre-rfc-introduction-of-half-and-quadruple-precision-floats-f16-and-f128/7521
     pub fn f128_type() -> Self {
         let float_type = unsafe {
@@ -114,6 +162,18 @@ impl FloatType {
         FloatType::new(float_type)
     }
 
+    /// Creates a new `FloatType` which represents one hundred and twenty eight bits (sixteen bytes) for the current context. PPC is two 64 bits side by side rather than one single 128 bit float.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::types::FloatType;
+    ///
+    /// let f128_type = FloatType::ppc_f128_type();
+    ///
+    /// assert_eq!(f128_type.get_context(), Context::get_global());
+    /// ```
     // Two 64 bits according to https://internals.rust-lang.org/t/pre-rfc-introduction-of-half-and-quadruple-precision-floats-f16-and-f128/7521
     pub fn ppc_f128_type() -> Self {
         let float_type = unsafe {

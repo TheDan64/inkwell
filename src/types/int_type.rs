@@ -28,7 +28,7 @@ impl IntType {
     /// To use your own `Context`, see [inkwell::context::bool_type()](../context/struct.Context.html#method.bool_type)
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::types::IntType;
     ///
@@ -50,7 +50,7 @@ impl IntType {
     /// To use your own `Context`, see [inkwell::context::i8_type()](../context/struct.Context.html#method.i8_type)
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::types::IntType;
     ///
@@ -72,7 +72,7 @@ impl IntType {
     /// To use your own `Context`, see [inkwell::context::i16_type()](../context/struct.Context.html#method.i16_type)
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::types::IntType;
     ///
@@ -94,7 +94,7 @@ impl IntType {
     /// To use your own `Context`, see [inkwell::context::i32_type()](../context/struct.Context.html#method.i32_type)
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::types::IntType;
     ///
@@ -116,7 +116,7 @@ impl IntType {
     /// To use your own `Context`, see [inkwell::context::i64_type()](../context/struct.Context.html#method.i64_type)
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::types::IntType;
     ///
@@ -138,7 +138,7 @@ impl IntType {
     /// To use your own `Context`, see [inkwell::context::i128_type()](../context/struct.Context.html#method.i128_type)
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::types::IntType;
     ///
@@ -159,7 +159,7 @@ impl IntType {
     /// To use your own `Context`, see [inkwell::context::custom_width_int_type()](../context/struct.Context.html#method.custom_width_int_type)
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::types::IntType;
     ///
@@ -179,7 +179,7 @@ impl IntType {
     /// Creates an `IntValue` repesenting a constant value of this `IntType`. It will be automatically assigned this `IntType`'s `Context`.
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::types::IntType;
     ///
