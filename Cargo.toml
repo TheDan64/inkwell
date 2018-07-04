@@ -24,7 +24,7 @@ llvm6-0 = []
 either = "1.5"
 enum-methods = "0.0.8"
 libc = "*"
-llvm-sys = "36"
+llvm-sys = "60"
 
 [badges]
 travis-ci = { repository = "TheDan64/inkwell" }
