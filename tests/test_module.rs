@@ -10,8 +10,8 @@ use std::env::temp_dir;
 use std::ffi::{CString, CStr};
 use std::fs::{File, remove_file};
 use std::io::Read;
+use std::path::Path;
 use std::str::from_utf8;
-
 
 #[test]
 fn test_write_bitcode_to_path() {
@@ -194,4 +194,83 @@ fn test_owned_module_dropped_ee_and_context() {
     };
 
     // Context and EE will live on in the module until here
+}
+
+#[test]
+fn test_parse_from_buffer() {
+    let context = Context::create();
+    let garbage_buffer = MemoryBuffer::create_from_memory_range("garbage ir data", "my_ir");
+    let module_result = Module::parse_bitcode_from_buffer(&garbage_buffer);
+
+    assert!(module_result.is_err());
+
+    let module = context.create_module("mod");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let f = module.add_function("f", &fn_type, None);
+    let basic_block = f.append_basic_block("entry");
+    let builder = context.create_builder();
+
+    builder.position_at_end(&basic_block);
+    builder.build_return(None);
+
+    assert!(module.verify().is_ok());
+
+    let buffer = module.write_bitcode_to_memory();
+    let module2_result = Module::parse_bitcode_from_buffer(&buffer);
+
+    assert!(module2_result.is_ok());
+    assert_eq!(module2_result.unwrap().get_context(), Context::get_global());
+
+    let module3_result = Module::parse_bitcode_from_buffer_in_context(&garbage_buffer, &context);
+
+    assert!(module3_result.is_err());
+
+    let buffer2 = module.write_bitcode_to_memory();
+    let module4_result = Module::parse_bitcode_from_buffer_in_context(&buffer, &context);
+
+    assert!(module4_result.is_ok());
+    assert_eq!(*module4_result.unwrap().get_context(), context);
+}
+
+#[test]
+fn test_parse_from_path() {
+    let context = Context::create();
+    let garbage_path = Path::new("foo/bar");
+    let module_result = Module::parse_bitcode_from_path(&garbage_path);
+
+    assert!(module_result.is_err(), "1");
+
+    let module_result2 = Module::parse_bitcode_from_path_in_context(&garbage_path, &context);
+
+    assert!(module_result2.is_err(), "2");
+
+    let module = context.create_module("mod");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let f = module.add_function("f", &fn_type, None);
+    let basic_block = f.append_basic_block("entry");
+    let builder = context.create_builder();
+
+    builder.position_at_end(&basic_block);
+    builder.build_return(None);
+
+    assert!(module.verify().is_ok(), "3");
+
+    // FIXME: Wasn't able to test success case. Got "invalid bitcode signature"
+    let mut temp_path = temp_dir();
+
+    temp_path.push("module.bc");
+
+    module.write_bitcode_to_path(&temp_path);
+
+    let module3_result = Module::parse_bitcode_from_path(&temp_path);
+
+    assert!(module3_result.is_ok());
+    assert_eq!(module3_result.unwrap().get_context(), Context::get_global());
+
+    let module4_result = Module::parse_bitcode_from_path_in_context(&temp_path, &context);
+
+    assert!(module4_result.is_ok());
+    assert_eq!(*module4_result.unwrap().get_context(), context);
 }

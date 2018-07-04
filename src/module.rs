@@ -1,4 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
+use llvm_sys::bit_reader::{LLVMParseBitcode, LLVMParseBitcodeInContext, LLVMGetBitcodeModuleInContext, LLVMGetBitcodeModule};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
 use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile, LLVMSetModuleInlineAsm};
 use llvm_sys::execution_engine::{LLVMCreateInterpreterForModule, LLVMCreateJITCompilerForModule, LLVMCreateExecutionEngineForModule};
@@ -635,6 +636,124 @@ impl Module {
         }
 
         Some(GlobalValue::new(value))
+    }
+
+    /// Creates a new `Module` from a `MemoryBuffer`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::module::Module;
+    /// use inkwell::memory_buffer::MemoryBuffer;
+    /// use std::path::Path;
+    ///
+    /// let path = Path::new("foo/bar.bc");
+    /// let buffer = MemoryBuffer::create_from_file(&path).unwrap();
+    /// let module = Module::parse_bitcode_from_buffer(&buffer);
+    ///
+    /// assert_eq!(module.unwrap().get_context(), Context::get_global());
+    ///
+    /// ```
+    pub fn parse_bitcode_from_buffer(buffer: &MemoryBuffer) -> Result<Self, LLVMString> {
+        let mut module = unsafe { zeroed() };
+        let mut err_string = unsafe { zeroed() };
+
+        // LLVM has a newer version of this function w/o the error result since 3.8 but this deprecated function
+        // hasen't yet been removed even in the unreleased LLVM 7. Seems fine to use instead of switching to their
+        // error diagnostics handler
+        let success = unsafe {
+            LLVMParseBitcode(buffer.memory_buffer, &mut module, &mut err_string)
+        };
+
+        if success != 0 {
+            return Err(LLVMString::new(err_string));
+        }
+
+        Ok(Module::new(module, None))
+    }
+
+    /// Creates a new `Module` from a `MemoryBuffer`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::module::Module;
+    /// use inkwell::memory_buffer::MemoryBuffer;
+    /// use std::path::Path;
+    ///
+    /// let path = Path::new("foo/bar.bc");
+    /// let context = Context::create();
+    /// let buffer = MemoryBuffer::create_from_file(&path).unwrap();
+    /// let module = Module::parse_bitcode_from_buffer_in_context(&buffer, &context);
+    ///
+    /// assert_eq!(module.unwrap().get_context(), Context::get_global());
+    ///
+    /// ```
+    pub fn parse_bitcode_from_buffer_in_context(buffer: &MemoryBuffer, context: &Context) -> Result<Self, LLVMString> {
+        let mut module = unsafe { zeroed() };
+        let mut err_string = unsafe { zeroed() };
+
+        // LLVM has a newer version of this function w/o the error result since 3.8 but this deprecated function
+        // hasen't yet been removed even in the unreleased LLVM 7. Seems fine to use instead of switching to their
+        // error diagnostics handler
+        let success = unsafe {
+            LLVMParseBitcodeInContext(*context.context, buffer.memory_buffer, &mut module, &mut err_string)
+        };
+
+        if success != 0 {
+            return Err(LLVMString::new(err_string));
+        }
+
+        Ok(Module::new(module, Some(&context)))
+    }
+
+    /// A convenience function for creating a `Module` from a file.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::module::Module;
+    /// use std::path::Path;
+    ///
+    /// let path = Path::new("foo/bar.bc");
+    /// let module = Module::parse_bitcode_from_path(&path);
+    ///
+    /// assert_eq!(module.unwrap().get_context(), Context::get_global());
+    ///
+    /// ```
+    // LLVMGetBitcodeModule was a pain to use, so I seem to be able to achieve the same effect
+    // by reusing create_from_file instead. This is basically just a convenience function.
+    pub fn parse_bitcode_from_path<P: AsRef<Path>>(path: P) -> Result<Self, LLVMString> {
+        let buffer = MemoryBuffer::create_from_file(path.as_ref())?;
+
+        Self::parse_bitcode_from_buffer(&buffer)
+    }
+
+    /// A convenience function for creating a `Module` from a file for a given context.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::module::Module;
+    /// use std::path::Path;
+    ///
+    /// let path = Path::new("foo/bar.bc");
+    /// let context = Context::create();
+    /// let module = Module::parse_bitcode_from_path_in_context(&path, &context);
+    ///
+    /// assert_eq!(*module.unwrap().get_context(), context);
+    ///
+    /// ```
+    // LLVMGetBitcodeModuleInContext was a pain to use, so I seem to be able to achieve the same effect
+    // by reusing create_from_file instead. This is basically just a convenience function.
+    pub fn parse_bitcode_from_path_in_context<P: AsRef<Path>>(path: P, context: &Context) -> Result<Self, LLVMString> {
+        let buffer = MemoryBuffer::create_from_file(path.as_ref())?;
+
+        Self::parse_bitcode_from_buffer_in_context(&buffer, &context)
     }
 }
 

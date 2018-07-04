@@ -1,7 +1,7 @@
 pub mod error_handling;
 
 use libc::c_char;
-use llvm_sys::core::LLVMDisposeMessage;
+use llvm_sys::core::{LLVMCreateMessage, LLVMDisposeMessage};
 use llvm_sys::support::LLVMLoadLibraryPermanently;
 
 use std::error::Error;
@@ -29,6 +29,17 @@ impl LLVMString {
     /// deallocator
     pub fn to_string(&self) -> String {
         (*self).to_string_lossy().into_owned()
+    }
+
+    /// Don't use this if it's not necessary. You likely need to allocate
+    /// a CString as input and then LLVM will likely allocate their own string
+    /// anyway.
+    fn create(bytes: *const c_char) -> LLVMString {
+        let ptr = unsafe {
+            LLVMCreateMessage(bytes)
+        };
+
+        LLVMString::new(ptr)
     }
 }
 

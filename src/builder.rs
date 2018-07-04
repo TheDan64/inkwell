@@ -128,9 +128,7 @@ impl Builder {
     pub unsafe fn build_struct_gep(&self, ptr: &PointerValue, index: u32, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
-        let value = unsafe {
-            LLVMBuildStructGEP(self.builder, ptr.as_value_ref(), index, c_string.as_ptr())
-        };
+        let value = LLVMBuildStructGEP(self.builder, ptr.as_value_ref(), index, c_string.as_ptr());
 
         PointerValue::new(value)
     }
