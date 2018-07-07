@@ -39,6 +39,18 @@ impl VoidType {
         self.void_type.fn_type(param_types, is_var_args)
     }
 
+    /// Gets the `VoidType`. It will be assigned the global context.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::types::VoidType;
+    ///
+    /// let void_type = VoidType::void_type();
+    ///
+    /// assert_eq!(void_type.get_context(), Context::get_global());
+    /// ```
     pub fn void_type() -> Self {
         let void_type = unsafe {
             LLVMVoidType()

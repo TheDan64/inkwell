@@ -135,6 +135,7 @@ fn test_sized_types() {
     let f16_type = FloatType::f16_type();
     let f32_type = FloatType::f32_type();
     let f64_type = FloatType::f64_type();
+    let f80_type = FloatType::x86_f80_type();
     let f128_type = FloatType::f128_type();
     let ppc_f128_type = FloatType::ppc_f128_type();
     let struct_type = StructType::struct_type(&[&i8_type, &f128_type], false);
@@ -159,6 +160,7 @@ fn test_sized_types() {
     assert!(f16_type.is_sized());
     assert!(f32_type.is_sized());
     assert!(f64_type.is_sized());
+    assert!(f80_type.is_sized());
     assert!(f128_type.is_sized());
     assert!(ppc_f128_type.is_sized());
     assert!(struct_type.is_sized());
@@ -181,6 +183,7 @@ fn test_sized_types() {
     assert!(f16_type.ptr_type(AddressSpace::Generic).is_sized());
     assert!(f32_type.ptr_type(AddressSpace::Generic).is_sized());
     assert!(f64_type.ptr_type(AddressSpace::Generic).is_sized());
+    assert!(f80_type.ptr_type(AddressSpace::Generic).is_sized());
     assert!(f128_type.ptr_type(AddressSpace::Generic).is_sized());
     assert!(ppc_f128_type.ptr_type(AddressSpace::Generic).is_sized());
     assert!(struct_type.ptr_type(AddressSpace::Generic).is_sized());
@@ -200,6 +203,7 @@ fn test_sized_types() {
     assert!(f16_type.array_type(42).is_sized());
     assert!(f32_type.array_type(42).is_sized());
     assert!(f64_type.array_type(42).is_sized());
+    assert!(f80_type.array_type(42).is_sized());
     assert!(f128_type.array_type(42).is_sized());
     assert!(ppc_f128_type.array_type(42).is_sized());
     assert!(struct_type.array_type(0).is_sized());
@@ -219,6 +223,7 @@ fn test_sized_types() {
     assert!(f16_type.vec_type(42).is_sized());
     assert!(f32_type.vec_type(42).is_sized());
     assert!(f64_type.vec_type(42).is_sized());
+    assert!(f80_type.vec_type(42).is_sized());
     assert!(f128_type.vec_type(42).is_sized());
     assert!(ppc_f128_type.vec_type(42).is_sized());
     assert!(struct_type.vec_type(42).is_sized());
@@ -241,7 +246,9 @@ fn test_const_null() {
     let f16_type = context.f16_type();
     let f32_type = context.f32_type();
     let f64_type = context.f64_type();
+    let f80_type = context.x86_f80_type();
     let f128_type = context.f128_type();
+    let ppc_f128_type = context.ppc_f128_type();
     let struct_type = context.struct_type(&[&i8_type, &f128_type], false);
     let ptr_type = f64_type.ptr_type(AddressSpace::Generic);
     let vec_type = f64_type.vec_type(42);
@@ -257,7 +264,9 @@ fn test_const_null() {
     assert!(f16_type.const_null_ptr().is_null());
     assert!(f32_type.const_null_ptr().is_null());
     assert!(f64_type.const_null_ptr().is_null());
+    assert!(f80_type.const_null_ptr().is_null());
     assert!(f128_type.const_null_ptr().is_null());
+    assert!(ppc_f128_type.const_null_ptr().is_null());
     assert!(struct_type.const_null_ptr().is_null());
     assert!(ptr_type.const_null_ptr().is_null());
     assert!(vec_type.const_null_ptr().is_null());
@@ -272,7 +281,9 @@ fn test_const_null() {
     let f16_zero = f16_type.const_null();
     let f32_zero = f32_type.const_null();
     let f64_zero = f64_type.const_null();
+    let f80_zero = f80_type.const_null();
     let f128_zero = f128_type.const_null();
+    let ppc_f128_zero = ppc_f128_type.const_null();
     let struct_zero = struct_type.const_null();
     let ptr_zero = ptr_type.const_null();
     let vec_zero = vec_type.const_null();
@@ -296,8 +307,12 @@ fn test_const_null() {
     assert!(f32_zero.is_null());
     assert_eq!(*f64_zero.print_to_string(), *CString::new("double 0.000000e+00").unwrap());
     assert!(f64_zero.is_null());
+    assert_eq!(*f80_zero.print_to_string(), *CString::new("x86_fp80 0xK00000000000000000000").unwrap());
+    assert!(f80_zero.is_null());
     assert_eq!(*f128_zero.print_to_string(), *CString::new("fp128 0xL00000000000000000000000000000000").unwrap());
     assert!(f128_zero.is_null());
+    assert_eq!(*ppc_f128_zero.print_to_string(), *CString::new("ppc_fp128 0xM00000000000000000000000000000000").unwrap());
+    assert!(ppc_f128_zero.is_null());
     assert_eq!(*struct_zero.print_to_string(), *CString::new("{ i8, fp128 } zeroinitializer").unwrap());
     assert!(struct_zero.is_null());
     assert_eq!(*ptr_zero.print_to_string(), *CString::new("double* null").unwrap());

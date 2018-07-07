@@ -1,4 +1,6 @@
-use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMGetMDKindIDInContext};
+//! A `Context` is an opaque owner and manager of core global data.
+
+use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMGetMDKindIDInContext, LLVMX86FP80TypeInContext};
 use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef};
 use llvm_sys::ir_reader::LLVMParseIRInContext;
 
@@ -10,7 +12,7 @@ use support::LLVMString;
 use types::{BasicType, FloatType, IntType, StructType, VoidType};
 use values::{AsValueRef, BasicValue, FunctionValue, StructValue, MetadataValue};
 
-use std::ffi::{CStr, CString};
+use std::ffi::CString;
 use std::mem::forget;
 use std::ops::Deref;
 use std::ptr;
@@ -104,6 +106,28 @@ impl Context {
         Module::new(module, Some(&self))
     }
 
+    /// Creates a new `Module` for the current `Context` from a `MemoryBuffer`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    /// let builder = context.create_builder();
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let fn_val = module.add_function("my_fn", &fn_type, None);
+    /// let basic_block = fn_val.append_basic_block("entry");
+    ///
+    /// builder.position_at_end(&basic_block);
+    /// builder.build_return(None);
+    ///
+    /// let memory_buffer = module.write_bitcode_to_memory();
+    ///
+    /// let module2 = context.create_module_from_ir(memory_buffer).unwrap();
+    /// ```
     // REVIEW: I haven't yet been able to find docs or other wrappers that confirm, but my suspicion
     // is that the method needs to take ownership of the MemoryBuffer... otherwise I see what looks like
     // a double free in valgrind when the MemoryBuffer drops so we are `forget`ting MemoryBuffer here
@@ -125,6 +149,18 @@ impl Context {
         Err(LLVMString::new(err_str))
     }
 
+    /// Gets the `VoidType`. It will be assigned the current context.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let void_type = context.void_type();
+    ///
+    /// assert_eq!(*void_type.get_context(), context);
+    /// ```
     pub fn void_type(&self) -> VoidType {
         let void_type = unsafe {
             LLVMVoidTypeInContext(*self.context)
@@ -333,6 +369,27 @@ impl Context {
         };
 
         FloatType::new(f64_type)
+    }
+
+    /// Gets the `FloatType` representing a 80 bit width. It will be assigned the current context.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    ///
+    /// let x86_f80_type = context.x86_f80_type();
+    ///
+    /// assert_eq!(*x86_f80_type.get_context(), context);
+    /// ```
+    pub fn x86_f80_type(&self) -> FloatType {
+        let f128_type = unsafe {
+            LLVMX86FP80TypeInContext(*self.context)
+        };
+
+        FloatType::new(f128_type)
     }
 
     /// Gets the `FloatType` representing a 128 bit width. It will be assigned the current context.

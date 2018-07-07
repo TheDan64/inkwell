@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMConstReal, LLVMConstNull, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMPPCFP128Type, LLVMConstRealOfStringAndSize};
+use llvm_sys::core::{LLVMConstReal, LLVMConstNull, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMPPCFP128Type, LLVMConstRealOfStringAndSize, LLVMX86FP80Type};
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfFloat;
 use llvm_sys::prelude::LLVMTypeRef;
 
@@ -141,6 +141,26 @@ impl FloatType {
         FloatType::new(float_type)
     }
 
+    /// Gets the `FloatType` representing a 80 bit width. It will be assigned the global context.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::types::FloatType;
+    ///
+    /// let x86_f80_type = FloatType::x86_f80_type();
+    ///
+    /// assert_eq!(x86_f80_type.get_context(), Context::get_global());
+    /// ```
+    pub fn x86_f80_type() -> FloatType {
+        let f128_type = unsafe {
+            LLVMX86FP80Type()
+        };
+
+        FloatType::new(f128_type)
+    }
+
     /// Creates a new `FloatType` which represents one hundred and twenty eight bits (sixteen bytes) for the global context.
     ///
     /// # Example
@@ -188,7 +208,7 @@ impl FloatType {
     }
 
     // See Type::print_to_stderr note on 5.0+ status
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm5-0")))]
+    #[cfg(any(feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0"))]
     pub fn print_to_stderr(&self) {
         self.float_type.print_to_stderr()
     }

@@ -166,7 +166,7 @@ impl Module {
 
         if let Some(linkage) = linkage {
             unsafe {
-                LLVMSetLinkage(value, linkage.as_llvm_linkage());
+                LLVMSetLinkage(value, linkage.as_llvm_linkage()); // TODO: set_linkage on fn_value itself
             }
         }
 
