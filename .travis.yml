@@ -1,9 +1,8 @@
 language: rust
 
-sudo: required
+sudo: false
 cache:
-  - apt
-  - cargo
+  cargo: true
 
 include_base: &BASE
   addons:
