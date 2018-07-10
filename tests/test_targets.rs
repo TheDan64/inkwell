@@ -1,8 +1,8 @@
 extern crate inkwell;
 
-use self::inkwell::OptimizationLevel;
+use self::inkwell::{AddressSpace, OptimizationLevel};
 use self::inkwell::context::Context;
-use self::inkwell::targets::{ByteOrdering, InitializationConfig, Target};
+use self::inkwell::targets::{ByteOrdering, InitializationConfig, Target, TargetMachine};
 
 use std::ffi::CString;
 
@@ -10,7 +10,6 @@ use std::ffi::CString;
 // #[test]
 // fn test_target() {
 //     // REVIEW: Some of the machine specific stuff may vary. Should allow multiple possibilites
-//     assert_eq!(TargetMachine::get_default_triple(), &*CString::new("x86_64-pc-linux-gnu").unwrap());
 //     assert!(Target::get_first().is_none());
 
 //     let mut config = InitializationConfig {
@@ -32,7 +31,7 @@ use std::ffi::CString;
 //     assert!(!target.has_asm_backend());
 //     assert!(!target.has_target_machine());
 
-//     assert!(target.create_target_machine("x86-64", "xx", "yy", None, RelocMode::Default, CodeModel::Default).is_none());
+//     assert!(target.create_target_machine("x86-64", "xx", "yy", OptimizationLevel::Default, RelocMode::Default, CodeModel::Default).is_none());
 
 //     config.base = true;
 
@@ -43,7 +42,7 @@ use std::ffi::CString;
 //     assert!(!target.has_asm_backend());
 //     assert!(target.has_target_machine());
 
-//     let target_machine = target.create_target_machine("zz", "xx", "yy", None, RelocMode::Default, CodeModel::Default).expect("Could not create TargetMachine");
+//     let target_machine = target.create_target_machine("zz", "xx", "yy", OptimizationLevel::Default, RelocMode::Default, CodeModel::Default).expect("Could not create TargetMachine");
 
 //     config.machine_code = true;
 
@@ -60,6 +59,23 @@ use std::ffi::CString;
 
 //     target.get_next().expect("Did not find any target2");
 // }
+
+#[test]
+fn test_target_machine() {
+    let default_target_triple = TargetMachine::get_default_triple();
+
+    #[cfg(target_os = "linux")]
+    let cond = *default_target_triple == *CString::new("x86_64-pc-linux-gnu").unwrap() ||
+               *default_target_triple == *CString::new("x86_64-unknown-linux-gnu").unwrap();
+
+
+    // let cond = *default_target_triple == *CString::new("x86_64-pc-linux-gnu").unwrap() |
+    //     *default_target_triple == *CString::new("x86_64-unknown-linux-gnu").unwrap();
+
+    assert!(cond);
+
+    // TODO: CFG for other supported major OSes
+}
 
 #[test]
 fn test_target_data() {
@@ -99,7 +115,7 @@ fn test_target_data() {
 
     // REVIEW: What if these fail on a different system?
     assert_eq!(target_data.get_byte_ordering(), ByteOrdering::LittleEndian);
-    assert_eq!(target_data.get_pointer_byte_size(), 8);
+    assert_eq!(target_data.get_pointer_byte_size(None), 8);
 
     // REVIEW: Are these just byte size? Maybe rename to get_byte_size?
     assert_eq!(target_data.get_store_size(&i32_type), 4);
@@ -168,4 +184,34 @@ fn test_target_data() {
     assert_eq!(target_data.element_at_offset(&struct_type2, 16), 3);
     assert_eq!(target_data.element_at_offset(&struct_type2, 32), 3); // OoB
     assert_eq!(target_data.element_at_offset(&struct_type2, ::std::u64::MAX), 3); // OoB; TODOC: Odd but seems to cap at max element number
+}
+
+#[test]
+fn test_ptr_sized_int() {
+    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+
+    let context = Context::create();
+    let module = context.create_module("sum");
+    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    let target_data = execution_engine.get_target_data();
+    let address_space = AddressSpace::Global;
+    let int_type = target_data.ptr_sized_int_type(None);
+
+    assert_eq!(int_type.get_context(), Context::get_global());
+    assert_eq!(int_type.get_bit_width(), target_data.get_pointer_byte_size(None) * 8);
+
+    let int_type2 = target_data.ptr_sized_int_type(Some(address_space));
+
+    assert_eq!(int_type2.get_context(), Context::get_global());
+    assert_eq!(int_type2.get_bit_width(), target_data.get_pointer_byte_size(Some(address_space)) * 8);
+
+    let int_type3 = target_data.ptr_sized_int_type_in_context(&context, None);
+
+    assert_eq!(*int_type3.get_context(), context);
+    assert_eq!(int_type3.get_bit_width(), target_data.get_pointer_byte_size(None) * 8);
+
+    let int_type4 = target_data.ptr_sized_int_type_in_context(&context, Some(address_space));
+
+    assert_eq!(*int_type4.get_context(), context);
+    assert_eq!(int_type4.get_bit_width(), target_data.get_pointer_byte_size(Some(address_space)) * 8);
 }

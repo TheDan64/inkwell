@@ -172,6 +172,7 @@ impl Context {
     /// Gets the `IntType` representing 1 bit width. It will be assigned the current context.
     ///
     /// # Example
+    ///
     /// ```no_run
     /// use inkwell::context::Context;
     ///
@@ -192,6 +193,7 @@ impl Context {
     /// Gets the `IntType` representing 8 bit width. It will be assigned the current context.
     ///
     /// # Example
+    ///
     /// ```no_run
     /// use inkwell::context::Context;
     ///
@@ -212,6 +214,7 @@ impl Context {
     /// Gets the `IntType` representing 16 bit width. It will be assigned the current context.
     ///
     /// # Example
+    ///
     /// ```no_run
     /// use inkwell::context::Context;
     ///
@@ -232,6 +235,7 @@ impl Context {
     /// Gets the `IntType` representing 32 bit width. It will be assigned the current context.
     ///
     /// # Example
+    ///
     /// ```no_run
     /// use inkwell::context::Context;
     ///
@@ -252,6 +256,7 @@ impl Context {
     /// Gets the `IntType` representing 64 bit width. It will be assigned the current context.
     ///
     /// # Example
+    ///
     /// ```no_run
     /// use inkwell::context::Context;
     ///
@@ -272,6 +277,7 @@ impl Context {
     /// Gets the `IntType` representing 128 bit width. It will be assigned the current context.
     ///
     /// # Example
+    ///
     /// ```no_run
     /// use inkwell::context::Context;
     ///
@@ -291,6 +297,7 @@ impl Context {
     /// Gets the `IntType` representing a custom bit width. It will be assigned the current context.
     ///
     /// # Example
+    ///
     /// ```no_run
     /// use inkwell::context::Context;
     ///
@@ -458,6 +465,39 @@ impl Context {
         StructType::new(struct_type)
     }
 
+    pub fn const_struct(&self, values: &[&BasicValue], packed: bool) -> StructValue {
+        let mut args: Vec<LLVMValueRef> = values.iter()
+                                                .map(|val| val.as_value_ref())
+                                                .collect();
+        let value = unsafe {
+            LLVMConstStructInContext(*self.context, args.as_mut_ptr(), args.len() as u32, packed as i32)
+        };
+
+        StructValue::new(value)
+    }
+
+    /// Append a named `BasicBlock` at the end of the referenced `FunctionValue`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_mod");
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let fn_value = module.add_function("my_fn", &fn_type, None);
+    /// let entry_basic_block = context.append_basic_block(&fn_value, "entry");
+    ///
+    /// assert_eq!(fn_value.count_basic_blocks(), 1);
+    ///
+    /// let last_basic_block = context.append_basic_block(&fn_value, "last");
+    ///
+    /// assert_eq!(fn_value.count_basic_blocks(), 2);
+    /// assert_eq!(fn_value.get_first_basic_block().unwrap(), entry_basic_block);
+    /// assert_eq!(fn_value.get_last_basic_block().unwrap(), last_basic_block);
+    /// ```
     pub fn append_basic_block(&self, function: &FunctionValue, name: &str) -> BasicBlock {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -468,6 +508,28 @@ impl Context {
         BasicBlock::new(bb).expect("Appending basic block should never fail")
     }
 
+    /// Append a named `BasicBlock` after the referenced `BasicBlock`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_mod");
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let fn_value = module.add_function("my_fn", &fn_type, None);
+    /// let entry_basic_block = context.append_basic_block(&fn_value, "entry");
+    ///
+    /// assert_eq!(fn_value.count_basic_blocks(), 1);
+    ///
+    /// let last_basic_block = context.insert_basic_block_after(&entry_basic_block, "last");
+    ///
+    /// assert_eq!(fn_value.count_basic_blocks(), 2);
+    /// assert_eq!(fn_value.get_first_basic_block().unwrap(), entry_basic_block);
+    /// assert_eq!(fn_value.get_last_basic_block().unwrap(), last_basic_block);
+    /// ```
     // REVIEW: What happens when using these methods and the BasicBlock doesn't have a parent?
     // Should they be callable at all? Needs testing to see what LLVM will do, I suppose. See below unwrap.
     // Maybe need SubTypes: BasicBlock<HasParent>, BasicBlock<Orphan>?
@@ -482,6 +544,28 @@ impl Context {
         }
     }
 
+    /// Prepend a named `BasicBlock` before the referenced `BasicBlock`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_mod");
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let fn_value = module.add_function("my_fn", &fn_type, None);
+    /// let entry_basic_block = context.append_basic_block(&fn_value, "entry");
+    ///
+    /// assert_eq!(fn_value.count_basic_blocks(), 1);
+    ///
+    /// let first_basic_block = context.prepend_basic_block(&entry_basic_block, "first");
+    ///
+    /// assert_eq!(fn_value.count_basic_blocks(), 2);
+    /// assert_eq!(fn_value.get_first_basic_block().unwrap(), first_basic_block);
+    /// assert_eq!(fn_value.get_last_basic_block().unwrap(), entry_basic_block);
+    /// ```
     pub fn prepend_basic_block(&self, basic_block: &BasicBlock, name: &str) -> BasicBlock {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -490,17 +574,6 @@ impl Context {
         };
 
         BasicBlock::new(bb).expect("Prepending basic block should never fail")
-    }
-
-    pub fn const_struct(&self, values: &[&BasicValue], packed: bool) -> StructValue {
-        let mut args: Vec<LLVMValueRef> = values.iter()
-                                                .map(|val| val.as_value_ref())
-                                                .collect();
-        let value = unsafe {
-            LLVMConstStructInContext(*self.context, args.as_mut_ptr(), args.len() as u32, packed as i32)
-        };
-
-        StructValue::new(value)
     }
 
     // REVIEW: Maybe more helpful to beginners to call this metadata_tuple?
@@ -516,6 +589,20 @@ impl Context {
         MetadataValue::new(metadata_value)
     }
 
+    /// Creates a `MetadataValue` string for the current context. It can be assigned to a value.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let md_string = context.metadata_string("Floats are awesome!");
+    /// let f32_type = context.f32_type();
+    /// let f32_one = f32_type.const_float(1.);
+    ///
+    /// f32_one.set_metadata(&md_string, 0);
+    /// ```
     // REVIEW: Seems to be unassgned to anything
     pub fn metadata_string(&self, string: &str) -> MetadataValue {
         let c_string = CString::new(string).expect("Conversion to CString failed unexpectedly");
@@ -527,6 +614,22 @@ impl Context {
         MetadataValue::new(metadata_value)
     }
 
+    /// Obtains the index of a metadata kind id. If the string doesn't exist, LLVM will add it at index `FIRST_CUSTOM_METADATA_KIND_ID` onward.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::values::FIRST_CUSTOM_METADATA_KIND_ID;
+    ///
+    /// let context = Context::create();
+    /// assert_eq!(context.get_kind_id("dbg"), 0);
+    /// assert_eq!(context.get_kind_id("tbaa"), 1);
+    /// assert_eq!(context.get_kind_id("prof"), 2);
+    ///
+    /// // Custom kind id doesn't exist in in LLVM until now:
+    /// assert_eq!(context.get_kind_id("foo"), FIRST_CUSTOM_METADATA_KIND_ID);
+    /// ```
     pub fn get_kind_id(&self, key: &str) -> u32 {
         unsafe {
             LLVMGetMDKindIDInContext(*self.context, key.as_ptr() as *const i8, key.len() as u32)
@@ -561,7 +664,8 @@ impl Drop for Context {
 // REVIEW: Now that Contexts are ref counted, it may not be necessary to
 // have this ContextRef type, however Global Contexts throw a wrench in that
 // a bit as it is a special case. get_context() methods as well since they do
-// not have access to the original Rc.
+// not have access to the original Rc. I suppose Context could be Option<Rc<LLVMContextRef>>
+// where None is global context
 #[derive(Debug, PartialEq, Eq)]
 pub struct ContextRef {
     context: Option<Context>,

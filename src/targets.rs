@@ -3,14 +3,14 @@ use llvm_sys::target::LLVMAddTargetData;
 use llvm_sys::target::{LLVMTargetDataRef, LLVMCopyStringRepOfTargetData, LLVMSizeOfTypeInBits, LLVMCreateTargetData, LLVMByteOrder, LLVMPointerSize, LLVMByteOrdering, LLVMStoreSizeOfType, LLVMABISizeOfType, LLVMABIAlignmentOfType, LLVMCallFrameAlignmentOfType, LLVMPreferredAlignmentOfType, LLVMPreferredAlignmentOfGlobal, LLVMElementAtOffset, LLVMOffsetOfElement, LLVMDisposeTargetData, LLVMPointerSizeForAS, LLVMIntPtrType, LLVMIntPtrTypeForAS, LLVMIntPtrTypeInContext, LLVMIntPtrTypeForASInContext};
 use llvm_sys::target_machine::{LLVMGetFirstTarget, LLVMTargetRef, LLVMGetNextTarget, LLVMGetTargetFromName, LLVMGetTargetFromTriple, LLVMGetTargetName, LLVMGetTargetDescription, LLVMTargetHasJIT, LLVMTargetHasTargetMachine, LLVMTargetHasAsmBackend, LLVMTargetMachineRef, LLVMDisposeTargetMachine, LLVMGetTargetMachineTarget, LLVMGetTargetMachineTriple, LLVMSetTargetMachineAsmVerbosity, LLVMCreateTargetMachine, LLVMGetTargetMachineCPU, LLVMGetTargetMachineFeatureString, LLVMGetDefaultTargetTriple, LLVMAddAnalysisPasses, LLVMCodeGenOptLevel, LLVMCodeModel, LLVMRelocMode, LLVMCodeGenFileType, LLVMTargetMachineEmitToMemoryBuffer, LLVMTargetMachineEmitToFile};
 
-use OptimizationLevel;
+use {AddressSpace, OptimizationLevel};
 use context::Context;
 use data_layout::DataLayout;
 use memory_buffer::MemoryBuffer;
 use module::Module;
 use passes::PassManager;
 use support::LLVMString;
-use types::{AnyType, AsTypeRef, StructType, PointerType};
+use types::{AnyType, AsTypeRef, IntType, StructType};
 use values::{AsValueRef, GlobalValue};
 
 use std::default::Default;
@@ -723,13 +723,13 @@ impl Target {
         Some(Target::new(target))
     }
 
-    pub fn get_name(&self) -> &CStr {
+    pub fn get_name(&self) -> &CStr { // REVIEW: LLVMString?
         unsafe {
             CStr::from_ptr(LLVMGetTargetName(self.target))
         }
     }
 
-    pub fn get_description(&self) -> &CStr {
+    pub fn get_description(&self) -> &CStr { // REVIEW: LLVMString?
         unsafe {
             CStr::from_ptr(LLVMGetTargetDescription(self.target))
         }
@@ -802,25 +802,27 @@ impl TargetMachine {
         Target::new(target)
     }
 
-    pub fn get_triple(&self) -> &CStr {
+    pub fn get_triple(&self) -> &CStr { // REVIEW: LLVMString?
         unsafe {
             CStr::from_ptr(LLVMGetTargetMachineTriple(self.target_machine))
         }
     }
 
-    pub fn get_default_triple() -> &'static CStr { // FIXME: Probably not static?
-        unsafe {
-            CStr::from_ptr(LLVMGetDefaultTargetTriple())
-        }
+    pub fn get_default_triple() -> LLVMString {
+        let llvm_string = unsafe {
+            LLVMGetDefaultTargetTriple()
+        };
+
+        LLVMString::new(llvm_string)
     }
 
-    pub fn get_cpu(&self) -> &CStr {
+    pub fn get_cpu(&self) -> &CStr { // REVIEW: LLVMString?
         unsafe {
             CStr::from_ptr(LLVMGetTargetMachineCPU(self.target_machine))
         }
     }
 
-    pub fn get_feature_string(&self) -> &CStr {
+    pub fn get_feature_string(&self) -> &CStr { // REVIEW: LLVMString?
         unsafe {
             CStr::from_ptr(LLVMGetTargetMachineFeatureString(self.target_machine))
         }
@@ -899,36 +901,53 @@ impl TargetData {
         }
     }
 
-    pub fn int_ptr_type(&self) -> PointerType {
-        let ptr_type = unsafe {
-            LLVMIntPtrType(self.target_data)
+    /// Gets the `IntType` representing a bit width of a pointer. It will be assigned the global context.
+    ///
+    /// ```no_run
+    /// use inkwell::OptimizationLevel;
+    /// use inkwell::context::Context;
+    /// use inkwell::targets::{InitializationConfig, Target};
+    ///
+    /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+    ///
+    /// let context = Context::get_global();
+    /// let module = context.create_module("sum");
+    /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    /// let target_data = execution_engine.get_target_data();
+    /// let int_type = target_data.ptr_sized_int_type(None);
+    /// ```
+    pub fn ptr_sized_int_type(&self, address_space: Option<AddressSpace>) -> IntType {
+        let ptr_type = match address_space {
+            Some(address_space) => unsafe { LLVMIntPtrTypeForAS(self.target_data, address_space as u32) },
+            None => unsafe { LLVMIntPtrType(self.target_data) },
         };
 
-        PointerType::new(ptr_type)
+        IntType::new(ptr_type)
     }
 
-    pub fn int_ptr_type_for_as(&self, as_: u32) -> PointerType {
-        let ptr_type = unsafe {
-            LLVMIntPtrTypeForAS(self.target_data, as_)
+    /// Gets the `IntType` representing a bit width of a pointer. It will be assigned the referenced context.
+    ///
+    ///
+    /// ```no_run
+    /// use inkwell::OptimizationLevel;
+    /// use inkwell::context::Context;
+    /// use inkwell::targets::{InitializationConfig, Target};
+    ///
+    /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("sum");
+    /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    /// let target_data = execution_engine.get_target_data();
+    /// let int_type = target_data.ptr_sized_int_type_in_context(&context, None);
+    /// ```
+    pub fn ptr_sized_int_type_in_context(&self, context: &Context, address_space: Option<AddressSpace>) -> IntType {
+        let ptr_type = match address_space {
+            Some(address_space) => unsafe { LLVMIntPtrTypeForASInContext(*context.context, self.target_data, address_space as u32) },
+            None => unsafe { LLVMIntPtrTypeInContext(*context.context, self.target_data) },
         };
 
-        PointerType::new(ptr_type)
-    }
-
-    pub fn int_ptr_type_in_context(&self, context: &Context) -> PointerType {
-        let ptr_type = unsafe {
-            LLVMIntPtrTypeInContext(*context.context, self.target_data)
-        };
-
-        PointerType::new(ptr_type)
-    }
-
-    pub fn int_ptr_type_for_as_in_context(&self, context: &Context, as_: u32) -> PointerType {
-        let ptr_type = unsafe {
-            LLVMIntPtrTypeForASInContext(*context.context, self.target_data, as_)
-        };
-
-        PointerType::new(ptr_type)
+        IntType::new(ptr_type)
     }
 
     pub fn get_data_layout(&self) -> DataLayout {
@@ -974,15 +993,10 @@ impl TargetData {
         }
     }
 
-    pub fn get_pointer_byte_size(&self) -> u32 {
-        unsafe {
-            LLVMPointerSize(self.target_data)
-        }
-    }
-
-    pub fn get_pointer_byte_size_for_as(&self, as_: u32) -> u32 {
-        unsafe {
-            LLVMPointerSizeForAS(self.target_data, as_)
+    pub fn get_pointer_byte_size(&self, address_space: Option<AddressSpace>) -> u32 {
+        match address_space {
+            Some(address_space) => unsafe { LLVMPointerSizeForAS(self.target_data, address_space as u32) },
+            None => unsafe { LLVMPointerSize(self.target_data) },
         }
     }
 
