@@ -918,30 +918,37 @@ fn test_phi_values() {
 #[test]
 fn test_allocations() {
     let context = Context::create();
+    let builder = context.create_builder();
+    let module = context.create_module("my_mod");
+    let void_type = context.void_type();
     let i32_type = context.i32_type();
     let i32_three = i32_type.const_int(3, false);
-    let builder = context.create_builder();
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_value = module.add_function("my_func", &fn_type, None);
+    let entry_block = fn_value.append_basic_block("entry");
 
-    // REVIEW: Alloca segfaults in 5.0 & 6.0 ...
-    // and in earlier versions too apparently?
-    #[cfg(not(any(feature = "llvm5-0", feature = "llvm6-0")))]
-    {
-        let stack_ptr = builder.build_alloca(&i32_type, "stack_ptr");
+    builder.position_at_end(&entry_block);
 
-        assert_eq!(*stack_ptr.get_type().print_to_string(), *CString::new("i32*").unwrap());
+    // REVIEW: Alloca (and possibly malloc) seem to be prone to segfaulting
+    // when called with a builder that isn't positioned. I wonder if other
+    // builder methods have this problem? We could make builder subtypes:
+    // Builder<HasPosition>, Builder<NoPosition> and only define most
+    // methods on positioned variant if so. But leave positioning methods
+    // on both?
 
-        let stack_array = builder.build_array_alloca(&i32_type, &i32_three, "stack_array");
+    let stack_ptr = builder.build_alloca(i32_type, "stack_ptr");
 
-        assert_eq!(*stack_array.get_type().print_to_string(), *CString::new("i32*").unwrap());
-    }
+    assert_eq!(*stack_ptr.get_type().print_to_string(), *CString::new("i32*").unwrap());
 
-    // REVIEW: Heap allocations are not working:
+    let stack_array = builder.build_array_alloca(i32_type, i32_three, "stack_array");
 
-    // let heap_ptr = builder.build_malloc(&i32_type, "heap_ptr");
+    assert_eq!(*stack_array.get_type().print_to_string(), *CString::new("i32*").unwrap());
 
-    // assert_eq!(heap_ptr.get_type().print_to_string(), &*CString::new("i32*").unwrap());
+    let heap_ptr = builder.build_malloc(i32_type, "heap_ptr");
 
-    // let heap_array = builder.build_array_malloc(&i32_type, &i32_three, "heap_array");
+    assert_eq!(*heap_ptr.get_type().print_to_string(), *CString::new("i32*").unwrap());
 
-    // assert_eq!(heap_array.get_type().print_to_string(), &*CString::new("i32*").unwrap());
+    let heap_array = builder.build_array_malloc(i32_type, i32_three, "heap_array");
+
+    assert_eq!(*heap_array.get_type().print_to_string(), *CString::new("i32*").unwrap());
 }

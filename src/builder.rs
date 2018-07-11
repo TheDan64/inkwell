@@ -168,46 +168,44 @@ impl Builder {
     }
 
     // TODOC: Stack allocation
-    pub fn build_alloca<T: BasicType>(&self, type_: &T, name: &str) -> PointerValue {
+    pub fn build_alloca<T: BasicType>(&self, ty: T, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildAlloca(self.builder, type_.as_type_ref(), c_string.as_ptr())
+            LLVMBuildAlloca(self.builder, ty.as_type_ref(), c_string.as_ptr())
         };
 
         PointerValue::new(value)
     }
 
     // TODOC: Stack allocation
-    pub fn build_array_alloca<T: BasicType>(&self, type_: &T, size: &IntValue, name: &str) -> PointerValue {
+    pub fn build_array_alloca<T: BasicType>(&self, ty: T, size: IntValue, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildArrayAlloca(self.builder, type_.as_type_ref(), size.as_value_ref(), c_string.as_ptr())
+            LLVMBuildArrayAlloca(self.builder, ty.as_type_ref(), size.as_value_ref(), c_string.as_ptr())
         };
 
         PointerValue::new(value)
     }
 
     // TODOC: Heap allocation
-    // FIXME: Not working
-    pub fn build_malloc<T: BasicType>(&self, type_: &T, name: &str) -> PointerValue {
+    pub fn build_malloc<T: BasicType>(&self, ty: T, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildMalloc(self.builder, type_.as_type_ref(), c_string.as_ptr())
+            LLVMBuildMalloc(self.builder, ty.as_type_ref(), c_string.as_ptr())
         };
 
         PointerValue::new(value)
     }
 
     // TODOC: Heap allocation
-    // FIXME: Not working
-    pub fn build_array_malloc<T: BasicType>(&self, type_: &T, size: &IntValue, name: &str) -> PointerValue {
+    pub fn build_array_malloc<T: BasicType>(&self, ty: T, size: IntValue, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildArrayMalloc(self.builder, type_.as_type_ref(), size.as_value_ref(), c_string.as_ptr())
+            LLVMBuildArrayMalloc(self.builder, ty.as_type_ref(), size.as_value_ref(), c_string.as_ptr())
         };
 
         PointerValue::new(value)
