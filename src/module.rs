@@ -68,7 +68,7 @@ impl Linkage {
         }
     }
 
-    fn as_llvm_linkage(&self) -> LLVMLinkage {
+    pub(crate) fn as_llvm_linkage(&self) -> LLVMLinkage {
         match *self {
             Linkage::AppendingLinkage => LLVMLinkage::LLVMAppendingLinkage,
             Linkage::AvailableExternallyLinkage => LLVMLinkage::LLVMAvailableExternallyLinkage,
@@ -157,20 +157,20 @@ impl Module {
     /// assert_eq!(fn_val.get_name().to_str(), Ok("my_function"));
     /// assert_eq!(fn_val.get_linkage(), Linkage::ExternalLinkage);
     /// ```
-    pub fn add_function(&self, name: &str, ty: &FunctionType, linkage: Option<&Linkage>) -> FunctionValue {
+    pub fn add_function(&self, name: &str, ty: &FunctionType, linkage: Option<Linkage>) -> FunctionValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMAddFunction(self.module.get(), c_string.as_ptr(), ty.as_type_ref())
         };
 
+        let fn_value = FunctionValue::new(value).expect("add_function should always succeed in adding a new function");
+
         if let Some(linkage) = linkage {
-            unsafe {
-                LLVMSetLinkage(value, linkage.as_llvm_linkage()); // TODO: set_linkage on fn_value itself
-            }
+            fn_value.set_linkage(linkage)
         }
 
-        FunctionValue::new(value).expect("add_function should always succeed in adding a new function")
+        fn_value
     }
 
     /// Gets the `Context` from which this `Module` originates.
@@ -537,8 +537,8 @@ impl Module {
     }
 
     /// Prints the content of the `Module` to a file.
-    pub fn print_to_file(&self, path: &Path) -> Result<(), LLVMString> {
-        let path = path.to_str().expect("Did not find a valid Unicode path string");
+    pub fn print_to_file<P: AsRef<Path>>(&self, path: P) -> Result<(), LLVMString> {
+        let path = path.as_ref().to_str().expect("Did not find a valid Unicode path string");
         let mut err_string = unsafe { zeroed() };
         let return_code = unsafe {
             LLVMPrintModuleToFile(self.module.get(), path.as_ptr() as *const i8, &mut err_string)
@@ -759,6 +759,11 @@ impl Module {
 
 impl Clone for Module {
     fn clone(&self) -> Self {
+        // REVIEW: Is this just a LLVM 6 bug? We could conditionally compile this assertion for affected versions
+        let verify = self.verify();
+
+        assert!(verify.is_ok(), "Cloning a Module seems to segfault when module is not valid. We are preventing that here. Error: {}", verify.unwrap_err());
+
         let module = unsafe {
             LLVMCloneModule(self.module.get())
         };

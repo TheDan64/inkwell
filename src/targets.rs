@@ -78,7 +78,7 @@ impl Default for InitializationConfig {
 }
 
 // NOTE: Versions verified as target-complete: 3.6, 3.7, 3.8, 3.9, 4.0
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct Target {
     target: LLVMTargetRef,
 }
@@ -711,7 +711,7 @@ impl Target {
         Some(Target::new(target))
     }
 
-    pub fn get_next(&self) -> Option<Target> {
+    pub fn get_next(&self) -> Option<Self> {
         let target = unsafe {
             LLVMGetNextTarget(self.target)
         };
@@ -723,29 +723,33 @@ impl Target {
         Some(Target::new(target))
     }
 
-    pub fn get_name(&self) -> &CStr { // REVIEW: LLVMString?
+    pub fn get_name(&self) -> &CStr {
         unsafe {
             CStr::from_ptr(LLVMGetTargetName(self.target))
         }
     }
 
-    pub fn get_description(&self) -> &CStr { // REVIEW: LLVMString?
+    pub fn get_description(&self) -> &CStr {
         unsafe {
             CStr::from_ptr(LLVMGetTargetDescription(self.target))
         }
     }
 
-    pub fn from_name(name: &str) -> Target { // REVIEW: Option?
+    pub fn from_name(name: &str) -> Option<Self> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let target = unsafe {
             LLVMGetTargetFromName(c_string.as_ptr())
         };
 
-        Target::new(target)
+        if target.is_null() {
+            return None;
+        }
+
+        Some(Target::new(target))
     }
 
-    pub fn from_triple(triple: &str) -> Result<Target, LLVMString> {
+    pub fn from_triple(triple: &str) -> Result<Self, LLVMString> {
         let c_string = CString::new(triple).expect("Conversion to CString failed unexpectedly");
         let mut target = ptr::null_mut();
         let mut err_string = unsafe { zeroed() };
@@ -802,10 +806,12 @@ impl TargetMachine {
         Target::new(target)
     }
 
-    pub fn get_triple(&self) -> &CStr { // REVIEW: LLVMString?
-        unsafe {
-            CStr::from_ptr(LLVMGetTargetMachineTriple(self.target_machine))
-        }
+    pub fn get_triple(&self) -> LLVMString {
+        let ptr = unsafe {
+            LLVMGetTargetMachineTriple(self.target_machine)
+        };
+
+        LLVMString::new(ptr)
     }
 
     pub fn get_default_triple() -> LLVMString {
@@ -816,13 +822,15 @@ impl TargetMachine {
         LLVMString::new(llvm_string)
     }
 
-    pub fn get_cpu(&self) -> &CStr { // REVIEW: LLVMString?
-        unsafe {
-            CStr::from_ptr(LLVMGetTargetMachineCPU(self.target_machine))
-        }
+    pub fn get_cpu(&self) -> LLVMString {
+        let ptr = unsafe {
+            LLVMGetTargetMachineCPU(self.target_machine)
+        };
+
+        LLVMString::new(ptr)
     }
 
-    pub fn get_feature_string(&self) -> &CStr { // REVIEW: LLVMString?
+    pub fn get_feature_string(&self) -> &CStr {
         unsafe {
             CStr::from_ptr(LLVMGetTargetMachineFeatureString(self.target_machine))
         }
@@ -860,7 +868,7 @@ impl TargetMachine {
         let path = path.to_str().expect("Did not find a valid Unicode path string");
         let mut err_string = unsafe { zeroed() };
         let return_code = unsafe {
-            // REVIEW: Why does LLVM need a mutable reference to path...?
+            // REVIEW: Why does LLVM need a mutable ptr to path...?
             LLVMTargetMachineEmitToFile(self.target_machine, module.module.get(), path.as_ptr() as *mut i8, file_type.as_llvm_file_type(), &mut err_string)
         };
 
@@ -917,12 +925,12 @@ impl TargetData {
     /// let int_type = target_data.ptr_sized_int_type(None);
     /// ```
     pub fn ptr_sized_int_type(&self, address_space: Option<AddressSpace>) -> IntType {
-        let ptr_type = match address_space {
+        let int_type_ptr = match address_space {
             Some(address_space) => unsafe { LLVMIntPtrTypeForAS(self.target_data, address_space as u32) },
             None => unsafe { LLVMIntPtrType(self.target_data) },
         };
 
-        IntType::new(ptr_type)
+        IntType::new(int_type_ptr)
     }
 
     /// Gets the `IntType` representing a bit width of a pointer. It will be assigned the referenced context.
@@ -942,12 +950,12 @@ impl TargetData {
     /// let int_type = target_data.ptr_sized_int_type_in_context(&context, None);
     /// ```
     pub fn ptr_sized_int_type_in_context(&self, context: &Context, address_space: Option<AddressSpace>) -> IntType {
-        let ptr_type = match address_space {
+        let int_type_ptr = match address_space {
             Some(address_space) => unsafe { LLVMIntPtrTypeForASInContext(*context.context, self.target_data, address_space as u32) },
             None => unsafe { LLVMIntPtrTypeInContext(*context.context, self.target_data) },
         };
 
-        IntType::new(ptr_type)
+        IntType::new(int_type_ptr)
     }
 
     pub fn get_data_layout(&self) -> DataLayout {

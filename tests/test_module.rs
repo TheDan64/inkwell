@@ -274,3 +274,46 @@ fn test_parse_from_path() {
     assert!(module4_result.is_ok());
     assert_eq!(*module4_result.unwrap().get_context(), context);
 }
+
+#[test]
+fn test_clone() {
+    let context = Context::create();
+    let module = context.create_module("mod");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let f = module.add_function("f", &fn_type, None);
+    let basic_block = f.append_basic_block("entry");
+    let builder = context.create_builder();
+
+    builder.position_at_end(&basic_block);
+    builder.build_return(None);
+
+    let module2 = module.clone();
+
+    assert_ne!(module, module2);
+    assert_eq!(module.print_to_string(), module2.print_to_string());
+}
+
+#[test]
+fn test_print_to_file() {
+    let context = Context::create();
+    let module = context.create_module("mod");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let f = module.add_function("f", &fn_type, None);
+    let basic_block = f.append_basic_block("entry");
+    let builder = context.create_builder();
+
+    builder.position_at_end(&basic_block);
+    builder.build_return(None);
+
+    let bad_path = Path::new("/");
+
+    assert_eq!(*module.print_to_file(bad_path).unwrap_err(), *CString::new("No such file or directory").unwrap());
+
+    let mut temp_path = temp_dir();
+
+    temp_path.push("module");
+
+    assert!(module.print_to_file(&temp_path).is_ok());
+}

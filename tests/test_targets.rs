@@ -2,7 +2,7 @@ extern crate inkwell;
 
 use self::inkwell::{AddressSpace, OptimizationLevel};
 use self::inkwell::context::Context;
-use self::inkwell::targets::{ByteOrdering, InitializationConfig, Target, TargetMachine};
+use self::inkwell::targets::{ByteOrdering, CodeModel, InitializationConfig, RelocMode, Target, TargetMachine};
 
 use std::ffi::CString;
 
@@ -61,7 +61,57 @@ use std::ffi::CString;
 // }
 
 #[test]
-fn test_target_machine() {
+fn test_target_and_target_machine() {
+    let bad_target = Target::from_name("asd");
+
+    assert!(bad_target.is_none());
+
+    let _bad_target2 = Target::from_triple("x86_64-pc-linux-gnu");
+
+    // REVIEW: Inconsistent success :(
+    // assert_eq!(*bad_target2.unwrap_err(), *CString::new("Unable to find target for this triple (no targets are registered)").unwrap());
+
+    Target::initialize_x86(&InitializationConfig::default());
+
+    let good_target = Target::from_name("x86-64");
+
+    assert!(good_target.is_some());
+
+    let good_target2 = Target::from_triple("x86_64-pc-linux-gnu");
+
+    assert!(good_target2.is_ok(), "{}", good_target2.unwrap_err());
+
+    let good_target = good_target.unwrap();
+    let good_target2 = good_target2.unwrap();
+
+    assert_eq!(good_target, good_target2);
+    assert_eq!(*good_target.get_name(), *CString::new("x86-64").unwrap());
+    assert_eq!(*good_target2.get_name(), *CString::new("x86-64").unwrap());
+    assert_eq!(*good_target.get_description(), *CString::new("64-bit X86: EM64T and AMD64").unwrap());
+    assert_eq!(*good_target2.get_description(), *CString::new("64-bit X86: EM64T and AMD64").unwrap());
+    assert!(good_target.has_jit());
+    assert!(good_target2.has_jit());
+    assert!(good_target.has_target_machine());
+    assert!(good_target2.has_target_machine());
+    assert!(good_target.has_asm_backend());
+    assert!(good_target2.has_asm_backend());
+
+    let next_target = good_target.get_next().unwrap();
+
+    assert_eq!(*next_target.get_name(), *CString::new("x86").unwrap());
+
+    let target_machine = good_target.create_target_machine("x86_64-pc-linux-gnu", "x86-64", "+avx2", OptimizationLevel::Default, RelocMode::Default, CodeModel::Default).unwrap();
+
+    // TODO: Test target_machine failure
+
+    assert_eq!(target_machine.get_target(), good_target);
+    assert_eq!(*target_machine.get_triple(), *CString::new("x86_64-pc-linux-gnu").unwrap());
+    assert_eq!(*target_machine.get_cpu(), *CString::new("x86-64").unwrap());
+    assert_eq!(*target_machine.get_feature_string(), *CString::new("+avx2").unwrap());
+}
+
+#[test]
+fn test_default_target_triple() {
     let default_target_triple = TargetMachine::get_default_triple();
 
     #[cfg(target_os = "linux")]
