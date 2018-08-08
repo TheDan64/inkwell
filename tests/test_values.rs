@@ -118,8 +118,8 @@ fn test_set_get_name() {
     let f128_val = f128_type.const_float(0.0);
     let ptr_val = bool_type.const_null_ptr();
     let array_val = array_type.const_array(&[f64_val]);
-    let struct_val = context.const_struct(&[&i8_val, &f128_val], false);
-    let vec_val = VectorType::const_vector(&[&i8_val]);
+    let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
+    let vec_val = VectorType::const_vector(&[i8_val]);
     let ppc_f128_val = ppc_f128_type.const_float(0.0);
 
     assert_eq!(bool_val.get_name(), &*CString::new("").unwrap());
@@ -173,7 +173,7 @@ fn test_set_get_name() {
 
     let void_type = context.void_type();
     let ptr_type = bool_type.ptr_type(AddressSpace::Generic);
-    let struct_type = context.struct_type(&[&bool_type], false);
+    let struct_type = context.struct_type(&[bool_type.into()], false);
     let vec_type = bool_type.vec_type(1);
 
     let module = context.create_module("types");
@@ -250,8 +250,8 @@ fn test_undef() {
     let f128_val = f128_type.const_float(0.0);
     let ptr_val = bool_type.const_null_ptr();
     let array_val = array_type.const_array(&[f64_val]);
-    let struct_val = context.const_struct(&[&i8_val, &f128_val], false);
-    let vec_val = VectorType::const_vector(&[&i8_val]);
+    let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
+    let vec_val = VectorType::const_vector(&[i8_val]);
     let ppc_f128_val = ppc_f128_type.const_float(0.0);
 
     assert!(!bool_val.is_undef());
@@ -282,7 +282,7 @@ fn test_undef() {
     let f128_undef = f128_type.get_undef();
     let ptr_undef = bool_type.ptr_type(AddressSpace::Generic).get_undef();
     let array_undef = array_type.get_undef();
-    let struct_undef = StructType::struct_type(&[&bool_type], false).get_undef();
+    let struct_undef = StructType::struct_type(&[bool_type.into()], false).get_undef();
     let vec_undef = bool_type.vec_type(1).get_undef();
     let ppc_f128_undef = ppc_f128_type.get_undef();
 
@@ -482,8 +482,8 @@ fn test_metadata() {
     // let ppc_f128_val = ppc_f128_type.const_float(0.0);
     let ptr_val = bool_type.ptr_type(AddressSpace::Generic).const_null();
     let array_val = array_type.const_array(&[f64_val]);
-    let struct_val = context.const_struct(&[&i8_val, &f128_val], false);
-    let vec_val = VectorType::const_vector(&[&i8_val]);
+    let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
+    let vec_val = VectorType::const_vector(&[i8_val]);
     let fn_val = module.add_function("my_fn", &fn_type, None);
 
     let md_node = MetadataValue::create_node(&[&bool_val, &f32_val]);
@@ -615,7 +615,7 @@ fn test_metadata() {
     assert_eq!(md_node_values[0].as_metadata_value().get_string_value(), md_string.get_string_value());
 
     // New Context Metadata
-    let context_metadata_node = context.metadata_node(&[&bool_val]);
+    let context_metadata_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
     let context_metadata_string = context.metadata_string("my_context_metadata");
 
     assert!(context_metadata_node.is_node());

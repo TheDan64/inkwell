@@ -9,8 +9,8 @@ use builder::Builder;
 use memory_buffer::MemoryBuffer;
 use module::Module;
 use support::LLVMString;
-use types::{BasicType, FloatType, IntType, StructType, VoidType};
-use values::{AsValueRef, BasicValue, FunctionValue, StructValue, MetadataValue};
+use types::{BasicType, BasicTypeEnum, FloatType, IntType, StructType, VoidType, AsTypeRef};
+use values::{AsValueRef, BasicValue, FunctionValue, StructValue, MetadataValue, BasicValueEnum};
 
 use std::ffi::CString;
 use std::mem::forget;
@@ -18,8 +18,10 @@ use std::ops::Deref;
 use std::ptr;
 use std::rc::Rc;
 
-// From Docs: A single context is not thread safe.
-// However, different contexts can execute on different threads simultaneously.
+/// A `Context` is a container for all LLVM entities including `Module`s.
+///
+/// A `Context` is not thread safe and cannot be shared across threads. Multiple `Context`s
+/// can, however, execute on different threads simultaneously according to the LLVM docs.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Context {
     pub(crate) context: Rc<LLVMContextRef>,
@@ -443,8 +445,22 @@ impl Context {
         FloatType::new(f128_type)
     }
 
+    /// Creates a `StructType` definiton from heterogeneous types.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let i16_type = context.i16_type();
+    /// let struct_type = context.struct_type(&[i16_type.into(), f32_type.into()], false);
+    ///
+    /// assert_eq!(struct_type.get_field_types(), &[i16_type.into(), f32_type.into()]);
+    /// ```
     // REVIEW: AnyType but VoidType? FunctionType?
-    pub fn struct_type(&self, field_types: &[&BasicType], packed: bool) -> StructType {
+    pub fn struct_type(&self, field_types: &[BasicTypeEnum], packed: bool) -> StructType {
         let mut field_types: Vec<LLVMTypeRef> = field_types.iter()
                                                            .map(|val| val.as_type_ref())
                                                            .collect();
@@ -455,6 +471,20 @@ impl Context {
         StructType::new(struct_type)
     }
 
+    /// Creates an opaque `StructType` with no type definition yet defined.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let i16_type = context.i16_type();
+    /// let struct_type = context.opaque_struct_type("my_struct");
+    ///
+    /// assert_eq!(struct_type.get_field_types(), &[]);
+    /// ```
     pub fn opaque_struct_type(&self, name: &str) -> StructType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -465,7 +495,23 @@ impl Context {
         StructType::new(struct_type)
     }
 
-    pub fn const_struct(&self, values: &[&BasicValue], packed: bool) -> StructValue {
+    /// Creates a constant `StructValue` from constant values.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let i16_type = context.i16_type();
+    /// let f32_one = f32_type.const_float(1.);
+    /// let i16_two = i16_type.const_int(2, false);
+    /// let const_struct = context.const_struct(&[i16_two.into(), f32_one.into()], false);
+    ///
+    /// assert_eq!(const_struct.get_type().get_field_types(), &[i16_type.into(), f32_type.into()]);
+    /// ```
+    pub fn const_struct(&self, values: &[BasicValueEnum], packed: bool) -> StructValue {
         let mut args: Vec<LLVMValueRef> = values.iter()
                                                 .map(|val| val.as_value_ref())
                                                 .collect();
@@ -576,9 +622,29 @@ impl Context {
         BasicBlock::new(bb).expect("Prepending basic block should never fail")
     }
 
+    /// Creates a `MetadataValue` tuple of heterogeneous types (a "Node") for the current context. It can be assigned to a value.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let i8_type = context.i8_type();
+    /// let i8_two = i8_type.const_int(2, false);
+    /// let f32_type = context.f32_type();
+    /// let f32_zero = f32_type.const_float(0.);
+    /// let md_node = context.metadata_node(&[i8_two.into(), f32_zero.into()]);
+    /// let f32_one = f32_type.const_float(1.);
+    ///
+    /// assert!(md_node.is_node());
+    ///
+    /// f32_one.set_metadata(&md_node, 0);
+    /// ```
     // REVIEW: Maybe more helpful to beginners to call this metadata_tuple?
     // REVIEW: Seems to be unassgned to anything
-    pub fn metadata_node(&self, values: &[&BasicValue]) -> MetadataValue {
+    // REVIEW: Should maybe make this take &[BasicValueEnum]?
+    pub fn metadata_node(&self, values: &[BasicValueEnum]) -> MetadataValue {
         let mut tuple_values: Vec<LLVMValueRef> = values.iter()
                                                         .map(|val| val.as_value_ref())
                                                         .collect();
@@ -600,6 +666,8 @@ impl Context {
     /// let md_string = context.metadata_string("Floats are awesome!");
     /// let f32_type = context.f32_type();
     /// let f32_one = f32_type.const_float(1.);
+    ///
+    /// assert!(md_string.is_string());
     ///
     /// f32_one.set_metadata(&md_string, 0);
     /// ```
@@ -623,11 +691,12 @@ impl Context {
     /// use inkwell::values::FIRST_CUSTOM_METADATA_KIND_ID;
     ///
     /// let context = Context::create();
+    ///
     /// assert_eq!(context.get_kind_id("dbg"), 0);
     /// assert_eq!(context.get_kind_id("tbaa"), 1);
     /// assert_eq!(context.get_kind_id("prof"), 2);
     ///
-    /// // Custom kind id doesn't exist in in LLVM until now:
+    /// // Custom kind id doesn't exist in LLVM until now:
     /// assert_eq!(context.get_kind_id("foo"), FIRST_CUSTOM_METADATA_KIND_ID);
     /// ```
     pub fn get_kind_id(&self, key: &str) -> u32 {
@@ -666,6 +735,7 @@ impl Drop for Context {
 // a bit as it is a special case. get_context() methods as well since they do
 // not have access to the original Rc. I suppose Context could be Option<Rc<LLVMContextRef>>
 // where None is global context
+/// A `ContextRef` is a smart pointer allowing borrowed access to a a type's `Context`.
 #[derive(Debug, PartialEq, Eq)]
 pub struct ContextRef {
     context: Option<Context>,

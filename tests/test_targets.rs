@@ -2,7 +2,7 @@ extern crate inkwell;
 
 use self::inkwell::{AddressSpace, OptimizationLevel};
 use self::inkwell::context::Context;
-use self::inkwell::targets::{ByteOrdering, CodeModel, InitializationConfig, RelocMode, Target, TargetMachine};
+use self::inkwell::targets::{ByteOrdering, CodeModel, InitializationConfig, RelocMode, Target, TargetData, TargetMachine};
 
 use std::ffi::CString;
 
@@ -104,6 +104,8 @@ fn test_target_and_target_machine() {
 
     // TODO: Test target_machine failure
 
+    target_machine.set_asm_verbosity(true);
+
     assert_eq!(target_machine.get_target(), good_target);
     assert_eq!(*target_machine.get_triple(), *CString::new("x86_64-pc-linux-gnu").unwrap());
     assert_eq!(*target_machine.get_cpu(), *CString::new("x86-64").unwrap());
@@ -153,8 +155,8 @@ fn test_target_data() {
     let i64_type = context.i64_type();
     let f32_type = context.f32_type();
     let f64_type = context.f64_type();
-    let struct_type = context.struct_type(&[&i32_type, &i64_type, &f64_type, &f32_type], false);
-    let struct_type2 = context.struct_type(&[&f32_type, &i32_type, &i64_type, &f64_type], false);
+    let struct_type = context.struct_type(&[i32_type.into(), i64_type.into(), f64_type.into(), f32_type.into()], false);
+    let struct_type2 = context.struct_type(&[f32_type.into(), i32_type.into(), i64_type.into(), f64_type.into()], false);
 
     assert_eq!(target_data.get_bit_size(&i32_type), 32);
     assert_eq!(target_data.get_bit_size(&i64_type), 64);
@@ -234,6 +236,8 @@ fn test_target_data() {
     assert_eq!(target_data.element_at_offset(&struct_type2, 16), 3);
     assert_eq!(target_data.element_at_offset(&struct_type2, 32), 3); // OoB
     assert_eq!(target_data.element_at_offset(&struct_type2, ::std::u64::MAX), 3); // OoB; TODOC: Odd but seems to cap at max element number
+
+    TargetData::create("e-m:e-i64:64-f80:128-n8:16:32:64-S128");
 }
 
 #[test]

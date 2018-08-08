@@ -1,5 +1,3 @@
-#[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
-use llvm_sys::target::LLVMAddTargetData;
 use llvm_sys::target::{LLVMTargetDataRef, LLVMCopyStringRepOfTargetData, LLVMSizeOfTypeInBits, LLVMCreateTargetData, LLVMByteOrder, LLVMPointerSize, LLVMByteOrdering, LLVMStoreSizeOfType, LLVMABISizeOfType, LLVMABIAlignmentOfType, LLVMCallFrameAlignmentOfType, LLVMPreferredAlignmentOfType, LLVMPreferredAlignmentOfGlobal, LLVMElementAtOffset, LLVMOffsetOfElement, LLVMDisposeTargetData, LLVMPointerSizeForAS, LLVMIntPtrType, LLVMIntPtrTypeForAS, LLVMIntPtrTypeInContext, LLVMIntPtrTypeForASInContext};
 use llvm_sys::target_machine::{LLVMGetFirstTarget, LLVMTargetRef, LLVMGetNextTarget, LLVMGetTargetFromName, LLVMGetTargetFromTriple, LLVMGetTargetName, LLVMGetTargetDescription, LLVMTargetHasJIT, LLVMTargetHasTargetMachine, LLVMTargetHasAsmBackend, LLVMTargetMachineRef, LLVMDisposeTargetMachine, LLVMGetTargetMachineTarget, LLVMGetTargetMachineTriple, LLVMSetTargetMachineAsmVerbosity, LLVMCreateTargetMachine, LLVMGetTargetMachineCPU, LLVMGetTargetMachineFeatureString, LLVMGetDefaultTargetTriple, LLVMAddAnalysisPasses, LLVMCodeGenOptLevel, LLVMCodeModel, LLVMRelocMode, LLVMCodeGenFileType, LLVMTargetMachineEmitToMemoryBuffer, LLVMTargetMachineEmitToFile};
 
@@ -54,7 +52,7 @@ impl FileType {
 }
 
 // TODO: Doc: Base gets you TargetMachine support, machine_code gets you asm_backend
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct InitializationConfig {
     pub asm_parser: bool,
     pub asm_printer: bool,
@@ -973,6 +971,7 @@ impl TargetData {
         }
     }
 
+    // TODOC: This can fail on LLVM's side(exit?), but it doesn't seem like we have any way to check this in rust
     pub fn create(str_repr: &str) -> TargetData {
         let c_string = CString::new(str_repr).expect("Conversion to CString failed unexpectedly");
 
@@ -981,13 +980,6 @@ impl TargetData {
         };
 
         TargetData::new(target_data)
-    }
-
-    #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
-    pub fn add_target_data(&self, pass_manager: &PassManager) {
-        unsafe {
-            LLVMAddTargetData(self.target_data, pass_manager.pass_manager)
-        }
     }
 
     pub fn get_byte_ordering(&self) -> ByteOrdering {
@@ -1061,7 +1053,6 @@ impl TargetData {
     }
 }
 
-// FIXME: Make sure this doesn't SegFault:
 impl Drop for TargetData {
     fn drop(&mut self) {
         unsafe {

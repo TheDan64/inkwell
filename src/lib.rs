@@ -14,6 +14,7 @@ extern crate llvm_sys;
 #[deny(missing_docs)]
 pub mod basic_block;
 pub mod builder;
+#[deny(missing_docs)]
 pub mod context;
 pub mod data_layout;
 pub mod execution_engine;

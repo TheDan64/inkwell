@@ -328,9 +328,8 @@ impl Module {
     /// ```
     // SubType: ExecutionEngine<?>
     pub fn create_execution_engine(&self) -> Result<ExecutionEngine, LLVMString> {
-        let mut execution_engine = unsafe { uninitialized() };
+        let mut execution_engine = unsafe { zeroed() };
         let mut err_string = unsafe { zeroed() };
-
         let code = unsafe {
             LLVMCreateExecutionEngineForModule(&mut execution_engine, self.module.get(), &mut err_string) // Takes ownership of module
         };
@@ -409,6 +408,18 @@ impl Module {
         };
 
         if code == 1 {
+            // The module still seems "owned" in this error case, despite failing to create an EE. This would normally
+            // end in a segfault on Module drop, however we're avoiding that by cloning the module and replacing the underlying pointer
+            // REVIEW: Ensure this doesn't lead to unexpected behavior... If it does, the alternate strategy would be to change the fn
+            // signature to take ownership of self and return it with good EE: (self, opt_level) -> Result<(Module, EE), LLVMString>
+            let module = self.clone();
+
+            self.module.set(module.module.get());
+
+            forget(module);
+
+            // REVIEW: Module still seems "owned" in the error case and may segfault on module drop. :/
+            // Need to figure out if there's a way to prevent this.
             return Err(LLVMString::new(err_string));
         }
 
@@ -778,7 +789,7 @@ impl Drop for Module {
     fn drop(&mut self) {
         if self.owned_by_ee.borrow_mut().take().is_none() {
             unsafe {
-                LLVMDisposeModule(self.module.get());
+                 LLVMDisposeModule(self.module.get());
             }
         }
 

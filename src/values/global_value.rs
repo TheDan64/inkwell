@@ -116,6 +116,7 @@ impl GlobalValue {
     }
 
     // SubType: This should be moved into the type. GlobalValue<Initialized/Uninitialized>
+    // TODO: FunctionValues as well?
     pub fn is_declaration(&self) -> bool {
         unsafe {
             LLVMIsDeclaration(self.as_value_ref()) == 1

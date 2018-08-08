@@ -11,7 +11,7 @@ use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, BasicType, BasicTypeEnum, ArrayType, PointerType, FunctionType, VectorType};
-use values::{BasicValue, StructValue, PointerValue, IntValue};
+use values::{BasicValue, BasicValueEnum, StructValue, PointerValue, IntValue, AsValueRef};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct StructType {
@@ -50,7 +50,7 @@ impl StructType {
     }
 
     // REVIEW: What's the difference between these two??
-    pub fn const_named_struct(&self, values: &[&BasicValue]) -> StructValue {
+    pub fn const_named_struct(&self, values: &[BasicValueEnum]) -> StructValue {
         let mut args: Vec<LLVMValueRef> = values.iter()
                                                 .map(|val| val.as_value_ref())
                                                 .collect();
@@ -61,7 +61,7 @@ impl StructType {
         StructValue::new(value)
     }
 
-    pub fn const_struct(values: &[&BasicValue], packed: bool) -> StructValue {
+    pub fn const_struct(values: &[BasicValueEnum], packed: bool) -> StructValue {
         let mut args: Vec<LLVMValueRef> = values.iter()
                                                 .map(|val| val.as_value_ref())
                                                 .collect();
@@ -148,7 +148,7 @@ impl StructType {
     // REVIEW: Is there an equivalent method to make opaque?
     // REVIEW: No way to set name like in context.struct_type() method?
     // DOC: This method will not create an opaque struct, even if empty array is passed!
-    pub fn struct_type(field_types: &[&BasicType], packed: bool) -> Self {
+    pub fn struct_type(field_types: &[BasicTypeEnum], packed: bool) -> Self {
         let mut field_types: Vec<LLVMTypeRef> = field_types.iter()
                                                            .map(|val| val.as_type_ref())
                                                            .collect();

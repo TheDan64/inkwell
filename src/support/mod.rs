@@ -116,14 +116,12 @@ impl PartialEq for LLVMStringOrRaw {
     }
 }
 
-// REVIEW: Not sure how safe this is. What happens when you make an llvm call after
-// shutdown_llvm has been called?
-pub fn shutdown_llvm() {
+/// This function is very unsafe. Any reference to LLVM data after this function is called will likey segfault.
+/// Probably only ever useful to call before your program ends. Might not even be absolutely necessary.
+pub unsafe fn shutdown_llvm() {
     use llvm_sys::core::LLVMShutdown;
 
-    unsafe {
-        LLVMShutdown()
-    }
+    LLVMShutdown()
 }
 
 pub fn load_library_permanently(filename: &str) -> bool {
@@ -134,6 +132,8 @@ pub fn load_library_permanently(filename: &str) -> bool {
     }
 }
 
+/// Determines whether or not LLVM has been configured to run in multithreaded mode. (Inkwell currently does
+/// not officially support multithreaded mode)
 pub fn is_multithreaded() -> bool {
     use llvm_sys::core::LLVMIsMultithreaded;
 

@@ -5,6 +5,8 @@ use self::inkwell::context::Context;
 use self::inkwell::execution_engine::{ExecutionEngine, FunctionLookupError};
 use self::inkwell::targets::{InitializationConfig, Target};
 
+use std::ffi::CString;
+
 type Thunk = unsafe extern "C" fn();
 
 #[test]
@@ -135,6 +137,43 @@ fn test_interpreter_execution_engine() {
 
     assert!(module.create_interpreter_execution_engine().is_ok());
 }
+
+
+#[test]
+fn test_add_remove_module() {
+    Target::initialize_all(&InitializationConfig::default());
+
+    let context = Context::create();
+    let module = context.create_module("test");
+    let ee = module.create_jit_execution_engine(OptimizationLevel::default()).unwrap();
+
+    assert!(ee.add_module(&module).is_err());
+
+    let module2 = context.create_module("mod2");
+
+    assert!(ee.remove_module(&module2).is_err());
+    assert!(ee.add_module(&module2).is_ok());
+    assert!(ee.remove_module(&module).is_ok());
+    assert!(ee.remove_module(&module2).is_ok());
+}
+
+// REVIEW: Global state pollution access tests cause this to pass when run individually
+// but fail when multiple tests are run
+// #[test]
+// fn test_no_longer_segfaults() {
+//     #[cfg(feature = "llvm3-6")]
+//     Target::initialize_r600(&InitializationConfig::default());
+//     #[cfg(not(feature = "llvm3-6"))]
+//     Target::initialize_amd_gpu(&InitializationConfig::default());
+
+
+//     let context = Context::create();
+//     let module = context.create_module("test");
+
+//     assert_eq!(*module.create_jit_execution_engine(OptimizationLevel::default()).unwrap_err(), *CString::new("No available targets are compatible with this triple.").unwrap());
+
+//     // REVIEW: Module is being cloned in err case... should test Module still works as expected...
+// }
 
 // #[test]
 // fn test_get_function_value() {

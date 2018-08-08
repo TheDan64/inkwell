@@ -129,6 +129,8 @@ impl Type {
         IntValue::new(val)
     }
 
+    // REVIEW: get_context could potentially be unsafe and UB if Context is shared across threads.
+    // Not currently possible AFAIK but might be in the future if we decide to support multithreading.
     fn get_context(&self) -> ContextRef {
         // We don't return an option because LLVM seems
         // to always assign a context, even to types

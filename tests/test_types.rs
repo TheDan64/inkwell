@@ -13,7 +13,7 @@ fn test_struct_type() {
     let int_vector = int.vec_type(100);
     let float = context.f32_type();
     let float_array = float.array_type(3);
-    let av_struct = context.struct_type(&[&int_vector, &float_array], false);
+    let av_struct = context.struct_type(&[int_vector.into(), float_array.into()], false);
 
     assert!(!av_struct.is_packed());
     assert!(!av_struct.is_opaque());
@@ -34,7 +34,7 @@ fn test_struct_type() {
         assert_eq!(av_struct.get_field_types(), vec![field_1, field_2]);
     }
 
-    let av_struct = context.struct_type(&[&int_vector, &float_array], true);
+    let av_struct = context.struct_type(&[int_vector.into(), float_array.into()], true);
 
     assert!(av_struct.is_packed());
     assert!(!av_struct.is_opaque());
@@ -138,9 +138,9 @@ fn test_sized_types() {
     let f80_type = FloatType::x86_f80_type();
     let f128_type = FloatType::f128_type();
     let ppc_f128_type = FloatType::ppc_f128_type();
-    let struct_type = StructType::struct_type(&[&i8_type, &f128_type], false);
+    let struct_type = StructType::struct_type(&[i8_type.into(), f128_type.into()], false);
     let struct_type2 = StructType::struct_type(&[], false);
-    let struct_type3 = StructType::struct_type(&[&i8_type, &f128_type], true);
+    let struct_type3 = StructType::struct_type(&[i8_type.into(), f128_type.into()], true);
     let struct_type4 = StructType::struct_type(&[], true);
     let opaque_struct_type = context.opaque_struct_type("opaque");
     let fn_type = void_type.fn_type(&[], false);
@@ -249,7 +249,7 @@ fn test_const_null() {
     let f80_type = context.x86_f80_type();
     let f128_type = context.f128_type();
     let ppc_f128_type = context.ppc_f128_type();
-    let struct_type = context.struct_type(&[&i8_type, &f128_type], false);
+    let struct_type = context.struct_type(&[i8_type.into(), f128_type.into()], false);
     let ptr_type = f64_type.ptr_type(AddressSpace::Generic);
     let vec_type = f64_type.vec_type(42);
     let array_type = f64_type.array_type(42);

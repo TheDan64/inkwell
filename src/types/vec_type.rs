@@ -52,7 +52,7 @@ impl VectorType {
     // REVIEW: Maybe we could make this use &self if the vector size
     // is stored as a const and the input values took a const size?
     // Something like: values: &[&V; self.size]. Doesn't sound possible though
-    pub fn const_vector<V: BasicValue>(values: &[&V]) -> VectorValue {
+    pub fn const_vector<V: BasicValue>(values: &[V]) -> VectorValue {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();
