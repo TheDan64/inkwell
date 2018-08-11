@@ -3,12 +3,12 @@ extern crate inkwell;
 use self::inkwell::context::Context;
 use self::inkwell::memory_buffer::MemoryBuffer;
 use self::inkwell::module::Module;
-use self::inkwell::OptimizationLevel;
 use self::inkwell::targets::{InitializationConfig, Target};
+use self::inkwell::OptimizationLevel;
 
 use std::env::temp_dir;
-use std::ffi::{CString, CStr};
-use std::fs::{File, remove_file};
+use std::ffi::{CStr, CString};
+use std::fs::{remove_file, File};
 use std::io::Read;
 use std::path::Path;
 use std::str::from_utf8;
@@ -30,7 +30,8 @@ fn test_write_bitcode_to_path() {
     let mut contents = Vec::new();
     let mut file = File::open(&path).expect("Could not open temp file");
 
-    file.read_to_end(&mut contents).expect("Unable to verify written file");
+    file.read_to_end(&mut contents)
+        .expect("Unable to verify written file");
 
     assert!(!contents.is_empty());
 
@@ -121,7 +122,10 @@ fn test_write_and_load_memory_buffer() {
 
     let module2 = context.create_module_from_ir(memory_buffer).unwrap();
 
-    assert_eq!(module2.get_function("my_fn").unwrap().print_to_string(), function.print_to_string());
+    assert_eq!(
+        module2.get_function("my_fn").unwrap().print_to_string(),
+        function.print_to_string()
+    );
 }
 
 #[test]
@@ -130,7 +134,10 @@ fn test_garbage_ir_fails_create_module_from_ir() {
     let memory_buffer = MemoryBuffer::create_from_memory_range("garbage ir data", "my_ir");
 
     assert_eq!(memory_buffer.get_size(), 15);
-    assert_eq!(from_utf8(memory_buffer.as_slice()).unwrap(), "garbage ir data");
+    assert_eq!(
+        from_utf8(memory_buffer.as_slice()).unwrap(),
+        "garbage ir data"
+    );
     assert!(context.create_module_from_ir(memory_buffer).is_err());
 }
 
@@ -140,7 +147,10 @@ fn test_garbage_ir_fails_create_module_from_ir_copy() {
     let memory_buffer = MemoryBuffer::create_from_memory_range_copy("garbage ir data", "my_ir");
 
     assert_eq!(memory_buffer.get_size(), 15);
-    assert_eq!(from_utf8(memory_buffer.as_slice()).unwrap(), "garbage ir data");
+    assert_eq!(
+        from_utf8(memory_buffer.as_slice()).unwrap(),
+        "garbage ir data"
+    );
     assert!(context.create_module_from_ir(memory_buffer).is_err());
 }
 
@@ -189,7 +199,9 @@ fn test_owned_module_dropped_ee_and_context() {
         let context = Context::create();
         let module = context.create_module("my_mod");
 
-        module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+        module
+            .create_jit_execution_engine(OptimizationLevel::None)
+            .unwrap();
         module
     };
 
@@ -307,9 +319,12 @@ fn test_print_to_file() {
     builder.position_at_end(&basic_block);
     builder.build_return(None);
 
-    let bad_path = Path::new("/");
+    let bad_path = Path::new("/tmp/some/silly/path/that/sure/doesn't/exist");
 
-    assert_eq!(*module.print_to_file(bad_path).unwrap_err(), *CString::new("No such file or directory").unwrap());
+    assert_eq!(
+        *module.print_to_file(bad_path).unwrap_err(),
+        *CString::new("No such file or directory").unwrap()
+    );
 
     let mut temp_path = temp_dir();
 
