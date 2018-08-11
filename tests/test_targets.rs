@@ -1,8 +1,10 @@
 extern crate inkwell;
 
-use self::inkwell::{AddressSpace, OptimizationLevel};
 use self::inkwell::context::Context;
-use self::inkwell::targets::{ByteOrdering, CodeModel, InitializationConfig, RelocMode, Target, TargetMachine};
+use self::inkwell::targets::{
+    ByteOrdering, CodeModel, InitializationConfig, RelocMode, Target, TargetMachine,
+};
+use self::inkwell::{AddressSpace, OptimizationLevel};
 
 use std::ffi::CString;
 
@@ -87,8 +89,14 @@ fn test_target_and_target_machine() {
     assert_eq!(good_target, good_target2);
     assert_eq!(*good_target.get_name(), *CString::new("x86-64").unwrap());
     assert_eq!(*good_target2.get_name(), *CString::new("x86-64").unwrap());
-    assert_eq!(*good_target.get_description(), *CString::new("64-bit X86: EM64T and AMD64").unwrap());
-    assert_eq!(*good_target2.get_description(), *CString::new("64-bit X86: EM64T and AMD64").unwrap());
+    assert_eq!(
+        *good_target.get_description(),
+        *CString::new("64-bit X86: EM64T and AMD64").unwrap()
+    );
+    assert_eq!(
+        *good_target2.get_description(),
+        *CString::new("64-bit X86: EM64T and AMD64").unwrap()
+    );
     assert!(good_target.has_jit());
     assert!(good_target2.has_jit());
     assert!(good_target.has_target_machine());
@@ -100,24 +108,41 @@ fn test_target_and_target_machine() {
 
     assert_eq!(*next_target.get_name(), *CString::new("x86").unwrap());
 
-    let target_machine = good_target.create_target_machine("x86_64-pc-linux-gnu", "x86-64", "+avx2", OptimizationLevel::Default, RelocMode::Default, CodeModel::Default).unwrap();
+    let target_machine = good_target
+        .create_target_machine(
+            "x86_64-pc-linux-gnu",
+            "x86-64",
+            "+avx2",
+            OptimizationLevel::Default,
+            RelocMode::Default,
+            CodeModel::Default,
+        )
+        .unwrap();
 
     // TODO: Test target_machine failure
 
     assert_eq!(target_machine.get_target(), good_target);
-    assert_eq!(*target_machine.get_triple(), *CString::new("x86_64-pc-linux-gnu").unwrap());
+    assert_eq!(
+        *target_machine.get_triple(),
+        *CString::new("x86_64-pc-linux-gnu").unwrap()
+    );
     assert_eq!(*target_machine.get_cpu(), *CString::new("x86-64").unwrap());
-    assert_eq!(*target_machine.get_feature_string(), *CString::new("+avx2").unwrap());
+    assert_eq!(
+        *target_machine.get_feature_string(),
+        *CString::new("+avx2").unwrap()
+    );
 }
 
 #[test]
 fn test_default_target_triple() {
     let default_target_triple = TargetMachine::get_default_triple();
-
+    println!("{}", default_target_triple);
     #[cfg(target_os = "linux")]
-    let cond = *default_target_triple == *CString::new("x86_64-pc-linux-gnu").unwrap() ||
-               *default_target_triple == *CString::new("x86_64-unknown-linux-gnu").unwrap();
+    let cond = *default_target_triple == *CString::new("x86_64-pc-linux-gnu").unwrap()
+        || *default_target_triple == *CString::new("x86_64-unknown-linux-gnu").unwrap();
 
+    #[cfg(target_os = "macos")]
+    let cond = *default_target_triple == *CString::new("x86_64-apple-darwin17.5.0").unwrap();
 
     // let cond = *default_target_triple == *CString::new("x86_64-pc-linux-gnu").unwrap() |
     //     *default_target_triple == *CString::new("x86_64-unknown-linux-gnu").unwrap();
@@ -129,18 +154,34 @@ fn test_default_target_triple() {
 
 #[test]
 fn test_target_data() {
-    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+    Target::initialize_native(&InitializationConfig::default())
+        .expect("Failed to initialize native target");
 
     let context = Context::create();
     let module = context.create_module("sum");
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    let execution_engine = module
+        .create_jit_execution_engine(OptimizationLevel::None)
+        .unwrap();
     let target_data = execution_engine.get_target_data();
 
     let data_layout = target_data.get_data_layout();
 
-    assert_eq!(data_layout.as_str(), &*CString::new("e-m:e-i64:64-f80:128-n8:16:32:64-S128").unwrap());
+    #[cfg(target_os = "linux")]
+    assert_eq!(
+        data_layout.as_str(),
+        &*CString::new("e-m:e-i64:64-f80:128-n8:16:32:64-S128").unwrap()
+    );
+
+    #[cfg(target_os = "macos")]
+    assert_eq!(
+        data_layout.as_str(),
+        &*CString::new("e-m:o-i64:64-f80:128-n8:16:32:64-S128").unwrap()
+    );
     #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
-    assert_eq!(*module.get_data_layout().as_str(), *CString::new("").unwrap());
+    assert_eq!(
+        *module.get_data_layout().as_str(),
+        *CString::new("").unwrap()
+    );
     // REVIEW: Why is llvm 3.9+ a %? 4.0 on travis doesn't have it, but does for me locally...
     // #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     // assert_eq!(module.get_data_layout().as_str(), &*CString::new("%").unwrap());
@@ -218,7 +259,10 @@ fn test_target_data() {
     assert_eq!(target_data.element_at_offset(&struct_type, 16), 2);
     assert_eq!(target_data.element_at_offset(&struct_type, 24), 3);
     assert_eq!(target_data.element_at_offset(&struct_type, 32), 3); // OoB
-    assert_eq!(target_data.element_at_offset(&struct_type, ::std::u64::MAX), 3); // OoB; Odd as it seems to cap at max element number
+    assert_eq!(
+        target_data.element_at_offset(&struct_type, ::std::u64::MAX),
+        3
+    ); // OoB; Odd as it seems to cap at max element number
 
     assert_eq!(target_data.offset_of_element(&struct_type2, 0), Some(0));
     assert_eq!(target_data.offset_of_element(&struct_type2, 1), Some(4));
@@ -233,35 +277,53 @@ fn test_target_data() {
     assert_eq!(target_data.element_at_offset(&struct_type2, 8), 2);
     assert_eq!(target_data.element_at_offset(&struct_type2, 16), 3);
     assert_eq!(target_data.element_at_offset(&struct_type2, 32), 3); // OoB
-    assert_eq!(target_data.element_at_offset(&struct_type2, ::std::u64::MAX), 3); // OoB; TODOC: Odd but seems to cap at max element number
+    assert_eq!(
+        target_data.element_at_offset(&struct_type2, ::std::u64::MAX),
+        3
+    ); // OoB; TODOC: Odd but seems to cap at max element number
 }
 
 #[test]
 fn test_ptr_sized_int() {
-    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+    Target::initialize_native(&InitializationConfig::default())
+        .expect("Failed to initialize native target");
 
     let context = Context::create();
     let module = context.create_module("sum");
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    let execution_engine = module
+        .create_jit_execution_engine(OptimizationLevel::None)
+        .unwrap();
     let target_data = execution_engine.get_target_data();
     let address_space = AddressSpace::Global;
     let int_type = target_data.ptr_sized_int_type(None);
 
     assert_eq!(int_type.get_context(), Context::get_global());
-    assert_eq!(int_type.get_bit_width(), target_data.get_pointer_byte_size(None) * 8);
+    assert_eq!(
+        int_type.get_bit_width(),
+        target_data.get_pointer_byte_size(None) * 8
+    );
 
     let int_type2 = target_data.ptr_sized_int_type(Some(address_space));
 
     assert_eq!(int_type2.get_context(), Context::get_global());
-    assert_eq!(int_type2.get_bit_width(), target_data.get_pointer_byte_size(Some(address_space)) * 8);
+    assert_eq!(
+        int_type2.get_bit_width(),
+        target_data.get_pointer_byte_size(Some(address_space)) * 8
+    );
 
     let int_type3 = target_data.ptr_sized_int_type_in_context(&context, None);
 
     assert_eq!(*int_type3.get_context(), context);
-    assert_eq!(int_type3.get_bit_width(), target_data.get_pointer_byte_size(None) * 8);
+    assert_eq!(
+        int_type3.get_bit_width(),
+        target_data.get_pointer_byte_size(None) * 8
+    );
 
     let int_type4 = target_data.ptr_sized_int_type_in_context(&context, Some(address_space));
 
     assert_eq!(*int_type4.get_context(), context);
-    assert_eq!(int_type4.get_bit_width(), target_data.get_pointer_byte_size(Some(address_space)) * 8);
+    assert_eq!(
+        int_type4.get_bit_width(),
+        target_data.get_pointer_byte_size(Some(address_space)) * 8
+    );
 }
