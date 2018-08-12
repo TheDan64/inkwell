@@ -120,6 +120,8 @@ fn test_default_target_triple() {
     let cond = *default_target_triple == *CString::new("x86_64-pc-linux-gnu").unwrap() ||
                *default_target_triple == *CString::new("x86_64-unknown-linux-gnu").unwrap();
 
+    #[cfg(target_os = "macos")]
+    let cond = *default_target_triple == *CString::new("x86_64-apple-darwin17.5.0").unwrap();
 
     // let cond = *default_target_triple == *CString::new("x86_64-pc-linux-gnu").unwrap() |
     //     *default_target_triple == *CString::new("x86_64-unknown-linux-gnu").unwrap();
@@ -140,7 +142,15 @@ fn test_target_data() {
 
     let data_layout = target_data.get_data_layout();
 
+    #[cfg(target_os = "linux")]
     assert_eq!(data_layout.as_str(), &*CString::new("e-m:e-i64:64-f80:128-n8:16:32:64-S128").unwrap());
+
+    #[cfg(target_os = "macos")]
+    assert_eq!(
+        data_layout.as_str(),
+        &*CString::new("e-m:o-i64:64-f80:128-n8:16:32:64-S128").unwrap()
+    );
+
     #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
     assert_eq!(*module.get_data_layout().as_str(), *CString::new("").unwrap());
     // REVIEW: Why is llvm 3.9+ a %? 4.0 on travis doesn't have it, but does for me locally...

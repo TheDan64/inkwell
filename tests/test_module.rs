@@ -307,7 +307,7 @@ fn test_print_to_file() {
     builder.position_at_end(&basic_block);
     builder.build_return(None);
 
-    let bad_path = Path::new("/");
+    let bad_path = Path::new("/tmp/some/silly/path/that/sure/doesn't/exist");
 
     assert_eq!(*module.print_to_file(bad_path).unwrap_err(), *CString::new("No such file or directory").unwrap());
 
