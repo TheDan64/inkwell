@@ -33,7 +33,7 @@ fn test_build_call() {
 
     builder.position_at_end(&basic_block2);
 
-    let pi2 = builder.build_call(&function, &[], "get_pi", false).left().unwrap();
+    let pi2 = builder.build_call(function, &[], "get_pi", false).left().unwrap();
 
     builder.build_return(Some(&pi2));
 }
@@ -86,7 +86,7 @@ fn test_null_checked_ptr_ops() {
     let ptr_as_int = builder.build_ptr_to_int(ptr, i64_type, "ptr_as_int");
     let new_ptr_as_int = builder.build_int_add(ptr_as_int, one, "add");
     let new_ptr = builder.build_int_to_ptr(new_ptr_as_int, i8_ptr_type, "int_as_ptr");
-    let index1 = builder.build_load(&new_ptr, "deref");
+    let index1 = builder.build_load(new_ptr, "deref");
 
     builder.build_return(Some(&index1));
 
@@ -123,7 +123,7 @@ fn test_null_checked_ptr_ops() {
     let ptr_as_int = builder.build_ptr_to_int(ptr, i64_type, "ptr_as_int");
     let new_ptr_as_int = builder.build_int_add(ptr_as_int, one, "add");
     let new_ptr = builder.build_int_to_ptr(new_ptr_as_int, i8_ptr_type, "int_as_ptr");
-    let index1 = builder.build_load(&new_ptr, "deref");
+    let index1 = builder.build_load(new_ptr, "deref");
 
     builder.build_return(Some(&index1));
 

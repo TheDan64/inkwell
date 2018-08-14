@@ -45,10 +45,10 @@ fn test_instructions() {
 
     let f32_val = f32_type.const_float(::std::f64::consts::PI);
 
-    let store_instruction = builder.build_store(&arg1, &f32_val);
+    let store_instruction = builder.build_store(arg1, f32_val);
     let ptr_val = builder.build_ptr_to_int(arg1, i64_type, "ptr_val");
     let ptr = builder.build_int_to_ptr(ptr_val, f32_ptr_type, "ptr");
-    let free_instruction = builder.build_free(&arg1);
+    let free_instruction = builder.build_free(arg1);
     let return_instruction = builder.build_return(None);
 
     assert_eq!(store_instruction.get_opcode(), Store);
@@ -81,11 +81,11 @@ fn test_tail_call() {
 
     let function = module.add_function("do_nothing", &fn_type, None);
 
-    let call_instruction = builder.build_call(&function, &[], "to_infinity_and_beyond", false);
+    let call_instruction = builder.build_call(function, &[], "to_infinity_and_beyond", false);
 
     assert_eq!(call_instruction.right().unwrap().is_tail_call(), false);
 
-    let call_instruction = builder.build_call(&function, &[], "to_infinity_and_beyond", true);
+    let call_instruction = builder.build_call(function, &[], "to_infinity_and_beyond", true);
 
     assert_eq!(call_instruction.right().unwrap().is_tail_call(), true);
 }
@@ -193,7 +193,7 @@ fn test_set_get_name() {
     let array_param = function.get_nth_param(3).unwrap().into_array_value();
     let ptr_param = function.get_nth_param(4).unwrap().into_pointer_value();
     let vec_param = function.get_nth_param(5).unwrap().into_vector_value();
-    let phi_val = builder.build_phi(&bool_type, "phi_node");
+    let phi_val = builder.build_phi(bool_type, "phi_node");
 
     assert_eq!(int_param.get_name(), &*CString::new("").unwrap());
     assert_eq!(float_param.get_name(), &*CString::new("").unwrap());
@@ -888,7 +888,7 @@ fn test_phi_values() {
 
     let false_val = bool_type.const_int(0, false);
     let true_val = bool_type.const_int(1, false);
-    let phi = builder.build_phi(&bool_type, "if");
+    let phi = builder.build_phi(bool_type, "if");
 
     assert!(!phi.is_null());
     assert!(!phi.is_undef());

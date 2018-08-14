@@ -28,7 +28,7 @@ use self::inkwell::module::Module;
 use self::inkwell::passes::PassManager;
 use self::inkwell::targets::{InitializationConfig, Target};
 use self::inkwell::types::BasicType;
-use self::inkwell::values::{BasicValue, FloatValue, FunctionValue, PointerValue};
+use self::inkwell::values::{BasicValueEnum, FloatValue, FunctionValue, PointerValue};
 use self::inkwell::{OptimizationLevel, FloatPredicate};
 
 use Token::*;
@@ -884,7 +884,7 @@ impl<'a> Compiler<'a> {
 
             Expr::Variable(ref name) => {
                 match self.variables.get(name.as_str()) {
-                    Some(var) => Ok(self.builder.build_load(var, name.as_str()).into_float_value()),
+                    Some(var) => Ok(self.builder.build_load(*var, name.as_str()).into_float_value()),
                     None => Err("Could not find a matching variable.")
                 }
             },
@@ -902,7 +902,7 @@ impl<'a> Compiler<'a> {
 
                     let alloca = self.create_entry_block_alloca(var_name, None);
 
-                    self.builder.build_store(&alloca, &initial_val);
+                    self.builder.build_store(alloca, initial_val);
 
                     if let Some(old_binding) = self.variables.remove(var_name) {
                         old_bindings.push(old_binding);
@@ -933,7 +933,7 @@ impl<'a> Compiler<'a> {
                     let var_val = self.compile_expr(right)?;
                     let var = self.variables.get(var_name.as_str()).ok_or("Undefined variable.")?;
 
-                    self.builder.build_store(var, &var_val);
+                    self.builder.build_store(*var, var_val);
 
                     Ok(var_val)
                 } else {
@@ -963,7 +963,7 @@ impl<'a> Compiler<'a> {
 
                             match self.get_function(name.as_str()) {
                                 Some(fun) => {
-                                    match self.builder.build_call(&fun, &[ &lhs, &rhs ], "tmpbin", false).left() {
+                                    match self.builder.build_call(fun, &[lhs.into(), rhs.into()], "tmpbin", false).left() {
                                         Some(value) => Ok(value.into_float_value()),
                                         None => Err("Invalid call produced.")
                                     }
@@ -985,9 +985,9 @@ impl<'a> Compiler<'a> {
                             compiled_args.push(self.compile_expr(arg)?);
                         }
 
-                        let argsv: Vec<&BasicValue> = compiled_args.iter().by_ref().map(|val| val as &BasicValue).collect();
+                        let argsv: Vec<BasicValueEnum> = compiled_args.iter().by_ref().map(|&val| val.into()).collect();
 
-                        match self.builder.build_call(&fun, argsv.as_slice(), "tmp", false).left() {
+                        match self.builder.build_call(fun, argsv.as_slice(), "tmp", false).left() {
                             Some(value) => Ok(value.into_float_value()),
                             None => Err("Invalid call produced.")
                         }
@@ -1028,7 +1028,7 @@ impl<'a> Compiler<'a> {
                 // emit merge block
                 self.builder.position_at_end(&cont_bb);
 
-                let phi = self.builder.build_phi(&self.context.f64_type(), "iftmp");
+                let phi = self.builder.build_phi(self.context.f64_type(), "iftmp");
 
                 phi.add_incoming(&[
                     (&then_val, &then_bb),
@@ -1044,7 +1044,7 @@ impl<'a> Compiler<'a> {
                 let start_alloca = self.create_entry_block_alloca(var_name, None);
                 let start = self.compile_expr(start)?;
 
-                self.builder.build_store(&start_alloca, &start);
+                self.builder.build_store(start_alloca, start);
 
                 // go from current block to loop block
                 let loop_bb = self.context.append_basic_block(&parent, "loop");
@@ -1068,10 +1068,10 @@ impl<'a> Compiler<'a> {
                 // compile end condition
                 let end_cond = self.compile_expr(end)?;
 
-                let curr_var = self.builder.build_load(&start_alloca, var_name);
+                let curr_var = self.builder.build_load(start_alloca, var_name);
                 let next_var = self.builder.build_float_add(curr_var.into_float_value(), step, "nextvar");
 
-                self.builder.build_store(&start_alloca, &next_var);
+                self.builder.build_store(start_alloca, next_var);
 
                 let end_cond = self.builder.build_float_compare(FloatPredicate::ONE, end_cond, self.context.f64_type().const_float(0.0), "loopcond");
                 let after_bb = self.context.append_basic_block(&parent, "afterloop");
@@ -1126,7 +1126,7 @@ impl<'a> Compiler<'a> {
             let arg_name = proto.args[i].as_str();
             let alloca = self.create_entry_block_alloca(arg_name, Some(&entry));
 
-            self.builder.build_store(&alloca, &arg);
+            self.builder.build_store(alloca, arg);
 
             self.variables.insert(proto.args[i].clone(), alloca);
         }

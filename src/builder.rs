@@ -51,7 +51,7 @@ impl Builder {
         InstructionValue::new(value)
     }
 
-    pub fn build_aggregate_return(&self, values: &[&BasicValue]) -> InstructionValue {
+    pub fn build_aggregate_return(&self, values: &[BasicValueEnum]) -> InstructionValue {
         let mut args: Vec<LLVMValueRef> = values.iter()
                                                 .map(|val| val.as_value_ref())
                                                 .collect();
@@ -62,7 +62,7 @@ impl Builder {
         InstructionValue::new(value)
     }
 
-    pub fn build_call(&self, function: &FunctionValue, args: &[&BasicValue], name: &str, tail_call: bool) -> Either<BasicValueEnum, InstructionValue> {
+    pub fn build_call(&self, function: FunctionValue, args: &[BasicValueEnum], name: &str, tail_call: bool) -> Either<BasicValueEnum, InstructionValue> {
         // LLVM gets upset when void calls are named because they don't return anything
         let name = unsafe {
             match LLVMGetTypeKind(LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(function.as_value_ref())))) {
@@ -95,7 +95,7 @@ impl Builder {
 
     // REVIEW: Doesn't GEP work on array too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    pub unsafe fn build_gep(&self, ptr: &PointerValue, ordered_indexes: &[IntValue], name: &str) -> PointerValue {
+    pub unsafe fn build_gep(&self, ptr: PointerValue, ordered_indexes: &[IntValue], name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
@@ -108,7 +108,7 @@ impl Builder {
 
     // REVIEW: Doesn't GEP work on array too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    pub unsafe fn build_in_bounds_gep(&self, ptr: &PointerValue, ordered_indexes: &[IntValue], name: &str) -> PointerValue {
+    pub unsafe fn build_in_bounds_gep(&self, ptr: PointerValue, ordered_indexes: &[IntValue], name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
@@ -121,7 +121,7 @@ impl Builder {
 
     // REVIEW: Shouldn't this take a StructValue? Or does it still need to be PointerValue<StructValue>?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    pub unsafe fn build_struct_gep(&self, ptr: &PointerValue, index: u32, name: &str) -> PointerValue {
+    pub unsafe fn build_struct_gep(&self, ptr: PointerValue, index: u32, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = LLVMBuildStructGEP(self.builder, ptr.as_value_ref(), index, c_string.as_ptr());
@@ -129,7 +129,7 @@ impl Builder {
         PointerValue::new(value)
     }
 
-    pub fn build_ptr_diff(&self, lhs_ptr: &PointerValue, rhs_ptr: &PointerValue, name: &str) -> IntValue {
+    pub fn build_ptr_diff(&self, lhs_ptr: PointerValue, rhs_ptr: PointerValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -139,7 +139,7 @@ impl Builder {
         IntValue::new(value)
     }
 
-    pub fn build_phi<T: BasicType>(&self, type_: &T, name: &str) -> PhiValue {
+    pub fn build_phi<T: BasicType>(&self, type_: T, name: &str) -> PhiValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -149,7 +149,7 @@ impl Builder {
         PhiValue::new(value)
     }
 
-    pub fn build_store<V: BasicValue>(&self, ptr: &PointerValue, value: &V) -> InstructionValue {
+    pub fn build_store<V: BasicValue>(&self, ptr: PointerValue, value: V) -> InstructionValue {
         let value = unsafe {
             LLVMBuildStore(self.builder, value.as_value_ref(), ptr.as_value_ref())
         };
@@ -157,7 +157,7 @@ impl Builder {
         InstructionValue::new(value)
     }
 
-    pub fn build_load(&self, ptr: &PointerValue, name: &str) -> BasicValueEnum {
+    pub fn build_load(&self, ptr: PointerValue, name: &str) -> BasicValueEnum {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -211,8 +211,8 @@ impl Builder {
         PointerValue::new(value)
     }
 
-    // SubType: <P>(&self, ptr: &PointerValue<P>) -> InstructionValue {
-    pub fn build_free(&self, ptr: &PointerValue) -> InstructionValue {
+    // SubType: <P>(&self, ptr: PointerValue<P>) -> InstructionValue {
+    pub fn build_free(&self, ptr: PointerValue) -> InstructionValue {
         let val = unsafe {
             LLVMBuildFree(self.builder, ptr.as_value_ref())
         };
@@ -764,7 +764,7 @@ impl Builder {
         T::new(value)
     }
 
-    pub fn build_cast(&self, op: InstructionOpcode, from_value: &BasicValue, to_type: &BasicType, name: &str) -> BasicValueEnum {
+    pub fn build_cast<T: BasicType, V: BasicValue>(&self, op: InstructionOpcode, from_value: V, to_type: T, name: &str) -> BasicValueEnum {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -917,7 +917,7 @@ impl Builder {
     }
 
     // REVIEW: Should this be AggregatePointerValue instead of just PointerValue?
-    pub fn build_insert_value(&self, value: &BasicValue, ptr: &PointerValue, index: u32, name: &str) -> InstructionValue {
+    pub fn build_insert_value<V: BasicValue>(&self, value: V, ptr: PointerValue, index: u32, name: &str) -> InstructionValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -927,7 +927,7 @@ impl Builder {
         InstructionValue::new(value)
     }
 
-    pub fn build_extract_element(&self, vector: &VectorValue, index: &IntValue, name: &str) -> BasicValueEnum {
+    pub fn build_extract_element(&self, vector: VectorValue, index: IntValue, name: &str) -> BasicValueEnum {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -937,7 +937,7 @@ impl Builder {
         BasicValueEnum::new(value)
     }
 
-    pub fn build_insert_element(&self, vector: &VectorValue, element: &BasicValue, index: &IntValue, name: &str) -> BasicValueEnum {
+    pub fn build_insert_element<V: BasicValue>(&self, vector: VectorValue, element: V, index: IntValue, name: &str) -> BasicValueEnum {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
