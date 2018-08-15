@@ -71,7 +71,7 @@ impl PointerValue {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
                                                                  .map(|val| val.as_value_ref())
                                                                  .collect();
-        let value = unsafe {
+        let value = {
             LLVMConstGEP(self.as_value_ref(), index_values.as_mut_ptr(), index_values.len() as u32)
         };
 
@@ -83,7 +83,7 @@ impl PointerValue {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
                                                                  .map(|val| val.as_value_ref())
                                                                  .collect();
-        let value = unsafe {
+        let value = {
             LLVMConstInBoundsGEP(self.as_value_ref(), index_values.as_mut_ptr(), index_values.len() as u32)
         };
 

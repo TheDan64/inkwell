@@ -5,7 +5,7 @@ use self::inkwell::context::Context;
 use self::inkwell::execution_engine::{ExecutionEngine, FunctionLookupError};
 use self::inkwell::targets::{InitializationConfig, Target};
 
-use std::ffi::CString;
+// use std::ffi::CString;
 
 type Thunk = unsafe extern "C" fn();
 
