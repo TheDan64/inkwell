@@ -9,8 +9,8 @@ use builder::Builder;
 use memory_buffer::MemoryBuffer;
 use module::Module;
 use support::LLVMString;
-use types::{BasicType, BasicTypeEnum, FloatType, IntType, StructType, VoidType, AsTypeRef};
-use values::{AsValueRef, BasicValue, FunctionValue, StructValue, MetadataValue, BasicValueEnum};
+use types::{BasicTypeEnum, FloatType, IntType, StructType, VoidType, AsTypeRef};
+use values::{AsValueRef, FunctionValue, StructValue, MetadataValue, BasicValueEnum};
 
 use std::ffi::CString;
 use std::mem::forget;
