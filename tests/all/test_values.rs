@@ -21,7 +21,7 @@ fn test_linkage() {
 
     let function = module.add_function("free_f32", &fn_type, None);
 
-    assert_eq!(function.get_linkage(), ExternalLinkage);
+    assert_eq!(function.get_linkage(), External);
 }
 
 #[test]
@@ -34,7 +34,7 @@ fn test_instructions() {
     let i64_type = context.i64_type();
     let f32_type = context.f32_type();
     let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
-    let fn_type = void_type.fn_type(&[&f32_ptr_type], false);
+    let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
 
     let function = module.add_function("free_f32", &fn_type, None);
     let basic_block = context.append_basic_block(&function, "entry");
@@ -180,7 +180,15 @@ fn test_set_get_name() {
     let builder = context.create_builder();
 
     // You can set names on variables, though:
-    let fn_type = void_type.fn_type(&[&bool_type, &f32_type, &struct_type, &array_type, &ptr_type, &vec_type], false);
+    let fn_type_params = [
+        bool_type.into(),
+        f32_type.into(),
+        struct_type.into(),
+        array_type.into(),
+        ptr_type.into(),
+        vec_type.into(),
+    ];
+    let fn_type = void_type.fn_type(&fn_type_params, false);
 
     let function = module.add_function("do_stuff", &fn_type, None);
     let basic_block = context.append_basic_block(&function, "entry");
@@ -467,7 +475,7 @@ fn test_metadata() {
     let f128_type = context.f128_type();
     let array_type = f64_type.array_type(42);
     // let ppc_f128_type = context.ppc_f128_type();
-    let fn_type = bool_type.fn_type(&[&i64_type, &array_type], false);
+    let fn_type = bool_type.fn_type(&[i64_type.into(), array_type.into()], false);
 
     let bool_val = bool_type.const_int(0, false);
     let i8_val = i8_type.const_int(0, false);
@@ -763,7 +771,7 @@ fn test_global_byte_array() {
     let my_str = "Hello, World";
     let i8_type = context.i8_type();
     let i8_array_type = i8_type.array_type(my_str.len() as u32);
-    let global_string = module.add_global(&i8_array_type, Some(AddressSpace::Generic), "message");
+    let global_string = module.add_global(i8_array_type, Some(AddressSpace::Generic), "message");
 
     let mut chars = Vec::with_capacity(my_str.len());
 
@@ -789,7 +797,7 @@ fn test_globals() {
     assert!(module.get_last_global().is_none());
     assert!(module.get_global("my_global").is_none());
 
-    let global = module.add_global(&i8_type, None, "my_global");
+    let global = module.add_global(i8_type, None, "my_global");
 
     assert!(global.get_previous_global().is_none());
     assert!(global.get_next_global().is_none());
@@ -852,7 +860,7 @@ fn test_globals() {
 
     assert!(global.get_thread_local_mode().is_none());
 
-    let global2 = module.add_global(&i8_type, Some(AddressSpace::Const), "my_global2");
+    let global2 = module.add_global(i8_type, Some(AddressSpace::Const), "my_global2");
 
     assert_eq!(global2.get_previous_global().unwrap(), global);
     assert_eq!(global.get_next_global().unwrap(), global2);
@@ -878,7 +886,7 @@ fn test_phi_values() {
     let module = context.create_module("my_mod");
     let void_type = context.void_type();
     let bool_type = context.bool_type();
-    let fn_type = void_type.fn_type(&[&bool_type], false);
+    let fn_type = void_type.fn_type(&[bool_type.into()], false);
     let fn_value = module.add_function("my_func", &fn_type, None);
     let entry_block = fn_value.append_basic_block("entry");
     let then_block = fn_value.append_basic_block("then");

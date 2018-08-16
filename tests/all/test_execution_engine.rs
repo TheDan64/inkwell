@@ -60,7 +60,7 @@ fn test_jit_execution_engine() {
     let one_i32 = i32_type.const_int(1, false);
     let three_i32 = i32_type.const_int(3, false);
     let fourtytwo_i32 = i32_type.const_int(42, false);
-    let fn_type = i32_type.fn_type(&[&i32_type, &i8_ptr_ptr_type], false);
+    let fn_type = i32_type.fn_type(&[i32_type.into(), i8_ptr_ptr_type.into()], false);
     let fn_value = module.add_function("main", &fn_type, None);
     let main_argc = fn_value.get_first_param().unwrap().into_int_value();
     // let main_argv = fn_value.get_nth_param(1).unwrap();

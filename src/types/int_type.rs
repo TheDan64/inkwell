@@ -6,7 +6,7 @@ use AddressSpace;
 use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
-use types::{Type, ArrayType, BasicType, VectorType, PointerType, FunctionType};
+use types::{Type, ArrayType, BasicTypeEnum, VectorType, PointerType, FunctionType};
 use values::{GenericValue, IntValue, PointerValue};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -271,7 +271,7 @@ impl IntType {
         IntValue::new(null)
     }
 
-    pub fn fn_type(&self, param_types: &[&BasicType], is_var_args: bool) -> FunctionType {
+    pub fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
         self.int_type.fn_type(param_types, is_var_args)
     }
 

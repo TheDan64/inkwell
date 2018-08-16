@@ -1,3 +1,5 @@
+//! A `Module` represets a single code compilation unit.
+
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 use llvm_sys::bit_reader::{LLVMParseBitcode, LLVMParseBitcodeInContext};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
@@ -23,70 +25,71 @@ use support::LLVMString;
 use types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
 use values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
 
+/// Defines how to link a function in a module
 // REVIEW: Maybe this should go into it's own module?
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Linkage {
-    AppendingLinkage,
-    AvailableExternallyLinkage,
-    CommonLinkage,
-    DLLExportLinkage,
-    DLLImportLinkage,
-    ExternalLinkage,
-    ExternalWeakLinkage,
-    GhostLinkage,
-    InternalLinkage,
-    LinkerPrivateLinkage,
-    LinkerPrivateWeakLinkage,
-    LinkOnceAnyLinkage,
-    LinkOnceODRAutoHideLinkage,
-    LinkOnceODRLinkage,
-    PrivateLinkage,
-    WeakAnyLinkage,
-    WeakODRLinkage,
+    Appending,
+    AvailableExternally,
+    Common,
+    DLLExport,
+    DLLImport,
+    External,
+    ExternalWeak,
+    Ghost,
+    Internal,
+    LinkerPrivate,
+    LinkerPrivateWeak,
+    LinkOnceAny,
+    LinkOnceODRAutoHide,
+    LinkOnceODR,
+    Private,
+    WeakAny,
+    WeakODR,
 }
 
 impl Linkage {
     pub(crate) fn new(linkage: LLVMLinkage) -> Self {
         match linkage {
-            LLVMLinkage::LLVMAppendingLinkage => Linkage::AppendingLinkage,
-            LLVMLinkage::LLVMAvailableExternallyLinkage => Linkage::AvailableExternallyLinkage,
-            LLVMLinkage::LLVMCommonLinkage => Linkage::CommonLinkage,
-            LLVMLinkage::LLVMDLLExportLinkage => Linkage::DLLExportLinkage,
-            LLVMLinkage::LLVMDLLImportLinkage => Linkage::DLLImportLinkage,
-            LLVMLinkage::LLVMExternalLinkage => Linkage::ExternalLinkage,
-            LLVMLinkage::LLVMExternalWeakLinkage => Linkage::ExternalWeakLinkage,
-            LLVMLinkage::LLVMGhostLinkage => Linkage::GhostLinkage,
-            LLVMLinkage::LLVMInternalLinkage => Linkage::InternalLinkage,
-            LLVMLinkage::LLVMLinkerPrivateLinkage => Linkage::LinkerPrivateLinkage,
-            LLVMLinkage::LLVMLinkerPrivateWeakLinkage => Linkage::LinkerPrivateWeakLinkage,
-            LLVMLinkage::LLVMLinkOnceAnyLinkage => Linkage::LinkOnceAnyLinkage,
-            LLVMLinkage::LLVMLinkOnceODRAutoHideLinkage => Linkage::LinkOnceODRAutoHideLinkage,
-            LLVMLinkage::LLVMLinkOnceODRLinkage => Linkage::LinkOnceODRLinkage,
-            LLVMLinkage::LLVMPrivateLinkage => Linkage::PrivateLinkage,
-            LLVMLinkage::LLVMWeakAnyLinkage => Linkage::WeakAnyLinkage,
-            LLVMLinkage::LLVMWeakODRLinkage => Linkage::WeakODRLinkage,
+            LLVMLinkage::LLVMAppendingLinkage => Linkage::Appending,
+            LLVMLinkage::LLVMAvailableExternallyLinkage => Linkage::AvailableExternally,
+            LLVMLinkage::LLVMCommonLinkage => Linkage::Common,
+            LLVMLinkage::LLVMDLLExportLinkage => Linkage::DLLExport,
+            LLVMLinkage::LLVMDLLImportLinkage => Linkage::DLLImport,
+            LLVMLinkage::LLVMExternalLinkage => Linkage::External,
+            LLVMLinkage::LLVMExternalWeakLinkage => Linkage::ExternalWeak,
+            LLVMLinkage::LLVMGhostLinkage => Linkage::Ghost,
+            LLVMLinkage::LLVMInternalLinkage => Linkage::Internal,
+            LLVMLinkage::LLVMLinkerPrivateLinkage => Linkage::LinkerPrivate,
+            LLVMLinkage::LLVMLinkerPrivateWeakLinkage => Linkage::LinkerPrivateWeak,
+            LLVMLinkage::LLVMLinkOnceAnyLinkage => Linkage::LinkOnceAny,
+            LLVMLinkage::LLVMLinkOnceODRAutoHideLinkage => Linkage::LinkOnceODRAutoHide,
+            LLVMLinkage::LLVMLinkOnceODRLinkage => Linkage::LinkOnceODR,
+            LLVMLinkage::LLVMPrivateLinkage => Linkage::Private,
+            LLVMLinkage::LLVMWeakAnyLinkage => Linkage::WeakAny,
+            LLVMLinkage::LLVMWeakODRLinkage => Linkage::WeakODR,
         }
     }
 
     pub(crate) fn as_llvm_linkage(&self) -> LLVMLinkage {
         match *self {
-            Linkage::AppendingLinkage => LLVMLinkage::LLVMAppendingLinkage,
-            Linkage::AvailableExternallyLinkage => LLVMLinkage::LLVMAvailableExternallyLinkage,
-            Linkage::CommonLinkage => LLVMLinkage::LLVMCommonLinkage,
-            Linkage::DLLExportLinkage => LLVMLinkage::LLVMDLLExportLinkage,
-            Linkage::DLLImportLinkage => LLVMLinkage::LLVMDLLImportLinkage,
-            Linkage::ExternalLinkage => LLVMLinkage::LLVMExternalLinkage,
-            Linkage::ExternalWeakLinkage => LLVMLinkage::LLVMExternalWeakLinkage,
-            Linkage::GhostLinkage => LLVMLinkage::LLVMGhostLinkage,
-            Linkage::InternalLinkage => LLVMLinkage::LLVMInternalLinkage,
-            Linkage::LinkerPrivateLinkage => LLVMLinkage::LLVMLinkerPrivateLinkage,
-            Linkage::LinkerPrivateWeakLinkage => LLVMLinkage::LLVMLinkerPrivateWeakLinkage,
-            Linkage::LinkOnceAnyLinkage => LLVMLinkage::LLVMLinkOnceAnyLinkage,
-            Linkage::LinkOnceODRAutoHideLinkage => LLVMLinkage::LLVMLinkOnceODRAutoHideLinkage,
-            Linkage::LinkOnceODRLinkage => LLVMLinkage::LLVMLinkOnceODRLinkage,
-            Linkage::PrivateLinkage => LLVMLinkage::LLVMPrivateLinkage,
-            Linkage::WeakAnyLinkage => LLVMLinkage::LLVMWeakAnyLinkage,
-            Linkage::WeakODRLinkage => LLVMLinkage::LLVMWeakODRLinkage,
+            Linkage::Appending => LLVMLinkage::LLVMAppendingLinkage,
+            Linkage::AvailableExternally => LLVMLinkage::LLVMAvailableExternallyLinkage,
+            Linkage::Common => LLVMLinkage::LLVMCommonLinkage,
+            Linkage::DLLExport => LLVMLinkage::LLVMDLLExportLinkage,
+            Linkage::DLLImport => LLVMLinkage::LLVMDLLImportLinkage,
+            Linkage::External => LLVMLinkage::LLVMExternalLinkage,
+            Linkage::ExternalWeak => LLVMLinkage::LLVMExternalWeakLinkage,
+            Linkage::Ghost => LLVMLinkage::LLVMGhostLinkage,
+            Linkage::Internal => LLVMLinkage::LLVMInternalLinkage,
+            Linkage::LinkerPrivate => LLVMLinkage::LLVMLinkerPrivateLinkage,
+            Linkage::LinkerPrivateWeak => LLVMLinkage::LLVMLinkerPrivateWeakLinkage,
+            Linkage::LinkOnceAny => LLVMLinkage::LLVMLinkOnceAnyLinkage,
+            Linkage::LinkOnceODRAutoHide => LLVMLinkage::LLVMLinkOnceODRAutoHideLinkage,
+            Linkage::LinkOnceODR => LLVMLinkage::LLVMLinkOnceODRLinkage,
+            Linkage::Private => LLVMLinkage::LLVMPrivateLinkage,
+            Linkage::WeakAny => LLVMLinkage::LLVMWeakAnyLinkage,
+            Linkage::WeakODR => LLVMLinkage::LLVMWeakODRLinkage,
         }
     }
 }
@@ -155,7 +158,7 @@ impl Module {
     /// let fn_val = module.add_function("my_function", &fn_type, None);
     ///
     /// assert_eq!(fn_val.get_name().to_str(), Ok("my_function"));
-    /// assert_eq!(fn_val.get_linkage(), Linkage::ExternalLinkage);
+    /// assert_eq!(fn_val.get_linkage(), Linkage::External);
     /// ```
     pub fn add_function(&self, name: &str, ty: &FunctionType, linkage: Option<Linkage>) -> FunctionValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
@@ -430,7 +433,23 @@ impl Module {
         Ok(execution_engine)
     }
 
-    pub fn add_global(&self, type_: &BasicType, address_space: Option<AddressSpace>, name: &str) -> GlobalValue {
+    /// Creates a `GlobalValue` based on a type in an address space.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::AddressSpace;
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("mod");
+    /// let i8_type = context.i8_type();
+    /// let global = module.add_global(i8_type, Some(AddressSpace::Const), "my_global");
+    ///
+    /// assert_eq!(module.get_first_global().unwrap(), global);
+    /// assert_eq!(module.get_last_global().unwrap(), global);
+    /// ```
+    pub fn add_global<T: BasicType>(&self, type_: T, address_space: Option<AddressSpace>, name: &str) -> GlobalValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -612,6 +631,24 @@ impl Module {
         slice.iter().map(|val| MetadataValue::new(*val)).collect()
     }
 
+    /// Gets the first `GlobalValue` in a module.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::AddressSpace;
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let i8_type = context.i8_type();
+    /// let module = context.create_module("mod");
+    ///
+    /// assert!(module.get_first_global().is_none());
+    ///
+    /// let global = module.add_global(i8_type, Some(AddressSpace::Const), "my_global");
+    ///
+    /// assert_eq!(module.get_first_global().unwrap(), global);
+    /// ```
     pub fn get_first_global(&self) -> Option<GlobalValue> {
         let value = unsafe {
             LLVMGetFirstGlobal(self.module.get())
@@ -624,6 +661,24 @@ impl Module {
         Some(GlobalValue::new(value))
     }
 
+    /// Gets the last `GlobalValue` in a module.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::AddressSpace;
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("mod");
+    /// let i8_type = context.i8_type();
+    ///
+    /// assert!(module.get_last_global().is_none());
+    ///
+    /// let global = module.add_global(i8_type, Some(AddressSpace::Const), "my_global");
+    ///
+    /// assert_eq!(module.get_last_global().unwrap(), global);
+    /// ```
     pub fn get_last_global(&self) -> Option<GlobalValue> {
         let value = unsafe {
             LLVMGetLastGlobal(self.module.get())
@@ -636,6 +691,24 @@ impl Module {
         Some(GlobalValue::new(value))
     }
 
+    /// Gets a named `GlobalValue` in a module.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::AddressSpace;
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("mod");
+    /// let i8_type = context.i8_type();
+    ///
+    /// assert!(module.get_global("my_global").is_none());
+    ///
+    /// let global = module.add_global(i8_type, Some(AddressSpace::Const), "my_global");
+    ///
+    /// assert_eq!(module.get_global("my_global").unwrap(), global);
+    /// ```
     pub fn get_global(&self, name: &str) -> Option<GlobalValue> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
         let value = unsafe {

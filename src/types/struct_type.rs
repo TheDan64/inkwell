@@ -11,7 +11,7 @@ use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, BasicType, BasicTypeEnum, ArrayType, PointerType, FunctionType, VectorType};
-use values::{BasicValue, BasicValueEnum, StructValue, PointerValue, IntValue, AsValueRef};
+use values::{BasicValueEnum, StructValue, PointerValue, IntValue, AsValueRef};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct StructType {
@@ -123,7 +123,7 @@ impl StructType {
         self.struct_type.ptr_type(address_space)
     }
 
-    pub fn fn_type(&self, param_types: &[&BasicType], is_var_args: bool) -> FunctionType {
+    pub fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
         self.struct_type.fn_type(param_types, is_var_args)
     }
 

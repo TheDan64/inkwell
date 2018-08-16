@@ -36,7 +36,8 @@ pub trait BasicType: AnyType {
         BasicTypeEnum::new(self.as_type_ref())
     }
 
-    fn fn_type(&self, param_types: &[&BasicType], is_var_args: bool) -> FunctionType {
+    // REVIEW: What if is fn type?
+    fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
         Type::new(self.as_type_ref()).fn_type(param_types, is_var_args)
     }
 }

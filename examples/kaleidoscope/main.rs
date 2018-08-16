@@ -27,7 +27,7 @@ use self::inkwell::context::Context;
 use self::inkwell::module::Module;
 use self::inkwell::passes::PassManager;
 use self::inkwell::targets::{InitializationConfig, Target};
-use self::inkwell::types::BasicType;
+use self::inkwell::types::BasicTypeEnum;
 use self::inkwell::values::{BasicValueEnum, FloatValue, FunctionValue, PointerValue};
 use self::inkwell::{OptimizationLevel, FloatPredicate};
 
@@ -1092,8 +1092,11 @@ impl<'a> Compiler<'a> {
 
     /// Compiles the specified `Prototype` into an extern LLVM `FunctionValue`.
     fn compile_prototype(&self, proto: &Prototype) -> Result<FunctionValue, &'static str> {
-        let ret_type: &BasicType = &self.context.f64_type();
-        let args_types = std::iter::repeat(ret_type).take(proto.args.len()).collect::<Vec<&BasicType>>();
+        let ret_type = self.context.f64_type();
+        let args_types = std::iter::repeat(ret_type)
+            .take(proto.args.len())
+            .map(|f| f.into())
+            .collect::<Vec<BasicTypeEnum>>();
         let args_types = args_types.as_slice();
 
         let fn_type = self.context.f64_type().fn_type(args_types, false);

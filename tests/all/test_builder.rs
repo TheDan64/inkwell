@@ -58,7 +58,7 @@ fn test_null_checked_ptr_ops() {
     let i8_type = context.i8_type();
     let i8_ptr_type = i8_type.ptr_type(AddressSpace::Generic);
     let i64_type = context.i64_type();
-    let fn_type = i8_type.fn_type(&[&i8_ptr_type], false);
+    let fn_type = i8_type.fn_type(&[i8_ptr_type.into()], false);
     let neg_one = i8_type.const_all_ones();
     let one = i64_type.const_int(1, false);
 
@@ -159,7 +159,7 @@ fn test_binary_ops() {
     // }
 
     let bool_type = context.bool_type();
-    let fn_type = bool_type.fn_type(&[&bool_type, &bool_type], false);
+    let fn_type = bool_type.fn_type(&[bool_type.into(), bool_type.into()], false);
     let fn_value = module.add_function("and", &fn_type, None);
     let entry = fn_value.append_basic_block("entry");
 
@@ -251,7 +251,7 @@ fn test_switch() {
     // }
 
     let i8_type = context.i8_type();
-    let fn_type = i8_type.fn_type(&[&i8_type], false);
+    let fn_type = i8_type.fn_type(&[i8_type.into()], false);
     let fn_value = module.add_function("switch", &fn_type, None);
     let i8_zero = i8_type.const_int(0, false);
     let i8_one = i8_type.const_int(1, false);
@@ -304,7 +304,7 @@ fn test_bit_shifts() {
     //     value << bits
     // }
     let i8_type = context.i8_type();
-    let fn_type = i8_type.fn_type(&[&i8_type, &i8_type], false);
+    let fn_type = i8_type.fn_type(&[i8_type.into(), i8_type.into()], false);
     let fn_value = module.add_function("left_shift", &fn_type, None);
     let value = fn_value.get_first_param().unwrap().into_int_value();
     let bits = fn_value.get_nth_param(1).unwrap().into_int_value();
@@ -460,7 +460,7 @@ fn test_vector_convert_ops() {
 
     // Here we're building a function that takes in a <3 x i8> and returns it casted to and from a <3 x i32>
     // Casting to and from means we can ensure the cast build functions return a vector when one is provided.
-    let fn_type = int32_vec_type.fn_type(&[&int8_vec_type], false);
+    let fn_type = int32_vec_type.fn_type(&[int8_vec_type.into()], false);
     let fn_value = module.add_function("test_int_vec_cast", &fn_type, None);
     let entry = fn_value.append_basic_block("entry");
     let builder = context.create_builder();
@@ -473,7 +473,7 @@ fn test_vector_convert_ops() {
     assert!(fn_value.verify(true));
 
     // Here we're building a function that takes in a <3 x f32> and returns it casted to and from a <3 x f16>
-    let fn_type = float16_vec_type.fn_type(&[&float32_vec_type], false);
+    let fn_type = float16_vec_type.fn_type(&[float32_vec_type.into()], false);
     let fn_value = module.add_function("test_float_vec_cast", &fn_type, None);
     let entry = fn_value.append_basic_block("entry");
     let builder = context.create_builder();
@@ -486,7 +486,7 @@ fn test_vector_convert_ops() {
     assert!(fn_value.verify(true));
 
     // Here we're building a function that takes in a <3 x f32> and returns it casted to and from a <3 x i32>
-    let fn_type = int32_vec_type.fn_type(&[&float32_vec_type], false);
+    let fn_type = int32_vec_type.fn_type(&[float32_vec_type.into()], false);
     let fn_value = module.add_function("test_float_to_int_vec_cast", &fn_type, None);
     let entry = fn_value.append_basic_block("entry");
     let builder = context.create_builder();
@@ -508,7 +508,7 @@ fn test_vector_binary_ops() {
     let bool_vec_type = context.bool_type().vec_type(2);
 
     // Here we're building a function that takes in three <2 x i32>s and returns them added together as a <2 x i32>
-    let fn_type = int32_vec_type.fn_type(&[&int32_vec_type, &int32_vec_type, &int32_vec_type], false);
+    let fn_type = int32_vec_type.fn_type(&[int32_vec_type.into(), int32_vec_type.into(), int32_vec_type.into()], false);
     let fn_value = module.add_function("test_int_vec_add", &fn_type, None);
     let entry = fn_value.append_basic_block("entry");
     let builder = context.create_builder();
@@ -524,7 +524,7 @@ fn test_vector_binary_ops() {
 
     // Here we're building a function that takes in three <2 x f32>s and returns x * y / z as an
     // <2 x f32>
-    let fn_type = float32_vec_type.fn_type(&[&float32_vec_type, &float32_vec_type, &float32_vec_type], false);
+    let fn_type = float32_vec_type.fn_type(&[float32_vec_type.into(), float32_vec_type.into(), float32_vec_type.into()], false);
     let fn_value = module.add_function("test_float_vec_mul", &fn_type, None);
     let entry = fn_value.append_basic_block("entry");
     let builder = context.create_builder();
@@ -540,7 +540,7 @@ fn test_vector_binary_ops() {
 
     // Here we're building a function that takes two <2 x f32>s and a <2 x bool> and returns (x < y) * z
     // as a <2 x bool>
-    let fn_type = bool_vec_type.fn_type(&[&float32_vec_type, &float32_vec_type, &bool_vec_type], false);
+    let fn_type = bool_vec_type.fn_type(&[float32_vec_type.into(), float32_vec_type.into(), bool_vec_type.into()], false);
     let fn_value = module.add_function("test_float_vec_compare", &fn_type, None);
     let entry = fn_value.append_basic_block("entry");
     let builder = context.create_builder();
@@ -565,7 +565,7 @@ fn test_vector_pointer_ops() {
 
     // Here we're building a function that takes a <4 x i32>, converts it to a <4 x i8*> and returns a
     // <4 x bool> if the pointer is null
-    let fn_type = bool_vec_type.fn_type(&[&int32_vec_type], false);
+    let fn_type = bool_vec_type.fn_type(&[int32_vec_type.into()], false);
     let fn_value = module.add_function("test_ptr_null", &fn_type, None);
     let entry = fn_value.append_basic_block("entry");
     let builder = context.create_builder();

@@ -576,7 +576,7 @@ impl Builder {
     /// let module = context.create_module("my_module");
     /// let builder = context.create_builder();
     /// let i8_type = context.i8_type();
-    /// let fn_type = i8_type.fn_type(&[&i8_type, &i8_type], false);
+    /// let fn_type = i8_type.fn_type(&[i8_type.into(), i8_type.into()], false);
     ///
     /// // Function Definition
     /// let function = module.add_function("left_shift", &fn_type, None);
@@ -643,7 +643,7 @@ impl Builder {
     /// let module = context.create_module("my_module");
     /// let builder = context.create_builder();
     /// let i8_type = context.i8_type();
-    /// let fn_type = i8_type.fn_type(&[&i8_type, &i8_type], false);
+    /// let fn_type = i8_type.fn_type(&[i8_type.into(), i8_type.into()], false);
     ///
     /// // Function Definition
     /// let function = module.add_function("right_shift", &fn_type, None);

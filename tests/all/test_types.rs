@@ -104,7 +104,7 @@ fn test_function_type() {
     let context = Context::create();
     let int = context.i8_type();
     let float = context.f32_type();
-    let fn_type = int.fn_type(&[&int, &int, &float], false);
+    let fn_type = int.fn_type(&[int.into(), int.into(), float.into()], false);
 
     assert!(!fn_type.is_var_arg());
     assert_eq!(*fn_type.get_context(), context);
@@ -116,7 +116,7 @@ fn test_function_type() {
     assert_eq!(*param_types[1].as_int_type(), int);
     assert_eq!(*param_types[2].as_float_type(), float);
 
-    let fn_type = int.fn_type(&[&int, &float], true);
+    let fn_type = int.fn_type(&[int.into(), float.into()], true);
 
     assert!(fn_type.is_var_arg());
     assert_eq!(*fn_type.get_context(), context);
@@ -145,8 +145,8 @@ fn test_sized_types() {
     let opaque_struct_type = context.opaque_struct_type("opaque");
     let fn_type = void_type.fn_type(&[], false);
     let fn_type2 = i8_type.fn_type(&[], false);
-    let fn_type3 = void_type.fn_type(&[&i32_type, &struct_type], false);
-    let fn_type4 = i8_type.fn_type(&[&struct_type, &i32_type], false);
+    let fn_type3 = void_type.fn_type(&[i32_type.into(), struct_type.into()], false);
+    let fn_type4 = i8_type.fn_type(&[struct_type.into(), i32_type.into()], false);
 
     // REVIEW: Should these maybe just be constant functions instead of bothering to calling LLVM?
 

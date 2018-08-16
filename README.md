@@ -95,7 +95,8 @@ fn jit_compile_sum(
     execution_engine: &ExecutionEngine,
 ) -> Option<Symbol<SumFunc>> {
     let i64_type = context.i64_type();
-    let fn_type = i64_type.fn_type(&[&i64_type, &i64_type, &i64_type], false);
+    let fn_type_params = [i64_type.into(), i64_type.into(), i64_type.into()];
+    let fn_type = i64_type.fn_type(&fn_type_params, false);
 
     let function = module.add_function("sum", &fn_type, None);
     let basic_block = context.append_basic_block(&function, "entry");

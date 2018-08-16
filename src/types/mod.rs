@@ -88,7 +88,7 @@ impl Type {
     }
 
     // REVIEW: Can you make a FunctionType from a FunctionType???
-    fn fn_type(&self, param_types: &[&BasicType], is_var_args: bool) -> FunctionType {
+    fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
         let mut param_types: Vec<LLVMTypeRef> = param_types.iter()
                                                            .map(|val| val.as_type_ref())
                                                            .collect();
