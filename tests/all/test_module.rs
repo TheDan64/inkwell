@@ -317,3 +317,18 @@ fn test_print_to_file() {
 
     assert!(module.print_to_file(&temp_path).is_ok());
 }
+
+#[test]
+fn test_get_set_target() {
+    Target::initialize_x86(&Default::default());
+
+    let context = Context::create();
+    let module = context.create_module("mod");
+    let target = Target::from_name("x86-64").unwrap();
+
+    assert!(module.get_target().is_none());
+
+    module.set_target(&target);
+
+    assert_eq!(module.get_target().unwrap(), target);
+}

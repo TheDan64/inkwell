@@ -736,8 +736,12 @@ impl Target {
     pub fn from_name(name: &str) -> Option<Self> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
+        Self::from_name_raw(c_string.as_ptr())
+    }
+
+    pub(crate) fn from_name_raw(c_string: *const i8) -> Option<Self> {
         let target = unsafe {
-            LLVMGetTargetFromName(c_string.as_ptr())
+            LLVMGetTargetFromName(c_string)
         };
 
         if target.is_null() {
@@ -745,6 +749,7 @@ impl Target {
         }
 
         Some(Target::new(target))
+
     }
 
     pub fn from_triple(triple: &str) -> Result<Self, LLVMString> {
