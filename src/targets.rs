@@ -749,7 +749,6 @@ impl Target {
         }
 
         Some(Target::new(target))
-
     }
 
     pub fn from_triple(triple: &str) -> Result<Self, LLVMString> {
@@ -869,10 +868,15 @@ impl TargetMachine {
 
     pub fn write_to_file(&self, module: &Module, file_type: FileType, path: &Path) -> Result<(), LLVMString> {
         let path = path.to_str().expect("Did not find a valid Unicode path string");
+        let path_c_string = CString::new(path).expect("Conversion to CString failed unexpectedly");
         let mut err_string = unsafe { zeroed() };
         let return_code = unsafe {
             // REVIEW: Why does LLVM need a mutable ptr to path...?
-            LLVMTargetMachineEmitToFile(self.target_machine, module.module.get(), path.as_ptr() as *mut i8, file_type.as_llvm_file_type(), &mut err_string)
+            let module_ptr = module.module.get();
+            let path_ptr = path_c_string.as_ptr() as *mut _;
+            let file_type_ptr = file_type.as_llvm_file_type();
+
+            LLVMTargetMachineEmitToFile(self.target_machine, module_ptr, path_ptr, file_type_ptr, &mut err_string)
         };
 
         // TODO: Verify 1 is error code (LLVM can be inconsistent)
