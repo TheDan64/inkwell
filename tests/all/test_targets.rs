@@ -2,9 +2,13 @@ extern crate inkwell;
 
 use self::inkwell::{AddressSpace, OptimizationLevel};
 use self::inkwell::context::Context;
-use self::inkwell::targets::{ByteOrdering, CodeModel, InitializationConfig, RelocMode, Target, TargetData, TargetMachine};
+use self::inkwell::targets::{ByteOrdering, CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetData, TargetMachine};
 
+use std::env::temp_dir;
 use std::ffi::CString;
+use std::fs::{File, remove_file};
+use std::io::Read;
+use std::str::from_utf8;
 
 // REVIEW: Inconsistently failing on different tries :(
 // #[test]
@@ -278,4 +282,66 @@ fn test_ptr_sized_int() {
 
     assert_eq!(*int_type4.get_context(), context);
     assert_eq!(int_type4.get_bit_width(), target_data.get_pointer_byte_size(Some(address_space)) * 8);
+}
+
+#[test]
+fn test_write_target_machine_to_file() {
+    Target::initialize_x86(&InitializationConfig::default());
+
+    let target = Target::from_name("x86-64").unwrap();
+    let target_machine = target.create_target_machine("x86_64-pc-linux-gnu", "x86-64", "+avx2", OptimizationLevel::Default, RelocMode::Default, CodeModel::Default).unwrap();
+    let mut path = temp_dir();
+
+    path.push("temp.asm");
+
+    let context = Context::create();
+    let module = context.create_module("my_module");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+
+    module.add_function("my_fn", &fn_type, None);
+
+    assert!(target_machine.write_to_file(&module, FileType::Assembly, &path).is_ok());
+
+    let mut contents = Vec::new();
+    let mut file = File::open(&path).expect("Could not open temp file");
+
+    file.read_to_end(&mut contents).expect("Unable to verify written file");
+
+    assert!(!contents.is_empty());
+
+    let string = from_utf8(&contents).unwrap();
+
+    assert!(string.contains(".text"));
+    assert!(string.contains(".file"));
+    assert!(string.contains("my_module"));
+    assert!(string.contains(".section"));
+
+    remove_file(&path).unwrap();
+}
+
+#[test]
+fn test_write_target_machine_to_memory_buffer() {
+    Target::initialize_x86(&InitializationConfig::default());
+
+    let target = Target::from_name("x86-64").unwrap();
+    let target_machine = target.create_target_machine("x86_64-pc-linux-gnu", "x86-64", "+avx2", OptimizationLevel::Default, RelocMode::Default, CodeModel::Default).unwrap();
+
+    let context = Context::create();
+    let module = context.create_module("my_module");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+
+    module.add_function("my_fn", &fn_type, None);
+
+    let buffer = target_machine.write_to_memory_buffer(&module, FileType::Assembly).unwrap();
+
+    assert!(!buffer.get_size() > 0);
+
+    let string = from_utf8(buffer.as_slice()).unwrap();
+
+    assert!(string.contains(".text"));
+    assert!(string.contains(".file"));
+    assert!(string.contains("my_module"));
+    assert!(string.contains(".section"));
 }

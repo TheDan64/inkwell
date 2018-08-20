@@ -855,10 +855,12 @@ impl TargetMachine {
         let mut memory_buffer = ptr::null_mut();
         let mut err_string = unsafe { zeroed() };
         let return_code = unsafe {
-            LLVMTargetMachineEmitToMemoryBuffer(self.target_machine, module.module.get(), file_type.as_llvm_file_type(), &mut err_string, &mut memory_buffer)
+            let module_ptr = module.module.get();
+            let file_type_ptr = file_type.as_llvm_file_type();
+
+            LLVMTargetMachineEmitToMemoryBuffer(self.target_machine, module_ptr, file_type_ptr, &mut err_string, &mut memory_buffer)
         };
 
-        // TODO: Verify 1 is error code (LLVM can be inconsistent)
         if return_code == 1 {
             return Err(LLVMString::new(err_string));
         }
@@ -879,7 +881,6 @@ impl TargetMachine {
             LLVMTargetMachineEmitToFile(self.target_machine, module_ptr, path_ptr, file_type_ptr, &mut err_string)
         };
 
-        // TODO: Verify 1 is error code (LLVM can be inconsistent)
         if return_code == 1 {
             return Err(LLVMString::new(err_string));
         }
