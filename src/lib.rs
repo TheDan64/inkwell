@@ -19,6 +19,7 @@ pub mod context;
 pub mod data_layout;
 pub mod execution_engine;
 pub mod memory_buffer;
+#[deny(missing_docs)]
 pub mod module;
 pub mod object_file;
 pub mod passes;
@@ -32,18 +33,6 @@ use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility, LLVMThreadLo
 #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0",
               feature = "llvm5-0", feature = "llvm6-0")))]
 compile_error!("A LLVM feature flag must be provided. See the README for more details.");
-
-// TODO: Probably move into error handling module
-pub fn enable_llvm_pretty_stack_trace() {
-    #[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]
-    use llvm_sys::core::LLVMEnablePrettyStackTrace;
-    #[cfg(any(feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
-    use llvm_sys::error_handling::LLVMEnablePrettyStackTrace;
-
-    unsafe {
-        LLVMEnablePrettyStackTrace()
-    }
-}
 
 /// Defines the address space in which a global will be inserted.
 ///
@@ -73,17 +62,28 @@ impl From<u32> for AddressSpace {
 }
 
 // REVIEW: Maybe this belongs in some sort of prelude?
+/// This enum defines how to compare a `left` and `right` `IntValue`.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum IntPredicate {
+    /// Equal
     EQ,
+    /// Not Equal
     NE,
+    /// Unsigned Greater Than
     UGT,
+    /// Unsigned Greater Than or Equal
     UGE,
+    /// Unsigned Less Than
     ULT,
+    /// Unsigned Less Than or Equal
     ULE,
+    /// Signed Greater Than
     SGT,
+    /// Signed Greater Than or Equal
     SGE,
+    /// Signed Less Than
     SLT,
+    /// Signed Less Than or Equal
     SLE,
 }
 
@@ -105,7 +105,7 @@ impl IntPredicate {
 }
 
 // REVIEW: Maybe this belongs in some sort of prelude?
-/// Defines how to compare a `left` and `right` float value.
+/// Defines how to compare a `left` and `right` `FloatValue`.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum FloatPredicate {
     /// Returns true if `left` == `right` and neither are NaN
@@ -280,9 +280,3 @@ impl DLLStorageClass {
         }
     }
 }
-
-// Misc Notes
-
-// Initializer (new) strategy:
-// assert!(!val.is_null()); where null is not expected to ever occur, but Option<Self>
-// when null is expected to be passed at some point

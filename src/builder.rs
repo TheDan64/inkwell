@@ -24,6 +24,16 @@ impl Builder {
         }
     }
 
+    /// Creates a `Builder` belonging to the global `Context`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    ///
+    /// use inkwell::builder::Builder;
+    ///
+    /// let builder = Builder::create();
+    /// ```
     pub fn create() -> Self {
         let builder = unsafe {
             LLVMCreateBuilder()

@@ -289,7 +289,7 @@ fn test_write_target_machine_to_file() {
     Target::initialize_x86(&InitializationConfig::default());
 
     let target = Target::from_name("x86-64").unwrap();
-    let target_machine = target.create_target_machine("x86_64-pc-linux-gnu", "x86-64", "+avx2", OptimizationLevel::Default, RelocMode::Default, CodeModel::Default).unwrap();
+    let target_machine = target.create_target_machine("x86_64-pc-linux-gnu", "x86-64", "+avx2", OptimizationLevel::Less, RelocMode::Static, CodeModel::Small).unwrap();
     let mut path = temp_dir();
 
     path.push("temp.asm");
@@ -325,7 +325,7 @@ fn test_write_target_machine_to_memory_buffer() {
     Target::initialize_x86(&InitializationConfig::default());
 
     let target = Target::from_name("x86-64").unwrap();
-    let target_machine = target.create_target_machine("x86_64-pc-linux-gnu", "x86-64", "+avx2", OptimizationLevel::Default, RelocMode::Default, CodeModel::Default).unwrap();
+    let target_machine = target.create_target_machine("x86_64-pc-linux-gnu", "x86-64", "+avx2", OptimizationLevel::Aggressive, RelocMode::PIC, CodeModel::Medium).unwrap();
 
     let context = Context::create();
     let module = context.create_module("my_module");

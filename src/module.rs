@@ -583,6 +583,25 @@ impl Module {
         GlobalValue::new(value)
     }
 
+    /// Writes a `Module` to a `Path`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// use std::path::Path;
+    ///
+    /// let mut path = Path::new("module.bc");
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    ///
+    /// module.add_function("my_fn", &fn_type, None);
+    /// module.write_bitcode_to_path(&path);
+    /// ```
     pub fn write_bitcode_to_path(&self, path: &Path) -> bool {
         let path_str = path.to_str().expect("Did not find a valid Unicode path string");
         let c_string = CString::new(path_str).expect("Conversion to CString failed unexpectedly");
@@ -593,24 +612,43 @@ impl Module {
     }
 
     // See GH issue #6
-    #[cfg(unix)]
+    /// `write_bitcode_to_path` should be preferred over this method, as it does not work on all operating systems.
     pub fn write_bitcode_to_file(&self, file: &File, should_close: bool, unbuffered: bool) -> bool {
-        use std::os::unix::io::AsRawFd;
-        use llvm_sys::bit_writer::LLVMWriteBitcodeToFD;
+        #[cfg(unix)]
+        {
+            use std::os::unix::io::AsRawFd;
+            use llvm_sys::bit_writer::LLVMWriteBitcodeToFD;
 
-        // REVIEW: as_raw_fd docs suggest it only works in *nix
-        // Also, should_close should maybe be hardcoded to true?
-        unsafe {
-            LLVMWriteBitcodeToFD(self.module.get(), file.as_raw_fd(), should_close as i32, unbuffered as i32) == 0
+            // REVIEW: as_raw_fd docs suggest it only works in *nix
+            // Also, should_close should maybe be hardcoded to true?
+            unsafe {
+                LLVMWriteBitcodeToFD(self.module.get(), file.as_raw_fd(), should_close as i32, unbuffered as i32) == 0
+            }
         }
+        #[cfg(windows)]
+        return false;
     }
 
-    #[cfg(windows)]
-    #[allow(unused_variables)]
-    pub fn write_bitcode_to_file(&self, file: &File, should_close: bool, unbuffered: bool) -> bool {
-        false
-    }
-
+    /// Writes this `Module` to a `MemoryBuffer`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("mod");
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let f = module.add_function("f", &fn_type, None);
+    /// let basic_block = f.append_basic_block("entry");
+    /// let builder = context.create_builder();
+    ///
+    /// builder.position_at_end(&basic_block);
+    /// builder.build_return(None);
+    ///
+    /// let buffer = module.write_bitcode_to_memory();
+    /// ```
     pub fn write_bitcode_to_memory(&self) -> MemoryBuffer {
         let memory_buffer = unsafe {
             LLVMWriteBitcodeToMemoryBuffer(self.module.get())
@@ -657,12 +695,54 @@ impl Module {
         DataLayout::new_borrowed(data_layout)
     }
 
+    /// Gets a smart pointer to the `DataLayout` belonging to a particular `Module`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::OptimizationLevel;
+    /// use inkwell::context::Context;
+    /// use inkwell::targets::{InitializationConfig, Target};
+    ///
+    /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("sum");
+    /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    /// let target_data = execution_engine.get_target_data();
+    /// let data_layout = target_data.get_data_layout();
+    ///
+    /// module.set_data_layout(&data_layout);
+    ///
+    /// assert_eq!(*module.get_data_layout(), data_layout);
+    /// ```
     pub fn get_data_layout(&self) -> Ref<DataLayout> {
         Ref::map(self.data_layout.borrow(), |l| l.as_ref().expect("DataLayout should always exist until Drop"))
     }
 
     // REVIEW: Ensure the replaced string ptr still gets cleaned up by the module (I think it does)
     // valgrind might come in handy once non jemalloc allocators stabilize
+    /// Sets the `DataLayout` for a particular `Module`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::OptimizationLevel;
+    /// use inkwell::context::Context;
+    /// use inkwell::targets::{InitializationConfig, Target};
+    ///
+    /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("sum");
+    /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    /// let target_data = execution_engine.get_target_data();
+    /// let data_layout = target_data.get_data_layout();
+    ///
+    /// module.set_data_layout(&data_layout);
+    ///
+    /// assert_eq!(*module.get_data_layout(), data_layout);
+    /// ```
     pub fn set_data_layout(&self, data_layout: &DataLayout) {
         unsafe {
             LLVMSetDataLayout(self.module.get(), data_layout.as_ptr());
@@ -703,6 +783,9 @@ impl Module {
         Ok(())
     }
 
+    /// Sets the inline assembly for the `Module`.
+    // REVIEW: Apparently LLVMSetModuleInlineAsm is deprecated at some point (recent?) in favor of
+    // LLVMSetModuleInlineAsm2 which takes a len
     pub fn set_inline_assembly(&self, asm: &str) {
         let c_string = CString::new(asm).expect("Conversion to CString failed unexpectedly");
 
@@ -715,6 +798,43 @@ impl Module {
     // REVIEW: Should we return a MetadataValue for the global since it's its own value?
     // it would be the last item in get_global_metadata I believe
     // TODOC: Appends your metadata to a global MetadataValue<Node> indexed by key
+    /// Appends a `MetaDataValue` to a global list indexed by a particular key.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::values::MetadataValue;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    /// let bool_type = context.bool_type();
+    /// let f32_type = context.f32_type();
+    /// let bool_val = bool_type.const_int(0, false);
+    /// let f32_val = f32_type.const_float(0.0);
+    ///
+    /// assert_eq!(module.get_global_metadata_size("my_md"), 0);
+    ///
+    /// let md_string = MetadataValue::create_string("lots of metadata here");
+    /// let md_node = MetadataValue::create_node(&[&bool_val, &f32_val]);
+    ///
+    /// module.add_global_metadata("my_md", &md_string);
+    /// module.add_global_metadata("my_md", &md_node);
+    ///
+    /// assert_eq!(module.get_global_metadata_size("my_md"), 2);
+    ///
+    /// let global_md = module.get_global_metadata("my_md");
+    ///
+    /// assert_eq!(global_md.len(), 2);
+    ///
+    /// let (md_0, md_1) = (global_md[0].get_node_values(), global_md[1].get_node_values());
+    ///
+    /// assert_eq!(md_0.len(), 1);
+    /// assert_eq!(md_1.len(), 2);
+    /// assert_eq!(md_0[0].as_metadata_value().get_string_value(), md_string.get_string_value());
+    /// assert_eq!(md_1[0].as_int_value(), &bool_val);
+    /// assert_eq!(md_1[1].as_float_value(), &f32_val);
+    /// ```
     pub fn add_global_metadata(&self, key: &str, metadata: &MetadataValue) {
         let c_string = CString::new(key).expect("Conversion to CString failed unexpectedly");
 
@@ -722,8 +842,45 @@ impl Module {
             LLVMAddNamedMetadataOperand(self.module.get(), c_string.as_ptr(), metadata.as_value_ref())
         }
     }
-    // REVIEW: Better name?
-    // TODOC: Gets the size of the metadata node indexed by key
+
+    // REVIEW: Better name? get_global_metadata_len or _count?
+    /// Obtains the number of `MetaDataValue`s indexed by a particular key.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::values::MetadataValue;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    /// let bool_type = context.bool_type();
+    /// let f32_type = context.f32_type();
+    /// let bool_val = bool_type.const_int(0, false);
+    /// let f32_val = f32_type.const_float(0.0);
+    ///
+    /// assert_eq!(module.get_global_metadata_size("my_md"), 0);
+    ///
+    /// let md_string = MetadataValue::create_string("lots of metadata here");
+    /// let md_node = MetadataValue::create_node(&[&bool_val, &f32_val]);
+    ///
+    /// module.add_global_metadata("my_md", &md_string);
+    /// module.add_global_metadata("my_md", &md_node);
+    ///
+    /// assert_eq!(module.get_global_metadata_size("my_md"), 2);
+    ///
+    /// let global_md = module.get_global_metadata("my_md");
+    ///
+    /// assert_eq!(global_md.len(), 2);
+    ///
+    /// let (md_0, md_1) = (global_md[0].get_node_values(), global_md[1].get_node_values());
+    ///
+    /// assert_eq!(md_0.len(), 1);
+    /// assert_eq!(md_1.len(), 2);
+    /// assert_eq!(md_0[0].as_metadata_value().get_string_value(), md_string.get_string_value());
+    /// assert_eq!(md_1[0].as_int_value(), &bool_val);
+    /// assert_eq!(md_1[1].as_float_value(), &f32_val);
+    /// ```
     pub fn get_global_metadata_size(&self, key: &str) -> u32 {
         let c_string = CString::new(key).expect("Conversion to CString failed unexpectedly");
 
@@ -732,8 +889,44 @@ impl Module {
         }
     }
 
-    // TODOC: Always returns a metadata node indexed by key, which may contain 1 string or multiple values as its get_node_values()
     // SubTypes: -> Vec<MetadataValue<Node>>
+    /// Obtains the global `MetaDataValue` node indexed by key, which may contain 1 string or multiple values as its `get_node_values()`
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::values::MetadataValue;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    /// let bool_type = context.bool_type();
+    /// let f32_type = context.f32_type();
+    /// let bool_val = bool_type.const_int(0, false);
+    /// let f32_val = f32_type.const_float(0.0);
+    ///
+    /// assert_eq!(module.get_global_metadata_size("my_md"), 0);
+    ///
+    /// let md_string = MetadataValue::create_string("lots of metadata here");
+    /// let md_node = MetadataValue::create_node(&[&bool_val, &f32_val]);
+    ///
+    /// module.add_global_metadata("my_md", &md_string);
+    /// module.add_global_metadata("my_md", &md_node);
+    ///
+    /// assert_eq!(module.get_global_metadata_size("my_md"), 2);
+    ///
+    /// let global_md = module.get_global_metadata("my_md");
+    ///
+    /// assert_eq!(global_md.len(), 2);
+    ///
+    /// let (md_0, md_1) = (global_md[0].get_node_values(), global_md[1].get_node_values());
+    ///
+    /// assert_eq!(md_0.len(), 1);
+    /// assert_eq!(md_1.len(), 2);
+    /// assert_eq!(md_0[0].as_metadata_value().get_string_value(), md_string.get_string_value());
+    /// assert_eq!(md_1[0].as_int_value(), &bool_val);
+    /// assert_eq!(md_1[1].as_float_value(), &f32_val);
+    /// ```
     pub fn get_global_metadata(&self, key: &str) -> Vec<MetadataValue> {
         let c_string = CString::new(key).expect("Conversion to CString failed unexpectedly");
         let count = self.get_global_metadata_size(key);

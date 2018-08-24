@@ -800,7 +800,7 @@ impl TargetMachine {
         }
     }
 
-    pub fn get_target(&self)-> Target {
+    pub fn get_target(&self) -> Target {
         let target = unsafe {
             LLVMGetTargetMachineTarget(self.target_machine)
         };
@@ -816,6 +816,19 @@ impl TargetMachine {
         LLVMString::new(ptr)
     }
 
+    /// Gets the default triple for the current system.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::targets::TargetMachine;
+    ///
+    /// use std::ffi::CString;
+    ///
+    /// let default_triple = TargetMachine::get_default_triple();
+    ///
+    /// assert_eq!(*default_triple, *CString::new("x86_64-pc-linux-gnu").unwrap());
+    /// ```
     pub fn get_default_triple() -> LLVMString {
         let llvm_string = unsafe {
             LLVMGetDefaultTargetTriple()
@@ -851,6 +864,32 @@ impl TargetMachine {
         }
     }
 
+    /// Writes a `TargetMachine` to a `MemoryBuffer`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::OptimizationLevel;
+    /// use inkwell::context::Context;
+    /// use inkwell::targets::{CodeModel, RelocMode, FileType, Target, TargetMachine, InitializationConfig};
+    ///
+    /// Target::initialize_x86(&InitializationConfig::default());
+    ///
+    /// let opt = OptimizationLevel::Default;
+    /// let reloc = RelocMode::Default;
+    /// let model = CodeModel::Default;
+    /// let target = Target::from_name("x86-64").unwrap();
+    /// let target_machine = target.create_target_machine("x86_64-pc-linux-gnu", "x86-64", "+avx2", opt, reloc, model).unwrap();
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    ///
+    /// module.add_function("my_fn", &fn_type, None);
+    ///
+    /// let buffer = target_machine.write_to_memory_buffer(&module, FileType::Assembly).unwrap();
+    /// ```
     pub fn write_to_memory_buffer(&self, module: &Module, file_type: FileType) -> Result<MemoryBuffer, LLVMString> {
         let mut memory_buffer = ptr::null_mut();
         let mut err_string = unsafe { zeroed() };
@@ -868,6 +907,35 @@ impl TargetMachine {
         Ok(MemoryBuffer::new(memory_buffer))
     }
 
+    /// Saves a `TargetMachine` to a file.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::OptimizationLevel;
+    /// use inkwell::context::Context;
+    /// use inkwell::targets::{CodeModel, RelocMode, FileType, Target, TargetMachine, InitializationConfig};
+    ///
+    /// use std::path::Path;
+    ///
+    /// Target::initialize_x86(&InitializationConfig::default());
+    ///
+    /// let opt = OptimizationLevel::Default;
+    /// let reloc = RelocMode::Default;
+    /// let model = CodeModel::Default;
+    /// let path = Path::new("/tmp/some/path/main.asm");
+    /// let target = Target::from_name("x86-64").unwrap();
+    /// let target_machine = target.create_target_machine("x86_64-pc-linux-gnu", "x86-64", "+avx2", opt, reloc, model).unwrap();
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    ///
+    /// module.add_function("my_fn", &fn_type, None);
+    ///
+    /// assert!(target_machine.write_to_file(&module, FileType::Object, &path).is_ok());
+    /// ```
     pub fn write_to_file(&self, module: &Module, file_type: FileType, path: &Path) -> Result<(), LLVMString> {
         let path = path.to_str().expect("Did not find a valid Unicode path string");
         let path_c_string = CString::new(path).expect("Conversion to CString failed unexpectedly");
@@ -919,6 +987,8 @@ impl TargetData {
 
     /// Gets the `IntType` representing a bit width of a pointer. It will be assigned the global context.
     ///
+    /// # Example
+    ///
     /// ```no_run
     /// use inkwell::OptimizationLevel;
     /// use inkwell::context::Context;
@@ -943,6 +1013,7 @@ impl TargetData {
 
     /// Gets the `IntType` representing a bit width of a pointer. It will be assigned the referenced context.
     ///
+    /// # Example
     ///
     /// ```no_run
     /// use inkwell::OptimizationLevel;

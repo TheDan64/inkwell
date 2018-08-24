@@ -141,3 +141,14 @@ pub fn is_multithreaded() -> bool {
         LLVMIsMultithreaded() == 1
     }
 }
+
+pub fn enable_llvm_pretty_stack_trace() {
+    #[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]
+    use llvm_sys::core::LLVMEnablePrettyStackTrace;
+    #[cfg(any(feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
+    use llvm_sys::error_handling::LLVMEnablePrettyStackTrace;
+
+    unsafe {
+        LLVMEnablePrettyStackTrace()
+    }
+}
