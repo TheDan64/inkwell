@@ -265,7 +265,7 @@ fn test_switch() {
     let value = fn_value.get_first_param().unwrap().into_int_value();
 
     builder.position_at_end(&entry);
-    builder.build_switch(&value, &else_, &[(&i8_zero, &check), (&i8_42, &elif)]);
+    builder.build_switch(value, &else_, &[(i8_zero, &check), (i8_42, &elif)]);
 
     builder.position_at_end(&check);
     builder.build_return(Some(&i8_one));
@@ -468,7 +468,7 @@ fn test_vector_convert_ops() {
     builder.position_at_end(&entry);
     let in_vec = fn_value.get_first_param().unwrap().into_vector_value();
     let casted_vec = builder.build_int_cast(in_vec, int32_vec_type, "casted_vec");
-    let uncasted_vec = builder.build_int_cast(casted_vec, int8_vec_type, "uncasted_vec");
+    let _uncasted_vec = builder.build_int_cast(casted_vec, int8_vec_type, "uncasted_vec");
     builder.build_return(Some(&casted_vec));
     assert!(fn_value.verify(true));
 
@@ -481,7 +481,7 @@ fn test_vector_convert_ops() {
     builder.position_at_end(&entry);
     let in_vec = fn_value.get_first_param().unwrap().into_vector_value();
     let casted_vec = builder.build_float_cast(in_vec, float16_vec_type, "casted_vec");
-    let uncasted_vec = builder.build_float_cast(casted_vec, float32_vec_type, "uncasted_vec");
+    let _uncasted_vec = builder.build_float_cast(casted_vec, float32_vec_type, "uncasted_vec");
     builder.build_return(Some(&casted_vec));
     assert!(fn_value.verify(true));
 
@@ -494,7 +494,7 @@ fn test_vector_convert_ops() {
     builder.position_at_end(&entry);
     let in_vec = fn_value.get_first_param().unwrap().into_vector_value();
     let casted_vec = builder.build_float_to_signed_int(in_vec, int32_vec_type, "casted_vec");
-    let uncasted_vec = builder.build_signed_int_to_float(casted_vec, float32_vec_type, "uncasted_vec");
+    let _uncasted_vec = builder.build_signed_int_to_float(casted_vec, float32_vec_type, "uncasted_vec");
     builder.build_return(Some(&casted_vec));
     assert!(fn_value.verify(true));
 }

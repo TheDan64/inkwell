@@ -12,6 +12,9 @@ extern crate libc;
 extern crate llvm_sys;
 
 #[deny(missing_docs)]
+#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+pub mod attributes;
+#[deny(missing_docs)]
 pub mod basic_block;
 pub mod builder;
 #[deny(missing_docs)]

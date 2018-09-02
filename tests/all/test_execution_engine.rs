@@ -2,7 +2,7 @@ extern crate inkwell;
 
 use self::inkwell::{AddressSpace, OptimizationLevel, IntPredicate};
 use self::inkwell::context::Context;
-use self::inkwell::execution_engine::{ExecutionEngine, FunctionLookupError};
+use self::inkwell::execution_engine::FunctionLookupError;
 use self::inkwell::targets::{InitializationConfig, Target};
 
 // use std::ffi::CString;

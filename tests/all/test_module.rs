@@ -7,7 +7,7 @@ use self::inkwell::OptimizationLevel;
 use self::inkwell::targets::{InitializationConfig, Target};
 
 use std::env::temp_dir;
-use std::ffi::{CString, CStr};
+use std::ffi::CString;
 use std::fs::{File, remove_file};
 use std::io::Read;
 use std::path::Path;
@@ -227,7 +227,7 @@ fn test_parse_from_buffer() {
     assert!(module3_result.is_err());
 
     let buffer2 = module.write_bitcode_to_memory();
-    let module4_result = Module::parse_bitcode_from_buffer_in_context(&buffer, &context);
+    let module4_result = Module::parse_bitcode_from_buffer_in_context(&buffer2, &context);
 
     assert!(module4_result.is_ok());
     assert_eq!(*module4_result.unwrap().get_context(), context);

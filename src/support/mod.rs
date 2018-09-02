@@ -1,3 +1,4 @@
+#[deny(missing_docs)]
 pub mod error_handling;
 
 use libc::c_char;

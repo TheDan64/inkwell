@@ -3,15 +3,15 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 use llvm_sys::bit_reader::{LLVMParseBitcode, LLVMParseBitcodeInContext};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
-use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile, LLVMSetModuleInlineAsm};
+use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile, LLVMSetModuleInlineAsm};
 use llvm_sys::execution_engine::{LLVMCreateInterpreterForModule, LLVMCreateJITCompilerForModule, LLVMCreateExecutionEngineForModule};
 use llvm_sys::prelude::{LLVMValueRef, LLVMModuleRef};
 use llvm_sys::LLVMLinkage;
 
 use std::cell::{Cell, RefCell, Ref};
-use std::ffi::{CString, CStr};
+use std::ffi::CString;
 use std::fs::File;
-use std::mem::{forget, uninitialized, zeroed};
+use std::mem::{forget, zeroed};
 use std::path::Path;
 use std::rc::Rc;
 use std::slice::from_raw_parts;
@@ -487,7 +487,7 @@ impl Module {
     /// ```
     // SubType: ExecutionEngine<Interpreter>
     pub fn create_interpreter_execution_engine(&self) -> Result<ExecutionEngine, LLVMString> {
-        let mut execution_engine = unsafe { uninitialized() };
+        let mut execution_engine = unsafe { zeroed() };
         let mut err_string = unsafe { zeroed() };
 
         let code = unsafe {
@@ -524,7 +524,7 @@ impl Module {
     /// ```
     // SubType: ExecutionEngine<Jit>
     pub fn create_jit_execution_engine(&self, opt_level: OptimizationLevel) -> Result<ExecutionEngine, LLVMString> {
-        let mut execution_engine = unsafe { uninitialized() };
+        let mut execution_engine = unsafe { zeroed() };
         let mut err_string = unsafe { zeroed() };
 
         let code = unsafe {

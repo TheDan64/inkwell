@@ -9,9 +9,9 @@ use values::{AnyValue, AsValueRef, FunctionValue, GenericValue};
 use std::error::Error;
 use std::rc::Rc;
 use std::ops::Deref;
-use std::ffi::{CStr, CString};
+use std::ffi::CString;
 use std::fmt::{self, Debug, Display, Formatter};
-use std::mem::{forget, uninitialized, zeroed, transmute_copy, size_of};
+use std::mem::{forget, zeroed, transmute_copy, size_of};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum FunctionLookupError {
@@ -110,12 +110,14 @@ impl ExecutionEngine {
         }
     }
 
+    // REVIEW: Should we support this function?
     pub fn link_in_mc_jit() {
         unsafe {
             LLVMLinkInMCJIT()
         }
     }
 
+    // REVIEW: Should we support this function?
     pub fn link_in_interpreter() {
         unsafe {
             LLVMLinkInInterpreter();
@@ -206,7 +208,7 @@ impl ExecutionEngine {
             _ => ()
         }
 
-        let mut new_module = unsafe { uninitialized() };
+        let mut new_module = unsafe { zeroed() };
         let mut err_string = unsafe { zeroed() };
 
         let code = unsafe {
@@ -371,12 +373,14 @@ impl ExecutionEngine {
         }
     }
 
+    // REVIEW: Is this actually safe?
     pub fn run_static_constructors(&self) {
         unsafe {
             LLVMRunStaticConstructors(*self.execution_engine)
         }
     }
 
+    // REVIEW: Is this actually safe? Can you double destruct/free?
     pub fn run_static_destructors(&self) {
         unsafe {
             LLVMRunStaticDestructors(*self.execution_engine)

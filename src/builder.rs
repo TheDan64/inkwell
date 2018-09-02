@@ -1,5 +1,5 @@
 use either::Either;
-use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf, LLVMSetTailCall, LLVMBuildExtractElement, LLVMBuildInsertElement, LLVMBuildIntToPtr, LLVMBuildPtrToInt, LLVMInsertIntoBuilderWithName, LLVMClearInsertionPosition, LLVMCreateBuilder, LLVMPositionBuilder, LLVMPositionBuilderBefore, LLVMBuildAggregateRet, LLVMBuildStructGEP, LLVMBuildInBoundsGEP, LLVMBuildPtrDiff, LLVMBuildNSWAdd, LLVMBuildNUWAdd, LLVMBuildNSWSub, LLVMBuildNUWSub, LLVMBuildNSWMul, LLVMBuildNUWMul, LLVMBuildSDiv, LLVMBuildSRem, LLVMBuildURem, LLVMBuildFRem, LLVMBuildNSWNeg, LLVMBuildNUWNeg, LLVMBuildFPToUI, LLVMBuildFPToSI, LLVMBuildSIToFP, LLVMBuildUIToFP, LLVMBuildFPTrunc, LLVMBuildFPExt, LLVMBuildIntCast, LLVMBuildFPCast, LLVMBuildSExtOrBitCast, LLVMBuildZExtOrBitCast, LLVMBuildTruncOrBitCast, LLVMBuildSwitch, LLVMAddCase, LLVMBuildShl, LLVMBuildAShr, LLVMBuildLShr, LLVMBuildGlobalString, LLVMBuildGlobalStringPtr, LLVMBuildExactSDiv, LLVMBuildTrunc, LLVMBuildSExt, LLVMBuildZExt};
+use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf, LLVMSetTailCall, LLVMBuildExtractElement, LLVMBuildInsertElement, LLVMBuildIntToPtr, LLVMBuildPtrToInt, LLVMInsertIntoBuilderWithName, LLVMClearInsertionPosition, LLVMCreateBuilder, LLVMPositionBuilder, LLVMPositionBuilderBefore, LLVMBuildAggregateRet, LLVMBuildStructGEP, LLVMBuildInBoundsGEP, LLVMBuildPtrDiff, LLVMBuildNSWAdd, LLVMBuildNUWAdd, LLVMBuildNSWSub, LLVMBuildNUWSub, LLVMBuildNSWMul, LLVMBuildNUWMul, LLVMBuildSDiv, LLVMBuildSRem, LLVMBuildURem, LLVMBuildFRem, LLVMBuildNSWNeg, LLVMBuildNUWNeg, LLVMBuildFPToUI, LLVMBuildFPToSI, LLVMBuildSIToFP, LLVMBuildUIToFP, LLVMBuildFPTrunc, LLVMBuildFPExt, LLVMBuildIntCast, LLVMBuildFPCast, LLVMBuildSExtOrBitCast, LLVMBuildZExtOrBitCast, LLVMBuildTruncOrBitCast, LLVMBuildSwitch, LLVMAddCase, LLVMBuildShl, LLVMBuildAShr, LLVMBuildLShr, LLVMBuildGlobalString, LLVMBuildGlobalStringPtr, LLVMBuildExactSDiv, LLVMBuildTrunc, LLVMBuildSExt, LLVMBuildZExt, LLVMBuildSelect};
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMTypeKind, LLVMAtomicOrdering};
 
@@ -117,6 +117,7 @@ impl Builder {
     }
 
     // REVIEW: Doesn't GEP work on array too?
+    // REVIEW: This could be merge in with build_gep via a in_bounds: bool param
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
     pub unsafe fn build_in_bounds_gep(&self, ptr: PointerValue, ordered_indexes: &[IntValue], name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
@@ -130,6 +131,8 @@ impl Builder {
     }
 
     // REVIEW: Shouldn't this take a StructValue? Or does it still need to be PointerValue<StructValue>?
+    // I think it's the latter. This might not be as unsafe as regular GEP. Should check to see if it lets us
+    // go OOB. Maybe we could use the PointerValue<StructValue>'s struct info to do bounds checking...
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
     pub unsafe fn build_struct_gep(&self, ptr: PointerValue, index: u32, name: &str) -> PointerValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
@@ -149,6 +152,11 @@ impl Builder {
         IntValue::new(value)
     }
 
+    // SubTypes: Maybe this should return PhiValue<T>? That way we could force incoming values to be of T::Value?
+    // That is, assuming LLVM complains about different phi types.. which I imagine it would. But this would get
+    // tricky with VoidType since it has no instance value?
+    // TODOC: Phi Instruction(s) must be first instruction(s) in a BasicBlock.
+    // REVIEW: Not sure if we can enforce the above somehow via types.
     pub fn build_phi<T: BasicType>(&self, type_: T, name: &str) -> PhiValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -967,11 +975,12 @@ impl Builder {
 
     // REVIEW: Not sure if this should return InstructionValue or an actual value
     // TODO: Better name for num?
-    pub fn build_fence(&self, atmoic_ordering: LLVMAtomicOrdering, num: i32, name: &str) -> InstructionValue {
+    // FIXME: Shouldn't use llvm_sys enum
+    pub fn build_fence(&self, atomic_ordering: LLVMAtomicOrdering, num: i32, name: &str) -> InstructionValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let val = unsafe {
-            LLVMBuildFence(self.builder, atmoic_ordering, num, c_string.as_ptr())
+            LLVMBuildFence(self.builder, atomic_ordering, num, c_string.as_ptr())
         };
 
         InstructionValue::new(val)
@@ -1030,7 +1039,7 @@ impl Builder {
     // REVIEW: Returning InstructionValue is the safe move here; but if the value means something
     // (IE the result of the switch) it should probably return BasicValueEnum?
     // SubTypes: I think value and case values must be the same subtype (maybe). Case value might need to be constants
-    pub fn build_switch(&self, value: &IntValue, else_block: &BasicBlock, cases: &[(&IntValue, &BasicBlock)]) -> InstructionValue {
+    pub fn build_switch(&self, value: IntValue, else_block: &BasicBlock, cases: &[(IntValue, &BasicBlock)]) -> InstructionValue {
         let switch_value = unsafe {
             LLVMBuildSwitch(self.builder, value.as_value_ref(), else_block.basic_block, cases.len() as u32)
         };
@@ -1042,6 +1051,16 @@ impl Builder {
         }
 
         InstructionValue::new(switch_value)
+    }
+
+    // SubTypes: condition can only be IntValue<bool> or VectorValue<IntValue<Bool>>
+    pub fn build_select<BV: BasicValue, IMV: IntMathValue>(&self, condition: IMV, then: BV, else_: BV, name: &str) -> BasicValueEnum {
+        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+        let value = unsafe {
+            LLVMBuildSelect(self.builder, condition.as_value_ref(), then.as_value_ref(), else_.as_value_ref(), c_string.as_ptr())
+        };
+
+        BasicValueEnum::new(value)
     }
 
     // The unsafety of this function should be fixable with subtypes. See GH #32

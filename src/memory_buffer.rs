@@ -5,7 +5,7 @@ use llvm_sys::object::LLVMCreateObjectFile;
 use object_file::ObjectFile;
 use support::LLVMString;
 
-use std::ffi::{CString, CStr};
+use std::ffi::CString;
 use std::mem::{forget, zeroed};
 use std::path::Path;
 use std::ptr;

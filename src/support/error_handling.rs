@@ -1,4 +1,5 @@
-// Installs an error handler to be called before LLVM exits
+//! This module contains some supplemental functions for dealing with errors.
+
 // REVIEW: Maybe it's possible to have a safe wrapper? If we can
 // wrap the provided function input ptr into a &CStr somehow
 // TODOC: Can be used like this:
@@ -12,6 +13,8 @@
 // }
 // and will be called before LLVM calls C exit(). IIRC
 // it's safe to panic from C in newer versions of rust
+/// Installs an error handler to be called before LLVM exits. This function may
+/// be repurposed for internal use only to provide better error handling
 pub unsafe fn install_fatal_error_handler(handler: extern "C" fn(*const i8)) {
     #[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]
     use llvm_sys::core::LLVMInstallFatalErrorHandler;
