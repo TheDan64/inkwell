@@ -57,6 +57,11 @@ impl FunctionType {
         self.fn_type.is_sized()
     }
 
+    // REVIEW: Does this work on functions?
+    // fn get_alignment(&self) -> IntValue {
+    //     self.fn_type.get_alignment()
+    // }
+
     pub fn get_context(&self) -> ContextRef {
         self.fn_type.get_context()
     }

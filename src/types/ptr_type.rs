@@ -30,6 +30,10 @@ impl PointerType {
         self.ptr_type.size_of()
     }
 
+    fn get_alignment(&self) -> IntValue {
+        self.ptr_type.get_alignment()
+    }
+
     pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
         self.ptr_type.ptr_type(address_space)
     }

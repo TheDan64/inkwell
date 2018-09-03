@@ -36,6 +36,10 @@ impl ArrayType {
         None
     }
 
+    fn get_alignment(&self) -> IntValue {
+        self.array_type.get_alignment()
+    }
+
     pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
         self.array_type.ptr_type(address_space)
     }

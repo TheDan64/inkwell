@@ -1009,7 +1009,7 @@ impl<'a> Compiler<'a> {
                 let else_bb = self.context.append_basic_block(&parent, "else");
                 let cont_bb = self.context.append_basic_block(&parent, "ifcont");
 
-                self.builder.build_conditional_branch(&cond, &then_bb, &else_bb);
+                self.builder.build_conditional_branch(cond, &then_bb, &else_bb);
 
                 // build then block
                 self.builder.position_at_end(&then_bb);
@@ -1076,7 +1076,7 @@ impl<'a> Compiler<'a> {
                 let end_cond = self.builder.build_float_compare(FloatPredicate::ONE, end_cond, self.context.f64_type().const_float(0.0), "loopcond");
                 let after_bb = self.context.append_basic_block(&parent, "afterloop");
 
-                self.builder.build_conditional_branch(&end_cond, &loop_bb, &after_bb);
+                self.builder.build_conditional_branch(end_cond, &loop_bb, &after_bb);
                 self.builder.position_at_end(&after_bb);
 
                 self.variables.remove(var_name);

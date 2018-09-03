@@ -38,6 +38,10 @@ impl VectorType {
         None
     }
 
+    fn get_alignment(&self) -> IntValue {
+        self.vec_type.get_alignment()
+    }
+
     pub fn get_size(&self) -> u32 {
         unsafe {
             LLVMGetVectorSize(self.as_type_ref())

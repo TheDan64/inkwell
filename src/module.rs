@@ -4,12 +4,14 @@ use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 use llvm_sys::bit_reader::{LLVMParseBitcode, LLVMParseBitcodeInContext};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
 use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile, LLVMSetModuleInlineAsm};
+#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
+use llvm_sys::core::{LLVMGetModuleIdentifier, LLVMSetModuleIdentifier};
 use llvm_sys::execution_engine::{LLVMCreateInterpreterForModule, LLVMCreateJITCompilerForModule, LLVMCreateExecutionEngineForModule};
 use llvm_sys::prelude::{LLVMValueRef, LLVMModuleRef};
 use llvm_sys::LLVMLinkage;
 
 use std::cell::{Cell, RefCell, Ref};
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::mem::{forget, zeroed};
 use std::path::Path;
@@ -1152,6 +1154,53 @@ impl Module {
         let buffer = MemoryBuffer::create_from_file(path.as_ref())?;
 
         Self::parse_bitcode_from_buffer_in_context(&buffer, &context)
+    }
+
+    /// Gets the name of this `Module`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use std::ffi::CString;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    ///
+    /// assert_eq!(*module.get_name(), *CString::new("my_mdoule").unwrap());
+    /// ```
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
+    pub fn get_name(&self) -> &CStr {
+        let mut length = 0;
+        let cstr_ptr = unsafe {
+            LLVMGetModuleIdentifier(self.module.get(), &mut length)
+        };
+
+        unsafe {
+            CStr::from_ptr(cstr_ptr)
+        }
+    }
+
+    /// Assigns the name of this `Module`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use std::ffi::CString;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    ///
+    /// module.set_name("my_module2");
+    ///
+    /// assert_eq!(*module.get_name(), *CString::new("my_mdoule2").unwrap());
+    /// ```
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
+    pub fn set_name(&self, name: &str) {
+        unsafe {
+            LLVMSetModuleIdentifier(self.module.get(), name.as_ptr() as *const i8, name.len())
+        }
     }
 }
 

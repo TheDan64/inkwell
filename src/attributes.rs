@@ -1,4 +1,4 @@
-//! An `Attribute` are optional modifiers to functions, function parameters, and return types.
+//! `Attribute`s are optional modifiers to functions, function parameters, and return types.
 
 use llvm_sys::prelude::LLVMAttributeRef;
 use llvm_sys::core::{LLVMGetEnumAttributeKindForName, LLVMGetLastEnumAttributeKind, LLVMGetEnumAttributeKind, LLVMGetEnumAttributeValue, LLVMGetStringAttributeKind, LLVMGetStringAttributeValue, LLVMIsEnumAttribute, LLVMIsStringAttribute};

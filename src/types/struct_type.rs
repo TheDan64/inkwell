@@ -99,6 +99,10 @@ impl StructType {
         None
     }
 
+    fn get_alignment(&self) -> IntValue {
+        self.struct_type.get_alignment()
+    }
+
     pub fn get_context(&self) -> ContextRef {
         self.struct_type.get_context()
     }

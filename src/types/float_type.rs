@@ -73,6 +73,10 @@ impl FloatType {
         self.float_type.size_of()
     }
 
+    fn get_alignment(&self) -> IntValue {
+        self.float_type.get_alignment()
+    }
+
     pub fn get_context(&self) -> ContextRef {
         self.float_type.get_context()
     }

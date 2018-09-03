@@ -720,8 +720,18 @@ impl Context {
     //     DiagnosticHandler::new(handler)
     // }
 
-    /// Creates an enum `Attribute`.
-    // TODO: Better docs
+    /// Creates an enum `Attribute` in this `Context`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let enum_attribute = context.create_enum_attribute(0, 10);
+    ///
+    /// assert!(enum_attribute.is_enum());
+    /// ```
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
     pub fn create_enum_attribute(&self, kind_id: u32, val: u64) -> Attribute {
         let attribute = unsafe {
@@ -731,8 +741,18 @@ impl Context {
         Attribute::new(attribute)
     }
 
-    /// Creates a string `Attribute`
-    // TODO: Better docs
+    /// Creates a string `Attribute` in this `Context`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let string_attribute = context.create_string_attribute("my_key_123", "my_val");
+    ///
+    /// assert!(string_attribute.is_string());
+    /// ```
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
     pub fn create_string_attribute(&self, key: &str, val: &str) -> Attribute {
         let attribute = unsafe {

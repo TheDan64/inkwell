@@ -74,7 +74,7 @@ fn test_null_checked_ptr_ops() {
     let ret_0 = function.append_basic_block("ret_0");
     let ret_idx = function.append_basic_block("ret_idx");
 
-    builder.build_conditional_branch(&is_null, &ret_0, &ret_idx);
+    builder.build_conditional_branch(is_null, &ret_0, &ret_idx);
 
     builder.position_at_end(&ret_0);
     builder.build_return(Some(&neg_one));
@@ -111,7 +111,7 @@ fn test_null_checked_ptr_ops() {
     let ret_idx = function.append_basic_block("ret_idx");
     let ret_0 = function.append_basic_block("ret_0");
 
-    builder.build_conditional_branch(&is_not_null, &ret_idx, &ret_0);
+    builder.build_conditional_branch(is_not_null, &ret_idx, &ret_0);
 
     builder.position_at_end(&ret_0);
     builder.build_return(Some(&neg_one));

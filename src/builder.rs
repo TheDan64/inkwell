@@ -837,7 +837,7 @@ impl Builder {
         InstructionValue::new(value)
     }
 
-    pub fn build_conditional_branch(&self, comparison: &IntValue, then_block: &BasicBlock, else_block: &BasicBlock) -> InstructionValue {
+    pub fn build_conditional_branch(&self, comparison: IntValue, then_block: &BasicBlock, else_block: &BasicBlock) -> InstructionValue {
         let value = unsafe {
             LLVMBuildCondBr(self.builder, comparison.as_value_ref(), then_block.basic_block, else_block.basic_block)
         };
@@ -846,7 +846,7 @@ impl Builder {
     }
 
     // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<I> {
-    pub fn build_int_neg<T: IntMathValue>(&self, value: &T, name: &str) -> T {
+    pub fn build_int_neg<T: IntMathValue>(&self, value: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -858,7 +858,7 @@ impl Builder {
 
     // REVIEW: Possibly incorperate into build_int_neg via flag and subtypes
     // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<I> {
-    pub fn build_int_nsw_neg<T: IntMathValue>(&self, value: &T, name: &str) -> T {
+    pub fn build_int_nsw_neg<T: IntMathValue>(&self, value: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -869,7 +869,7 @@ impl Builder {
     }
 
     // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<I> {
-    pub fn build_int_nuw_neg<T: IntMathValue>(&self, value: &T, name: &str) -> T {
+    pub fn build_int_nuw_neg<T: IntMathValue>(&self, value: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -880,7 +880,7 @@ impl Builder {
     }
 
     // SubType: <F>(&self, value: &FloatValue<F>, name) -> FloatValue<F> {
-    pub fn build_float_neg<T: FloatMathValue>(&self, value: &T, name: &str) -> T {
+    pub fn build_float_neg<T: FloatMathValue>(&self, value: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -891,7 +891,7 @@ impl Builder {
     }
 
     // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<bool> { ?
-    pub fn build_not<T: IntMathValue>(&self, value: &T, name: &str) -> T {
+    pub fn build_not<T: IntMathValue>(&self, value: T, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {

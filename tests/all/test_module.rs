@@ -326,9 +326,15 @@ fn test_get_set_target() {
     let module = context.create_module("mod");
     let target = Target::from_name("x86-64").unwrap();
 
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
+    assert_eq!(*module.get_name(), *CString::new("mod").unwrap());
     assert!(module.get_target().is_none());
 
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
+    module.set_name("mod2");
     module.set_target(&target);
 
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
+    assert_eq!(*module.get_name(), *CString::new("mod2").unwrap());
     assert_eq!(module.get_target().unwrap(), target);
 }
