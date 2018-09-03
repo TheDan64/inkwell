@@ -76,6 +76,14 @@ fn test_basic_block_ordering() {
     let bb3 = function.get_first_basic_block().unwrap();
 
     assert_eq!(bb3, basic_block3);
+
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
+    {
+        assert_eq!(*basic_block.get_name(), *CString::new("entry").unwrap());
+        assert_eq!(*basic_block2.get_name(), *CString::new("block2").unwrap());
+        assert_eq!(*basic_block3.get_name(), *CString::new("block3").unwrap());
+        assert_eq!(*basic_block5.get_name(), *CString::new("block5").unwrap());
+    }
 }
 
 #[test]

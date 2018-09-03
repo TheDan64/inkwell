@@ -1,6 +1,6 @@
 //! A `Context` is an opaque owner and manager of core global data.
 
-use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMGetMDKindIDInContext, LLVMX86FP80TypeInContext};
+use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMGetMDKindIDInContext, LLVMX86FP80TypeInContext, LLVMConstStringInContext};
 #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
 use llvm_sys::core::{LLVMCreateEnumAttribute, LLVMCreateStringAttribute};
 use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef};
@@ -14,7 +14,7 @@ use memory_buffer::MemoryBuffer;
 use module::Module;
 use support::LLVMString;
 use types::{BasicTypeEnum, FloatType, IntType, StructType, VoidType, AsTypeRef};
-use values::{AsValueRef, FunctionValue, StructValue, MetadataValue, BasicValueEnum};
+use values::{AsValueRef, FunctionValue, StructValue, MetadataValue, BasicValueEnum, VectorValue};
 
 use std::ffi::CString;
 use std::mem::forget;
@@ -760,6 +760,27 @@ impl Context {
         };
 
         Attribute::new(attribute)
+    }
+
+    /// Creates a const string which may be null terminated.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let string = context.const_string("my_string", false);
+    ///
+    /// assert_eq!(string.print_to_string().to_string(), "[9 x i8] c\"my_string\"");
+    /// ```
+    // SubTypes: Should return VectorValue<IntValue<i8>>
+    pub fn const_string(&self, string: &str, null_terminated: bool) -> VectorValue {
+        let ptr = unsafe {
+            LLVMConstStringInContext(*self.context, string.as_ptr() as *const i8, string.len() as u32, !null_terminated as i32)
+        };
+
+        VectorValue::new(ptr)
     }
 }
 

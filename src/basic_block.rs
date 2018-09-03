@@ -1,6 +1,6 @@
 //! A `BasicBlock` is a container of instructions.
 
-use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMInsertBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDeleteBasicBlock, LLVMGetPreviousBasicBlock, LLVMRemoveBasicBlockFromParent, LLVMGetFirstInstruction, LLVMGetLastInstruction, LLVMGetTypeContext, LLVMBasicBlockAsValue};
+use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMInsertBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDeleteBasicBlock, LLVMGetPreviousBasicBlock, LLVMRemoveBasicBlockFromParent, LLVMGetFirstInstruction, LLVMGetLastInstruction, LLVMGetTypeContext, LLVMBasicBlockAsValue, LLVMGetBasicBlockName};
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
 
 use context::{Context, ContextRef};
@@ -413,6 +413,35 @@ impl BasicBlock {
 
         // REVIEW: This probably should be somehow using the existing context Rc
         ContextRef::new(Context::new(Rc::new(context)))
+    }
+
+    /// Gets the name of a `BasicBlock`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use std::ffi::CString;
+    ///
+    /// let context = Context::create();
+    /// let builder = context.create_builder();
+    /// let module = context.create_module("my_mod");
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let fn_val = module.add_function("my_fn", &fn_type, None);
+    /// let bb = context.append_basic_block(&fn_val, "entry");
+    ///
+    /// assert_eq!(*bb.get_name(), *CString::new("entry").unwrap());
+    /// ```
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
+    pub fn get_name(&self) -> &CStr {
+        let ptr = unsafe {
+            LLVMGetBasicBlockName(self.basic_block)
+        };
+
+        unsafe {
+            CStr::from_ptr(ptr)
+        }
     }
 }
 

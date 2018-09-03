@@ -1,9 +1,9 @@
 extern crate inkwell;
 
+use self::inkwell::OptimizationLevel;
 use self::inkwell::context::Context;
 use self::inkwell::memory_buffer::MemoryBuffer;
 use self::inkwell::module::Module;
-use self::inkwell::OptimizationLevel;
 use self::inkwell::targets::{InitializationConfig, Target};
 
 use std::env::temp_dir;

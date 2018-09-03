@@ -4,8 +4,7 @@ use self::inkwell::{DLLStorageClass, FloatPredicate, GlobalVisibility, ThreadLoc
 use self::inkwell::context::Context;
 use self::inkwell::module::Linkage::*;
 use self::inkwell::types::{StructType, VectorType};
-use self::inkwell::values::InstructionOpcode::*;
-use self::inkwell::values::{MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID};
+use self::inkwell::values::{InstructionOpcode::*, MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID, VectorValue};
 
 use std::ffi::CString;
 
@@ -121,6 +120,8 @@ fn test_set_get_name() {
     let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
     let vec_val = VectorType::const_vector(&[i8_val]);
     let ppc_f128_val = ppc_f128_type.const_float(0.0);
+
+    assert!(!vec_val.is_const_string());
 
     assert_eq!(bool_val.get_name(), &*CString::new("").unwrap());
     assert_eq!(i8_val.get_name(), &*CString::new("").unwrap());
@@ -959,4 +960,27 @@ fn test_allocations() {
     let heap_array = builder.build_array_malloc(i32_type, i32_three, "heap_array");
 
     assert_eq!(*heap_array.get_type().print_to_string(), *CString::new("i32*").unwrap());
+}
+
+#[test]
+fn test_string_values() {
+    let string = VectorValue::const_string("my_string", false);
+    let string_null = VectorValue::const_string("my_string", true);
+
+    assert_eq!(string.print_to_string().to_string(), "[9 x i8] c\"my_string\"");
+    assert_eq!(string_null.print_to_string().to_string(), "[10 x i8] c\"my_string\\00\"");
+    assert!(string.is_const_string());
+    assert!(string_null.is_const_string());
+
+    let context = Context::create();
+    let i8_type = context.i8_type();
+    let string = context.const_string("my_string", false);
+    let string_null = context.const_string("my_string", true);
+
+    assert_eq!(string.print_to_string().to_string(), "[9 x i8] c\"my_string\"");
+    assert_eq!(string_null.print_to_string().to_string(), "[10 x i8] c\"my_string\\00\"");
+    assert!(string.is_const_string());
+    assert!(string_null.is_const_string());
+    assert_eq!(string.get_type().get_element_type().into_int_type(), i8_type);
+    assert_eq!(string_null.get_type().get_element_type().into_int_type(), i8_type);
 }

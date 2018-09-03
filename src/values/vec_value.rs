@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMConstInsertElement, LLVMConstExtractElement};
+use llvm_sys::core::{LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMConstInsertElement, LLVMConstExtractElement, LLVMIsConstantString, LLVMConstString, LLVMGetElementAsConstant};
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
@@ -102,6 +102,53 @@ impl VectorValue {
 
     pub fn replace_all_uses_with(&self, other: &VectorValue) {
         self.vec_value.replace_all_uses_with(other.as_value_ref())
+    }
+
+    /// Creates a const string which may be null terminated.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::values::VectorValue;
+    ///
+    /// let string = VectorValue::const_string("my_string", false);
+    ///
+    /// assert_eq!(string.print_to_string().to_string(), "[9 x i8] c\"my_string\"");
+    /// ```
+    // SubTypes: Should return VectorValue<IntValue<i8>>
+    pub fn const_string(string: &str, null_terminated: bool) -> Self {
+        let ptr = unsafe {
+            LLVMConstString(string.as_ptr() as *const i8, string.len() as u32, !null_terminated as i32)
+        };
+
+        VectorValue::new(ptr)
+    }
+
+    /// Creates a const string which may be null terminated.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::values::VectorValue;
+    ///
+    /// let string = VectorValue::const_string("my_string", false);
+    ///
+    /// assert!(string.is_const_string());
+    /// ```
+    pub fn is_const_string(&self) -> bool {
+        unsafe {
+            LLVMIsConstantString(self.as_value_ref()) == 1
+        }
+    }
+
+    // TODOC: Value seems to be zero initialized if index out of bounds
+    // SubType: VectorValue<BV> -> BV
+    pub fn get_element_as_constant(&self, index: u32) -> BasicValueEnum {
+        let ptr = unsafe {
+            LLVMGetElementAsConstant(self.as_value_ref(), index)
+        };
+
+        BasicValueEnum::new(ptr)
     }
 }
 
