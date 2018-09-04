@@ -8,9 +8,9 @@ use std::ffi::CStr;
 // SubTypes: Attribute<Enum>, Attribute<String>
 /// Functions, function parameters, and return types can have `Attribute`s to indicate
 /// how they should be treated by optimizations and code generation.
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Attribute {
-    attribute: LLVMAttributeRef,
+    pub(crate) attribute: LLVMAttributeRef,
 }
 
 impl Attribute {

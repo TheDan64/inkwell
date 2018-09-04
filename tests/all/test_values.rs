@@ -18,7 +18,7 @@ fn test_linkage() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
 
-    let function = module.add_function("free_f32", &fn_type, None);
+    let function = module.add_function("free_f32", fn_type, None);
 
     assert_eq!(function.get_linkage(), External);
 }
@@ -35,7 +35,7 @@ fn test_instructions() {
     let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
     let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
 
-    let function = module.add_function("free_f32", &fn_type, None);
+    let function = module.add_function("free_f32", fn_type, None);
     let basic_block = context.append_basic_block(&function, "entry");
 
     builder.position_at_end(&basic_block);
@@ -78,7 +78,7 @@ fn test_tail_call() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
 
-    let function = module.add_function("do_nothing", &fn_type, None);
+    let function = module.add_function("do_nothing", fn_type, None);
 
     let call_instruction = builder.build_call(function, &[], "to_infinity_and_beyond", false);
 
@@ -191,7 +191,7 @@ fn test_set_get_name() {
     ];
     let fn_type = void_type.fn_type(&fn_type_params, false);
 
-    let function = module.add_function("do_stuff", &fn_type, None);
+    let function = module.add_function("do_stuff", fn_type, None);
     let basic_block = context.append_basic_block(&function, "entry");
 
     builder.position_at_end(&basic_block);
@@ -320,12 +320,12 @@ fn test_consecutive_fns() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
 
-    let function = module.add_function("fn", &fn_type, None);
+    let function = module.add_function("fn", fn_type, None);
 
     assert!(function.get_previous_function().is_none());
     assert!(function.get_next_function().is_none());
 
-    let function2 = module.add_function("fn2", &fn_type, None);
+    let function2 = module.add_function("fn2", fn_type, None);
 
     assert_ne!(function, function2);
 
@@ -345,7 +345,7 @@ fn test_verify_fn() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
 
-    let function = module.add_function("fn", &fn_type, None);
+    let function = module.add_function("fn", fn_type, None);
 
     #[cfg(not(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     assert!(!function.verify(false));
@@ -493,7 +493,7 @@ fn test_metadata() {
     let array_val = array_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
     let vec_val = VectorType::const_vector(&[i8_val]);
-    let fn_val = module.add_function("my_fn", &fn_type, None);
+    let fn_val = module.add_function("my_fn", fn_type, None);
 
     let md_node = MetadataValue::create_node(&[&bool_val, &f32_val]);
 
@@ -712,7 +712,7 @@ fn test_function_value_no_params() {
     let module = context.create_module("my_mod");
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
-    let fn_value = module.add_function("no_params", &fn_type, None);
+    let fn_value = module.add_function("no_params", fn_type, None);
 
     // REVIEW: According to this, fn_value.get_type() is a void ptr??
     // assert_eq!(fn_value.get_type(), fn_type);
@@ -888,7 +888,7 @@ fn test_phi_values() {
     let void_type = context.void_type();
     let bool_type = context.bool_type();
     let fn_type = void_type.fn_type(&[bool_type.into()], false);
-    let fn_value = module.add_function("my_func", &fn_type, None);
+    let fn_value = module.add_function("my_func", fn_type, None);
     let entry_block = fn_value.append_basic_block("entry");
     let then_block = fn_value.append_basic_block("then");
     let else_block = fn_value.append_basic_block("else");
@@ -933,7 +933,7 @@ fn test_allocations() {
     let i32_type = context.i32_type();
     let i32_three = i32_type.const_int(3, false);
     let fn_type = void_type.fn_type(&[], false);
-    let fn_value = module.add_function("my_func", &fn_type, None);
+    let fn_value = module.add_function("my_func", fn_type, None);
     let entry_block = fn_value.append_basic_block("entry");
 
     builder.position_at_end(&entry_block);

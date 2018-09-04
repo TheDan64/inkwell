@@ -16,7 +16,7 @@ fn test_basic_block_ordering() {
     let i128_type = context.i128_type();
     let fn_type = i128_type.fn_type(&[], false);
 
-    let function = module.add_function("testing", &fn_type, None);
+    let function = module.add_function("testing", fn_type, None);
 
     // REVIEW: Possibly LLVM bug - gives a basic block ptr that isn't
     // actually a basic block instead of returning nullptr. Simplest solution
@@ -94,7 +94,7 @@ fn test_get_basic_blocks() {
     let bool_type = context.bool_type();
     let fn_type = bool_type.fn_type(&[], false);
 
-    let function = module.add_function("testing", &fn_type, None);
+    let function = module.add_function("testing", fn_type, None);
 
     assert_eq!(function.get_name(), &*CString::new("testing").unwrap());
     assert_eq!(function.get_return_type().into_int_type().get_bit_width(), 1);
@@ -124,7 +124,7 @@ fn test_get_terminator() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
 
-    let function = module.add_function("testing", &fn_type, None);
+    let function = module.add_function("testing", fn_type, None);
     let basic_block = context.append_basic_block(&function, "entry");
 
     builder.position_at_end(&basic_block);
@@ -150,7 +150,7 @@ fn test_no_parent() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
 
-    let function = module.add_function("testing", &fn_type, None);
+    let function = module.add_function("testing", fn_type, None);
     let basic_block = context.append_basic_block(&function, "entry");
     let basic_block2 = context.append_basic_block(&function, "next");
 

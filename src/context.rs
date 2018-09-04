@@ -124,7 +124,7 @@ impl Context {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
-    /// let fn_val = module.add_function("my_fn", &fn_type, None);
+    /// let fn_val = module.add_function("my_fn", fn_type, None);
     /// let basic_block = fn_val.append_basic_block("entry");
     ///
     /// builder.position_at_end(&basic_block);
@@ -537,7 +537,7 @@ impl Context {
     /// let module = context.create_module("my_mod");
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
-    /// let fn_value = module.add_function("my_fn", &fn_type, None);
+    /// let fn_value = module.add_function("my_fn", fn_type, None);
     /// let entry_basic_block = context.append_basic_block(&fn_value, "entry");
     ///
     /// assert_eq!(fn_value.count_basic_blocks(), 1);
@@ -569,7 +569,7 @@ impl Context {
     /// let module = context.create_module("my_mod");
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
-    /// let fn_value = module.add_function("my_fn", &fn_type, None);
+    /// let fn_value = module.add_function("my_fn", fn_type, None);
     /// let entry_basic_block = context.append_basic_block(&fn_value, "entry");
     ///
     /// assert_eq!(fn_value.count_basic_blocks(), 1);
@@ -605,7 +605,7 @@ impl Context {
     /// let module = context.create_module("my_mod");
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
-    /// let fn_value = module.add_function("my_fn", &fn_type, None);
+    /// let fn_value = module.add_function("my_fn", fn_type, None);
     /// let entry_basic_block = context.append_basic_block(&fn_value, "entry");
     ///
     /// assert_eq!(fn_value.count_basic_blocks(), 1);

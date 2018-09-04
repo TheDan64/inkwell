@@ -24,7 +24,7 @@ fn test_write_bitcode_to_path() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
 
-    module.add_function("my_fn", &fn_type, None);
+    module.add_function("my_fn", fn_type, None);
     module.write_bitcode_to_path(&path);
 
     let mut contents = Vec::new();
@@ -57,7 +57,7 @@ fn test_write_bitcode_to_path() {
 //     let void_type = context.void_type();
 //     let fn_type = void_type.fn_type(&[], false);
 
-//     module.add_function("my_fn", &fn_type, None);
+//     module.add_function("my_fn", fn_type, None);
 //     module.write_bitcode_to_file(&file, true, false);
 
 //     let mut contents = Vec::new();
@@ -82,7 +82,7 @@ fn test_get_function() {
 
     let void_type = context.void_type();
     let some_fn_type = void_type.fn_type(&[], false);
-    let some_fn = module.add_function("some_fn", &some_fn_type, None);
+    let some_fn = module.add_function("some_fn", some_fn_type, None);
     let first_fn = module.get_first_function().unwrap();
     let last_fn = module.get_last_function().unwrap();
     let named_fn = module.get_function("some_fn").unwrap();
@@ -106,7 +106,7 @@ fn test_write_and_load_memory_buffer() {
     let builder = context.create_builder();
     let void_type = context.void_type();
     let function_type = void_type.fn_type(&[], false);
-    let function = module.add_function("my_fn", &function_type, None);
+    let function = module.add_function("my_fn", function_type, None);
     let basic_block = function.append_basic_block("entry");
 
     builder.position_at_end(&basic_block);
@@ -207,7 +207,7 @@ fn test_parse_from_buffer() {
     let module = context.create_module("mod");
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
-    let f = module.add_function("f", &fn_type, None);
+    let f = module.add_function("f", fn_type, None);
     let basic_block = f.append_basic_block("entry");
     let builder = context.create_builder();
 
@@ -248,7 +248,7 @@ fn test_parse_from_path() {
     let module = context.create_module("mod");
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
-    let f = module.add_function("f", &fn_type, None);
+    let f = module.add_function("f", fn_type, None);
     let basic_block = f.append_basic_block("entry");
     let builder = context.create_builder();
 
@@ -281,7 +281,7 @@ fn test_clone() {
     let module = context.create_module("mod");
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
-    let f = module.add_function("f", &fn_type, None);
+    let f = module.add_function("f", fn_type, None);
     let basic_block = f.append_basic_block("entry");
     let builder = context.create_builder();
 
@@ -300,7 +300,7 @@ fn test_print_to_file() {
     let module = context.create_module("mod");
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
-    let f = module.add_function("f", &fn_type, None);
+    let f = module.add_function("f", fn_type, None);
     let basic_block = f.append_basic_block("entry");
     let builder = context.create_builder();
 

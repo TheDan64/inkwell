@@ -145,12 +145,12 @@ impl ExecutionEngine {
     /// let ft = context.f64_type();
     /// let fnt = ft.fn_type(&[], false);
     ///
-    /// let f = module.add_function("test_fn", &fnt, None);
+    /// let f = module.add_function("test_fn", fnt, None);
     /// let b = context.append_basic_block(&f, "entry");
     ///
     /// builder.position_at_end(&b);
     ///
-    /// let extf = module.add_function("sumf", &ft.fn_type(&[ft.into(), ft.into()], false), None);
+    /// let extf = module.add_function("sumf", ft.fn_type(&[ft.into(), ft.into()], false), None);
     ///
     /// let argf = ft.const_float(64.);
     /// let retv = builder.build_call(extf, &[argf.into(), argf.into()], "retv", false).left().unwrap().into_float_value();
@@ -253,7 +253,7 @@ impl ExecutionEngine {
     /// let sig = double.fn_type(&[], false);
     ///
     /// // Add the function to our module
-    /// let f = module.add_function("test_fn", &sig, None);
+    /// let f = module.add_function("test_fn", sig, None);
     /// let b = context.append_basic_block(&f, "entry");
     /// builder.position_at_end(&b);
     ///

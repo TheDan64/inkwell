@@ -104,7 +104,7 @@ fn test_pass_manager_builder() {
 
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
-    let fn_value = module.add_function("my_fn", &fn_type, None);
+    let fn_value = module.add_function("my_fn", fn_type, None);
     let builder = context.create_builder();
     let entry = context.append_basic_block(&fn_value, "entry");
 

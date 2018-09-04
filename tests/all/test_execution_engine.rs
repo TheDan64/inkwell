@@ -32,7 +32,7 @@ fn test_get_function_address() {
     }
 
     let module = context.create_module("errors_abound");
-    let fn_value = module.add_function("func", &fn_type, None);
+    let fn_value = module.add_function("func", fn_type, None);
     let basic_block = context.append_basic_block(&fn_value, "entry");
 
     builder.position_at_end(&basic_block);
@@ -61,7 +61,7 @@ fn test_jit_execution_engine() {
     let three_i32 = i32_type.const_int(3, false);
     let fourtytwo_i32 = i32_type.const_int(42, false);
     let fn_type = i32_type.fn_type(&[i32_type.into(), i8_ptr_ptr_type.into()], false);
-    let fn_value = module.add_function("main", &fn_type, None);
+    let fn_value = module.add_function("main", fn_type, None);
     let main_argc = fn_value.get_first_param().unwrap().into_int_value();
     // let main_argv = fn_value.get_nth_param(1).unwrap();
     let check_argc = context.append_basic_block(&fn_value, "check_argc");
@@ -184,7 +184,7 @@ fn test_add_remove_module() {
 //     let mut execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 //     let void_type = context.void_type();
 //     let fn_type = void_type.fn_type(&[], false);
-//     let fn_value = module.add_function("func", &fn_type, None);
+//     let fn_value = module.add_function("func", fn_type, None);
 //     let basic_block = context.append_basic_block(&fn_value, "entry");
 
 //     builder.position_at_end(&basic_block);

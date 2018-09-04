@@ -49,7 +49,7 @@ fn test_basic_block_context() {
     let module = context.create_module("my_mod");
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
-    let fn_value = module.add_function("my_fn", &fn_type, None);
+    let fn_value = module.add_function("my_fn", fn_type, None);
     let basic_block = fn_value.append_basic_block("entry");
 
     assert_eq!(basic_block.get_context(), Context::get_global());

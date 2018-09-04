@@ -186,3 +186,43 @@ fn test_string_attributes() {
     assert_eq!(*string_attribute.get_string_kind_id(), *CString::new("my_key_123").unwrap());
     assert_eq!(*string_attribute.get_string_value(), *CString::new("my_val").unwrap());
 }
+
+#[test]
+fn test_attributes_on_function_values() {
+    let context = Context::create();
+    let builder = context.create_builder();
+    let module = context.create_module("my_mod");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_value = module.add_function("my_fn", fn_type, None);
+    let entry_bb = fn_value.append_basic_block("entry");
+    let string_attribute = context.create_string_attribute("my_key", "my_val");
+    let enum_attribute = context.create_enum_attribute(1, 1);
+
+    builder.position_at_end(&entry_bb);
+    builder.build_return(None);
+
+    assert_eq!(fn_value.count_attributes(0), 0);
+    assert_eq!(fn_value.count_attributes(1), 0);
+
+    fn_value.remove_string_attribute(0, "my_key"); // Noop
+    fn_value.remove_enum_attribute(0, 1); // Noop
+
+    // define align 1 "my_key"="my_val" void @my_fn()
+    fn_value.add_attribute(0, string_attribute);
+    fn_value.add_attribute(0, enum_attribute);
+
+    assert_eq!(fn_value.count_attributes(0), 2);
+    assert_eq!(fn_value.get_enum_attribute(0, 1), Some(enum_attribute));
+    assert_eq!(fn_value.get_string_attribute(0, "my_key"), Some(string_attribute));
+
+    fn_value.remove_string_attribute(0, "my_key");
+
+    assert_eq!(fn_value.count_attributes(0), 1);
+
+    fn_value.remove_enum_attribute(0, 1);
+
+    assert_eq!(fn_value.count_attributes(0), 0);
+    assert!(fn_value.get_enum_attribute(0, 1).is_none());
+    assert!(fn_value.get_string_attribute(0, "my_key").is_none());
+}

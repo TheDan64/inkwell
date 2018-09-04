@@ -222,12 +222,12 @@ impl Module {
     /// let module = Module::create("my_module");
     ///
     /// let fn_type = context.f32_type().fn_type(&[], false);
-    /// let fn_val = module.add_function("my_function", &fn_type, None);
+    /// let fn_val = module.add_function("my_function", fn_type, None);
     ///
     /// assert_eq!(fn_val.get_name().to_str(), Ok("my_function"));
     /// assert_eq!(fn_val.get_linkage(), Linkage::External);
     /// ```
-    pub fn add_function(&self, name: &str, ty: &FunctionType, linkage: Option<Linkage>) -> FunctionValue {
+    pub fn add_function(&self, name: &str, ty: FunctionType, linkage: Option<Linkage>) -> FunctionValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -284,7 +284,7 @@ impl Module {
     ///
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
-    /// let fn_value = module.add_function("my_fn", &fn_type, None);
+    /// let fn_value = module.add_function("my_fn", fn_type, None);
     ///
     /// assert_eq!(fn_value, module.get_first_function().unwrap());
     /// ```
@@ -310,7 +310,7 @@ impl Module {
     ///
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
-    /// let fn_value = module.add_function("my_fn", &fn_type, None);
+    /// let fn_value = module.add_function("my_fn", fn_type, None);
     ///
     /// assert_eq!(fn_value, module.get_last_function().unwrap());
     /// ```
@@ -336,7 +336,7 @@ impl Module {
     ///
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
-    /// let fn_value = module.add_function("my_fn", &fn_type, None);
+    /// let fn_value = module.add_function("my_fn", fn_type, None);
     ///
     /// assert_eq!(fn_value, module.get_function("my_fn").unwrap());
     /// ```
@@ -601,7 +601,7 @@ impl Module {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     ///
-    /// module.add_function("my_fn", &fn_type, None);
+    /// module.add_function("my_fn", fn_type, None);
     /// module.write_bitcode_to_path(&path);
     /// ```
     pub fn write_bitcode_to_path(&self, path: &Path) -> bool {
@@ -642,7 +642,7 @@ impl Module {
     /// let module = context.create_module("mod");
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
-    /// let f = module.add_function("f", &fn_type, None);
+    /// let f = module.add_function("f", fn_type, None);
     /// let basic_block = f.append_basic_block("entry");
     /// let builder = context.create_builder();
     ///

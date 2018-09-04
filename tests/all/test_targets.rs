@@ -299,7 +299,7 @@ fn test_write_target_machine_to_file() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
 
-    module.add_function("my_fn", &fn_type, None);
+    module.add_function("my_fn", fn_type, None);
 
     assert!(target_machine.write_to_file(&module, FileType::Assembly, &path).is_ok());
 
@@ -332,7 +332,7 @@ fn test_write_target_machine_to_memory_buffer() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
 
-    module.add_function("my_fn", &fn_type, None);
+    module.add_function("my_fn", fn_type, None);
 
     let buffer = target_machine.write_to_memory_buffer(&module, FileType::Assembly).unwrap();
 

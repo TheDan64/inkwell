@@ -597,7 +597,7 @@ impl Builder {
     /// let fn_type = i8_type.fn_type(&[i8_type.into(), i8_type.into()], false);
     ///
     /// // Function Definition
-    /// let function = module.add_function("left_shift", &fn_type, None);
+    /// let function = module.add_function("left_shift", fn_type, None);
     /// let value = function.get_first_param().unwrap().into_int_value();
     /// let n = function.get_nth_param(1).unwrap().into_int_value();
     /// let entry_block = function.append_basic_block("entry");
@@ -664,7 +664,7 @@ impl Builder {
     /// let fn_type = i8_type.fn_type(&[i8_type.into(), i8_type.into()], false);
     ///
     /// // Function Definition
-    /// let function = module.add_function("right_shift", &fn_type, None);
+    /// let function = module.add_function("right_shift", fn_type, None);
     /// let value = function.get_first_param().unwrap().into_int_value();
     /// let n = function.get_nth_param(1).unwrap().into_int_value();
     /// let entry_block = function.append_basic_block("entry");
