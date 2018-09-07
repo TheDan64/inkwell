@@ -21,7 +21,7 @@ fn test_init_all_passes_for_module() {
     pass_manager.add_ip_constant_propagation_pass();
     pass_manager.add_prune_eh_pass();
     pass_manager.add_ipsccp_pass();
-    pass_manager.add_interinalize_pass(1);
+    pass_manager.add_internalize_pass(true);
     pass_manager.add_strip_dead_prototypes_pass();
     pass_manager.add_strip_symbol_pass();
     pass_manager.add_bb_vectorize_pass();
