@@ -138,7 +138,7 @@ impl Value {
         Some(MetadataValue::new(metadata_value))
     }
 
-    fn set_metadata(&self, metadata: &MetadataValue, kind_id: u32) {
+    fn set_metadata(&self, metadata: MetadataValue, kind_id: u32) {
         unsafe {
             LLVMSetMetadata(self.value, kind_id, metadata.as_value_ref())
         }

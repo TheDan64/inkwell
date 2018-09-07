@@ -48,7 +48,7 @@ pub enum AddressSpace {
     Global  = 1,
     Shared  = 3,
     Const   = 4,
-    Local   = 5
+    Local   = 5,
 }
 
 impl From<u32> for AddressSpace {

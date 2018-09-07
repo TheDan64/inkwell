@@ -61,11 +61,11 @@ impl StructValue {
         self.struct_value.get_metadata(kind_id)
     }
 
-    pub fn set_metadata(&self, metadata: &MetadataValue, kind_id: u32) {
+    pub fn set_metadata(&self, metadata: MetadataValue, kind_id: u32) {
         self.struct_value.set_metadata(metadata, kind_id)
     }
 
-    pub fn replace_all_uses_with(&self, other: &StructValue) {
+    pub fn replace_all_uses_with(&self, other: StructValue) {
         self.struct_value.replace_all_uses_with(other.as_value_ref())
     }
 }

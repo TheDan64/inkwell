@@ -1,4 +1,6 @@
 use llvm_sys::core::{LLVMConstNot, LLVMConstNeg, LLVMConstNSWNeg, LLVMConstNUWNeg, LLVMConstAdd, LLVMConstNSWAdd, LLVMConstNUWAdd, LLVMConstSub, LLVMConstNSWSub, LLVMConstNUWSub, LLVMConstMul, LLVMConstNSWMul, LLVMConstNUWMul, LLVMConstUDiv, LLVMConstSDiv, LLVMConstSRem, LLVMConstURem, LLVMConstIntCast, LLVMConstXor, LLVMConstOr, LLVMConstAnd, LLVMConstExactSDiv, LLVMConstShl, LLVMConstLShr, LLVMConstAShr, LLVMConstUIToFP, LLVMConstSIToFP, LLVMConstIntToPtr, LLVMConstTrunc, LLVMConstSExt, LLVMConstZExt, LLVMConstTruncOrBitCast, LLVMConstSExtOrBitCast, LLVMConstZExtOrBitCast, LLVMConstBitCast, LLVMConstICmp};
+#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+use llvm_sys::core::LLVMConstExactUDiv;
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
@@ -87,8 +89,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    // TODO: operator overloading to call this
-    pub fn const_add(&self, rhs: &IntValue) -> Self {
+    pub fn const_add(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstAdd(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -96,7 +97,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_nsw_add(&self, rhs: &IntValue) -> Self {
+    pub fn const_nsw_add(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstNSWAdd(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -104,7 +105,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_nuw_add(&self, rhs: &IntValue) -> Self {
+    pub fn const_nuw_add(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstNUWAdd(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -112,8 +113,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    // TODO: operator overloading to call this
-    pub fn const_sub(&self, rhs: &IntValue) -> Self {
+    pub fn const_sub(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstSub(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -121,7 +121,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_nsw_sub(&self, rhs: &IntValue) -> Self {
+    pub fn const_nsw_sub(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstNSWSub(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -129,7 +129,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_nuw_sub(&self, rhs: &IntValue) -> Self {
+    pub fn const_nuw_sub(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstNUWSub(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -137,8 +137,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    // TODO: operator overloading to call this
-    pub fn const_mul(&self, rhs: &IntValue) -> Self {
+    pub fn const_mul(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstMul(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -146,7 +145,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_nsw_mul(&self, rhs: &IntValue) -> Self {
+    pub fn const_nsw_mul(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstNSWMul(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -154,7 +153,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_nuw_mul(&self, rhs: &IntValue) -> Self {
+    pub fn const_nuw_mul(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstNUWMul(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -162,7 +161,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_unsigned_div(&self, rhs: &IntValue) -> Self {
+    pub fn const_unsigned_div(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstUDiv(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -170,7 +169,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_signed_div(&self, rhs: &IntValue) -> Self {
+    pub fn const_signed_div(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstSDiv(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -178,7 +177,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_exact_signed_div(&self, rhs: &IntValue) -> Self {
+    pub fn const_exact_signed_div(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstExactSDiv(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -186,7 +185,16 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_unsigned_remainder(&self, rhs: &IntValue) -> Self {
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+    pub fn const_exact_unsigned_div(&self, rhs: IntValue) -> Self {
+        let value = unsafe {
+            LLVMConstExactUDiv(self.as_value_ref(), rhs.as_value_ref())
+        };
+
+        IntValue::new(value)
+    }
+
+    pub fn const_unsigned_remainder(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstURem(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -194,7 +202,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_signed_remainder(&self, rhs: &IntValue) -> Self {
+    pub fn const_signed_remainder(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstSRem(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -202,7 +210,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_and(&self, rhs: &IntValue) -> Self {
+    pub fn const_and(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstAnd(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -210,7 +218,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_or(&self, rhs: &IntValue) -> Self {
+    pub fn const_or(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstOr(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -218,7 +226,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_xor(&self, rhs: &IntValue) -> Self {
+    pub fn const_xor(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstXor(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -226,8 +234,8 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    // TODO: Could infer is_signed from type (one day)
-    pub fn const_cast(&self, int_type: &IntType, is_signed: bool) -> Self {
+    // TODO: Could infer is_signed from type (one day)?
+    pub fn const_cast(&self, int_type: IntType, is_signed: bool) -> Self {
         let value = unsafe {
             LLVMConstIntCast(self.as_value_ref(), int_type.as_type_ref(), is_signed as i32)
         };
@@ -236,7 +244,7 @@ impl IntValue {
     }
 
     // TODO: Give shift methods more descriptive names
-    pub fn const_shl(&self, rhs: &IntValue) -> Self {
+    pub fn const_shl(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstShl(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -244,7 +252,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_rshr(&self, rhs: &IntValue) -> Self {
+    pub fn const_rshr(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstLShr(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -252,7 +260,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_ashr(&self, rhs: &IntValue) -> Self {
+    pub fn const_ashr(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstAShr(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -261,7 +269,7 @@ impl IntValue {
     }
 
     // SubType: const_to_float impl only for unsigned types
-    pub fn const_unsigned_to_float(&self, float_type: &FloatType) -> FloatValue {
+    pub fn const_unsigned_to_float(&self, float_type: FloatType) -> FloatValue {
         let value = unsafe {
             LLVMConstUIToFP(self.as_value_ref(), float_type.as_type_ref())
         };
@@ -270,7 +278,7 @@ impl IntValue {
     }
 
     // SubType: const_to_float impl only for signed types
-    pub fn const_signed_to_float(&self, float_type: &FloatType) -> FloatValue {
+    pub fn const_signed_to_float(&self, float_type: FloatType) -> FloatValue {
         let value = unsafe {
             LLVMConstSIToFP(self.as_value_ref(), float_type.as_type_ref())
         };
@@ -278,7 +286,7 @@ impl IntValue {
         FloatValue::new(value)
     }
 
-    pub fn const_to_pointer(&self, ptr_type: &PointerType) -> PointerValue {
+    pub fn const_to_pointer(&self, ptr_type: PointerType) -> PointerValue {
         let value = unsafe {
             LLVMConstIntToPtr(self.as_value_ref(), ptr_type.as_type_ref())
         };
@@ -286,7 +294,7 @@ impl IntValue {
         PointerValue::new(value)
     }
 
-    pub fn const_truncate(&self, int_type: &IntType) -> IntValue {
+    pub fn const_truncate(&self, int_type: IntType) -> IntValue {
         let value = unsafe {
             LLVMConstTrunc(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -295,7 +303,7 @@ impl IntValue {
     }
 
     // TODO: More descriptive name
-    pub fn const_s_extend(&self, int_type: &IntType) -> IntValue {
+    pub fn const_s_extend(&self, int_type: IntType) -> IntValue {
         let value = unsafe {
             LLVMConstSExt(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -304,7 +312,7 @@ impl IntValue {
     }
 
     // TODO: More descriptive name
-    pub fn const_z_ext(&self, int_type: &IntType) -> IntValue {
+    pub fn const_z_ext(&self, int_type: IntType) -> IntValue {
         let value = unsafe {
             LLVMConstZExt(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -312,7 +320,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_truncate_or_bit_cast(&self, int_type: &IntType) -> IntValue {
+    pub fn const_truncate_or_bit_cast(&self, int_type: IntType) -> IntValue {
         let value = unsafe {
             LLVMConstTruncOrBitCast(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -321,7 +329,7 @@ impl IntValue {
     }
 
     // TODO: More descriptive name
-    pub fn const_s_extend_or_bit_cast(&self, int_type: &IntType) -> IntValue {
+    pub fn const_s_extend_or_bit_cast(&self, int_type: IntType) -> IntValue {
         let value = unsafe {
             LLVMConstSExtOrBitCast(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -330,7 +338,7 @@ impl IntValue {
     }
 
     // TODO: More descriptive name
-    pub fn const_z_ext_or_bit_cast(&self, int_type: &IntType) -> IntValue {
+    pub fn const_z_ext_or_bit_cast(&self, int_type: IntType) -> IntValue {
         let value = unsafe {
             LLVMConstZExtOrBitCast(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -338,7 +346,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_bit_cast(&self, int_type: &IntType) -> IntValue {
+    pub fn const_bit_cast(&self, int_type: IntType) -> IntValue {
         let value = unsafe {
             LLVMConstBitCast(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -354,12 +362,12 @@ impl IntValue {
         self.int_value.get_metadata(kind_id)
     }
 
-    pub fn set_metadata(&self, metadata: &MetadataValue, kind_id: u32) {
+    pub fn set_metadata(&self, metadata: MetadataValue, kind_id: u32) {
         self.int_value.set_metadata(metadata, kind_id)
     }
 
     // SubType: rhs same as lhs; return IntValue<bool>
-    pub fn const_int_compare(&self, op: IntPredicate, rhs: &IntValue) -> IntValue {
+    pub fn const_int_compare(&self, op: IntPredicate, rhs: IntValue) -> IntValue {
         let value = unsafe {
             LLVMConstICmp(op.as_llvm_predicate(), self.as_value_ref(), rhs.as_value_ref())
         };
@@ -367,7 +375,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn replace_all_uses_with(&self, other: &IntValue) {
+    pub fn replace_all_uses_with(&self, other: IntValue) {
         self.int_value.replace_all_uses_with(other.as_value_ref())
     }
 }

@@ -643,7 +643,7 @@ impl Context {
     ///
     /// assert!(md_node.is_node());
     ///
-    /// f32_one.set_metadata(&md_node, 0);
+    /// f32_one.set_metadata(md_node, 0);
     /// ```
     // REVIEW: Maybe more helpful to beginners to call this metadata_tuple?
     // REVIEW: Seems to be unassgned to anything
@@ -673,7 +673,7 @@ impl Context {
     ///
     /// assert!(md_string.is_string());
     ///
-    /// f32_one.set_metadata(&md_string, 0);
+    /// f32_one.set_metadata(md_string, 0);
     /// ```
     // REVIEW: Seems to be unassgned to anything
     pub fn metadata_string(&self, string: &str) -> MetadataValue {

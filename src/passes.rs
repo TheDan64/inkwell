@@ -43,7 +43,7 @@ impl PassManagerBuilder {
         }
     }
 
-    // REVIEW: Valid input 0-2 according to llvmlite
+    // REVIEW: Valid input 0-2 according to llvmlite. Maybe better as an enum?
     pub fn set_size_level(&self, size_level: u32) {
         unsafe {
             LLVMPassManagerBuilderSetSizeLevel(self.pass_manager_builder, size_level)

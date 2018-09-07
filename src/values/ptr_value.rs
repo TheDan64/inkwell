@@ -61,7 +61,7 @@ impl PointerValue {
         self.ptr_value.get_metadata(kind_id)
     }
 
-    pub fn set_metadata(&self, metadata: &MetadataValue, kind_id: u32) {
+    pub fn set_metadata(&self, metadata: MetadataValue, kind_id: u32) {
         self.ptr_value.set_metadata(metadata, kind_id)
     }
 
@@ -90,7 +90,7 @@ impl PointerValue {
         PointerValue::new(value)
     }
 
-    pub fn const_to_int(&self, int_type: &IntType) -> IntValue {
+    pub fn const_to_int(&self, int_type: IntType) -> IntValue {
         let value = unsafe {
             LLVMConstPtrToInt(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -98,7 +98,7 @@ impl PointerValue {
         IntValue::new(value)
     }
 
-    pub fn const_cast(&self, ptr_type: &PointerType) -> PointerValue {
+    pub fn const_cast(&self, ptr_type: PointerType) -> PointerValue {
         let value = unsafe {
             LLVMConstPointerCast(self.as_value_ref(), ptr_type.as_type_ref())
         };
@@ -106,7 +106,7 @@ impl PointerValue {
         PointerValue::new(value)
     }
 
-    pub fn const_address_space_cast(&self, ptr_type: &PointerType) -> PointerValue {
+    pub fn const_address_space_cast(&self, ptr_type: PointerType) -> PointerValue {
         let value = unsafe {
             LLVMConstAddrSpaceCast(self.as_value_ref(), ptr_type.as_type_ref())
         };
@@ -114,7 +114,7 @@ impl PointerValue {
         PointerValue::new(value)
     }
 
-    pub fn replace_all_uses_with(&self, other: &PointerValue) {
+    pub fn replace_all_uses_with(&self, other: PointerValue) {
         self.ptr_value.replace_all_uses_with(other.as_value_ref())
     }
 }

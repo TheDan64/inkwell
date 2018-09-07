@@ -546,7 +546,7 @@ fn test_metadata() {
     // assert!(!vec_val.has_metadata());
     // assert!(!fn_val.has_metadata());
 
-    bool_val.set_metadata(&md_string, 3);
+    bool_val.set_metadata(md_string, 3);
 
     assert!(bool_val.has_metadata());
     assert!(bool_val.get_metadata(1).is_none());
@@ -557,7 +557,7 @@ fn test_metadata() {
     assert_eq!(md_node_values.len(), 1);
     assert_eq!(md_node_values[0].as_metadata_value().get_string_value(), md_string.get_string_value());
 
-    f128_val.set_metadata(&md_node, 3);
+    f128_val.set_metadata(md_node, 3);
 
     assert!(f128_val.has_metadata());
     assert!(f128_val.get_metadata(1).is_none());
@@ -569,7 +569,7 @@ fn test_metadata() {
     assert_eq!(md_node_values[0].as_int_value(), &bool_val);
     assert_eq!(md_node_values[1].as_float_value(), &f32_val);
 
-    array_val.set_metadata(&md_string, 2);
+    array_val.set_metadata(md_string, 2);
 
     assert!(array_val.has_metadata());
     assert!(array_val.get_metadata(1).is_none());
@@ -579,7 +579,7 @@ fn test_metadata() {
     assert_eq!(md_node_values.len(), 1);
     assert_eq!(md_node_values[0].as_metadata_value().get_string_value(), md_string.get_string_value());
 
-    struct_val.set_metadata(&md_node, 4);
+    struct_val.set_metadata(md_node, 4);
 
     assert!(struct_val.has_metadata());
     assert!(struct_val.get_metadata(1).is_none());
@@ -592,7 +592,7 @@ fn test_metadata() {
     assert_eq!(md_node_values[0].as_int_value(), &bool_val);
     assert_eq!(md_node_values[1].as_float_value(), &f32_val);
 
-    vec_val.set_metadata(&md_string, 1);
+    vec_val.set_metadata(md_string, 1);
 
     assert!(vec_val.has_metadata());
 
@@ -601,7 +601,7 @@ fn test_metadata() {
     assert_eq!(md_node_values.len(), 1);
     assert_eq!(md_node_values[0].as_metadata_value().get_string_value(), md_string.get_string_value());
 
-    fn_val.set_metadata(&md_node, 4);
+    fn_val.set_metadata(md_node, 4);
 
     assert!(fn_val.has_metadata());
     assert!(fn_val.get_metadata(1).is_none());
@@ -614,7 +614,7 @@ fn test_metadata() {
     assert_eq!(md_node_values[0].as_int_value(), &bool_val);
     assert_eq!(md_node_values[1].as_float_value(), &f32_val);
 
-    ptr_val.set_metadata(&md_string, 1);
+    ptr_val.set_metadata(md_string, 1);
 
     assert!(ptr_val.has_metadata());
 
@@ -642,11 +642,11 @@ fn test_floats() {
 
     let f64_pi = f64_type.const_float(::std::f64::consts::PI);
 
-    let f32_pi = f64_pi.const_truncate(&f32_type);
-    let f128_pi = f64_pi.const_extend(&f128_type);
-    let i64_pi = f64_pi.const_to_signed_int(&i64_type);
-    let u64_pi = f64_pi.const_to_unsigned_int(&i64_type);
-    let f128_pi_cast = f64_pi.const_cast(&f128_type);
+    let f32_pi = f64_pi.const_truncate(f32_type);
+    let f128_pi = f64_pi.const_extend(f128_type);
+    let i64_pi = f64_pi.const_to_signed_int(i64_type);
+    let u64_pi = f64_pi.const_to_unsigned_int(i64_type);
+    let f128_pi_cast = f64_pi.const_cast(f128_type);
 
     assert_eq!(i64_pi.get_type(), i64_type);
     assert_eq!(u64_pi.get_type(), i64_type);
@@ -668,42 +668,42 @@ fn test_floats() {
 
     assert_eq!(*neg_two.print_to_string(), *CString::new("double -2.000000e+00").unwrap());
 
-    let neg_three = neg_two.const_sub(&f64_one);
+    let neg_three = neg_two.const_sub(f64_one);
 
     assert_eq!(*neg_three.print_to_string(), *CString::new("double -3.000000e+00").unwrap());
 
-    let pos_six = neg_three.const_mul(&neg_two);
+    let pos_six = neg_three.const_mul(neg_two);
 
     assert_eq!(*pos_six.print_to_string(), *CString::new("double 6.000000e+00").unwrap());
 
-    let pos_eight = pos_six.const_add(&f64_two);
+    let pos_eight = pos_six.const_add(f64_two);
 
     assert_eq!(*pos_eight.print_to_string(), *CString::new("double 8.000000e+00").unwrap());
 
-    let pos_four = pos_eight.const_div(&f64_two);
+    let pos_four = pos_eight.const_div(f64_two);
 
     assert_eq!(*pos_four.print_to_string(), *CString::new("double 4.000000e+00").unwrap());
 
-    let rem = pos_six.const_remainder(&pos_four);
+    let rem = pos_six.const_remainder(pos_four);
 
     assert_eq!(*rem.print_to_string(), *CString::new("double 2.000000e+00").unwrap());
 
-    assert!(f64_one.const_compare(FloatPredicate::PredicateFalse, &f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::PredicateTrue, &f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::OEQ, &f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::OGT, &f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::OGE, &f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::OLT, &f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::OLE, &f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::ONE, &f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::UEQ, &f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::UGT, &f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::UGE, &f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::ULT, &f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::ULE, &f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::UNE, &f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::ORD, &f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::UNO, &f64_two).is_null());
+    assert!(f64_one.const_compare(FloatPredicate::PredicateFalse, f64_two).is_null());
+    assert!(!f64_one.const_compare(FloatPredicate::PredicateTrue, f64_two).is_null());
+    assert!(f64_one.const_compare(FloatPredicate::OEQ, f64_two).is_null());
+    assert!(f64_one.const_compare(FloatPredicate::OGT, f64_two).is_null());
+    assert!(f64_one.const_compare(FloatPredicate::OGE, f64_two).is_null());
+    assert!(!f64_one.const_compare(FloatPredicate::OLT, f64_two).is_null());
+    assert!(!f64_one.const_compare(FloatPredicate::OLE, f64_two).is_null());
+    assert!(!f64_one.const_compare(FloatPredicate::ONE, f64_two).is_null());
+    assert!(f64_one.const_compare(FloatPredicate::UEQ, f64_two).is_null());
+    assert!(f64_one.const_compare(FloatPredicate::UGT, f64_two).is_null());
+    assert!(f64_one.const_compare(FloatPredicate::UGE, f64_two).is_null());
+    assert!(!f64_one.const_compare(FloatPredicate::ULT, f64_two).is_null());
+    assert!(!f64_one.const_compare(FloatPredicate::ULE, f64_two).is_null());
+    assert!(!f64_one.const_compare(FloatPredicate::UNE, f64_two).is_null());
+    assert!(!f64_one.const_compare(FloatPredicate::ORD, f64_two).is_null());
+    assert!(f64_one.const_compare(FloatPredicate::UNO, f64_two).is_null());
 }
 
 #[test]

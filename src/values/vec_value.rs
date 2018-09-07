@@ -72,7 +72,7 @@ impl VectorValue {
         self.vec_value.as_instruction()
     }
 
-    pub fn const_extract_element(&self, index: &IntValue) -> BasicValueEnum {
+    pub fn const_extract_element(&self, index: IntValue) -> BasicValueEnum {
         let value = unsafe {
             LLVMConstExtractElement(self.as_value_ref(), index.as_value_ref())
         };
@@ -80,7 +80,7 @@ impl VectorValue {
         BasicValueEnum::new(value)
     }
 
-    pub fn const_insert_element(&self, index: &IntValue, value: &BasicValue) -> BasicValueEnum {
+    pub fn const_insert_element<BV: BasicValue>(&self, index: IntValue, value: BV) -> BasicValueEnum {
         let value = unsafe {
             LLVMConstInsertElement(self.as_value_ref(), value.as_value_ref(), index.as_value_ref())
         };
@@ -96,11 +96,11 @@ impl VectorValue {
         self.vec_value.get_metadata(kind_id)
     }
 
-    pub fn set_metadata(&self, metadata: &MetadataValue, kind_id: u32) {
+    pub fn set_metadata(&self, metadata: MetadataValue, kind_id: u32) {
         self.vec_value.set_metadata(metadata, kind_id)
     }
 
-    pub fn replace_all_uses_with(&self, other: &VectorValue) {
+    pub fn replace_all_uses_with(&self, other: VectorValue) {
         self.vec_value.replace_all_uses_with(other.as_value_ref())
     }
 

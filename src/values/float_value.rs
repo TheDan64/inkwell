@@ -63,8 +63,7 @@ impl FloatValue {
         FloatValue::new(value)
     }
 
-    // TODO: operator overloading to call this
-    pub fn const_add(&self, rhs: &FloatValue) -> Self {
+    pub fn const_add(&self, rhs: FloatValue) -> Self {
         let value = unsafe {
             LLVMConstFAdd(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -72,8 +71,7 @@ impl FloatValue {
         FloatValue::new(value)
     }
 
-    // TODO: operator overloading to call this
-    pub fn const_sub(&self, rhs: &FloatValue) -> Self {
+    pub fn const_sub(&self, rhs: FloatValue) -> Self {
         let value = unsafe {
             LLVMConstFSub(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -81,8 +79,7 @@ impl FloatValue {
         FloatValue::new(value)
     }
 
-    // TODO: operator overloading to call this
-    pub fn const_mul(&self, rhs: &FloatValue) -> Self {
+    pub fn const_mul(&self, rhs: FloatValue) -> Self {
         let value = unsafe {
             LLVMConstFMul(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -90,8 +87,7 @@ impl FloatValue {
         FloatValue::new(value)
     }
 
-    // TODO: operator overloading to call this
-    pub fn const_div(&self, rhs: &FloatValue) -> Self {
+    pub fn const_div(&self, rhs: FloatValue) -> Self {
         let value = unsafe {
             LLVMConstFDiv(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -99,7 +95,7 @@ impl FloatValue {
         FloatValue::new(value)
     }
 
-    pub fn const_remainder(&self, rhs: &FloatValue) -> Self {
+    pub fn const_remainder(&self, rhs: FloatValue) -> Self {
         let value = unsafe {
             LLVMConstFRem(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -107,7 +103,7 @@ impl FloatValue {
         FloatValue::new(value)
     }
 
-    pub fn const_cast(&self, float_type: &FloatType) -> Self {
+    pub fn const_cast(&self, float_type: FloatType) -> Self {
         let value = unsafe {
             LLVMConstFPCast(self.as_value_ref(), float_type.as_type_ref())
         };
@@ -115,7 +111,7 @@ impl FloatValue {
         FloatValue::new(value)
     }
 
-    pub fn const_to_unsigned_int(&self, int_type: &IntType) -> IntValue {
+    pub fn const_to_unsigned_int(&self, int_type: IntType) -> IntValue {
         let value = unsafe {
             LLVMConstFPToUI(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -123,7 +119,7 @@ impl FloatValue {
         IntValue::new(value)
     }
 
-    pub fn const_to_signed_int(&self, int_type: &IntType) -> IntValue {
+    pub fn const_to_signed_int(&self, int_type: IntType) -> IntValue {
         let value = unsafe {
             LLVMConstFPToSI(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -131,7 +127,7 @@ impl FloatValue {
         IntValue::new(value)
     }
 
-    pub fn const_truncate(&self, float_type: &FloatType) -> FloatValue {
+    pub fn const_truncate(&self, float_type: FloatType) -> FloatValue {
         let value = unsafe {
             LLVMConstFPTrunc(self.as_value_ref(), float_type.as_type_ref())
         };
@@ -139,7 +135,7 @@ impl FloatValue {
         FloatValue::new(value)
     }
 
-    pub fn const_extend(&self, float_type: &FloatType) -> FloatValue {
+    pub fn const_extend(&self, float_type: FloatType) -> FloatValue {
         let value = unsafe {
             LLVMConstFPExt(self.as_value_ref(), float_type.as_type_ref())
         };
@@ -155,12 +151,12 @@ impl FloatValue {
         self.float_value.get_metadata(kind_id)
     }
 
-    pub fn set_metadata(&self, metadata: &MetadataValue, kind_id: u32) {
+    pub fn set_metadata(&self, metadata: MetadataValue, kind_id: u32) {
         self.float_value.set_metadata(metadata, kind_id)
     }
 
     // SubType: rhs same as lhs; return IntValue<bool>
-    pub fn const_compare(&self, op: FloatPredicate, rhs: &FloatValue) -> IntValue {
+    pub fn const_compare(&self, op: FloatPredicate, rhs: FloatValue) -> IntValue {
         let value = unsafe {
             LLVMConstFCmp(op.as_llvm_predicate(), self.as_value_ref(), rhs.as_value_ref())
         };
@@ -168,7 +164,7 @@ impl FloatValue {
         IntValue::new(value)
     }
 
-    pub fn replace_all_uses_with(&self, other: &FloatValue) {
+    pub fn replace_all_uses_with(&self, other: FloatValue) {
         self.float_value.replace_all_uses_with(other.as_value_ref())
     }
 }
