@@ -2,8 +2,11 @@ language: rust
 
 sudo: required
 cache:
-  cargo: true
+  directories:
+    - /home/travis/.cargo
 
+before_cache:
+  - rm -rf /home/travis/.cargo/registry
 include_base: &BASE
   addons:
     apt:
