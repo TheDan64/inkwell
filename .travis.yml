@@ -129,6 +129,7 @@ matrix:
         - cargo doc --no-default-features --features llvm6-0
         - echo '<meta http-equiv="refresh" content="1; url=inkwell/index.html">' > target/doc/index.html
       rust: nightly
+      name: "GitHub IO Documentation Deployment"
       addons:
         apt:
           sources:

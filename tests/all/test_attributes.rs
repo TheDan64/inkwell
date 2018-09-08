@@ -193,7 +193,8 @@ fn test_attributes_on_function_values() {
     let builder = context.create_builder();
     let module = context.create_module("my_mod");
     let void_type = context.void_type();
-    let fn_type = void_type.fn_type(&[], false);
+    let i32_type = context.i32_type();
+    let fn_type = void_type.fn_type(&[i32_type.into()], false);
     let fn_value = module.add_function("my_fn", fn_type, None);
     let entry_bb = fn_value.append_basic_block("entry");
     let string_attribute = context.create_string_attribute("my_key", "my_val");
@@ -210,6 +211,7 @@ fn test_attributes_on_function_values() {
 
     // define align 1 "my_key"="my_val" void @my_fn()
     fn_value.add_attribute(0, string_attribute);
+    fn_value.add_attribute(1, string_attribute); // Applied to 1st param
     fn_value.add_attribute(0, enum_attribute);
 
     assert_eq!(fn_value.count_attributes(0), 2);

@@ -1103,7 +1103,7 @@ impl<'a> Compiler<'a> {
         let fn_val = self.module.add_function(proto.name.as_str(), fn_type, None);
 
         // set arguments names
-        for (i, arg) in fn_val.params().enumerate() {
+        for (i, arg) in fn_val.get_param_iter().enumerate() {
             arg.into_float_value().set_name(proto.args[i].as_str());
         }
 
@@ -1125,7 +1125,7 @@ impl<'a> Compiler<'a> {
         // build variables map
         self.variables.reserve(proto.args.len());
 
-        for (i, arg) in function.params().enumerate() {
+        for (i, arg) in function.get_param_iter().enumerate() {
             let arg_name = proto.args[i].as_str();
             let alloca = self.create_entry_block_alloca(arg_name, Some(&entry));
 

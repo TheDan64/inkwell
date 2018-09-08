@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMTypeOf, LLVMGetPreviousFunction, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetBasicBlocks, LLVMGetReturnType, LLVMAppendBasicBlock, LLVMDeleteFunction, LLVMGetElementType, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetEntryBasicBlock, LLVMGetIntrinsicID, LLVMGetFunctionCallConv, LLVMSetFunctionCallConv, LLVMGetGC, LLVMSetGC, LLVMSetLinkage};
+use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMTypeOf, LLVMGetPreviousFunction, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetPreviousParam, LLVMGetBasicBlocks, LLVMGetReturnType, LLVMAppendBasicBlock, LLVMDeleteFunction, LLVMGetElementType, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetEntryBasicBlock, LLVMGetIntrinsicID, LLVMGetFunctionCallConv, LLVMSetFunctionCallConv, LLVMGetGC, LLVMSetGC, LLVMSetLinkage, LLVMSetParamAlignment, LLVMGetParamParent, LLVMGetParams};
 #[cfg(not(feature = "llvm3-6"))]
 use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
 #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
@@ -210,11 +210,27 @@ impl FunctionValue {
         BasicTypeEnum::new(type_)
     }
 
-    pub fn params(&self) -> ParamValueIter {
+    pub fn get_param_iter(&self) -> ParamValueIter {
         ParamValueIter {
             param_iter_value: self.fn_value.value,
             start: true,
         }
+    }
+
+    pub fn get_params(&self) -> Vec<BasicValueEnum> {
+        let count = self.count_params();
+        let mut raw_vec: Vec<LLVMValueRef> = Vec::with_capacity(count as usize);
+        let ptr = raw_vec.as_mut_ptr();
+
+        forget(raw_vec);
+
+        let raw_vec = unsafe {
+            LLVMGetParams(self.as_value_ref(), ptr);
+
+            Vec::from_raw_parts(ptr, count as usize, count as usize)
+        };
+
+        raw_vec.iter().map(|val| BasicValueEnum::new(*val)).collect()
     }
 
     pub fn get_last_basic_block(&self) -> Option<BasicBlock> {
@@ -241,11 +257,9 @@ impl FunctionValue {
         }
     }
 
-    // FIXME: Look for ways to prevent use after delete
+    // TODO: Look for ways to prevent use after delete but maybe not possible
     pub unsafe fn delete(self) {
-        // unsafe {
         LLVMDeleteFunction(self.as_value_ref())
-        // }
     }
 
     pub fn get_type(&self) -> FunctionType {
@@ -284,7 +298,7 @@ impl FunctionValue {
     }
 
     #[cfg(not(feature = "llvm3-6"))]
-    pub fn set_personality_function(&self, personality_fn: &FunctionValue) {
+    pub fn set_personality_function(&self, personality_fn: FunctionValue) {
         unsafe {
             LLVMSetPersonalityFn(self.as_value_ref(), personality_fn.as_value_ref())
         }
@@ -326,7 +340,8 @@ impl FunctionValue {
         self.fn_value.replace_all_uses_with(other.as_value_ref())
     }
 
-    /// Adds an `Attribute` to this `FunctionValue`.
+    /// Adds an `Attribute` to this `FunctionValue` if index is 0, otherwise to its parameter
+    /// in the 1 - Nth position.
     ///
     /// # Example
     ///
@@ -351,7 +366,8 @@ impl FunctionValue {
         }
     }
 
-    /// Counts the number of `Attribute` belonging to this `FunctionValue`.
+    /// Counts the number of `Attribute`s belonging to this `FunctionValue` if index is 0,
+    /// otherwise to its parameter in the 1 - Nth position.
     ///
     /// # Example
     ///
@@ -378,7 +394,8 @@ impl FunctionValue {
         }
     }
 
-    /// Removes a string `Attribute` belonging this `FunctionValue`.
+    /// Removes a string `Attribute` belonging this `FunctionValue` if index is 0,
+    /// otherwise to its parameter in the 1 - Nth position.
     ///
     /// # Example
     ///
@@ -402,7 +419,8 @@ impl FunctionValue {
         }
     }
 
-    /// Removes an enum `Attribute` belonging to this `FunctionValue`.
+    /// Removes an enum `Attribute` belonging to this `FunctionValue` if index is 0,
+    /// otherwise to its parameter in the 1 - Nth position.
     ///
     /// # Example
     ///
@@ -426,7 +444,8 @@ impl FunctionValue {
         }
     }
 
-    /// Gets an enum `Attribute` belonging to this `FunctionValue`.
+    /// Gets an enum `Attribute` belonging to this `FunctionValue` if index is 0,
+    /// otherwise to its parameter in the 1 - Nth position.
     ///
     /// # Example
     ///
@@ -458,7 +477,8 @@ impl FunctionValue {
         Some(Attribute::new(ptr))
     }
 
-    /// Gets a string `Attribute` belonging this `FunctionValue`.
+    /// Gets a string `Attribute` belonging this `FunctionValue` if index is 0,
+    /// otherwise to its parameter in the 1 - Nth position.
     ///
     /// # Example
     ///
@@ -488,6 +508,14 @@ impl FunctionValue {
         }
 
         Some(Attribute::new(ptr))
+    }
+
+    pub fn set_param_alignment(&self, param_index: u32, alignment: u32) {
+        if let Some(param) = self.get_nth_param(param_index) {
+            unsafe {
+                LLVMSetParamAlignment(param.as_value_ref(), alignment)
+            }
+        }
     }
 }
 
@@ -541,7 +569,7 @@ impl Iterator for ParamValueIter {
 
             self.param_iter_value = first_value;
 
-            return Some(BasicValueEnum::new(first_value));
+            return Some(Self::Item::new(first_value));
         }
 
         let next_value = unsafe {
@@ -554,6 +582,6 @@ impl Iterator for ParamValueIter {
 
         self.param_iter_value = next_value;
 
-        Some(BasicValueEnum::new(next_value))
+        Some(Self::Item::new(next_value))
     }
 }

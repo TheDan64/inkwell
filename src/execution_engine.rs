@@ -110,14 +110,16 @@ impl ExecutionEngine {
         }
     }
 
-    // REVIEW: Should we support this function?
+    /// This function probably doesn't need to be called, but is here due to
+    /// linking(?) requirements. Bad things happen if we don't provide it.
     pub fn link_in_mc_jit() {
         unsafe {
             LLVMLinkInMCJIT()
         }
     }
 
-    // REVIEW: Should we support this function?
+    /// This function probably doesn't need to be called, but is here due to
+    /// linking(?) requirements. Bad things happen if we don't provide it.
     pub fn link_in_interpreter() {
         unsafe {
             LLVMLinkInInterpreter();
