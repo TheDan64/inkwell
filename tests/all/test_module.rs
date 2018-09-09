@@ -390,6 +390,9 @@ fn test_linking_modules() {
 
     // EE owned module links in unowned module which has
     // another definition for the same funciton name, "f2"
+    #[cfg(feature = "llvm3-6")] // Likely a LLVM bug that no error message is produced in 3-6
+    assert_eq!(*module.link_in_module(module5).unwrap_err(), *CString::new("").unwrap());
+    #[cfg(not(feature = "llvm3-6"))]
     assert_eq!(*module.link_in_module(module5).unwrap_err(), *CString::new("Linking globals named \'f2\': symbol multiply defined!").unwrap());
 
     let module6 = context.create_module("mod5");
