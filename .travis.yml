@@ -6,8 +6,8 @@ cache:
     - /home/travis/.cargo
 
 before_cache:
+  - RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin # Could write script to apply --force if newer version available
   - rm -rf /home/travis/.cargo/registry
-  - RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin
 include_base: &BASE
   addons:
     apt:
