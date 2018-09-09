@@ -28,7 +28,6 @@ use llvm_sys::LLVMTypeKind;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use std::fmt;
-use std::mem::forget;
 use std::rc::Rc;
 
 use AddressSpace;

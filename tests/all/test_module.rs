@@ -309,7 +309,7 @@ fn test_print_to_file() {
 
     let bad_path = Path::new("/tmp/some/silly/path/that/sure/doesn't/exist");
 
-    assert_eq!(*module.print_to_file(bad_path).unwrap_err(), *CString::new("File name too long").unwrap());
+    assert_eq!(*module.print_to_file(bad_path).unwrap_err(), *CString::new("No such file or directory").unwrap());
 
     let mut temp_path = temp_dir();
 

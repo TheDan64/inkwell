@@ -4,7 +4,7 @@
 use llvm_sys::core::{LLVMInstallFatalErrorHandler, LLVMResetFatalErrorHandler};
 #[cfg(any(feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
 use llvm_sys::error_handling::{LLVMInstallFatalErrorHandler, LLVMResetFatalErrorHandler};
-use llvm_sys::core::{LLVMGetDiagInfoDescription, LLVMContextSetDiagnosticHandler, LLVMGetDiagInfoSeverity};
+use llvm_sys::core::{LLVMGetDiagInfoDescription, LLVMGetDiagInfoSeverity};
 use llvm_sys::prelude::LLVMDiagnosticInfoRef;
 use llvm_sys::LLVMDiagnosticSeverity;
 use libc::c_void;
@@ -52,7 +52,10 @@ impl DiagnosticInfo {
 
     pub(crate) fn severity_is_error(&self) -> bool {
         unsafe {
-            LLVMGetDiagInfoSeverity(self.diagnostic_info) == LLVMDiagnosticSeverity::LLVMDSError
+            match LLVMGetDiagInfoSeverity(self.diagnostic_info) {
+                LLVMDiagnosticSeverity::LLVMDSError => true,
+                _ => false,
+            }
         }
     }
 }

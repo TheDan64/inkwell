@@ -6,17 +6,14 @@ use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffe
 use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile, LLVMSetModuleInlineAsm};
 #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
 use llvm_sys::core::{LLVMGetModuleIdentifier, LLVMSetModuleIdentifier};
-#[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]
-use llvm_sys::linker::LLVMLinkModules;
-#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
-use llvm_sys::linker::LLVMLinkModules2;
 use llvm_sys::execution_engine::{LLVMCreateInterpreterForModule, LLVMCreateJITCompilerForModule, LLVMCreateExecutionEngineForModule};
 use llvm_sys::prelude::{LLVMValueRef, LLVMModuleRef};
 use llvm_sys::LLVMLinkage;
-use libc::c_void;
 
 use std::cell::{Cell, RefCell, Ref};
-use std::ffi::{CStr, CString};
+#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
+use std::ffi::CStr;
+use std::ffi::CString;
 use std::fs::File;
 use std::mem::{forget, zeroed};
 use std::path::Path;
@@ -27,7 +24,6 @@ use std::slice::from_raw_parts;
 use {AddressSpace, OptimizationLevel};
 use context::{Context, ContextRef};
 use data_layout::DataLayout;
-use support::error_handling::get_error_str_diagnostic_handler;
 use execution_engine::ExecutionEngine;
 use memory_buffer::MemoryBuffer;
 use support::LLVMString;
@@ -1210,27 +1206,46 @@ impl Module {
         }
     }
 
-    /// Links one module into another. This will essentialy merge two `Module`s.
+    /// Links one module into another. This will merge two `Module`s into one.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("mod");
+    /// let module2 = context.create_module("mod2");
+    ///
+    /// assert!(module.link_in_module(module2).is_ok());
+    /// ```
     pub fn link_in_module(&self, other: Self) -> Result<(), LLVMString> {
         // REVIEW: Check if owned by EE? test_linking_modules seems OK as is...
 
         #[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]
         {
-            let err_string = ptr::null_mut();
+            use llvm_sys::linker::{LLVMLinkerMode, LLVMLinkModules};
+
+            let mut err_string = ptr::null_mut();
+            let mode = LLVMLinkerMode::LLVMLinkerDestroySource;
             let code = unsafe {
-                LLVMLinkModules(self.module.get(), other.module.get(), 0, &mut err_string)
+                LLVMLinkModules(self.module.get(), other.module.get(), mode, &mut err_string)
             };
 
             forget(other);
 
             if code == 1 {
-                Err(LLVMString::new(char_ptr))
+                Err(LLVMString::new(err_string))
             } else {
                 Ok(())
             }
         }
         #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
         {
+            use support::error_handling::get_error_str_diagnostic_handler;
+            use llvm_sys::linker::LLVMLinkModules2;
+            use libc::c_void;
+
             let context = self.get_context();
 
             let mut char_ptr: *mut i8 = ptr::null_mut();
