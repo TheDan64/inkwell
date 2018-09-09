@@ -169,7 +169,6 @@ impl StructType {
         }
     }
 
-    // REVIEW: Method name
     pub fn get_field_types(&self) -> Vec<BasicTypeEnum> {
         let count = self.count_fields();
         let mut raw_vec: Vec<LLVMTypeRef> = Vec::with_capacity(count as usize);

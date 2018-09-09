@@ -21,6 +21,7 @@ fn test_struct_type() {
     assert!(av_struct.get_name().is_none());
     assert_eq!(*av_struct.get_context(), context);
     assert_eq!(av_struct.count_fields(), 2);
+    assert_eq!(av_struct.get_field_types(), &[int_vector.into(), float_array.into()]);
 
     #[cfg(not(feature = "llvm3-6"))]
     {
@@ -65,6 +66,7 @@ fn test_struct_type() {
     assert_eq!(opaque_struct.get_name(), Some(&*CString::new("opaque_struct").unwrap()));
     assert_eq!(*opaque_struct.get_context(), context);
     assert_eq!(opaque_struct.count_fields(), 0);
+    assert!(opaque_struct.get_field_types().is_empty());
 
     #[cfg(not(feature = "llvm3-6"))]
     {
@@ -72,7 +74,6 @@ fn test_struct_type() {
         assert!(opaque_struct.get_field_type_at_index(1).is_none());
         assert!(opaque_struct.get_field_type_at_index(2).is_none());
         assert!(opaque_struct.get_field_type_at_index(200).is_none());
-        assert!(opaque_struct.get_field_types().is_empty());
     }
 
     assert!(opaque_struct.set_body(&[&int_vector, &float_array], true));
@@ -85,6 +86,7 @@ fn test_struct_type() {
     assert_eq!(no_longer_opaque_struct.get_name(), Some(&*CString::new("opaque_struct").unwrap()));
     assert_eq!(*no_longer_opaque_struct.get_context(), context);
     assert_eq!(no_longer_opaque_struct.count_fields(), 2);
+    assert_eq!(no_longer_opaque_struct.get_field_types(), &[int_vector.into(), float_array.into()]);
 
     #[cfg(not(feature = "llvm3-6"))]
     {
@@ -328,8 +330,10 @@ fn test_vec_type() {
     let context = Context::create();
     let int = context.i8_type();
     let vec_type = int.vec_type(42);
+    let vec_type2 = vec_type.vec_type(7);
 
     assert_eq!(vec_type.get_size(), 42);
+    assert_eq!(vec_type2.get_element_type().into_vector_type(), vec_type);
 }
 
 #[test]
@@ -339,4 +343,13 @@ fn test_type_copies() {
     let i8_type_copy = i8_type;
 
     assert_eq!(i8_type, i8_type_copy);
+}
+
+#[test]
+fn test_ptr_type() {
+    let context = Context::create();
+    let i8_type = context.i8_type();
+    let ptr_type = i8_type.ptr_type(AddressSpace::Generic);
+
+    assert_eq!(ptr_type.get_element_type().into_int_type(), i8_type);
 }

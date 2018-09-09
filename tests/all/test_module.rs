@@ -309,7 +309,7 @@ fn test_print_to_file() {
 
     let bad_path = Path::new("/tmp/some/silly/path/that/sure/doesn't/exist");
 
-    assert_eq!(*module.print_to_file(bad_path).unwrap_err(), *CString::new("No such file or directory").unwrap());
+    assert_eq!(*module.print_to_file(bad_path).unwrap_err(), *CString::new("File name too long").unwrap());
 
     let mut temp_path = temp_dir();
 
@@ -337,4 +337,76 @@ fn test_get_set_target() {
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     assert_eq!(*module.get_name(), *CString::new("mod2").unwrap());
     assert_eq!(module.get_target().unwrap(), target);
+}
+
+#[test]
+fn test_linking_modules() {
+    let context = Context::create();
+    let module = context.create_module("mod");
+    let void_type = context.void_type();
+    let builder = context.create_builder();
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_val = module.add_function("f", fn_type, None);
+    let basic_block = fn_val.append_basic_block("entry");
+
+    builder.position_at_end(&basic_block);
+    builder.build_return(None);
+
+    let module2 = context.create_module("mod2");
+
+    // Unowned module links in unowned (empty) module
+    assert!(module.link_in_module(module2).is_ok());
+    assert_eq!(module.get_function("f"), Some(fn_val));
+    assert!(module.get_function("f2").is_none());
+
+    let module3 = context.create_module("mod3");
+    let fn_val2 = module3.add_function("f2", fn_type, None);
+    let basic_block2 = fn_val2.append_basic_block("entry");
+
+    builder.position_at_end(&basic_block2);
+    builder.build_return(None);
+
+    // Unowned module links in unowned module
+    assert!(module.link_in_module(module3).is_ok());
+    assert_eq!(module.get_function("f"), Some(fn_val));
+
+    // fn_val2 is no longer the same instance of f2
+    assert_ne!(module.get_function("f2"), Some(fn_val2));
+
+    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+
+    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).expect("Could not create Execution Engine");
+    let module4 = context.create_module("mod4");
+
+    // EE owned module links in unowned (empty) module
+    assert!(module.link_in_module(module4).is_ok());
+
+    let module5 = context.create_module("mod5");
+    let fn_val3 = module5.add_function("f2", fn_type, None);
+    let basic_block3 = fn_val3.append_basic_block("entry");
+
+    builder.position_at_end(&basic_block3);
+    builder.build_return(None);
+
+    // EE owned module links in unowned module which has
+    // another definition for the same funciton name, "f2"
+    assert_eq!(*module.link_in_module(module5).unwrap_err(), *CString::new("Linking globals named \'f2\': symbol multiply defined!").unwrap());
+
+    let module6 = context.create_module("mod5");
+    let fn_val4 = module6.add_function("f4", fn_type, None);
+    let basic_block4 = fn_val4.append_basic_block("entry");
+
+    builder.position_at_end(&basic_block4);
+    builder.build_return(None);
+
+    let execution_engine2 = module6.create_jit_execution_engine(OptimizationLevel::None).expect("Could not create Execution Engine");
+
+    // EE owned module links in EE owned module
+    assert!(module.link_in_module(module6).is_ok());
+
+    // EE2 still seems to "work" despite merging module6 into module...
+    // But f4 is now missing from EE2 (though this is expected, I'm really
+    // suprised it "just works" without segfault TBH)
+    // TODO: Test this much more thoroughly
+    assert_ne!(execution_engine2.get_function_value("f4"), Ok(fn_val4));
 }

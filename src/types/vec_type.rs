@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMConstVector, LLVMConstNull, LLVMGetVectorSize, LLVMGetElementType};
+use llvm_sys::core::{LLVMConstVector, LLVMConstNull, LLVMGetVectorSize};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use support::LLVMString;
@@ -94,11 +94,11 @@ impl VectorType {
 
     // SubType: VectorType<BT> -> BT?
     pub fn get_element_type(&self) -> BasicTypeEnum {
-        let ptr = unsafe {
-            LLVMGetElementType(self.as_type_ref())
-        };
+        self.vec_type.get_element_type()
+    }
 
-        BasicTypeEnum::new(ptr)
+    pub fn vec_type(&self, size: u32) -> VectorType {
+        self.vec_type.vec_type(size)
     }
 }
 

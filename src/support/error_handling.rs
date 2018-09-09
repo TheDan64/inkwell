@@ -1,37 +1,75 @@
 //! This module contains some supplemental functions for dealing with errors.
 
+#[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]
+use llvm_sys::core::{LLVMInstallFatalErrorHandler, LLVMResetFatalErrorHandler};
+#[cfg(any(feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
+use llvm_sys::error_handling::{LLVMInstallFatalErrorHandler, LLVMResetFatalErrorHandler};
+use llvm_sys::core::{LLVMGetDiagInfoDescription, LLVMContextSetDiagnosticHandler, LLVMGetDiagInfoSeverity};
+use llvm_sys::prelude::LLVMDiagnosticInfoRef;
+use llvm_sys::LLVMDiagnosticSeverity;
+use libc::c_void;
+
 // REVIEW: Maybe it's possible to have a safe wrapper? If we can
 // wrap the provided function input ptr into a &CStr somehow
 // TODOC: Can be used like this:
 // extern "C" fn print_before_exit(msg: *const i8) {
 //    let c_str = unsafe { ::std::ffi::CStr::from_ptr(msg) };
 //
-//    panic!("LLVM fatally errored: {:?}", c_str);
+//    eprintln!("LLVM fatally errored: {:?}", c_str);
 // }
 // unsafe {
 //     install_fatal_error_handler(print_before_exit);
 // }
-// and will be called before LLVM calls C exit(). IIRC
-// it's safe to panic from C in newer versions of rust
-/// Installs an error handler to be called before LLVM exits. This function may
-/// be repurposed for internal use only to provide better error handling
+// and will be called before LLVM calls C exit()
+/// Installs an error handler to be called before LLVM exits.
 pub unsafe fn install_fatal_error_handler(handler: extern "C" fn(*const i8)) {
-    #[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]
-    use llvm_sys::core::LLVMInstallFatalErrorHandler;
-    #[cfg(any(feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
-    use llvm_sys::error_handling::LLVMInstallFatalErrorHandler;
-
     LLVMInstallFatalErrorHandler(Some(handler))
 }
 
 /// Resets LLVM's fatal error handler back to the default
 pub fn reset_fatal_error_handler() {
-    #[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]
-    use llvm_sys::core::LLVMResetFatalErrorHandler;
-    #[cfg(any(feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
-    use llvm_sys::error_handling::LLVMResetFatalErrorHandler;
-
     unsafe {
         LLVMResetFatalErrorHandler()
+    }
+}
+
+pub(crate) struct DiagnosticInfo {
+    diagnostic_info: LLVMDiagnosticInfoRef,
+}
+
+impl DiagnosticInfo {
+    pub(crate) fn new(diagnostic_info: LLVMDiagnosticInfoRef) -> Self {
+        DiagnosticInfo {
+            diagnostic_info,
+        }
+    }
+
+    pub(crate) fn get_description(&self) -> *mut i8 {
+        unsafe {
+            LLVMGetDiagInfoDescription(self.diagnostic_info)
+        }
+    }
+
+    pub(crate) fn severity_is_error(&self) -> bool {
+        unsafe {
+            LLVMGetDiagInfoSeverity(self.diagnostic_info) == LLVMDiagnosticSeverity::LLVMDSError
+        }
+    }
+}
+
+// Assmuptions this handler makes:
+// * A valid *mut *mut i8 is provided as the void_ptr (via context.set_diagnostic_handler)
+//
+// https://github.com/llvm-mirror/llvm/blob/master/tools/llvm-c-test/diagnostic.c was super useful
+// for figuring out how to get this to work
+pub(crate) extern "C" fn get_error_str_diagnostic_handler(diagnostic_info: LLVMDiagnosticInfoRef, void_ptr: *mut c_void) {
+    let diagnostic_info = DiagnosticInfo::new(diagnostic_info);
+
+    if diagnostic_info.severity_is_error() {
+        let i8_ptr_ptr = void_ptr as *mut *mut c_void as *mut *mut i8;
+
+        unsafe {
+            *i8_ptr_ptr = diagnostic_info.get_description();
+        }
     }
 }

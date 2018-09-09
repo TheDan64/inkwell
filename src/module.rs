@@ -6,21 +6,28 @@ use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffe
 use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile, LLVMSetModuleInlineAsm};
 #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
 use llvm_sys::core::{LLVMGetModuleIdentifier, LLVMSetModuleIdentifier};
+#[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]
+use llvm_sys::linker::LLVMLinkModules;
+#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+use llvm_sys::linker::LLVMLinkModules2;
 use llvm_sys::execution_engine::{LLVMCreateInterpreterForModule, LLVMCreateJITCompilerForModule, LLVMCreateExecutionEngineForModule};
 use llvm_sys::prelude::{LLVMValueRef, LLVMModuleRef};
 use llvm_sys::LLVMLinkage;
+use libc::c_void;
 
 use std::cell::{Cell, RefCell, Ref};
 use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::mem::{forget, zeroed};
 use std::path::Path;
+use std::ptr;
 use std::rc::Rc;
 use std::slice::from_raw_parts;
 
 use {AddressSpace, OptimizationLevel};
 use context::{Context, ContextRef};
 use data_layout::DataLayout;
+use support::error_handling::get_error_str_diagnostic_handler;
 use execution_engine::ExecutionEngine;
 use memory_buffer::MemoryBuffer;
 use support::LLVMString;
@@ -1202,6 +1209,54 @@ impl Module {
             LLVMSetModuleIdentifier(self.module.get(), name.as_ptr() as *const i8, name.len())
         }
     }
+
+    /// Links one module into another. This will essentialy merge two `Module`s.
+    pub fn link_in_module(&self, other: Self) -> Result<(), LLVMString> {
+        // REVIEW: Check if owned by EE? test_linking_modules seems OK as is...
+
+        #[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]
+        {
+            let err_string = ptr::null_mut();
+            let code = unsafe {
+                LLVMLinkModules(self.module.get(), other.module.get(), 0, &mut err_string)
+            };
+
+            forget(other);
+
+            if code == 1 {
+                Err(LLVMString::new(char_ptr))
+            } else {
+                Ok(())
+            }
+        }
+        #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+        {
+            let context = self.get_context();
+
+            let mut char_ptr: *mut i8 = ptr::null_mut();
+            let char_ptr_ptr = &mut char_ptr as *mut *mut i8 as *mut *mut c_void as *mut c_void;
+
+            // Newer LLVM versions don't use an out ptr anymore which was really straightforward...
+            // Here we assign an error handler to extract the error message, if any, for us.
+            unsafe {
+                context.set_diagnostic_handler(get_error_str_diagnostic_handler, char_ptr_ptr);
+            }
+
+            let code = unsafe {
+                LLVMLinkModules2(self.module.get(), other.module.get())
+            };
+
+            forget(other);
+
+            if code == 1 {
+                debug_assert!(!char_ptr.is_null());
+
+                Err(LLVMString::new(char_ptr))
+            } else {
+                Ok(())
+            }
+        }
+    }
 }
 
 impl Clone for Module {
@@ -1225,7 +1280,7 @@ impl Drop for Module {
     fn drop(&mut self) {
         if self.owned_by_ee.borrow_mut().take().is_none() {
             unsafe {
-                 LLVMDisposeModule(self.module.get());
+                LLVMDisposeModule(self.module.get());
             }
         }
 

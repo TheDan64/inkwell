@@ -85,6 +85,11 @@ impl PointerType {
     pub fn vec_type(&self, size: u32) -> VectorType {
         self.ptr_type.vec_type(size)
     }
+
+    // SubType: PointerrType<BT> -> BT?
+    pub fn get_element_type(&self) -> BasicTypeEnum {
+        self.ptr_type.get_element_type()
+    }
 }
 
 impl AsTypeRef for PointerType {

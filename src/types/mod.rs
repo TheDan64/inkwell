@@ -23,11 +23,12 @@ pub(crate) use types::traits::AsTypeRef;
 
 #[cfg(not(feature = "llvm3-6"))]
 use llvm_sys::core::LLVMDumpType;
-use llvm_sys::core::{LLVMAlignOf, LLVMGetTypeContext, LLVMFunctionType, LLVMArrayType, LLVMGetTypeKind, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMTypeIsSized, LLVMSizeOf, LLVMVectorType, LLVMConstPointerNull};
+use llvm_sys::core::{LLVMAlignOf, LLVMGetTypeContext, LLVMFunctionType, LLVMArrayType, LLVMGetTypeKind, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMTypeIsSized, LLVMSizeOf, LLVMVectorType, LLVMConstPointerNull, LLVMGetElementType};
 use llvm_sys::LLVMTypeKind;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use std::fmt;
+use std::mem::forget;
 use std::rc::Rc;
 
 use AddressSpace;
@@ -171,6 +172,15 @@ impl Type {
 
         LLVMString::new(c_string_ptr)
     }
+
+    pub fn get_element_type(&self) -> BasicTypeEnum {
+        let ptr = unsafe {
+            LLVMGetElementType(self.type_)
+        };
+
+        BasicTypeEnum::new(ptr)
+    }
+
 }
 
 impl fmt::Debug for Type {

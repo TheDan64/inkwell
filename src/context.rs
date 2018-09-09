@@ -1,10 +1,11 @@
 //! A `Context` is an opaque owner and manager of core global data.
 
-use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMGetMDKindIDInContext, LLVMX86FP80TypeInContext, LLVMConstStringInContext};
+use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMGetMDKindIDInContext, LLVMX86FP80TypeInContext, LLVMConstStringInContext, LLVMContextSetDiagnosticHandler};
 #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
 use llvm_sys::core::{LLVMCreateEnumAttribute, LLVMCreateStringAttribute};
-use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef};
+use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef, LLVMDiagnosticInfoRef};
 use llvm_sys::ir_reader::LLVMParseIRInContext;
+use libc::c_void;
 
 #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
 use attributes::Attribute;
@@ -781,6 +782,12 @@ impl Context {
         };
 
         VectorValue::new(ptr)
+    }
+
+    pub(crate) fn set_diagnostic_handler(&self, handler: extern "C" fn (LLVMDiagnosticInfoRef, *mut c_void), void_ptr: *mut c_void) {
+        unsafe {
+            LLVMContextSetDiagnosticHandler(*self.context, Some(handler), void_ptr)
+        }
     }
 }
 
