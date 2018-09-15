@@ -375,7 +375,7 @@ fn test_linking_modules() {
 
     Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
 
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).expect("Could not create Execution Engine");
+    let _execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).expect("Could not create Execution Engine");
     let module4 = context.create_module("mod4");
 
     // EE owned module links in unowned (empty) module

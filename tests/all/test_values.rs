@@ -121,8 +121,6 @@ fn test_set_get_name() {
     let vec_val = VectorType::const_vector(&[i8_val]);
     let ppc_f128_val = ppc_f128_type.const_float(0.0);
 
-    assert!(!vec_val.is_const_string());
-
     assert_eq!(bool_val.get_name(), &*CString::new("").unwrap());
     assert_eq!(i8_val.get_name(), &*CString::new("").unwrap());
     assert_eq!(i16_val.get_name(), &*CString::new("").unwrap());
@@ -978,6 +976,11 @@ fn test_string_values() {
     let string = context.const_string("my_string", false);
     let string_null = context.const_string("my_string", true);
 
+    assert!(!string.is_constant_vector());
+    assert!(!string_null.is_constant_vector());
+    assert!(!string.is_constant_data_vector());
+    assert!(!string_null.is_constant_data_vector());
+
     assert_eq!(string.print_to_string().to_string(), "[9 x i8] c\"my_string\"");
     assert_eq!(string_null.print_to_string().to_string(), "[10 x i8] c\"my_string\\00\"");
     assert!(string.is_const_string());
@@ -1016,6 +1019,11 @@ fn test_consts() {
     let f64_val = f64_type.const_float(5.6);
     let f128_val = f128_type.const_float(7.8);
     let ppc_f128_val = ppc_f128_type.const_float(9.0);
+    let vec_val = VectorType::const_vector(&[i8_val]);
+
+    assert!(!vec_val.is_const_string());
+    assert!(!vec_val.is_constant_vector());
+    assert!(vec_val.is_constant_data_vector());
 
     assert_eq!(bool_val.get_zero_extended_constant(), Some(1));
     assert_eq!(i8_val.get_zero_extended_constant(), Some(u8::max_value() as u64));

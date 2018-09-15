@@ -1,7 +1,7 @@
-use llvm_sys::core::{LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMConstInsertElement, LLVMConstExtractElement, LLVMIsConstantString, LLVMConstString, LLVMGetElementAsConstant, LLVMGetAsString};
+use llvm_sys::core::{LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMConstInsertElement, LLVMConstExtractElement, LLVMIsConstantString, LLVMConstString, LLVMGetElementAsConstant, LLVMGetAsString, LLVMConstSelect};
 use llvm_sys::prelude::LLVMValueRef;
 
-use std::ffi::CStr;
+use std::ffi::{CStr, CString};
 
 use support::LLVMString;
 use types::{VectorType};
@@ -22,22 +22,16 @@ impl VectorValue {
         }
     }
 
-    // REVIEW: Should this be !int_value.is_null() to return bool?
-    pub fn is_constant_vector(&self) -> IntValue { // TSv2: IntValue<bool>
-        let int_value = unsafe {
-            LLVMIsAConstantVector(self.as_value_ref())
-        };
-
-        IntValue::new(int_value)
+    pub fn is_constant_vector(&self) -> bool {
+        unsafe {
+            !LLVMIsAConstantVector(self.as_value_ref()).is_null()
+        }
     }
 
-    // REVIEW: Should this be !int_value.is_null() to return bool?
-    pub fn is_constant_data_vector(&self) -> IntValue { // TSv2: IntValue<bool>
-        let int_value = unsafe {
-            LLVMIsAConstantDataVector(self.as_value_ref())
-        };
-
-        IntValue::new(int_value)
+    pub fn is_constant_data_vector(&self) -> bool {
+        unsafe {
+            !LLVMIsAConstantDataVector(self.as_value_ref()).is_null()
+        }
     }
 
     pub fn print_to_string(&self) -> LLVMString {
@@ -164,6 +158,15 @@ impl VectorValue {
         };
 
         BasicValueEnum::new(ptr)
+    }
+
+    // SubTypes: self can only be VectoValue<IntValue<bool>>
+    pub fn const_select<BV: BasicValue>(&self, then: BV, else_: BV) -> BasicValueEnum {
+        let value = unsafe {
+            LLVMConstSelect(self.as_value_ref(), then.as_value_ref(), else_.as_value_ref())
+        };
+
+        BasicValueEnum::new(value)
     }
 }
 

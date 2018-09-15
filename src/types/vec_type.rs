@@ -1,8 +1,9 @@
 use llvm_sys::core::{LLVMConstVector, LLVMConstNull, LLVMGetVectorSize};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
+use AddressSpace;
 use support::LLVMString;
-use types::{BasicTypeEnum, Type, traits::AsTypeRef};
+use types::{ArrayType, BasicTypeEnum, Type, traits::AsTypeRef, FunctionType, PointerType};
 use values::{BasicValue, PointerValue, VectorValue, IntValue};
 
 // REVIEW: vec_type() is impl for IntType & FloatType. Need to
@@ -99,6 +100,18 @@ impl VectorType {
 
     pub fn vec_type(&self, size: u32) -> VectorType {
         self.vec_type.vec_type(size)
+    }
+
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
+        self.vec_type.ptr_type(address_space)
+    }
+
+    pub fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
+        self.vec_type.fn_type(param_types, is_var_args)
+    }
+
+    pub fn array_type(&self, size: u32) -> ArrayType {
+        self.vec_type.array_type(size)
     }
 }
 
