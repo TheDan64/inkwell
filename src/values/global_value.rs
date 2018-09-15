@@ -1,5 +1,5 @@
 use llvm_sys::LLVMThreadLocalMode;
-use llvm_sys::core::{LLVMGetVisibility, LLVMSetVisibility, LLVMGetSection, LLVMSetSection, LLVMIsExternallyInitialized, LLVMSetExternallyInitialized, LLVMDeleteGlobal, LLVMIsGlobalConstant, LLVMSetGlobalConstant, LLVMGetPreviousGlobal, LLVMGetNextGlobal, LLVMHasUnnamedAddr, LLVMSetUnnamedAddr, LLVMIsThreadLocal, LLVMSetThreadLocal, LLVMGetThreadLocalMode, LLVMSetThreadLocalMode, LLVMGetInitializer, LLVMSetInitializer, LLVMIsDeclaration, LLVMGetDLLStorageClass, LLVMSetDLLStorageClass};
+use llvm_sys::core::{LLVMGetVisibility, LLVMSetVisibility, LLVMGetSection, LLVMSetSection, LLVMIsExternallyInitialized, LLVMSetExternallyInitialized, LLVMDeleteGlobal, LLVMIsGlobalConstant, LLVMSetGlobalConstant, LLVMGetPreviousGlobal, LLVMGetNextGlobal, LLVMHasUnnamedAddr, LLVMSetUnnamedAddr, LLVMIsThreadLocal, LLVMSetThreadLocal, LLVMGetThreadLocalMode, LLVMSetThreadLocalMode, LLVMGetInitializer, LLVMSetInitializer, LLVMIsDeclaration, LLVMGetDLLStorageClass, LLVMSetDLLStorageClass, LLVMGetAlignment, LLVMSetAlignment};
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::{CString, CStr};
@@ -193,6 +193,18 @@ impl GlobalValue {
 
     pub fn as_pointer_value(&self) -> PointerValue {
         PointerValue::new(self.as_value_ref())
+    }
+
+    pub fn get_alignment(&self) -> u32 {
+        unsafe {
+            LLVMGetAlignment(self.as_value_ref())
+        }
+    }
+
+    pub fn set_alignment(&self, alignment: u32) {
+        unsafe {
+            LLVMSetAlignment(self.as_value_ref(), alignment)
+        }
     }
 }
 

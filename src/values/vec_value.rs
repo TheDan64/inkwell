@@ -74,6 +74,7 @@ impl VectorValue {
         BasicValueEnum::new(value)
     }
 
+    // SubTypes: value should really be T in self: VectorValue<T> I think
     pub fn const_insert_element<BV: BasicValue>(&self, index: IntValue, value: BV) -> BasicValueEnum {
         let value = unsafe {
             LLVMConstInsertElement(self.as_value_ref(), value.as_value_ref(), index.as_value_ref())

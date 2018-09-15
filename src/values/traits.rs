@@ -1,5 +1,5 @@
 use llvm_sys::prelude::LLVMValueRef;
-use llvm_sys::core::LLVMConstExtractValue;
+use llvm_sys::core::{LLVMConstExtractValue, LLVMConstInsertValue};
 
 use std::fmt::Debug;
 
@@ -50,6 +50,15 @@ pub trait AggregateValue: BasicValue {
     fn const_extract_value(&self, indexes: &mut [u32]) -> BasicValueEnum {
         let value = unsafe {
             LLVMConstExtractValue(self.as_value_ref(), indexes.as_mut_ptr(), indexes.len() as u32)
+        };
+
+        BasicValueEnum::new(value)
+    }
+
+    // SubTypes: value should really be T in self: VectorValue<T> I think
+    fn const_insert_value<BV: BasicValue>(&self, value: BV, indexes: &mut [u32]) -> BasicValueEnum {
+        let value = unsafe {
+            LLVMConstInsertValue(self.as_value_ref(), value.as_value_ref(), indexes.as_mut_ptr(), indexes.len() as u32)
         };
 
         BasicValueEnum::new(value)

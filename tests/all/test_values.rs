@@ -868,11 +868,17 @@ fn test_globals() {
     assert_eq!(module.get_last_global().unwrap(), global2);
     assert_eq!(module.get_global("my_global2").unwrap(), global2);
     assert!(!global.is_declaration());
+    assert!(!global.is_externally_initialized());
+    assert_eq!(global.get_alignment(), 0);
+
+    global.set_alignment(4);
+
+    assert_eq!(global.get_alignment(), 4);
 
     global2.set_externally_initialized(true);
 
     // REVIEW: This doesn't seem to work. LLVM bug?
-    // assert!(global.is_externally_initialized());
+    assert!(global2.is_externally_initialized());
 
     unsafe {
         global.delete();
