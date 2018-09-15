@@ -28,8 +28,8 @@ include_base: &BASE
     - export LLVM_PATH=/usr/share/llvm-${LLVM_VERSION}/cmake/
     - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "'${LLVM_VERSION_SHORT}'"/' Cargo.toml
   script:
-    - cargo build --no-default-features --features "llvm${LLVM_VERSION_DASH}"
-    - cargo test --no-default-features --features "llvm${LLVM_VERSION_DASH}" --verbose
+    - cargo build --no-default-features --features "llvm${LLVM_VERSION_DASH}" --color=always
+    - cargo test --no-default-features --features "llvm${LLVM_VERSION_DASH}" --verbose --color=always
 
 matrix:
   fast_finish: true
@@ -130,7 +130,7 @@ matrix:
         - export PATH=/usr/lib/llvm-6.0/bin/:$HOME/.local/bin:$PATH
         - export LLVM_PATH=/usr/share/llvm-6.0/cmake/
       script:
-        - cargo doc --no-default-features --features llvm6-0
+        - cargo doc --no-default-features --features llvm6-0 --color=always
         - echo '<meta http-equiv="refresh" content="1; url=inkwell/index.html">' > target/doc/index.html
       rust: nightly
       name: "GitHub IO Documentation Deployment"
@@ -162,7 +162,7 @@ env:
 after_success: |
   if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
     cargo tarpaulin --features "llvm${LLVM_VERSION_DASH}" --ignore-tests --out Xml
-    bash <(curl -s https://codecov.io/bash) || travis_terminate 1
+    bash <(curl -s https://codecov.io/bash)
   fi
 
 notifications:

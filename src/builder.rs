@@ -945,7 +945,7 @@ impl Builder {
     // REVIEW: How does LLVM treat out of bound index? Maybe we should return an Option?
     // or is that only in bounds GEP
     // REVIEW: Should this be AggregatePointerValue?
-    pub fn build_extract_value(&self, value: &AggregateValue, index: u32, name: &str) -> BasicValueEnum {
+    pub fn build_extract_value<AV: AggregateValue>(&self, value: AV, index: u32, name: &str) -> BasicValueEnum {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {

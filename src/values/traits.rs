@@ -1,4 +1,5 @@
 use llvm_sys::prelude::LLVMValueRef;
+use llvm_sys::core::LLVMConstExtractValue;
 
 use std::fmt::Debug;
 
@@ -41,6 +42,17 @@ pub trait AggregateValue: BasicValue {
     /// Returns an enum containing a typed version of the `AggregateValue`.
     fn as_aggregate_value_enum(&self) -> AggregateValueEnum {
         AggregateValueEnum::new(self.as_value_ref())
+    }
+
+    // REVIEW: How does LLVM treat out of bound index? Maybe we should return an Option?
+    // or is that only in bounds GEP
+    // REVIEW: Should this be AggregatePointerValue?
+    fn const_extract_value(&self, indexes: &mut [u32]) -> BasicValueEnum {
+        let value = unsafe {
+            LLVMConstExtractValue(self.as_value_ref(), indexes.as_mut_ptr(), indexes.len() as u32)
+        };
+
+        BasicValueEnum::new(value)
     }
 }
 

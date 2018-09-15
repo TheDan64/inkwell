@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMConstInsertElement, LLVMConstExtractElement, LLVMIsConstantString, LLVMConstString, LLVMGetElementAsConstant, LLVMGetAsString, LLVMConstSelect};
+use llvm_sys::core::{LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMConstInsertElement, LLVMConstExtractElement, LLVMIsConstantString, LLVMConstString, LLVMGetElementAsConstant, LLVMGetAsString, LLVMConstSelect, LLVMConstShuffleVector};
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::{CStr, CString};
@@ -167,6 +167,15 @@ impl VectorValue {
         };
 
         BasicValueEnum::new(value)
+    }
+
+    // SubTypes: <V: VectorValue<T, Const>> self: V, right: V, mask: V -> V
+    pub fn const_shuffle_vector(&self, right: VectorValue, mask: VectorValue) -> VectorValue {
+        let value = unsafe {
+            LLVMConstShuffleVector(self.as_value_ref(), right.as_value_ref(), mask.as_value_ref())
+        };
+
+        VectorValue::new(value)
     }
 }
 

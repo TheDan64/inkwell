@@ -65,6 +65,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
+    // REVIEW: What happens when not using a const value? This and other fns
     pub fn const_neg(&self) -> Self {
         let value = unsafe {
             LLVMConstNeg(self.as_value_ref())
