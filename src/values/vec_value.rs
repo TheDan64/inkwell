@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMConstInsertElement, LLVMConstExtractElement, LLVMIsConstantString, LLVMConstString, LLVMGetElementAsConstant};
+use llvm_sys::core::{LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMConstInsertElement, LLVMConstExtractElement, LLVMIsConstantString, LLVMConstString, LLVMGetElementAsConstant, LLVMGetAsString};
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
@@ -135,9 +135,24 @@ impl VectorValue {
     ///
     /// assert!(string.is_const_string());
     /// ```
+    // SubTypes: Impl only for VectorValue<IntValue<i8>>
     pub fn is_const_string(&self) -> bool {
         unsafe {
             LLVMIsConstantString(self.as_value_ref()) == 1
+        }
+    }
+
+    // SubTypes: Impl only for VectorValue<IntValue<i8>>
+    pub fn get_string_constant(&self) -> &CStr {
+        // REVIEW: Maybe need to check is_const_string?
+
+        let mut len = 0;
+        let ptr = unsafe {
+            LLVMGetAsString(self.as_value_ref(), &mut len)
+        };
+
+        unsafe {
+            CStr::from_ptr(ptr)
         }
     }
 

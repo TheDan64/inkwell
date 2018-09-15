@@ -984,4 +984,73 @@ fn test_string_values() {
     assert!(string_null.is_const_string());
     assert_eq!(string.get_type().get_element_type().into_int_type(), i8_type);
     assert_eq!(string_null.get_type().get_element_type().into_int_type(), i8_type);
+    assert_eq!(*string.get_string_constant(), *CString::new("my_string").unwrap());
+    assert_eq!(*string_null.get_string_constant(), *CString::new("my_string").unwrap());
+
+    // TODO: Test get_string_constant on non const... and non i8... (the latter should be
+    // prevented with subtypes eventually)
+}
+
+#[test]
+fn test_consts() {
+    let context = Context::create();
+    let bool_type = context.bool_type();
+    let i8_type = context.i8_type();
+    let i16_type = context.i16_type();
+    let i32_type = context.i32_type();
+    let i64_type = context.i64_type();
+    let i128_type = context.i128_type();
+    let f16_type = context.f16_type();
+    let f32_type = context.f32_type();
+    let f64_type = context.f64_type();
+    let f128_type = context.f128_type();
+    let ppc_f128_type = context.ppc_f128_type();
+    let bool_val = bool_type.const_all_ones();
+    let i8_val = i8_type.const_all_ones();
+    let i16_val = i16_type.const_all_ones();
+    let i32_val = i32_type.const_all_ones();
+    let i64_val = i64_type.const_all_ones();
+    let i128_val = i128_type.const_all_ones();
+    let f16_val = f16_type.const_float(1.2);
+    let f32_val = f32_type.const_float(3.4);
+    let f64_val = f64_type.const_float(5.6);
+    let f128_val = f128_type.const_float(7.8);
+    let ppc_f128_val = ppc_f128_type.const_float(9.0);
+
+    assert_eq!(bool_val.get_zero_extended_constant(), Some(1));
+    assert_eq!(i8_val.get_zero_extended_constant(), Some(u8::max_value() as u64));
+    assert_eq!(i16_val.get_zero_extended_constant(), Some(u16::max_value() as u64));
+    assert_eq!(i32_val.get_zero_extended_constant(), Some(u32::max_value() as u64));
+    assert_eq!(i64_val.get_zero_extended_constant(), Some(u64::max_value() as u64));
+    assert_eq!(i128_val.get_zero_extended_constant(), Some(u128::max_value() as u64));
+
+    // How does a bool get sign extended to -1??
+    assert_eq!(bool_val.get_sign_extended_constant(), Some(-1));
+    assert_eq!(i8_val.get_sign_extended_constant(), Some(-1));
+    assert_eq!(i16_val.get_sign_extended_constant(), Some(-1));
+    assert_eq!(i32_val.get_sign_extended_constant(), Some(-1));
+    assert_eq!(i64_val.get_sign_extended_constant(), Some(-1));
+    assert_eq!(i128_val.get_sign_extended_constant(), Some(-1));
+
+    assert_eq!(f16_val.get_constant(), Some((1.2001953125, false)));
+    assert_eq!(f32_val.get_constant(), Some((3.4000000953674316, false)));
+    assert_eq!(f64_val.get_constant(), Some((5.6, false)));
+    assert_eq!(f128_val.get_constant(), Some((7.8, false)));
+    assert_eq!(ppc_f128_val.get_constant(), Some((9.0, false)));
+
+    // Non const test
+    let builder = context.create_builder();
+    let module = context.create_module("fns");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[i32_type.into(), f32_type.into()], false);
+    let function = module.add_function("fn", fn_type, None);
+    let basic_block = context.append_basic_block(&function, "entry");
+
+    builder.position_at_end(&basic_block);
+
+    let i32_param = function.get_first_param().unwrap().into_int_value();
+    let f32_param = function.get_nth_param(1).unwrap().into_float_value();
+
+    assert!(i32_param.get_zero_extended_constant().is_none());
+    assert!(f32_param.get_constant().is_none());
 }

@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMConstFNeg, LLVMConstFAdd, LLVMConstFSub, LLVMConstFMul, LLVMConstFDiv, LLVMConstFRem, LLVMConstFPCast, LLVMConstFPToUI, LLVMConstFPToSI, LLVMConstFPTrunc, LLVMConstFPExt, LLVMConstFCmp};
+use llvm_sys::core::{LLVMConstFNeg, LLVMConstFAdd, LLVMConstFSub, LLVMConstFMul, LLVMConstFDiv, LLVMConstFRem, LLVMConstFPCast, LLVMConstFPToUI, LLVMConstFPToSI, LLVMConstFPTrunc, LLVMConstFPExt, LLVMConstFCmp, LLVMConstRealGetDouble};
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
@@ -162,6 +162,51 @@ impl FloatValue {
         };
 
         IntValue::new(value)
+    }
+
+    /// Determines whether or not a `FloatValue` is a constant.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f64_type = context.f64_type();
+    /// let f64_val = f64_type.const_float(1.2);
+    ///
+    /// assert!(f64_val.is_const());
+    /// ```
+    pub fn is_const(&self) -> bool {
+        self.float_value.is_const()
+    }
+
+    /// Obtains a constant `FloatValue`'s value and whether or not it lost info.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f64_type = context.f64_type();
+    /// let f64_1_2 = f64_type.const_float(1.2);
+    ///
+    /// assert_eq!(f64_1_2.get_constant(), Some((1.2, false)));
+    /// ```
+    pub fn get_constant(&self) -> Option<(f64, bool)> {
+        // Nothing bad happens as far as I can tell if we don't check if const
+        // unlike the int versions, but just doing this just in case and for consistency
+        if !self.is_const() {
+            return None;
+        }
+
+        let mut lossy = 0;
+        let constant = unsafe {
+            LLVMConstRealGetDouble(self.as_value_ref(), &mut lossy)
+        };
+
+        Some((constant, lossy == 1))
     }
 
     pub fn replace_all_uses_with(&self, other: FloatValue) {

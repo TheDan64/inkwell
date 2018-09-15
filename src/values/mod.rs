@@ -71,6 +71,12 @@ impl Value {
         }
     }
 
+    fn is_const(&self) -> bool {
+        unsafe {
+            LLVMIsConstant(self.value) == 1
+        }
+    }
+
     // TODOC: According to https://stackoverflow.com/questions/21593752/llvm-how-to-pass-a-name-to-constantint
     // you can't use set_name name on a constant(by can't, I mean it wont do anything), unless it's also a global.
     // So, you can set names on variables (ie a function parameter)
@@ -164,12 +170,8 @@ impl fmt::Debug for Value {
         let llvm_type = unsafe {
             CStr::from_ptr(LLVMPrintTypeToString(LLVMTypeOf(self.value)))
         };
-        let name = unsafe {
-            CStr::from_ptr(LLVMGetValueName(self.value))
-        };
-        let is_const = unsafe {
-            LLVMIsConstant(self.value) == 1
-        };
+        let name = self.get_name();
+        let is_const = self.is_const();
         let is_null = self.is_null();
         let is_undef = self.is_undef();
 

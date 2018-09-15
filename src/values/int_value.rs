@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMConstNot, LLVMConstNeg, LLVMConstNSWNeg, LLVMConstNUWNeg, LLVMConstAdd, LLVMConstNSWAdd, LLVMConstNUWAdd, LLVMConstSub, LLVMConstNSWSub, LLVMConstNUWSub, LLVMConstMul, LLVMConstNSWMul, LLVMConstNUWMul, LLVMConstUDiv, LLVMConstSDiv, LLVMConstSRem, LLVMConstURem, LLVMConstIntCast, LLVMConstXor, LLVMConstOr, LLVMConstAnd, LLVMConstExactSDiv, LLVMConstShl, LLVMConstLShr, LLVMConstAShr, LLVMConstUIToFP, LLVMConstSIToFP, LLVMConstIntToPtr, LLVMConstTrunc, LLVMConstSExt, LLVMConstZExt, LLVMConstTruncOrBitCast, LLVMConstSExtOrBitCast, LLVMConstZExtOrBitCast, LLVMConstBitCast, LLVMConstICmp};
+use llvm_sys::core::{LLVMConstNot, LLVMConstNeg, LLVMConstNSWNeg, LLVMConstNUWNeg, LLVMConstAdd, LLVMConstNSWAdd, LLVMConstNUWAdd, LLVMConstSub, LLVMConstNSWSub, LLVMConstNUWSub, LLVMConstMul, LLVMConstNSWMul, LLVMConstNUWMul, LLVMConstUDiv, LLVMConstSDiv, LLVMConstSRem, LLVMConstURem, LLVMConstIntCast, LLVMConstXor, LLVMConstOr, LLVMConstAnd, LLVMConstExactSDiv, LLVMConstShl, LLVMConstLShr, LLVMConstAShr, LLVMConstUIToFP, LLVMConstSIToFP, LLVMConstIntToPtr, LLVMConstTrunc, LLVMConstSExt, LLVMConstZExt, LLVMConstTruncOrBitCast, LLVMConstSExtOrBitCast, LLVMConstZExtOrBitCast, LLVMConstBitCast, LLVMConstICmp, LLVMConstIntGetZExtValue, LLVMConstIntGetSExtValue};
 #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
 use llvm_sys::core::LLVMConstExactUDiv;
 use llvm_sys::prelude::LLVMValueRef;
@@ -373,6 +373,71 @@ impl IntValue {
         };
 
         IntValue::new(value)
+    }
+
+    /// Determines whether or not an `IntValue` is a constant.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let i64_type = context.i64_type();
+    /// let i64_val = i64_type.const_int(12, false);
+    ///
+    /// assert!(i64_val.is_const());
+    /// ```
+    pub fn is_const(&self) -> bool {
+        self.int_value.is_const()
+    }
+
+    /// Obtains a constant `IntValue`'s zero extended value.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let i8_type = context.i8_type();
+    /// let i8_all_ones = i8_type.const_all_ones();
+    ///
+    /// assert_eq!(i8_all_ones.get_zero_extended_constant(), Some(255));
+    /// ```
+    pub fn get_zero_extended_constant(&self) -> Option<u64> {
+        // Garbage values are produced on non constant values
+        if !self.is_const() {
+            return None;
+        }
+
+        unsafe {
+            Some(LLVMConstIntGetZExtValue(self.as_value_ref()))
+        }
+    }
+
+    /// Obtains a constant `IntValue`'s sign extended value.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let i8_type = context.i8_type();
+    /// let i8_all_ones = i8_type.const_all_ones();
+    ///
+    /// assert_eq!(i8_all_ones.get_sign_extended_constant(), Some(-1));
+    /// ```
+    pub fn get_sign_extended_constant(&self) -> Option<i64> {
+        // Garbage values are produced on non constant values
+        if !self.is_const() {
+            return None;
+        }
+
+        unsafe {
+            Some(LLVMConstIntGetSExtValue(self.as_value_ref()))
+        }
     }
 
     pub fn replace_all_uses_with(&self, other: IntValue) {
