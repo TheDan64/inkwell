@@ -160,7 +160,7 @@ env:
     - RUSTFLAGS="-C link-dead-code -C target-cpu=native -l ffi"
 
 after_success: |
-  if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
+  if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
     cargo tarpaulin --features "llvm${LLVM_VERSION_DASH}" --ignore-tests --out Xml
     bash <(curl -s https://codecov.io/bash)
   fi
