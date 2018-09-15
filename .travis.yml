@@ -6,7 +6,7 @@ cache:
     - /home/travis/.cargo
 
 before_cache:
-  - RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin # Could write script to apply --force if newer version available
+  - RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo +nightly install cargo-tarpaulin
   - rm -rf /home/travis/.cargo/registry
 include_base: &BASE
   addons:
@@ -158,7 +158,7 @@ env:
 
 after_success: |
   if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
-    cargo tarpaulin --features "llvm${LLVM_VERSION_DASH}" --ignore-tests --out Xml
+    cargo +nightly tarpaulin --features "llvm${LLVM_VERSION_DASH}" --ignore-tests --out Xml
     bash <(curl -s https://codecov.io/bash)
   fi
 
