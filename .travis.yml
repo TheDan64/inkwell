@@ -47,7 +47,9 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.6-dev
-
+      rust:
+        - stable
+        - nightly
     - env:
         - LLVM_VERSION="3.7"
       <<: *BASE
@@ -59,6 +61,9 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.7-dev
+      rust:
+        - stable
+        - nightly
     - env:
         - LLVM_VERSION="3.8"
       <<: *BASE
@@ -70,6 +75,9 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.8-dev
+      rust:
+        - stable
+        - nightly
     # 3.9 seems to have a linking issue :/
     # - env:
     #     - LLVM_VERSION="3.9"
@@ -93,6 +101,9 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-4.0-dev
+      rust:
+        - stable
+        - nightly
     - env:
         - LLVM_VERSION="5.0"
       <<: *BASE
@@ -115,6 +126,9 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-6.0-dev
+      rust:
+        - stable
+        - nightly
     - deploy: # Documentation build; Only latest supported LLVM version for now
         provider: pages
         skip-cleanup: true
@@ -159,7 +173,7 @@ env:
 after_success: |
   if [[ "$TRAVIS_RUST_VERSION" == stable ]]; then
     cargo +nightly tarpaulin --features "llvm${LLVM_VERSION_DASH}" --ignore-tests --out Xml
-    bash <(curl -s https://codecov.io/bash)
+    bash <(curl -s https://codecov.io/bash) || travis_terminate 1
   fi
 
 notifications:
