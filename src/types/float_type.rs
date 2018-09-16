@@ -1,13 +1,13 @@
-use llvm_sys::core::{LLVMConstReal, LLVMConstNull, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMPPCFP128Type, LLVMConstRealOfStringAndSize, LLVMX86FP80Type};
+use llvm_sys::core::{LLVMConstReal, LLVMConstNull, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMPPCFP128Type, LLVMConstRealOfStringAndSize, LLVMX86FP80Type, LLVMConstArray};
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfFloat;
-use llvm_sys::prelude::LLVMTypeRef;
+use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use AddressSpace;
 use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, PointerType, FunctionType, BasicTypeEnum, ArrayType, VectorType};
-use values::{FloatValue, GenericValue, PointerValue, IntValue};
+use values::{AsValueRef, ArrayValue, FloatValue, GenericValue, PointerValue, IntValue};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct FloatType {
@@ -73,7 +73,7 @@ impl FloatType {
         self.float_type.size_of()
     }
 
-    fn get_alignment(&self) -> IntValue {
+    pub fn get_alignment(&self) -> IntValue {
         self.float_type.get_alignment()
     }
 
@@ -227,6 +227,17 @@ impl FloatType {
         };
 
         GenericValue::new(value)
+    }
+
+    pub fn const_array(&self, values: &[FloatValue]) -> ArrayValue {
+        let mut values: Vec<LLVMValueRef> = values.iter()
+                                                  .map(|val| val.as_value_ref())
+                                                  .collect();
+        let value = unsafe {
+            LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32)
+        };
+
+        ArrayValue::new(value)
     }
 }
 

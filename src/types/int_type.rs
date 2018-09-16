@@ -1,13 +1,13 @@
-use llvm_sys::core::{LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMConstInt, LLVMConstNull, LLVMConstAllOnes, LLVMIntType, LLVMGetIntTypeWidth, LLVMConstIntOfStringAndSize, LLVMConstIntOfArbitraryPrecision};
+use llvm_sys::core::{LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMConstInt, LLVMConstNull, LLVMConstAllOnes, LLVMIntType, LLVMGetIntTypeWidth, LLVMConstIntOfStringAndSize, LLVMConstIntOfArbitraryPrecision, LLVMConstArray};
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfInt;
-use llvm_sys::prelude::LLVMTypeRef;
+use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use AddressSpace;
 use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, ArrayType, BasicTypeEnum, VectorType, PointerType, FunctionType};
-use values::{GenericValue, IntValue, PointerValue};
+use values::{AsValueRef, ArrayValue, GenericValue, IntValue, PointerValue};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct IntType {
@@ -296,7 +296,7 @@ impl IntType {
         self.int_type.size_of()
     }
 
-    fn get_alignment(&self) -> IntValue {
+    pub fn get_alignment(&self) -> IntValue {
         self.int_type.get_alignment()
     }
 
@@ -330,6 +330,17 @@ impl IntType {
         };
 
         GenericValue::new(value)
+    }
+
+    pub fn const_array(&self, values: &[IntValue]) -> ArrayValue {
+        let mut values: Vec<LLVMValueRef> = values.iter()
+                                                  .map(|val| val.as_value_ref())
+                                                  .collect();
+        let value = unsafe {
+            LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32)
+        };
+
+        ArrayValue::new(value)
     }
 }
 

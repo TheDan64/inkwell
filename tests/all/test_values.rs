@@ -116,7 +116,7 @@ fn test_set_get_name() {
     let f64_val = f64_type.const_float(0.0);
     let f128_val = f128_type.const_float(0.0);
     let ptr_val = bool_type.const_null_ptr();
-    let array_val = array_type.const_array(&[f64_val]);
+    let array_val = f64_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
     let vec_val = VectorType::const_vector(&[i8_val]);
     let ppc_f128_val = ppc_f128_type.const_float(0.0);
@@ -245,6 +245,8 @@ fn test_undef() {
     let array_type = f64_type.array_type(42);
     let ppc_f128_type = context.ppc_f128_type();
 
+    assert_eq!(array_type.get_element_type().into_float_type(), f64_type);
+
     let bool_val = bool_type.const_int(0, false);
     let i8_val = i8_type.const_int(0, false);
     let i16_val = i16_type.const_int(0, false);
@@ -256,7 +258,7 @@ fn test_undef() {
     let f64_val = f64_type.const_float(0.0);
     let f128_val = f128_type.const_float(0.0);
     let ptr_val = bool_type.const_null_ptr();
-    let array_val = array_type.const_array(&[f64_val]);
+    let array_val = f64_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
     let vec_val = VectorType::const_vector(&[i8_val]);
     let ppc_f128_val = ppc_f128_type.const_float(0.0);
@@ -488,7 +490,7 @@ fn test_metadata() {
     let f128_val = f128_type.const_float(0.0);
     // let ppc_f128_val = ppc_f128_type.const_float(0.0);
     let ptr_val = bool_type.ptr_type(AddressSpace::Generic).const_null();
-    let array_val = array_type.const_array(&[f64_val]);
+    let array_val = f64_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
     let vec_val = VectorType::const_vector(&[i8_val]);
     let fn_val = module.add_function("my_fn", fn_type, None);
@@ -779,11 +781,11 @@ fn test_global_byte_array() {
         chars.push(i8_type.const_int(chr as u64, false));
     }
 
-    let const_str_array = i8_array_type.const_array(chars.as_ref());
+    let const_str_array = i8_type.const_array(chars.as_ref());
 
     global_string.set_initializer(&const_str_array);
 
-    // TODO: Assert something?
+    assert!(module.verify().is_ok());
 }
 
 #[test]
@@ -996,8 +998,23 @@ fn test_string_values() {
     assert_eq!(*string.get_string_constant(), *CString::new("my_string").unwrap());
     assert_eq!(*string_null.get_string_constant(), *CString::new("my_string").unwrap());
 
-    // TODO: Test get_string_constant on non const... and non i8... (the latter should be
-    // prevented with subtypes eventually)
+    let i8_val = i8_type.const_int(33, false);
+    let i8_val2 = i8_type.const_int(43, false);
+    let non_string_vec_i8 = VectorType::const_vector(&[i8_val, i8_val2]);
+
+    // TODOC: Will still interpret vec as string even if not generated with const_string:
+    assert_eq!(*non_string_vec_i8.get_string_constant(), *CString::new("!+").unwrap());
+
+    let i32_type = context.i32_type();
+    let i32_val = i32_type.const_int(33, false);
+    let i32_val2 = i32_type.const_int(43, false);
+    let non_string_vec_i32 = VectorType::const_vector(&[i32_val, i32_val2, i32_val2]);
+
+    // TODOC: Will still interpret vec with non i8 but in unexpected ways:
+    // We may want to restrict this to VectorValue<IntValue<i8>>...
+    assert_eq!(*non_string_vec_i32.get_string_constant(), *CString::new("!").unwrap());
+
+    // TODO: Test get_string_constant on non const...
 }
 
 #[test]

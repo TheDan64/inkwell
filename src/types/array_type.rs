@@ -6,7 +6,7 @@ use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, BasicTypeEnum, PointerType, FunctionType};
-use values::{BasicValue, ArrayValue, PointerValue, IntValue};
+use values::{AsValueRef, BasicValue, ArrayValue, PointerValue, IntValue};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct ArrayType {
@@ -36,7 +36,7 @@ impl ArrayType {
         None
     }
 
-    fn get_alignment(&self) -> IntValue {
+    pub fn get_alignment(&self) -> IntValue {
         self.array_type.get_alignment()
     }
 
@@ -56,7 +56,7 @@ impl ArrayType {
         self.array_type.array_type(size)
     }
 
-    pub fn const_array<V: BasicValue>(&self, values: &[V]) -> ArrayValue {
+    pub fn const_array(&self, values: &[ArrayValue]) -> ArrayValue {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();
@@ -98,6 +98,12 @@ impl ArrayType {
     pub fn get_undef(&self) -> ArrayValue {
         ArrayValue::new(self.array_type.get_undef())
     }
+
+    // SubType: ArrayType<BT> -> BT?
+    pub fn get_element_type(&self) -> BasicTypeEnum {
+        self.array_type.get_element_type()
+    }
+
 }
 
 impl AsTypeRef for ArrayType {
