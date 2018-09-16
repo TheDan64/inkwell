@@ -256,6 +256,20 @@ fn test_const_null() {
     let vec_type = f64_type.vec_type(42);
     let array_type = f64_type.array_type(42);
 
+    bool_type.size_of();
+    f32_type.size_of();
+    struct_type.size_of();
+    ptr_type.size_of();
+    vec_type.size_of();
+    array_type.size_of();
+
+    bool_type.get_alignment();
+    f32_type.get_alignment();
+    struct_type.get_alignment();
+    ptr_type.get_alignment();
+    vec_type.get_alignment();
+    array_type.get_alignment();
+
     assert!(void_type.const_null_ptr().is_null());
     assert!(bool_type.const_null_ptr().is_null());
     assert!(i8_type.const_null_ptr().is_null());

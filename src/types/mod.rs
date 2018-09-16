@@ -2,6 +2,7 @@ mod array_type;
 mod enums;
 mod float_type;
 mod fn_type;
+#[deny(missing_docs)]
 mod int_type;
 mod ptr_type;
 mod struct_type;

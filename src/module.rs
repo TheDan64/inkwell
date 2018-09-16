@@ -1253,9 +1253,7 @@ impl Module {
 
             // Newer LLVM versions don't use an out ptr anymore which was really straightforward...
             // Here we assign an error handler to extract the error message, if any, for us.
-            unsafe {
-                context.set_diagnostic_handler(get_error_str_diagnostic_handler, char_ptr_ptr);
-            }
+            context.set_diagnostic_handler(get_error_str_diagnostic_handler, char_ptr_ptr);
 
             let code = unsafe {
                 LLVMLinkModules2(self.module.get(), other.module.get())
