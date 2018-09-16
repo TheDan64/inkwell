@@ -1043,7 +1043,10 @@ fn test_consts() {
     let f128_val = f128_type.const_float(7.8);
     let ppc_f128_val = ppc_f128_type.const_float(9.0);
     let vec_val = VectorType::const_vector(&[i8_val]);
+    let array_val = i8_type.const_array(&[i8_val]);
     let arbitrary_precision_int = i64_type.const_int_arbitrary_precision(&[1, 2]);
+
+    assert!(array_val.is_const());
 
     assert_eq!(*arbitrary_precision_int.print_to_string(), *CString::new("i64 1").unwrap());
 

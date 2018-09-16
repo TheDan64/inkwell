@@ -70,6 +70,24 @@ impl ArrayValue {
     pub fn replace_all_uses_with(&self, other: ArrayValue) {
         self.array_value.replace_all_uses_with(other.as_value_ref())
     }
+
+    /// Determines whether or not an `ArrayValue` is a constant.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let i64_type = context.i64_type();
+    /// let i64_val = i64_type.const_int(23, false);
+    /// let array_val = i64_type.const_array(&[i64_val]);
+    ///
+    /// assert!(array_val.is_const());
+    /// ```
+    pub fn is_const(&self) -> bool {
+        self.array_value.is_const()
+    }
 }
 
 impl AsValueRef for ArrayValue {
@@ -83,9 +101,7 @@ impl fmt::Debug for ArrayValue {
         let llvm_value = self.print_to_string();
         let llvm_type = self.get_type();
         let name = self.get_name();
-        let is_const = unsafe {
-            LLVMIsConstant(self.as_value_ref()) == 1
-        };
+        let is_const = self.is_const();
         let is_null = self.is_null();
         let is_const_array = unsafe {
             !LLVMIsAConstantArray(self.as_value_ref()).is_null()
@@ -94,7 +110,7 @@ impl fmt::Debug for ArrayValue {
             !LLVMIsAConstantDataArray(self.as_value_ref()).is_null()
         };
 
-        f.debug_struct("Value")
+        f.debug_struct("ArrayValue")
             .field("name", &name)
             .field("address", &self.as_value_ref())
             .field("is_const", &is_const)

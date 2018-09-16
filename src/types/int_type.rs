@@ -212,7 +212,7 @@ impl IntType {
     /// ```no_run
     /// use inkwell::context::Context;
     ///
-    /// let context = Context::new();
+    /// let context = Context::create();
     /// let i8_type = context.i8_type();
     /// let i8_val = i8_type.const_int_from_string("0121", 10);
     ///
@@ -248,7 +248,7 @@ impl IntType {
     ///
     /// let context = Context::create();
     /// let i64_type = context.i64_type();
-    /// let i64_val = context.const_int_arbitrary_precision(&[1, 2]);
+    /// let i64_val = i64_type.const_int_arbitrary_precision(&[1, 2]);
     /// ```
     pub fn const_int_arbitrary_precision(&self, words: &[u64]) -> IntValue {
         let value = unsafe {
@@ -366,7 +366,7 @@ impl IntType {
     ///
     /// let context = Context::create();
     /// let i8_type = context.i8_type();
-    /// let i8_vector_type = i8_type.vector_type(3);
+    /// let i8_vector_type = i8_type.vec_type(3);
     ///
     /// assert_eq!(i8_vector_type.get_size(), 3);
     /// assert_eq!(i8_vector_type.get_element_type().into_int_type(), i8_type);
@@ -433,7 +433,7 @@ impl IntType {
     ///
     /// let context = Context::create();
     /// let i8_type = context.i8_type();
-    /// let i8_type_alignment = i8_type.alignment_of();
+    /// let i8_type_alignment = i8_type.get_alignment();
     /// ```
     pub fn get_alignment(&self) -> IntValue {
         self.int_type.get_alignment()
