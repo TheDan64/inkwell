@@ -1,5 +1,6 @@
 mod array_type;
 mod enums;
+#[deny(missing_docs)]
 mod float_type;
 mod fn_type;
 #[deny(missing_docs)]

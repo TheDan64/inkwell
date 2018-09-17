@@ -35,6 +35,7 @@ impl LLVMString {
     /// Don't use this if it's not necessary. You likely need to allocate
     /// a CString as input and then LLVM will likely allocate their own string
     /// anyway.
+    #[allow(dead_code)]
     fn create(bytes: *const c_char) -> LLVMString {
         let ptr = unsafe {
             LLVMCreateMessage(bytes)

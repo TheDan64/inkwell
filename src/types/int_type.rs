@@ -409,7 +409,7 @@ impl IntType {
         self.int_type.is_sized()
     }
 
-    /// Gets the size of this `IntType`. Value may vary depending on the target machine.
+    /// Gets the size of this `IntType`. Value may vary depending on the target architecture.
     ///
     /// # Example
     ///
@@ -424,7 +424,7 @@ impl IntType {
         self.int_type.size_of()
     }
 
-    /// Gets the aligment of this `IntType`. Value may vary depending on the target machine.
+    /// Gets the aligment of this `IntType`. Value may vary depending on the target architecture.
     ///
     /// # Example
     ///
@@ -480,7 +480,7 @@ impl IntType {
 
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of an `IntType` to stderr. Not available in newer LLVM versions.
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm5-0")))]
+    #[cfg(any(feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0"))]
     pub fn print_to_stderr(&self) {
         self.int_type.print_to_stderr()
     }
@@ -516,7 +516,6 @@ impl IntType {
     /// # Example
     /// ```no_run
     /// use inkwell::context::Context;
-    /// use inkwell::AddressSpace;
     ///
     /// let context = Context::create();
     /// let i8_type = context.i8_type();

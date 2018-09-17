@@ -6,7 +6,7 @@ use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, BasicTypeEnum, PointerType, FunctionType};
-use values::{AsValueRef, BasicValue, ArrayValue, PointerValue, IntValue};
+use values::{AsValueRef, ArrayValue, PointerValue, IntValue};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct ArrayType {

@@ -1,7 +1,7 @@
 use llvm_sys::core::{LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMConstInsertElement, LLVMConstExtractElement, LLVMIsConstantString, LLVMConstString, LLVMGetElementAsConstant, LLVMGetAsString, LLVMConstSelect, LLVMConstShuffleVector};
 use llvm_sys::prelude::LLVMValueRef;
 
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 
 use support::LLVMString;
 use types::{VectorType};

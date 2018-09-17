@@ -3,7 +3,7 @@ use llvm_sys::core::{LLVMConstNot, LLVMConstNeg, LLVMConstNSWNeg, LLVMConstNUWNe
 use llvm_sys::core::LLVMConstExactUDiv;
 use llvm_sys::prelude::LLVMValueRef;
 
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 
 use IntPredicate;
 use support::LLVMString;

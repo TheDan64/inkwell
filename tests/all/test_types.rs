@@ -365,5 +365,6 @@ fn test_ptr_type() {
     let i8_type = context.i8_type();
     let ptr_type = i8_type.ptr_type(AddressSpace::Generic);
 
+    assert_eq!(ptr_type.get_address_space(), AddressSpace::Generic);
     assert_eq!(ptr_type.get_element_type().into_int_type(), i8_type);
 }

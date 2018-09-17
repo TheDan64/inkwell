@@ -2,6 +2,7 @@ use llvm_sys::core::{LLVMConstVector, LLVMConstNull, LLVMGetVectorSize, LLVMCons
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use AddressSpace;
+use context::ContextRef;
 use support::LLVMString;
 use types::{ArrayType, BasicTypeEnum, Type, traits::AsTypeRef, FunctionType, PointerType};
 use values::{AsValueRef, ArrayValue, BasicValue, PointerValue, VectorValue, IntValue};
@@ -123,6 +124,10 @@ impl VectorType {
         };
 
         ArrayValue::new(value)
+    }
+
+    pub fn get_context(&self) -> ContextRef {
+        self.vec_type.get_context()
     }
 }
 
