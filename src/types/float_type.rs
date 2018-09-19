@@ -1,5 +1,3 @@
-//! This module contains functions for working with `FloatType`s and generating types and values from them.
-
 use llvm_sys::core::{LLVMConstReal, LLVMConstNull, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMPPCFP128Type, LLVMConstRealOfStringAndSize, LLVMX86FP80Type, LLVMConstArray};
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfFloat;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
@@ -399,7 +397,7 @@ impl FloatType {
         self.float_type.print_to_stderr()
     }
 
-    /// Creates an undefined instance of an `FloatType`.
+    /// Creates an undefined instance of a `FloatType`.
     ///
     /// # Example
     /// ```no_run

@@ -1,5 +1,3 @@
-//! This module contains functions for working with `IntType`s and generating values from them.
-
 use llvm_sys::core::{LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMConstInt, LLVMConstNull, LLVMConstAllOnes, LLVMIntType, LLVMGetIntTypeWidth, LLVMConstIntOfStringAndSize, LLVMConstIntOfArbitraryPrecision, LLVMConstArray};
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfInt;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};

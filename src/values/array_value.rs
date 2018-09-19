@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMIsConstant, LLVMIsAConstantArray, LLVMIsAConstantDataArray};
+use llvm_sys::core::{LLVMIsAConstantArray, LLVMIsAConstantDataArray};
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;

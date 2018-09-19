@@ -8,6 +8,7 @@ mod int_type;
 mod ptr_type;
 mod struct_type;
 mod traits;
+#[deny(missing_docs)]
 mod vec_type;
 mod void_type;
 

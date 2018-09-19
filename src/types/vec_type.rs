@@ -7,8 +7,7 @@ use support::LLVMString;
 use types::{ArrayType, BasicTypeEnum, Type, traits::AsTypeRef, FunctionType, PointerType};
 use values::{AsValueRef, ArrayValue, BasicValue, PointerValue, VectorValue, IntValue};
 
-// REVIEW: vec_type() is impl for IntType & FloatType. Need to
-// find out if it is valid for other types too. Maybe PointerType?
+/// A `VectorType` is the type of a multiple value SIMD constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct VectorType {
     vec_type: Type,
@@ -24,6 +23,19 @@ impl VectorType {
     }
 
     // REVIEW: Can be unsized if inner type is opaque struct
+    /// Gets whether or not this `VectorType` is sized or not.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_vec_type = f32_type.vec_type(40);
+    ///
+    /// assert!(f32_vec_type.is_sized());
+    /// ```
     pub fn is_sized(&self) -> bool {
         self.vec_type.is_sized()
     }
@@ -31,6 +43,18 @@ impl VectorType {
     // TODO: impl only for VectorType<!StructType<Opaque>>
     // REVIEW: What about Opaque struct hiding in deeper levels?
     // like VectorType<ArrayType<StructType<Opaque>>>?
+    /// Gets the size of this `VectorType`. Value may vary depending on the target architecture.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_vec_type = f32_type.vec_type(3);
+    /// let f32_vec_type_size = f32_vec_type.size_of();
+    /// ```
     pub fn size_of(&self) -> Option<IntValue> {
         if self.is_sized() {
             return Some(self.vec_type.size_of())
@@ -39,10 +63,36 @@ impl VectorType {
         None
     }
 
+    /// Gets the aligment of this `VectorType`. Value may vary depending on the target architecture.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_vec_type = f32_type.vec_type(7);
+    /// let f32_type_alignment = f32_vec_type.get_alignment();
+    /// ```
     pub fn get_alignment(&self) -> IntValue {
         self.vec_type.get_alignment()
     }
 
+    /// Gets the size of this `VectorType`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_vector_type = f32_type.vec_type(3);
+    ///
+    /// assert_eq!(f32_vector_type.get_size(), 3);
+    /// assert_eq!(f32_vector_type.get_element_type().into_float_type(), f32_type);
+    /// ```
     pub fn get_size(&self) -> u32 {
         unsafe {
             LLVMGetVectorSize(self.as_type_ref())
@@ -57,6 +107,21 @@ impl VectorType {
     // REVIEW: Maybe we could make this use &self if the vector size
     // is stored as a const and the input values took a const size?
     // Something like: values: &[&V; self.size]. Doesn't sound possible though
+    /// Creates a constant `VectorValue`.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::types::VectorType;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_val = f32_type.const_float(0.);
+    /// let f32_val2 = f32_type.const_float(2.);
+    /// let f32_vec_val = VectorType::const_vector(&[f32_val, f32_val2]);
+    ///
+    /// assert!(f32_vec_val.is_constant_vector());
+    /// ```
     pub fn const_vector<V: BasicValue>(values: &[V]) -> VectorValue {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
@@ -68,10 +133,44 @@ impl VectorType {
         VectorValue::new(vec_value)
     }
 
+    /// Creates a `PointerValue` representing a constant value of zero (null pointer) pointing to this `VectorType`.
+    /// It will be automatically assigned this `FloatType`'s `Context`.
+    ///
+    /// # Example
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::types::FloatType;
+    ///
+    /// // Global Context
+    /// let f32_type = FloatType::f32_type();
+    /// let f32_vec_type = f32_type.vec_type(7);
+    /// let f32_value = f32_vec_type.const_null_ptr();
+    ///
+    /// // Custom Context
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_vec_type = f32_type.vec_type(7);
+    /// let f32_value = f32_vec_type.const_null_ptr();
+    /// ```
     pub fn const_null_ptr(&self) -> PointerValue {
         self.vec_type.const_null_ptr()
     }
 
+    /// Creates a constant null (zero) value of this `FloatType`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_vec_type = f32_type.vec_type(7);
+    /// let f32_vec_zero = f32_vec_type.const_null();
+    ///
+    /// assert!(f32_vec_zero.is_null());
+    /// assert_eq!(f32_vec_zero.print_to_string().to_string(), "f32 0");
+    /// ```
     pub fn const_null(&self) -> VectorValue {
         let null = unsafe {
             LLVMConstNull(self.as_type_ref())
@@ -80,41 +179,145 @@ impl VectorType {
         VectorValue::new(null)
     }
 
+    /// Prints the definition of a `VectorType` to a `LLVMString`.
     pub fn print_to_string(&self) -> LLVMString {
         self.vec_type.print_to_string()
     }
 
     // See Type::print_to_stderr note on 5.0+ status
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm5-0")))]
+    /// Prints the definition of an `IntType` to stderr. Not available in newer LLVM versions.
+    #[cfg(any(feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0"))]
     pub fn print_to_stderr(&self) {
         self.vec_type.print_to_stderr()
     }
 
+    /// Creates an undefined instance of a `VectorType`.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::AddressSpace;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_vec_type = f32_type.vec_type(3);
+    /// let f32_vec_undef = f32_vec_type.get_undef();
+    ///
+    /// assert!(f32_vec_undef.is_undef());
+    /// ```
     pub fn get_undef(&self) -> VectorValue {
         VectorValue::new(self.vec_type.get_undef())
     }
 
     // SubType: VectorType<BT> -> BT?
+    /// Gets the element type of this `VectorType`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_vector_type = f32_type.vec_type(3);
+    ///
+    /// assert_eq!(f32_vector_type.get_size(), 3);
+    /// assert_eq!(f32_vector_type.get_element_type().into_float_type(), f32_type);
+    /// ```
     pub fn get_element_type(&self) -> BasicTypeEnum {
         self.vec_type.get_element_type()
     }
 
+    /// Creates a `VectorType` with this `VectorType` for its element type.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_vector_type = f32_type.vec_type(3);
+    /// let f32_vector_vector_type = f32_vector_type.vec_type(3);
+    ///
+    /// assert_eq!(f32_vector_vector_type.get_size(), 3);
+    /// assert_eq!(f32_vector_vector_type.get_element_type().into_vector_type(), f32_vector_type);
+    /// ```
     pub fn vec_type(&self, size: u32) -> VectorType {
         self.vec_type.vec_type(size)
     }
 
+    /// Creates a `PointerType` with this `VectorType` for its element type.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::AddressSpace;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_vec_type = f32_type.vec_type(3);
+    /// let f32_vec_ptr_type = f32_vec_type.ptr_type(AddressSpace::Generic);
+    ///
+    /// assert_eq!(f32_vec_ptr_type.get_element_type().into_vector_type(), f32_vec_type);
+    /// ```
     pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
         self.vec_type.ptr_type(address_space)
     }
 
+    /// Creates a `FunctionType` with this `VectorType` for its return type.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_vec_type = f32_type.vec_type(3);
+    /// let fn_type = f32_vec_type.fn_type(&[], false);
+    /// ```
     pub fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
         self.vec_type.fn_type(param_types, is_var_args)
     }
 
+    /// Creates an `ArrayType` with this `VectorType` for its element type.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_vec_type = f32_type.vec_type(3);
+    /// let f32_vec_array_type = f32_vec_type.array_type(3);
+    ///
+    /// assert_eq!(f32_vec_array_type.len(), 3);
+    /// assert_eq!(f32_vec_array_type.get_element_type().into_vector_type(), f32_vec_type);
+    /// ```
     pub fn array_type(&self, size: u32) -> ArrayType {
         self.vec_type.array_type(size)
     }
 
+    /// Creates a constant `ArrayValue`.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::types::VectorType;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_val = f32_type.const_float(0.);
+    /// let f32_val2 = f32_type.const_float(2.);
+    /// let f32_vec_type = f32_type.vec_type(2);
+    /// let f32_vec_val = VectorType::const_vector(&[f32_val, f32_val2]);
+    /// let f32_array = f32_vec_type.const_array(&[f32_vec_val, f32_vec_val]);
+    ///
+    /// assert!(f32_array.is_const());
+    /// ```
     pub fn const_array(&self, values: &[VectorValue]) -> ArrayValue {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
@@ -126,6 +329,19 @@ impl VectorType {
         ArrayValue::new(value)
     }
 
+    /// Gets a reference to the `Context` this `VectorType` was created in.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_vec_type = f32_type.vec_type(7);
+    ///
+    /// assert_eq!(*f32_vec_type.get_context(), context);
+    /// ```
     pub fn get_context(&self) -> ContextRef {
         self.vec_type.get_context()
     }
