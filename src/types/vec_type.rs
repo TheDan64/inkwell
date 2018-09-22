@@ -63,7 +63,7 @@ impl VectorType {
         None
     }
 
-    /// Gets the aligment of this `VectorType`. Value may vary depending on the target architecture.
+    /// Gets the alignment of this `VectorType`. Value may vary depending on the target architecture.
     ///
     /// # Example
     ///
@@ -134,7 +134,7 @@ impl VectorType {
     }
 
     /// Creates a `PointerValue` representing a constant value of zero (null pointer) pointing to this `VectorType`.
-    /// It will be automatically assigned this `FloatType`'s `Context`.
+    /// It will be automatically assigned this `VectorType`'s `Context`.
     ///
     /// # Example
     /// ```
@@ -144,19 +144,23 @@ impl VectorType {
     /// // Global Context
     /// let f32_type = FloatType::f32_type();
     /// let f32_vec_type = f32_type.vec_type(7);
-    /// let f32_value = f32_vec_type.const_null_ptr();
+    /// let f32_vec_ptr_value = f32_vec_type.const_null_ptr();
+    ///
+    /// assert!(f32_vec_ptr_value.is_null());
     ///
     /// // Custom Context
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
     /// let f32_vec_type = f32_type.vec_type(7);
-    /// let f32_value = f32_vec_type.const_null_ptr();
+    /// let f32_vec_ptr_value = f32_vec_type.const_null_ptr();
+    ///
+    /// assert!(f32_vec_ptr_value.is_null());
     /// ```
     pub fn const_null_ptr(&self) -> PointerValue {
         self.vec_type.const_null_ptr()
     }
 
-    /// Creates a constant null (zero) value of this `FloatType`.
+    /// Creates a constant null (zero) value of this `VectorType`.
     ///
     /// # Example
     ///
@@ -169,7 +173,6 @@ impl VectorType {
     /// let f32_vec_zero = f32_vec_type.const_null();
     ///
     /// assert!(f32_vec_zero.is_null());
-    /// assert_eq!(f32_vec_zero.print_to_string().to_string(), "f32 0");
     /// ```
     pub fn const_null(&self) -> VectorValue {
         let null = unsafe {

@@ -1,3 +1,4 @@
+#[deny(missing_docs)]
 mod array_type;
 mod enums;
 #[deny(missing_docs)]
@@ -5,6 +6,7 @@ mod float_type;
 mod fn_type;
 #[deny(missing_docs)]
 mod int_type;
+#[deny(missing_docs)]
 mod ptr_type;
 mod struct_type;
 mod traits;

@@ -214,7 +214,7 @@ impl FloatType {
         self.float_type.size_of()
     }
 
-    /// Gets the aligment of this `FloatType`. Value may vary depending on the target architecture.
+    /// Gets the alignment of this `FloatType`. Value may vary depending on the target architecture.
     ///
     /// # Example
     ///
@@ -402,7 +402,6 @@ impl FloatType {
     /// # Example
     /// ```no_run
     /// use inkwell::context::Context;
-    /// use inkwell::AddressSpace;
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();

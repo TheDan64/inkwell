@@ -422,7 +422,7 @@ impl IntType {
         self.int_type.size_of()
     }
 
-    /// Gets the aligment of this `IntType`. Value may vary depending on the target architecture.
+    /// Gets the alignment of this `IntType`. Value may vary depending on the target architecture.
     ///
     /// # Example
     ///
