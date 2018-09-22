@@ -211,7 +211,10 @@ impl PointerType {
         PointerValue::new(self.ptr_type.const_null())
     }
 
-    /// Creates a constant null (zero) value of this `PointerType`.
+    // REVIEW: Unlike the other const_zero functions, this one becomes null instead of a 0 value. Maybe remove?
+    /// Creates a constant *null* value of this `PointerType`.
+    /// This is practically the same as calling `const_null` for this particular type and
+    /// so this function may be removed in the future.
     ///
     /// # Example
     ///
