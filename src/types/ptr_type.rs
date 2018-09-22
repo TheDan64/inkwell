@@ -1,11 +1,11 @@
-use llvm_sys::core::{LLVMGetPointerAddressSpace, LLVMConstNull, LLVMConstArray};
+use llvm_sys::core::{LLVMGetPointerAddressSpace, LLVMConstArray};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use AddressSpace;
 use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
-use types::{Type, BasicTypeEnum, ArrayType, FunctionType, VectorType};
+use types::{AnyTypeEnum, Type, BasicTypeEnum, ArrayType, FunctionType, VectorType};
 use values::{AsValueRef, ArrayValue, PointerValue, IntValue};
 
 /// A `PointerType` is the type of a pointer constant or variable.
@@ -183,31 +183,32 @@ impl PointerType {
         self.ptr_type.print_to_stderr()
     }
 
-    /// Creates a `PointerValue` representing a constant value of zero (null pointer) pointing to this `PointerType`.
+    /// Creates a null `PointerValue` of this `PointerType`.
     /// It will be automatically assigned this `PointerType`'s `Context`.
     ///
     /// # Example
     /// ```
+    /// use inkwell::AddressSpace;
     /// use inkwell::context::Context;
     /// use inkwell::types::FloatType;
     ///
     /// // Global Context
     /// let f32_type = FloatType::f32_type();
-    /// let f32_array_type = f32_type.array_type(3);
-    /// let f32_array_ptr_value = f32_array_type.const_null_ptr();
+    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
+    /// let f32_ptr_null = f32_ptr_type.const_null();
     ///
-    /// assert!(f32_array_ptr_value.is_null());
+    /// assert!(f32_ptr_null.is_null());
     ///
     /// // Custom Context
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// let f32_array_type = f32_type.array_type(3);
-    /// let f32_array_ptr_value = f32_array_type.const_null_ptr();
+    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
+    /// let f32_ptr_null = f32_ptr_type.const_null();
     ///
-    /// assert!(f32_array_ptr_value.is_null());
+    /// assert!(f32_ptr_null.is_null());
     /// ```
-    pub fn const_null_ptr(&self) -> PointerValue {
-        self.ptr_type.const_null_ptr()
+    pub fn const_null(&self) -> PointerValue {
+        PointerValue::new(self.ptr_type.const_null())
     }
 
     /// Creates a constant null (zero) value of this `PointerType`.
@@ -215,22 +216,16 @@ impl PointerType {
     /// # Example
     ///
     /// ```no_run
-    /// use inkwell::context::Context;
     /// use inkwell::AddressSpace;
+    /// use inkwell::context::Context;
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
-    /// let f32_ptr_zero = f32_ptr_type.const_null();
-    ///
-    /// assert!(f32_ptr_zero.is_null());
+    /// let f32_ptr_zero = f32_ptr_type.const_zero();
     /// ```
-    pub fn const_null(&self) -> PointerValue {
-        let null = unsafe {
-            LLVMConstNull(self.as_type_ref())
-        };
-
-        PointerValue::new(null)
+    pub fn const_zero(&self) -> PointerValue {
+        PointerValue::new(self.ptr_type.const_zero())
     }
 
     /// Creates an undefined instance of a `PointerType`.
@@ -286,7 +281,7 @@ impl PointerType {
     ///
     /// assert_eq!(f32_ptr_type.get_element_type().into_float_type(), f32_type);
     /// ```
-    pub fn get_element_type(&self) -> BasicTypeEnum {
+    pub fn get_element_type(&self) -> AnyTypeEnum {
         self.ptr_type.get_element_type()
     }
 

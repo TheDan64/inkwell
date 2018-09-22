@@ -22,6 +22,24 @@ impl VectorValue {
         }
     }
 
+    /// Determines whether or not a `VectorValue` is a constant.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let i8_type = context.i8_type();
+    /// let i8_vec_type = i8_type.vec_type(3);
+    /// let i8_vec_null = i8_vec_type.const_null();
+    ///
+    /// assert!(i8_vec_null.is_const());
+    /// ```
+    pub fn is_const(&self) -> bool {
+        self.vec_value.is_const()
+    }
+
     pub fn is_constant_vector(&self) -> bool {
         unsafe {
             !LLVMIsAConstantVector(self.as_value_ref()).is_null()

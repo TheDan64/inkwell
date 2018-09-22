@@ -12,6 +12,7 @@ mod struct_type;
 mod traits;
 #[deny(missing_docs)]
 mod vec_type;
+#[deny(missing_docs)]
 mod void_type;
 
 pub use types::array_type::ArrayType;
@@ -28,8 +29,7 @@ pub(crate) use types::traits::AsTypeRef;
 
 #[cfg(not(feature = "llvm3-6"))]
 use llvm_sys::core::LLVMDumpType;
-use llvm_sys::core::{LLVMAlignOf, LLVMGetTypeContext, LLVMFunctionType, LLVMArrayType, LLVMGetTypeKind, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMTypeIsSized, LLVMSizeOf, LLVMVectorType, LLVMConstPointerNull, LLVMGetElementType};
-use llvm_sys::LLVMTypeKind;
+use llvm_sys::core::{LLVMAlignOf, LLVMGetTypeContext, LLVMFunctionType, LLVMArrayType, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMTypeIsSized, LLVMSizeOf, LLVMVectorType, LLVMConstPointerNull, LLVMGetElementType, LLVMConstNull};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use std::fmt;
@@ -38,11 +38,10 @@ use std::rc::Rc;
 use AddressSpace;
 use context::{Context, ContextRef};
 use support::LLVMString;
-use values::{IntValue, PointerValue};
+use values::IntValue;
 
 // Worth noting that types seem to be singletons. At the very least, primitives are.
 // Though this is likely only true per thread since LLVM claims to not be very thread-safe.
-// REVIEW: Maybe move this into its own module?
 #[derive(PartialEq, Eq, Clone, Copy)]
 struct Type {
     type_: LLVMTypeRef,
@@ -68,12 +67,18 @@ impl Type {
         }
     }
 
-    fn const_null_ptr(&self) -> PointerValue {
-        let ptr_type = unsafe {
+    // Even though the LLVM fuction has the word "Pointer", it doesn't seem to create
+    // a pointer at all, just a null value of the current type...
+    fn const_null(&self) -> LLVMValueRef {
+        unsafe {
             LLVMConstPointerNull(self.type_)
-        };
+        }
+    }
 
-        PointerValue::new(ptr_type)
+    fn const_zero(&self) -> LLVMValueRef {
+        unsafe {
+            LLVMConstNull(self.type_)
+        }
     }
 
     fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
@@ -115,13 +120,6 @@ impl Type {
     fn get_undef(&self) -> LLVMValueRef {
         unsafe {
             LLVMGetUndef(self.type_)
-        }
-    }
-
-    // NOTE: AnyType
-    pub(crate) fn get_kind(&self) -> LLVMTypeKind {
-        unsafe {
-            LLVMGetTypeKind(self.type_)
         }
     }
 
@@ -177,12 +175,12 @@ impl Type {
         LLVMString::new(c_string_ptr)
     }
 
-    pub fn get_element_type(&self) -> BasicTypeEnum {
+    pub fn get_element_type(&self) -> AnyTypeEnum {
         let ptr = unsafe {
             LLVMGetElementType(self.type_)
         };
 
-        BasicTypeEnum::new(ptr)
+        AnyTypeEnum::new(ptr)
     }
 
 }

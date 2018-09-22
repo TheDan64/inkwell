@@ -41,6 +41,24 @@ impl PointerValue {
         self.ptr_value.is_undef()
     }
 
+    /// Determines whether or not a `PointerValue` is a constant.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::AddressSpace;
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let void_type = context.void_type();
+    /// let void_ptr_null = void_type.ptr_type(AddressSpace::Generic).const_null();
+    ///
+    /// assert!(void_ptr_null.is_const());
+    /// ```
+    pub fn is_const(&self) -> bool {
+        self.ptr_value.is_const()
+    }
+
     pub fn print_to_string(&self) -> LLVMString {
         self.ptr_value.print_to_string()
     }

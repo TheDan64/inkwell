@@ -65,6 +65,10 @@ impl AnyTypeEnum {
             LLVMTypeKind::LLVMTokenTypeKind => panic!("FIXME: Unsupported type: Token"),
         }
     }
+
+    pub(crate) fn to_basic_type_enum(&self) -> BasicTypeEnum {
+        BasicTypeEnum::new(self.as_type_ref())
+    }
 }
 
 impl BasicTypeEnum {
@@ -85,13 +89,13 @@ impl BasicTypeEnum {
             LLVMTypeKind::LLVMPointerTypeKind => BasicTypeEnum::PointerType(PointerType::new(type_)),
             LLVMTypeKind::LLVMArrayTypeKind => BasicTypeEnum::ArrayType(ArrayType::new(type_)),
             LLVMTypeKind::LLVMVectorTypeKind => BasicTypeEnum::VectorType(VectorType::new(type_)),
-            LLVMTypeKind::LLVMMetadataTypeKind => unreachable!("Unsupported type: Metadata"),
-            LLVMTypeKind::LLVMX86_MMXTypeKind => unreachable!("Unsupported type: MMX"),
-            LLVMTypeKind::LLVMLabelTypeKind => unreachable!("Unsupported type: Label"),
-            LLVMTypeKind::LLVMVoidTypeKind => unreachable!("Unsupported type: VoidType"),
-            LLVMTypeKind::LLVMFunctionTypeKind => unreachable!("Unsupported type: FunctionType"),
+            LLVMTypeKind::LLVMMetadataTypeKind => unreachable!("Unsupported basic type: Metadata"),
+            LLVMTypeKind::LLVMX86_MMXTypeKind => unreachable!("Unsupported basic type: MMX"),
+            LLVMTypeKind::LLVMLabelTypeKind => unreachable!("Unsupported basic type: Label"),
+            LLVMTypeKind::LLVMVoidTypeKind => unreachable!("Unsupported basic type: VoidType"),
+            LLVMTypeKind::LLVMFunctionTypeKind => unreachable!("Unsupported basic type: FunctionType"),
             #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
-            LLVMTypeKind::LLVMTokenTypeKind => panic!("FIXME: Unsupported type: Token"),
+            LLVMTypeKind::LLVMTokenTypeKind => unreachable!("Unsupported basic type: Token"),
         }
     }
 }

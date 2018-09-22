@@ -1,6 +1,7 @@
 //! A `Module` represets a single code compilation unit.
 
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
+#[allow(deprecated)]
 use llvm_sys::bit_reader::{LLVMParseBitcode, LLVMParseBitcodeInContext};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
 use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile, LLVMSetModuleInlineAsm};
@@ -1065,6 +1066,7 @@ impl Module {
         // LLVM has a newer version of this function w/o the error result since 3.8 but this deprecated function
         // hasen't yet been removed even in the unreleased LLVM 7. Seems fine to use instead of switching to their
         // error diagnostics handler
+        #[allow(deprecated)]
         let success = unsafe {
             LLVMParseBitcode(buffer.memory_buffer, &mut module, &mut err_string)
         };
@@ -1101,6 +1103,7 @@ impl Module {
         // LLVM has a newer version of this function w/o the error result since 3.8 but this deprecated function
         // hasen't yet been removed even in the unreleased LLVM 7. Seems fine to use instead of switching to their
         // error diagnostics handler
+        #[allow(deprecated)]
         let success = unsafe {
             LLVMParseBitcodeInContext(*context.context, buffer.memory_buffer, &mut module, &mut err_string)
         };

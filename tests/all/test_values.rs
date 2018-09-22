@@ -115,7 +115,7 @@ fn test_set_get_name() {
     let f32_val = f32_type.const_float(0.0);
     let f64_val = f64_type.const_float(0.0);
     let f128_val = f128_type.const_float(0.0);
-    let ptr_val = bool_type.const_null_ptr();
+    let ptr_val = bool_type.ptr_type(AddressSpace::Generic).const_null();
     let array_val = f64_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
     let vec_val = VectorType::const_vector(&[i8_val]);
@@ -257,7 +257,7 @@ fn test_undef() {
     let f32_val = f32_type.const_float(0.0);
     let f64_val = f64_type.const_float(0.0);
     let f128_val = f128_type.const_float(0.0);
-    let ptr_val = bool_type.const_null_ptr();
+    let ptr_val = bool_type.ptr_type(AddressSpace::Generic).const_null();
     let array_val = f64_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
     let vec_val = VectorType::const_vector(&[i8_val]);
@@ -1068,7 +1068,20 @@ fn test_consts() {
     let array_val = i8_type.const_array(&[i8_val]);
     let arbitrary_precision_int = i64_type.const_int_arbitrary_precision(&[1, 2]);
 
+    assert!(bool_val.is_const());
+    assert!(i8_val.is_const());
+    assert!(i16_val.is_const());
+    assert!(i32_val.is_const());
+    assert!(i64_val.is_const());
+    assert!(i128_val.is_const());
+    assert!(f16_val.is_const());
+    assert!(f32_val.is_const());
+    assert!(f64_val.is_const());
+    assert!(f128_val.is_const());
+    assert!(ppc_f128_val.is_const());
+    assert!(vec_val.is_const());
     assert!(array_val.is_const());
+    assert!(arbitrary_precision_int.is_const());
 
     assert_eq!(*arbitrary_precision_int.print_to_string(), *CString::new("i64 1").unwrap());
 

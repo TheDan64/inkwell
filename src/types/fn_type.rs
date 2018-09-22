@@ -4,11 +4,13 @@ use llvm_sys::prelude::LLVMTypeRef;
 use std::fmt;
 use std::mem::forget;
 
+use AddressSpace;
 use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
-use types::{Type, BasicTypeEnum};
-// use values::FunctionValue;
+use types::{PointerType, Type, BasicTypeEnum};
+
+// REVIEW: Add a get_return_type() -> Option<BasicTypeEnum>?
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub struct FunctionType {
@@ -22,6 +24,10 @@ impl FunctionType {
         FunctionType {
             fn_type: Type::new(fn_type)
         }
+    }
+
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
+        self.fn_type.ptr_type(address_space)
     }
 
     pub fn is_var_arg(&self) -> bool {

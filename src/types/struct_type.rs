@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMConstNamedStruct, LLVMConstStruct, LLVMConstNull, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMStructSetBody, LLVMConstArray};
+use llvm_sys::core::{LLVMConstNamedStruct, LLVMConstStruct, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMStructSetBody, LLVMConstArray};
 #[cfg(not(feature = "llvm3-6"))]
 use llvm_sys::core::LLVMStructGetTypeAtIndex;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
@@ -11,7 +11,7 @@ use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, BasicType, BasicTypeEnum, ArrayType, PointerType, FunctionType, VectorType};
-use values::{ArrayValue, BasicValueEnum, StructValue, PointerValue, IntValue, AsValueRef};
+use values::{ArrayValue, BasicValueEnum, StructValue, IntValue, AsValueRef};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct StructType {
@@ -72,16 +72,12 @@ impl StructType {
         StructValue::new(value)
     }
 
-    pub fn const_null_ptr(&self) -> PointerValue {
-        self.struct_type.const_null_ptr()
+    pub fn const_null(&self) -> StructValue {
+        StructValue::new(self.struct_type.const_null())
     }
 
-    pub fn const_null(&self) -> StructValue {
-        let null = unsafe {
-            LLVMConstNull(self.as_type_ref())
-        };
-
-        StructValue::new(null)
+    pub fn const_zero(&self) -> StructValue {
+        StructValue::new(self.struct_type.const_zero())
     }
 
     // REVIEW: Can be false if opaque. To make a const fn, we'd have to have

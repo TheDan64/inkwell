@@ -1,11 +1,11 @@
-use llvm_sys::core::{LLVMConstVector, LLVMConstNull, LLVMGetVectorSize, LLVMConstArray};
+use llvm_sys::core::{LLVMConstVector, LLVMGetVectorSize, LLVMConstArray};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use AddressSpace;
 use context::ContextRef;
 use support::LLVMString;
 use types::{ArrayType, BasicTypeEnum, Type, traits::AsTypeRef, FunctionType, PointerType};
-use values::{AsValueRef, ArrayValue, BasicValue, PointerValue, VectorValue, IntValue};
+use values::{AsValueRef, ArrayValue, BasicValue, VectorValue, IntValue};
 
 /// A `VectorType` is the type of a multiple value SIMD constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -133,7 +133,7 @@ impl VectorType {
         VectorValue::new(vec_value)
     }
 
-    /// Creates a `PointerValue` representing a constant value of zero (null pointer) pointing to this `VectorType`.
+    /// Creates a null `VectorValue` of this `VectorType`.
     /// It will be automatically assigned this `VectorType`'s `Context`.
     ///
     /// # Example
@@ -144,23 +144,23 @@ impl VectorType {
     /// // Global Context
     /// let f32_type = FloatType::f32_type();
     /// let f32_vec_type = f32_type.vec_type(7);
-    /// let f32_vec_ptr_value = f32_vec_type.const_null_ptr();
+    /// let f32_vec_null = f32_vec_type.const_null();
     ///
-    /// assert!(f32_vec_ptr_value.is_null());
+    /// assert!(f32_vec_null.is_null());
     ///
     /// // Custom Context
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
     /// let f32_vec_type = f32_type.vec_type(7);
-    /// let f32_vec_ptr_value = f32_vec_type.const_null_ptr();
+    /// let f32_vec_null = f32_vec_type.const_null();
     ///
-    /// assert!(f32_vec_ptr_value.is_null());
+    /// assert!(f32_vec_null.is_null());
     /// ```
-    pub fn const_null_ptr(&self) -> PointerValue {
-        self.vec_type.const_null_ptr()
+    pub fn const_null(&self) -> VectorValue {
+        VectorValue::new(self.vec_type.const_null())
     }
 
-    /// Creates a constant null (zero) value of this `VectorType`.
+    /// Creates a constant zero value of this `VectorType`.
     ///
     /// # Example
     ///
@@ -170,16 +170,10 @@ impl VectorType {
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
     /// let f32_vec_type = f32_type.vec_type(7);
-    /// let f32_vec_zero = f32_vec_type.const_null();
-    ///
-    /// assert!(f32_vec_zero.is_null());
+    /// let f32_vec_zero = f32_vec_type.const_zero();
     /// ```
-    pub fn const_null(&self) -> VectorValue {
-        let null = unsafe {
-            LLVMConstNull(self.as_type_ref())
-        };
-
-        VectorValue::new(null)
+    pub fn const_zero(&self) -> VectorValue {
+        VectorValue::new(self.vec_type.const_zero())
     }
 
     /// Prints the definition of a `VectorType` to a `LLVMString`.
@@ -228,7 +222,8 @@ impl VectorType {
     /// assert_eq!(f32_vector_type.get_element_type().into_float_type(), f32_type);
     /// ```
     pub fn get_element_type(&self) -> BasicTypeEnum {
-        self.vec_type.get_element_type()
+        self.vec_type.get_element_type().to_basic_type_enum()
+
     }
 
     /// Creates a `VectorType` with this `VectorType` for its element type.

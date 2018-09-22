@@ -238,7 +238,6 @@ fn test_sized_types() {
 #[test]
 fn test_const_null() {
     let context = Context::create();
-    let void_type = context.void_type();
     let bool_type = context.bool_type();
     let i8_type = context.i8_type();
     let i16_type = context.i16_type();
@@ -270,40 +269,39 @@ fn test_const_null() {
     vec_type.get_alignment();
     array_type.get_alignment();
 
-    assert!(void_type.const_null_ptr().is_null());
-    assert!(bool_type.const_null_ptr().is_null());
-    assert!(i8_type.const_null_ptr().is_null());
-    assert!(i16_type.const_null_ptr().is_null());
-    assert!(i32_type.const_null_ptr().is_null());
-    assert!(i64_type.const_null_ptr().is_null());
-    assert!(i128_type.const_null_ptr().is_null());
-    assert!(f16_type.const_null_ptr().is_null());
-    assert!(f32_type.const_null_ptr().is_null());
-    assert!(f64_type.const_null_ptr().is_null());
-    assert!(f80_type.const_null_ptr().is_null());
-    assert!(f128_type.const_null_ptr().is_null());
-    assert!(ppc_f128_type.const_null_ptr().is_null());
-    assert!(struct_type.const_null_ptr().is_null());
-    assert!(ptr_type.const_null_ptr().is_null());
-    assert!(vec_type.const_null_ptr().is_null());
-    assert!(array_type.const_null_ptr().is_null());
+    assert!(bool_type.const_null().is_null());
+    assert!(i8_type.const_null().is_null());
+    assert!(i16_type.const_null().is_null());
+    assert!(i32_type.const_null().is_null());
+    assert!(i64_type.const_null().is_null());
+    assert!(i128_type.const_null().is_null());
+    assert!(f16_type.const_null().is_null());
+    assert!(f32_type.const_null().is_null());
+    assert!(f64_type.const_null().is_null());
+    assert!(f80_type.const_null().is_null());
+    assert!(f128_type.const_null().is_null());
+    assert!(ppc_f128_type.const_null().is_null());
+    assert!(struct_type.const_null().is_null());
+    assert!(ptr_type.const_null().is_null());
+    assert!(vec_type.const_null().is_null());
+    assert!(array_type.const_null().is_null());
 
-    let bool_zero = bool_type.const_null();
-    let i8_zero = i8_type.const_null();
-    let i16_zero = i16_type.const_null();
-    let i32_zero = i32_type.const_null();
-    let i64_zero = i64_type.const_null();
-    let i128_zero = i128_type.const_null();
-    let f16_zero = f16_type.const_null();
-    let f32_zero = f32_type.const_null();
-    let f64_zero = f64_type.const_null();
-    let f80_zero = f80_type.const_null();
-    let f128_zero = f128_type.const_null();
-    let ppc_f128_zero = ppc_f128_type.const_null();
-    let struct_zero = struct_type.const_null();
-    let ptr_zero = ptr_type.const_null();
-    let vec_zero = vec_type.const_null();
-    let array_zero = array_type.const_null();
+    let bool_zero = bool_type.const_zero();
+    let i8_zero = i8_type.const_zero();
+    let i16_zero = i16_type.const_zero();
+    let i32_zero = i32_type.const_zero();
+    let i64_zero = i64_type.const_zero();
+    let i128_zero = i128_type.const_zero();
+    let f16_zero = f16_type.const_zero();
+    let f32_zero = f32_type.const_zero();
+    let f64_zero = f64_type.const_zero();
+    let f80_zero = f80_type.const_zero();
+    let f128_zero = f128_type.const_zero();
+    let ppc_f128_zero = ppc_f128_type.const_zero();
+    let struct_zero = struct_type.const_zero();
+    let ptr_zero = ptr_type.const_zero();
+    let vec_zero = vec_type.const_zero();
+    let array_zero = array_type.const_zero();
 
     assert_eq!(*bool_zero.print_to_string(), *CString::new("i1 false").unwrap());
     assert!(bool_zero.is_null());
@@ -367,4 +365,17 @@ fn test_ptr_type() {
 
     assert_eq!(ptr_type.get_address_space(), AddressSpace::Generic);
     assert_eq!(ptr_type.get_element_type().into_int_type(), i8_type);
+
+    // Void ptr:
+    let void_type = context.void_type();
+    let void_ptr_type = void_type.ptr_type(AddressSpace::Generic);
+
+    assert_eq!(void_ptr_type.get_element_type().into_void_type(), void_type);
+
+    // Fn ptr:
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_ptr_type = fn_type.ptr_type(AddressSpace::Generic);
+
+    assert_eq!(fn_ptr_type.get_element_type().into_function_type(), fn_type);
+    assert_eq!(*fn_ptr_type.get_context(), context);
 }

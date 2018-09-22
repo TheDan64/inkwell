@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMConstInt, LLVMConstNull, LLVMConstAllOnes, LLVMIntType, LLVMGetIntTypeWidth, LLVMConstIntOfStringAndSize, LLVMConstIntOfArbitraryPrecision, LLVMConstArray};
+use llvm_sys::core::{LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMConstInt, LLVMConstAllOnes, LLVMIntType, LLVMGetIntTypeWidth, LLVMConstIntOfStringAndSize, LLVMConstIntOfArbitraryPrecision, LLVMConstArray};
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfInt;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
@@ -7,7 +7,7 @@ use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, ArrayType, BasicTypeEnum, VectorType, PointerType, FunctionType};
-use values::{AsValueRef, ArrayValue, GenericValue, IntValue, PointerValue};
+use values::{AsValueRef, ArrayValue, GenericValue, IntValue};
 
 /// An `IntType` is the type of an integer constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -280,7 +280,7 @@ impl IntType {
         IntValue::new(value)
     }
 
-    /// Creates a `PointerValue` representing a constant value of zero (null pointer) pointing to this `IntType`. It will be automatically assigned this `IntType`'s `Context`.
+    /// Creates a constant null value of this `IntType`.
     ///
     /// # Example
     /// ```
@@ -289,18 +289,18 @@ impl IntType {
     ///
     /// // Global Context
     /// let i32_type = IntType::i32_type();
-    /// let i32_value = i32_type.const_null_ptr();
+    /// let i32_value = i32_type.const_null();
     ///
     /// // Custom Context
     /// let context = Context::create();
     /// let i32_type = context.i32_type();
-    /// let i32_value = i32_type.const_null_ptr();
+    /// let i32_value = i32_type.const_null();
     /// ```
-    pub fn const_null_ptr(&self) -> PointerValue {
-        self.int_type.const_null_ptr()
+    pub fn const_null(&self) -> IntValue {
+        IntValue::new(self.int_type.const_null())
     }
 
-    /// Creates a constant null (zero) value of this `IntType`.
+    /// Creates a constant zero value of this `IntType`.
     ///
     /// # Example
     ///
@@ -309,17 +309,12 @@ impl IntType {
     ///
     /// let context = Context::create();
     /// let i8_type = context.i8_type();
-    /// let i8_zero = i8_type.const_null();
+    /// let i8_zero = i8_type.const_zero();
     ///
-    /// assert!(i8_zero.is_null());
     /// assert_eq!(i8_zero.print_to_string().to_string(), "i8 0");
     /// ```
-    pub fn const_null(&self) -> IntValue {
-        let null = unsafe {
-            LLVMConstNull(self.as_type_ref())
-        };
-
-        IntValue::new(null)
+    pub fn const_zero(&self) -> IntValue {
+        IntValue::new(self.int_type.const_zero())
     }
 
     /// Creates a `FunctionType` with this `IntType` for its return type.

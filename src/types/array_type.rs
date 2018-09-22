@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMConstArray, LLVMConstNull, LLVMGetArrayLength};
+use llvm_sys::core::{LLVMConstArray, LLVMGetArrayLength};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use AddressSpace;
@@ -6,7 +6,7 @@ use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, BasicTypeEnum, PointerType, FunctionType};
-use values::{AsValueRef, ArrayValue, PointerValue, IntValue};
+use values::{AsValueRef, ArrayValue, IntValue};
 
 /// An `ArrayType` is the type of contiguous constants or variables.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -158,7 +158,7 @@ impl ArrayType {
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
     /// let f32_array_type = f32_type.array_type(3);
-    /// let f32_array_val = f32_array_type.const_null();
+    /// let f32_array_val = f32_array_type.const_zero();
     /// let f32_array_array = f32_array_type.const_array(&[f32_array_val, f32_array_val]);
     ///
     /// assert!(f32_array_array.is_const());
@@ -174,7 +174,7 @@ impl ArrayType {
         ArrayValue::new(value)
     }
 
-    /// Creates a `PointerValue` representing a constant value of zero (null pointer) pointing to this `ArrayType`.
+    /// Creates a null `ArrayValue` of this `ArrayType`.
     /// It will be automatically assigned this `ArrayType`'s `Context`.
     ///
     /// # Example
@@ -185,24 +185,24 @@ impl ArrayType {
     ///
     /// // Global Context
     /// let f32_type = FloatType::f32_type();
-    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
-    /// let f32_ptr_ptr_value = f32_ptr_type.const_null_ptr();
+    /// let f32_array_type = f32_type.array_type(7);
+    /// let f32_array_null = f32_array_type.const_null();
     ///
-    /// assert!(f32_ptr_ptr_value.is_null());
+    /// assert!(f32_array_null.is_null());
     ///
     /// // Custom Context
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
-    /// let f32_ptr_ptr_value = f32_ptr_type.const_null_ptr();
+    /// let f32_array_type = f32_type.array_type(7);
+    /// let f32_array_null = f32_array_type.const_null();
     ///
-    /// assert!(f32_ptr_ptr_value.is_null());
+    /// assert!(f32_array_null.is_null());
     /// ```
-    pub fn const_null_ptr(&self) -> PointerValue {
-        self.array_type.const_null_ptr()
+    pub fn const_null(&self) -> ArrayValue {
+        ArrayValue::new(self.array_type.const_null())
     }
 
-    /// Creates a constant null (zero) value of this `ArrayType`.
+    /// Creates a constant zero value of this `ArrayType`.
     ///
     /// # Example
     ///
@@ -212,16 +212,10 @@ impl ArrayType {
     /// let context = Context::create();
     /// let i8_type = context.i8_type();
     /// let i8_array_type = i8_type.array_type(3);
-    /// let i8_array_zero = i8_array_type.const_null();
-    ///
-    /// assert!(i8_array_zero.is_null());
+    /// let i8_array_zero = i8_array_type.const_zero();
     /// ```
-    pub fn const_null(&self) -> ArrayValue {
-        let null = unsafe {
-            LLVMConstNull(self.as_type_ref())
-        };
-
-        ArrayValue::new(null)
+    pub fn const_zero(&self) -> ArrayValue {
+        ArrayValue::new(self.array_type.const_zero())
     }
 
     /// Gets the length of this `ArrayType`.
@@ -249,7 +243,7 @@ impl ArrayType {
     }
 
     // See Type::print_to_stderr note on 5.0+ status
-    /// Prints the definition of an `IntType` to stderr. Not available in newer LLVM versions.
+    /// Prints the definition of an `ArrayType` to stderr. Not available in newer LLVM versions.
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm5-0")))]
     pub fn print_to_stderr(&self) {
         self.array_type.print_to_stderr()
@@ -287,7 +281,7 @@ impl ArrayType {
     /// assert_eq!(i8_array_type.get_element_type().into_int_type(), i8_type);
     /// ```
     pub fn get_element_type(&self) -> BasicTypeEnum {
-        self.array_type.get_element_type()
+        self.array_type.get_element_type().to_basic_type_enum()
     }
 
 }

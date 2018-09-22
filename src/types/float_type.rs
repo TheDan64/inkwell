@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMConstReal, LLVMConstNull, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMPPCFP128Type, LLVMConstRealOfStringAndSize, LLVMX86FP80Type, LLVMConstArray};
+use llvm_sys::core::{LLVMConstReal, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMPPCFP128Type, LLVMConstRealOfStringAndSize, LLVMX86FP80Type, LLVMConstArray};
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfFloat;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
@@ -7,7 +7,7 @@ use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, PointerType, FunctionType, BasicTypeEnum, ArrayType, VectorType};
-use values::{AsValueRef, ArrayValue, FloatValue, GenericValue, PointerValue, IntValue};
+use values::{AsValueRef, ArrayValue, FloatValue, GenericValue, IntValue};
 
 /// A `FloatType` is the type of a floating point constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -138,7 +138,7 @@ impl FloatType {
         FloatValue::new(value)
     }
 
-    /// Creates a `PointerValue` representing a constant value of zero (null pointer) pointing to this `FloatType`.
+    /// Creates a constant null value of this `FloatType`.
     /// It will be automatically assigned this `FloatType`'s `Context`.
     ///
     /// # Example
@@ -148,18 +148,18 @@ impl FloatType {
     ///
     /// // Global Context
     /// let f32_type = FloatType::f32_type();
-    /// let f32_value = f32_type.const_null_ptr();
+    /// let f32_value = f32_type.const_null();
     ///
     /// // Custom Context
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// let f32_value = f32_type.const_null_ptr();
+    /// let f32_value = f32_type.const_null();
     /// ```
-    pub fn const_null_ptr(&self) -> PointerValue {
-        self.float_type.const_null_ptr()
+    pub fn const_null(&self) -> FloatValue {
+        FloatValue::new(self.float_type.const_null())
     }
 
-    /// Creates a constant null (zero) value of this `FloatType`.
+    /// Creates a constant zero value of this `FloatType`.
     ///
     /// # Example
     ///
@@ -168,17 +168,12 @@ impl FloatType {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// let f32_zero = f32_type.const_null();
+    /// let f32_zero = f32_type.const_zero();
     ///
-    /// assert!(f32_zero.is_null());
     /// assert_eq!(f32_zero.print_to_string().to_string(), "f32 0");
     /// ```
-    pub fn const_null(&self) -> FloatValue {
-        let null = unsafe {
-            LLVMConstNull(self.as_type_ref())
-        };
-
-        FloatValue::new(null)
+    pub fn const_zero(&self) -> FloatValue {
+        FloatValue::new(self.float_type.const_zero())
     }
 
     // REVIEW: Always true -> const fn?

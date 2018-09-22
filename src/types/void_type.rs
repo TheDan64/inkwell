@@ -6,8 +6,9 @@ use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, BasicTypeEnum, FunctionType, PointerType};
-use values::PointerValue;
 
+/// A `VoidType` is a special type with no possible direct instances. It's particularly
+/// useful as a pointer element type or a function return type.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct VoidType {
     void_type: Type,
@@ -23,18 +24,69 @@ impl VoidType {
     }
 
     // REVIEW: Always false -> const fn?
+    /// Gets whether or not this `VectorType` is sized or not. This may always
+    /// be false and as such this function may be removed in the future.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let void_type = context.void_type();
+    ///
+    /// assert!(void_type.is_sized());
+    /// ```
     pub fn is_sized(&self) -> bool {
         self.void_type.is_sized()
     }
 
+    /// Gets a reference to the `Context` this `VoidType` was created in.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let void_type = context.void_type();
+    ///
+    /// assert_eq!(*void_type.get_context(), context);
+    /// ```
     pub fn get_context(&self) -> ContextRef {
         self.void_type.get_context()
     }
 
+    /// Creates a `PointerType` with this `VoidType` for its element type.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::AddressSpace;
+    ///
+    /// let context = Context::create();
+    /// let void_type = context.void_type();
+    /// let void_ptr_type = void_type.ptr_type(AddressSpace::Generic);
+    ///
+    /// assert_eq!(void_ptr_type.get_element_type().into_void_type(), void_type);
+    /// ```
     pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
         self.void_type.ptr_type(address_space)
     }
 
+    /// Creates a `FunctionType` with this `VoidType` for its return type.
+    /// This means the function does not return.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// ```
     pub fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
         self.void_type.fn_type(param_types, is_var_args)
     }
@@ -59,18 +111,16 @@ impl VoidType {
         VoidType::new(void_type)
     }
 
+    /// Prints the definition of a `VoidType` to a `LLVMString`.
     pub fn print_to_string(&self) -> LLVMString {
         self.void_type.print_to_string()
     }
 
     // See Type::print_to_stderr note on 5.0+ status
+    /// Prints the definition of a `VoidType` to stderr. Not available in newer LLVM versions.
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm5-0")))]
     pub fn print_to_stderr(&self) {
         self.void_type.print_to_stderr()
-    }
-
-    pub fn const_null_ptr(&self) -> PointerValue {
-        self.void_type.const_null_ptr()
     }
 }
 
