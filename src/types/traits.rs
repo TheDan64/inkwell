@@ -29,14 +29,14 @@ pub trait AnyType: AsTypeRef + Debug {
     }
 }
 
-/// Represents a basic LLVM type, that may be used in functions and struct declarations.
+/// Represents a basic LLVM type, that may be used in functions and struct definitions.
 pub trait BasicType: AnyType {
     /// Returns a `BasicTypeEnum` that represents the current type.
     fn as_basic_type_enum(&self) -> BasicTypeEnum {
         BasicTypeEnum::new(self.as_type_ref())
     }
 
-    // REVIEW: What if is fn type?
+    /// Create a function type from this `BasicType`.
     fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
         Type::new(self.as_type_ref()).fn_type(param_types, is_var_args)
     }
@@ -44,20 +44,27 @@ pub trait BasicType: AnyType {
 
 /// Represents an LLVM type that can have integer math operations applied to it.
 pub trait IntMathType: BasicType {
+    /// The value instance of an int or int vector type.
     type ValueType: IntMathValue;
+    /// The type for int to float or int vector to float vector conversions.
     type MathConvType: FloatMathType;
+    /// The type for int to pointer or int vector to pointer vector conversions.
     type PtrConvType: PointerMathType;
 }
 
 /// Represents an LLVM type that can have floating point math operations applied to it.
 pub trait FloatMathType: BasicType {
+    /// The value instance of a float or float vector type.
     type ValueType: FloatMathValue;
+    /// The type for float to int or float vector to int vector conversions.
     type MathConvType: IntMathType;
 }
 
 /// Represents an LLVM type that can have pointer operations applied to it.
 pub trait PointerMathType: BasicType {
+    /// The value instance of a pointer type.
     type ValueType: PointerMathValue;
+    /// The type for pointer to int or pointer vector to int conversions.
     type PtrConvType: IntMathType;
 }
 

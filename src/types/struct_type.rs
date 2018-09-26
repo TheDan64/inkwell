@@ -10,9 +10,10 @@ use AddressSpace;
 use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
-use types::{Type, BasicType, BasicTypeEnum, ArrayType, PointerType, FunctionType, VectorType};
+use types::{Type, BasicTypeEnum, ArrayType, PointerType, FunctionType, VectorType};
 use values::{ArrayValue, BasicValueEnum, StructValue, IntValue, AsValueRef};
 
+/// A `StructType` is the type of a heterogeneous container of types.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct StructType {
     struct_type: Type,
@@ -61,6 +62,7 @@ impl StructType {
         StructValue::new(value)
     }
 
+    // REVIEW: Is this equivalent to context.struct_type?
     pub fn const_struct(values: &[BasicValueEnum], packed: bool) -> StructValue {
         let mut args: Vec<LLVMValueRef> = values.iter()
                                                 .map(|val| val.as_value_ref())
@@ -72,10 +74,45 @@ impl StructType {
         StructValue::new(value)
     }
 
+    /// Creates a null `StructValue` of this `StructType`.
+    /// It will be automatically assigned this `StructType`'s `Context`.
+    ///
+    /// # Example
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::types::{FloatType, StructType};
+    ///
+    /// // Global Context
+    /// let f32_type = FloatType::f32_type();
+    /// let struct_type = StructType::struct_type(&[f32_type.into(), f32_type.into()], false);
+    /// let struct_null = struct_type.const_null();
+    ///
+    /// assert!(struct_null.is_null());
+    ///
+    /// // Custom Context
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
+    /// let struct_null = struct_type.const_null();
+    ///
+    /// assert!(struct_null.is_null());
+    /// ```
     pub fn const_null(&self) -> StructValue {
         StructValue::new(self.struct_type.const_null())
     }
 
+    /// Creates a constant zero value of this `StructType`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
+    /// let struct_zero = struct_type.const_zero();
+    /// ```
     pub fn const_zero(&self) -> StructValue {
         StructValue::new(self.struct_type.const_zero())
     }
@@ -131,13 +168,26 @@ impl StructType {
         self.struct_type.array_type(size)
     }
 
+    /// Determines whether or not a `StructType` is packed.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
+    ///
+    /// assert!(struct_type.is_packed());
+    /// ```
     pub fn is_packed(&self) -> bool {
         unsafe {
             LLVMIsPackedStruct(self.as_type_ref()) == 1
         }
     }
 
-    // TODO: Worth documenting that a sturct is opaque when types are not
+    // TODOC: Worth documenting that a struct is opaque when types are not
     // yet assigned (empty array to struct_type)
     pub fn is_opaque(&self) -> bool {
         unsafe {
@@ -181,11 +231,13 @@ impl StructType {
         raw_vec.iter().map(|val| BasicTypeEnum::new(*val)).collect()
     }
 
+    /// Prints the definition of a `VectorType` to a `LLVMString`.
     pub fn print_to_string(&self) -> LLVMString {
         self.struct_type.print_to_string()
     }
 
     // See Type::print_to_stderr note on 5.0+ status
+    /// Prints the definition of an `StructType` to stderr. Not available in newer LLVM versions.
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm5-0")))]
     pub fn print_to_stderr(&self) {
         self.struct_type.print_to_stderr()
@@ -198,7 +250,7 @@ impl StructType {
     // REVIEW: SubTypes should allow this to only be implemented for StructType<Opaque> one day
     // but would have to return StructType<Tys>
     // REVIEW: What happens if called with &[]? Should that still be opaque? Does the call break?
-    pub fn set_body(&self, field_types: &[&BasicType], packed: bool) -> bool {
+    pub fn set_body(&self, field_types: &[BasicTypeEnum], packed: bool) -> bool {
         let is_opaque = self.is_opaque();
         let mut field_types: Vec<LLVMTypeRef> = field_types.iter()
                                                            .map(|val| val.as_type_ref())

@@ -1,3 +1,5 @@
+//! A value is an instance of a type.
+
 mod array_value;
 mod enums;
 mod float_value;

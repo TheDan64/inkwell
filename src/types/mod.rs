@@ -1,14 +1,18 @@
+//! A type is a classification which determines how data is used.
+
 #[deny(missing_docs)]
 mod array_type;
 mod enums;
 #[deny(missing_docs)]
 mod float_type;
+#[deny(missing_docs)]
 mod fn_type;
 #[deny(missing_docs)]
 mod int_type;
 #[deny(missing_docs)]
 mod ptr_type;
 mod struct_type;
+#[deny(missing_docs)]
 mod traits;
 #[deny(missing_docs)]
 mod vec_type;

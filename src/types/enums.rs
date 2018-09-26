@@ -6,10 +6,12 @@ use types::{IntType, VoidType, FunctionType, PointerType, VectorType, ArrayType,
 use types::traits::AsTypeRef;
 
 macro_rules! enum_type_set {
-    ($enum_name:ident: $($args:ident),*) => (
+    ($(#[$enum_attrs:meta])* $enum_name:ident: { $($(#[$variant_attrs:meta])* $args:ident,)+ }) => (
         #[derive(Debug, EnumAsGetters, EnumIntoGetters, EnumIsA, PartialEq, Eq, Clone, Copy)]
+        $(#[$enum_attrs])*
         pub enum $enum_name {
             $(
+                $(#[$variant_attrs])*
                 $args($args),
             )*
         }
@@ -34,9 +36,43 @@ macro_rules! enum_type_set {
     );
 }
 
-enum_type_set! {AnyTypeEnum: IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VoidType, VectorType}
-enum_type_set! {BasicTypeEnum: IntType, FloatType, PointerType, StructType, ArrayType, VectorType}
-
+enum_type_set! {
+    /// A wrapper for any `BasicType`, `VoidType`, or `FunctionType`.
+    AnyTypeEnum: {
+        /// A contiguous homogeneous container type.
+        ArrayType,
+        /// A floating point type.
+        FloatType,
+        /// A function return and parameter definition.
+        FunctionType,
+        /// An integer type.
+        IntType,
+        /// A pointer type.
+        PointerType,
+        /// A contiguous heterogeneous container type.
+        StructType,
+        /// A contiguous homogeneous "SIMD" container type.
+        VectorType,
+        /// A valueless type.
+        VoidType,
+    }
+}
+enum_type_set! {
+    /// A wrapper for any `BasicType`.
+    BasicTypeEnum: {
+        /// A contiguous homogeneous container type.
+        ArrayType,
+        /// A floating point type.
+        FloatType,
+        IntType,
+        /// A pointer type.
+        PointerType,
+        /// A contiguous heterogeneous container type.
+        StructType,
+        /// A contiguous homogeneous "SIMD" container type.
+        VectorType,
+    }
+}
 
 impl AnyTypeEnum {
     pub(crate) fn new(type_: LLVMTypeRef) -> AnyTypeEnum {
@@ -66,6 +102,7 @@ impl AnyTypeEnum {
         }
     }
 
+    /// This will panic if type is a void or function type.
     pub(crate) fn to_basic_type_enum(&self) -> BasicTypeEnum {
         BasicTypeEnum::new(self.as_type_ref())
     }

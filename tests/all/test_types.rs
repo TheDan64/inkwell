@@ -76,7 +76,7 @@ fn test_struct_type() {
         assert!(opaque_struct.get_field_type_at_index(200).is_none());
     }
 
-    assert!(opaque_struct.set_body(&[&int_vector, &float_array], true));
+    assert!(opaque_struct.set_body(&[int_vector.into(), float_array.into()], true));
 
     let no_longer_opaque_struct = opaque_struct;
 
