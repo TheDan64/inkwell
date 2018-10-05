@@ -57,7 +57,6 @@ fn test_struct_type() {
         assert_eq!(av_struct.get_field_types(), vec![field_1, field_2]);
     }
 
-
     let opaque_struct = context.opaque_struct_type("opaque_struct");
 
     assert!(!opaque_struct.is_packed());

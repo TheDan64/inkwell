@@ -11,6 +11,7 @@ mod fn_type;
 mod int_type;
 #[deny(missing_docs)]
 mod ptr_type;
+#[deny(missing_docs)]
 mod struct_type;
 #[deny(missing_docs)]
 mod traits;

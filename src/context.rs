@@ -450,7 +450,7 @@ impl Context {
         FloatType::new(f128_type)
     }
 
-    /// Creates a `StructType` definiton from heterogeneous types.
+    /// Creates a `StructType` definiton from heterogeneous types in the current `Context`.
     ///
     /// # Example
     ///
