@@ -125,10 +125,10 @@ matrix:
         apt:
           sources:
             - *BASE_SOURCES
-            - llvm-toolchain-trusty-7.0
+            - llvm-toolchain-trusty-7
           packages:
             - *BASE_PACKAGES
-            - llvm-7.0-dev
+            - llvm-7-dev
       rust: nightly-2018-09-25
     - deploy: # Documentation build; Only latest supported LLVM version for now
         provider: pages
@@ -139,10 +139,10 @@ matrix:
         on:
           branch: master
       before_install:
-        - export PATH=/usr/lib/llvm-6.0/bin/:$HOME/.local/bin:$PATH
-        - export LLVM_PATH=/usr/share/llvm-6.0/cmake/
+        - export PATH=/usr/lib/llvm-7/bin/:$HOME/.local/bin:$PATH
+        - export LLVM_PATH=/usr/share/llvm-7/cmake/
       script:
-        - cargo doc --no-default-features --features llvm6-0 --color=always
+        - cargo doc --no-default-features --features llvm7-0 --color=always
         - echo '<meta http-equiv="refresh" content="1; url=inkwell/index.html">' > target/doc/index.html
       rust: nightly
       name: "GitHub IO Documentation Deployment"
@@ -156,7 +156,8 @@ matrix:
             # - llvm-toolchain-trusty-3.9
             # - llvm-toolchain-trusty-4.0
             # - llvm-toolchain-trusty-5.0
-            - llvm-toolchain-trusty-6.0
+            # - llvm-toolchain-trusty-6.0
+            - llvm-toolchain-trusty-7
           packages:
             - *BASE_PACKAGES
             # - llvm-3.6-dev
@@ -165,7 +166,8 @@ matrix:
             # - llvm-3.9-dev
             # - llvm-4.0-dev
             # - llvm-5.0-dev
-            - llvm-6.0-dev
+            # - llvm-6.0-dev
+            - llvm-7-dev
 
 env:
   global:
