@@ -118,6 +118,18 @@ matrix:
             - *BASE_PACKAGES
             - llvm-6.0-dev
       rust: nightly-2018-09-25
+    - env:
+        - LLVM_VERSION="7.0"
+      <<: *BASE
+      addons:
+        apt:
+          sources:
+            - *BASE_SOURCES
+            - llvm-toolchain-trusty-7.0
+          packages:
+            - *BASE_PACKAGES
+            - llvm-7.0-dev
+      rust: nightly-2018-09-25
     - deploy: # Documentation build; Only latest supported LLVM version for now
         provider: pages
         skip-cleanup: true

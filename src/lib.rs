@@ -38,7 +38,7 @@ pub mod values;
 use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility, LLVMThreadLocalMode, LLVMDLLStorageClass};
 
 #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0",
-              feature = "llvm5-0", feature = "llvm6-0")))]
+              feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0")))]
 compile_error!("A LLVM feature flag must be provided. See the README for more details.");
 
 /// Defines the address space in which a global will be inserted.

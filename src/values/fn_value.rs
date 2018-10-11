@@ -288,8 +288,31 @@ impl FunctionValue {
         }
     }
 
-    #[cfg(not(feature = "llvm3-6"))]
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-8")))]
     pub fn get_personality_function(&self) -> Option<FunctionValue> {
+        // This prevents a segfault in 3.9+ when not having a pfn
+        // however that segfault will unforuntately still happen in 3.8
+        // because LLVMHasPersonalityFn doesn't exist yet :(
+        #[cfg(not(any(feature = "llvm3-7", feature = "llvm3-8")))]
+        {
+            if !self.has_personality_function() {
+                return None;
+            }
+        }
+
+        let value = unsafe {
+            LLVMGetPersonalityFn(self.as_value_ref())
+        };
+
+        FunctionValue::new(value)
+    }
+
+    // TODOC: This function will segfault in 3.8 due to a LLVM bug when
+    // there is no personality fn. This segfault is worked around and
+    // avoided in later LLVM versions. Therefore this fn is unsafe in 3.8
+    // but not in all other versions
+    #[cfg(feature = "llvm3-8")]
+    pub unsafe fn get_personality_function(&self) -> Option<FunctionValue> {
         let value = unsafe {
             LLVMGetPersonalityFn(self.as_value_ref())
         };

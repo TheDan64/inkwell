@@ -14,7 +14,7 @@ Inkwell aims to help you pen your own programming languages by safely wrapping l
 
 * Any Rust version released in the last year or so
 * Rust Stable, Beta, or Nightly
-* LLVM 3.6, 3.7, 3.8, 3.9, 4.0, 5.0, or 6.0
+* LLVM 3.6, 3.7, 3.8, 3.9, 4.0, 5.0, 6.0, or 7
 
 ## Usage
 
@@ -36,6 +36,7 @@ Supported versions:
 | 4.0.x        | llvm4-0       |
 | 5.0.x        | llvm5-0       |
 | 6.0.x        | llvm6-0       |
+| 7.0.x        | llvm7-0       |
 
 ## Documentation
 

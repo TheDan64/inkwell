@@ -24,6 +24,8 @@ fn test_init_all_passes_for_module() {
     pass_manager.add_internalize_pass(true);
     pass_manager.add_strip_dead_prototypes_pass();
     pass_manager.add_strip_symbol_pass();
+    #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0",
+              feature = "llvm5-0", feature = "llvm6-0"))]
     pass_manager.add_bb_vectorize_pass();
     pass_manager.add_loop_vectorize_pass();
     pass_manager.add_slp_vectorize_pass();
@@ -120,11 +122,11 @@ fn test_pass_manager_builder() {
 
     pass_manager_builder.populate_module_pass_manager(&module_pass_manager);
 
-    // TODOC: Seems to return true in 3.7 & 6.0, even though no changes were made.
+    // TODOC: Seems to return true in 3.7, 6.0, & 7.0 even though no changes were made.
     // In 3.6, 3.8, & 3.9 it returns false. Seems like a LLVM bug?
-    #[cfg(not(any(feature = "llvm3-7", feature = "llvm6-0")))]
+    #[cfg(not(any(feature = "llvm3-7", feature = "llvm6-0", feature = "llvm7-0")))]
     assert!(!module_pass_manager.run_on_module(&module));
-    #[cfg(any(feature = "llvm3-7", feature = "llvm6-0"))]
+    #[cfg(any(feature = "llvm3-7", feature = "llvm6-0", feature = "llvm7-0"))]
     assert!(module_pass_manager.run_on_module(&module));
 
     // TODO: Populate LTO pass manager?

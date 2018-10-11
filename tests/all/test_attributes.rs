@@ -11,7 +11,12 @@ fn test_enum_attribute_kinds() {
     assert_eq!(Attribute::get_named_enum_kind_id("foo"), 0);
     assert_eq!(Attribute::get_named_enum_kind_id("bar"), 0);
 
-    // TODO: Document these kinds of attributes:
+    // Many of the values change and are not consistent across LLVM versions
+    // so it only seems to make sense to test some consistent subset.
+    // Otherwise it's not worth keeping track of. Users will have to
+    // play around with it and determine which ones they are interested in
+    // for their particular LLVM version
+
     // Function Attributes:
     assert_eq!(Attribute::get_named_enum_kind_id("allocsize"), 2);
     assert_eq!(Attribute::get_named_enum_kind_id("alwaysinline"), 3);
@@ -26,21 +31,6 @@ fn test_enum_attribute_kinds() {
     assert_eq!(Attribute::get_named_enum_kind_id("minsize"), 17);
     assert_eq!(Attribute::get_named_enum_kind_id("naked"), 18);
     assert_eq!(Attribute::get_named_enum_kind_id("nobuiltin"), 21);
-    assert_eq!(Attribute::get_named_enum_kind_id("noduplicate"), 23);
-    assert_eq!(Attribute::get_named_enum_kind_id("noimplicitfloat"), 24);
-    assert_eq!(Attribute::get_named_enum_kind_id("noinline"), 25);
-    assert_eq!(Attribute::get_named_enum_kind_id("norecurse"), 26);
-    assert_eq!(Attribute::get_named_enum_kind_id("noredzone"), 27);
-    assert_eq!(Attribute::get_named_enum_kind_id("noreturn"), 28);
-    assert_eq!(Attribute::get_named_enum_kind_id("nounwind"), 29);
-    assert_eq!(Attribute::get_named_enum_kind_id("nonlazybind"), 30);
-    assert_eq!(Attribute::get_named_enum_kind_id("optsize"), 32);
-    assert_eq!(Attribute::get_named_enum_kind_id("optnone"), 33);
-    assert_eq!(Attribute::get_named_enum_kind_id("readnone"), 34);
-    assert_eq!(Attribute::get_named_enum_kind_id("readonly"), 35);
-    assert_eq!(Attribute::get_named_enum_kind_id("returns_twice"), 37);
-    assert_eq!(Attribute::get_named_enum_kind_id("safestack"), 39);
-    assert_eq!(Attribute::get_named_enum_kind_id("sanitize_address"), 40);
 
     // REVIEW: The LLVM docs suggest these fn attrs exist, but don't turn up:
     // assert_eq!(Attribute::get_named_enum_kind_id("no-jump-tables"), 19);
@@ -64,87 +54,6 @@ fn test_enum_attribute_kinds() {
     assert_eq!(Attribute::get_named_enum_kind_id("nest"), 19);
     assert_eq!(Attribute::get_named_enum_kind_id("noalias"), 20);
     assert_eq!(Attribute::get_named_enum_kind_id("nocapture"), 22);
-    assert_eq!(Attribute::get_named_enum_kind_id("nonnull"), 31);
-    assert_eq!(Attribute::get_named_enum_kind_id("returned"), 36);
-    assert_eq!(Attribute::get_named_enum_kind_id("signext"), 38);
-
-    #[cfg(feature = "llvm4-0")]
-    {
-        // Function Attributes:
-        // assert_eq!(Attribute::get_named_enum_kind_id("sanitize_hwaddress"), 41);
-        assert_eq!(Attribute::get_named_enum_kind_id("sanitize_memory"), 41);
-        // assert_eq!(Attribute::get_named_enum_kind_id("sanitize_thread"), 42);
-        // assert_eq!(Attribute::get_named_enum_kind_id("speculatable"), 43);
-        assert_eq!(Attribute::get_named_enum_kind_id("alignstack"), 43); // 43 vs 44
-        assert_eq!(Attribute::get_named_enum_kind_id("ssp"), 44); // 44 vs 45
-        assert_eq!(Attribute::get_named_enum_kind_id("sspreq"), 45); // 45 vs 46
-        assert_eq!(Attribute::get_named_enum_kind_id("sspstrong"), 46); // 46 vs 47
-        // assert_eq!(Attribute::get_named_enum_kind_id("strictfp"), 48);
-        assert_eq!(Attribute::get_named_enum_kind_id("uwtable"), 50); // 50 vs 51 vs 53
-        assert_eq!(Attribute::get_named_enum_kind_id("writeonly"), 51); // 51 vs 52 vs 54
-
-        // Parameter Attributes:
-        assert_eq!(Attribute::get_named_enum_kind_id("sret"), 47); // 47 vs 48 vs 50
-        assert_eq!(Attribute::get_named_enum_kind_id("swifterror"), 48); // 48 vs 49 vs 51
-        assert_eq!(Attribute::get_named_enum_kind_id("swiftself"), 49); // 49 vs 50 vs 52
-        assert_eq!(Attribute::get_named_enum_kind_id("zeroext"), 52); // 52 vs 53 vs 55
-
-        // REVIEW: Does last mean there is another kind at 53 we're missing?
-        // or is it the next "free" slot
-        assert_eq!(Attribute::get_last_enum_kind_id(), 53);
-    }
-
-    #[cfg(feature = "llvm5-0")]
-    {
-        // Function Attributes:
-        // assert_eq!(Attribute::get_named_enum_kind_id("sanitize_hwaddress"), 41);
-        assert_eq!(Attribute::get_named_enum_kind_id("sanitize_memory"), 41);
-        assert_eq!(Attribute::get_named_enum_kind_id("sanitize_thread"), 42);
-        assert_eq!(Attribute::get_named_enum_kind_id("speculatable"), 43);
-        assert_eq!(Attribute::get_named_enum_kind_id("alignstack"), 44);
-        assert_eq!(Attribute::get_named_enum_kind_id("ssp"), 45);
-        assert_eq!(Attribute::get_named_enum_kind_id("sspreq"), 46);
-        assert_eq!(Attribute::get_named_enum_kind_id("sspstrong"), 47);
-        // assert_eq!(Attribute::get_named_enum_kind_id("strictfp"), 48);
-        assert_eq!(Attribute::get_named_enum_kind_id("uwtable"), 51); // 51 vs 53
-        assert_eq!(Attribute::get_named_enum_kind_id("writeonly"), 52); // 52 vs 54
-
-        // Parameter Attributes:
-        assert_eq!(Attribute::get_named_enum_kind_id("sret"), 48); // 48 vs 50
-        assert_eq!(Attribute::get_named_enum_kind_id("swifterror"), 49); // 49 vs 51
-        assert_eq!(Attribute::get_named_enum_kind_id("swiftself"), 50); // 50 vs 52
-        assert_eq!(Attribute::get_named_enum_kind_id("zeroext"), 53); // 53 vs 55
-
-        // REVIEW: Does last mean there is another kind at 54 we're missing?
-        // or is it the next "free" slot
-        assert_eq!(Attribute::get_last_enum_kind_id(), 54);
-    }
-
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0")))]
-    {
-        // Function Attributes:
-        assert_eq!(Attribute::get_named_enum_kind_id("sanitize_hwaddress"), 41);
-        assert_eq!(Attribute::get_named_enum_kind_id("sanitize_memory"), 42);
-        assert_eq!(Attribute::get_named_enum_kind_id("sanitize_thread"), 43);
-        assert_eq!(Attribute::get_named_enum_kind_id("speculatable"), 44);
-        assert_eq!(Attribute::get_named_enum_kind_id("alignstack"), 45);
-        assert_eq!(Attribute::get_named_enum_kind_id("ssp"), 46);
-        assert_eq!(Attribute::get_named_enum_kind_id("sspreq"), 47);
-        assert_eq!(Attribute::get_named_enum_kind_id("sspstrong"), 48);
-        assert_eq!(Attribute::get_named_enum_kind_id("strictfp"), 49);
-        assert_eq!(Attribute::get_named_enum_kind_id("uwtable"), 53);
-        assert_eq!(Attribute::get_named_enum_kind_id("writeonly"), 54);
-
-        // Parameter Attributes:
-        assert_eq!(Attribute::get_named_enum_kind_id("sret"), 50);
-        assert_eq!(Attribute::get_named_enum_kind_id("swifterror"), 51);
-        assert_eq!(Attribute::get_named_enum_kind_id("swiftself"), 52);
-        assert_eq!(Attribute::get_named_enum_kind_id("zeroext"), 55);
-
-        // REVIEW: Does last mean there is another kind at 56 we're missing?
-        // or is it the next "free" slot
-        assert_eq!(Attribute::get_last_enum_kind_id(), 56);
-    }
 }
 
 #[test]

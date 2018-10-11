@@ -2,7 +2,8 @@
 
 #[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]
 use llvm_sys::core::{LLVMInstallFatalErrorHandler, LLVMResetFatalErrorHandler};
-#[cfg(any(feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
+#[cfg(any(feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0",
+          feature = "llvm7-0"))]
 use llvm_sys::error_handling::{LLVMInstallFatalErrorHandler, LLVMResetFatalErrorHandler};
 use llvm_sys::core::{LLVMGetDiagInfoDescription, LLVMGetDiagInfoSeverity};
 use llvm_sys::prelude::LLVMDiagnosticInfoRef;

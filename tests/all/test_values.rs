@@ -347,10 +347,10 @@ fn test_verify_fn() {
 
     let function = module.add_function("fn", fn_type, None);
 
-    #[cfg(not(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[cfg(not(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0")))]
     assert!(!function.verify(false));
-    // REVIEW: Why does 3.9, 4.0, & 5.0 return true here? LLVM bug? Bugfix?
-    #[cfg(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
+    // REVIEW: Why does 3.9 -> 7.0 return true here? LLVM bug? Bugfix?
+    #[cfg(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0"))]
     assert!(function.verify(false));
 
     let basic_block = context.append_basic_block(&function, "entry");
@@ -722,9 +722,9 @@ fn test_function_value_no_params() {
     assert!(fn_value.get_first_param().is_none());
     assert!(fn_value.get_last_param().is_none());
     assert!(fn_value.get_nth_param(0).is_none());
-    // REVIEW: get_personality_function causes segfault in 3.8 - 6.0
-    // Probably LLVM bug if so, should document
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+
+    // Here we're able to avoid a segfault in every version except 3.8 :(
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-8")))]
     assert!(fn_value.get_personality_function().is_none());
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     assert!(!fn_value.has_personality_function());
@@ -832,8 +832,8 @@ fn test_globals() {
     assert!(global.is_declaration());
     assert!(!global.has_unnamed_addr());
     assert!(!global.is_externally_initialized());
-    // REVIEW: Segfaults in 4.0, 5.0, & 6.0
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    // REVIEW: Segfaults in 4.0 -> 7.0
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0")))]
     assert_eq!(global.get_section(), &*CString::new("").unwrap());
     assert_eq!(global.get_dll_storage_class(), DLLStorageClass::default());
     assert_eq!(global.get_visibility(), GlobalVisibility::default());

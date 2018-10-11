@@ -19,12 +19,13 @@ llvm3-9 = []
 llvm4-0 = []
 llvm5-0 = []
 llvm6-0 = []
+llvm7-0 = []
 
 [dependencies]
 either = "1.5"
 enum-methods = "0.0.8"
 libc = "*"
-llvm-sys = "60"
+llvm-sys = "70.0"
 
 [badges]
 travis-ci = { repository = "TheDan64/inkwell" }

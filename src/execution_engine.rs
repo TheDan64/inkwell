@@ -285,15 +285,16 @@ impl ExecutionEngine {
     ///
     /// [`UnsafeFunctionPointer`]: trait.UnsafeFunctionPointer.html
     pub unsafe fn get_function<F>(&self, fn_name: &str) -> Result<Symbol<F>, FunctionLookupError>
-    where F: UnsafeFunctionPointer
+    where
+        F: UnsafeFunctionPointer,
     {
         if !self.jit_mode {
             return Err(FunctionLookupError::JITNotEnabled);
         }
 
-        // LLVMGetFunctionAddress segfaults in llvm 5.0 & 6.0 when fn_name doesn't exist. This is a workaround
+        // LLVMGetFunctionAddress segfaults in llvm 5.0 -> 7.0 when fn_name doesn't exist. This is a workaround
         // to see if it exists and avoid the segfault when it doesn't
-        #[cfg(any(feature = "llvm5-0", feature = "llvm6-0"))]
+        #[cfg(any(feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0"))]
         self.get_function_value(fn_name)?;
 
         let c_string = CString::new(fn_name).expect("Conversion to CString failed unexpectedly");

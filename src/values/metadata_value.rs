@@ -25,6 +25,8 @@ pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 22;
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 23;
 #[cfg(feature = "llvm6-0")]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 25;
+#[cfg(feature = "llvm7-0")]
+pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 25;
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub struct MetadataValue {

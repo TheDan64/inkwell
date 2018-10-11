@@ -29,7 +29,6 @@ impl Builder {
     /// # Example
     ///
     /// ```no_run
-    ///
     /// use inkwell::builder::Builder;
     ///
     /// let builder = Builder::create();
