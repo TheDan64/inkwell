@@ -1200,12 +1200,73 @@ impl Module {
     ///
     /// module.set_name("my_module2");
     ///
-    /// assert_eq!(*module.get_name(), *CString::new("my_mdoule2").unwrap());
+    /// assert_eq!(*module.get_name(), *CString::new("my_module2").unwrap());
     /// ```
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     pub fn set_name(&self, name: &str) {
         unsafe {
             LLVMSetModuleIdentifier(self.module.get(), name.as_ptr() as *const i8, name.len())
+        }
+    }
+
+    /// Gets the source file name. It defaults to the module identifier but is separate from it.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use std::ffi::CString;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_mod");
+    ///
+    /// assert_eq!(*module.get_source_file_name(), *CString::new("my_mod").unwrap());
+    ///
+    /// module.set_source_file_name("my_mod.rs");
+    ///
+    /// assert_eq!(*module.get_name(), *CString::new("my_mod").unwrap());
+    /// assert_eq!(*module.get_source_file_name(), *CString::new("my_mod.rs").unwrap());
+    /// ```
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    pub fn get_source_file_name(&self) -> &CStr {
+        use llvm_sys::core::LLVMGetSourceFileName;
+
+        let mut len = 0;
+        let ptr = unsafe {
+            LLVMGetSourceFileName(self.module.get(), &mut len)
+        };
+
+        unsafe {
+            CStr::from_ptr(ptr)
+        }
+    }
+
+    /// Sets the source file name. It defaults to the module identifier but is separate from it.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use std::ffi::CString;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_mod");
+    ///
+    /// assert_eq!(*module.get_source_file_name(), *CString::new("my_mod").unwrap());
+    ///
+    /// module.set_source_file_name("my_mod.rs");
+    ///
+    /// assert_eq!(*module.get_name(), *CString::new("my_mod").unwrap());
+    /// assert_eq!(*module.get_source_file_name(), *CString::new("my_mod.rs").unwrap());
+    /// ```
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    pub fn set_source_file_name(&self, file_name: &str) {
+        use llvm_sys::core::LLVMSetSourceFileName;
+
+        unsafe {
+            LLVMSetSourceFileName(self.module.get(), file_name.as_ptr() as *const i8, file_name.len())
         }
     }
 

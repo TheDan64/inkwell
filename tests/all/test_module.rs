@@ -330,6 +330,10 @@ fn test_get_set_target() {
     assert_eq!(*module.get_name(), *CString::new("mod").unwrap());
     assert!(module.get_target().is_none());
 
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    assert_eq!(*module.get_source_file_name(), *CString::new("mod").unwrap());
+
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     module.set_name("mod2");
     module.set_target(&target);
@@ -337,6 +341,15 @@ fn test_get_set_target() {
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     assert_eq!(*module.get_name(), *CString::new("mod2").unwrap());
     assert_eq!(module.get_target().unwrap(), target);
+
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    {
+        module.set_source_file_name("foo.rs");
+
+        assert_eq!(*module.get_source_file_name(), *CString::new("foo.rs").unwrap());
+        assert_eq!(*module.get_name(), *CString::new("mod2").unwrap());
+    }
 }
 
 #[test]
