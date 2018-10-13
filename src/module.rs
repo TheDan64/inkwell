@@ -4,7 +4,7 @@ use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 #[allow(deprecated)]
 use llvm_sys::bit_reader::{LLVMParseBitcode, LLVMParseBitcodeInContext};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
-use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile, LLVMSetModuleInlineAsm};
+use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile};
 #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
 use llvm_sys::core::{LLVMGetModuleIdentifier, LLVMSetModuleIdentifier};
 use llvm_sys::execution_engine::{LLVMCreateInterpreterForModule, LLVMCreateJITCompilerForModule, LLVMCreateExecutionEngineForModule};
@@ -781,7 +781,6 @@ impl Module {
             LLVMPrintModuleToFile(self.module.get(), path.as_ptr() as *const i8, &mut err_string)
         };
 
-        // TODO: Verify 1 is error code (LLVM can be inconsistent)
         if return_code == 1 {
             return Err(LLVMString::new(err_string));
         }
@@ -790,14 +789,28 @@ impl Module {
     }
 
     /// Sets the inline assembly for the `Module`.
-    // REVIEW: Apparently LLVMSetModuleInlineAsm is deprecated at some point (recent?) in favor of
-    // LLVMSetModuleInlineAsm2 which takes a len
     pub fn set_inline_assembly(&self, asm: &str) {
-        let c_string = CString::new(asm).expect("Conversion to CString failed unexpectedly");
+        #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
+        {
+            use llvm_sys::core::LLVMSetModuleInlineAsm;
 
-        unsafe {
-            LLVMSetModuleInlineAsm(self.module.get(), c_string.as_ptr())
+            let c_string = CString::new(asm).expect("Conversion to CString failed unexpectedly");
+
+            unsafe {
+                LLVMSetModuleInlineAsm(self.module.get(), c_string.as_ptr())
+            }
         }
+        #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                      feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+        {
+            use llvm_sys::core::LLVMSetModuleInlineAsm2;
+
+            unsafe {
+                LLVMSetModuleInlineAsm2(self.module.get(), asm.as_ptr() as *const i8, asm.len())
+            }
+        }
+
     }
 
     // REVIEW: Should module take ownership of metadata?

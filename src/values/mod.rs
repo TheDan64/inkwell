@@ -31,7 +31,7 @@ pub use values::traits::{AnyValue, AggregateValue, BasicValue, IntMathValue, Flo
 pub use values::vec_value::VectorValue;
 pub(crate) use values::traits::AsValueRef;
 
-use llvm_sys::core::{LLVMGetValueName, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMSetValueName, LLVMTypeOf, LLVMDumpValue, LLVMIsAInstruction, LLVMGetMetadata, LLVMHasMetadata, LLVMSetMetadata, LLVMReplaceAllUsesWith};
+use llvm_sys::core::{LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDumpValue, LLVMIsAInstruction, LLVMGetMetadata, LLVMHasMetadata, LLVMSetMetadata, LLVMReplaceAllUsesWith};
 use llvm_sys::prelude::{LLVMValueRef, LLVMTypeRef};
 
 use std::ffi::{CString, CStr};
@@ -86,17 +86,48 @@ impl Value {
     // add a ParamValue wrapper type that always have it but conditional types (IntValue<Variable>)
     // that also have it. This isn't a huge deal though, since it hasn't proven to be UB so far
     fn set_name(&self, name: &str) {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+        #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
+        {
+            use llvm_sys::core::LLVMSetValueName;
 
-        unsafe {
-            LLVMSetValueName(self.value, c_string.as_ptr());
+            let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+
+            unsafe {
+                LLVMSetValueName(self.value, c_string.as_ptr());
+            }
+        }
+        #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                      feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+        {
+            use llvm_sys::core::LLVMSetValueName2;
+
+            unsafe {
+                LLVMSetValueName2(self.value, name.as_ptr() as *const i8, name.len())
+            }
         }
     }
 
     // get_name should *not* return a LLVMString, because it is not an owned value AFAICT
     fn get_name(&self) -> &CStr {
+        #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
+        let ptr = unsafe {
+            use llvm_sys::core::LLVMGetValueName;
+
+            LLVMGetValueName(self.value)
+        };
+        #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                      feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+        let ptr = unsafe {
+            use llvm_sys::core::LLVMGetValueName2;
+            let mut len = 0;
+
+            LLVMGetValueName2(self.value, &mut len)
+        };
+
         unsafe {
-            CStr::from_ptr(LLVMGetValueName(self.value))
+            CStr::from_ptr(ptr)
         }
     }
 
