@@ -82,6 +82,7 @@ fn test_call_site() {
 
     let call_site = builder.build_call(function, &[], "to_infinity_and_beyond");
 
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     assert_eq!(call_site.count_arguments(), 0);
     assert!(!call_site.is_tail_call());
 
