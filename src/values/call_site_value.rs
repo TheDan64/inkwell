@@ -3,6 +3,7 @@ use llvm_sys::LLVMTypeKind;
 use llvm_sys::core::{LLVMIsTailCall, LLVMSetTailCall, LLVMGetTypeKind, LLVMTypeOf, LLVMSetInstructionCallConv, LLVMGetInstructionCallConv, LLVMSetInstrParamAlignment};
 use llvm_sys::prelude::LLVMValueRef;
 
+#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
 use attributes::Attribute;
 use support::LLVMString;
 use values::{AsValueRef, BasicValueEnum, FunctionValue, InstructionValue, Value};
