@@ -155,7 +155,8 @@ impl ExecutionEngine {
     /// let extf = module.add_function("sumf", ft.fn_type(&[ft.into(), ft.into()], false), None);
     ///
     /// let argf = ft.const_float(64.);
-    /// let retv = builder.build_call(extf, &[argf.into(), argf.into()], "retv", false).left().unwrap().into_float_value();
+    /// let call_site_value = builder.build_call(extf, &[argf.into(), argf.into()], "retv");
+    /// let retv = call_site_value.try_as_basic_value().left().unwrap().into_float_value();
     ///
     /// builder.build_return(Some(&retv));
     ///

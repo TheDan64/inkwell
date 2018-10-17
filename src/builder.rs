@@ -1,11 +1,10 @@
-use either::Either;
 use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf, LLVMSetTailCall, LLVMBuildExtractElement, LLVMBuildInsertElement, LLVMBuildIntToPtr, LLVMBuildPtrToInt, LLVMInsertIntoBuilderWithName, LLVMClearInsertionPosition, LLVMCreateBuilder, LLVMPositionBuilder, LLVMPositionBuilderBefore, LLVMBuildAggregateRet, LLVMBuildStructGEP, LLVMBuildInBoundsGEP, LLVMBuildPtrDiff, LLVMBuildNSWAdd, LLVMBuildNUWAdd, LLVMBuildNSWSub, LLVMBuildNUWSub, LLVMBuildNSWMul, LLVMBuildNUWMul, LLVMBuildSDiv, LLVMBuildSRem, LLVMBuildURem, LLVMBuildFRem, LLVMBuildNSWNeg, LLVMBuildNUWNeg, LLVMBuildFPToUI, LLVMBuildFPToSI, LLVMBuildSIToFP, LLVMBuildUIToFP, LLVMBuildFPTrunc, LLVMBuildFPExt, LLVMBuildIntCast, LLVMBuildFPCast, LLVMBuildSExtOrBitCast, LLVMBuildZExtOrBitCast, LLVMBuildTruncOrBitCast, LLVMBuildSwitch, LLVMAddCase, LLVMBuildShl, LLVMBuildAShr, LLVMBuildLShr, LLVMBuildGlobalString, LLVMBuildGlobalStringPtr, LLVMBuildExactSDiv, LLVMBuildTrunc, LLVMBuildSExt, LLVMBuildZExt, LLVMBuildSelect, LLVMBuildAddrSpaceCast, LLVMBuildBitCast, LLVMBuildShuffleVector, LLVMBuildVAArg};
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMTypeKind, LLVMAtomicOrdering};
 
 use {IntPredicate, FloatPredicate};
 use basic_block::BasicBlock;
-use values::{AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode};
+use values::{AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode, CallSiteValue};
 use types::{AsTypeRef, BasicType, IntMathType, FloatMathType, PointerType, PointerMathType};
 
 use std::ffi::CString;
@@ -46,15 +45,8 @@ impl Builder {
     // Is that frowned upon?
     // TODO: Option<impl BasicValue>
     pub fn build_return(&self, value: Option<&BasicValue>) -> InstructionValue {
-        // let value = unsafe {
-        //     value.map_or(LLVMBuildRetVoid(self.builder), |value| LLVMBuildRet(self.builder, value.value))
-        // };
-
         let value = unsafe {
-            match value {
-                Some(v) => LLVMBuildRet(self.builder, v.as_value_ref()),
-                None => LLVMBuildRetVoid(self.builder),
-            }
+            value.map_or_else(|| LLVMBuildRetVoid(self.builder), |value| LLVMBuildRet(self.builder, value.as_value_ref()))
         };
 
         InstructionValue::new(value)
@@ -71,8 +63,8 @@ impl Builder {
         InstructionValue::new(value)
     }
 
-    pub fn build_call(&self, function: FunctionValue, args: &[BasicValueEnum], name: &str, tail_call: bool) -> Either<BasicValueEnum, InstructionValue> {
-        // LLVM gets upset when void calls are named because they don't return anything
+    pub fn build_call(&self, function: FunctionValue, args: &[BasicValueEnum], name: &str) -> CallSiteValue {
+        // LLVM gets upset when void return calls are named because they don't return anything
         let name = unsafe {
             match LLVMGetTypeKind(LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(function.as_value_ref())))) {
                 LLVMTypeKind::LLVMVoidTypeKind => "",
@@ -88,18 +80,7 @@ impl Builder {
             LLVMBuildCall(self.builder, function.as_value_ref(), args.as_mut_ptr(), args.len() as u32, c_string.as_ptr())
         };
 
-        if tail_call {
-            unsafe {
-                LLVMSetTailCall(value, true as i32)
-            }
-        }
-
-        unsafe {
-            match LLVMGetTypeKind(LLVMTypeOf(value)) {
-                LLVMTypeKind::LLVMVoidTypeKind => Either::Right(InstructionValue::new(value)),
-                _ => Either::Left(BasicValueEnum::new(value)),
-            }
-        }
+        CallSiteValue::new(value)
     }
 
     // REVIEW: Doesn't GEP work on array too?

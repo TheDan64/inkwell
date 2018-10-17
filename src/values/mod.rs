@@ -1,6 +1,8 @@
 //! A value is an instance of a type.
 
 mod array_value;
+#[deny(missing_docs)]
+mod call_site_value;
 mod enums;
 mod float_value;
 mod fn_value;
@@ -16,6 +18,7 @@ mod traits;
 mod vec_value;
 
 pub use values::array_value::ArrayValue;
+pub use values::call_site_value::CallSiteValue;
 pub use values::enums::{AnyValueEnum, AggregateValueEnum, BasicValueEnum, BasicMetadataValueEnum};
 pub use values::float_value::FloatValue;
 pub use values::fn_value::FunctionValue;
@@ -34,7 +37,7 @@ pub(crate) use values::traits::AsValueRef;
 use llvm_sys::core::{LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDumpValue, LLVMIsAInstruction, LLVMGetMetadata, LLVMHasMetadata, LLVMSetMetadata, LLVMReplaceAllUsesWith};
 use llvm_sys::prelude::{LLVMValueRef, LLVMTypeRef};
 
-use std::ffi::{CString, CStr};
+use std::ffi::CStr;
 use std::fmt;
 
 use support::LLVMString;
@@ -90,6 +93,7 @@ impl Value {
                   feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
         {
             use llvm_sys::core::LLVMSetValueName;
+            use std::ffi::CString;
 
             let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 

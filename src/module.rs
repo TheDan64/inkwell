@@ -810,7 +810,6 @@ impl Module {
                 LLVMSetModuleInlineAsm2(self.module.get(), asm.as_ptr() as *const i8, asm.len())
             }
         }
-
     }
 
     // REVIEW: Should module take ownership of metadata?

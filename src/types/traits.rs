@@ -21,6 +21,7 @@ macro_rules! trait_type_set {
     );
 }
 
+// REVIEW: print_to_string might be a good candidate to live here?
 /// Represents any LLVM type.
 pub trait AnyType: AsTypeRef + Debug {
     /// Returns an `AnyTypeEnum` that represents the current type.

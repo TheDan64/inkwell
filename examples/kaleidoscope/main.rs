@@ -963,7 +963,7 @@ impl<'a> Compiler<'a> {
 
                             match self.get_function(name.as_str()) {
                                 Some(fun) => {
-                                    match self.builder.build_call(fun, &[lhs.into(), rhs.into()], "tmpbin", false).left() {
+                                    match self.builder.build_call(fun, &[lhs.into(), rhs.into()], "tmpbin").try_as_basic_value().left() {
                                         Some(value) => Ok(value.into_float_value()),
                                         None => Err("Invalid call produced.")
                                     }
@@ -987,7 +987,7 @@ impl<'a> Compiler<'a> {
 
                         let argsv: Vec<BasicValueEnum> = compiled_args.iter().by_ref().map(|&val| val.into()).collect();
 
-                        match self.builder.build_call(fun, argsv.as_slice(), "tmp", false).left() {
+                        match self.builder.build_call(fun, argsv.as_slice(), "tmp").try_as_basic_value().left() {
                             Some(value) => Ok(value.into_float_value()),
                             None => Err("Invalid call produced.")
                         }

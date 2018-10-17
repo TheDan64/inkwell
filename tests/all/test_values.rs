@@ -70,7 +70,7 @@ fn test_instructions() {
 }
 
 #[test]
-fn test_tail_call() {
+fn test_call_site() {
     let context = Context::create();
     let module = context.create_module("testing");
     let builder = context.create_builder();
@@ -80,13 +80,26 @@ fn test_tail_call() {
 
     let function = module.add_function("do_nothing", fn_type, None);
 
-    let call_instruction = builder.build_call(function, &[], "to_infinity_and_beyond", false);
+    let call_site = builder.build_call(function, &[], "to_infinity_and_beyond");
 
-    assert_eq!(call_instruction.right().unwrap().is_tail_call(), false);
+    assert_eq!(call_site.count_arguments(), 0);
+    assert!(!call_site.is_tail_call());
 
-    let call_instruction = builder.build_call(function, &[], "to_infinity_and_beyond", true);
+    call_site.set_tail_call(true);
 
-    assert_eq!(call_instruction.right().unwrap().is_tail_call(), true);
+    assert!(call_site.is_tail_call());
+
+    call_site.set_tail_call(false);
+
+    assert!(!call_site.is_tail_call());
+
+    assert_eq!(call_site.get_call_convention(), 0);
+
+    call_site.set_call_convention(2);
+
+    assert_eq!(call_site.get_call_convention(), 2);
+
+    call_site.set_param_alignment_attribute(0, 12);
 }
 
 #[test]

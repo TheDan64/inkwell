@@ -1,6 +1,6 @@
 //! Having a main.rs in a directory w/ mods will force tests to be built in a single binary
 
-#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
 mod test_attributes;
 mod test_basic_block;
 mod test_builder;

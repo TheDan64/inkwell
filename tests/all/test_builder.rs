@@ -32,7 +32,15 @@ fn test_build_call() {
 
     builder.position_at_end(&basic_block2);
 
-    let pi2 = builder.build_call(function, &[], "get_pi", false).left().unwrap();
+    let pi2_call_site = builder.build_call(function, &[], "get_pi");
+
+    assert!(!pi2_call_site.is_tail_call());
+
+    pi2_call_site.set_tail_call(true);
+
+    assert!(pi2_call_site.is_tail_call());
+
+    let pi2 = pi2_call_site.try_as_basic_value().left().unwrap();
 
     builder.build_return(Some(&pi2));
 }

@@ -3,7 +3,7 @@ use llvm_sys::core::{LLVMConstExtractValue, LLVMConstInsertValue};
 
 use std::fmt::Debug;
 
-use values::{ArrayValue, AggregateValueEnum, GlobalValue, StructValue, BasicValueEnum, AnyValueEnum, IntValue, FloatValue, PointerValue, PhiValue, VectorValue, FunctionValue, InstructionValue};
+use values::{ArrayValue, AggregateValueEnum, CallSiteValue, GlobalValue, StructValue, BasicValueEnum, AnyValueEnum, IntValue, FloatValue, PointerValue, PhiValue, VectorValue, FunctionValue, InstructionValue};
 use types::{IntMathType, FloatMathType, PointerMathType, IntType, FloatType, PointerType, VectorType};
 
 // This is an ugly privacy hack so that Type can stay private to this module
@@ -90,6 +90,7 @@ pub trait PointerMathValue: BasicValue {
     fn new(value: LLVMValueRef) -> Self;
 }
 
+// REVIEW: print_to_string might be a good candidate to live here?
 /// Defines any struct wrapping an LLVM value.
 pub trait AnyValue: AsValueRef + Debug {
     /// Returns an enum containing a typed version of `AnyValue`.
@@ -99,7 +100,7 @@ pub trait AnyValue: AsValueRef + Debug {
 }
 
 trait_value_set! {AggregateValue: ArrayValue, AggregateValueEnum, StructValue}
-trait_value_set! {AnyValue: AnyValueEnum, BasicValueEnum, AggregateValueEnum, ArrayValue, IntValue, FloatValue, GlobalValue, PhiValue, PointerValue, FunctionValue, StructValue, VectorValue, InstructionValue}
+trait_value_set! {AnyValue: AnyValueEnum, BasicValueEnum, AggregateValueEnum, ArrayValue, IntValue, FloatValue, GlobalValue, PhiValue, PointerValue, FunctionValue, StructValue, VectorValue, InstructionValue, CallSiteValue}
 trait_value_set! {BasicValue: ArrayValue, BasicValueEnum, AggregateValueEnum, IntValue, FloatValue, GlobalValue, StructValue, PointerValue, VectorValue}
 math_trait_value_set! {IntMathValue: (IntValue => IntType), (VectorValue => VectorType)}
 math_trait_value_set! {FloatMathValue: (FloatValue => FloatType), (VectorValue => VectorType)}

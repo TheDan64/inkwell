@@ -137,3 +137,55 @@ fn test_attributes_on_function_values() {
     assert!(fn_value.get_enum_attribute(0, 1).is_none());
     assert!(fn_value.get_string_attribute(0, "my_key").is_none());
 }
+
+#[test]
+fn test_attributes_on_call_site_values() {
+    let context = Context::create();
+    let builder = context.create_builder();
+    let module = context.create_module("my_mod");
+    let void_type = context.void_type();
+    let i32_type = context.i32_type();
+    let fn_type = void_type.fn_type(&[i32_type.into()], false);
+    let fn_value = module.add_function("my_fn", fn_type, None);
+    let entry_bb = fn_value.append_basic_block("entry");
+    let string_attribute = context.create_string_attribute("my_key", "my_val");
+    let enum_attribute = context.create_enum_attribute(1, 1);
+
+    builder.position_at_end(&entry_bb);
+
+    let call_site_value = builder.build_call(fn_value, &[], "my_fn");
+
+    builder.build_return(None);
+
+    assert_eq!(call_site_value.count_arguments(), 0);
+    assert_eq!(call_site_value.count_attributes(0), 0);
+    assert_eq!(call_site_value.count_attributes(1), 0);
+
+    call_site_value.remove_string_attribute(0, "my_key"); // Noop
+    call_site_value.remove_enum_attribute(0, 1); // Noop
+
+    // define align 1 "my_key"="my_val" void @my_fn()
+    call_site_value.add_attribute(0, string_attribute);
+    call_site_value.add_attribute(1, string_attribute); // Applied to 1st param
+    call_site_value.add_attribute(0, enum_attribute);
+
+    assert_eq!(call_site_value.count_attributes(0), 2);
+    assert_eq!(call_site_value.get_enum_attribute(0, 1), Some(enum_attribute));
+    assert_eq!(call_site_value.get_string_attribute(0, "my_key"), Some(string_attribute));
+
+    call_site_value.remove_string_attribute(0, "my_key");
+
+    assert_eq!(call_site_value.count_attributes(0), 1);
+
+    call_site_value.remove_enum_attribute(0, 1);
+
+    assert_eq!(call_site_value.count_attributes(0), 0);
+    assert!(call_site_value.get_enum_attribute(0, 1).is_none());
+    assert!(call_site_value.get_string_attribute(0, "my_key").is_none());
+    assert_eq!(call_site_value.get_called_fn_value(), fn_value);
+
+    call_site_value.set_param_alignment_attribute(0, 12);
+
+    assert_eq!(call_site_value.count_attributes(0), 1);
+    assert!(call_site_value.get_enum_attribute(0, 1).is_some());
+}
