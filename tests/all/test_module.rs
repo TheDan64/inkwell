@@ -116,12 +116,14 @@ fn test_write_and_load_memory_buffer() {
 
     assert!(memory_buffer.get_size() > 0);
 
-    // REVIEW: This returns a null ptr or segfaults :(
-    // let object_file = memory_buffer.create_object_file();
-
     let module2 = context.create_module_from_ir(memory_buffer).unwrap();
 
     assert_eq!(module2.get_function("my_fn").unwrap().print_to_string(), function.print_to_string());
+
+    let memory_buffer2 = module.write_bitcode_to_memory();
+    let object_file = memory_buffer2.create_object_file();
+
+    assert!(object_file.is_none());
 }
 
 #[test]
