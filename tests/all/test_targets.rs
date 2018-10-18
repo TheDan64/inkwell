@@ -1,5 +1,7 @@
 extern crate inkwell;
 
+use either::Either::{Left, Right};
+
 use self::inkwell::{AddressSpace, OptimizationLevel};
 use self::inkwell::context::Context;
 use self::inkwell::targets::{ByteOrdering, CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetData, TargetMachine};
@@ -110,10 +112,23 @@ fn test_target_and_target_machine() {
 
     target_machine.set_asm_verbosity(true);
 
+    let triple = target_machine.get_triple();
+
     assert_eq!(target_machine.get_target(), good_target);
-    assert_eq!(*target_machine.get_triple(), *CString::new("x86_64-pc-linux-gnu").unwrap());
+    assert_eq!(*triple, *CString::new("x86_64-pc-linux-gnu").unwrap());
     assert_eq!(*target_machine.get_cpu(), *CString::new("x86-64").unwrap());
     assert_eq!(*target_machine.get_feature_string(), *CString::new("+avx2").unwrap());
+
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    {
+        // TODO: Try and find a triple that actually gets normalized..
+        assert_eq!(*TargetMachine::normalize_target_triple(Left("x86_64-pc-linux-gnu")), *CString::new("x86_64-pc-linux-gnu").unwrap());
+        assert_eq!(*TargetMachine::normalize_target_triple(Right(&*triple)), *CString::new("x86_64-pc-linux-gnu").unwrap());
+
+        let _host_name = TargetMachine::get_host_cpu_name();
+        let _host_cpu_features = TargetMachine::get_host_cpu_features();
+    }
 }
 
 #[test]

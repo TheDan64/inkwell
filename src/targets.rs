@@ -1,3 +1,4 @@
+use either::Either;
 use llvm_sys::target::{LLVMTargetDataRef, LLVMCopyStringRepOfTargetData, LLVMSizeOfTypeInBits, LLVMCreateTargetData, LLVMByteOrder, LLVMPointerSize, LLVMByteOrdering, LLVMStoreSizeOfType, LLVMABISizeOfType, LLVMABIAlignmentOfType, LLVMCallFrameAlignmentOfType, LLVMPreferredAlignmentOfType, LLVMPreferredAlignmentOfGlobal, LLVMElementAtOffset, LLVMOffsetOfElement, LLVMDisposeTargetData, LLVMPointerSizeForAS, LLVMIntPtrType, LLVMIntPtrTypeForAS, LLVMIntPtrTypeInContext, LLVMIntPtrTypeForASInContext};
 use llvm_sys::target_machine::{LLVMGetFirstTarget, LLVMTargetRef, LLVMGetNextTarget, LLVMGetTargetFromName, LLVMGetTargetFromTriple, LLVMGetTargetName, LLVMGetTargetDescription, LLVMTargetHasJIT, LLVMTargetHasTargetMachine, LLVMTargetHasAsmBackend, LLVMTargetMachineRef, LLVMDisposeTargetMachine, LLVMGetTargetMachineTarget, LLVMGetTargetMachineTriple, LLVMSetTargetMachineAsmVerbosity, LLVMCreateTargetMachine, LLVMGetTargetMachineCPU, LLVMGetTargetMachineFeatureString, LLVMGetDefaultTargetTriple, LLVMAddAnalysisPasses, LLVMCodeGenOptLevel, LLVMCodeModel, LLVMRelocMode, LLVMCodeGenFileType, LLVMTargetMachineEmitToMemoryBuffer, LLVMTargetMachineEmitToFile};
 
@@ -835,6 +836,63 @@ impl TargetMachine {
         };
 
         LLVMString::new(llvm_string)
+    }
+
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    pub fn normalize_target_triple(triple: Either<&str, &CStr>) -> LLVMString {
+        use llvm_sys::target_machine::LLVMNormalizeTargetTriple;
+
+        let ptr = match triple {
+            Either::Left(triple_str) => {
+                let c_string = CString::new(triple_str).expect("Conversion to CString failed unexpectedly");
+
+                unsafe {
+                    LLVMNormalizeTargetTriple(c_string.as_ptr())
+                }
+            },
+            Either::Right(triple_cstr) => {
+                unsafe {
+                    LLVMNormalizeTargetTriple(triple_cstr.as_ptr())
+                }
+            },
+        };
+
+        LLVMString::new(ptr)
+    }
+
+    /// Gets a string containing the host CPU's name (triple).
+    ///
+    /// # Example Output
+    ///
+    /// `x86_64-pc-linux-gnu`
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    pub fn get_host_cpu_name() -> LLVMString {
+        use llvm_sys::target_machine::LLVMGetHostCPUName;
+
+        let ptr = unsafe {
+            LLVMGetHostCPUName()
+        };
+
+        LLVMString::new(ptr)
+    }
+
+    /// Gets a comma separated list of supported features by the host CPU.
+    ///
+    /// # Example Output
+    ///
+    /// `+sse2,+cx16,+sahf,-tbm`
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    pub fn get_host_cpu_features() -> LLVMString {
+        use llvm_sys::target_machine::LLVMGetHostCPUFeatures;
+
+        let ptr = unsafe {
+            LLVMGetHostCPUFeatures()
+        };
+
+        LLVMString::new(ptr)
     }
 
     pub fn get_cpu(&self) -> LLVMString {
