@@ -1,5 +1,5 @@
 use llvm_sys::core::{LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile};
-#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
+#[feature_versions("llvm3-9" => latest)]
 use llvm_sys::core::LLVMInstructionRemoveFromParent;
 use llvm_sys::LLVMOpcode;
 use llvm_sys::prelude::LLVMValueRef;
@@ -295,7 +295,7 @@ impl InstructionValue {
 
     // REVIEW: Potentially unsafe if parent BB or grandparent fn were removed?
     // REVIEW: Is this actually an erase and should be (self)?
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
+    #[feature_versions("llvm3-9" => latest)]
     pub fn remove_from_basic_block(&self) {
         unsafe {
             LLVMInstructionRemoveFromParent(self.as_value_ref())

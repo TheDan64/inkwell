@@ -1,5 +1,6 @@
 //! These macros are only intended to be used by inkwell internally
 //! and should not be expected to have public support nor stability
+//! Here be dragons
 
 extern crate proc_macro;
 #[macro_use]
@@ -23,7 +24,7 @@ const ALL_FEATURE_VERSIONS: [&str; 8] = [
     "llvm7-0",
 ];
 
-fn panic_with_feature_versions_usage() -> ! {
+fn panic_with_usage() -> ! {
     panic!("feature_version must take the form: \"llvmX-Y\" => (\"llvmX-Y\" || latest)");
 }
 
@@ -36,21 +37,21 @@ pub fn feature_versions(attribute_args: TokenStream, attributee: TokenStream) ->
     let arm = parse_macro_input!(attribute_args as Arm);
 
     if arm.pats.len() != 1 {
-        panic_with_feature_versions_usage();
+        panic_with_usage();
     }
 
     let start_feature = match arm.pats.first().unwrap() {
         Pair::End(Pat::Lit(PatLit { expr })) => match **expr {
             Expr::Lit(ExprLit { lit: Lit::Str(ref literal_str), .. }) => literal_str.value(),
-            _ => panic_with_feature_versions_usage(),
+            _ => panic_with_usage(),
         },
-        _ => panic_with_feature_versions_usage(),
+        _ => panic_with_usage(),
     };
     let end_feature = match *arm.body {
         Expr::Lit(ExprLit { lit: Lit::Str(literal_str), .. }) => Some(literal_str.value()),
         // We could assert the path is just "latest" but this seems like a lot of extra work...
         Expr::Path(_) => None,
-        _ => panic_with_feature_versions_usage(),
+        _ => panic_with_usage(),
     }.unwrap_or_else(get_latest_feature);
 
     let start_index = ALL_FEATURE_VERSIONS.iter().position(|&str| str == start_feature).unwrap();

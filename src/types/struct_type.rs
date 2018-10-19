@@ -1,5 +1,5 @@
 use llvm_sys::core::{LLVMConstNamedStruct, LLVMConstStruct, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMStructSetBody, LLVMConstArray};
-#[cfg(not(feature = "llvm3-6"))]
+#[feature_versions("llvm3-7" => latest)]
 use llvm_sys::core::LLVMStructGetTypeAtIndex;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
@@ -41,7 +41,7 @@ impl StructType {
     ///
     /// assert_eq!(struct_type.get_field_type_at_index(0).unwrap().into_float_type(), f32_type);
     /// ```
-    #[cfg(not(feature = "llvm3-6"))]
+    #[feature_versions("llvm3-7" => latest)]
     pub fn get_field_type_at_index(&self, index: u32) -> Option<BasicTypeEnum> {
         // LLVM doesn't seem to just return null if opaque.
         // TODO: One day, with SubTypes (& maybe specialization?) we could just
