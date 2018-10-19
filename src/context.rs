@@ -1,13 +1,13 @@
 //! A `Context` is an opaque owner and manager of core global data.
 
 use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMGetMDKindIDInContext, LLVMX86FP80TypeInContext, LLVMConstStringInContext, LLVMContextSetDiagnosticHandler};
-#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+#[feature_versions("llvm4-0" => latest)]
 use llvm_sys::core::{LLVMCreateEnumAttribute, LLVMCreateStringAttribute};
 use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef, LLVMDiagnosticInfoRef};
 use llvm_sys::ir_reader::LLVMParseIRInContext;
 use libc::c_void;
 
-#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+#[feature_versions("llvm4-0" => latest)]
 use attributes::Attribute;
 use basic_block::BasicBlock;
 use builder::Builder;
@@ -733,7 +733,7 @@ impl Context {
     ///
     /// assert!(enum_attribute.is_enum());
     /// ```
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+    #[feature_versions("llvm4-0" => latest)]
     pub fn create_enum_attribute(&self, kind_id: u32, val: u64) -> Attribute {
         let attribute = unsafe {
             LLVMCreateEnumAttribute(*self.context, kind_id, val)
@@ -754,7 +754,7 @@ impl Context {
     ///
     /// assert!(string_attribute.is_string());
     /// ```
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+    #[feature_versions("llvm4-0" => latest)]
     pub fn create_string_attribute(&self, key: &str, val: &str) -> Attribute {
         let attribute = unsafe {
             LLVMCreateStringAttribute(*self.context, key.as_ptr() as *const _, key.len() as u32, val.as_ptr() as *const _, val.len() as u32)

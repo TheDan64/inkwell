@@ -1,0 +1,11 @@
+[package]
+name = "inkwell_internal_macros"
+version = "0.1.0"
+authors = ["Daniel Kolsoi <thadan64@gmail.com>"]
+
+[dependencies]
+syn = { version = "0.15", features = ["full"] }
+quote = "0.6"
+
+[lib]
+proc-macro = true

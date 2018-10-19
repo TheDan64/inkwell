@@ -14,6 +14,8 @@ extern crate either;
 extern crate enum_methods;
 extern crate libc;
 extern crate llvm_sys;
+#[macro_use]
+extern crate inkwell_internal_macros;
 
 #[deny(missing_docs)]
 #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]

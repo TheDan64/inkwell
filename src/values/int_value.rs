@@ -1,5 +1,5 @@
 use llvm_sys::core::{LLVMConstNot, LLVMConstNeg, LLVMConstNSWNeg, LLVMConstNUWNeg, LLVMConstAdd, LLVMConstNSWAdd, LLVMConstNUWAdd, LLVMConstSub, LLVMConstNSWSub, LLVMConstNUWSub, LLVMConstMul, LLVMConstNSWMul, LLVMConstNUWMul, LLVMConstUDiv, LLVMConstSDiv, LLVMConstSRem, LLVMConstURem, LLVMConstIntCast, LLVMConstXor, LLVMConstOr, LLVMConstAnd, LLVMConstExactSDiv, LLVMConstShl, LLVMConstLShr, LLVMConstAShr, LLVMConstUIToFP, LLVMConstSIToFP, LLVMConstIntToPtr, LLVMConstTrunc, LLVMConstSExt, LLVMConstZExt, LLVMConstTruncOrBitCast, LLVMConstSExtOrBitCast, LLVMConstZExtOrBitCast, LLVMConstBitCast, LLVMConstICmp, LLVMConstIntGetZExtValue, LLVMConstIntGetSExtValue, LLVMConstSelect};
-#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+#[feature_versions("llvm4-0" => latest)]
 use llvm_sys::core::LLVMConstExactUDiv;
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -186,7 +186,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+    #[feature_versions("llvm4-0" => latest)]
     pub fn const_exact_unsigned_div(&self, rhs: IntValue) -> Self {
         let value = unsafe {
             LLVMConstExactUDiv(self.as_value_ref(), rhs.as_value_ref())

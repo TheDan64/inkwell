@@ -4,13 +4,13 @@ use llvm_sys::prelude::{LLVMPassManagerRef, LLVMPassRegistryRef};
 use llvm_sys::transforms::ipo::{LLVMAddArgumentPromotionPass, LLVMAddConstantMergePass, LLVMAddDeadArgEliminationPass, LLVMAddFunctionAttrsPass, LLVMAddFunctionInliningPass, LLVMAddAlwaysInlinerPass, LLVMAddGlobalDCEPass, LLVMAddGlobalOptimizerPass, LLVMAddIPConstantPropagationPass, LLVMAddIPSCCPPass, LLVMAddInternalizePass, LLVMAddStripDeadPrototypesPass, LLVMAddPruneEHPass, LLVMAddStripSymbolsPass};
 use llvm_sys::transforms::pass_manager_builder::{LLVMPassManagerBuilderRef, LLVMPassManagerBuilderCreate, LLVMPassManagerBuilderDispose, LLVMPassManagerBuilderSetOptLevel, LLVMPassManagerBuilderSetSizeLevel, LLVMPassManagerBuilderSetDisableUnitAtATime, LLVMPassManagerBuilderSetDisableUnrollLoops, LLVMPassManagerBuilderSetDisableSimplifyLibCalls, LLVMPassManagerBuilderUseInlinerWithThreshold, LLVMPassManagerBuilderPopulateFunctionPassManager, LLVMPassManagerBuilderPopulateModulePassManager, LLVMPassManagerBuilderPopulateLTOPassManager};
 use llvm_sys::transforms::scalar::{LLVMAddAggressiveDCEPass, LLVMAddMemCpyOptPass, LLVMAddAlignmentFromAssumptionsPass, LLVMAddCFGSimplificationPass, LLVMAddDeadStoreEliminationPass, LLVMAddScalarizerPass, LLVMAddMergedLoadStoreMotionPass, LLVMAddGVNPass, LLVMAddIndVarSimplifyPass, LLVMAddInstructionCombiningPass, LLVMAddJumpThreadingPass, LLVMAddLICMPass, LLVMAddLoopDeletionPass, LLVMAddLoopIdiomPass, LLVMAddLoopRotatePass, LLVMAddLoopRerollPass, LLVMAddLoopUnrollPass, LLVMAddLoopUnswitchPass, LLVMAddPartiallyInlineLibCallsPass, LLVMAddSCCPPass, LLVMAddScalarReplAggregatesPass, LLVMAddScalarReplAggregatesPassSSA, LLVMAddScalarReplAggregatesPassWithThreshold, LLVMAddSimplifyLibCallsPass, LLVMAddTailCallEliminationPass, LLVMAddConstantPropagationPass, LLVMAddDemoteMemoryToRegisterPass, LLVMAddVerifierPass, LLVMAddCorrelatedValuePropagationPass, LLVMAddEarlyCSEPass, LLVMAddLowerExpectIntrinsicPass, LLVMAddTypeBasedAliasAnalysisPass, LLVMAddScopedNoAliasAAPass, LLVMAddBasicAliasAnalysisPass, LLVMAddReassociatePass};
-#[cfg(not(feature = "llvm3-6"))]
+#[feature_versions("llvm3-7" => latest)]
 use llvm_sys::transforms::scalar::LLVMAddBitTrackingDCEPass;
 use llvm_sys::transforms::vectorize::{LLVMAddLoopVectorizePass, LLVMAddSLPVectorizePass};
 
 use OptimizationLevel;
 use module::Module;
-#[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
+#[feature_versions("llvm3-6" => "llvm3-8")]
 use targets::TargetData;
 use values::{AsValueRef, FunctionValue};
 
@@ -167,7 +167,7 @@ impl PassManager {
         }
     }
 
-    #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
+    #[feature_versions("llvm3-6" => "llvm3-8")]
     pub fn add_target_data(&self, target_data: &TargetData) {
         use llvm_sys::target::LLVMAddTargetData;
 
@@ -352,8 +352,7 @@ impl PassManager {
     /// for each pair of compatible instructions. These heuristics
     /// are intended to prevent vectorization in cases where it would
     /// not yield a performance increase of the resulting code.
-    #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0",
-              feature = "llvm5-0", feature = "llvm6-0"))]
+    #[feature_versions("llvm3-6" => "llvm6-0")]
     pub fn add_bb_vectorize_pass(&self) {
         use llvm_sys::transforms::vectorize::LLVMAddBBVectorizePass;
 
@@ -387,7 +386,7 @@ impl PassManager {
         }
     }
 
-    #[cfg(not(feature = "llvm3-6"))]
+    #[feature_versions("llvm3-7" => latest)]
     /// No LLVM documentation is available at this time.
     pub fn add_bit_tracking_dce_pass(&self) {
         unsafe {
@@ -449,7 +448,7 @@ impl PassManager {
     /// performs redundant load elimination.
     // REVIEW: Is `LLVMAddGVNPass` deprecated? Should we just seemlessly replace
     // the old one with this one in 4.0+?
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+    #[feature_versions("llvm4-0" => latest)]
     pub fn add_new_gvn_pass(&self) {
         use llvm_sys::transforms::scalar::LLVMAddNewGVNPass;
 
@@ -704,9 +703,9 @@ impl PassManager {
     /// which allows targets to get away with not implementing the
     /// switch instruction until it is convenient.
     pub fn add_lower_switch_pass(&self) {
-        #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
+        #[feature_versions("llvm3-6" => "llvm6-0")]
         use llvm_sys::transforms::scalar::LLVMAddLowerSwitchPass;
-        #[cfg(feature = "llvm7-0")]
+        #[feature_versions("llvm7-0" => latest)]
         use llvm_sys::transforms::util::LLVMAddLowerSwitchPass;
 
         unsafe {
@@ -721,9 +720,9 @@ impl PassManager {
     /// order to rewrite loads and stores as appropriate. This is just
     /// the standard SSA construction algorithm to construct "pruned" SSA form.
     pub fn add_promote_memory_to_register_pass(&self) {
-        #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
+        #[feature_versions("llvm3-6" => "llvm6-0")]
         use llvm_sys::transforms::scalar::LLVMAddPromoteMemoryToRegisterPass;
-        #[cfg(feature = "llvm7-0")]
+        #[feature_versions("llvm7-0" => latest)]
         use llvm_sys::transforms::util::LLVMAddPromoteMemoryToRegisterPass;
 
         unsafe {
@@ -926,7 +925,7 @@ impl PassManager {
         }
     }
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+    #[feature_versions("llvm4-0" => latest)]
     /// No LLVM documentation is available at this time.
     pub fn add_early_cse_mem_ssa_pass(&self) {
         use llvm_sys::transforms::scalar::LLVMAddEarlyCSEMemSSAPass;

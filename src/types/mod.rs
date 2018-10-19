@@ -32,7 +32,7 @@ pub use types::vec_type::VectorType;
 pub use types::void_type::VoidType;
 pub(crate) use types::traits::AsTypeRef;
 
-#[cfg(not(feature = "llvm3-6"))]
+#[feature_versions("llvm3-7" => "llvm4-0")]
 use llvm_sys::core::LLVMDumpType;
 use llvm_sys::core::{LLVMAlignOf, LLVMGetTypeContext, LLVMFunctionType, LLVMArrayType, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMTypeIsSized, LLVMSizeOf, LLVMVectorType, LLVMConstPointerNull, LLVMGetElementType, LLVMConstNull};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
@@ -65,7 +65,7 @@ impl Type {
     // and so will fail to link when used. I've decided to remove it from 5.0+
     // for now. We should consider removing it altogether since print_to_string
     // could be used and manually written to stderr in rust...
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm5-0")))]
+    #[feature_versions("llvm3-7" => "llvm4-0")]
     fn print_to_stderr(&self) {
         unsafe {
             LLVMDumpType(self.type_);

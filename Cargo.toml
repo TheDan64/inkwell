@@ -26,6 +26,7 @@ either = "1.5"
 enum-methods = "0.0.8"
 libc = "0.2"
 llvm-sys = "70.0"
+inkwell_internal_macros = { path = "./internal_macros", version = "0.1.0" }
 
 [badges]
 travis-ci = { repository = "TheDan64/inkwell" }

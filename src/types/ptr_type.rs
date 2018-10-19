@@ -178,7 +178,7 @@ impl PointerType {
 
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of an `IntType` to stderr. Not available in newer LLVM versions.
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm5-0")))]
+    #[feature_versions("llvm3-7" => "llvm4-0")]
     pub fn print_to_stderr(&self) {
         self.ptr_type.print_to_stderr()
     }

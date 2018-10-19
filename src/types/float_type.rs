@@ -387,7 +387,7 @@ impl FloatType {
 
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of an `IntType` to stderr. Not available in newer LLVM versions.
-    #[cfg(any(feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0"))]
+    #[feature_versions("llvm3-7" => "llvm4-0")]
     pub fn print_to_stderr(&self) {
         self.float_type.print_to_stderr()
     }

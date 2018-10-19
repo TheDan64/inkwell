@@ -145,10 +145,9 @@ pub fn is_multithreaded() -> bool {
 }
 
 pub fn enable_llvm_pretty_stack_trace() {
-    #[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]
+    #[feature_versions("llvm3-6" => "llvm3-7")]
     use llvm_sys::core::LLVMEnablePrettyStackTrace;
-    #[cfg(any(feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0",
-              feature = "llvm7-0"))]
+    #[feature_versions("llvm3-8" => latest)]
     use llvm_sys::error_handling::LLVMEnablePrettyStackTrace;
 
     unsafe {
