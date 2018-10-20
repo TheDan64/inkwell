@@ -47,7 +47,7 @@ impl FunctionValue {
 
     pub fn set_linkage(&self, linkage: Linkage) {
         unsafe {
-            LLVMSetLinkage(self.as_value_ref(), linkage.as_llvm_linkage())
+            LLVMSetLinkage(self.as_value_ref(), linkage.as_llvm_enum())
         }
     }
 
@@ -67,7 +67,6 @@ impl FunctionValue {
         self.fn_value.print_to_stderr()
     }
 
-    // TODO: Maybe support LLVMAbortProcessAction?
     // FIXME: Better error returns, code 1 is error
     pub fn verify(&self, print: bool) -> bool {
         let action = if print {

@@ -964,6 +964,24 @@ impl PassManager {
             LLVMAddBasicAliasAnalysisPass(self.pass_manager)
         }
     }
+
+    #[llvm_versions(7.0 => latest)]
+    pub fn add_aggressive_inst_combiner_pass(&self) {
+        use llvm_sys::transforms::scalar::LLVMAddAggressiveInstCombinerPass;
+
+        unsafe {
+            LLVMAddAggressiveInstCombinerPass(self.pass_manager)
+        }
+    }
+
+    #[llvm_versions(7.0 => latest)]
+    pub fn add_loop_unroll_and_jam_pass(&self) {
+        use llvm_sys::transforms::scalar::LLVMAddLoopUnrollAndJamPass;
+
+        unsafe {
+            LLVMAddLoopUnrollAndJamPass(self.pass_manager)
+        }
+    }
 }
 
 impl Drop for PassManager {
@@ -1066,6 +1084,15 @@ impl PassRegistry {
     pub fn initialize_target(&self) {
         unsafe {
             LLVMInitializeTarget(self.pass_registry)
+        }
+    }
+
+    #[llvm_versions(7.0 => latest)]
+    pub fn initialize_aggressive_inst_combiner(&self) {
+        use llvm_sys::initialization::LLVMInitializeAggressiveInstCombiner;
+
+        unsafe {
+            LLVMInitializeAggressiveInstCombiner(self.pass_registry)
         }
     }
 }

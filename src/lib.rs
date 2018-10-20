@@ -17,9 +17,15 @@ extern crate llvm_sys;
 #[macro_use]
 extern crate inkwell_internal_macros;
 
+#[macro_use]
+pub mod support;
 #[deny(missing_docs)]
 #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
 pub mod attributes;
+#[deny(missing_docs)]
+#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+              feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+pub mod comdat;
 #[deny(missing_docs)]
 pub mod basic_block;
 pub mod builder;
@@ -32,7 +38,6 @@ pub mod memory_buffer;
 pub mod module;
 pub mod object_file;
 pub mod passes;
-pub mod support;
 pub mod targets;
 pub mod types;
 pub mod values;
@@ -98,109 +103,70 @@ impl From<u32> for AddressSpace {
 }
 
 // REVIEW: Maybe this belongs in some sort of prelude?
-/// This enum defines how to compare a `left` and `right` `IntValue`.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum IntPredicate {
-    /// Equal
-    EQ,
-    /// Not Equal
-    NE,
-    /// Unsigned Greater Than
-    UGT,
-    /// Unsigned Greater Than or Equal
-    UGE,
-    /// Unsigned Less Than
-    ULT,
-    /// Unsigned Less Than or Equal
-    ULE,
-    /// Signed Greater Than
-    SGT,
-    /// Signed Greater Than or Equal
-    SGE,
-    /// Signed Less Than
-    SLT,
-    /// Signed Less Than or Equal
-    SLE,
-}
-
-impl IntPredicate {
-    pub(crate) fn as_llvm_predicate(&self) -> LLVMIntPredicate {
-        match *self {
-            IntPredicate::EQ => LLVMIntPredicate::LLVMIntEQ,
-            IntPredicate::NE => LLVMIntPredicate::LLVMIntNE,
-            IntPredicate::UGT => LLVMIntPredicate::LLVMIntUGT,
-            IntPredicate::UGE => LLVMIntPredicate::LLVMIntUGE,
-            IntPredicate::ULT => LLVMIntPredicate::LLVMIntULT,
-            IntPredicate::ULE => LLVMIntPredicate::LLVMIntULE,
-            IntPredicate::SGT => LLVMIntPredicate::LLVMIntSGT,
-            IntPredicate::SGE => LLVMIntPredicate::LLVMIntSGE,
-            IntPredicate::SLT => LLVMIntPredicate::LLVMIntSLT,
-            IntPredicate::SLE => LLVMIntPredicate::LLVMIntSLE,
-        }
+enum_rename!{
+    /// This enum defines how to compare a `left` and `right` `IntValue`.
+    IntPredicate <=> LLVMIntPredicate {
+        /// Equal
+        EQ <=> LLVMIntEQ,
+        /// Not Equal
+        NE <=> LLVMIntNE,
+        /// Unsigned Greater Than
+        UGT <=> LLVMIntUGT,
+        /// Unsigned Greater Than or Equal
+        UGE <=> LLVMIntUGE,
+        /// Unsigned Less Than
+        ULT <=> LLVMIntULT,
+        /// Unsigned Less Than or Equal
+        ULE <=> LLVMIntULE,
+        /// Signed Greater Than
+        SGT <=> LLVMIntSGT,
+        /// Signed Greater Than or Equal
+        SGE <=> LLVMIntSGE,
+        /// Signed Less Than
+        SLT <=> LLVMIntSLT,
+        /// Signed Less Than or Equal
+        SLE <=> LLVMIntSLE,
     }
 }
 
 // REVIEW: Maybe this belongs in some sort of prelude?
-/// Defines how to compare a `left` and `right` `FloatValue`.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum FloatPredicate {
-    /// Returns true if `left` == `right` and neither are NaN
-    OEQ,
-    /// Returns true if `left` >= `right` and neither are NaN
-    OGE,
-    /// Returns true if `left` > `right` and neither are NaN
-    OGT,
-    /// Returns true if `left` <= `right` and neither are NaN
-    OLE,
-    /// Returns true if `left` < `right` and neither are NaN
-    OLT,
-    /// Returns true if `left` != `right` and neither are NaN
-    ONE,
-    /// Returns true if neither value is NaN
-    ORD,
-    /// Always returns false
-    PredicateFalse,
-    /// Always returns true
-    PredicateTrue,
-    /// Returns true if `left` == `right` or either is NaN
-    UEQ,
-    /// Returns true if `left` >= `right` or either is NaN
-    UGE,
-    /// Returns true if `left` > `right` or either is NaN
-    UGT,
-    /// Returns true if `left` <= `right` or either is NaN
-    ULE,
-    /// Returns true if `left` < `right` or either is NaN
-    ULT,
-    /// Returns true if `left` != `right` or either is NaN
-    UNE,
-    /// Returns true if either value is NaN
-    UNO,
-}
-
-impl FloatPredicate {
-    pub(crate) fn as_llvm_predicate(&self) -> LLVMRealPredicate {
-        match *self {
-            FloatPredicate::PredicateFalse => LLVMRealPredicate::LLVMRealPredicateFalse,
-            FloatPredicate::OEQ => LLVMRealPredicate::LLVMRealOEQ,
-            FloatPredicate::OGT => LLVMRealPredicate::LLVMRealOGT,
-            FloatPredicate::OGE => LLVMRealPredicate::LLVMRealOGE,
-            FloatPredicate::OLT => LLVMRealPredicate::LLVMRealOLT,
-            FloatPredicate::OLE => LLVMRealPredicate::LLVMRealOLE,
-            FloatPredicate::ONE => LLVMRealPredicate::LLVMRealONE,
-            FloatPredicate::ORD => LLVMRealPredicate::LLVMRealORD,
-            FloatPredicate::UNO => LLVMRealPredicate::LLVMRealUNO,
-            FloatPredicate::UEQ => LLVMRealPredicate::LLVMRealUEQ,
-            FloatPredicate::UGT => LLVMRealPredicate::LLVMRealUGT,
-            FloatPredicate::UGE => LLVMRealPredicate::LLVMRealUGE,
-            FloatPredicate::ULT => LLVMRealPredicate::LLVMRealULT,
-            FloatPredicate::ULE => LLVMRealPredicate::LLVMRealULE,
-            FloatPredicate::UNE => LLVMRealPredicate::LLVMRealUNE,
-            FloatPredicate::PredicateTrue => LLVMRealPredicate::LLVMRealPredicateTrue,
-        }
+enum_rename!{
+    /// Defines how to compare a `left` and `right` `FloatValue`.
+    FloatPredicate <=> LLVMRealPredicate {
+        /// Returns true if `left` == `right` and neither are NaN
+        OEQ <=> LLVMRealOEQ,
+        /// Returns true if `left` >= `right` and neither are NaN
+        OGE <=> LLVMRealOGE,
+        /// Returns true if `left` > `right` and neither are NaN
+        OGT <=> LLVMRealOGT,
+        /// Returns true if `left` <= `right` and neither are NaN
+        OLE <=> LLVMRealOLE,
+        /// Returns true if `left` < `right` and neither are NaN
+        OLT <=> LLVMRealOLT,
+        /// Returns true if `left` != `right` and neither are NaN
+        ONE <=> LLVMRealONE,
+        /// Returns true if neither value is NaN
+        ORD <=> LLVMRealORD,
+        /// Always returns false
+        PredicateFalse <=> LLVMRealPredicateFalse,
+        /// Always returns true
+        PredicateTrue <=> LLVMRealPredicateTrue,
+        /// Returns true if `left` == `right` or either is NaN
+        UEQ <=> LLVMRealUEQ,
+        /// Returns true if `left` >= `right` or either is NaN
+        UGE <=> LLVMRealUGE,
+        /// Returns true if `left` > `right` or either is NaN
+        UGT <=> LLVMRealUGT,
+        /// Returns true if `left` <= `right` or either is NaN
+        ULE <=> LLVMRealULE,
+        /// Returns true if `left` < `right` or either is NaN
+        ULT <=> LLVMRealULT,
+        /// Returns true if `left` != `right` or either is NaN
+        UNE <=> LLVMRealUNE,
+        /// Returns true if either value is NaN
+        UNO <=> LLVMRealUNO,
     }
 }
-
 
 /// Defines the optimization level used to compile a `Module`.
 ///
@@ -222,36 +188,18 @@ impl Default for OptimizationLevel {
     }
 }
 
-// REVIEW: Maybe this belongs in some sort of prelude?
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum GlobalVisibility {
-    Default,
-    Hidden,
-    Protected,
+enum_rename!{
+    GlobalVisibility <=> LLVMVisibility {
+        Default <=> LLVMDefaultVisibility,
+        Hidden <=> LLVMHiddenVisibility,
+        Protected <=> LLVMProtectedVisibility,
+    }
 }
 
 impl Default for GlobalVisibility {
     /// Returns the default value for `GlobalVisibility`, namely `GlobalVisibility::Default`.
     fn default() -> Self {
         GlobalVisibility::Default
-    }
-}
-
-impl GlobalVisibility {
-    pub(crate) fn new(visibility: LLVMVisibility) -> Self {
-        match visibility {
-            LLVMVisibility::LLVMDefaultVisibility => GlobalVisibility::Default,
-            LLVMVisibility::LLVMHiddenVisibility => GlobalVisibility::Hidden,
-            LLVMVisibility::LLVMProtectedVisibility => GlobalVisibility::Protected,
-        }
-    }
-
-    pub(crate) fn as_llvm_visibility(&self) -> LLVMVisibility {
-        match *self {
-            GlobalVisibility::Default => LLVMVisibility::LLVMDefaultVisibility,
-            GlobalVisibility::Hidden => LLVMVisibility::LLVMHiddenVisibility,
-            GlobalVisibility::Protected => LLVMVisibility::LLVMProtectedVisibility,
-        }
     }
 }
 
@@ -285,34 +233,17 @@ impl ThreadLocalMode {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum DLLStorageClass {
-    Default,
-    Import,
-    Export,
+enum_rename! {
+    DLLStorageClass <=> LLVMDLLStorageClass {
+        Default <=> LLVMDefaultStorageClass,
+        Import <=> LLVMDLLImportStorageClass,
+        Export <=> LLVMDLLExportStorageClass,
+    }
 }
 
 impl Default for DLLStorageClass {
     /// Returns the default value for `DLLStorageClass`, namely `DLLStorageClass::Default`.
     fn default() -> Self {
         DLLStorageClass::Default
-    }
-}
-
-impl DLLStorageClass {
-    pub(crate) fn new(dll_storage_class: LLVMDLLStorageClass) -> Self {
-        match dll_storage_class {
-            LLVMDLLStorageClass::LLVMDefaultStorageClass => DLLStorageClass::Default,
-            LLVMDLLStorageClass::LLVMDLLImportStorageClass => DLLStorageClass::Import,
-            LLVMDLLStorageClass::LLVMDLLExportStorageClass => DLLStorageClass::Export,
-        }
-    }
-
-    pub(crate) fn as_llvm_class(&self) -> LLVMDLLStorageClass {
-        match *self {
-            DLLStorageClass::Default => LLVMDLLStorageClass::LLVMDefaultStorageClass,
-            DLLStorageClass::Import => LLVMDLLStorageClass::LLVMDLLImportStorageClass,
-            DLLStorageClass::Export => LLVMDLLStorageClass::LLVMDLLExportStorageClass,
-        }
     }
 }

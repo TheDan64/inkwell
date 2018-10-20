@@ -75,6 +75,13 @@ fn test_init_all_passes_for_module() {
         pass_manager.add_new_gvn_pass();
     }
 
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    {
+        pass_manager.add_aggressive_inst_combiner_pass();
+        pass_manager.add_loop_unroll_and_jam_pass();
+    }
+
     assert!(!pass_manager.initialize());
     assert!(!pass_manager.finalize());
 
@@ -148,4 +155,7 @@ fn test_pass_registry() {
     pass_registry.initialize_ipa();
     pass_registry.initialize_codegen();
     pass_registry.initialize_target();
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    pass_registry.initialize_aggressive_inst_combiner();
 }

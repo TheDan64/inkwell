@@ -194,11 +194,6 @@ impl Value {
             LLVMReplaceAllUsesWith(self.value, other)
         }
     }
-
-    // REVIEW: Remove?
-    // fn get_type_kind(&self) -> LLVMTypeKind {
-    //     (*self.get_type()).as_llvm_type_ref().get_kind()
-    // }
 }
 
 impl fmt::Debug for Value {

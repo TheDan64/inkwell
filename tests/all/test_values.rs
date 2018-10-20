@@ -5,6 +5,8 @@ use self::inkwell::context::Context;
 use self::inkwell::module::Linkage::*;
 use self::inkwell::types::{StructType, VectorType};
 use self::inkwell::values::{InstructionOpcode::*, MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID, VectorValue};
+#[llvm_versions(7.0 => latest)]
+use self::inkwell::comdat::ComdatSelectionKind;
 
 use std::ffi::CString;
 
@@ -917,6 +919,25 @@ fn test_globals() {
 
     // REVIEW: This doesn't seem to work. LLVM bug?
     assert!(global2.is_externally_initialized());
+
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    {
+        assert!(global.get_comdat().is_none());
+
+        let comdat = module.get_or_insert_comdat("my_comdat");
+
+        assert!(global.get_comdat().is_none());
+
+        global.set_comdat(comdat);
+
+        assert_eq!(comdat, global.get_comdat().unwrap());
+        assert_eq!(comdat.get_selection_kind(), ComdatSelectionKind::Any);
+
+        comdat.set_selection_kind(ComdatSelectionKind::Largest);
+
+        assert_eq!(comdat.get_selection_kind(), ComdatSelectionKind::Largest);
+    }
 
     unsafe {
         global.delete();

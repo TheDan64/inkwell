@@ -5,6 +5,8 @@ use llvm_sys::prelude::LLVMValueRef;
 use std::ffi::{CString, CStr};
 
 use {GlobalVisibility, ThreadLocalMode, DLLStorageClass};
+#[llvm_versions(7.0 => latest)]
+use comdat::Comdat;
 use values::traits::AsValueRef;
 use values::{BasicValueEnum, BasicValue, PointerValue, Value};
 
@@ -58,7 +60,7 @@ impl GlobalValue {
 
     pub fn set_dll_storage_class(&self, dll_storage_class: DLLStorageClass) {
         unsafe {
-            LLVMSetDLLStorageClass(self.as_value_ref(), dll_storage_class.as_llvm_class())
+            LLVMSetDLLStorageClass(self.as_value_ref(), dll_storage_class.as_llvm_enum())
         }
     }
 
@@ -161,7 +163,7 @@ impl GlobalValue {
 
     pub fn set_visibility(&self, visibility: GlobalVisibility) {
         unsafe {
-            LLVMSetVisibility(self.as_value_ref(), visibility.as_llvm_visibility())
+            LLVMSetVisibility(self.as_value_ref(), visibility.as_llvm_enum())
         }
     }
 
@@ -204,6 +206,32 @@ impl GlobalValue {
     pub fn set_alignment(&self, alignment: u32) {
         unsafe {
             LLVMSetAlignment(self.as_value_ref(), alignment)
+        }
+    }
+
+    /// Gets a `Comdat` assigned to this `GlobalValue`, if any.
+    #[llvm_versions(7.0 => latest)]
+    pub fn get_comdat(&self) -> Option<Comdat> {
+        use llvm_sys::comdat::LLVMGetComdat;
+
+        let comdat_ptr = unsafe {
+            LLVMGetComdat(self.as_value_ref())
+        };
+
+        if comdat_ptr.is_null() {
+            return None;
+        }
+
+        Some(Comdat::new(comdat_ptr))
+    }
+
+    /// Assigns a `Comdat` to this `GlobalValue`.
+    #[llvm_versions(7.0 => latest)]
+    pub fn set_comdat(&self, comdat: Comdat) {
+        use llvm_sys::comdat::LLVMSetComdat;
+
+        unsafe {
+            LLVMSetComdat(self.as_value_ref(), comdat.0)
         }
     }
 }
