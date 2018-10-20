@@ -39,9 +39,36 @@ pub mod values;
 
 use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility, LLVMThreadLocalMode, LLVMDLLStorageClass};
 
-#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0",
-              feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0")))]
-compile_error!("A LLVM feature flag must be provided. See the README for more details.");
+// Thanks to kennytm for coming up with assert_unique_features!
+// which ensures that the LLVM feature flags are mutually exclusive
+macro_rules! assert_unique_features {
+    () => {};
+    ($first:tt $(,$rest:tt)*) => {
+        $(
+            #[cfg(all(feature = $first, feature = $rest))]
+            compile_error!(concat!("features \"", $first, "\" and \"", $rest, "\" cannot be used together"));
+        )*
+        assert_unique_features!($($rest),*);
+    }
+}
+
+// This macro ensures that at least one of the LLVM feature
+// flags are provided and prints them out if none are provided
+macro_rules! assert_used_features {
+    ($($all:tt),*) => {
+        #[cfg(not(any($(feature = $all),*)))]
+        compile_error!(concat!("One of the LLVM feature flags must be provided: ", $($all, " "),*));
+    }
+}
+
+macro_rules! assert_unique_used_features {
+    ($($all:tt),*) => {
+        assert_unique_features!($($all),*);
+        assert_used_features!($($all),*);
+    }
+}
+
+assert_unique_used_features!{"llvm3-6", "llvm3-7", "llvm3-8", "llvm3-9", "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0"}
 
 /// Defines the address space in which a global will be inserted.
 ///

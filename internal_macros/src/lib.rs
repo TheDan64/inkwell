@@ -1,15 +1,14 @@
 //! These macros are only intended to be used by inkwell internally
-//! and should not be expected to have public support nor stability
-//! Here be dragons
+//! and should not be expected to have public support nor stability.
+//! Here be dragons 🐉
 
 extern crate proc_macro;
-#[macro_use]
 extern crate quote;
-#[macro_use]
 extern crate syn;
 
 use proc_macro::TokenStream;
-use syn::{Arm, Expr, ExprLit, Item, Lit, punctuated::Pair, Pat, PatLit};
+use quote::quote;
+use syn::{Arm, Expr, ExprLit, Item, Lit, punctuated::Pair, Pat, PatLit, parse_macro_input};
 
 // We could include_str! inkwell's Cargo.toml and extract these features
 // so that they don't need to also be managed here...
