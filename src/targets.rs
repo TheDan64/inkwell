@@ -243,7 +243,7 @@ impl Target {
     }
 
     // TODOC: Called R600 in 3.6
-    #[feature_versions("llvm3-7" => latest)]
+    #[llvm_versions(3.7 => latest)]
     pub fn initialize_amd_gpu(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeAMDGPUTarget, LLVMInitializeAMDGPUTargetInfo, LLVMInitializeAMDGPUTargetMC, LLVMInitializeAMDGPUAsmPrinter, LLVMInitializeAMDGPUAsmParser};
 
@@ -356,7 +356,7 @@ impl Target {
         }
     }
 
-    #[feature_versions("llvm3-6" => "llvm3-8")]
+    #[llvm_versions(3.6 => 3.8)]
     pub fn initialize_cpp_backend(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeCppBackendTarget, LLVMInitializeCppBackendTargetInfo, LLVMInitializeCppBackendTargetMC};
 
@@ -490,7 +490,7 @@ impl Target {
     }
 
     // TODOC: Disassembler only supported in LLVM 4.0+
-    #[feature_versions("llvm3-7" => latest)]
+    #[llvm_versions(3.7 => latest)]
     pub fn initialize_bpf(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeBPFTarget, LLVMInitializeBPFTargetInfo, LLVMInitializeBPFTargetMC, LLVMInitializeBPFAsmPrinter};
 
@@ -524,7 +524,7 @@ impl Target {
         }
     }
 
-    #[feature_versions("llvm4-0" => latest)]
+    #[llvm_versions(4.0 => latest)]
     pub fn initialize_lanai(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeLanaiTargetInfo, LLVMInitializeLanaiTarget, LLVMInitializeLanaiTargetMC, LLVMInitializeLanaiAsmPrinter, LLVMInitializeLanaiAsmParser, LLVMInitializeLanaiDisassembler};
 
@@ -838,7 +838,7 @@ impl TargetMachine {
         LLVMString::new(llvm_string)
     }
 
-    #[feature_versions("llvm7-0" => latest)]
+    #[llvm_versions(7.0 => latest)]
     pub fn normalize_target_triple(triple: Either<&str, &CStr>) -> LLVMString {
         use llvm_sys::target_machine::LLVMNormalizeTargetTriple;
 
@@ -865,7 +865,7 @@ impl TargetMachine {
     /// # Example Output
     ///
     /// `x86_64-pc-linux-gnu`
-    #[feature_versions("llvm7-0" => latest)]
+    #[llvm_versions(7.0 => latest)]
     pub fn get_host_cpu_name() -> LLVMString {
         use llvm_sys::target_machine::LLVMGetHostCPUName;
 
@@ -881,7 +881,7 @@ impl TargetMachine {
     /// # Example Output
     ///
     /// `+sse2,+cx16,+sahf,-tbm`
-    #[feature_versions("llvm7-0" => latest)]
+    #[llvm_versions(7.0 => latest)]
     pub fn get_host_cpu_features() -> LLVMString {
         use llvm_sys::target_machine::LLVMGetHostCPUFeatures;
 

@@ -5,14 +5,14 @@ use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 use llvm_sys::bit_reader::{LLVMParseBitcode, LLVMParseBitcodeInContext};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
 use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile};
-#[feature_versions("llvm3-9" => latest)]
+#[llvm_versions(3.9 => latest)]
 use llvm_sys::core::{LLVMGetModuleIdentifier, LLVMSetModuleIdentifier};
 use llvm_sys::execution_engine::{LLVMCreateInterpreterForModule, LLVMCreateJITCompilerForModule, LLVMCreateExecutionEngineForModule};
 use llvm_sys::prelude::{LLVMValueRef, LLVMModuleRef};
 use llvm_sys::LLVMLinkage;
 
 use std::cell::{Cell, RefCell, Ref};
-#[feature_versions("llvm3-9" => latest)]
+#[llvm_versions(3.9 => latest)]
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::fs::File;
@@ -1187,7 +1187,7 @@ impl Module {
     ///
     /// assert_eq!(*module.get_name(), *CString::new("my_mdoule").unwrap());
     /// ```
-    #[feature_versions("llvm3-9" => latest)]
+    #[llvm_versions(3.9 => latest)]
     pub fn get_name(&self) -> &CStr {
         let mut length = 0;
         let cstr_ptr = unsafe {
@@ -1214,7 +1214,7 @@ impl Module {
     ///
     /// assert_eq!(*module.get_name(), *CString::new("my_module2").unwrap());
     /// ```
-    #[feature_versions("llvm3-9" => latest)]
+    #[llvm_versions(3.9 => latest)]
     pub fn set_name(&self, name: &str) {
         unsafe {
             LLVMSetModuleIdentifier(self.module.get(), name.as_ptr() as *const i8, name.len())
@@ -1239,7 +1239,7 @@ impl Module {
     /// assert_eq!(*module.get_name(), *CString::new("my_mod").unwrap());
     /// assert_eq!(*module.get_source_file_name(), *CString::new("my_mod.rs").unwrap());
     /// ```
-    #[feature_versions("llvm7-0" => latest)]
+    #[llvm_versions(7.0 => latest)]
     pub fn get_source_file_name(&self) -> &CStr {
         use llvm_sys::core::LLVMGetSourceFileName;
 
@@ -1271,7 +1271,7 @@ impl Module {
     /// assert_eq!(*module.get_name(), *CString::new("my_mod").unwrap());
     /// assert_eq!(*module.get_source_file_name(), *CString::new("my_mod.rs").unwrap());
     /// ```
-    #[feature_versions("llvm7-0" => latest)]
+    #[llvm_versions(7.0 => latest)]
     pub fn set_source_file_name(&self, file_name: &str) {
         use llvm_sys::core::LLVMSetSourceFileName;
 

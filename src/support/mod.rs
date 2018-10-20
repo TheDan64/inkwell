@@ -145,9 +145,9 @@ pub fn is_multithreaded() -> bool {
 }
 
 pub fn enable_llvm_pretty_stack_trace() {
-    #[feature_versions("llvm3-6" => "llvm3-7")]
+    #[llvm_versions(3.6 => 3.7)]
     use llvm_sys::core::LLVMEnablePrettyStackTrace;
-    #[feature_versions("llvm3-8" => latest)]
+    #[llvm_versions(3.8 => latest)]
     use llvm_sys::error_handling::LLVMEnablePrettyStackTrace;
 
     unsafe {

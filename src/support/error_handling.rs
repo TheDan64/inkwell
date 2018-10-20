@@ -1,8 +1,8 @@
 //! This module contains some supplemental functions for dealing with errors.
 
-#[feature_versions("llvm3-6" => "llvm3-7")]
+#[llvm_versions(3.6 => 3.7)]
 use llvm_sys::core::{LLVMInstallFatalErrorHandler, LLVMResetFatalErrorHandler};
-#[feature_versions("llvm3-8" => latest)]
+#[llvm_versions(3.8 => latest)]
 use llvm_sys::error_handling::{LLVMInstallFatalErrorHandler, LLVMResetFatalErrorHandler};
 use llvm_sys::core::{LLVMGetDiagInfoDescription, LLVMGetDiagInfoSeverity};
 use llvm_sys::prelude::LLVMDiagnosticInfoRef;
