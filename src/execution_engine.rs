@@ -270,7 +270,7 @@ impl ExecutionEngine {
     /// // fetch our JIT'd function and execute it
     /// unsafe {
     ///     let test_fn = ee.get_function::<unsafe extern "C" fn() -> f64>("test_fn").unwrap();
-    ///     let return_value = test_fn();
+    ///     let return_value = test_fn.call();
     ///     assert_eq!(return_value, 64.0);
     /// }
     /// ```
@@ -440,11 +440,17 @@ pub struct Symbol<F> {
     inner: F,
 }
 
-impl<F: UnsafeFunctionPointer> Deref for Symbol<F> {
-    type Target = F;
-
-    fn deref(&self) -> &Self::Target {
-        &self.inner
+impl<F: UnsafeFunctionPointer> Symbol<F> {
+    /// This method allows to retrieve the internal function pointer.
+    ///
+    /// This is highly unsafe because as soon as you get it, it's up to you
+    /// to make sure that the [`ExecutionEngine`] is not dropped earlier than
+    /// the returned function.
+    ///
+    /// It's almost always better to use either [`Symbol::call`] or
+    /// [`Symbol::to_closure`] which will uphold the memory guarantee for you.
+    pub unsafe fn into_inner(&self) -> F {
+        self.inner
     }
 }
 
@@ -470,7 +476,30 @@ mod private {
 macro_rules! impl_unsafe_fn {
     ($( $param:ident ),*) => {
         impl<Output, $( $param ),*> private::Sealed for unsafe extern "C" fn($( $param ),*) -> Output {}
+
         impl<Output, $( $param ),*> UnsafeFunctionPointer for unsafe extern "C" fn($( $param ),*) -> Output {}
+
+        impl<Output, $( $param ),*> Symbol<unsafe extern "C" fn($( $param ),*) -> Output> {
+            /// This method allows to call the underlying function while making
+            /// sure that the backing storage is not dropped too early and
+            /// preserves the `unsafe` marker for any calls.
+            #[allow(non_snake_case)]
+            #[inline(always)]
+            pub unsafe fn call(&self, $( $param: $param ),*) -> Output {
+                (self.inner)($( $param ),*)
+            }
+
+            /// This method allows to cast [`Symbol`] to an opaque Rust closure.
+            ///
+            /// Unlike [`Symbol::into_inner`], it still automatically keeps the backing
+            /// storage alive as long as it's needed, however it "forgets"
+            /// that function is actually `unsafe`.
+            pub unsafe fn into_closure(self) -> impl Fn($( $param ),*) -> Output {
+                #[allow(non_snake_case)]
+                #[inline(always)]
+                move |$( $param ),*| (self.inner)($( $param ),*)
+            }
+        }
     };
 }
 

@@ -54,8 +54,8 @@ fn run() -> Result<(), Box<Error>> {
     let z = 3u64;
 
     unsafe {
-        println!("{} + {} + {} = {}", x, y, z, sum(x, y, z));
-        assert_eq!(sum(x, y, z), x + y + z);
+        println!("{} + {} + {} = {}", x, y, z, sum.call(x, y, z));
+        assert_eq!(sum.call(x, y, z), x + y + z);
     }
 
     Ok(())

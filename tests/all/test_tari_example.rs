@@ -39,6 +39,6 @@ fn test_tari_example() {
         let y = 2u64;
         let z = 3u64;
 
-        assert_eq!(sum(x, y, z), x + y + z);
+        assert_eq!(sum.call(x, y, z), x + y + z);
     }
 }
