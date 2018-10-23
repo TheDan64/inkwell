@@ -4,7 +4,6 @@ use self::inkwell::{AddressSpace, OptimizationLevel};
 use self::inkwell::context::Context;
 use self::inkwell::builder::Builder;
 use self::inkwell::targets::{InitializationConfig, Target};
-use self::inkwell::execution_engine::Symbol;
 
 use std::ffi::CString;
 use std::ptr::null;
