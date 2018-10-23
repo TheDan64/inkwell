@@ -134,18 +134,16 @@ fn test_target_and_target_machine() {
 #[test]
 fn test_default_target_triple() {
     let default_target_triple = TargetMachine::get_default_triple();
+    let default_target_triple = default_target_triple.to_str().unwrap();
 
     #[cfg(target_os = "linux")]
-    let cond = *default_target_triple == *CString::new("x86_64-pc-linux-gnu").unwrap() ||
-               *default_target_triple == *CString::new("x86_64-unknown-linux-gnu").unwrap();
+    let cond = default_target_triple == "x86_64-pc-linux-gnu" ||
+               default_target_triple == "x86_64-unknown-linux-gnu";
 
     #[cfg(target_os = "macos")]
-    let cond = *default_target_triple == *CString::new("x86_64-apple-darwin17.5.0").unwrap();
+    let cond = default_target_triple.starts_with("x86_64-apple-darwin");
 
-    // let cond = *default_target_triple == *CString::new("x86_64-pc-linux-gnu").unwrap() |
-    //     *default_target_triple == *CString::new("x86_64-unknown-linux-gnu").unwrap();
-
-    assert!(cond);
+    assert!(cond, "Unexpected target triple: {}", default_target_triple);
 
     // TODO: CFG for other supported major OSes
 }
