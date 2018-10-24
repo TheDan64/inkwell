@@ -281,12 +281,12 @@ impl ExecutionEngine {
     /// It is the caller's responsibility to ensure they call the function with
     /// the correct signature and calling convention.
     ///
-    /// The `Symbol` wrapper ensures a function won't accidentally outlive the
+    /// The `JitFunction` wrapper ensures a function won't accidentally outlive the
     /// execution engine it came from, but adding functions after calling this
     /// method *may* invalidate the function pointer.
     ///
     /// [`UnsafeFunctionPointer`]: trait.UnsafeFunctionPointer.html
-    pub unsafe fn get_function<'engine, F>(&'engine self, fn_name: &str) -> Result<Symbol<'engine, F>, FunctionLookupError>
+    pub unsafe fn get_function<'engine, F>(&'engine self, fn_name: &str) -> Result<JitFunction<'engine, F>, FunctionLookupError>
     where
         F: UnsafeFunctionPointer,
     {
@@ -314,7 +314,7 @@ impl ExecutionEngine {
         assert_eq!(size_of::<F>(), size_of::<usize>(),
             "The type `F` must have the same size as a function pointer");
 
-        Ok(Symbol {
+        Ok(JitFunction {
             _execution_engine: PhantomData,
             inner: transmute_copy(&address),
         })
@@ -433,17 +433,17 @@ impl Deref for ExecEngineInner {
     }
 }
 
-/// A wrapper around a function pointer which ensures the symbol being pointed
+/// A wrapper around a function pointer which ensures the function being pointed
 /// to doesn't accidentally outlive its execution engine.
 #[derive(Clone)]
-pub struct Symbol<'engine, F> {
+pub struct JitFunction<'engine, F> {
     _execution_engine: PhantomData<&'engine ExecutionEngine>,
     inner: F,
 }
 
-impl<'engine, F> Debug for Symbol<'engine, F> {
+impl<'engine, F> Debug for JitFunction<'engine, F> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        f.debug_tuple("Symbol")
+        f.debug_tuple("JitFunction")
             .field(&"<unnamed>")
             .finish()
     }
@@ -472,7 +472,7 @@ macro_rules! impl_unsafe_fn {
     ($( $param:ident ),*) => {
         impl<'engine, Output, $( $param ),*> private::SealedUnsafeFunctionPointer for unsafe extern "C" fn($( $param ),*) -> Output {}
 
-        impl<'engine, Output, $( $param ),*> Symbol<'engine, unsafe extern "C" fn($( $param ),*) -> Output> {
+        impl<'engine, Output, $( $param ),*> JitFunction<'engine, unsafe extern "C" fn($( $param ),*) -> Output> {
             /// This method allows to call the underlying function while making
             /// sure that the backing storage is not dropped too early and
             /// preserves the `unsafe` marker for any calls.

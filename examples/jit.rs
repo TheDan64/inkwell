@@ -3,7 +3,7 @@ extern crate inkwell;
 use inkwell::OptimizationLevel;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
-use inkwell::execution_engine::{ExecutionEngine, Symbol};
+use inkwell::execution_engine::{ExecutionEngine, JitFunction};
 use inkwell::module::Module;
 use inkwell::targets::{InitializationConfig, Target};
 use std::error::Error;
@@ -19,7 +19,7 @@ fn jit_compile_sum<'engine>(
     module: &Module,
     builder: &Builder,
     execution_engine: &'engine ExecutionEngine,
-) -> Option<Symbol<'engine, SumFunc>> {
+) -> Option<JitFunction<'engine, SumFunc>> {
     let i64_type = context.i64_type();
     let fn_type = i64_type.fn_type(&[i64_type.into(), i64_type.into(), i64_type.into()], false);
 
