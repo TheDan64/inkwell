@@ -60,7 +60,7 @@ use std::error::Error;
 
 /// Convenience type alias for the `sum` function.
 ///
-/// Calling `sum` is innately `unsafe` because there's no guarantee it doesn't
+/// Calling this is innately `unsafe` because there's no guarantee it doesn't
 /// do `unsafe` operations internally.
 type SumFunc = unsafe extern "C" fn(u64, u64, u64) -> u64;
 
@@ -83,22 +83,21 @@ fn run() -> Result<(), Box<Error>> {
     let z = 3u64;
 
     unsafe {
-        println!("{} + {} + {} = {}", x, y, z, sum(x, y, z));
-        assert_eq!(sum(x, y, z), x + y + z);
+        println!("{} + {} + {} = {}", x, y, z, sum.call(x, y, z));
+        assert_eq!(sum.call(x, y, z), x + y + z);
     }
 
     Ok(())
 }
 
-fn jit_compile_sum(
+fn jit_compile_sum<'engine>(
     context: &Context,
     module: &Module,
     builder: &Builder,
-    execution_engine: &ExecutionEngine,
-) -> Option<Symbol<SumFunc>> {
+    execution_engine: &'engine ExecutionEngine,
+) -> Option<Symbol<'engine, SumFunc>> {
     let i64_type = context.i64_type();
-    let fn_type_params = [i64_type.into(), i64_type.into(), i64_type.into()];
-    let fn_type = i64_type.fn_type(&fn_type_params, false);
+    let fn_type = i64_type.fn_type(&[i64_type.into(), i64_type.into(), i64_type.into()], false);
 
     let function = module.add_function("sum", fn_type, None);
     let basic_block = context.append_basic_block(&function, "entry");
