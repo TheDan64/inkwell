@@ -461,6 +461,12 @@ mod private {
 }
 
 macro_rules! impl_unsafe_fn {
+    (@recurse $first:ident $( , $rest:ident )*) => {
+        impl_unsafe_fn!($( $rest ),*);
+    };
+
+    (@recurse) => {};
+
     ($( $param:ident ),*) => {
         impl<'engine, Output, $( $param ),*> private::Sealed for unsafe extern "C" fn($( $param ),*) -> Output {}
 
@@ -476,20 +482,9 @@ macro_rules! impl_unsafe_fn {
                 (self.inner)($( $param ),*)
             }
         }
+
+        impl_unsafe_fn!(@recurse $( $param ),*);
     };
 }
 
-impl_unsafe_fn!();
-impl_unsafe_fn!(A);
-impl_unsafe_fn!(A, B);
-impl_unsafe_fn!(A, B, C);
-impl_unsafe_fn!(A, B, C, D);
-impl_unsafe_fn!(A, B, C, D, E);
-impl_unsafe_fn!(A, B, C, D, E, F);
-impl_unsafe_fn!(A, B, C, D, E, F, G);
-impl_unsafe_fn!(A, B, C, D, E, F, G, H);
-impl_unsafe_fn!(A, B, C, D, E, F, G, H, I);
-impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J);
-impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J, K);
-impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J, K, L);
 impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J, K, L, M);
