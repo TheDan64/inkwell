@@ -136,17 +136,17 @@ fn test_null_checked_ptr_ops() {
     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
     unsafe {
-        let check_null_index1 = execution_engine.get_function::<unsafe extern "C" fn(*const i8) -> i8>("check_null_index1").unwrap().into_closure();
+        let check_null_index1 = execution_engine.get_function::<unsafe extern "C" fn(*const i8) -> i8>("check_null_index1").unwrap();
 
         let array = &[100i8, 42i8];
 
-        assert_eq!(check_null_index1(null()), -1i8);
-        assert_eq!(check_null_index1(array.as_ptr()), 42i8);
+        assert_eq!(check_null_index1.call(null()), -1i8);
+        assert_eq!(check_null_index1.call(array.as_ptr()), 42i8);
 
-        let check_null_index2 = execution_engine.get_function::<unsafe extern "C" fn(*const i8) -> i8>("check_null_index2").unwrap().into_closure();
+        let check_null_index2 = execution_engine.get_function::<unsafe extern "C" fn(*const i8) -> i8>("check_null_index2").unwrap();
 
-        assert_eq!(check_null_index2(null()), -1i8);
-        assert_eq!(check_null_index2(array.as_ptr()), 42i8);
+        assert_eq!(check_null_index2.call(null()), -1i8);
+        assert_eq!(check_null_index2.call(array.as_ptr()), 42i8);
     }
 }
 
@@ -215,24 +215,24 @@ fn test_binary_ops() {
     unsafe {
         type BoolFunc = unsafe extern "C" fn(bool, bool) -> bool;
 
-        let and = execution_engine.get_function::<BoolFunc>("and").unwrap().into_closure();
-        let or = execution_engine.get_function::<BoolFunc>("or").unwrap().into_closure();
-        let xor = execution_engine.get_function::<BoolFunc>("xor").unwrap().into_closure();
+        let and = execution_engine.get_function::<BoolFunc>("and").unwrap();
+        let or = execution_engine.get_function::<BoolFunc>("or").unwrap();
+        let xor = execution_engine.get_function::<BoolFunc>("xor").unwrap();
 
-        assert!(!and(false, false));
-        assert!(!and(true, false));
-        assert!(!and(false, true));
-        assert!(and(true, true));
+        assert!(!and.call(false, false));
+        assert!(!and.call(true, false));
+        assert!(!and.call(false, true));
+        assert!(and.call(true, true));
 
-        assert!(!or(false, false));
-        assert!(or(true, false));
-        assert!(or(false, true));
-        assert!(or(true, true));
+        assert!(!or.call(false, false));
+        assert!(or.call(true, false));
+        assert!(or.call(false, true));
+        assert!(or.call(true, true));
 
-        assert!(!xor(false, false));
-        assert!(xor(true, false));
-        assert!(xor(false, true));
-        assert!(!xor(true, true));
+        assert!(!xor.call(false, false));
+        assert!(xor.call(true, false));
+        assert!(xor.call(false, true));
+        assert!(!xor.call(true, true));
     }
 }
 
@@ -286,13 +286,13 @@ fn test_switch() {
     builder.build_return(Some(&double));
 
     unsafe {
-        let switch = execution_engine.get_function::<unsafe extern "C" fn(u8) -> u8>("switch").unwrap().into_closure();
+        let switch = execution_engine.get_function::<unsafe extern "C" fn(u8) -> u8>("switch").unwrap();
 
-        assert_eq!(switch(0), 1);
-        assert_eq!(switch(1), 2);
-        assert_eq!(switch(3), 6);
-        assert_eq!(switch(10), 20);
-        assert_eq!(switch(42), 255);
+        assert_eq!(switch.call(0), 1);
+        assert_eq!(switch.call(1), 2);
+        assert_eq!(switch.call(3), 6);
+        assert_eq!(switch.call(10), 20);
+        assert_eq!(switch.call(42), 255);
     }
 }
 
@@ -356,37 +356,37 @@ fn test_bit_shifts() {
     builder.build_return(Some(&shift));
 
     unsafe {
-        let left_shift = execution_engine.get_function::<unsafe extern "C" fn(u8, u8) -> u8>("left_shift").unwrap().into_closure();
-        let right_shift  = execution_engine.get_function::<unsafe extern "C" fn(u8, u8) -> u8>("right_shift").unwrap().into_closure();
-        let right_shift_sign_extend = execution_engine.get_function::<unsafe extern "C" fn(i8, u8) -> i8>("right_shift_sign_extend").unwrap().into_closure();
+        let left_shift = execution_engine.get_function::<unsafe extern "C" fn(u8, u8) -> u8>("left_shift").unwrap();
+        let right_shift  = execution_engine.get_function::<unsafe extern "C" fn(u8, u8) -> u8>("right_shift").unwrap();
+        let right_shift_sign_extend = execution_engine.get_function::<unsafe extern "C" fn(i8, u8) -> i8>("right_shift_sign_extend").unwrap();
 
-        assert_eq!(left_shift(0, 0), 0);
-        assert_eq!(left_shift(0, 4), 0);
-        assert_eq!(left_shift(1, 0), 1);
-        assert_eq!(left_shift(1, 1), 2);
-        assert_eq!(left_shift(1, 2), 4);
-        assert_eq!(left_shift(1, 3), 8);
-        assert_eq!(left_shift(64, 1), 128);
+        assert_eq!(left_shift.call(0, 0), 0);
+        assert_eq!(left_shift.call(0, 4), 0);
+        assert_eq!(left_shift.call(1, 0), 1);
+        assert_eq!(left_shift.call(1, 1), 2);
+        assert_eq!(left_shift.call(1, 2), 4);
+        assert_eq!(left_shift.call(1, 3), 8);
+        assert_eq!(left_shift.call(64, 1), 128);
 
-        assert_eq!(right_shift(128, 1), 64);
-        assert_eq!(right_shift(8, 3), 1);
-        assert_eq!(right_shift(4, 2), 1);
-        assert_eq!(right_shift(2, 1), 1);
-        assert_eq!(right_shift(1, 0), 1);
-        assert_eq!(right_shift(0, 4), 0);
-        assert_eq!(right_shift(0, 0), 0);
+        assert_eq!(right_shift.call(128, 1), 64);
+        assert_eq!(right_shift.call(8, 3), 1);
+        assert_eq!(right_shift.call(4, 2), 1);
+        assert_eq!(right_shift.call(2, 1), 1);
+        assert_eq!(right_shift.call(1, 0), 1);
+        assert_eq!(right_shift.call(0, 4), 0);
+        assert_eq!(right_shift.call(0, 0), 0);
 
-        assert_eq!(right_shift_sign_extend(8, 3), 1);
-        assert_eq!(right_shift_sign_extend(4, 2), 1);
-        assert_eq!(right_shift_sign_extend(2, 1), 1);
-        assert_eq!(right_shift_sign_extend(1, 0), 1);
-        assert_eq!(right_shift_sign_extend(0, 4), 0);
-        assert_eq!(right_shift_sign_extend(0, 0), 0);
-        assert_eq!(right_shift_sign_extend(-127, 1), -64);
-        assert_eq!(right_shift_sign_extend(-127, 8), -1);
-        assert_eq!(right_shift_sign_extend(-65, 3), -9);
-        assert_eq!(right_shift_sign_extend(-64, 3), -8);
-        assert_eq!(right_shift_sign_extend(-63, 3), -8);
+        assert_eq!(right_shift_sign_extend.call(8, 3), 1);
+        assert_eq!(right_shift_sign_extend.call(4, 2), 1);
+        assert_eq!(right_shift_sign_extend.call(2, 1), 1);
+        assert_eq!(right_shift_sign_extend.call(1, 0), 1);
+        assert_eq!(right_shift_sign_extend.call(0, 4), 0);
+        assert_eq!(right_shift_sign_extend.call(0, 0), 0);
+        assert_eq!(right_shift_sign_extend.call(-127, 1), -64);
+        assert_eq!(right_shift_sign_extend.call(-127, 8), -1);
+        assert_eq!(right_shift_sign_extend.call(-65, 3), -9);
+        assert_eq!(right_shift_sign_extend.call(-64, 3), -8);
+        assert_eq!(right_shift_sign_extend.call(-63, 3), -8);
     }
 }
 

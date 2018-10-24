@@ -440,20 +440,6 @@ pub struct Symbol<F> {
     inner: F,
 }
 
-impl<F: UnsafeFunctionPointer> Symbol<F> {
-    /// This method allows to retrieve the internal function pointer.
-    ///
-    /// This is highly unsafe because as soon as you get it, it's up to you
-    /// to make sure that the [`ExecutionEngine`] is not dropped earlier than
-    /// the returned function.
-    ///
-    /// It's almost always better to use either [`Symbol::call`] or
-    /// [`Symbol::to_closure`] which will uphold the memory guarantee for you.
-    pub unsafe fn into_inner(&self) -> F {
-        self.inner
-    }
-}
-
 impl<F> Debug for Symbol<F> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         f.debug_tuple("Symbol")
@@ -487,17 +473,6 @@ macro_rules! impl_unsafe_fn {
             #[inline(always)]
             pub unsafe fn call(&self, $( $param: $param ),*) -> Output {
                 (self.inner)($( $param ),*)
-            }
-
-            /// This method allows to cast [`Symbol`] to an opaque Rust closure.
-            ///
-            /// Unlike [`Symbol::into_inner`], it still automatically keeps the backing
-            /// storage alive as long as it's needed, however it "forgets"
-            /// that function is actually `unsafe`.
-            pub unsafe fn into_closure(self) -> impl Fn($( $param ),*) -> Output {
-                #[allow(non_snake_case)]
-                #[inline(always)]
-                move |$( $param ),*| (self.inner)($( $param ),*)
             }
         }
     };
