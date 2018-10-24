@@ -11,6 +11,7 @@ use std::rc::Rc;
 use std::ops::Deref;
 use std::ffi::CString;
 use std::fmt::{self, Debug, Display, Formatter};
+use std::marker::PhantomData;
 use std::mem::{forget, zeroed, transmute_copy, size_of};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -285,7 +286,7 @@ impl ExecutionEngine {
     /// method *may* invalidate the function pointer.
     ///
     /// [`UnsafeFunctionPointer`]: trait.UnsafeFunctionPointer.html
-    pub unsafe fn get_function<F>(&self, fn_name: &str) -> Result<Symbol<F>, FunctionLookupError>
+    pub unsafe fn get_function<'engine, F>(&'engine self, fn_name: &str) -> Result<Symbol<'engine, F>, FunctionLookupError>
     where
         F: UnsafeFunctionPointer,
     {
@@ -314,7 +315,7 @@ impl ExecutionEngine {
             "The type `F` must have the same size as a function pointer");
 
         Ok(Symbol {
-            _execution_engine: self.execution_engine.clone(),
+            _execution_engine: PhantomData,
             inner: transmute_copy(&address),
         })
     }
@@ -435,12 +436,12 @@ impl Deref for ExecEngineInner {
 /// A wrapper around a function pointer which ensures the symbol being pointed
 /// to doesn't accidentally outlive its execution engine.
 #[derive(Clone)]
-pub struct Symbol<F> {
-    _execution_engine: ExecEngineInner,
+pub struct Symbol<'engine, F> {
+    _execution_engine: PhantomData<&'engine ExecutionEngine>,
     inner: F,
 }
 
-impl<F> Debug for Symbol<F> {
+impl<'engine, F> Debug for Symbol<'engine, F> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         f.debug_tuple("Symbol")
             .field(&"<unnamed>")
@@ -461,11 +462,11 @@ mod private {
 
 macro_rules! impl_unsafe_fn {
     ($( $param:ident ),*) => {
-        impl<Output, $( $param ),*> private::Sealed for unsafe extern "C" fn($( $param ),*) -> Output {}
+        impl<'engine, Output, $( $param ),*> private::Sealed for unsafe extern "C" fn($( $param ),*) -> Output {}
 
-        impl<Output, $( $param ),*> UnsafeFunctionPointer for unsafe extern "C" fn($( $param ),*) -> Output {}
+        impl<'engine, Output, $( $param ),*> UnsafeFunctionPointer for unsafe extern "C" fn($( $param ),*) -> Output {}
 
-        impl<Output, $( $param ),*> Symbol<unsafe extern "C" fn($( $param ),*) -> Output> {
+        impl<'engine, Output, $( $param ),*> Symbol<'engine, unsafe extern "C" fn($( $param ),*) -> Output> {
             /// This method allows to call the underlying function while making
             /// sure that the backing storage is not dropped too early and
             /// preserves the `unsafe` marker for any calls.
