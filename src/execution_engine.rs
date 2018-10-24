@@ -450,15 +450,17 @@ impl<'engine, F> Debug for Symbol<'engine, F> {
 }
 
 /// Marker trait representing an unsafe function pointer (`unsafe extern "C" fn(A, B, ...) -> Output`).
-pub trait UnsafeFunctionPointer: private::Sealed + Copy {}
+pub trait UnsafeFunctionPointer: private::SealedUnsafeFunctionPointer {}
 
 mod private {
     /// A sealed trait which ensures nobody outside this crate can implement
     /// `UnsafeFunctionPointer`.
     ///
     /// See https://rust-lang-nursery.github.io/api-guidelines/future-proofing.html
-    pub trait Sealed {}
+    pub trait SealedUnsafeFunctionPointer: Copy {}
 }
+
+impl<F: private::SealedUnsafeFunctionPointer> UnsafeFunctionPointer for F {}
 
 macro_rules! impl_unsafe_fn {
     (@recurse $first:ident $( , $rest:ident )*) => {
@@ -468,9 +470,7 @@ macro_rules! impl_unsafe_fn {
     (@recurse) => {};
 
     ($( $param:ident ),*) => {
-        impl<'engine, Output, $( $param ),*> private::Sealed for unsafe extern "C" fn($( $param ),*) -> Output {}
-
-        impl<'engine, Output, $( $param ),*> UnsafeFunctionPointer for unsafe extern "C" fn($( $param ),*) -> Output {}
+        impl<'engine, Output, $( $param ),*> private::SealedUnsafeFunctionPointer for unsafe extern "C" fn($( $param ),*) -> Output {}
 
         impl<'engine, Output, $( $param ),*> Symbol<'engine, unsafe extern "C" fn($( $param ),*) -> Output> {
             /// This method allows to call the underlying function while making
