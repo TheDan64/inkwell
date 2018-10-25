@@ -20,6 +20,7 @@ Hello there! Thank you for taking interest in Inkwell!
 * I have updated documentation and doc tests to any modified functions or types as applicable
 * I have added tests to cover my changes
 * All new and existing tests passed
+* I am basing my changes off master, instead of one of the llvm version branches
 
 ### Desired
 
