@@ -473,7 +473,7 @@ macro_rules! impl_unsafe_fn {
         impl<'engine, Output, $( $param ),*> private::SealedUnsafeFunctionPointer for unsafe extern "C" fn($( $param ),*) -> Output {}
 
         impl<'engine, Output, $( $param ),*> JitFunction<'engine, unsafe extern "C" fn($( $param ),*) -> Output> {
-            /// This method allows to call the underlying function while making
+            /// This method allows you to call the underlying function while making
             /// sure that the backing storage is not dropped too early and
             /// preserves the `unsafe` marker for any calls.
             #[allow(non_snake_case)]
