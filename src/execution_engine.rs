@@ -11,6 +11,7 @@ use std::rc::Rc;
 use std::ops::Deref;
 use std::ffi::CString;
 use std::fmt::{self, Debug, Display, Formatter};
+use std::marker::PhantomData;
 use std::mem::{forget, zeroed, transmute_copy, size_of};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -270,7 +271,7 @@ impl ExecutionEngine {
     /// // fetch our JIT'd function and execute it
     /// unsafe {
     ///     let test_fn = ee.get_function::<unsafe extern "C" fn() -> f64>("test_fn").unwrap();
-    ///     let return_value = test_fn();
+    ///     let return_value = test_fn.call();
     ///     assert_eq!(return_value, 64.0);
     /// }
     /// ```
@@ -280,12 +281,12 @@ impl ExecutionEngine {
     /// It is the caller's responsibility to ensure they call the function with
     /// the correct signature and calling convention.
     ///
-    /// The `Symbol` wrapper ensures a function won't accidentally outlive the
+    /// The `JitFunction` wrapper ensures a function won't accidentally outlive the
     /// execution engine it came from, but adding functions after calling this
     /// method *may* invalidate the function pointer.
     ///
     /// [`UnsafeFunctionPointer`]: trait.UnsafeFunctionPointer.html
-    pub unsafe fn get_function<F>(&self, fn_name: &str) -> Result<Symbol<F>, FunctionLookupError>
+    pub unsafe fn get_function<'engine, F>(&'engine self, fn_name: &str) -> Result<JitFunction<'engine, F>, FunctionLookupError>
     where
         F: UnsafeFunctionPointer,
     {
@@ -313,8 +314,8 @@ impl ExecutionEngine {
         assert_eq!(size_of::<F>(), size_of::<usize>(),
             "The type `F` must have the same size as a function pointer");
 
-        Ok(Symbol {
-            _execution_engine: self.execution_engine.clone(),
+        Ok(JitFunction {
+            _execution_engine: PhantomData,
             inner: transmute_copy(&address),
         })
     }
@@ -432,59 +433,58 @@ impl Deref for ExecEngineInner {
     }
 }
 
-/// A wrapper around a function pointer which ensures the symbol being pointed
+/// A wrapper around a function pointer which ensures the function being pointed
 /// to doesn't accidentally outlive its execution engine.
 #[derive(Clone)]
-pub struct Symbol<F> {
-    _execution_engine: ExecEngineInner,
+pub struct JitFunction<'engine, F> {
+    _execution_engine: PhantomData<&'engine ExecutionEngine>,
     inner: F,
 }
 
-impl<F: UnsafeFunctionPointer> Deref for Symbol<F> {
-    type Target = F;
-
-    fn deref(&self) -> &Self::Target {
-        &self.inner
-    }
-}
-
-impl<F> Debug for Symbol<F> {
+impl<'engine, F> Debug for JitFunction<'engine, F> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        f.debug_tuple("Symbol")
+        f.debug_tuple("JitFunction")
             .field(&"<unnamed>")
             .finish()
     }
 }
 
 /// Marker trait representing an unsafe function pointer (`unsafe extern "C" fn(A, B, ...) -> Output`).
-pub trait UnsafeFunctionPointer: private::Sealed + Copy {}
+pub trait UnsafeFunctionPointer: private::SealedUnsafeFunctionPointer {}
 
 mod private {
     /// A sealed trait which ensures nobody outside this crate can implement
     /// `UnsafeFunctionPointer`.
     ///
     /// See https://rust-lang-nursery.github.io/api-guidelines/future-proofing.html
-    pub trait Sealed {}
+    pub trait SealedUnsafeFunctionPointer: Copy {}
 }
 
+impl<F: private::SealedUnsafeFunctionPointer> UnsafeFunctionPointer for F {}
+
 macro_rules! impl_unsafe_fn {
+    (@recurse $first:ident $( , $rest:ident )*) => {
+        impl_unsafe_fn!($( $rest ),*);
+    };
+
+    (@recurse) => {};
+
     ($( $param:ident ),*) => {
-        impl<Output, $( $param ),*> private::Sealed for unsafe extern "C" fn($( $param ),*) -> Output {}
-        impl<Output, $( $param ),*> UnsafeFunctionPointer for unsafe extern "C" fn($( $param ),*) -> Output {}
+        impl<'engine, Output, $( $param ),*> private::SealedUnsafeFunctionPointer for unsafe extern "C" fn($( $param ),*) -> Output {}
+
+        impl<'engine, Output, $( $param ),*> JitFunction<'engine, unsafe extern "C" fn($( $param ),*) -> Output> {
+            /// This method allows you to call the underlying function while making
+            /// sure that the backing storage is not dropped too early and
+            /// preserves the `unsafe` marker for any calls.
+            #[allow(non_snake_case)]
+            #[inline(always)]
+            pub unsafe fn call(&self, $( $param: $param ),*) -> Output {
+                (self.inner)($( $param ),*)
+            }
+        }
+
+        impl_unsafe_fn!(@recurse $( $param ),*);
     };
 }
 
-impl_unsafe_fn!();
-impl_unsafe_fn!(A);
-impl_unsafe_fn!(A, B);
-impl_unsafe_fn!(A, B, C);
-impl_unsafe_fn!(A, B, C, D);
-impl_unsafe_fn!(A, B, C, D, E);
-impl_unsafe_fn!(A, B, C, D, E, F);
-impl_unsafe_fn!(A, B, C, D, E, F, G);
-impl_unsafe_fn!(A, B, C, D, E, F, G, H);
-impl_unsafe_fn!(A, B, C, D, E, F, G, H, I);
-impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J);
-impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J, K);
-impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J, K, L);
 impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J, K, L, M);

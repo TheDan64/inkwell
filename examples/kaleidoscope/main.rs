@@ -1330,7 +1330,7 @@ pub fn main() {
             };
 
             unsafe {
-                println!("=> {}", compiled_fn());
+                println!("=> {}", compiled_fn.call());
             }
         }
     }

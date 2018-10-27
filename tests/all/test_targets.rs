@@ -1,7 +1,5 @@
 extern crate inkwell;
 
-use either::Either::{Left, Right};
-
 use self::inkwell::{AddressSpace, OptimizationLevel};
 use self::inkwell::context::Context;
 use self::inkwell::targets::{ByteOrdering, CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetData, TargetMachine};
@@ -122,6 +120,8 @@ fn test_target_and_target_machine() {
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
                   feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     {
+        use either::Either::{Left, Right};
+
         // TODO: Try and find a triple that actually gets normalized..
         assert_eq!(*TargetMachine::normalize_target_triple(Left("x86_64-pc-linux-gnu")), *CString::new("x86_64-pc-linux-gnu").unwrap());
         assert_eq!(*TargetMachine::normalize_target_triple(Right(&*triple)), *CString::new("x86_64-pc-linux-gnu").unwrap());
@@ -134,18 +134,16 @@ fn test_target_and_target_machine() {
 #[test]
 fn test_default_target_triple() {
     let default_target_triple = TargetMachine::get_default_triple();
+    let default_target_triple = default_target_triple.to_str().unwrap();
 
     #[cfg(target_os = "linux")]
-    let cond = *default_target_triple == *CString::new("x86_64-pc-linux-gnu").unwrap() ||
-               *default_target_triple == *CString::new("x86_64-unknown-linux-gnu").unwrap();
+    let cond = default_target_triple == "x86_64-pc-linux-gnu" ||
+               default_target_triple == "x86_64-unknown-linux-gnu";
 
     #[cfg(target_os = "macos")]
-    let cond = *default_target_triple == *CString::new("x86_64-apple-darwin17.5.0").unwrap();
+    let cond = default_target_triple.starts_with("x86_64-apple-darwin");
 
-    // let cond = *default_target_triple == *CString::new("x86_64-pc-linux-gnu").unwrap() |
-    //     *default_target_triple == *CString::new("x86_64-unknown-linux-gnu").unwrap();
-
-    assert!(cond);
+    assert!(cond, "Unexpected target triple: {}", default_target_triple);
 
     // TODO: CFG for other supported major OSes
 }
