@@ -11,7 +11,6 @@ use std::rc::Rc;
 use std::ops::Deref;
 use std::ffi::CString;
 use std::fmt::{self, Debug, Display, Formatter};
-use std::marker::PhantomData;
 use std::mem::{forget, zeroed, transmute_copy, size_of};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -286,7 +285,7 @@ impl ExecutionEngine {
     /// method *may* invalidate the function pointer.
     ///
     /// [`UnsafeFunctionPointer`]: trait.UnsafeFunctionPointer.html
-    pub unsafe fn get_function<'engine, F>(&'engine self, fn_name: &str) -> Result<JitFunction<'engine, F>, FunctionLookupError>
+    pub unsafe fn get_function<F>(&self, fn_name: &str) -> Result<JitFunction<F>, FunctionLookupError>
     where
         F: UnsafeFunctionPointer,
     {
@@ -315,7 +314,7 @@ impl ExecutionEngine {
             "The type `F` must have the same size as a function pointer");
 
         Ok(JitFunction {
-            _execution_engine: PhantomData,
+            _execution_engine: self.execution_engine.clone(),
             inner: transmute_copy(&address),
         })
     }
@@ -436,12 +435,12 @@ impl Deref for ExecEngineInner {
 /// A wrapper around a function pointer which ensures the function being pointed
 /// to doesn't accidentally outlive its execution engine.
 #[derive(Clone)]
-pub struct JitFunction<'engine, F> {
-    _execution_engine: PhantomData<&'engine ExecutionEngine>,
+pub struct JitFunction<F> {
+    _execution_engine: ExecEngineInner,
     inner: F,
 }
 
-impl<'engine, F> Debug for JitFunction<'engine, F> {
+impl<F> Debug for JitFunction<F> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         f.debug_tuple("JitFunction")
             .field(&"<unnamed>")
@@ -470,9 +469,9 @@ macro_rules! impl_unsafe_fn {
     (@recurse) => {};
 
     ($( $param:ident ),*) => {
-        impl<'engine, Output, $( $param ),*> private::SealedUnsafeFunctionPointer for unsafe extern "C" fn($( $param ),*) -> Output {}
+        impl<Output, $( $param ),*> private::SealedUnsafeFunctionPointer for unsafe extern "C" fn($( $param ),*) -> Output {}
 
-        impl<'engine, Output, $( $param ),*> JitFunction<'engine, unsafe extern "C" fn($( $param ),*) -> Output> {
+        impl<Output, $( $param ),*> JitFunction<unsafe extern "C" fn($( $param ),*) -> Output> {
             /// This method allows you to call the underlying function while making
             /// sure that the backing storage is not dropped too early and
             /// preserves the `unsafe` marker for any calls.
