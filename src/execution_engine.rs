@@ -1,6 +1,7 @@
 use libc::c_int;
 use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction, LLVMLinkInMCJIT, LLVMLinkInInterpreter, LLVMRemoveModule, LLVMGenericValueRef, LLVMFreeMachineCodeForFunction, LLVMAddGlobalMapping, LLVMRunStaticConstructors, LLVMRunStaticDestructors};
 
+use context::Context;
 use module::Module;
 use support::LLVMString;
 use targets::TargetData;
@@ -12,6 +13,8 @@ use std::ops::Deref;
 use std::ffi::CString;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::mem::{forget, zeroed, transmute_copy, size_of};
+
+static EE_INNER_PANIC: &str = "ExecutionEngineInner should exist until Drop";
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum FunctionLookupError {
@@ -83,19 +86,28 @@ impl Display for RemoveModuleError {
 
 /// A reference-counted wrapper around LLVM's execution engine.
 ///
+/// # Note
+///
 /// Cloning this object is essentially just a case of copying a couple pointers
 /// and incrementing one or two atomics, so this should be quite cheap to create
 /// copies. The underlying LLVM object will be automatically deallocated when
 /// there are no more references to it.
+// non_global_context is required to ensure last remaining Context ref will drop
+// after EE drop. execution_engine & target_data are an option for drop purposes
 #[derive(PartialEq, Eq, Debug)]
 pub struct ExecutionEngine {
-    execution_engine: ExecEngineInner,
+    non_global_context: Option<Context>,
+    execution_engine: Option<ExecEngineInner>,
     target_data: Option<TargetData>,
     jit_mode: bool,
 }
 
 impl ExecutionEngine {
-    pub(crate) fn new(execution_engine: Rc<LLVMExecutionEngineRef>, jit_mode: bool) -> ExecutionEngine {
+    pub(crate) fn new(
+        execution_engine: Rc<LLVMExecutionEngineRef>,
+        non_global_context: Option<Context>,
+        jit_mode: bool,
+    ) -> ExecutionEngine {
         assert!(!execution_engine.is_null());
 
         // REVIEW: Will we have to do this for LLVMGetExecutionEngineTargetMachine too?
@@ -104,10 +116,20 @@ impl ExecutionEngine {
         };
 
         ExecutionEngine {
-            execution_engine: ExecEngineInner(execution_engine),
+            non_global_context,
+            execution_engine: Some(ExecEngineInner(execution_engine)),
             target_data: Some(TargetData::new(target_data)),
             jit_mode: jit_mode,
         }
+    }
+
+    pub(crate) fn execution_engine_rc(&self) -> &Rc<LLVMExecutionEngineRef> {
+        &self.execution_engine.as_ref().expect(EE_INNER_PANIC).0
+    }
+
+    #[inline]
+    pub(crate) fn execution_engine_inner(&self) -> LLVMExecutionEngineRef {
+        **self.execution_engine_rc()
     }
 
     /// This function probably doesn't need to be called, but is here due to
@@ -169,7 +191,7 @@ impl ExecutionEngine {
     /// ```
     pub fn add_global_mapping(&self, value: &AnyValue, addr: usize) {
         unsafe {
-            LLVMAddGlobalMapping(*self.execution_engine, value.as_value_ref(), addr as *mut _)
+            LLVMAddGlobalMapping(self.execution_engine_inner(), value.as_value_ref(), addr as *mut _)
         }
     }
 
@@ -192,7 +214,7 @@ impl ExecutionEngine {
     /// ```
     pub fn add_module(&self, module: &Module) -> Result<(), ()> {
         unsafe {
-            LLVMAddModule(*self.execution_engine, module.module.get())
+            LLVMAddModule(self.execution_engine_inner(), module.module.get())
         }
 
         if module.owned_by_ee.borrow().is_some() {
@@ -206,7 +228,8 @@ impl ExecutionEngine {
 
     pub fn remove_module(&self, module: &Module) -> Result<(), RemoveModuleError> {
         match *module.owned_by_ee.borrow() {
-            Some(ref ee) if *ee.execution_engine != *self.execution_engine => return Err(RemoveModuleError::IncorrectModuleOwner),
+            Some(ref ee) if ee.execution_engine_inner() != self.execution_engine_inner() =>
+                return Err(RemoveModuleError::IncorrectModuleOwner),
             None => return Err(RemoveModuleError::ModuleNotOwned),
             _ => ()
         }
@@ -215,7 +238,7 @@ impl ExecutionEngine {
         let mut err_string = unsafe { zeroed() };
 
         let code = unsafe {
-            LLVMRemoveModule(*self.execution_engine, module.module.get(), &mut new_module, &mut err_string)
+            LLVMRemoveModule(self.execution_engine_inner(), module.module.get(), &mut new_module, &mut err_string)
         };
 
         if code == 1 {
@@ -300,7 +323,7 @@ impl ExecutionEngine {
 
         let c_string = CString::new(fn_name).expect("Conversion to CString failed unexpectedly");
 
-        let address = LLVMGetFunctionAddress(*self.execution_engine, c_string.as_ptr());
+        let address = LLVMGetFunctionAddress(self.execution_engine_inner(), c_string.as_ptr());
 
         // REVIEW: Can also return 0 if no targets are initialized.
         // One option might be to set a (thread local?) global to true if any at all of the targets have been
@@ -313,8 +336,10 @@ impl ExecutionEngine {
         assert_eq!(size_of::<F>(), size_of::<usize>(),
             "The type `F` must have the same size as a function pointer");
 
+        let execution_engine = self.execution_engine.as_ref().expect(EE_INNER_PANIC);
+
         Ok(JitFunction {
-            _execution_engine: self.execution_engine.clone(),
+            _execution_engine: execution_engine.clone(),
             inner: transmute_copy(&address),
         })
     }
@@ -337,7 +362,7 @@ impl ExecutionEngine {
         let mut function = unsafe { zeroed() };
 
         let code = unsafe {
-            LLVMFindFunction(*self.execution_engine, c_string.as_ptr(), &mut function)
+            LLVMFindFunction(self.execution_engine_inner(), c_string.as_ptr(), &mut function)
         };
 
         if code == 0 {
@@ -354,7 +379,7 @@ impl ExecutionEngine {
                                                      .map(|val| val.generic_value)
                                                      .collect();
 
-        let value = LLVMRunFunction(*self.execution_engine, function.as_value_ref(), args.len() as u32, args.as_mut_ptr()); // REVIEW: usize to u32 ok??
+        let value = LLVMRunFunction(self.execution_engine_inner(), function.as_value_ref(), args.len() as u32, args.as_mut_ptr()); // REVIEW: usize to u32 ok??
 
         GenericValue::new(value)
     }
@@ -368,26 +393,26 @@ impl ExecutionEngine {
 
         let environment_variables = vec![]; // TODO: Support envp. Likely needs to be null terminated
 
-        LLVMRunFunctionAsMain(*self.execution_engine, function.as_value_ref(), raw_args.len() as u32, raw_args.as_ptr(), environment_variables.as_ptr()) // REVIEW: usize to u32 cast ok??
+        LLVMRunFunctionAsMain(self.execution_engine_inner(), function.as_value_ref(), raw_args.len() as u32, raw_args.as_ptr(), environment_variables.as_ptr()) // REVIEW: usize to u32 cast ok??
     }
 
     pub fn free_fn_machine_code(&self, function: &FunctionValue) {
         unsafe {
-            LLVMFreeMachineCodeForFunction(*self.execution_engine, function.as_value_ref())
+            LLVMFreeMachineCodeForFunction(self.execution_engine_inner(), function.as_value_ref())
         }
     }
 
     // REVIEW: Is this actually safe?
     pub fn run_static_constructors(&self) {
         unsafe {
-            LLVMRunStaticConstructors(*self.execution_engine)
+            LLVMRunStaticConstructors(self.execution_engine_inner())
         }
     }
 
     // REVIEW: Is this actually safe? Can you double destruct/free?
     pub fn run_static_destructors(&self) {
         unsafe {
-            LLVMRunStaticDestructors(*self.execution_engine)
+            LLVMRunStaticDestructors(self.execution_engine_inner())
         }
     }
 }
@@ -401,12 +426,20 @@ impl Drop for ExecutionEngine {
                 .take()
                 .expect("TargetData should always exist until Drop"),
         );
+
+        // We must ensure the EE gets dropped before its context does,
+        // which is important in the case where the EE has the last
+        // remaining reference to it context
+        drop(self.execution_engine.take().expect(EE_INNER_PANIC));
     }
 }
 
 impl Clone for ExecutionEngine {
     fn clone(&self) -> ExecutionEngine {
-        ExecutionEngine::new(self.execution_engine.0.clone(), self.jit_mode)
+        let context = self.non_global_context.clone();
+        let execution_engine_rc = self.execution_engine_rc().clone();
+
+        ExecutionEngine::new(execution_engine_rc, context, self.jit_mode)
     }
 }
 

@@ -27,7 +27,14 @@ use std::rc::Rc;
 ///
 /// A `Context` is not thread safe and cannot be shared across threads. Multiple `Context`s
 /// can, however, execute on different threads simultaneously according to the LLVM docs.
-#[derive(Debug, PartialEq, Eq)]
+///
+/// # Note
+///
+/// Cloning this object is essentially just a case of copying a couple pointers
+/// and incrementing one or two atomics, so this should be quite cheap to create
+/// copies. The underlying LLVM object will be automatically deallocated when
+/// there are no more references to it.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Context {
     pub(crate) context: Rc<LLVMContextRef>,
 }

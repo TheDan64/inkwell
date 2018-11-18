@@ -138,7 +138,7 @@ impl Module {
 
         Module {
             module: Cell::new(module),
-            non_global_context: context.map(|ctx| Context::new(ctx.context.clone())),
+            non_global_context: context.map(|ctx| ctx.clone()),
             owned_by_ee: RefCell::new(None),
             data_layout: RefCell::new(Some(Module::get_borrowed_data_layout(module))),
         }
@@ -425,7 +425,8 @@ impl Module {
             return Err(LLVMString::new(err_string));
         }
 
-        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), false);
+        let context = self.non_global_context.clone();
+        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), context, false);
 
         *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
 
@@ -461,7 +462,8 @@ impl Module {
             return Err(LLVMString::new(err_string));
         }
 
-        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), false);
+        let context = self.non_global_context.clone();
+        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), context, false);
 
         *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
 
@@ -510,7 +512,8 @@ impl Module {
             return Err(LLVMString::new(err_string));
         }
 
-        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), true);
+        let context = self.non_global_context.clone();
+        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), context, true);
 
         *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
 

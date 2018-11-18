@@ -203,3 +203,28 @@ fn test_add_remove_module() {
 
 //     assert!(execution_engine.get_function_value("func").is_ok());
 // }
+
+
+#[test]
+fn test_previous_double_free() {
+    Target::initialize_native(&InitializationConfig::default()).unwrap();
+
+    let context = Context::create();
+    let module = context.create_module("sum");
+    let ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+
+    drop(context);
+    drop(module);
+}
+
+#[test]
+fn test_previous_double_free2() {
+    Target::initialize_native(&InitializationConfig::default()).unwrap();
+
+    let _execution_engine = {
+        let context = Context::create();
+        let module = context.create_module("sum");
+
+        module.create_jit_execution_engine(OptimizationLevel::None).unwrap()
+    };
+}
