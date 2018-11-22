@@ -23,7 +23,9 @@ pub use values::enums::{AnyValueEnum, AggregateValueEnum, BasicValueEnum, BasicM
 pub use values::float_value::FloatValue;
 pub use values::fn_value::FunctionValue;
 pub use values::generic_value::GenericValue;
-pub use values::global_value::{GlobalValue, UnnamedAddress};
+pub use values::global_value::GlobalValue;
+#[llvm_versions(7.0 => latest)]
+pub use values::global_value::UnnamedAddress;
 pub use values::instruction_value::{InstructionValue, InstructionOpcode};
 pub use values::int_value::IntValue;
 pub use values::metadata_value::{MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID};
