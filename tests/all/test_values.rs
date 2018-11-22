@@ -470,6 +470,8 @@ fn test_metadata() {
         assert_eq!(MetadataValue::get_kind_id("irr_loop"), 24);
     }
 
+    // TODO: 7+?
+
     assert_eq!(module.get_global_metadata_size("my_string_md"), 0);
     assert_eq!(module.get_global_metadata("my_string_md").len(), 0);
 
@@ -952,9 +954,14 @@ fn test_phi_values() {
     let bool_type = context.bool_type();
     let fn_type = void_type.fn_type(&[bool_type.into()], false);
     let fn_value = module.add_function("my_func", fn_type, None);
+
+    assert!(fn_value.is_declaration());
+
     let entry_block = fn_value.append_basic_block("entry");
     let then_block = fn_value.append_basic_block("then");
     let else_block = fn_value.append_basic_block("else");
+
+    assert!(!fn_value.is_declaration());
 
     builder.position_at_end(&entry_block);
 

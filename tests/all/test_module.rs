@@ -431,3 +431,43 @@ fn test_linking_modules() {
     #[cfg(not(feature = "llvm3-6"))]
     assert_ne!(execution_engine2.get_function_value("f4"), Ok(fn_val4));
 }
+
+#[test]
+fn test_metadata_flags() {
+    let context = Context::create();
+    let module = context.create_module("my_module");
+
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    {
+        use self::inkwell::module::FlagBehavior;
+        use self::inkwell::values::MetadataValue;
+
+        assert!(module.get_flag("some_key").is_none());
+
+        let md = MetadataValue::create_string("lots of metadata here");
+
+        module.add_metadata_flag("some_key", FlagBehavior::Error, md);
+
+        // These have different addresses but same value
+        assert!(module.get_flag("some_key").is_some());
+
+        let f64_type = context.f64_type();
+        let f64_val = f64_type.const_float(3.14);
+
+        assert!(module.get_flag("some_key2").is_none());
+
+        module.add_basic_value_flag("some_key2", FlagBehavior::Error, f64_val);
+
+        assert!(module.get_flag("some_key2").is_some());
+
+        let struct_val = context.const_struct(&[f64_val.into()], false);
+
+        assert!(module.get_flag("some_key3").is_none());
+
+        module.add_basic_value_flag("some_key3", FlagBehavior::Error, struct_val);
+
+        assert!(module.get_flag("some_key3").is_some());
+        assert!(module.verify().is_ok());
+    }
+}

@@ -7,9 +7,13 @@ use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffe
 use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile};
 #[llvm_versions(3.9 => latest)]
 use llvm_sys::core::{LLVMGetModuleIdentifier, LLVMSetModuleIdentifier};
+#[llvm_versions(7.0 => latest)]
+use llvm_sys::core::{LLVMGetModuleFlag, LLVMAddModuleFlag};
 use llvm_sys::execution_engine::{LLVMCreateInterpreterForModule, LLVMCreateJITCompilerForModule, LLVMCreateExecutionEngineForModule};
 use llvm_sys::prelude::{LLVMValueRef, LLVMModuleRef};
 use llvm_sys::LLVMLinkage;
+#[llvm_versions(7.0 => latest)]
+use llvm_sys::LLVMModuleFlagBehavior;
 
 use std::cell::{Cell, RefCell, Ref};
 #[llvm_versions(3.9 => latest)]
@@ -32,7 +36,7 @@ use memory_buffer::MemoryBuffer;
 use support::LLVMString;
 use targets::Target;
 use types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
-use values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
+use values::{AsValueRef, BasicValue, BasicValueEnum, FunctionValue, GlobalValue, MetadataValue};
 
 enum_rename!{
     /// This enum defines how to link a global variable or function in a module. The variant documenation is
@@ -1318,6 +1322,62 @@ impl Module {
 
         Comdat::new(comdat_ptr)
     }
+
+    /// Gets the `MetadataValue` flag associated with the key in this module, if any.
+    /// If a `BasicValue` was used to create this flag, it will be wrapped in a `MetadataValue`
+    /// when returned from this function.
+    // SubTypes: Might need to return Option<BVE, MV<Enum>, or MV<String>>
+    #[llvm_versions(7.0 => latest)]
+    pub fn get_flag(&self, key: &str) -> Option<MetadataValue> {
+        use llvm_sys::core::{LLVMGetTypeKind, LLVMTypeOf, LLVMMetadataAsValue};
+        use llvm_sys::LLVMTypeKind;
+
+        let flag = unsafe {
+            LLVMGetModuleFlag(self.module.get(), key.as_ptr() as *const i8, key.len())
+        };
+
+        if flag.is_null() {
+            return None;
+        }
+
+        let global_ctx = Context::get_global();
+        let ctx = self.non_global_context.as_ref().unwrap_or(&*global_ctx);
+
+        let flag_value = unsafe {
+            LLVMMetadataAsValue(*ctx.context, flag)
+        };
+
+        let value = unsafe { LLVMGetTypeKind(LLVMTypeOf(flag_value)) };
+
+        Some(MetadataValue::new(flag_value))
+    }
+
+    /// Append a `MetadataValue` as a module wide flag. Note that using the same key twice
+    /// will likely invalidate the module.
+    #[llvm_versions(7.0 => latest)]
+    pub fn add_metadata_flag(&self, key: &str, behavior: FlagBehavior, flag: MetadataValue) {
+        let md = flag.as_metadata_ref();
+
+        unsafe {
+            LLVMAddModuleFlag(self.module.get(), behavior.as_llvm_enum(), key.as_ptr() as *mut i8, key.len(), md)
+        }
+    }
+
+    /// Append a `BasicValue` as a module wide flag. Note that using the same key twice
+    /// will likely invalidate the module.
+    // REVIEW: What happens if value is not const?
+    #[llvm_versions(7.0 => latest)]
+    pub fn add_basic_value_flag<BV: BasicValue>(&self, key: &str, behavior: FlagBehavior, flag: BV) {
+        use llvm_sys::core::LLVMValueAsMetadata;
+
+        let md = unsafe {
+            LLVMValueAsMetadata(flag.as_value_ref())
+        };
+
+        unsafe {
+            LLVMAddModuleFlag(self.module.get(), behavior.as_llvm_enum(), key.as_ptr() as *mut i8, key.len(), md)
+        }
+    }
 }
 
 impl Clone for Module {
@@ -1346,5 +1406,33 @@ impl Drop for Module {
         }
 
         // Context & EE will drop naturally if they are unique references at this point
+    }
+}
+
+#[llvm_versions(7.0 => latest)]
+enum_rename!{
+    /// Defines the operational behavior for a module wide flag. This documenation comes directly
+    /// from the LLVM docs
+    FlagBehavior <=> LLVMModuleFlagBehavior {
+        /// Emits an error if two values disagree, otherwise the resulting value is that of the operands.
+        Error <=> LLVMModuleFlagBehaviorError,
+        /// Emits a warning if two values disagree. The result value will be the operand for the
+        /// flag from the first module being linked.
+        Warning <=> LLVMModuleFlagBehaviorWarning,
+        /// Adds a requirement that another module flag be present and have a specified value after
+        /// linking is performed. The value must be a metadata pair, where the first element of the
+        /// pair is the ID of the module flag to be restricted, and the second element of the pair
+        /// is the value the module flag should be restricted to. This behavior can be used to
+        /// restrict the allowable results (via triggering of an error) of linking IDs with the
+        /// **Override** behavior.
+        Require <=> LLVMModuleFlagBehaviorRequire,
+        /// Uses the specified value, regardless of the behavior or value of the other module. If
+        /// both modules specify **Override**, but the values differ, an error will be emitted.
+        Override <=> LLVMModuleFlagBehaviorOverride,
+        /// Appends the two values, which are required to be metadata nodes.
+        Append <=> LLVMModuleFlagBehaviorAppend,
+        /// Appends the two values, which are required to be metadata nodes. However, duplicate
+        /// entries in the second list are dropped during the append operation.
+        AppendUnique <=> LLVMModuleFlagBehaviorAppendUnique,
     }
 }

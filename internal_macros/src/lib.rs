@@ -35,6 +35,10 @@ fn get_feature_slice(start_feature: &str, end_feature: &str) -> Option<&'static 
     let start_index = ALL_FEATURE_VERSIONS.iter().position(|&str| str == start_feature)?;
     let end_index = ALL_FEATURE_VERSIONS.iter().position(|&str| str == end_feature)?;
 
+    if end_index < start_index {
+        return None;
+    }
+
     Some(&ALL_FEATURE_VERSIONS[start_index..=end_index])
 }
 

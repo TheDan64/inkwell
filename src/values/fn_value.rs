@@ -3,7 +3,7 @@ use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMTypeOf
 #[llvm_versions(3.7 => latest)]
 use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
 #[llvm_versions(3.9 => latest)]
-use llvm_sys::core::{LLVMAddAttributeAtIndex, LLVMGetAttributeCountAtIndex, LLVMGetEnumAttributeAtIndex, LLVMGetStringAttributeAtIndex, LLVMRemoveEnumAttributeAtIndex, LLVMRemoveStringAttributeAtIndex};
+use llvm_sys::core::{LLVMAddAttributeAtIndex, LLVMGetAttributeCountAtIndex, LLVMGetEnumAttributeAtIndex, LLVMGetStringAttributeAtIndex, LLVMRemoveEnumAttributeAtIndex, LLVMRemoveStringAttributeAtIndex, LLVMIsDeclaration};
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
 
 use std::ffi::{CStr, CString};
@@ -537,6 +537,33 @@ impl FunctionValue {
             unsafe {
                 LLVMSetParamAlignment(param.as_value_ref(), alignment)
             }
+        }
+    }
+
+    /// Determines whether or not a `FunctionValue` is a declaration based on
+    /// whether or not it contains a body definition whatsoever
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let builder = context.create_builder();
+    /// let module = context.create_module("my_mod");
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let fn_value = module.add_function("my_func", fn_type, None);
+    ///
+    /// assert!(fn_value.is_declaration());
+    ///
+    /// fn_value.append_basic_block("entry");
+    ///
+    /// assert!(!fn_value.is_declaration());
+    /// ```
+    pub fn is_declaration(&self) -> bool {
+        unsafe {
+            LLVMIsDeclaration(self.as_value_ref()) != 0
         }
     }
 }

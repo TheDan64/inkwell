@@ -286,7 +286,6 @@ impl InstructionValue {
     }
 
     // REVIEW: Potentially unsafe if parent BB or grandparent fn were removed?
-    // REVIEW: Is this actually an erase and should be (self)?
     pub fn erase_from_basic_block(&self) {
         unsafe {
             LLVMInstructionEraseFromParent(self.as_value_ref())
@@ -294,7 +293,6 @@ impl InstructionValue {
     }
 
     // REVIEW: Potentially unsafe if parent BB or grandparent fn were removed?
-    // REVIEW: Is this actually an erase and should be (self)?
     #[llvm_versions(3.9 => latest)]
     pub fn remove_from_basic_block(&self) {
         unsafe {

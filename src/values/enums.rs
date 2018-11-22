@@ -8,7 +8,7 @@ use values::{IntValue, FunctionValue, PointerValue, VectorValue, ArrayValue, Str
 
 macro_rules! enum_value_set {
     ($enum_name:ident: $($args:ident),*) => (
-        #[derive(Debug, EnumAsGetters, EnumIntoGetters, EnumIsA, Clone, Copy)]
+        #[derive(Debug, EnumAsGetters, EnumIntoGetters, EnumIsA, Clone, Copy, PartialEq, Eq)]
         pub enum $enum_name {
             $(
                 $args($args),
