@@ -1,5 +1,7 @@
 use llvm_sys::LLVMThreadLocalMode;
 use llvm_sys::core::{LLVMGetVisibility, LLVMSetVisibility, LLVMGetSection, LLVMSetSection, LLVMIsExternallyInitialized, LLVMSetExternallyInitialized, LLVMDeleteGlobal, LLVMIsGlobalConstant, LLVMSetGlobalConstant, LLVMGetPreviousGlobal, LLVMGetNextGlobal, LLVMHasUnnamedAddr, LLVMSetUnnamedAddr, LLVMIsThreadLocal, LLVMSetThreadLocal, LLVMGetThreadLocalMode, LLVMSetThreadLocalMode, LLVMGetInitializer, LLVMSetInitializer, LLVMIsDeclaration, LLVMGetDLLStorageClass, LLVMSetDLLStorageClass, LLVMGetAlignment, LLVMSetAlignment};
+#[llvm_versions(7.0 => latest)]
+use llvm_sys::LLVMUnnamedAddr;
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::{CString, CStr};
@@ -234,10 +236,43 @@ impl GlobalValue {
             LLVMSetComdat(self.as_value_ref(), comdat.0)
         }
     }
+
+    #[llvm_versions(7.0 => latest)]
+    pub fn get_unnamed_address(&self) -> UnnamedAddress {
+        use llvm_sys::core::LLVMGetUnnamedAddress;
+
+        let unnamed_address = unsafe {
+            LLVMGetUnnamedAddress(self.as_value_ref())
+        };
+
+        UnnamedAddress::new(unnamed_address)
+    }
+
+    #[llvm_versions(7.0 => latest)]
+    pub fn set_unnamed_address(&self, address: UnnamedAddress) {
+        use llvm_sys::core::LLVMSetUnnamedAddress;
+
+        unsafe {
+            LLVMSetUnnamedAddress(self.as_value_ref(), address.as_llvm_enum())
+        }
+    }
 }
 
 impl AsValueRef for GlobalValue {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.global_value.value
+    }
+}
+
+#[llvm_versions(7.0 => latest)]
+enum_rename! {
+    /// This enum determines the significance of a `GlobalValue`'s address.
+    UnnamedAddress <=> LLVMUnnamedAddr {
+        /// Address of the `GlobalValue` is significant.
+        None <=> LLVMNoUnnamedAddr,
+        /// Address of the `GlobalValue` is locally insignificant.
+        Local <=> LLVMLocalUnnamedAddr,
+        /// Address of the `GlobalValue` is globally insignificant.
+        Global <=> LLVMGlobalUnnamedAddr,
     }
 }

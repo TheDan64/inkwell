@@ -829,6 +829,9 @@ fn test_global_byte_array() {
 
 #[test]
 fn test_globals() {
+    #[llvm_versions(7.0 => latest)]
+    use self::inkwell::values::UnnamedAddress;
+
     let context = Context::create();
     let module = context.create_module("my_mod");
     let i8_type = context.i8_type();
@@ -840,6 +843,9 @@ fn test_globals() {
 
     let global = module.add_global(i8_type, None, "my_global");
 
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    assert_eq!(global.get_unnamed_address(), UnnamedAddress::None);
     assert!(global.get_previous_global().is_none());
     assert!(global.get_next_global().is_none());
     assert!(global.get_initializer().is_none());
@@ -858,6 +864,9 @@ fn test_globals() {
     assert_eq!(module.get_last_global().unwrap(), global);
     assert_eq!(module.get_global("my_global").unwrap(), global);
 
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    global.set_unnamed_address(UnnamedAddress::Local);
     global.set_dll_storage_class(DLLStorageClass::Import);
     global.set_initializer(&i8_zero);
     global.set_thread_local_mode(Some(ThreadLocalMode::InitialExecTLSModel));
@@ -866,6 +875,10 @@ fn test_globals() {
     global.set_visibility(GlobalVisibility::Hidden);
     global.set_section("not sure what goes here");
 
+    // REVIEW: Not sure why this is Global when we set it to Local
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    assert_eq!(global.get_unnamed_address(), UnnamedAddress::Global);
     assert_eq!(global.get_dll_storage_class(), DLLStorageClass::Import);
     assert_eq!(global.get_initializer().unwrap().into_int_value(), i8_zero);
     assert_eq!(global.get_visibility(), GlobalVisibility::Hidden);
@@ -876,10 +889,16 @@ fn test_globals() {
     assert!(!global.is_declaration());
     assert_eq!(global.get_section(), &*CString::new("not sure what goes here").unwrap());
 
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    global.set_unnamed_address(UnnamedAddress::Global);
     global.set_dll_storage_class(DLLStorageClass::Export);
     global.set_thread_local(false);
     global.set_visibility(GlobalVisibility::Protected);
 
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    assert_eq!(global.get_unnamed_address(), UnnamedAddress::Global);
     assert!(!global.is_thread_local());
     assert_eq!(global.get_visibility(), GlobalVisibility::Protected);
 
