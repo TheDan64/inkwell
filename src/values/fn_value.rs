@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMTypeOf, LLVMGetPreviousFunction, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetBasicBlocks, LLVMGetReturnType, LLVMAppendBasicBlock, LLVMDeleteFunction, LLVMGetElementType, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetEntryBasicBlock, LLVMGetIntrinsicID, LLVMGetFunctionCallConv, LLVMSetFunctionCallConv, LLVMGetGC, LLVMSetGC, LLVMSetLinkage, LLVMSetParamAlignment, LLVMGetParams, LLVMIsDeclaration};
+use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMTypeOf, LLVMGetPreviousFunction, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetBasicBlocks, LLVMGetReturnType, LLVMAppendBasicBlock, LLVMDeleteFunction, LLVMGetElementType, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetEntryBasicBlock, LLVMGetIntrinsicID, LLVMGetFunctionCallConv, LLVMSetFunctionCallConv, LLVMGetGC, LLVMSetGC, LLVMSetLinkage, LLVMSetParamAlignment, LLVMGetParams};
 #[llvm_versions(3.7 => latest)]
 use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
 #[llvm_versions(3.9 => latest)]
@@ -17,7 +17,7 @@ use module::Linkage;
 use support::LLVMString;
 use types::{BasicTypeEnum, FunctionType};
 use values::traits::AsValueRef;
-use values::{BasicValueEnum, Value, MetadataValue};
+use values::{BasicValueEnum, GlobalValue, Value, MetadataValue};
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub struct FunctionValue {
@@ -540,31 +540,11 @@ impl FunctionValue {
         }
     }
 
-    /// Determines whether or not a `FunctionValue` is a declaration based on
-    /// whether or not it contains a body definition whatsoever
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let builder = context.create_builder();
-    /// let module = context.create_module("my_mod");
-    /// let void_type = context.void_type();
-    /// let fn_type = void_type.fn_type(&[], false);
-    /// let fn_value = module.add_function("my_func", fn_type, None);
-    ///
-    /// assert!(fn_value.is_declaration());
-    ///
-    /// fn_value.append_basic_block("entry");
-    ///
-    /// assert!(!fn_value.is_declaration());
-    /// ```
-    pub fn is_declaration(&self) -> bool {
-        unsafe {
-            LLVMIsDeclaration(self.as_value_ref()) != 0
-        }
+    /// Gets the `GlobalValue` version of this `FunctionValue`. This allows
+    /// you to further inspect its global properties or even convert it to
+    /// a `PointerValue`.
+    pub fn as_global_value(&self) -> GlobalValue {
+        GlobalValue::new(self.as_value_ref())
     }
 }
 

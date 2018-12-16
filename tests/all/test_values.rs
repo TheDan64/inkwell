@@ -974,13 +974,13 @@ fn test_phi_values() {
     let fn_type = void_type.fn_type(&[bool_type.into()], false);
     let fn_value = module.add_function("my_func", fn_type, None);
 
-    assert!(fn_value.is_declaration());
+    assert!(fn_value.as_global_value().is_declaration());
 
     let entry_block = fn_value.append_basic_block("entry");
     let then_block = fn_value.append_basic_block("then");
     let else_block = fn_value.append_basic_block("else");
 
-    assert!(!fn_value.is_declaration());
+    assert!(!fn_value.as_global_value().is_declaration());
 
     builder.position_at_end(&entry_block);
 
@@ -1185,4 +1185,39 @@ fn test_consts() {
 
     assert!(i32_param.get_zero_extended_constant().is_none());
     assert!(f32_param.get_constant().is_none());
+}
+
+#[test]
+fn test_function_value_to_global_to_pointer() {
+    let context = Context::create();
+    let builder = context.create_builder();
+    let module = context.create_module("my_mod");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_value = module.add_function("my_func", fn_type, None);
+
+    let fn_global_value = fn_value.as_global_value();
+
+    assert!(fn_global_value.is_declaration());
+
+    let bb = fn_value.append_basic_block("entry");
+
+    builder.position_at_end(&bb);
+    builder.build_return(None);
+
+    assert!(!fn_global_value.is_declaration());
+    assert_eq!(fn_global_value.get_dll_storage_class(), DLLStorageClass::Default);
+
+    fn_global_value.set_dll_storage_class(DLLStorageClass::Export);
+
+    assert_eq!(fn_global_value.get_dll_storage_class(), DLLStorageClass::Export);
+    assert!(fn_global_value.get_thread_local_mode().is_none());
+    assert_eq!(fn_global_value.get_visibility(), GlobalVisibility::Default);
+
+    let fn_ptr_value = fn_global_value.as_pointer_value();
+    let fn_ptr_type = fn_ptr_value.get_type();
+
+    assert!(!fn_ptr_value.is_null());
+    assert_eq!(*fn_ptr_value.get_name(), *CString::new("my_func").unwrap());
+    assert!(module.verify().is_ok());
 }

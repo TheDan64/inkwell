@@ -1329,8 +1329,7 @@ impl Module {
     // SubTypes: Might need to return Option<BVE, MV<Enum>, or MV<String>>
     #[llvm_versions(7.0 => latest)]
     pub fn get_flag(&self, key: &str) -> Option<MetadataValue> {
-        use llvm_sys::core::{LLVMGetTypeKind, LLVMTypeOf, LLVMMetadataAsValue};
-        use llvm_sys::LLVMTypeKind;
+        use llvm_sys::core::{LLVMTypeOf, LLVMMetadataAsValue};
 
         let flag = unsafe {
             LLVMGetModuleFlag(self.module.get(), key.as_ptr() as *const i8, key.len())
@@ -1346,8 +1345,6 @@ impl Module {
         let flag_value = unsafe {
             LLVMMetadataAsValue(*ctx.context, flag)
         };
-
-        let value = unsafe { LLVMGetTypeKind(LLVMTypeOf(flag_value)) };
 
         Some(MetadataValue::new(flag_value))
     }
