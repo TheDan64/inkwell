@@ -739,7 +739,8 @@ impl Module {
 
     /// Prints the content of the `Module` to a file.
     pub fn print_to_file<P: AsRef<Path>>(&self, path: P) -> Result<(), LLVMString> {
-        let path = path.as_ref().to_str().expect("Did not find a valid Unicode path string");
+        let path_str = path.as_ref().to_str().expect("Did not find a valid Unicode path string");
+        let path = CString::new(path_str).expect("Could not convert path to CString");
         let mut err_string = unsafe { zeroed() };
         let return_code = unsafe {
             LLVMPrintModuleToFile(self.module.get(), path.as_ptr() as *const i8, &mut err_string)
