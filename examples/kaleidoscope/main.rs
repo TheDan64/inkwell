@@ -26,7 +26,6 @@ use self::inkwell::builder::Builder;
 use self::inkwell::context::Context;
 use self::inkwell::module::Module;
 use self::inkwell::passes::PassManager;
-use self::inkwell::targets::{InitializationConfig, Target};
 use self::inkwell::types::BasicTypeEnum;
 use self::inkwell::values::{BasicValueEnum, FloatValue, FunctionValue, PointerValue};
 use self::inkwell::{OptimizationLevel, FloatPredicate};
@@ -1218,8 +1217,6 @@ pub fn main() {
         }
     }
 
-    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target.");
-
     let context = Context::create();
     let module = context.create_module("repl");
     let builder = context.create_builder();
@@ -1255,7 +1252,7 @@ pub fn main() {
         }
 
         // Build precedence map
-        let mut prec = HashMap::with_capacity(4);
+        let mut prec = HashMap::with_capacity(6);
 
         prec.insert('=', 2);
         prec.insert('<', 10);

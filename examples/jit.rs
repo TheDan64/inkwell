@@ -40,7 +40,7 @@ fn jit_compile_sum(
     unsafe { execution_engine.get_function("sum").ok() }
 }
 
-fn run() -> Result<(), Box<Error>> {
+fn main() -> Result<(), Box<Error>> {
     let context = Context::create();
     let module = context.create_module("sum");
     let builder = context.create_builder();
@@ -59,9 +59,4 @@ fn run() -> Result<(), Box<Error>> {
     }
 
     Ok(())
-}
-
-fn main() {
-    Target::initialize_native(&InitializationConfig::default()).unwrap();
-    run().unwrap();
 }

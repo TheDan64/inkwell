@@ -64,12 +64,7 @@ use std::error::Error;
 /// do `unsafe` operations internally.
 type SumFunc = unsafe extern "C" fn(u64, u64, u64) -> u64;
 
-fn main() {
-    Target::initialize_native(&InitializationConfig::default()).unwrap();
-    run().unwrap();
-}
-
-fn run() -> Result<(), Box<Error>> {
+fn main() -> Result<(), Box<Error>> {
     let context = Context::create();
     let module = context.create_module("sum");
     let builder = context.create_builder();

@@ -185,8 +185,6 @@ fn test_module_no_double_free() {
 
 #[test]
 fn test_owned_module_dropped_ee_and_context() {
-    Target::initialize_native(&InitializationConfig::default()).unwrap();
-
     let _module = {
         let context = Context::create();
         let module = context.create_module("my_mod");
@@ -387,8 +385,6 @@ fn test_linking_modules() {
 
     // fn_val2 is no longer the same instance of f2
     assert_ne!(module.get_function("f2"), Some(fn_val2));
-
-    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
 
     let _execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).expect("Could not create Execution Engine");
     let module4 = context.create_module("mod4");

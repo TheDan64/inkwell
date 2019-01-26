@@ -123,8 +123,6 @@ fn test_execution_engine() {
     let context = Context::create();
     let module = context.create_module("main_module");
 
-    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
-
     assert!(module.create_execution_engine().is_ok());
 }
 
@@ -133,16 +131,12 @@ fn test_interpreter_execution_engine() {
     let context = Context::create();
     let module = context.create_module("main_module");
 
-    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
-
     assert!(module.create_interpreter_execution_engine().is_ok());
 }
 
 
 #[test]
 fn test_add_remove_module() {
-    Target::initialize_all(&InitializationConfig::default());
-
     let context = Context::create();
     let module = context.create_module("test");
     let ee = module.create_jit_execution_engine(OptimizationLevel::default()).unwrap();

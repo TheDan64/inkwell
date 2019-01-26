@@ -34,9 +34,9 @@ use data_layout::DataLayout;
 use execution_engine::ExecutionEngine;
 use memory_buffer::MemoryBuffer;
 use support::LLVMString;
-use targets::Target;
+use targets::{Target, InitializationConfig};
 use types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
-use values::{AsValueRef, BasicValue, BasicValueEnum, FunctionValue, GlobalValue, MetadataValue};
+use values::{AsValueRef, BasicValue, FunctionValue, GlobalValue, MetadataValue};
 
 enum_rename!{
     /// This enum defines how to link a global variable or function in a module. The variant documenation is
@@ -417,8 +417,15 @@ impl Module {
     ///
     /// assert_eq!(module.get_context(), context);
     /// ```
-    // SubType: ExecutionEngine<?>
+    // SubType: ExecutionEngine<Basic?>
     pub fn create_execution_engine(&self) -> Result<ExecutionEngine, LLVMString> {
+        Target::initialize_native(&InitializationConfig::default())
+            .map_err(|mut err_string| {
+                err_string.push('\0');
+
+                LLVMString::create(err_string.as_ptr() as *const i8)
+            })?;
+
         let mut execution_engine = unsafe { zeroed() };
         let mut err_string = unsafe { zeroed() };
         let code = unsafe {
@@ -455,6 +462,13 @@ impl Module {
     /// ```
     // SubType: ExecutionEngine<Interpreter>
     pub fn create_interpreter_execution_engine(&self) -> Result<ExecutionEngine, LLVMString> {
+        Target::initialize_native(&InitializationConfig::default())
+            .map_err(|mut err_string| {
+                err_string.push('\0');
+
+                LLVMString::create(err_string.as_ptr() as *const i8)
+            })?;
+
         let mut execution_engine = unsafe { zeroed() };
         let mut err_string = unsafe { zeroed() };
 
@@ -493,6 +507,13 @@ impl Module {
     /// ```
     // SubType: ExecutionEngine<Jit>
     pub fn create_jit_execution_engine(&self, opt_level: OptimizationLevel) -> Result<ExecutionEngine, LLVMString> {
+        Target::initialize_native(&InitializationConfig::default())
+            .map_err(|mut err_string| {
+                err_string.push('\0');
+
+                LLVMString::create(err_string.as_ptr() as *const i8)
+            })?;
+
         let mut execution_engine = unsafe { zeroed() };
         let mut err_string = unsafe { zeroed() };
 
@@ -501,18 +522,6 @@ impl Module {
         };
 
         if code == 1 {
-            // The module still seems "owned" in this error case, despite failing to create an EE. This would normally
-            // end in a segfault on Module drop, however we're avoiding that by cloning the module and replacing the underlying pointer
-            // REVIEW: Ensure this doesn't lead to unexpected behavior... If it does, the alternate strategy would be to change the fn
-            // signature to take ownership of self and return it with good EE: (self, opt_level) -> Result<(Module, EE), LLVMString>
-            let module = self.clone();
-
-            self.module.set(module.module.get());
-
-            forget(module);
-
-            // REVIEW: Module still seems "owned" in the error case and may segfault on module drop. :/
-            // Need to figure out if there's a way to prevent this.
             return Err(LLVMString::new(err_string));
         }
 

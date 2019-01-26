@@ -64,6 +64,7 @@ enum_type_set! {
         ArrayType,
         /// A floating point type.
         FloatType,
+        // An integer type.
         IntType,
         /// A pointer type.
         PointerType,

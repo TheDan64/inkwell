@@ -46,8 +46,6 @@ fn test_build_call() {
 
 #[test]
 fn test_null_checked_ptr_ops() {
-    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
-
     let context = Context::create();
     let module = context.create_module("unsafe");
     let builder = context.create_builder();
@@ -152,8 +150,6 @@ fn test_null_checked_ptr_ops() {
 
 #[test]
 fn test_binary_ops() {
-    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
-
     let context = Context::create();
     let module = context.create_module("unsafe");
     let builder = context.create_builder();
@@ -238,8 +234,6 @@ fn test_binary_ops() {
 
 #[test]
 fn test_switch() {
-    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
-
     let context = Context::create();
     let module = context.create_module("unsafe");
     let builder = context.create_builder();
@@ -298,8 +292,6 @@ fn test_switch() {
 
 #[test]
 fn test_bit_shifts() {
-    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
-
     let context = Context::create();
     let module = context.create_module("unsafe");
     let builder = context.create_builder();
