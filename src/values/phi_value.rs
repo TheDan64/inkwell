@@ -9,6 +9,8 @@ use values::traits::AsValueRef;
 use values::{BasicValue, BasicValueEnum, InstructionValue, Value};
 
 // REVIEW: Metadata for phi values?
+/// A Phi Instruction returns a value based on which basic block branched into
+/// the Phi's containing basic block.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct PhiValue {
     phi_value: Value

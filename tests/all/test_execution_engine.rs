@@ -205,7 +205,7 @@ fn test_previous_double_free() {
 
     let context = Context::create();
     let module = context.create_module("sum");
-    let ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    let _ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
     drop(context);
     drop(module);

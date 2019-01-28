@@ -36,7 +36,9 @@ use memory_buffer::MemoryBuffer;
 use support::LLVMString;
 use targets::{Target, InitializationConfig};
 use types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
-use values::{AsValueRef, BasicValue, FunctionValue, GlobalValue, MetadataValue};
+use values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
+#[llvm_versions(7.0 => latest)]
+use values::BasicValue;
 
 enum_rename!{
     /// This enum defines how to link a global variable or function in a module. The variant documenation is
@@ -1339,7 +1341,7 @@ impl Module {
     // SubTypes: Might need to return Option<BVE, MV<Enum>, or MV<String>>
     #[llvm_versions(7.0 => latest)]
     pub fn get_flag(&self, key: &str) -> Option<MetadataValue> {
-        use llvm_sys::core::{LLVMTypeOf, LLVMMetadataAsValue};
+        use llvm_sys::core::LLVMMetadataAsValue;
 
         let flag = unsafe {
             LLVMGetModuleFlag(self.module.get(), key.as_ptr() as *const i8, key.len())

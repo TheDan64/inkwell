@@ -4,7 +4,7 @@ use self::inkwell::OptimizationLevel;
 use self::inkwell::context::Context;
 use self::inkwell::memory_buffer::MemoryBuffer;
 use self::inkwell::module::Module;
-use self::inkwell::targets::{InitializationConfig, Target};
+use self::inkwell::targets::Target;
 
 use std::env::temp_dir;
 use std::ffi::CString;
