@@ -4,7 +4,7 @@ use self::inkwell::{AddressSpace, OptimizationLevel};
 use self::inkwell::context::Context;
 use self::inkwell::builder::Builder;
 
-use std::ffi::CString;
+// use std::ffi::CString;
 use std::ptr::null;
 
 #[test]

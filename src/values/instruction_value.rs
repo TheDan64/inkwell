@@ -1,12 +1,12 @@
-use llvm_sys::core::{LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile};
+use llvm_sys::core::{LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMSetOperand, LLVMGetFirstUse, LLVMGetNextUse, LLVMGetUser, LLVMGetUsedValue};
 #[llvm_versions(3.9 => latest)]
 use llvm_sys::core::LLVMInstructionRemoveFromParent;
 use llvm_sys::LLVMOpcode;
-use llvm_sys::prelude::LLVMValueRef;
+use llvm_sys::prelude::{LLVMUseRef, LLVMValueRef};
 
 use basic_block::BasicBlock;
 use values::traits::AsValueRef;
-use values::Value;
+use values::{BasicValue, BasicValueEnum, Value};
 
 // REVIEW: Split up into structs for SubTypes on InstructionValues?
 // REVIEW: This should maybe be split up into InstructionOpcode and ConstOpcode?
@@ -246,7 +246,7 @@ impl InstructionValue {
 
         let value = Value::new(instruction_value);
 
-        assert!(value.is_instruction());
+        debug_assert!(value.is_instruction());
 
         InstructionValue {
             instruction_value: value,
@@ -303,7 +303,8 @@ impl InstructionValue {
     // REVIEW: Potentially unsafe is parent BB or grandparent fn was deleted
     // REVIEW: Should this *not* be an option? Parent should always exist,
     // but I doubt LLVM returns null if the parent BB (or grandparent FN)
-    // was deleted... Invalid memory is more likely
+    // was deleted... Invalid memory is more likely. Cloned IV will have no
+    // parent?
     pub fn get_parent(&self) -> Option<BasicBlock> {
         let value = unsafe {
             LLVMGetInstructionParent(self.as_value_ref())
@@ -338,6 +339,105 @@ impl InstructionValue {
         unsafe {
             LLVMSetVolatile(self.as_value_ref(), volatile as i32)
         }
+    }
+
+    pub fn get_num_operands(&self) -> u32 {
+        unsafe {
+            LLVMGetNumOperands(self.as_value_ref()) as u32
+        }
+    }
+
+    pub fn get_operand(&self, index: u32) -> Option<BasicValueEnum> {
+        let num_operands = self.get_num_operands();
+
+        if index >= num_operands {
+            return None;
+        }
+
+        let operand = unsafe {
+            LLVMGetOperand(self.as_value_ref(), index)
+        };
+
+        if operand.is_null() {
+            return None;
+        }
+
+        Some(BasicValueEnum::new(operand))
+    }
+
+    pub fn set_operand<BV: BasicValue>(&self, index: u32, val: BV) {
+        let num_operands = self.get_num_operands();
+
+        if index >= num_operands {
+            return;
+        }
+
+        unsafe {
+            LLVMSetOperand(self.as_value_ref(), index, val.as_value_ref())
+        }
+    }
+
+    pub fn get_operand_use(&self, index: u32) -> Option<Use> {
+        let num_operands = self.get_num_operands();
+
+        if index >= num_operands {
+            return None;
+        }
+
+        let use_ = unsafe {
+            LLVMGetOperandUse(self.as_value_ref(), index)
+        };
+
+        if use_.is_null() {
+            return None;
+        }
+
+        Some(Use(use_))
+    }
+
+    pub fn get_first_use(&self) -> Option<Use> {
+        let use_ = unsafe {
+            LLVMGetFirstUse(self.as_value_ref())
+        };
+
+        if use_.is_null() {
+            return None;
+        }
+
+        Some(Use(use_))
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Use(LLVMUseRef);
+
+impl Use {
+    pub fn get_next_use(&self) -> Option<Use> {
+        let use_ = unsafe {
+            LLVMGetNextUse(self.0)
+        };
+
+        if use_.is_null() {
+            return None;
+        }
+
+        Some(Use(use_))
+    }
+
+    pub fn get_user(&self) -> InstructionValue {
+        let user = unsafe {
+            LLVMGetUser(self.0)
+        };
+
+        InstructionValue::new(user)
+    }
+
+    pub fn get_used_value(&self) -> BasicValueEnum {
+        let used_value = unsafe {
+            LLVMGetUsedValue(self.0)
+        };
+
+        BasicValueEnum::new(used_value)
     }
 }
 

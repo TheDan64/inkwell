@@ -10,6 +10,7 @@ mod test_basic_block;
 mod test_builder;
 mod test_context;
 mod test_execution_engine;
+mod test_instruction_values;
 mod test_module;
 mod test_passes;
 mod test_targets;

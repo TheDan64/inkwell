@@ -3,7 +3,7 @@ use llvm_sys::core::{LLVMConstExtractValue, LLVMConstInsertValue};
 
 use std::fmt::Debug;
 
-use values::{ArrayValue, AggregateValueEnum, CallSiteValue, GlobalValue, StructValue, BasicValueEnum, AnyValueEnum, IntValue, FloatValue, PointerValue, PhiValue, VectorValue, FunctionValue, InstructionValue};
+use values::{ArrayValue, AggregateValueEnum, CallSiteValue, GlobalValue, StructValue, BasicValueEnum, AnyValueEnum, IntValue, FloatValue, PointerValue, PhiValue, VectorValue, FunctionValue, InstructionValue, Value};
 use types::{IntMathType, FloatMathType, PointerMathType, IntType, FloatType, PointerType, VectorType};
 
 // This is an ugly privacy hack so that Type can stay private to this module
@@ -70,6 +70,18 @@ pub trait BasicValue: AnyValue {
     /// Returns an enum containing a typed version of the `BasicValue`.
     fn as_basic_value_enum(&self) -> BasicValueEnum {
         BasicValueEnum::new(self.as_value_ref())
+    }
+
+    /// Most `BasicValue`s are the byproduct of an instruction
+    /// and so are convertable into an `InstructionValue`
+    fn as_instruction_value(&self) -> Option<InstructionValue> {
+        let value = Value::new(self.as_value_ref());
+
+        if !value.is_instruction() {
+            return None;
+        }
+
+        Some(InstructionValue::new(self.as_value_ref()))
     }
 }
 
