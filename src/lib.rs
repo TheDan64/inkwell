@@ -40,6 +40,8 @@ pub mod object_file;
 pub mod passes;
 pub mod targets;
 pub mod types;
+#[deny(missing_docs)]
+pub mod value_use;
 pub mod values;
 
 use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility, LLVMThreadLocalMode, LLVMDLLStorageClass};

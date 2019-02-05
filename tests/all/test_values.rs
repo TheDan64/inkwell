@@ -26,51 +26,6 @@ fn test_linkage() {
 }
 
 #[test]
-fn test_instructions() {
-    let context = Context::create();
-    let module = context.create_module("testing");
-    let builder = context.create_builder();
-
-    let void_type = context.void_type();
-    let i64_type = context.i64_type();
-    let f32_type = context.f32_type();
-    let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
-    let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
-
-    let function = module.add_function("free_f32", fn_type, None);
-    let basic_block = context.append_basic_block(&function, "entry");
-
-    builder.position_at_end(&basic_block);
-
-    let arg1 = function.get_first_param().unwrap().into_pointer_value();
-
-    let f32_val = f32_type.const_float(::std::f64::consts::PI);
-
-    let store_instruction = builder.build_store(arg1, f32_val);
-    let ptr_val = builder.build_ptr_to_int(arg1, i64_type, "ptr_val");
-    let ptr = builder.build_int_to_ptr(ptr_val, f32_ptr_type, "ptr");
-    let free_instruction = builder.build_free(arg1);
-    let return_instruction = builder.build_return(None);
-
-    assert_eq!(store_instruction.get_opcode(), Store);
-    assert_eq!(ptr_val.as_instruction().unwrap().get_opcode(), PtrToInt);
-    assert_eq!(ptr.as_instruction().unwrap().get_opcode(), IntToPtr);
-    assert_eq!(free_instruction.get_opcode(), Call);
-    assert_eq!(return_instruction.get_opcode(), Return);
-
-    // test instruction cloning
-    let instruction_clone = return_instruction.clone();
-
-    assert_eq!(instruction_clone.get_opcode(), return_instruction.get_opcode());
-    assert_ne!(instruction_clone, return_instruction);
-
-    // test copying
-    let instruction_clone_copy = instruction_clone;
-
-    assert_eq!(instruction_clone, instruction_clone_copy);
-}
-
-#[test]
 fn test_call_site() {
     let context = Context::create();
     let module = context.create_module("testing");
@@ -1215,7 +1170,7 @@ fn test_function_value_to_global_to_pointer() {
     assert_eq!(fn_global_value.get_visibility(), GlobalVisibility::Default);
 
     let fn_ptr_value = fn_global_value.as_pointer_value();
-    let fn_ptr_type = fn_ptr_value.get_type();
+    let _fn_ptr_type = fn_ptr_value.get_type();
 
     assert!(!fn_ptr_value.is_null());
     assert_eq!(*fn_ptr_value.get_name(), *CString::new("my_func").unwrap());

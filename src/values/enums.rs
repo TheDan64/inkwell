@@ -31,10 +31,19 @@ macro_rules! enum_value_set {
                     $enum_name::$args(value)
                 }
             }
-        )*
 
-        // REVIEW: Possible encompassing methods to implement:
-        // as_instruction, is_sized, get/set metadata
+            impl PartialEq<$args> for $enum_name {
+                fn eq(&self, other: &$args) -> bool {
+                    self.as_value_ref() == other.as_value_ref()
+                }
+            }
+
+            impl PartialEq<$enum_name> for $args {
+                fn eq(&self, other: &$enum_name) -> bool {
+                    self.as_value_ref() == other.as_value_ref()
+                }
+            }
+        )*
     );
 }
 
@@ -105,17 +114,6 @@ impl BasicValueEnum {
         };
 
         BasicTypeEnum::new(type_)
-    }
-
-    pub fn as_instruction(&self) -> Option<InstructionValue> {
-        match *self {
-            BasicValueEnum::ArrayValue(ref val) => val.as_instruction(),
-            BasicValueEnum::IntValue(ref val) => val.as_instruction(),
-            BasicValueEnum::FloatValue(ref val) => val.as_instruction(),
-            BasicValueEnum::StructValue(ref val) => val.as_instruction(),
-            BasicValueEnum::PointerValue(ref val) => val.as_instruction(),
-            BasicValueEnum::VectorValue(ref val) => val.as_instruction(),
-        }
     }
 }
 

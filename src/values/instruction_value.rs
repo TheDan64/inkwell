@@ -1,10 +1,11 @@
-use llvm_sys::core::{LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMSetOperand, LLVMGetFirstUse, LLVMGetNextUse, LLVMGetUser, LLVMGetUsedValue};
+use llvm_sys::core::{LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMSetOperand};
 #[llvm_versions(3.9 => latest)]
 use llvm_sys::core::LLVMInstructionRemoveFromParent;
 use llvm_sys::LLVMOpcode;
-use llvm_sys::prelude::{LLVMUseRef, LLVMValueRef};
+use llvm_sys::prelude::LLVMValueRef;
 
 use basic_block::BasicBlock;
+use value_use::ValueUse;
 use values::traits::AsValueRef;
 use values::{BasicValue, BasicValueEnum, Value};
 
@@ -242,7 +243,7 @@ pub struct InstructionValue {
 
 impl InstructionValue {
     pub(crate) fn new(instruction_value: LLVMValueRef) -> Self {
-        assert!(!instruction_value.is_null());
+        debug_assert!(!instruction_value.is_null());
 
         let value = Value::new(instruction_value);
 
@@ -365,19 +366,21 @@ impl InstructionValue {
         Some(BasicValueEnum::new(operand))
     }
 
-    pub fn set_operand<BV: BasicValue>(&self, index: u32, val: BV) {
+    pub fn set_operand<BV: BasicValue>(&self, index: u32, val: BV) -> bool {
         let num_operands = self.get_num_operands();
 
         if index >= num_operands {
-            return;
+            return false;
         }
 
         unsafe {
             LLVMSetOperand(self.as_value_ref(), index, val.as_value_ref())
         }
+
+        true
     }
 
-    pub fn get_operand_use(&self, index: u32) -> Option<Use> {
+    pub fn get_operand_use(&self, index: u32) -> Option<ValueUse> {
         let num_operands = self.get_num_operands();
 
         if index >= num_operands {
@@ -392,52 +395,11 @@ impl InstructionValue {
             return None;
         }
 
-        Some(Use(use_))
+        Some(ValueUse::new(use_))
     }
 
-    pub fn get_first_use(&self) -> Option<Use> {
-        let use_ = unsafe {
-            LLVMGetFirstUse(self.as_value_ref())
-        };
-
-        if use_.is_null() {
-            return None;
-        }
-
-        Some(Use(use_))
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct Use(LLVMUseRef);
-
-impl Use {
-    pub fn get_next_use(&self) -> Option<Use> {
-        let use_ = unsafe {
-            LLVMGetNextUse(self.0)
-        };
-
-        if use_.is_null() {
-            return None;
-        }
-
-        Some(Use(use_))
-    }
-
-    pub fn get_user(&self) -> InstructionValue {
-        let user = unsafe {
-            LLVMGetUser(self.0)
-        };
-
-        InstructionValue::new(user)
-    }
-
-    pub fn get_used_value(&self) -> BasicValueEnum {
-        let used_value = unsafe {
-            LLVMGetUsedValue(self.0)
-        };
-
-        BasicValueEnum::new(used_value)
+    pub fn get_first_use(&self) -> Option<ValueUse> {
+        self.instruction_value.get_first_use()
     }
 }
 

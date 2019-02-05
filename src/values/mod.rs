@@ -36,13 +36,14 @@ pub use values::traits::{AnyValue, AggregateValue, BasicValue, IntMathValue, Flo
 pub use values::vec_value::VectorValue;
 pub(crate) use values::traits::AsValueRef;
 
-use llvm_sys::core::{LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDumpValue, LLVMIsAInstruction, LLVMGetMetadata, LLVMHasMetadata, LLVMSetMetadata, LLVMReplaceAllUsesWith};
+use llvm_sys::core::{LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDumpValue, LLVMIsAInstruction, LLVMGetMetadata, LLVMHasMetadata, LLVMSetMetadata, LLVMReplaceAllUsesWith, LLVMGetFirstUse};
 use llvm_sys::prelude::{LLVMValueRef, LLVMTypeRef};
 
 use std::ffi::CStr;
 use std::fmt;
 
 use support::LLVMString;
+use value_use::ValueUse;
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 struct Value {
@@ -195,6 +196,18 @@ impl Value {
         unsafe {
             LLVMReplaceAllUsesWith(self.value, other)
         }
+    }
+
+    pub fn get_first_use(&self) -> Option<ValueUse> {
+        let use_ = unsafe {
+            LLVMGetFirstUse(self.value)
+        };
+
+        if use_.is_null() {
+            return None;
+        }
+
+        Some(ValueUse::new(use_))
     }
 }
 

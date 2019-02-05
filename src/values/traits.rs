@@ -3,6 +3,7 @@ use llvm_sys::core::{LLVMConstExtractValue, LLVMConstInsertValue};
 
 use std::fmt::Debug;
 
+use value_use::ValueUse;
 use values::{ArrayValue, AggregateValueEnum, CallSiteValue, GlobalValue, StructValue, BasicValueEnum, AnyValueEnum, IntValue, FloatValue, PointerValue, PhiValue, VectorValue, FunctionValue, InstructionValue, Value};
 use types::{IntMathType, FloatMathType, PointerMathType, IntType, FloatType, PointerType, VectorType};
 
@@ -83,6 +84,13 @@ pub trait BasicValue: AnyValue {
 
         Some(InstructionValue::new(self.as_value_ref()))
     }
+
+    fn get_first_use(&self) -> Option<ValueUse> {
+        Value::new(self.as_value_ref()).get_first_use()
+    }
+
+    // REVIEW: Possible encompassing methods to implement:
+    // is_sized, get/set metadata
 }
 
 /// Represents a value which is permitted in integer math operations
