@@ -93,16 +93,19 @@ fn test_operands() {
     assert!(free_instruction.get_first_use().is_none());
     assert!(return_instruction.get_first_use().is_none());
 
+    // arg1 (%0) has two uses:
+    //   store float 0x400921FB60000000, float* %0
+    //   %1 = bitcast float* %0 to i8*
+    let arg1_first_use = arg1.get_first_use().unwrap();
+    let arg1_second_use = arg1_first_use.get_next_use().unwrap();
+
     // However their operands are used
     let store_operand_use0 = store_instruction.get_operand_use(0).unwrap();
     let store_operand_use1 = store_instruction.get_operand_use(1).unwrap();
 
-    // in "store float 0x400921FB60000000, float* %0"
-    // The const float is only used once, so it has no subsequent use
-    // However the 2nd operand %0 is used in the subsequent (implicit) bitcast
-    // TODO: Test with successful next use
     assert!(store_operand_use0.get_next_use().is_none());
-    assert!(store_operand_use1.get_next_use().is_none()); // REVIEW: Why is this none?
+    assert!(store_operand_use1.get_next_use().is_none());
+    assert_eq!(store_operand_use1, arg1_second_use);
 
     assert_eq!(store_operand_use0.get_user(), store_instruction);
     assert_eq!(store_operand_use1.get_user(), store_instruction);
@@ -120,20 +123,13 @@ fn test_operands() {
 
     assert!(free_operand_use0.get_next_use().is_none());
     assert!(free_operand_use1.get_next_use().is_none());
-
-
-
-
-
-
     assert!(free_instruction.get_operand_use(2).is_none());
     assert!(free_instruction.get_operand_use(3).is_none());
     assert!(free_instruction.get_operand_use(4).is_none());
     assert!(free_instruction.get_operand_use(5).is_none());
     assert!(free_instruction.get_operand_use(6).is_none());
 
-
-    // assert!(false, "\n{}", module.print_to_string().to_string());
+    assert!(module.verify().is_ok());
 }
 
 #[test]
@@ -158,7 +154,8 @@ fn test_get_next_use() {
     // f32_val constant appears twice, so there are two uses (first, next)
     let first_use = f32_val.get_first_use().unwrap();
 
-    assert!(first_use.get_next_use().is_some());
+    assert_eq!(first_use.get_user(), add_pi1.as_instruction_value().unwrap());
+    assert_eq!(first_use.get_next_use().map(|x| x.get_user()), add_pi0.as_instruction_value());
     assert!(arg1.get_first_use().is_some());
     assert!(module.verify().is_ok());
 }

@@ -5,9 +5,8 @@ use llvm_sys::LLVMOpcode;
 use llvm_sys::prelude::LLVMValueRef;
 
 use basic_block::BasicBlock;
-use value_use::ValueUse;
 use values::traits::AsValueRef;
-use values::{BasicValue, BasicValueEnum, Value};
+use values::{BasicValue, BasicValueEnum, BasicValueUse, Value};
 
 // REVIEW: Split up into structs for SubTypes on InstructionValues?
 // REVIEW: This should maybe be split up into InstructionOpcode and ConstOpcode?
@@ -380,7 +379,7 @@ impl InstructionValue {
         true
     }
 
-    pub fn get_operand_use(&self, index: u32) -> Option<ValueUse> {
+    pub fn get_operand_use(&self, index: u32) -> Option<BasicValueUse> {
         let num_operands = self.get_num_operands();
 
         if index >= num_operands {
@@ -395,10 +394,10 @@ impl InstructionValue {
             return None;
         }
 
-        Some(ValueUse::new(use_))
+        Some(BasicValueUse::new(use_))
     }
 
-    pub fn get_first_use(&self) -> Option<ValueUse> {
+    pub fn get_first_use(&self) -> Option<BasicValueUse> {
         self.instruction_value.get_first_use()
     }
 }

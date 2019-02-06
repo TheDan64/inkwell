@@ -6,13 +6,13 @@ use llvm_sys::prelude::LLVMUseRef;
 
 /// TODO
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ValueUse(LLVMUseRef);
+pub struct BasicValueUse(LLVMUseRef);
 
-impl ValueUse {
+impl BasicValueUse {
     pub(crate) fn new(use_: LLVMUseRef) -> Self {
         debug_assert!(!use_.is_null());
 
-        ValueUse(use_)
+        BasicValueUse(use_)
     }
 
     /// TODO
@@ -25,7 +25,7 @@ impl ValueUse {
             return None;
         }
 
-        Some(ValueUse::new(use_))
+        Some(Self::new(use_))
     }
 
     /// TODO

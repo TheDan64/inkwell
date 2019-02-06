@@ -2,6 +2,8 @@
 
 mod array_value;
 #[deny(missing_docs)]
+mod basic_value_use;
+#[deny(missing_docs)]
 mod call_site_value;
 mod enums;
 mod float_value;
@@ -18,6 +20,7 @@ mod traits;
 mod vec_value;
 
 pub use values::array_value::ArrayValue;
+pub use values::basic_value_use::BasicValueUse;
 pub use values::call_site_value::CallSiteValue;
 pub use values::enums::{AnyValueEnum, AggregateValueEnum, BasicValueEnum, BasicMetadataValueEnum};
 pub use values::float_value::FloatValue;
@@ -43,7 +46,6 @@ use std::ffi::CStr;
 use std::fmt;
 
 use support::LLVMString;
-use value_use::ValueUse;
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 struct Value {
@@ -198,7 +200,7 @@ impl Value {
         }
     }
 
-    pub fn get_first_use(&self) -> Option<ValueUse> {
+    pub fn get_first_use(&self) -> Option<BasicValueUse> {
         let use_ = unsafe {
             LLVMGetFirstUse(self.value)
         };
@@ -207,7 +209,7 @@ impl Value {
             return None;
         }
 
-        Some(ValueUse::new(use_))
+        Some(BasicValueUse::new(use_))
     }
 }
 
