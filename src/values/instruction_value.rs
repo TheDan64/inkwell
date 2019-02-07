@@ -341,12 +341,129 @@ impl InstructionValue {
         }
     }
 
+    /// Obtains the number of operands an `InstructionValue` has.
+    /// An operand is a `BasicValue` used in an IR instruction.
+    ///
+    /// The following example,
+    ///
+    /// ```no_run
+    /// use inkwell::AddressSpace;
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("ivs");
+    /// let builder = context.create_builder();
+    /// let void_type = context.void_type();
+    /// let f32_type = context.f32_type();
+    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
+    /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
+    ///
+    /// let function = module.add_function("take_f32_ptr", fn_type, None);
+    /// let basic_block = context.append_basic_block(&function, "entry");
+    ///
+    /// builder.position_at_end(&basic_block);
+    ///
+    /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
+    /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
+    /// let store_instruction = builder.build_store(arg1, f32_val);
+    /// let free_instruction = builder.build_free(arg1);
+    /// let return_instruction = builder.build_return(None);
+    ///
+    /// assert_eq!(store_instruction.get_num_operands(), 2);
+    /// assert_eq!(free_instruction.get_num_operands(), 2);
+    /// assert_eq!(return_instruction.get_num_operands(), 0);
+    /// ```
+    ///
+    /// will generate LLVM IR roughly like (varying slightly across LLVM versions):
+    ///
+    /// ```ir
+    /// ; ModuleID = 'ivs'
+    /// source_filename = "ivs"
+    ///
+    /// define void @take_f32_ptr(float* %0) {
+    /// entry:
+    ///   store float 0x400921FB60000000, float* %0
+    ///   %1 = bitcast float* %0 to i8*
+    ///   tail call void @free(i8* %1)
+    ///   ret void
+    /// }
+    ///
+    /// declare void @free(i8*)
+    /// ```
+    ///
+    /// which makes the number of instruction operands clear:
+    /// 1) Store has two: a const float and a variable float pointer %0
+    /// 2) Bitcast has one: a variable float pointer %0
+    /// 3) Function call has two: i8 pointer %1 argument, and the free function itself
+    /// 4) Void return has zero: void is not a value and does not count as an operand
+    /// even though the return instruction can take values.
     pub fn get_num_operands(&self) -> u32 {
         unsafe {
             LLVMGetNumOperands(self.as_value_ref()) as u32
         }
     }
 
+    /// Obtains the operand an `InstructionValue` has at a given index if any.
+    /// An operand is a `BasicValue` used in an IR instruction.
+    ///
+    /// The following example,
+    ///
+    /// ```no_run
+    /// use inkwell::AddressSpace;
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("ivs");
+    /// let builder = context.create_builder();
+    /// let void_type = context.void_type();
+    /// let f32_type = context.f32_type();
+    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
+    /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
+    ///
+    /// let function = module.add_function("take_f32_ptr", fn_type, None);
+    /// let basic_block = context.append_basic_block(&function, "entry");
+    ///
+    /// builder.position_at_end(&basic_block);
+    ///
+    /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
+    /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
+    /// let store_instruction = builder.build_store(arg1, f32_val);
+    /// let free_instruction = builder.build_free(arg1);
+    /// let return_instruction = builder.build_return(None);
+    ///
+    /// assert!(store_instruction.get_operand(0).is_some());
+    /// assert!(store_instruction.get_operand(1).is_some());
+    /// assert!(store_instruction.get_operand(2).is_none());
+    /// assert!(free_instruction.get_operand(0).is_some());
+    /// assert!(free_instruction.get_operand(1).is_some());
+    /// assert!(free_instruction.get_operand(2).is_none());
+    /// assert!(return_instruction.get_operand(0).is_none());
+    /// assert!(return_instruction.get_operand(1).is_none());
+    /// ```
+    ///
+    /// will generate LLVM IR roughly like (varying slightly across LLVM versions):
+    ///
+    /// ```ir
+    /// ; ModuleID = 'ivs'
+    /// source_filename = "ivs"
+    ///
+    /// define void @take_f32_ptr(float* %0) {
+    /// entry:
+    ///   store float 0x400921FB60000000, float* %0
+    ///   %1 = bitcast float* %0 to i8*
+    ///   tail call void @free(i8* %1)
+    ///   ret void
+    /// }
+    ///
+    /// declare void @free(i8*)
+    /// ```
+    ///
+    /// which makes the instruction operands clear:
+    /// 1) Store has two: a const float and a variable float pointer %0
+    /// 2) Bitcast has one: a variable float pointer %0
+    /// 3) Function call has two: i8 pointer %1 argument, and the free function itself
+    /// 4) Void return has zero: void is not a value and does not count as an operand
+    /// even though the return instruction can take values.
     pub fn get_operand(&self, index: u32) -> Option<BasicValueEnum> {
         let num_operands = self.get_num_operands();
 
@@ -365,6 +482,37 @@ impl InstructionValue {
         Some(BasicValueEnum::new(operand))
     }
 
+    /// Sets the operand an `InstructionValue` has at a given index if possible.
+    /// An operand is a `BasicValue` used in an IR instruction.
+    ///
+    /// ```no_run
+    /// use inkwell::AddressSpace;
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("ivs");
+    /// let builder = context.create_builder();
+    /// let void_type = context.void_type();
+    /// let f32_type = context.f32_type();
+    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
+    /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
+    ///
+    /// let function = module.add_function("take_f32_ptr", fn_type, None);
+    /// let basic_block = context.append_basic_block(&function, "entry");
+    ///
+    /// builder.position_at_end(&basic_block);
+    ///
+    /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
+    /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
+    /// let store_instruction = builder.build_store(arg1, f32_val);
+    /// let free_instruction = builder.build_free(arg1);
+    /// let return_instruction = builder.build_return(None);
+    ///
+    /// // This will produce invalid IR:
+    /// free_instruction.set_operand(0, f32_val);
+    ///
+    /// assert_eq!(free_instruction.get_operand(0).unwrap(), f32_val);
+    /// ```
     pub fn set_operand<BV: BasicValue>(&self, index: u32, val: BV) -> bool {
         let num_operands = self.get_num_operands();
 
@@ -379,6 +527,34 @@ impl InstructionValue {
         true
     }
 
+    /// Gets the use of an operand(`BasicValue`), if any.
+    ///
+    /// ```no_run
+    /// use inkwell::AddressSpace;
+    /// use inkwell::context::Context;
+    /// use inkwell::values::BasicValue;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("ivs");
+    /// let builder = context.create_builder();
+    /// let void_type = context.void_type();
+    /// let f32_type = context.f32_type();
+    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
+    /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
+    ///
+    /// let function = module.add_function("take_f32_ptr", fn_type, None);
+    /// let basic_block = context.append_basic_block(&function, "entry");
+    ///
+    /// builder.position_at_end(&basic_block);
+    ///
+    /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
+    /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
+    /// let store_instruction = builder.build_store(arg1, f32_val);
+    /// let free_instruction = builder.build_free(arg1);
+    /// let return_instruction = builder.build_return(None);
+    ///
+    /// assert_eq!(store_instruction.get_operand_use(1), arg1.get_first_use());
+    /// ```
     pub fn get_operand_use(&self, index: u32) -> Option<BasicValueUse> {
         let num_operands = self.get_num_operands();
 
@@ -397,6 +573,36 @@ impl InstructionValue {
         Some(BasicValueUse::new(use_))
     }
 
+    /// Gets the first use of an `InstructionValue` if any.
+    ///
+    /// The following example,
+    ///
+    /// ```no_run
+    /// use inkwell::AddressSpace;
+    /// use inkwell::context::Context;
+    /// use inkwell::values::BasicValue;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("ivs");
+    /// let builder = context.create_builder();
+    /// let void_type = context.void_type();
+    /// let f32_type = context.f32_type();
+    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
+    /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
+    ///
+    /// let function = module.add_function("take_f32_ptr", fn_type, None);
+    /// let basic_block = context.append_basic_block(&function, "entry");
+    ///
+    /// builder.position_at_end(&basic_block);
+    ///
+    /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
+    /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
+    /// let store_instruction = builder.build_store(arg1, f32_val);
+    /// let free_instruction = builder.build_free(arg1);
+    /// let return_instruction = builder.build_return(None);
+    ///
+    /// assert!(arg1.get_first_use().is_some());
+    /// ```
     pub fn get_first_use(&self) -> Option<BasicValueUse> {
         self.instruction_value.get_first_use()
     }
