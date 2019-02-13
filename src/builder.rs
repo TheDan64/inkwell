@@ -1,3 +1,4 @@
+use either::{Either, Left, Right};
 use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf, LLVMBuildExtractElement, LLVMBuildInsertElement, LLVMBuildIntToPtr, LLVMBuildPtrToInt, LLVMInsertIntoBuilderWithName, LLVMClearInsertionPosition, LLVMCreateBuilder, LLVMPositionBuilder, LLVMPositionBuilderBefore, LLVMBuildAggregateRet, LLVMBuildStructGEP, LLVMBuildInBoundsGEP, LLVMBuildPtrDiff, LLVMBuildNSWAdd, LLVMBuildNUWAdd, LLVMBuildNSWSub, LLVMBuildNUWSub, LLVMBuildNSWMul, LLVMBuildNUWMul, LLVMBuildSDiv, LLVMBuildSRem, LLVMBuildURem, LLVMBuildFRem, LLVMBuildNSWNeg, LLVMBuildNUWNeg, LLVMBuildFPToUI, LLVMBuildFPToSI, LLVMBuildSIToFP, LLVMBuildUIToFP, LLVMBuildFPTrunc, LLVMBuildFPExt, LLVMBuildIntCast, LLVMBuildFPCast, LLVMBuildSExtOrBitCast, LLVMBuildZExtOrBitCast, LLVMBuildTruncOrBitCast, LLVMBuildSwitch, LLVMAddCase, LLVMBuildShl, LLVMBuildAShr, LLVMBuildLShr, LLVMBuildGlobalString, LLVMBuildGlobalStringPtr, LLVMBuildExactSDiv, LLVMBuildTrunc, LLVMBuildSExt, LLVMBuildZExt, LLVMBuildSelect, LLVMBuildAddrSpaceCast, LLVMBuildBitCast, LLVMBuildShuffleVector, LLVMBuildVAArg, LLVMBuildIndirectBr, LLVMAddDestination};
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMTypeKind, LLVMAtomicOrdering};
@@ -63,10 +64,17 @@ impl Builder {
         InstructionValue::new(value)
     }
 
-    pub fn build_call(&self, function: FunctionValue, args: &[BasicValueEnum], name: &str) -> CallSiteValue {
+    pub fn build_call<F>(&self, function: F, args: &[BasicValueEnum], name: &str) -> CallSiteValue
+        where F: Into<FunctionOrPointerValue>,
+    {
+        let fn_val_ref = match function.into() {
+            Left(val) => val.as_value_ref(),
+            Right(val) => val.as_value_ref(),
+        };
+
         // LLVM gets upset when void return calls are named because they don't return anything
         let name = unsafe {
-            match LLVMGetTypeKind(LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(function.as_value_ref())))) {
+            match LLVMGetTypeKind(LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(fn_val_ref)))) {
                 LLVMTypeKind::LLVMVoidTypeKind => "",
                 _ => name,
             }
@@ -77,7 +85,7 @@ impl Builder {
                                               .map(|val| val.as_value_ref())
                                               .collect();
         let value = unsafe {
-            LLVMBuildCall(self.builder, function.as_value_ref(), args.as_mut_ptr(), args.len() as u32, c_string.as_ptr())
+            LLVMBuildCall(self.builder, fn_val_ref, args.as_mut_ptr(), args.len() as u32, c_string.as_ptr())
         };
 
         CallSiteValue::new(value)
@@ -1128,5 +1136,19 @@ impl Drop for Builder {
         unsafe {
             LLVMDisposeBuilder(self.builder);
         }
+    }
+}
+
+type FunctionOrPointerValue = Either<FunctionValue, PointerValue>;
+
+impl Into<FunctionOrPointerValue> for FunctionValue {
+    fn into(self) -> FunctionOrPointerValue {
+        Left(self)
+    }
+}
+
+impl Into<FunctionOrPointerValue> for PointerValue {
+    fn into(self) -> FunctionOrPointerValue {
+        Right(self)
     }
 }

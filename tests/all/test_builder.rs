@@ -41,6 +41,29 @@ fn test_build_call() {
     let pi2 = pi2_call_site.try_as_basic_value().left().unwrap();
 
     builder.build_return(Some(&pi2));
+
+    assert!(module.verify().is_ok());
+
+    // Test using function `PointerValue`
+    let void_type = context.void_type();
+    let fn_type2 = void_type.fn_type(&[], false);
+    let function3 = module.add_function("call_fn", fn_type2, None);
+    let basic_block3 = context.append_basic_block(&function3, "entry");
+    let fn_ptr = function3.as_global_value().as_pointer_value();
+    let fn_ptr_type = fn_ptr.get_type();
+
+    builder.position_at_end(&basic_block3);
+
+    let alloca = builder.build_alloca(fn_ptr_type, "alloca");
+
+    builder.build_store(alloca, fn_ptr);
+
+    let load = builder.build_load(alloca, "load").into_pointer_value();
+
+    builder.build_call(load, &[], "call");
+    builder.build_return(None);
+
+    assert!(module.verify().is_ok());
 }
 
 #[test]
