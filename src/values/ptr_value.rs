@@ -5,7 +5,7 @@ use std::ffi::CStr;
 
 use support::LLVMString;
 use types::{AsTypeRef, IntType, PointerType};
-use values::{AsValueRef, FunctionValue, InstructionValue, IntValue, Value, MetadataValue};
+use values::{AsValueRef, InstructionValue, IntValue, Value, MetadataValue};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct PointerValue {

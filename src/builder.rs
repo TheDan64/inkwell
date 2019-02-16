@@ -65,7 +65,8 @@ impl Builder {
     }
 
     pub fn build_call<F>(&self, function: F, args: &[BasicValueEnum], name: &str) -> CallSiteValue
-        where F: Into<FunctionOrPointerValue>,
+    where
+        F: Into<FunctionOrPointerValue>,
     {
         let fn_val_ref = match function.into() {
             Left(val) => val.as_value_ref(),
@@ -957,12 +958,47 @@ impl Builder {
         BasicValueEnum::new(value)
     }
 
-    // REVIEW: Should this be AggregatePointerValue instead of just PointerValue?
-    pub fn build_insert_value<V: BasicValue>(&self, value: V, ptr: PointerValue, index: u32, name: &str) -> InstructionValue {
+    /// Builds an insert value instruction which inserts a `BasicValue` into a struct
+    /// or array.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("av");
+    /// let void_type = context.void_type();
+    /// let f32_type = context.f32_type();
+    /// let i32_type = context.i32_type();
+    /// let struct_type = context.struct_type(&[i32_type.into(), f32_type.into()], false);
+    /// let array_type = i32_type.array_type(3);
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let fn_value = module.add_function("av_fn", fn_type, None);
+    /// let builder = context.create_builder();
+    /// let entry = fn_value.append_basic_block("entry");
+    ///
+    /// builder.position_at_end(&entry);
+    ///
+    /// let array_alloca = builder.build_alloca(array_type, "array_alloca");
+    /// let array = builder.build_load(array_alloca, "array_load").into_array_value();
+    /// let const_int1 = i32_type.const_int(2, false);
+    /// let const_int2 = i32_type.const_int(5, false);
+    /// let const_int3 = i32_type.const_int(6, false);
+    ///
+    /// builder.build_insert_value(array, const_int1, 0, "insert");
+    /// builder.build_insert_value(array, const_int2, 1, "insert");
+    /// builder.build_insert_value(array, const_int3, 2, "insert");
+    /// ```
+    pub fn build_insert_value<AV, BV>(&self, agg: AV, value: BV, index: u32, name: &str) -> InstructionValue
+    where
+        AV: AggregateValue,
+        BV: BasicValue,
+    {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildInsertValue(self.builder, value.as_value_ref(), ptr.as_value_ref(), index, c_string.as_ptr())
+            LLVMBuildInsertValue(self.builder, agg.as_value_ref(), value.as_value_ref(), index, c_string.as_ptr())
         };
 
         InstructionValue::new(value)
