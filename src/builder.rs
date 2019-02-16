@@ -5,7 +5,7 @@ use llvm_sys::{LLVMTypeKind, LLVMAtomicOrdering};
 
 use {IntPredicate, FloatPredicate};
 use basic_block::BasicBlock;
-use values::{AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode, CallSiteValue};
+use values::{AggregateValue, AggregateValueEnum, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode, CallSiteValue};
 use types::{AsTypeRef, BasicType, IntMathType, FloatMathType, PointerType, PointerMathType};
 
 use std::ffi::CString;
@@ -947,7 +947,6 @@ impl Builder {
 
     // REVIEW: How does LLVM treat out of bound index? Maybe we should return an Option?
     // or is that only in bounds GEP
-    // REVIEW: Should this be AggregatePointerValue?
     pub fn build_extract_value<AV: AggregateValue>(&self, value: AV, index: u32, name: &str) -> BasicValueEnum {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -986,22 +985,32 @@ impl Builder {
     /// let const_int2 = i32_type.const_int(5, false);
     /// let const_int3 = i32_type.const_int(6, false);
     ///
-    /// builder.build_insert_value(array, const_int1, 0, "insert");
-    /// builder.build_insert_value(array, const_int2, 1, "insert");
-    /// builder.build_insert_value(array, const_int3, 2, "insert");
+    /// assert!(builder.build_insert_value(array, const_int1, 0, "insert").is_some());
+    /// assert!(builder.build_insert_value(array, const_int2, 1, "insert").is_some());
+    /// assert!(builder.build_insert_value(array, const_int3, 2, "insert").is_some());
+    /// assert!(builder.build_insert_value(array, const_int3, 3, "insert").is_none());
     /// ```
-    pub fn build_insert_value<AV, BV>(&self, agg: AV, value: BV, index: u32, name: &str) -> InstructionValue
+    pub fn build_insert_value<AV, BV>(&self, agg: AV, value: BV, index: u32, name: &str) -> Option<InstructionValue>
     where
         AV: AggregateValue,
         BV: BasicValue,
     {
+        let size = match agg.as_aggregate_value_enum() {
+            AggregateValueEnum::ArrayValue(av) => av.get_type().len(),
+            AggregateValueEnum::StructValue(sv) => sv.get_type().count_fields(),
+        };
+
+        if index >= size {
+            return None;
+        }
+
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildInsertValue(self.builder, agg.as_value_ref(), value.as_value_ref(), index, c_string.as_ptr())
         };
 
-        InstructionValue::new(value)
+        Some(InstructionValue::new(value))
     }
 
     pub fn build_extract_element(&self, vector: VectorValue, index: IntValue, name: &str) -> BasicValueEnum {
