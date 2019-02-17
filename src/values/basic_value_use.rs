@@ -1,6 +1,9 @@
-use values::{BasicValueEnum, InstructionValue};
-use llvm_sys::core::{LLVMGetNextUse, LLVMGetUser, LLVMGetUsedValue};
+use either::{Either, Either::{Left, Right}};
+use llvm_sys::core::{LLVMGetNextUse, LLVMGetUser, LLVMGetUsedValue, LLVMIsABasicBlock, LLVMValueAsBasicBlock};
 use llvm_sys::prelude::LLVMUseRef;
+
+use basic_block::BasicBlock;
+use values::{BasicValueEnum, InstructionValue};
 
 /// A usage of a `BasicValue` in an `InstructionValue`.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -118,7 +121,7 @@ impl BasicValueUse {
         InstructionValue::new(user)
     }
 
-    /// Gets the used value(a `BasicValueEnum`) of this use.
+    /// Gets the used value(a `BasicValueEnum` or `BasicBlock`) of this use.
     ///
     /// ```no_run
     /// use inkwell::AddressSpace;
@@ -149,15 +152,29 @@ impl BasicValueUse {
     /// let bitcast_use_value = free_operand0_instruction
     ///     .get_first_use()
     ///     .unwrap()
-    ///     .get_used_value();
+    ///     .get_used_value()
+    ///     .left()
+    ///     .unwrap();
     ///
     /// assert_eq!(bitcast_use_value, free_operand0);
     /// ```
-    pub fn get_used_value(&self) -> BasicValueEnum {
+    pub fn get_used_value(&self) -> Either<BasicValueEnum, BasicBlock> {
         let used_value = unsafe {
             LLVMGetUsedValue(self.0)
         };
 
-        BasicValueEnum::new(used_value)
+        let is_basic_block = unsafe {
+            !LLVMIsABasicBlock(used_value).is_null()
+        };
+
+        if is_basic_block {
+            let used_value = unsafe {
+                LLVMValueAsBasicBlock(used_value)
+            };
+
+            Right(BasicBlock::new(used_value).expect("BasicBlock should be valid"))
+        } else {
+            Left(BasicValueEnum::new(used_value))
+        }
     }
 }

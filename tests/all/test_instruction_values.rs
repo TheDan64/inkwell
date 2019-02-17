@@ -83,7 +83,9 @@ fn test_operands() {
     let bitcast_use_value = free_operand0_instruction
         .get_first_use()
         .unwrap()
-        .get_used_value();
+        .get_used_value()
+        .left()
+        .unwrap();
     let free_call_param = free_instruction.get_operand(0).unwrap().left().unwrap();
 
     assert_eq!(bitcast_use_value, free_call_param);
@@ -109,8 +111,8 @@ fn test_operands() {
 
     assert_eq!(store_operand_use0.get_user(), store_instruction);
     assert_eq!(store_operand_use1.get_user(), store_instruction);
-    assert_eq!(store_operand_use0.get_used_value(), f32_val);
-    assert_eq!(store_operand_use1.get_used_value(), arg1);
+    assert_eq!(store_operand_use0.get_used_value().left().unwrap(), f32_val);
+    assert_eq!(store_operand_use1.get_used_value().left().unwrap(), arg1);
 
     assert!(store_instruction.get_operand_use(2).is_none());
     assert!(store_instruction.get_operand_use(3).is_none());
@@ -149,6 +151,10 @@ fn test_basic_block_operand() {
     let bb_operand = branch_instruction.get_operand(0).unwrap().right().unwrap();
 
     assert_eq!(bb_operand, basic_block2);
+
+    let bb_operand_use = branch_instruction.get_operand_use(0).unwrap();
+
+    assert_eq!(bb_operand_use.get_used_value().right().unwrap(), basic_block2);
 
     builder.position_at_end(&basic_block2);
     builder.build_return(None);
