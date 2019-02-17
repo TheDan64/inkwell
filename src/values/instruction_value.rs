@@ -1,4 +1,5 @@
-use llvm_sys::core::{LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMSetOperand};
+use either::{Either, Either::{Left, Right}};
+use llvm_sys::core::{LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMSetOperand, LLVMValueAsBasicBlock, LLVMIsABasicBlock};
 #[llvm_versions(3.9 => latest)]
 use llvm_sys::core::LLVMInstructionRemoveFromParent;
 use llvm_sys::LLVMOpcode;
@@ -464,7 +465,7 @@ impl InstructionValue {
     /// 3) Function call has two: i8 pointer %1 argument, and the free function itself
     /// 4) Void return has zero: void is not a value and does not count as an operand
     /// even though the return instruction can take values.
-    pub fn get_operand(&self, index: u32) -> Option<BasicValueEnum> {
+    pub fn get_operand(&self, index: u32) -> Option<Either<BasicValueEnum, BasicBlock>> {
         let num_operands = self.get_num_operands();
 
         if index >= num_operands {
@@ -479,7 +480,19 @@ impl InstructionValue {
             return None;
         }
 
-        Some(BasicValueEnum::new(operand))
+        let is_basic_block = unsafe {
+            !LLVMIsABasicBlock(operand).is_null()
+        };
+
+        if is_basic_block {
+            let operand = unsafe {
+                LLVMValueAsBasicBlock(operand)
+            };
+
+            Some(Right(BasicBlock::new(operand).expect("BasicBlock should be valid")))
+        } else {
+            Some(Left(BasicValueEnum::new(operand)))
+        }
     }
 
     /// Sets the operand an `InstructionValue` has at a given index if possible.
@@ -511,7 +524,7 @@ impl InstructionValue {
     /// // This will produce invalid IR:
     /// free_instruction.set_operand(0, f32_val);
     ///
-    /// assert_eq!(free_instruction.get_operand(0).unwrap(), f32_val);
+    /// assert_eq!(free_instruction.get_operand(0).unwrap().left().unwrap(), f32_val);
     /// ```
     pub fn set_operand<BV: BasicValue>(&self, index: u32, val: BV) -> bool {
         let num_operands = self.get_num_operands();

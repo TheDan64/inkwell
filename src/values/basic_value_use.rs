@@ -144,7 +144,7 @@ impl BasicValueUse {
     /// let free_instruction = builder.build_free(arg1);
     /// let return_instruction = builder.build_return(None);
     ///
-    /// let free_operand0 = free_instruction.get_operand(0).unwrap();
+    /// let free_operand0 = free_instruction.get_operand(0).unwrap().left().unwrap();
     /// let free_operand0_instruction = free_operand0.as_instruction_value().unwrap();
     /// let bitcast_use_value = free_operand0_instruction
     ///     .get_first_use()
