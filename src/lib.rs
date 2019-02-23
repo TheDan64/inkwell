@@ -42,7 +42,7 @@ pub mod targets;
 pub mod types;
 pub mod values;
 
-use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility, LLVMThreadLocalMode, LLVMDLLStorageClass};
+use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility, LLVMThreadLocalMode, LLVMDLLStorageClass, LLVMAtomicOrdering};
 
 // Thanks to kennytm for coming up with assert_unique_features!
 // which ensures that the LLVM feature flags are mutually exclusive
@@ -165,6 +165,19 @@ enum_rename!{
         UNE <=> LLVMRealUNE,
         /// Returns true if either value is NaN
         UNO <=> LLVMRealUNO,
+    }
+}
+
+// REVIEW: Maybe this belongs in some sort of prelude?
+enum_rename!{
+    AtomicOrdering <=> LLVMAtomicOrdering {
+        NotAtomic <=> LLVMAtomicOrderingNotAtomic,
+        Unordered <=> LLVMAtomicOrderingUnordered,
+        Monotonic <=> LLVMAtomicOrderingMonotonic,
+        Acquire <=> LLVMAtomicOrderingAcquire,
+        Release <=> LLVMAtomicOrderingRelease,
+        AcquireRelease <=> LLVMAtomicOrderingAcquireRelease,
+        SequentiallyConsistent <=> LLVMAtomicOrderingSequentiallyConsistent,
     }
 }
 
