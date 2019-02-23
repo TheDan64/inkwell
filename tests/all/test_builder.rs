@@ -630,6 +630,11 @@ fn test_insert_value() {
     assert!(builder.build_insert_value(array, const_int3, 3, "insert").is_none());
     assert!(builder.build_insert_value(array, const_int3, 4, "insert").is_none());
 
+    assert!(builder.build_extract_value(array, 0, "extract").unwrap().is_int_value());
+    assert!(builder.build_extract_value(array, 1, "extract").unwrap().is_int_value());
+    assert!(builder.build_extract_value(array, 2, "extract").unwrap().is_int_value());
+    assert!(builder.build_extract_value(array, 3, "extract").is_none());
+
     let struct_alloca = builder.build_alloca(struct_type, "struct_alloca");
     let struct_value = builder.build_load(struct_alloca, "struct_load").into_struct_value();
 
@@ -637,6 +642,11 @@ fn test_insert_value() {
     assert!(builder.build_insert_value(struct_value, const_float, 1, "insert").is_some());
     assert!(builder.build_insert_value(struct_value, const_float, 2, "insert").is_none());
     assert!(builder.build_insert_value(struct_value, const_float, 3, "insert").is_none());
+
+    assert!(builder.build_extract_value(struct_value, 0, "extract").unwrap().is_int_value());
+    assert!(builder.build_extract_value(struct_value, 1, "extract").unwrap().is_float_value());
+    assert!(builder.build_extract_value(struct_value, 2, "extract").is_none());
+    assert!(builder.build_extract_value(struct_value, 3, "extract").is_none());
 
     builder.build_return(None);
 
