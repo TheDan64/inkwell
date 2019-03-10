@@ -3,6 +3,7 @@ extern crate inkwell;
 use self::inkwell::{AddressSpace, OptimizationLevel};
 use self::inkwell::context::Context;
 use self::inkwell::builder::Builder;
+use self::inkwell::values::BasicValue;
 
 // use std::ffi::CString;
 use std::ptr::null;
@@ -651,4 +652,50 @@ fn test_insert_value() {
     builder.build_return(None);
 
     assert!(module.verify().is_ok());
+}
+
+#[test]
+fn test_bitcast() {
+    let context = Context::create();
+    let module = context.create_module("bc");
+    let void_type = context.void_type();
+    let f32_type = context.f32_type();
+    let i32_type = context.i32_type();
+    let i64_type = context.i64_type();
+    let i32_ptr_type = i32_type.ptr_type(AddressSpace::Generic);
+    let i64_ptr_type = i64_type.ptr_type(AddressSpace::Generic);
+    let i32_vec_type = i32_type.vec_type(2);
+    let arg_types = [
+        i32_type.into(),
+        f32_type.into(),
+        i32_vec_type.into(),
+        i32_ptr_type.into(),
+    ];
+    let fn_type = void_type.fn_type(&arg_types, false);
+    let fn_value = module.add_function("bc", fn_type, None);
+    let builder = context.create_builder();
+    let entry = fn_value.append_basic_block("entry");
+    let i32_arg = fn_value.get_first_param().unwrap().into_int_value();
+    let f32_arg = fn_value.get_nth_param(1).unwrap().into_float_value();
+    let i32_vec_arg = fn_value.get_nth_param(2).unwrap().into_vector_value();
+    let i32_ptr_arg = fn_value.get_nth_param(3).unwrap().into_pointer_value();
+
+    builder.position_at_end(&entry);
+
+    let cast = builder.build_bitcast(i32_arg, f32_type, "i32tof32");
+
+    builder.build_bitcast(f32_arg, f32_type, "f32tof32");
+    builder.build_bitcast(i32_vec_arg, i64_type, "2xi32toi64");
+    builder.build_bitcast(i32_ptr_arg, i64_ptr_type, "i32*toi64*");
+
+    builder.build_return(None);
+
+    assert!(module.verify().is_ok(), module.print_to_string().to_string());
+
+    let first_iv = cast.as_instruction_value().unwrap();
+
+    builder.position_before(&first_iv);
+    builder.build_bitcast(f32_arg, i64_type, "f32toi64");
+
+    assert!(module.verify().is_err());
 }

@@ -333,14 +333,45 @@ impl Builder {
         PointerValue::new(value)
     }
 
-    pub fn build_bitcast<T: IntMathValue>(&self, int_val: T, int_type: T::BaseType, name: &str) -> T {
+    /// Builds a bitcast instruction. A bitcast reinterprets the bits of one value
+    /// into a value of another type which has the same bit width.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("bc");
+    /// let void_type = context.void_type();
+    /// let f32_type = context.f32_type();
+    /// let i32_type = context.i32_type();
+    /// let arg_types = [i32_type.into()];
+    /// let fn_type = void_type.fn_type(&arg_types, false);
+    /// let fn_value = module.add_function("bc", fn_type, None);
+    /// let builder = context.create_builder();
+    /// let entry = fn_value.append_basic_block("entry");
+    /// let i32_arg = fn_value.get_first_param().unwrap().into_int_value();
+    ///
+    /// builder.position_at_end(&entry);
+    ///
+    /// builder.build_bitcast(i32_arg, f32_type, "i32tof32");
+    /// builder.build_return(None);
+    ///
+    /// assert!(module.verify().is_ok());
+    /// ```
+    pub fn build_bitcast<T, V>(&self, val: V, ty: T, name: &str) -> BasicValueEnum
+    where
+        T: BasicType,
+        V: BasicValue,
+    {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildBitCast(self.builder, int_val.as_value_ref(), int_type.as_type_ref(), c_string.as_ptr())
+            LLVMBuildBitCast(self.builder, val.as_value_ref(), ty.as_type_ref(), c_string.as_ptr())
         };
 
-        T::new(value)
+        BasicValueEnum::new(value)
     }
 
     pub fn build_int_s_extend_or_bit_cast<T: IntMathValue>(&self, int_value: T, int_type: T::BaseType, name: &str) -> T {
