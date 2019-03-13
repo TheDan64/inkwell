@@ -675,10 +675,10 @@ fn test_bitcast() {
     let fn_value = module.add_function("bc", fn_type, None);
     let builder = context.create_builder();
     let entry = fn_value.append_basic_block("entry");
-    let i32_arg = fn_value.get_first_param().unwrap().into_int_value();
-    let f32_arg = fn_value.get_nth_param(1).unwrap().into_float_value();
-    let i32_vec_arg = fn_value.get_nth_param(2).unwrap().into_vector_value();
-    let i32_ptr_arg = fn_value.get_nth_param(3).unwrap().into_pointer_value();
+    let i32_arg = fn_value.get_first_param().unwrap();
+    let f32_arg = fn_value.get_nth_param(1).unwrap();
+    let i32_vec_arg = fn_value.get_nth_param(2).unwrap();
+    let i32_ptr_arg = fn_value.get_nth_param(3).unwrap();
 
     builder.position_at_end(&entry);
 

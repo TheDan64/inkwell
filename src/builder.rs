@@ -351,7 +351,7 @@ impl Builder {
     /// let fn_value = module.add_function("bc", fn_type, None);
     /// let builder = context.create_builder();
     /// let entry = fn_value.append_basic_block("entry");
-    /// let i32_arg = fn_value.get_first_param().unwrap().into_int_value();
+    /// let i32_arg = fn_value.get_first_param().unwrap();
     ///
     /// builder.position_at_end(&entry);
     ///
