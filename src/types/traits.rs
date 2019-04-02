@@ -2,9 +2,9 @@ use llvm_sys::prelude::LLVMTypeRef;
 
 use std::fmt::Debug;
 
-use types::{IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VectorType, VoidType, Type};
-use types::enums::{AnyTypeEnum, BasicTypeEnum};
-use values::{IntMathValue, FloatMathValue, PointerMathValue, IntValue, FloatValue, PointerValue, VectorValue};
+use crate::types::{IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VectorType, VoidType, Type};
+use crate::types::enums::{AnyTypeEnum, BasicTypeEnum};
+use crate::values::{IntMathValue, FloatMathValue, PointerMathValue, IntValue, FloatValue, PointerValue, VectorValue};
 
 // This is an ugly privacy hack so that Type can stay private to this module
 // and so that super traits using this trait will be not be implementable

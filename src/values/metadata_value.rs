@@ -6,9 +6,9 @@ use llvm_sys::prelude::LLVMMetadataRef;
 #[llvm_versions(7.0 => latest)]
 use llvm_sys::core::LLVMValueAsMetadata;
 
-use support::LLVMString;
-use values::traits::AsValueRef;
-use values::{BasicValue, BasicMetadataValueEnum, Value};
+use crate::support::LLVMString;
+use crate::values::traits::AsValueRef;
+use crate::values::{BasicValue, BasicMetadataValueEnum, Value};
 
 use std::ffi::{CString, CStr};
 use std::fmt;

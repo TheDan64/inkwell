@@ -19,25 +19,25 @@ mod struct_value;
 mod traits;
 mod vec_value;
 
-pub use values::array_value::ArrayValue;
-pub use values::basic_value_use::BasicValueUse;
-pub use values::call_site_value::CallSiteValue;
-pub use values::enums::{AnyValueEnum, AggregateValueEnum, BasicValueEnum, BasicMetadataValueEnum};
-pub use values::float_value::FloatValue;
-pub use values::fn_value::FunctionValue;
-pub use values::generic_value::GenericValue;
-pub use values::global_value::GlobalValue;
+pub use crate::values::array_value::ArrayValue;
+pub use crate::values::basic_value_use::BasicValueUse;
+pub use crate::values::call_site_value::CallSiteValue;
+pub use crate::values::enums::{AnyValueEnum, AggregateValueEnum, BasicValueEnum, BasicMetadataValueEnum};
+pub use crate::values::float_value::FloatValue;
+pub use crate::values::fn_value::FunctionValue;
+pub use crate::values::generic_value::GenericValue;
+pub use crate::values::global_value::GlobalValue;
 #[llvm_versions(7.0 => latest)]
-pub use values::global_value::UnnamedAddress;
-pub use values::instruction_value::{InstructionValue, InstructionOpcode};
-pub use values::int_value::IntValue;
-pub use values::metadata_value::{MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID};
-pub use values::phi_value::PhiValue;
-pub use values::ptr_value::PointerValue;
-pub use values::struct_value::StructValue;
-pub use values::traits::{AnyValue, AggregateValue, BasicValue, IntMathValue, FloatMathValue, PointerMathValue};
-pub use values::vec_value::VectorValue;
-pub(crate) use values::traits::AsValueRef;
+pub use crate::values::global_value::UnnamedAddress;
+pub use crate::values::instruction_value::{InstructionValue, InstructionOpcode};
+pub use crate::values::int_value::IntValue;
+pub use crate::values::metadata_value::{MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID};
+pub use crate::values::phi_value::PhiValue;
+pub use crate::values::ptr_value::PointerValue;
+pub use crate::values::struct_value::StructValue;
+pub use crate::values::traits::{AnyValue, AggregateValue, BasicValue, IntMathValue, FloatMathValue, PointerMathValue};
+pub use crate::values::vec_value::VectorValue;
+pub(crate) use crate::values::traits::AsValueRef;
 
 use llvm_sys::core::{LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDumpValue, LLVMIsAInstruction, LLVMGetMetadata, LLVMHasMetadata, LLVMSetMetadata, LLVMReplaceAllUsesWith, LLVMGetFirstUse};
 use llvm_sys::prelude::{LLVMValueRef, LLVMTypeRef};
@@ -45,7 +45,7 @@ use llvm_sys::prelude::{LLVMValueRef, LLVMTypeRef};
 use std::ffi::CStr;
 use std::fmt;
 
-use support::LLVMString;
+use crate::support::LLVMString;
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 struct Value {

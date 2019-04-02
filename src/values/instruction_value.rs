@@ -5,9 +5,9 @@ use llvm_sys::core::LLVMInstructionRemoveFromParent;
 use llvm_sys::LLVMOpcode;
 use llvm_sys::prelude::LLVMValueRef;
 
-use basic_block::BasicBlock;
-use values::traits::AsValueRef;
-use values::{BasicValue, BasicValueEnum, BasicValueUse, Value};
+use crate::basic_block::BasicBlock;
+use crate::values::traits::AsValueRef;
+use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, Value};
 
 // REVIEW: Split up into structs for SubTypes on InstructionValues?
 // REVIEW: This should maybe be split up into InstructionOpcode and ConstOpcode?

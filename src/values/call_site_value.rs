@@ -4,11 +4,11 @@ use llvm_sys::core::{LLVMIsTailCall, LLVMSetTailCall, LLVMGetTypeKind, LLVMTypeO
 use llvm_sys::prelude::LLVMValueRef;
 
 #[llvm_versions(3.9 => latest)]
-use attributes::Attribute;
-use support::LLVMString;
-use values::{AsValueRef, BasicValueEnum, InstructionValue, Value};
+use crate::attributes::Attribute;
+use crate::support::LLVMString;
+use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, Value};
 #[llvm_versions(3.9 => latest)]
-use values::FunctionValue;
+use crate::values::FunctionValue;
 
 /// A value resulting from a function call. It may have function attributes applied to it.
 ///

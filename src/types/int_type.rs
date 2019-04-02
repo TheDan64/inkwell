@@ -2,12 +2,12 @@ use llvm_sys::core::{LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, L
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfInt;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
-use AddressSpace;
-use context::ContextRef;
-use support::LLVMString;
-use types::traits::AsTypeRef;
-use types::{Type, ArrayType, BasicTypeEnum, VectorType, PointerType, FunctionType};
-use values::{AsValueRef, ArrayValue, GenericValue, IntValue};
+use crate::AddressSpace;
+use crate::context::ContextRef;
+use crate::support::LLVMString;
+use crate::types::traits::AsTypeRef;
+use crate::types::{Type, ArrayType, BasicTypeEnum, VectorType, PointerType, FunctionType};
+use crate::values::{AsValueRef, ArrayValue, GenericValue, IntValue};
 
 /// An `IntType` is the type of an integer constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

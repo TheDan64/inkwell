@@ -1,11 +1,11 @@
 use llvm_sys::core::LLVMVoidType;
 use llvm_sys::prelude::LLVMTypeRef;
 
-use AddressSpace;
-use context::ContextRef;
-use support::LLVMString;
-use types::traits::AsTypeRef;
-use types::{Type, BasicTypeEnum, FunctionType, PointerType};
+use crate::AddressSpace;
+use crate::context::ContextRef;
+use crate::support::LLVMString;
+use crate::types::traits::AsTypeRef;
+use crate::types::{Type, BasicTypeEnum, FunctionType, PointerType};
 
 /// A `VoidType` is a special type with no possible direct instances. It's particularly
 /// useful as a pointer element type or a function return type.

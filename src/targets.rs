@@ -3,15 +3,15 @@ use either::Either;
 use llvm_sys::target::{LLVMTargetDataRef, LLVMCopyStringRepOfTargetData, LLVMSizeOfTypeInBits, LLVMCreateTargetData, LLVMByteOrder, LLVMPointerSize, LLVMByteOrdering, LLVMStoreSizeOfType, LLVMABISizeOfType, LLVMABIAlignmentOfType, LLVMCallFrameAlignmentOfType, LLVMPreferredAlignmentOfType, LLVMPreferredAlignmentOfGlobal, LLVMElementAtOffset, LLVMOffsetOfElement, LLVMDisposeTargetData, LLVMPointerSizeForAS, LLVMIntPtrType, LLVMIntPtrTypeForAS, LLVMIntPtrTypeInContext, LLVMIntPtrTypeForASInContext};
 use llvm_sys::target_machine::{LLVMGetFirstTarget, LLVMTargetRef, LLVMGetNextTarget, LLVMGetTargetFromName, LLVMGetTargetFromTriple, LLVMGetTargetName, LLVMGetTargetDescription, LLVMTargetHasJIT, LLVMTargetHasTargetMachine, LLVMTargetHasAsmBackend, LLVMTargetMachineRef, LLVMDisposeTargetMachine, LLVMGetTargetMachineTarget, LLVMGetTargetMachineTriple, LLVMSetTargetMachineAsmVerbosity, LLVMCreateTargetMachine, LLVMGetTargetMachineCPU, LLVMGetTargetMachineFeatureString, LLVMGetDefaultTargetTriple, LLVMAddAnalysisPasses, LLVMCodeGenOptLevel, LLVMCodeModel, LLVMRelocMode, LLVMCodeGenFileType, LLVMTargetMachineEmitToMemoryBuffer, LLVMTargetMachineEmitToFile};
 
-use {AddressSpace, OptimizationLevel};
-use context::Context;
-use data_layout::DataLayout;
-use memory_buffer::MemoryBuffer;
-use module::Module;
-use passes::PassManager;
-use support::LLVMString;
-use types::{AnyType, AsTypeRef, IntType, StructType};
-use values::{AsValueRef, GlobalValue};
+use crate::{AddressSpace, OptimizationLevel};
+use crate::context::Context;
+use crate::data_layout::DataLayout;
+use crate::memory_buffer::MemoryBuffer;
+use crate::module::Module;
+use crate::passes::PassManager;
+use crate::support::LLVMString;
+use crate::types::{AnyType, AsTypeRef, IntType, StructType};
+use crate::values::{AsValueRef, GlobalValue};
 
 use std::default::Default;
 use std::ffi::{CStr, CString};

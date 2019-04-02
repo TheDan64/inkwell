@@ -5,11 +5,11 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
 
-use IntPredicate;
-use support::LLVMString;
-use types::{AsTypeRef, FloatType, PointerType, IntType};
-use values::traits::AsValueRef;
-use values::{BasicValue, BasicValueEnum, FloatValue, InstructionValue, PointerValue, Value, MetadataValue};
+use crate::IntPredicate;
+use crate::support::LLVMString;
+use crate::types::{AsTypeRef, FloatType, PointerType, IntType};
+use crate::values::traits::AsValueRef;
+use crate::values::{BasicValue, BasicValueEnum, FloatValue, InstructionValue, PointerValue, Value, MetadataValue};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct IntValue {

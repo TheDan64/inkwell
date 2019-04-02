@@ -1,11 +1,11 @@
 use llvm_sys::core::{LLVMConstVector, LLVMGetVectorSize, LLVMConstArray};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
-use AddressSpace;
-use context::ContextRef;
-use support::LLVMString;
-use types::{ArrayType, BasicTypeEnum, Type, traits::AsTypeRef, FunctionType, PointerType};
-use values::{AsValueRef, ArrayValue, BasicValue, VectorValue, IntValue};
+use crate::AddressSpace;
+use crate::context::ContextRef;
+use crate::support::LLVMString;
+use crate::types::{ArrayType, BasicTypeEnum, Type, traits::AsTypeRef, FunctionType, PointerType};
+use crate::values::{AsValueRef, ArrayValue, BasicValue, VectorValue, IntValue};
 
 /// A `VectorType` is the type of a multiple value SIMD constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

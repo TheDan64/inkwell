@@ -20,17 +20,17 @@ mod vec_type;
 #[deny(missing_docs)]
 mod void_type;
 
-pub use types::array_type::ArrayType;
-pub use types::enums::{AnyTypeEnum, BasicTypeEnum};
-pub use types::float_type::FloatType;
-pub use types::fn_type::FunctionType;
-pub use types::int_type::IntType;
-pub use types::ptr_type::PointerType;
-pub use types::struct_type::StructType;
-pub use types::traits::{AnyType, BasicType, IntMathType, FloatMathType, PointerMathType};
-pub use types::vec_type::VectorType;
-pub use types::void_type::VoidType;
-pub(crate) use types::traits::AsTypeRef;
+pub use crate::types::array_type::ArrayType;
+pub use crate::types::enums::{AnyTypeEnum, BasicTypeEnum};
+pub use crate::types::float_type::FloatType;
+pub use crate::types::fn_type::FunctionType;
+pub use crate::types::int_type::IntType;
+pub use crate::types::ptr_type::PointerType;
+pub use crate::types::struct_type::StructType;
+pub use crate::types::traits::{AnyType, BasicType, IntMathType, FloatMathType, PointerMathType};
+pub use crate::types::vec_type::VectorType;
+pub use crate::types::void_type::VoidType;
+pub(crate) use crate::types::traits::AsTypeRef;
 
 #[llvm_versions(3.7 => 4.0)]
 use llvm_sys::core::LLVMDumpType;
@@ -40,10 +40,10 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use std::fmt;
 use std::rc::Rc;
 
-use AddressSpace;
-use context::{Context, ContextRef};
-use support::LLVMString;
-use values::IntValue;
+use crate::AddressSpace;
+use crate::context::{Context, ContextRef};
+use crate::support::LLVMString;
+use crate::values::IntValue;
 
 // Worth noting that types seem to be singletons. At the very least, primitives are.
 // Though this is likely only true per thread since LLVM claims to not be very thread-safe.

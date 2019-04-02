@@ -5,8 +5,8 @@ use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMG
 use llvm_sys::core::LLVMGetBasicBlockName;
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
 
-use context::{Context, ContextRef};
-use values::{FunctionValue, InstructionValue};
+use crate::context::{Context, ContextRef};
+use crate::values::{FunctionValue, InstructionValue};
 
 use std::fmt;
 use std::ffi::{CStr, CString};

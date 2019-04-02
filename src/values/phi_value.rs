@@ -3,10 +3,10 @@ use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 
 use std::ffi::CStr;
 
-use basic_block::BasicBlock;
-use support::LLVMString;
-use values::traits::AsValueRef;
-use values::{BasicValue, BasicValueEnum, InstructionValue, Value};
+use crate::basic_block::BasicBlock;
+use crate::support::LLVMString;
+use crate::values::traits::AsValueRef;
+use crate::values::{BasicValue, BasicValueEnum, InstructionValue, Value};
 
 // REVIEW: Metadata for phi values?
 /// A Phi Instruction returns a value based on which basic block branched into

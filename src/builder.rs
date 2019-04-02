@@ -3,10 +3,10 @@ use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArray
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMTypeKind};
 
-use {AtomicOrdering, IntPredicate, FloatPredicate};
-use basic_block::BasicBlock;
-use values::{AggregateValue, AggregateValueEnum, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode, CallSiteValue};
-use types::{AsTypeRef, BasicType, IntMathType, FloatMathType, PointerType, PointerMathType};
+use crate::{AtomicOrdering, IntPredicate, FloatPredicate};
+use crate::basic_block::BasicBlock;
+use crate::values::{AggregateValue, AggregateValueEnum, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode, CallSiteValue};
+use crate::types::{AsTypeRef, BasicType, IntMathType, FloatMathType, PointerType, PointerMathType};
 
 use std::ffi::CString;
 

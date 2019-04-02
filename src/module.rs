@@ -26,19 +26,19 @@ use std::ptr;
 use std::rc::Rc;
 use std::slice::from_raw_parts;
 
-use {AddressSpace, OptimizationLevel};
+use crate::{AddressSpace, OptimizationLevel};
 #[llvm_versions(7.0 => latest)]
-use comdat::Comdat;
-use context::{Context, ContextRef};
-use data_layout::DataLayout;
-use execution_engine::ExecutionEngine;
-use memory_buffer::MemoryBuffer;
-use support::LLVMString;
-use targets::{Target, InitializationConfig};
-use types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
-use values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
+use crate::comdat::Comdat;
+use crate::context::{Context, ContextRef};
+use crate::data_layout::DataLayout;
+use crate::execution_engine::ExecutionEngine;
+use crate::memory_buffer::MemoryBuffer;
+use crate::support::LLVMString;
+use crate::targets::{Target, InitializationConfig};
+use crate::types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
+use crate::values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
 #[llvm_versions(7.0 => latest)]
-use values::BasicValue;
+use crate::values::BasicValue;
 
 enum_rename!{
     /// This enum defines how to link a global variable or function in a module. The variant documenation is
@@ -594,7 +594,7 @@ impl Module {
 
     // See GH issue #6
     /// `write_bitcode_to_path` should be preferred over this method, as it does not work on all operating systems.
-    pub fn write_bitcode_to_file(&self, file: &File, should_close: bool, unbuffered: bool) -> bool {
+    pub fn write_bitcode_to_file(&self, _file: &File, _should_close: bool, _unbuffered: bool) -> bool {
         #[cfg(unix)]
         {
             use std::os::unix::io::AsRawFd;
@@ -1292,7 +1292,7 @@ impl Module {
         }
         #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
         {
-            use support::error_handling::get_error_str_diagnostic_handler;
+            use crate::support::error_handling::get_error_str_diagnostic_handler;
             use llvm_sys::linker::LLVMLinkModules2;
             use libc::c_void;
 

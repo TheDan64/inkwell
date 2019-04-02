@@ -1,11 +1,11 @@
 use libc::c_int;
 use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction, LLVMLinkInMCJIT, LLVMLinkInInterpreter, LLVMRemoveModule, LLVMGenericValueRef, LLVMFreeMachineCodeForFunction, LLVMAddGlobalMapping, LLVMRunStaticConstructors, LLVMRunStaticDestructors};
 
-use context::Context;
-use module::Module;
-use support::LLVMString;
-use targets::TargetData;
-use values::{AnyValue, AsValueRef, FunctionValue, GenericValue};
+use crate::context::Context;
+use crate::module::Module;
+use crate::support::LLVMString;
+use crate::targets::TargetData;
+use crate::values::{AnyValue, AsValueRef, FunctionValue, GenericValue};
 
 use std::error::Error;
 use std::rc::Rc;
