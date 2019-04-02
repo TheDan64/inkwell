@@ -673,6 +673,7 @@ impl Builder {
     /// assert_eq!(0b0000_1100 >> 2, 0b0000_0011);
     ///
     /// // Sign Extended Right Shift
+	/// #![allow(overflowing_literals)]
     /// assert_eq!(0b0100_0000i8 >> 2, 0b0001_0000);
     /// assert_eq!(0b1110_0000i8 >> 1, 0b1111_0000);
     /// assert_eq!(0b1100_0000i8 >> 2, 0b1111_0000);
