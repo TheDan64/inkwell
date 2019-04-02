@@ -15,7 +15,7 @@ Inkwell aims to help you pen your own programming languages by safely wrapping l
 
 * Rust 1.31+
 * Rust Stable, Beta, or Nightly
-* LLVM 3.6, 3.7, 3.8, 3.9, 4.0, 5.0, 6.0, or 7
+* LLVM 3.6, 3.7, 3.8, 3.9, 4.0, 5.0, 6.0, or 7.0
 
 ## Usage
 
@@ -48,8 +48,6 @@ Documentation is automatically [deployed here](https://thedan64.github.io/inkwel
 ### Tari's [llvm-sys example](https://bitbucket.org/tari/llvm-sys.rs/src/ea4ac92a171da2c1851806b91e531ed3a0b41091/examples/jit-function.rs) written in safe code<sup>1</sup> with Inkwell:
 
 ```rust
-extern crate inkwell;
-
 use inkwell::OptimizationLevel;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
