@@ -594,7 +594,7 @@ impl Module {
 
     // See GH issue #6
     /// `write_bitcode_to_path` should be preferred over this method, as it does not work on all operating systems.
-    pub fn write_bitcode_to_file(&self, _file: &File, _should_close: bool, _unbuffered: bool) -> bool {
+    pub fn write_bitcode_to_file(&self, file: &File, should_close: bool, unbuffered: bool) -> bool {
         #[cfg(unix)]
         {
             use std::os::unix::io::AsRawFd;
