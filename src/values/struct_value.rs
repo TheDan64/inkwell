@@ -2,10 +2,10 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
 
-use support::LLVMString;
-use types::StructType;
-use values::traits::AsValueRef;
-use values::{InstructionValue, Value, MetadataValue};
+use crate::support::LLVMString;
+use crate::types::StructType;
+use crate::values::traits::AsValueRef;
+use crate::values::{InstructionValue, Value, MetadataValue};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct StructValue {

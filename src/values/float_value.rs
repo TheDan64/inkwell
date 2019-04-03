@@ -3,11 +3,11 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
 
-use FloatPredicate;
-use support::LLVMString;
-use types::{AsTypeRef, FloatType, IntType};
-use values::traits::AsValueRef;
-use values::{InstructionValue, IntValue, Value, MetadataValue};
+use crate::FloatPredicate;
+use crate::support::LLVMString;
+use crate::types::{AsTypeRef, FloatType, IntType};
+use crate::values::traits::AsValueRef;
+use crate::values::{InstructionValue, IntValue, Value, MetadataValue};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct FloatValue {

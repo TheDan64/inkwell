@@ -3,9 +3,9 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
 
-use support::LLVMString;
-use types::{AsTypeRef, IntType, PointerType};
-use values::{AsValueRef, InstructionValue, IntValue, Value, MetadataValue};
+use crate::support::LLVMString;
+use crate::types::{AsTypeRef, IntType, PointerType};
+use crate::values::{AsValueRef, InstructionValue, IntValue, Value, MetadataValue};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct PointerValue {

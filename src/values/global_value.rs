@@ -6,12 +6,12 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::{CString, CStr};
 
-use {GlobalVisibility, ThreadLocalMode, DLLStorageClass};
-use support::LLVMString;
+use crate::{GlobalVisibility, ThreadLocalMode, DLLStorageClass};
+use crate::support::LLVMString;
 #[llvm_versions(7.0 => latest)]
-use comdat::Comdat;
-use values::traits::AsValueRef;
-use values::{BasicValueEnum, BasicValue, PointerValue, Value};
+use crate::comdat::Comdat;
+use crate::values::traits::AsValueRef;
+use crate::values::{BasicValueEnum, BasicValue, PointerValue, Value};
 
 // REVIEW: GlobalValues are always PointerValues. With SubTypes, we should
 // compress this into a PointerValue<Global> type

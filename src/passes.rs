@@ -8,11 +8,11 @@ use llvm_sys::transforms::scalar::{LLVMAddAggressiveDCEPass, LLVMAddMemCpyOptPas
 use llvm_sys::transforms::scalar::LLVMAddBitTrackingDCEPass;
 use llvm_sys::transforms::vectorize::{LLVMAddLoopVectorizePass, LLVMAddSLPVectorizePass};
 
-use OptimizationLevel;
-use module::Module;
+use crate::OptimizationLevel;
+use crate::module::Module;
 #[llvm_versions(3.6 => 3.8)]
-use targets::TargetData;
-use values::{AsValueRef, FunctionValue};
+use crate::targets::TargetData;
+use crate::values::{AsValueRef, FunctionValue};
 
 // REVIEW: Opt Level might be identical to targets::Option<CodeGenOptLevel>
 #[derive(Debug)]

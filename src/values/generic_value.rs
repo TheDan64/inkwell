@@ -1,7 +1,7 @@
 use libc::c_void;
 use llvm_sys::execution_engine::{LLVMCreateGenericValueOfPointer, LLVMDisposeGenericValue, LLVMGenericValueIntWidth, LLVMGenericValueRef, LLVMGenericValueToInt, LLVMGenericValueToFloat, LLVMGenericValueToPointer};
 
-use types::{AsTypeRef, FloatType};
+use crate::types::{AsTypeRef, FloatType};
 
 // SubTypes: GenericValue<IntValue, FloatValue, or PointerValue>
 #[derive(Debug)]

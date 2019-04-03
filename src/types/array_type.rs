@@ -1,12 +1,12 @@
 use llvm_sys::core::{LLVMConstArray, LLVMGetArrayLength};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
-use AddressSpace;
-use context::ContextRef;
-use support::LLVMString;
-use types::traits::AsTypeRef;
-use types::{Type, BasicTypeEnum, PointerType, FunctionType};
-use values::{AsValueRef, ArrayValue, IntValue};
+use crate::AddressSpace;
+use crate::context::ContextRef;
+use crate::support::LLVMString;
+use crate::types::traits::AsTypeRef;
+use crate::types::{Type, BasicTypeEnum, PointerType, FunctionType};
+use crate::values::{AsValueRef, ArrayValue, IntValue};
 
 /// An `ArrayType` is the type of contiguous constants or variables.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

@@ -5,10 +5,10 @@ authors = ["Daniel Kolsoi <thadan64@gmail.com>"]
 description = "Inkwell aims to help you pen your own programming languages by safely wrapping llvm-sys."
 repository = "https://github.com/TheDan64/inkwell"
 readme = "README.md"
-changelog = "CHANGELOG.md"
 keywords = ["llvm", "safe", "wrapper"]
 license = "Apache-2.0"
 categories = ["development-tools::ffi"]
+edition = "2018"
 
 [features]
 default = []

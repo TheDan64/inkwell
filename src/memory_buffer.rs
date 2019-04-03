@@ -2,8 +2,8 @@ use llvm_sys::core::{LLVMCreateMemoryBufferWithContentsOfFile, LLVMCreateMemoryB
 use llvm_sys::prelude::LLVMMemoryBufferRef;
 use llvm_sys::object::LLVMCreateObjectFile;
 
-use object_file::ObjectFile;
-use support::LLVMString;
+use crate::object_file::ObjectFile;
+use crate::support::LLVMString;
 
 use std::ffi::CString;
 use std::mem::{forget, zeroed};

@@ -4,10 +4,10 @@ use llvm_sys::prelude::LLVMValueRef;
 use std::ffi::CStr;
 use std::fmt;
 
-use support::LLVMString;
-use types::ArrayType;
-use values::traits::AsValueRef;
-use values::{Value, InstructionValue, MetadataValue};
+use crate::support::LLVMString;
+use crate::types::ArrayType;
+use crate::values::traits::AsValueRef;
+use crate::values::{Value, InstructionValue, MetadataValue};
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub struct ArrayValue {

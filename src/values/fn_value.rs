@@ -11,13 +11,13 @@ use std::mem::forget;
 use std::fmt;
 
 #[llvm_versions(3.9 => latest)]
-use attributes::Attribute;
-use basic_block::BasicBlock;
-use module::Linkage;
-use support::LLVMString;
-use types::{BasicTypeEnum, FunctionType};
-use values::traits::AsValueRef;
-use values::{BasicValueEnum, GlobalValue, Value, MetadataValue};
+use crate::attributes::Attribute;
+use crate::basic_block::BasicBlock;
+use crate::module::Linkage;
+use crate::support::LLVMString;
+use crate::types::{BasicTypeEnum, FunctionType};
+use crate::values::traits::AsValueRef;
+use crate::values::{BasicValueEnum, GlobalValue, Value, MetadataValue};
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub struct FunctionValue {

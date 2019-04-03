@@ -3,10 +3,10 @@ use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArray
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMTypeKind};
 
-use {AtomicOrdering, IntPredicate, FloatPredicate};
-use basic_block::BasicBlock;
-use values::{AggregateValue, AggregateValueEnum, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode, CallSiteValue};
-use types::{AsTypeRef, BasicType, IntMathType, FloatMathType, PointerType, PointerMathType};
+use crate::{AtomicOrdering, IntPredicate, FloatPredicate};
+use crate::basic_block::BasicBlock;
+use crate::values::{AggregateValue, AggregateValueEnum, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode, CallSiteValue};
+use crate::types::{AsTypeRef, BasicType, IntMathType, FloatMathType, PointerType, PointerMathType};
 
 use std::ffi::CString;
 
@@ -667,6 +667,11 @@ impl Builder {
     /// if the leftmost bit was one.
     ///
     /// ```rust,no_run
+    /// //fix doc error about overflowing_literals
+    /// //rendered rfc: https://github.com/rust-lang/rfcs/blob/master/text/2438-deny-integer-literal-overflow-lint.md
+    /// //tracking issue: https://github.com/rust-lang/rust/issues/54502
+    /// #![allow(overflowing_literals)]
+    ///
     /// // Logical Right Shift
     /// assert_eq!(0b1100_0000 >> 2, 0b0011_0000);
     /// assert_eq!(0b0000_0010 >> 1, 0b0000_0001);

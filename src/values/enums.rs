@@ -2,9 +2,9 @@ use llvm_sys::core::{LLVMTypeOf, LLVMGetTypeKind};
 use llvm_sys::LLVMTypeKind;
 use llvm_sys::prelude::LLVMValueRef;
 
-use types::{AnyTypeEnum, BasicTypeEnum};
-use values::traits::AsValueRef;
-use values::{IntValue, FunctionValue, PointerValue, VectorValue, ArrayValue, StructValue, FloatValue, PhiValue, InstructionValue, MetadataValue};
+use crate::types::{AnyTypeEnum, BasicTypeEnum};
+use crate::values::traits::AsValueRef;
+use crate::values::{IntValue, FunctionValue, PointerValue, VectorValue, ArrayValue, StructValue, FloatValue, PhiValue, InstructionValue, MetadataValue};
 
 macro_rules! enum_value_set {
     ($enum_name:ident: $($args:ident),*) => (

@@ -8,14 +8,14 @@ use llvm_sys::ir_reader::LLVMParseIRInContext;
 use libc::c_void;
 
 #[llvm_versions(4.0 => latest)]
-use attributes::Attribute;
-use basic_block::BasicBlock;
-use builder::Builder;
-use memory_buffer::MemoryBuffer;
-use module::Module;
-use support::LLVMString;
-use types::{BasicTypeEnum, FloatType, IntType, StructType, VoidType, AsTypeRef};
-use values::{AsValueRef, FunctionValue, StructValue, MetadataValue, BasicValueEnum, VectorValue};
+use crate::attributes::Attribute;
+use crate::basic_block::BasicBlock;
+use crate::builder::Builder;
+use crate::memory_buffer::MemoryBuffer;
+use crate::module::Module;
+use crate::support::LLVMString;
+use crate::types::{BasicTypeEnum, FloatType, IntType, StructType, VoidType, AsTypeRef};
+use crate::values::{AsValueRef, FunctionValue, StructValue, MetadataValue, BasicValueEnum, VectorValue};
 
 use std::ffi::CString;
 use std::mem::forget;

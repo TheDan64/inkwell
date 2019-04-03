@@ -4,11 +4,11 @@ use llvm_sys::prelude::LLVMTypeRef;
 use std::fmt;
 use std::mem::forget;
 
-use AddressSpace;
-use context::ContextRef;
-use support::LLVMString;
-use types::traits::AsTypeRef;
-use types::{PointerType, Type, BasicTypeEnum};
+use crate::AddressSpace;
+use crate::context::ContextRef;
+use crate::support::LLVMString;
+use crate::types::traits::AsTypeRef;
+use crate::types::{PointerType, Type, BasicTypeEnum};
 
 // REVIEW: Add a get_return_type() -> Option<BasicTypeEnum>?
 /// A `FunctionType` is the type of a function variable.

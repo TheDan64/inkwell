@@ -6,12 +6,12 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use std::ffi::CStr;
 use std::mem::forget;
 
-use AddressSpace;
-use context::ContextRef;
-use support::LLVMString;
-use types::traits::AsTypeRef;
-use types::{Type, BasicTypeEnum, ArrayType, PointerType, FunctionType, VectorType};
-use values::{ArrayValue, BasicValueEnum, StructValue, IntValue, AsValueRef};
+use crate::AddressSpace;
+use crate::context::ContextRef;
+use crate::support::LLVMString;
+use crate::types::traits::AsTypeRef;
+use crate::types::{Type, BasicTypeEnum, ArrayType, PointerType, FunctionType, VectorType};
+use crate::values::{ArrayValue, BasicValueEnum, StructValue, IntValue, AsValueRef};
 
 /// A `StructType` is the type of a heterogeneous container of types.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

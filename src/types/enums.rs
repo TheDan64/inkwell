@@ -2,8 +2,8 @@ use llvm_sys::core::LLVMGetTypeKind;
 use llvm_sys::LLVMTypeKind;
 use llvm_sys::prelude::LLVMTypeRef;
 
-use types::{IntType, VoidType, FunctionType, PointerType, VectorType, ArrayType, StructType, FloatType};
-use types::traits::AsTypeRef;
+use crate::types::{IntType, VoidType, FunctionType, PointerType, VectorType, ArrayType, StructType, FloatType};
+use crate::types::traits::AsTypeRef;
 
 macro_rules! enum_type_set {
     ($(#[$enum_attrs:meta])* $enum_name:ident: { $($(#[$variant_attrs:meta])* $args:ident,)+ }) => (

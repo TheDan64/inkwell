@@ -1,12 +1,12 @@
 use llvm_sys::core::{LLVMGetPointerAddressSpace, LLVMConstArray};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
-use AddressSpace;
-use context::ContextRef;
-use support::LLVMString;
-use types::traits::AsTypeRef;
-use types::{AnyTypeEnum, Type, BasicTypeEnum, ArrayType, FunctionType, VectorType};
-use values::{AsValueRef, ArrayValue, PointerValue, IntValue};
+use crate::AddressSpace;
+use crate::context::ContextRef;
+use crate::support::LLVMString;
+use crate::types::traits::AsTypeRef;
+use crate::types::{AnyTypeEnum, Type, BasicTypeEnum, ArrayType, FunctionType, VectorType};
+use crate::values::{AsValueRef, ArrayValue, PointerValue, IntValue};
 
 /// A `PointerType` is the type of a pointer constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

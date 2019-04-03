@@ -2,12 +2,12 @@ use llvm_sys::core::{LLVMConstReal, LLVMHalfType, LLVMFloatType, LLVMDoubleType,
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfFloat;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
-use AddressSpace;
-use context::ContextRef;
-use support::LLVMString;
-use types::traits::AsTypeRef;
-use types::{Type, PointerType, FunctionType, BasicTypeEnum, ArrayType, VectorType};
-use values::{AsValueRef, ArrayValue, FloatValue, GenericValue, IntValue};
+use crate::AddressSpace;
+use crate::context::ContextRef;
+use crate::support::LLVMString;
+use crate::types::traits::AsTypeRef;
+use crate::types::{Type, PointerType, FunctionType, BasicTypeEnum, ArrayType, VectorType};
+use crate::values::{AsValueRef, ArrayValue, FloatValue, GenericValue, IntValue};
 
 /// A `FloatType` is the type of a floating point constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

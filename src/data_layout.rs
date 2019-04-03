@@ -1,7 +1,7 @@
 use std::ffi::CStr;
 use std::fmt;
 
-use support::{LLVMString, LLVMStringOrRaw};
+use crate::support::{LLVMString, LLVMStringOrRaw};
 
 #[derive(Eq)]
 pub struct DataLayout {

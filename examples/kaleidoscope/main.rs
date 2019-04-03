@@ -30,7 +30,7 @@ use self::inkwell::types::BasicTypeEnum;
 use self::inkwell::values::{BasicValueEnum, FloatValue, FunctionValue, PointerValue};
 use self::inkwell::{OptimizationLevel, FloatPredicate};
 
-use Token::*;
+use crate::Token::*;
 
 const ANONYMOUS_FUNCTION_NAME: &str = "anonymous";
 
