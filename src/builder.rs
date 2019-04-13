@@ -73,9 +73,10 @@ impl Builder {
             Right(val) => {
                 // If using a pointer value, we must validate it's a valid function ptr
                 let value_ref = val.as_value_ref();
-
-                let is_a_fn_ptr = unsafe {
-                    LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(value_ref))) == LLVMTypeKind::LLVMFunctionTypeKind
+                let ty_kind = unsafe { LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(value_ref))) };
+                let is_a_fn_ptr = match ty_kind {
+                    LLVMTypeKind::LLVMFunctionTypeKind => true,
+                    _ => false,
                 };
 
                 // REVIEW: We should probably turn this into a Result?
