@@ -70,7 +70,19 @@ impl Builder {
     {
         let fn_val_ref = match function.into() {
             Left(val) => val.as_value_ref(),
-            Right(val) => val.as_value_ref(),
+            Right(val) => {
+                // If using a pointer value, we must validate it's a valid function ptr
+                let value_ref = val.as_value_ref();
+
+                let is_a_fn_ptr = unsafe {
+                    LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(value_ref))) == LLVMTypeKind::LLVMFunctionTypeKind
+                };
+
+                // REVIEW: We should probably turn this into a Result?
+                assert!(is_a_fn_ptr);
+
+                value_ref
+            },
         };
 
         // LLVM gets upset when void return calls are named because they don't return anything

@@ -1176,3 +1176,23 @@ fn test_function_value_to_global_to_pointer() {
     assert_eq!(*fn_ptr_value.get_name(), *CString::new("my_func").unwrap());
     assert!(module.verify().is_ok());
 }
+
+#[test]
+#[should_panic]
+fn test_non_fn_ptr_called() {
+    let context = Context::create();
+    let builder = context.create_builder();
+    let module = context.create_module("my_mod");
+    let void_type = context.void_type();
+    let void_ptr_type = void_type.ptr_type(AddressSpace::Generic);
+    let fn_type = void_type.fn_type(&[void_ptr_type.into()], false);
+    let fn_value = module.add_function("my_func", fn_type, None);
+    let bb = fn_value.append_basic_block("entry");
+    let void_ptr_param = fn_value .get_first_param().unwrap().into_pointer_value();
+
+    builder.position_at_end(&bb);
+    builder.build_call(void_ptr_param, &[], "call");
+    builder.build_return(None);
+
+    assert!(module.verify().is_ok());
+}
