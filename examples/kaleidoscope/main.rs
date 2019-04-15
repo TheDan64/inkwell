@@ -286,11 +286,11 @@ pub struct Prototype {
     pub prec: usize
 }
 
-/// Defines a user-defined function.
+/// Defines a user-defined or external function.
 #[derive(Debug)]
 pub struct Function {
     pub prototype: Prototype,
-    pub body: Expr,
+    pub body: Option<Expr>,
     pub is_anon: bool
 }
 
@@ -502,7 +502,7 @@ impl<'a> Parser<'a> {
         // Return new function
         Ok(Function {
             prototype: proto,
-            body: body,
+            body: Some(body),
             is_anon: false
         })
     }
@@ -515,10 +515,9 @@ impl<'a> Parser<'a> {
         // Parse signature of extern function
         let proto = self.parse_prototype()?;
 
-        // Return signature of extern function
         Ok(Function {
             prototype: proto,
-            body: Expr::Number(std::f64::NAN),
+            body: None,
             is_anon: false
         })
     }
@@ -820,8 +819,9 @@ impl<'a> Parser<'a> {
                         args: vec![],
                         is_op: false,
                         prec: 0
+
                     },
-                    body: expr,
+                    body: Some(expr),
                     is_anon: true
                 })
             },
@@ -1114,6 +1114,12 @@ impl<'a> Compiler<'a> {
     fn compile_fn(&mut self) -> Result<FunctionValue, &'static str> {
         let proto = &self.function.prototype;
         let function = self.compile_prototype(proto)?;
+
+        // got external function, returning only compiled prototype
+        if self.function.body.is_none() {
+            return Ok(function);
+        }
+
         let entry = self.context.append_basic_block(&function, "entry");
 
         self.builder.position_at_end(&entry);
@@ -1134,7 +1140,7 @@ impl<'a> Compiler<'a> {
         }
 
         // compile body
-        let body = self.compile_expr(&self.function.body)?;
+        let body = self.compile_expr(self.function.body.as_ref().unwrap())?;
 
         self.builder.build_return(Some(&body));
 
@@ -1183,23 +1189,23 @@ macro_rules! print_flush {
     };
 }
 
-// Greg <6A>: 2017-10-03
-// The two following functions are supposed to be found by the JIT
-// using the 'extern' keyword, but it currently does not work on my machine.
-// I tried using add_symbol, add_global_mapping, and simple extern declaration,
-// but nothing worked.
-// However, extern functions such as cos(x) and sin(x) can be imported without any problem.
-// Other lines related to this program can be found further down.
-
+#[no_mangle]
 pub extern fn putchard(x: f64) -> f64 {
     print_flush!("{}", x as u8 as char);
     x
 }
 
+#[no_mangle]
 pub extern fn printd(x: f64) -> f64 {
     println!("{}", x);
     x
+
 }
+
+// Adding the functions above to a global array,
+// so Rust compiler won't remove them.
+#[used]
+static EXTERNAL_FNS: [extern fn(f64) -> f64; 2] = [putchard, printd];
 
 /// Entry point of the program; acts as a REPL.
 pub fn main() {
