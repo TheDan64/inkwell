@@ -1188,11 +1188,35 @@ fn test_non_fn_ptr_called() {
     let fn_type = void_type.fn_type(&[void_ptr_type.into()], false);
     let fn_value = module.add_function("my_func", fn_type, None);
     let bb = fn_value.append_basic_block("entry");
-    let void_ptr_param = fn_value .get_first_param().unwrap().into_pointer_value();
+    let void_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
 
     builder.position_at_end(&bb);
     builder.build_call(void_ptr_param, &[], "call");
     builder.build_return(None);
+
+    assert!(module.verify().is_ok());
+}
+
+#[test]
+fn test_vectors() {
+    let context = Context::create();
+    let builder = context.create_builder();
+    let module = context.create_module("my_mod");
+    let i32_type = context.i32_type();
+    let i32_zero = i32_type.const_int(0, false);
+    let i32_seven = i32_type.const_int(7, false);
+    let vec_type = i32_type.vec_type(2);
+    let fn_type = i32_type.fn_type(&[vec_type.into()], false);
+    let fn_value = module.add_function("my_func", fn_type, None);
+    let bb = fn_value.append_basic_block("entry");
+    let vector_param = fn_value.get_first_param().unwrap().into_vector_value();
+
+    builder.position_at_end(&bb);
+    builder.build_insert_element(vector_param, i32_seven, i32_zero, "insert");
+
+    let extracted = builder.build_extract_element(vector_param, i32_zero, "extract");
+
+    builder.build_return(Some(&extracted));
 
     assert!(module.verify().is_ok());
 }

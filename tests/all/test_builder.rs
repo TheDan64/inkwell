@@ -625,9 +625,9 @@ fn test_insert_value() {
     let const_int3 = i32_type.const_int(6, false);
     let const_float = f32_type.const_float(3.14);
 
-    assert!(builder.build_insert_value(array, const_int1, 0, "insert").is_some());
-    assert!(builder.build_insert_value(array, const_int2, 1, "insert").is_some());
-    assert!(builder.build_insert_value(array, const_int3, 2, "insert").is_some());
+    assert!(builder.build_insert_value(array, const_int1, 0, "insert").unwrap().is_array_value());
+    assert!(builder.build_insert_value(array, const_int2, 1, "insert").unwrap().is_array_value());
+    assert!(builder.build_insert_value(array, const_int3, 2, "insert").unwrap().is_array_value());
     assert!(builder.build_insert_value(array, const_int3, 3, "insert").is_none());
     assert!(builder.build_insert_value(array, const_int3, 4, "insert").is_none());
 
@@ -639,8 +639,8 @@ fn test_insert_value() {
     let struct_alloca = builder.build_alloca(struct_type, "struct_alloca");
     let struct_value = builder.build_load(struct_alloca, "struct_load").into_struct_value();
 
-    assert!(builder.build_insert_value(struct_value, const_int2, 0, "insert").is_some());
-    assert!(builder.build_insert_value(struct_value, const_float, 1, "insert").is_some());
+    assert!(builder.build_insert_value(struct_value, const_int2, 0, "insert").unwrap().is_struct_value());
+    assert!(builder.build_insert_value(struct_value, const_float, 1, "insert").unwrap().is_struct_value());
     assert!(builder.build_insert_value(struct_value, const_float, 2, "insert").is_none());
     assert!(builder.build_insert_value(struct_value, const_float, 3, "insert").is_none());
 

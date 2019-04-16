@@ -80,7 +80,7 @@ impl Builder {
                 };
 
                 // REVIEW: We should probably turn this into a Result?
-                assert!(is_a_fn_ptr);
+                assert!(is_a_fn_ptr, "build_call called with a pointer which is not a function pointer");
 
                 value_ref
             },
@@ -1052,7 +1052,7 @@ impl Builder {
     }
 
     /// Builds an insert value instruction which inserts a `BasicValue` into a struct
-    /// or array.
+    /// or array and returns the resulting aggregate value.
     ///
     /// # Example
     ///
@@ -1084,7 +1084,7 @@ impl Builder {
     /// assert!(builder.build_insert_value(array, const_int3, 2, "insert").is_some());
     /// assert!(builder.build_insert_value(array, const_int3, 3, "insert").is_none());
     /// ```
-    pub fn build_insert_value<AV, BV>(&self, agg: AV, value: BV, index: u32, name: &str) -> Option<InstructionValue>
+    pub fn build_insert_value<AV, BV>(&self, agg: AV, value: BV, index: u32, name: &str) -> Option<AggregateValueEnum>
     where
         AV: AggregateValue,
         BV: BasicValue,
@@ -1104,9 +1104,33 @@ impl Builder {
             LLVMBuildInsertValue(self.builder, agg.as_value_ref(), value.as_value_ref(), index, c_string.as_ptr())
         };
 
-        Some(InstructionValue::new(value))
+        Some(AggregateValueEnum::new(value))
     }
 
+    /// Builds an extract element instruction which extracts a `BasicValueEnum`
+    /// from a vector.
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("av");
+    /// let i32_type = context.i32_type();
+    /// let i32_zero = i32_type.const_int(0, false);
+    /// let vec_type = i32_type.vec_type(2);
+    /// let fn_type = i32_type.fn_type(&[vec_type.into()], false);
+    /// let fn_value = module.add_function("vec_fn", fn_type, None);
+    /// let builder = context.create_builder();
+    /// let entry = fn_value.append_basic_block("entry");
+    /// let vector_param = fn_value.get_first_param().unwrap().into_vector_value();
+    ///
+    /// builder.position_at_end(&entry);
+    ///
+    /// let extracted = builder.build_extract_element(vector_param, i32_zero, "insert");
+    ///
+    /// builder.build_return(Some(&extracted));
+    /// ```
     pub fn build_extract_element(&self, vector: VectorValue, index: IntValue, name: &str) -> BasicValueEnum {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -1117,14 +1141,39 @@ impl Builder {
         BasicValueEnum::new(value)
     }
 
-    pub fn build_insert_element<V: BasicValue>(&self, vector: VectorValue, element: V, index: IntValue, name: &str) -> BasicValueEnum {
+    /// Builds an insert element instruction which inserts a `BasicValue` into a vector
+    /// and returns the resulting vector.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("av");
+    /// let void_type = context.void_type();
+    /// let i32_type = context.i32_type();
+    /// let i32_zero = i32_type.const_int(0, false);
+    /// let i32_seven = i32_type.const_int(7, false);
+    /// let vec_type = i32_type.vec_type(2);
+    /// let fn_type = void_type.fn_type(&[vec_type.into()], false);
+    /// let fn_value = module.add_function("vec_fn", fn_type, None);
+    /// let builder = context.create_builder();
+    /// let entry = fn_value.append_basic_block("entry");
+    /// let vector_param = fn_value.get_first_param().unwrap().into_vector_value();
+    ///
+    /// builder.position_at_end(&entry);
+    /// builder.build_insert_element(vector_param, i32_seven, i32_zero, "insert");
+    /// builder.build_return(None);
+    /// ```
+    pub fn build_insert_element<V: BasicValue>(&self, vector: VectorValue, element: V, index: IntValue, name: &str) -> VectorValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildInsertElement(self.builder, vector.as_value_ref(), element.as_value_ref(), index.as_value_ref(), c_string.as_ptr())
         };
 
-        BasicValueEnum::new(value)
+        VectorValue::new(value)
     }
 
     pub fn build_unreachable(&self) -> InstructionValue {
