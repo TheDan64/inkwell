@@ -430,12 +430,12 @@ fn test_linking_modules() {
 
 #[test]
 fn test_metadata_flags() {
-    let context = Context::create();
-    let module = context.create_module("my_module");
-
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
                   feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     {
+        let context = Context::create();
+        let module = context.create_module("my_module");
+
         use self::inkwell::module::FlagBehavior;
         use self::inkwell::values::MetadataValue;
 
