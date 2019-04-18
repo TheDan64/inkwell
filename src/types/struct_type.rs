@@ -226,7 +226,7 @@ impl StructType {
         self.struct_type.get_context()
     }
 
-    /// Determines whether or not a `StructType` is opaque.
+    /// Gets this `StructType`'s name.
     ///
     /// # Example
     ///
