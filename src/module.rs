@@ -428,6 +428,11 @@ impl Module {
                 LLVMString::create(err_string.as_ptr() as *const i8)
             })?;
 
+        if self.owned_by_ee.borrow().is_some() {
+            let string = "This module is already owned by an ExecutionEngine.\0";
+            return Err(LLVMString::create(string.as_ptr() as *const _));
+        }
+
         let mut execution_engine = unsafe { zeroed() };
         let mut err_string = unsafe { zeroed() };
         let code = unsafe {
@@ -470,6 +475,11 @@ impl Module {
 
                 LLVMString::create(err_string.as_ptr() as *const i8)
             })?;
+
+        if self.owned_by_ee.borrow().is_some() {
+            let string = "This module is already owned by an ExecutionEngine.\0";
+            return Err(LLVMString::create(string.as_ptr() as *const _));
+        }
 
         let mut execution_engine = unsafe { zeroed() };
         let mut err_string = unsafe { zeroed() };
@@ -515,6 +525,11 @@ impl Module {
 
                 LLVMString::create(err_string.as_ptr() as *const i8)
             })?;
+
+        if self.owned_by_ee.borrow().is_some() {
+            let string = "This module is already owned by an ExecutionEngine.\0";
+            return Err(LLVMString::create(string.as_ptr() as *const _));
+        }
 
         let mut execution_engine = unsafe { zeroed() };
         let mut err_string = unsafe { zeroed() };

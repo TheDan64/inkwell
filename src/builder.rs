@@ -1294,7 +1294,7 @@ impl Builder {
         GlobalValue::new(value)
     }
 
-    // REVIEW: Do we need to constain types here? subtypes?
+    // REVIEW: Do we need to constrain types here? subtypes?
     pub fn build_shuffle_vector(&self, left: VectorValue, right: VectorValue, mask: VectorValue, name: &str) -> VectorValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
         let value = unsafe {

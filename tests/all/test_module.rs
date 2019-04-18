@@ -467,3 +467,33 @@ fn test_metadata_flags() {
         assert!(module.verify().is_ok());
     }
 }
+
+#[test]
+fn test_double_ee_from_same_module() {
+    let context = Context::create();
+    let module = context.create_module("mod");
+    let void_type = context.void_type();
+    let builder = context.create_builder();
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_val = module.add_function("f", fn_type, None);
+    let basic_block = fn_val.append_basic_block("entry");
+
+    builder.position_at_end(&basic_block);
+    builder.build_return(None);
+
+    module.create_execution_engine().expect("Could not create Execution Engine");
+
+    assert!(module.create_execution_engine().is_err());
+
+    let module2 = module.clone();
+
+    module2.create_jit_execution_engine(OptimizationLevel::None).expect("Could not create Execution Engine");
+
+    assert!(module.create_jit_execution_engine(OptimizationLevel::None).is_err());
+
+    let module3 = module.clone();
+
+    module3.create_interpreter_execution_engine().expect("Could not create Execution Engine");
+
+    assert!(module.create_interpreter_execution_engine().is_err());
+}
