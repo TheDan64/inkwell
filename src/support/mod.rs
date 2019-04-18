@@ -32,12 +32,12 @@ impl LLVMString {
         (*self).to_string_lossy().into_owned()
     }
 
-    /// Don't use this if it's not necessary. You likely need to allocate
-    /// a CString as input and then LLVM will likely allocate their own string
-    /// anyway.
-    pub(crate) fn create(bytes: *const c_char) -> LLVMString {
+    /// This method will allocate a c string through LLVM
+    pub(crate) fn create(string: &str) -> LLVMString {
+        debug_assert_eq!(string.as_bytes()[string.as_bytes().len() - 1], 0);
+
         let ptr = unsafe {
-            LLVMCreateMessage(bytes)
+            LLVMCreateMessage(string.as_ptr() as *const _)
         };
 
         LLVMString::new(ptr)
