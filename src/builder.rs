@@ -41,10 +41,30 @@ impl Builder {
         Builder::new(builder)
     }
 
-    // REVIEW: Would probably make this API a bit simpler by taking Into<Option<impl BasicValue>>
-    // So that you could just do build_return(value) or build_return(None)
-    // Is that frowned upon?
-    // TODO: Option<impl BasicValue>
+    // REVIEW: Would probably make this API a bit simpler by taking Into<Option<&BasicValue>>
+    // So that you could just do build_return(&value) or build_return(None). Is that frowned upon?
+    /// Builds a function return instruction. It should be provided with `None` if the return type
+    /// is void otherwise `Some(&value)` should be provided.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// // A simple function which returns its argument:
+    /// let context = Context::create();
+    /// let module = context.create_module("ret");
+    /// let builder = context.create_builder();
+    /// let i32_type = context.i32_type();
+    /// let arg_types = [i32_type.into()];
+    /// let fn_type = i32_type.fn_type(&arg_types, false);
+    /// let fn_value = module.add_function("ret", fn_type, None);
+    /// let entry = fn_value.append_basic_block("entry");
+    /// let i32_arg = fn_value.get_first_param().unwrap();
+    ///
+    /// builder.position_at_end(&entry);
+    /// builder.build_return(Some(&i32_arg));
+    /// ```
     pub fn build_return(&self, value: Option<&BasicValue>) -> InstructionValue {
         let value = unsafe {
             value.map_or_else(|| LLVMBuildRetVoid(self.builder), |value| LLVMBuildRet(self.builder, value.as_value_ref()))
