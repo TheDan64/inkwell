@@ -215,6 +215,31 @@ impl Builder {
         PointerValue::new(value)
     }
 
+    /// Builds an instruction which calculates the difference of two pointers.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::AddressSpace;
+    ///
+    /// // Builds a function which diffs two pointers
+    /// let context = Context::create();
+    /// let module = context.create_module("ret");
+    /// let builder = context.create_builder();
+    /// let void_type = context.void_type();
+    /// let i32_type = context.i32_type();
+    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Generic);
+    /// let fn_type = void_type.fn_type(&[i32_ptr_type.into(), i32_ptr_type.into()], false);
+    /// let fn_value = module.add_function("ret", fn_type, None);
+    /// let entry = fn_value.append_basic_block("entry");
+    /// let i32_ptr_param1 = fn_value.get_first_param().unwrap().into_pointer_value();
+    /// let i32_ptr_param2 = fn_value.get_nth_param(1).unwrap().into_pointer_value();
+    ///
+    /// builder.position_at_end(&entry);
+    /// builder.build_ptr_diff(i32_ptr_param1, i32_ptr_param2, "diff");
+    /// builder.build_return(None);
+    /// ```
     pub fn build_ptr_diff(&self, lhs_ptr: PointerValue, rhs_ptr: PointerValue, name: &str) -> IntValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
@@ -240,6 +265,31 @@ impl Builder {
         PhiValue::new(value)
     }
 
+    /// Builds a store instruction. It allows you to store a value of type `T` in a pointer to a type `T`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::AddressSpace;
+    ///
+    /// // Builds a function which takes an i32 pointer and stores a 7 in it.
+    /// let context = Context::create();
+    /// let module = context.create_module("ret");
+    /// let builder = context.create_builder();
+    /// let void_type = context.void_type();
+    /// let i32_type = context.i32_type();
+    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Generic);
+    /// let i32_seven = i32_type.const_int(7, false);
+    /// let fn_type = void_type.fn_type(&[i32_ptr_type.into()], false);
+    /// let fn_value = module.add_function("ret", fn_type, None);
+    /// let entry = fn_value.append_basic_block("entry");
+    /// let i32_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
+    ///
+    /// builder.position_at_end(&entry);
+    /// builder.build_store(i32_ptr_param, i32_seven);
+    /// builder.build_return(None);
+    /// ```
     pub fn build_store<V: BasicValue>(&self, ptr: PointerValue, value: V) -> InstructionValue {
         let value = unsafe {
             LLVMBuildStore(self.builder, value.as_value_ref(), ptr.as_value_ref())
@@ -248,6 +298,31 @@ impl Builder {
         InstructionValue::new(value)
     }
 
+    /// Builds a load instruction. It allows you to retrieve a value of type `T` from a pointer to a type `T`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::AddressSpace;
+    ///
+    /// // Builds a function which takes an i32 pointer and returns the pointed at i32.
+    /// let context = Context::create();
+    /// let module = context.create_module("ret");
+    /// let builder = context.create_builder();
+    /// let i32_type = context.i32_type();
+    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Generic);
+    /// let fn_type = i32_type.fn_type(&[i32_ptr_type.into()], false);
+    /// let fn_value = module.add_function("ret", fn_type, None);
+    /// let entry = fn_value.append_basic_block("entry");
+    /// let i32_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
+    ///
+    /// builder.position_at_end(&entry);
+    ///
+    /// let pointee = builder.build_load(i32_ptr_param, "load");
+    ///
+    /// builder.build_return(Some(&pointee));
+    /// ```
     pub fn build_load(&self, ptr: PointerValue, name: &str) -> BasicValueEnum {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
