@@ -1220,3 +1220,22 @@ fn test_vectors() {
 
     assert!(module.verify().is_ok());
 }
+
+#[test]
+fn test_aggregate_returns() {
+    let context = Context::create();
+    let builder = context.create_builder();
+    let module = context.create_module("my_mod");
+    let i32_type = context.i32_type();
+    let i32_three = i32_type.const_int(3, false);
+    let i32_seven = i32_type.const_int(7, false);
+    let struct_type = context.struct_type(&[i32_type.into(), i32_type.into()], false);
+    let fn_type = struct_type.fn_type(&[], false);
+    let fn_value = module.add_function("my_func", fn_type, None);
+    let bb = fn_value.append_basic_block("entry");
+
+    builder.position_at_end(&bb);
+    builder.build_aggregate_return(&[i32_three.into(), i32_seven.into()]);
+
+    assert!(module.verify().is_ok());
+}

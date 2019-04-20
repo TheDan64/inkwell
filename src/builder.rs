@@ -73,6 +73,29 @@ impl Builder {
         InstructionValue::new(value)
     }
 
+    /// Builds a function return instruction for a return type which is an aggregate type (ie structs and arrays).
+    /// It is not necessary to use this over `build_return` but may be more convenient to use.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// // This builds a simple function which returns a struct (tuple) of two ints.
+    /// let context = Context::create();
+    /// let module = context.create_module("ret");
+    /// let builder = context.create_builder();
+    /// let i32_type = context.i32_type();
+    /// let i32_three = i32_type.const_int(3, false);
+    /// let i32_seven = i32_type.const_int(7, false);
+    /// let struct_type = context.struct_type(&[i32_type.into(), i32_type.into()], false);
+    /// let fn_type = struct_type.fn_type(&[], false);
+    /// let fn_value = module.add_function("ret", fn_type, None);
+    /// let entry = fn_value.append_basic_block("entry");
+    ///
+    /// builder.position_at_end(&entry);
+    /// builder.build_aggregate_return(&[i32_three.into(), i32_seven.into()]);
+    /// ```
     pub fn build_aggregate_return(&self, values: &[BasicValueEnum]) -> InstructionValue {
         let mut args: Vec<LLVMValueRef> = values.iter()
                                                 .map(|val| val.as_value_ref())
@@ -84,6 +107,34 @@ impl Builder {
         InstructionValue::new(value)
     }
 
+    /// Builds a function call instruction. It can take either a `FunctionValue` or a `PointerValue`
+    /// which is a function pointer. It will panic if the `PointerValue` is not a function pointer.
+    /// This may be turned into a Result in the future, however.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// // A simple function which calls itself:
+    /// let context = Context::create();
+    /// let module = context.create_module("ret");
+    /// let builder = context.create_builder();
+    /// let i32_type = context.i32_type();
+    /// let fn_type = i32_type.fn_type(&[i32_type.into()], false);
+    /// let fn_value = module.add_function("ret", fn_type, None);
+    /// let entry = fn_value.append_basic_block("entry");
+    /// let i32_arg = fn_value.get_first_param().unwrap();
+    ///
+    /// builder.position_at_end(&entry);
+    ///
+    /// let ret_val = builder.build_call(fn_value, &[i32_arg], "call")
+    ///     .try_as_basic_value()
+    ///     .left()
+    ///     .unwrap();
+    ///
+    /// builder.build_return(Some(&ret_val));
+    /// ```
     pub fn build_call<F>(&self, function: F, args: &[BasicValueEnum], name: &str) -> CallSiteValue
     where
         F: Into<FunctionOrPointerValue>,
@@ -1327,7 +1378,7 @@ impl Builder {
     // REVIEW: Is return type correct?
     // SubTypes: I think this should be type: BT -> BT::Value
     // https://llvm.org/docs/LangRef.html#i-va-arg
-    pub fn build_va_arg<BT: BasicType>(&self, list: PointerValue, type_: BT , name: &str) -> BasicValueEnum {
+    pub fn build_va_arg<BT: BasicType>(&self, list: PointerValue, type_: BT, name: &str) -> BasicValueEnum {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
