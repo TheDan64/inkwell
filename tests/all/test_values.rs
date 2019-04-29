@@ -815,6 +815,7 @@ fn test_globals() {
     assert_eq!(global.get_section(), &*CString::new("").unwrap());
     assert_eq!(global.get_dll_storage_class(), DLLStorageClass::default());
     assert_eq!(global.get_visibility(), GlobalVisibility::default());
+    assert_eq!(global.get_linkage(), External);
     assert_eq!(module.get_first_global().unwrap(), global);
     assert_eq!(module.get_last_global().unwrap(), global);
     assert_eq!(module.get_global("my_global").unwrap(), global);
@@ -843,6 +844,12 @@ fn test_globals() {
     assert!(global.is_constant());
     assert!(!global.is_declaration());
     assert_eq!(global.get_section(), &*CString::new("not sure what goes here").unwrap());
+
+    global.set_linkage(Private);
+
+    assert_eq!(global.get_linkage(), Private);
+    // Setting linkage seems to reset visibility
+    assert_eq!(global.get_visibility(), GlobalVisibility::Default);
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
                   feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]

@@ -1,5 +1,5 @@
 use llvm_sys::LLVMThreadLocalMode;
-use llvm_sys::core::{LLVMGetVisibility, LLVMSetVisibility, LLVMGetSection, LLVMSetSection, LLVMIsExternallyInitialized, LLVMSetExternallyInitialized, LLVMDeleteGlobal, LLVMIsGlobalConstant, LLVMSetGlobalConstant, LLVMGetPreviousGlobal, LLVMGetNextGlobal, LLVMHasUnnamedAddr, LLVMSetUnnamedAddr, LLVMIsThreadLocal, LLVMSetThreadLocal, LLVMGetThreadLocalMode, LLVMSetThreadLocalMode, LLVMGetInitializer, LLVMSetInitializer, LLVMIsDeclaration, LLVMGetDLLStorageClass, LLVMSetDLLStorageClass, LLVMGetAlignment, LLVMSetAlignment};
+use llvm_sys::core::{LLVMGetVisibility, LLVMSetVisibility, LLVMGetSection, LLVMSetSection, LLVMIsExternallyInitialized, LLVMSetExternallyInitialized, LLVMDeleteGlobal, LLVMIsGlobalConstant, LLVMSetGlobalConstant, LLVMGetPreviousGlobal, LLVMGetNextGlobal, LLVMHasUnnamedAddr, LLVMSetUnnamedAddr, LLVMIsThreadLocal, LLVMSetThreadLocal, LLVMGetThreadLocalMode, LLVMSetThreadLocalMode, LLVMGetInitializer, LLVMSetInitializer, LLVMIsDeclaration, LLVMGetDLLStorageClass, LLVMSetDLLStorageClass, LLVMGetAlignment, LLVMSetAlignment, LLVMGetLinkage, LLVMSetLinkage};
 #[llvm_versions(7.0 => latest)]
 use llvm_sys::LLVMUnnamedAddr;
 use llvm_sys::prelude::LLVMValueRef;
@@ -7,6 +7,7 @@ use llvm_sys::prelude::LLVMValueRef;
 use std::ffi::{CString, CStr};
 
 use crate::{GlobalVisibility, ThreadLocalMode, DLLStorageClass};
+use crate::module::Linkage;
 use crate::support::LLVMString;
 #[llvm_versions(7.0 => latest)]
 use crate::comdat::Comdat;
@@ -274,6 +275,20 @@ impl GlobalValue {
 
         unsafe {
             LLVMSetUnnamedAddress(self.as_value_ref(), address.as_llvm_enum())
+        }
+    }
+
+    pub fn get_linkage(&self) -> Linkage {
+        let linkage = unsafe {
+            LLVMGetLinkage(self.as_value_ref())
+        };
+
+        Linkage::new(linkage)
+    }
+
+    pub fn set_linkage(&self, linkage: Linkage) {
+        unsafe {
+            LLVMSetLinkage(self.as_value_ref(), linkage.as_llvm_enum())
         }
     }
 
