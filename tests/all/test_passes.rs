@@ -131,8 +131,7 @@ fn test_pass_manager_builder() {
 
     let module2 = module.clone();
 
-    // TODOC: Seems to return true in 3.7, 6.0, & 7.0 even though no changes were made.
-    // In 3.6, 3.8, & 3.9 it returns false. Seems like a LLVM bug?
+    // TODOC: In 3.6, 3.8, & 3.9 it returns false. Seems like a LLVM bug?
     #[cfg(not(any(feature = "llvm3-7", feature = "llvm6-0", feature = "llvm7-0")))]
     assert!(!module_pass_manager.run_on(&module));
     #[cfg(any(feature = "llvm3-7", feature = "llvm6-0", feature = "llvm7-0"))]
@@ -142,10 +141,6 @@ fn test_pass_manager_builder() {
 
     pass_manager_builder.populate_lto_pass_manager(&lto_pass_manager, false, false);
 
-    // See above note on version differences
-    #[cfg(not(any(feature = "llvm3-7", feature = "llvm6-0", feature = "llvm7-0")))]
-    assert!(!lto_pass_manager.run_on(&module2));
-    #[cfg(any(feature = "llvm3-7", feature = "llvm6-0", feature = "llvm7-0"))]
     assert!(lto_pass_manager.run_on(&module2));
 }
 

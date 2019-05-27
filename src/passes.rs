@@ -234,8 +234,8 @@ impl<T: PassManagerSubType> PassManager<T> {
         }
     }
 
-    /// This method returns true if any of the passes modified the module and
-    /// false otherwise.
+    /// This method returns true if any of the passes modified the function or module
+    /// and false otherwise.
     pub fn run_on(&self, input: &T) -> bool {
         unsafe {
             input.run_in_pass_manager(self)
