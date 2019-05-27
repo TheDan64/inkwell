@@ -1,14 +1,14 @@
 extern crate inkwell;
 
+use self::inkwell::OptimizationLevel::Aggressive;
 use self::inkwell::context::Context;
 use self::inkwell::passes::{PassManagerBuilder, PassManager, PassRegistry};
-use self::inkwell::OptimizationLevel::Aggressive;
 
 #[test]
 fn test_init_all_passes_for_module() {
     let context = Context::create();
     let module = context.create_module("my_module");
-    let pass_manager = PassManager::create_for_module();
+    let pass_manager = PassManager::create(());
 
     pass_manager.add_argument_promotion_pass();
     pass_manager.add_constant_merge_pass();
@@ -85,7 +85,7 @@ fn test_init_all_passes_for_module() {
     assert!(!pass_manager.initialize());
     assert!(!pass_manager.finalize());
 
-    pass_manager.run_on_module(&module);
+    pass_manager.run_on(&module);
 
     assert!(!pass_manager.initialize());
     assert!(!pass_manager.finalize());
@@ -107,7 +107,7 @@ fn test_pass_manager_builder() {
     let context = Context::create();
     let module = context.create_module("my_module");
 
-    let fn_pass_manager = PassManager::create_for_function(&module);
+    let fn_pass_manager = PassManager::create(&module);
 
     pass_manager_builder.populate_function_pass_manager(&fn_pass_manager);
 
@@ -123,20 +123,30 @@ fn test_pass_manager_builder() {
     // TODO: Test with actual changes? Would be true in that case
     // REVIEW: Segfaults in 4.0
     #[cfg(not(feature = "llvm4-0"))]
-    assert!(!fn_pass_manager.run_on_function(&fn_value));
+    assert!(!fn_pass_manager.run_on(&fn_value));
 
-    let module_pass_manager = PassManager::create_for_module();
+    let module_pass_manager = PassManager::create(());
 
     pass_manager_builder.populate_module_pass_manager(&module_pass_manager);
+
+    let module2 = module.clone();
 
     // TODOC: Seems to return true in 3.7, 6.0, & 7.0 even though no changes were made.
     // In 3.6, 3.8, & 3.9 it returns false. Seems like a LLVM bug?
     #[cfg(not(any(feature = "llvm3-7", feature = "llvm6-0", feature = "llvm7-0")))]
-    assert!(!module_pass_manager.run_on_module(&module));
+    assert!(!module_pass_manager.run_on(&module));
     #[cfg(any(feature = "llvm3-7", feature = "llvm6-0", feature = "llvm7-0"))]
-    assert!(module_pass_manager.run_on_module(&module));
+    assert!(module_pass_manager.run_on(&module));
 
-    // TODO: Populate LTO pass manager?
+    let lto_pass_manager = PassManager::create(());
+
+    pass_manager_builder.populate_lto_pass_manager(&lto_pass_manager, false, false);
+
+    // See above note on version differences
+    #[cfg(not(any(feature = "llvm3-7", feature = "llvm6-0", feature = "llvm7-0")))]
+    assert!(!lto_pass_manager.run_on(&module2));
+    #[cfg(any(feature = "llvm3-7", feature = "llvm6-0", feature = "llvm7-0"))]
+    assert!(lto_pass_manager.run_on(&module2));
 }
 
 #[test]

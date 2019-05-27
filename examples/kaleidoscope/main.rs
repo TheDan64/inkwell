@@ -840,7 +840,7 @@ impl<'a> Parser<'a> {
 pub struct Compiler<'a> {
     pub context: &'a Context,
     pub builder: &'a Builder,
-    pub fpm: &'a PassManager,
+    pub fpm: &'a PassManager<FunctionValue>,
     pub module: &'a Module,
     pub function: &'a Function,
 
@@ -1146,7 +1146,7 @@ impl<'a> Compiler<'a> {
 
         // return the whole thing after verification and optimization
         if function.verify(true) {
-            self.fpm.run_on_function(&function);
+            self.fpm.run_on(&function);
 
             Ok(function)
         } else {
@@ -1159,7 +1159,7 @@ impl<'a> Compiler<'a> {
     }
 
     /// Compiles the specified `Function` in the given `Context` and using the specified `Builder`, `PassManager`, and `Module`.
-    pub fn compile(context: &'a Context, builder: &'a Builder, pass_manager: &'a PassManager, module: &'a Module, function: &Function) -> Result<FunctionValue, &'static str> {
+    pub fn compile(context: &'a Context, builder: &'a Builder, pass_manager: &'a PassManager<FunctionValue>, module: &'a Module, function: &Function) -> Result<FunctionValue, &'static str> {
         let mut compiler = Compiler {
             context: context,
             builder: builder,
@@ -1228,7 +1228,7 @@ pub fn main() {
     let builder = context.create_builder();
 
     // Create FPM
-    let fpm = PassManager::create_for_function(&module);
+    let fpm = PassManager::create(&module);
 
     fpm.add_instruction_combining_pass();
     fpm.add_reassociate_pass();

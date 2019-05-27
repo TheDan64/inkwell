@@ -14,6 +14,9 @@ use crate::module::Module;
 use crate::targets::TargetData;
 use crate::values::{AsValueRef, FunctionValue};
 
+use std::borrow::Borrow;
+use std::marker::PhantomData;
+
 // REVIEW: Opt Level might be identical to targets::Option<CodeGenOptLevel>
 #[derive(Debug)]
 pub struct PassManagerBuilder {
@@ -74,22 +77,72 @@ impl PassManagerBuilder {
         }
     }
 
-    // SubType: pass_manager: &PassManager<FunctionValue>
-    pub fn populate_function_pass_manager(&self, pass_manager: &PassManager) {
+    /// Populates a PassManager<FunctionValue> with the expectation of function
+    /// transformations.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use inkwell::OptimizationLevel::Aggressive;
+    /// use inkwell::module::Module;
+    /// use inkwell::passes::{PassManager, PassManagerBuilder};
+    ///
+    /// let module = Module::create("mod");
+    /// let pass_manager_builder = PassManagerBuilder::create();
+    ///
+    /// pass_manager_builder.set_optimization_level(Aggressive);
+    ///
+    /// let fpm = PassManager::create(&module);
+    ///
+    /// pass_manager_builder.populate_function_pass_manager(&fpm);
+    /// ```
+    pub fn populate_function_pass_manager(&self, pass_manager: &PassManager<FunctionValue>) {
         unsafe {
             LLVMPassManagerBuilderPopulateFunctionPassManager(self.pass_manager_builder, pass_manager.pass_manager)
         }
     }
 
-    // SubType: pass_manager: &PassManager<Module>
-    pub fn populate_module_pass_manager(&self, pass_manager: &PassManager) {
+    /// Populates a PassManager<Module> with the expectation of whole module
+    /// transformations.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use inkwell::OptimizationLevel::Aggressive;
+    /// use inkwell::passes::{PassManager, PassManagerBuilder};
+    ///
+    /// let pass_manager_builder = PassManagerBuilder::create();
+    ///
+    /// pass_manager_builder.set_optimization_level(Aggressive);
+    ///
+    /// let fpm = PassManager::create(());
+    ///
+    /// pass_manager_builder.populate_module_pass_manager(&fpm);
+    /// ```
+    pub fn populate_module_pass_manager(&self, pass_manager: &PassManager<Module>) {
         unsafe {
             LLVMPassManagerBuilderPopulateModulePassManager(self.pass_manager_builder, pass_manager.pass_manager)
         }
     }
 
-    // SubType: Need LTO subtype?
-    pub fn populate_lto_pass_manager(&self, pass_manager: &PassManager, internalize: bool, run_inliner: bool) {
+    /// Populates a PassManager<Module> with the expectation of link time
+    /// optimization transformations.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use inkwell::OptimizationLevel::Aggressive;
+    /// use inkwell::passes::{PassManager, PassManagerBuilder};
+    ///
+    /// let pass_manager_builder = PassManagerBuilder::create();
+    ///
+    /// pass_manager_builder.set_optimization_level(Aggressive);
+    ///
+    /// let lpm = PassManager::create(());
+    ///
+    /// pass_manager_builder.populate_lto_pass_manager(&lpm, false, false);
+    /// ```
+    pub fn populate_lto_pass_manager(&self, pass_manager: &PassManager<Module>, internalize: bool, run_inliner: bool) {
         unsafe {
             LLVMPassManagerBuilderPopulateLTOPassManager(self.pass_manager_builder, pass_manager.pass_manager, internalize as i32, run_inliner as i32)
         }
@@ -104,37 +157,65 @@ impl Drop for PassManagerBuilder {
     }
 }
 
+// This is an ugly privacy hack so that PassManagerSubType can stay private
+// to this module and so that super traits using this trait will be not be
+// implementable outside this library
+pub trait PassManagerSubType {
+    type Input;
+
+    unsafe fn create<I: Borrow<Self::Input>>(input: I) -> LLVMPassManagerRef;
+    unsafe fn run_in_pass_manager(&self, pass_manager: &PassManager<Self>) -> bool where Self: Sized;
+}
+
+impl PassManagerSubType for Module {
+    type Input = ();
+
+    unsafe fn create<I: Borrow<Self::Input>>(_: I) -> LLVMPassManagerRef {
+        LLVMCreatePassManager()
+    }
+
+    unsafe fn run_in_pass_manager(&self, pass_manager: &PassManager<Self>) -> bool {
+        LLVMRunPassManager(pass_manager.pass_manager, self.module.get()) == 1
+    }
+}
+
+// With GATs https://github.com/rust-lang/rust/issues/44265 this could be
+// type Input<'a> = &'a Module;
+impl PassManagerSubType for FunctionValue {
+    type Input = Module;
+
+    unsafe fn create<I: Borrow<Self::Input>>(input: I) -> LLVMPassManagerRef {
+        LLVMCreateFunctionPassManagerForModule(input.borrow().module.get())
+    }
+
+    unsafe fn run_in_pass_manager(&self, pass_manager: &PassManager<Self>) -> bool {
+        LLVMRunFunctionPassManager(pass_manager.pass_manager, self.as_value_ref()) == 1
+    }
+}
+
 // SubTypes: PassManager<Module>, PassManager<FunctionValue>
 /// A manager for running optimization and simplification passes. Much of the
 /// documenation for specific passes is directly from the [LLVM
 /// documentation](https://llvm.org/docs/Passes.html).
 #[derive(Debug)]
-pub struct PassManager {
+pub struct PassManager<T> {
     pub(crate) pass_manager: LLVMPassManagerRef,
+    sub_type: PhantomData<T>,
 }
 
-impl PassManager {
-    pub(crate) fn new(pass_manager: LLVMPassManagerRef) -> PassManager {
+impl<T: PassManagerSubType> PassManager<T> {
+    pub(crate) fn new(pass_manager: LLVMPassManagerRef) -> Self {
         assert!(!pass_manager.is_null());
 
         PassManager {
             pass_manager,
+            sub_type: PhantomData,
         }
     }
 
-    // SubTypes: PassManager<Module>::create()
-    pub fn create_for_module() -> Self {
+    pub fn create<I: Borrow<T::Input>>(input: I) -> PassManager<T> {
         let pass_manager = unsafe {
-            LLVMCreatePassManager()
-        };
-
-        PassManager::new(pass_manager)
-    }
-
-    // SubTypes: PassManager<FunctionValue>::create()
-    pub fn create_for_function(module: &Module) -> Self {
-        let pass_manager = unsafe {
-            LLVMCreateFunctionPassManagerForModule(module.module.get())
+            T::create(input)
         };
 
         PassManager::new(pass_manager)
@@ -153,17 +234,11 @@ impl PassManager {
         }
     }
 
-    // SubTypes: For PassManager<FunctionValue> only, rename run_on
-    pub fn run_on_function(&self, fn_value: &FunctionValue) -> bool {
+    /// This method returns true if any of the passes modified the module and
+    /// false otherwise.
+    pub fn run_on(&self, input: &T) -> bool {
         unsafe {
-            LLVMRunFunctionPassManager(self.pass_manager, fn_value.as_value_ref()) == 1
-        }
-    }
-
-    // SubTypes: For PassManager<Module> only, rename run_on
-    pub fn run_on_module(&self, module: &Module) -> bool {
-        unsafe {
-            LLVMRunPassManager(self.pass_manager, module.module.get()) == 1
+            input.run_in_pass_manager(self)
         }
     }
 
@@ -984,7 +1059,7 @@ impl PassManager {
     }
 }
 
-impl Drop for PassManager {
+impl<T> Drop for PassManager<T> {
     fn drop(&mut self) {
         unsafe {
             LLVMDisposePassManager(self.pass_manager)
