@@ -26,7 +26,7 @@ impl MemoryBuffer {
     }
 
     pub fn create_from_file(path: &Path) -> Result<Self, LLVMString> {
-        let path = path.to_str().expect("Did not find a valid Unicode path string");
+        let path = CString::new(path.to_str().expect("Did not find a valid Unicode path string")).expect("Failed to convert to CString");
         let mut memory_buffer = ptr::null_mut();
         let mut err_string = unsafe { zeroed() };
 
