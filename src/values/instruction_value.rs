@@ -12,7 +12,7 @@ use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, Value};
 // REVIEW: Split up into structs for SubTypes on InstructionValues?
 // REVIEW: This should maybe be split up into InstructionOpcode and ConstOpcode?
 // see LLVMGetConstOpcode
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub enum InstructionOpcode {
     // Actual Instructions:
     Add,
@@ -236,7 +236,7 @@ impl InstructionOpcode {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Copy)]
+#[derive(Debug, PartialEq, Eq, Copy, Hash)]
 pub struct InstructionValue {
     instruction_value: Value,
 }

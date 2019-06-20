@@ -8,7 +8,7 @@ use crate::types::{VectorType};
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValueEnum, BasicValue, InstructionValue, Value, IntValue, MetadataValue};
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct VectorValue {
     vec_value: Value,
 }

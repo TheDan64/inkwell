@@ -9,7 +9,7 @@ use crate::types::ArrayType;
 use crate::values::traits::AsValueRef;
 use crate::values::{Value, InstructionValue, MetadataValue};
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct ArrayValue {
     array_value: Value
 }

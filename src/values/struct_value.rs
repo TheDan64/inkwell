@@ -7,7 +7,7 @@ use crate::types::StructType;
 use crate::values::traits::AsValueRef;
 use crate::values::{InstructionValue, Value, MetadataValue};
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct StructValue {
     struct_value: Value
 }

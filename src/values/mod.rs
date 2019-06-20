@@ -47,7 +47,7 @@ use std::fmt;
 
 use crate::support::LLVMString;
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash)]
 struct Value {
     value: LLVMValueRef,
 }
