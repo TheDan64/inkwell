@@ -11,7 +11,7 @@ use crate::types::{AsTypeRef, FloatType, PointerType, IntType};
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, FloatValue, InstructionValue, PointerValue, Value, MetadataValue};
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct IntValue {
     int_value: Value,
 }

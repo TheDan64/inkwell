@@ -8,7 +8,7 @@ use crate::values::{IntValue, FunctionValue, PointerValue, VectorValue, ArrayVal
 
 macro_rules! enum_value_set {
     ($enum_name:ident: $($args:ident),*) => (
-        #[derive(Debug, EnumAsGetters, EnumIntoGetters, EnumIsA, Clone, Copy, PartialEq, Eq)]
+        #[derive(Debug, EnumAsGetters, EnumIntoGetters, EnumIsA, Clone, Copy, PartialEq, Eq, Hash)]
         pub enum $enum_name {
             $(
                 $args($args),

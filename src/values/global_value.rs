@@ -16,7 +16,7 @@ use crate::values::{BasicValueEnum, BasicValue, PointerValue, Value};
 
 // REVIEW: GlobalValues are always PointerValues. With SubTypes, we should
 // compress this into a PointerValue<Global> type
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct GlobalValue {
     global_value: Value,
 }

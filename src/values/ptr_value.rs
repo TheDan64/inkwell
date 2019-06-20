@@ -7,7 +7,7 @@ use crate::support::LLVMString;
 use crate::types::{AsTypeRef, IntType, PointerType};
 use crate::values::{AsValueRef, InstructionValue, IntValue, Value, MetadataValue};
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct PointerValue {
     ptr_value: Value,
 }

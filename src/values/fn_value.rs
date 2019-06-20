@@ -19,7 +19,7 @@ use crate::types::{BasicTypeEnum, FunctionType};
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValueEnum, GlobalValue, Value, MetadataValue};
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct FunctionValue {
     fn_value: Value,
 }
