@@ -1,5 +1,5 @@
 use either::{Either, Either::{Left, Right}};
-use llvm_sys::core::{LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMSetOperand, LLVMValueAsBasicBlock, LLVMIsABasicBlock};
+use llvm_sys::core::{LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMSetOperand, LLVMValueAsBasicBlock, LLVMIsABasicBlock, LLVMGetICmpPredicate, LLVMGetFCmpPredicate};
 #[llvm_versions(3.9 => latest)]
 use llvm_sys::core::LLVMInstructionRemoveFromParent;
 use llvm_sys::LLVMOpcode;
@@ -8,6 +8,7 @@ use llvm_sys::prelude::LLVMValueRef;
 use crate::basic_block::BasicBlock;
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, Value};
+use crate::{IntPredicate, FloatPredicate};
 
 // REVIEW: Split up into structs for SubTypes on InstructionValues?
 // REVIEW: This should maybe be split up into InstructionOpcode and ConstOpcode?
@@ -618,6 +619,46 @@ impl InstructionValue {
     /// ```
     pub fn get_first_use(&self) -> Option<BasicValueUse> {
         self.instruction_value.get_first_use()
+    }
+
+    /// Gets the predicate of an `ICmp` `InstructionValue`.
+    /// For instance, in the LLVM instruction
+    /// `%3 = icmp slt i32 %0, %1`
+    /// this gives the `slt`.
+    ///
+    /// If the instruction is not an `ICmp`, this returns None.
+    pub fn get_icmp_predicate(&self) -> Option<IntPredicate> {
+        // REVIEW: this call to get_opcode() can be inefficient;
+        // what happens if we don't perform this check, and just call
+        // LLVMGetICmpPredicate() regardless?
+        if self.get_opcode() == InstructionOpcode::ICmp {
+            let pred = unsafe {
+                LLVMGetICmpPredicate(self.as_value_ref())
+            };
+            Some(IntPredicate::new(pred))
+        } else {
+            None
+        }
+    }
+
+    /// Gets the predicate of an `FCmp` `InstructionValue`.
+    /// For instance, in the LLVM instruction
+    /// `%3 = fcmp olt float %0, %1`
+    /// this gives the `olt`.
+    ///
+    /// If the instruction is not an `FCmp`, this returns None.
+    pub fn get_fcmp_predicate(&self) -> Option<FloatPredicate> {
+        // REVIEW: this call to get_opcode() can be inefficient;
+        // what happens if we don't perform this check, and just call
+        // LLVMGetFCmpPredicate() regardless?
+        if self.get_opcode() == InstructionOpcode::FCmp {
+            let pred = unsafe {
+                LLVMGetFCmpPredicate(self.as_value_ref())
+            };
+            Some(FloatPredicate::new(pred))
+        } else {
+            None
+        }
     }
 }
 

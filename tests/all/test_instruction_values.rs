@@ -1,6 +1,6 @@
 extern crate inkwell;
 
-use self::inkwell::AddressSpace;
+use self::inkwell::{AddressSpace, IntPredicate, FloatPredicate};
 use self::inkwell::context::Context;
 use self::inkwell::values::{BasicValue, InstructionOpcode::*};
 
@@ -201,7 +201,7 @@ fn test_instructions() {
     let i64_type = context.i64_type();
     let f32_type = context.f32_type();
     let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
-    let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
+    let fn_type = void_type.fn_type(&[f32_ptr_type.into(), f32_type.into()], false);
 
     let function = module.add_function("free_f32", fn_type, None);
     let basic_block = context.append_basic_block(&function, "entry");
@@ -209,20 +209,30 @@ fn test_instructions() {
     builder.position_at_end(&basic_block);
 
     let arg1 = function.get_first_param().unwrap().into_pointer_value();
+    let arg2 = function.get_nth_param(1).unwrap().into_float_value();
 
     assert!(arg1.get_first_use().is_none());
+    assert!(arg2.get_first_use().is_none());
 
     let f32_val = f32_type.const_float(::std::f64::consts::PI);
 
     let store_instruction = builder.build_store(arg1, f32_val);
     let ptr_val = builder.build_ptr_to_int(arg1, i64_type, "ptr_val");
     let ptr = builder.build_int_to_ptr(ptr_val, f32_ptr_type, "ptr");
+    let icmp = builder.build_int_compare(IntPredicate::EQ, ptr_val, ptr_val, "icmp");
+    let f32_sum = builder.build_float_add(arg2, f32_val, "f32_sum");
+    let fcmp = builder.build_float_compare(FloatPredicate::OEQ, f32_sum, arg2, "fcmp");
     let free_instruction = builder.build_free(arg1);
     let return_instruction = builder.build_return(None);
 
     assert_eq!(store_instruction.get_opcode(), Store);
     assert_eq!(ptr_val.as_instruction().unwrap().get_opcode(), PtrToInt);
     assert_eq!(ptr.as_instruction().unwrap().get_opcode(), IntToPtr);
+    assert_eq!(icmp.as_instruction().unwrap().get_opcode(), ICmp);
+    assert_eq!(icmp.as_instruction().unwrap().get_icmp_predicate().unwrap(), IntPredicate::EQ);
+    assert_eq!(f32_sum.as_instruction().unwrap().get_opcode(), FAdd);
+    assert_eq!(fcmp.as_instruction().unwrap().get_opcode(), FCmp);
+    assert_eq!(fcmp.as_instruction().unwrap().get_fcmp_predicate().unwrap(), FloatPredicate::OEQ);
     assert_eq!(free_instruction.get_opcode(), Call);
     assert_eq!(return_instruction.get_opcode(), Return);
 
