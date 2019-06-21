@@ -1,4 +1,5 @@
-use llvm_sys::core::{LLVMGetParamTypes, LLVMIsFunctionVarArg, LLVMCountParamTypes};
+use llvm_sys::LLVMTypeKind;
+use llvm_sys::core::{LLVMGetParamTypes, LLVMIsFunctionVarArg, LLVMCountParamTypes, LLVMGetReturnType, LLVMGetTypeKind};
 use llvm_sys::prelude::LLVMTypeRef;
 
 use std::fmt;
@@ -10,7 +11,6 @@ use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
 use crate::types::{PointerType, Type, BasicTypeEnum};
 
-// REVIEW: Add a get_return_type() -> Option<BasicTypeEnum>?
 /// A `FunctionType` is the type of a function variable.
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub struct FunctionType {
@@ -165,6 +165,35 @@ impl FunctionType {
     #[llvm_versions(3.7 => 4.0)]
     pub fn print_to_stderr(&self) {
         self.fn_type.print_to_stderr()
+    }
+
+    /// Gets the return type of this `FunctionType`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let fn_type = f32_type.fn_type(&[], true);
+    ///
+    /// assert_eq!(fn_type.get_return_type().unwrap().into_float_type(), f32_type);
+    /// ```
+    pub fn get_return_type(&self) -> Option<BasicTypeEnum> {
+        let ty = unsafe {
+            LLVMGetReturnType(self.as_type_ref())
+        };
+
+        let kind = unsafe {
+            LLVMGetTypeKind(ty)
+        };
+
+        if let LLVMTypeKind::LLVMVoidTypeKind = kind {
+            return None;
+        }
+
+        Some(BasicTypeEnum::new(ty))
     }
 
     // REVIEW: Can you do undef for functions?

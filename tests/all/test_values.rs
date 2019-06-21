@@ -22,6 +22,10 @@ fn test_linkage() {
 
     let function = module.add_function("free_f32", fn_type, None);
 
+    assert_eq!(function.get_type(), fn_type);
+    assert!(function.get_type().get_return_type().is_none());
+    assert!(fn_type.get_return_type().is_none());
+
     assert_eq!(function.get_linkage(), External);
 }
 
@@ -686,8 +690,7 @@ fn test_function_value_no_params() {
     let fn_type = void_type.fn_type(&[], false);
     let fn_value = module.add_function("no_params", fn_type, None);
 
-    // REVIEW: According to this, fn_value.get_type() is a void ptr??
-    // assert_eq!(fn_value.get_type(), fn_type);
+    assert_eq!(fn_value.get_type(), fn_type);
     assert_eq!(fn_value.count_params(), 0);
     assert_eq!(fn_value.get_param_iter().collect::<Vec<_>>().len(), 0);
     assert_eq!(fn_value.get_params().len(), 0);

@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMTypeOf, LLVMGetPreviousFunction, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetBasicBlocks, LLVMGetReturnType, LLVMAppendBasicBlock, LLVMDeleteFunction, LLVMGetElementType, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetEntryBasicBlock, LLVMGetIntrinsicID, LLVMGetFunctionCallConv, LLVMSetFunctionCallConv, LLVMGetGC, LLVMSetGC, LLVMSetLinkage, LLVMSetParamAlignment, LLVMGetParams};
+use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMGetPreviousFunction, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetBasicBlocks, LLVMAppendBasicBlock, LLVMDeleteFunction, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetEntryBasicBlock, LLVMGetIntrinsicID, LLVMGetFunctionCallConv, LLVMSetFunctionCallConv, LLVMGetGC, LLVMSetGC, LLVMSetLinkage, LLVMSetParamAlignment, LLVMGetParams};
 #[llvm_versions(3.7 => latest)]
 use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
 #[llvm_versions(3.9 => latest)]
@@ -15,9 +15,9 @@ use crate::attributes::Attribute;
 use crate::basic_block::BasicBlock;
 use crate::module::Linkage;
 use crate::support::LLVMString;
-use crate::types::{BasicTypeEnum, FunctionType};
+use crate::types::{FunctionType, PointerType};
 use crate::values::traits::AsValueRef;
-use crate::values::{BasicValueEnum, GlobalValue, Value, MetadataValue};
+use crate::values::{BasicValueEnum, GlobalValue, MetadataValue, Value};
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct FunctionValue {
@@ -201,14 +201,6 @@ impl FunctionValue {
         raw_vec.iter().map(|val| BasicBlock::new(*val).unwrap()).collect()
     }
 
-    pub fn get_return_type(&self) -> BasicTypeEnum {
-        let type_ = unsafe {
-            LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(self.fn_value.value)))
-        };
-
-        BasicTypeEnum::new(type_)
-    }
-
     pub fn get_param_iter(&self) -> ParamValueIter {
         ParamValueIter {
             param_iter_value: self.fn_value.value,
@@ -262,7 +254,9 @@ impl FunctionValue {
     }
 
     pub fn get_type(&self) -> FunctionType {
-        FunctionType::new(self.fn_value.get_type())
+        let ptr_type = PointerType::new(self.fn_value.get_type());
+
+        ptr_type.get_element_type().into_function_type()
     }
 
     pub fn has_metadata(&self) -> bool {

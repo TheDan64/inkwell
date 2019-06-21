@@ -97,7 +97,7 @@ fn test_get_basic_blocks() {
     let function = module.add_function("testing", fn_type, None);
 
     assert_eq!(function.get_name(), &*CString::new("testing").unwrap());
-    assert_eq!(function.get_return_type().into_int_type().get_bit_width(), 1);
+    assert_eq!(fn_type.get_return_type().unwrap().into_int_type().get_bit_width(), 1);
 
     assert!(function.get_last_basic_block().is_none());
     assert_eq!(function.get_basic_blocks().len(), 0);
