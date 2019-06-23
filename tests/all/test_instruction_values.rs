@@ -229,9 +229,12 @@ fn test_instructions() {
     assert_eq!(ptr_val.as_instruction().unwrap().get_opcode(), PtrToInt);
     assert_eq!(ptr.as_instruction().unwrap().get_opcode(), IntToPtr);
     assert_eq!(icmp.as_instruction().unwrap().get_opcode(), ICmp);
+    assert_eq!(ptr.as_instruction().unwrap().get_icmp_predicate(), None);
     assert_eq!(icmp.as_instruction().unwrap().get_icmp_predicate().unwrap(), IntPredicate::EQ);
     assert_eq!(f32_sum.as_instruction().unwrap().get_opcode(), FAdd);
     assert_eq!(fcmp.as_instruction().unwrap().get_opcode(), FCmp);
+    assert_eq!(f32_sum.as_instruction().unwrap().get_fcmp_predicate(), None);
+    assert_eq!(icmp.as_instruction().unwrap().get_fcmp_predicate(), None);
     assert_eq!(fcmp.as_instruction().unwrap().get_fcmp_predicate().unwrap(), FloatPredicate::OEQ);
     assert_eq!(free_instruction.get_opcode(), Call);
     assert_eq!(return_instruction.get_opcode(), Return);
