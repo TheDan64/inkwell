@@ -19,7 +19,7 @@ use std::rc::Rc;
 /// A well formed `BasicBlock` is a list of non terminating instructions followed by a single terminating
 /// instruction. `BasicBlock`s are allowed to be malformed prior to running validation because it may be useful
 /// when constructing or modifying a program.
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct BasicBlock {
     pub(crate) basic_block: LLVMBasicBlockRef,
 }
