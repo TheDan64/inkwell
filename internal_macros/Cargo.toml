@@ -3,10 +3,15 @@ name = "inkwell_internal_macros"
 version = "0.1.0"
 authors = ["Daniel Kolsoi <thadan64@gmail.com>"]
 edition = "2018"
+build = "build.rs"
 
 [dependencies]
 quote = "0.6"
 syn = { version = "0.15", features = ["full"] }
+proc-macro2 = "0.4"
+
+[build-dependencies]
+cargo_toml = "0.6"
 
 [lib]
 proc-macro = true

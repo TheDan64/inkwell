@@ -5,7 +5,7 @@ use self::inkwell::context::Context;
 use self::inkwell::module::Linkage::*;
 use self::inkwell::types::{StructType, VectorType};
 use self::inkwell::values::{InstructionOpcode::*, MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID, VectorValue};
-#[llvm_versions(7.0 => latest)]
+#[llvm_versions(7.0..=latest)]
 use self::inkwell::comdat::ComdatSelectionKind;
 
 use std::ffi::CString;
@@ -787,7 +787,7 @@ fn test_global_byte_array() {
 
 #[test]
 fn test_globals() {
-    #[llvm_versions(7.0 => latest)]
+    #[llvm_versions(7.0..=latest)]
     use self::inkwell::values::UnnamedAddress;
 
     let context = Context::create();

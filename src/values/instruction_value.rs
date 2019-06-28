@@ -1,6 +1,6 @@
 use either::{Either, Either::{Left, Right}};
 use llvm_sys::core::{LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMSetOperand, LLVMValueAsBasicBlock, LLVMIsABasicBlock, LLVMGetICmpPredicate, LLVMGetFCmpPredicate};
-#[llvm_versions(3.9 => latest)]
+#[llvm_versions(3.9..=latest)]
 use llvm_sys::core::LLVMInstructionRemoveFromParent;
 use llvm_sys::LLVMOpcode;
 use llvm_sys::prelude::LLVMValueRef;
@@ -301,7 +301,7 @@ impl InstructionValue {
     }
 
     // REVIEW: Potentially unsafe if parent BB or grandparent fn were removed?
-    #[llvm_versions(3.9 => latest)]
+    #[llvm_versions(3.9..=latest)]
     pub fn remove_from_basic_block(&self) {
         unsafe {
             LLVMInstructionRemoveFromParent(self.as_value_ref())
