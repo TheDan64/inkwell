@@ -563,7 +563,7 @@ impl Target {
     // We can revisit this issue if someone wants RISCV support in inkwell, or if
     // llvm-sys starts supporting expiramental llvm targets. See
     // https://lists.llvm.org/pipermail/llvm-dev/2017-August/116347.html for more info
-    #[cfg(feature = "llvm4-0")]
+    #[llvm_versions(4.0)]
     pub fn initialize_riscv(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeRISCVTargetInfo, LLVMInitializeRISCVTarget, LLVMInitializeRISCVTargetMC};
 
@@ -584,6 +584,37 @@ impl Target {
 
             if config.machine_code {
                 LLVMInitializeRISCVTargetMC()
+            }
+        }
+    }
+
+    #[llvm_versions(8.0..=latest)]
+    pub fn initialize_webassembly(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeWebAssemblyTargetInfo, LLVMInitializeWebAssemblyTarget, LLVMInitializeWebAssemblyTargetMC, LLVMInitializeWebAssemblyAsmPrinter, LLVMInitializeWebAssemblyAsmParser, LLVMInitializeWebAssemblyDisassembler};
+
+        unsafe {
+            if config.base {
+                LLVMInitializeWebAssemblyTarget()
+            }
+
+            if config.info {
+                LLVMInitializeWebAssemblyTargetInfo()
+            }
+
+            if config.asm_printer {
+                LLVMInitializeWebAssemblyAsmPrinter()
+            }
+
+            if config.asm_parser {
+                LLVMInitializeWebAssemblyAsmParser()
+            }
+
+            if config.disassembler {
+                LLVMInitializeWebAssemblyDisassembler()
+            }
+
+            if config.machine_code {
+                LLVMInitializeWebAssemblyTargetMC()
             }
         }
     }
