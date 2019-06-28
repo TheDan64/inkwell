@@ -110,7 +110,10 @@ impl PassManagerBuilder {
     /// ```
     /// use inkwell::OptimizationLevel::Aggressive;
     /// use inkwell::passes::{PassManager, PassManagerBuilder};
+    /// use inkwell::targets::{InitializationConfig, Target};
     ///
+    /// let config = InitializationConfig::default();
+    /// Target::initialize_native(&config).unwrap();
     /// let pass_manager_builder = PassManagerBuilder::create();
     ///
     /// pass_manager_builder.set_optimization_level(Aggressive);
@@ -133,7 +136,10 @@ impl PassManagerBuilder {
     /// ```
     /// use inkwell::OptimizationLevel::Aggressive;
     /// use inkwell::passes::{PassManager, PassManagerBuilder};
+    /// use inkwell::targets::{InitializationConfig, Target};
     ///
+    /// let config = InitializationConfig::default();
+    /// Target::initialize_native(&config).unwrap();
     /// let pass_manager_builder = PassManagerBuilder::create();
     ///
     /// pass_manager_builder.set_optimization_level(Aggressive);
@@ -1040,7 +1046,7 @@ impl<T: PassManagerSubType> PassManager<T> {
         }
     }
 
-    #[llvm_versions(7.0 => latest)]
+    #[llvm_versions(7.0)]
     pub fn add_aggressive_inst_combiner_pass(&self) {
         use llvm_sys::transforms::scalar::LLVMAddAggressiveInstCombinerPass;
 
@@ -1048,6 +1054,15 @@ impl<T: PassManagerSubType> PassManager<T> {
             LLVMAddAggressiveInstCombinerPass(self.pass_manager)
         }
     }
+    #[llvm_versions(8.0 => latest)]
+    pub fn add_aggressive_inst_combiner_pass(&self) {
+        use llvm_sys::transforms::aggressive_instcombine::LLVMAddAggressiveInstCombinerPass;
+
+        unsafe {
+            LLVMAddAggressiveInstCombinerPass(self.pass_manager)
+        }
+    }
+
 
     #[llvm_versions(7.0 => latest)]
     pub fn add_loop_unroll_and_jam_pass(&self) {

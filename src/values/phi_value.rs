@@ -25,7 +25,7 @@ impl PhiValue {
         }
     }
 
-    pub fn add_incoming(&self, incoming: &[(&BasicValue, &BasicBlock)]) {
+    pub fn add_incoming(&self, incoming: &[(&dyn BasicValue, &BasicBlock)]) {
         let (mut values, mut basic_blocks): (Vec<LLVMValueRef>, Vec<LLVMBasicBlockRef>) = {
             incoming.iter()
                     .map(|&(v, bb)| (v.as_value_ref(), bb.basic_block))

@@ -67,7 +67,7 @@ impl Builder {
     /// builder.position_at_end(&entry);
     /// builder.build_return(Some(&i32_arg));
     /// ```
-    pub fn build_return(&self, value: Option<&BasicValue>) -> InstructionValue {
+    pub fn build_return(&self, value: Option<&dyn BasicValue>) -> InstructionValue {
         let value = unsafe {
             value.map_or_else(|| LLVMBuildRetVoid(self.builder), |value| LLVMBuildRet(self.builder, value.as_value_ref()))
         };

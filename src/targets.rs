@@ -1102,7 +1102,7 @@ impl TargetData {
     }
 
     // REVIEW: Does this only work if Sized?
-    pub fn get_bit_size(&self, type_: &AnyType) -> u64 {
+    pub fn get_bit_size(&self, type_: &dyn AnyType) -> u64 {
         unsafe {
             LLVMSizeOfTypeInBits(self.target_data, type_.as_type_ref())
         }
@@ -1137,31 +1137,31 @@ impl TargetData {
         }
     }
 
-    pub fn get_store_size(&self, type_: &AnyType) -> u64 {
+    pub fn get_store_size(&self, type_: &dyn AnyType) -> u64 {
         unsafe {
             LLVMStoreSizeOfType(self.target_data, type_.as_type_ref())
         }
     }
 
-    pub fn get_abi_size(&self, type_: &AnyType) -> u64 {
+    pub fn get_abi_size(&self, type_: &dyn AnyType) -> u64 {
         unsafe {
             LLVMABISizeOfType(self.target_data, type_.as_type_ref())
         }
     }
 
-    pub fn get_abi_alignment(&self, type_: &AnyType) -> u32 {
+    pub fn get_abi_alignment(&self, type_: &dyn AnyType) -> u32 {
         unsafe {
             LLVMABIAlignmentOfType(self.target_data, type_.as_type_ref())
         }
     }
 
-    pub fn get_call_frame_alignment(&self, type_: &AnyType) -> u32 {
+    pub fn get_call_frame_alignment(&self, type_: &dyn AnyType) -> u32 {
         unsafe {
             LLVMCallFrameAlignmentOfType(self.target_data, type_.as_type_ref())
         }
     }
 
-    pub fn get_preferred_alignment(&self, type_: &AnyType) -> u32 {
+    pub fn get_preferred_alignment(&self, type_: &dyn AnyType) -> u32 {
         unsafe {
             LLVMPreferredAlignmentOfType(self.target_data, type_.as_type_ref())
         }

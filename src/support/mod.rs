@@ -77,7 +77,7 @@ impl Error for LLVMString {
         self.to_str().expect("Could not convert LLVMString to str (likely invalid unicode)")
     }
 
-    fn cause(&self) -> Option<&Error> {
+    fn cause(&self) -> Option<&dyn Error> {
         None
     }
 }

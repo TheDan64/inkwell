@@ -39,7 +39,7 @@ fn get_feature_slice(vt: VersionType) -> Option<&'static [&'static str]> {
         VersionType::Specific(version) => {
             let feature = f64_to_feature_string(version);
             let index = ALL_FEATURE_VERSIONS.iter().position(|&s| s == feature)?;
-            Some(&ALL_FEATURE_VERSIONS[index..index])
+            Some(&ALL_FEATURE_VERSIONS[index..=index])
         }
         VersionType::RangeToLatest(version) => {
             let latest = get_latest_feature_index();
@@ -66,6 +66,7 @@ fn f64_to_feature_string(float: f64) -> String {
     format!("llvm{}-{}", int, (float * 10.) % 10.)
 }
 
+#[derive(Debug)]
 enum VersionType {
     Specific(f64),
     RangeToLatest(f64),

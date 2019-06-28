@@ -29,7 +29,7 @@ impl Error for FunctionLookupError {
         self.as_str()
     }
 
-    fn cause(&self) -> Option<&Error> {
+    fn cause(&self) -> Option<&dyn Error> {
         None
     }
 }
@@ -63,7 +63,7 @@ impl Error for RemoveModuleError {
         self.as_str()
     }
 
-    fn cause(&self) -> Option<&Error> {
+    fn cause(&self) -> Option<&dyn Error> {
         None
     }
 }
@@ -189,7 +189,7 @@ impl ExecutionEngine {
     ///
     /// assert_eq!(result, 128.);
     /// ```
-    pub fn add_global_mapping(&self, value: &AnyValue, addr: usize) {
+    pub fn add_global_mapping(&self, value: &dyn AnyValue, addr: usize) {
         unsafe {
             LLVMAddGlobalMapping(self.execution_engine_inner(), value.as_value_ref(), addr as *mut _)
         }
@@ -318,7 +318,7 @@ impl ExecutionEngine {
 
         // LLVMGetFunctionAddress segfaults in llvm 5.0 -> 7.0 when fn_name doesn't exist. This is a workaround
         // to see if it exists and avoid the segfault when it doesn't
-        #[cfg(any(feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0"))]
+        #[cfg(any(feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0"))]
         self.get_function_value(fn_name)?;
 
         let c_string = CString::new(fn_name).expect("Conversion to CString failed unexpectedly");
