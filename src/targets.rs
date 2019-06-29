@@ -1,7 +1,7 @@
 #[llvm_versions(7.0..=latest)]
 use either::Either;
 use llvm_sys::target::{LLVMTargetDataRef, LLVMCopyStringRepOfTargetData, LLVMSizeOfTypeInBits, LLVMCreateTargetData, LLVMByteOrder, LLVMPointerSize, LLVMByteOrdering, LLVMStoreSizeOfType, LLVMABISizeOfType, LLVMABIAlignmentOfType, LLVMCallFrameAlignmentOfType, LLVMPreferredAlignmentOfType, LLVMPreferredAlignmentOfGlobal, LLVMElementAtOffset, LLVMOffsetOfElement, LLVMDisposeTargetData, LLVMPointerSizeForAS, LLVMIntPtrType, LLVMIntPtrTypeForAS, LLVMIntPtrTypeInContext, LLVMIntPtrTypeForASInContext};
-use llvm_sys::target_machine::{LLVMGetFirstTarget, LLVMTargetRef, LLVMGetNextTarget, LLVMGetTargetFromName, LLVMGetTargetFromTriple, LLVMGetTargetName, LLVMGetTargetDescription, LLVMTargetHasJIT, LLVMTargetHasTargetMachine, LLVMTargetHasAsmBackend, LLVMTargetMachineRef, LLVMDisposeTargetMachine, LLVMGetTargetMachineTarget, LLVMGetTargetMachineTriple, LLVMSetTargetMachineAsmVerbosity, LLVMCreateTargetMachine, LLVMGetTargetMachineCPU, LLVMGetTargetMachineFeatureString, LLVMGetDefaultTargetTriple, LLVMAddAnalysisPasses, LLVMCodeGenOptLevel, LLVMCodeModel, LLVMRelocMode, LLVMCodeGenFileType, LLVMTargetMachineEmitToMemoryBuffer, LLVMTargetMachineEmitToFile};
+use llvm_sys::target_machine::{LLVMGetFirstTarget, LLVMTargetRef, LLVMGetNextTarget, LLVMGetTargetFromName, LLVMGetTargetFromTriple, LLVMGetTargetName, LLVMGetTargetDescription, LLVMTargetHasJIT, LLVMTargetHasTargetMachine, LLVMTargetHasAsmBackend, LLVMTargetMachineRef, LLVMDisposeTargetMachine, LLVMGetTargetMachineTarget, LLVMGetTargetMachineTriple, LLVMSetTargetMachineAsmVerbosity, LLVMCreateTargetMachine, LLVMGetTargetMachineCPU, LLVMGetTargetMachineFeatureString, LLVMGetDefaultTargetTriple, LLVMAddAnalysisPasses, LLVMCreateTargetDataLayout, LLVMCodeGenOptLevel, LLVMCodeModel, LLVMRelocMode, LLVMCodeGenFileType, LLVMTargetMachineEmitToMemoryBuffer, LLVMTargetMachineEmitToFile};
 
 use crate::{AddressSpace, OptimizationLevel};
 use crate::context::Context;
@@ -936,6 +936,15 @@ impl TargetMachine {
         unsafe {
             CStr::from_ptr(LLVMGetTargetMachineFeatureString(self.target_machine))
         }
+    }
+
+    /// Create a DataLayout based on the target machine
+    pub fn get_target_data(&self) -> TargetData {
+        let data_layout = unsafe {
+            LLVMCreateTargetDataLayout(self.target_machine)
+        };
+
+        TargetData::new(data_layout)
     }
 
     pub fn set_asm_verbosity(&self, verbosity: bool) {
