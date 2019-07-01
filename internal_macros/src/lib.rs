@@ -12,7 +12,7 @@ use syn::{Arm, Expr, ExprLit, Item, Lit, punctuated::Pair, Pat, PatLit, parse_ma
 
 // We could include_str! inkwell's Cargo.toml and extract these features
 // so that they don't need to also be managed here...
-const ALL_FEATURE_VERSIONS: [&str; 8] = [
+const ALL_FEATURE_VERSIONS: [&str; 9] = [
     "llvm3-6",
     "llvm3-7",
     "llvm3-8",
@@ -21,6 +21,7 @@ const ALL_FEATURE_VERSIONS: [&str; 8] = [
     "llvm5-0",
     "llvm6-0",
     "llvm7-0",
+    "llvm8-0",
 ];
 
 fn panic_with_usage() -> ! {

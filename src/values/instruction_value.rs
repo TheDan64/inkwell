@@ -38,6 +38,8 @@ pub enum InstructionOpcode {
     CleanupRet,
     ExtractElement,
     ExtractValue,
+    #[cfg(feature = "llvm8-0")]
+    FNeg,
     FAdd,
     FCmp,
     FDiv,
@@ -112,6 +114,8 @@ impl InstructionOpcode {
             LLVMOpcode::LLVMCleanupRet => InstructionOpcode::CleanupRet,
             LLVMOpcode::LLVMExtractElement => InstructionOpcode::ExtractElement,
             LLVMOpcode::LLVMExtractValue => InstructionOpcode::ExtractValue,
+            #[cfg(feature = "llvm8-0")]
+            LLVMOpcode::LLVMFNeg => InstructionOpcode::FNeg,
             LLVMOpcode::LLVMFAdd => InstructionOpcode::FAdd,
             LLVMOpcode::LLVMFCmp => InstructionOpcode::FCmp,
             LLVMOpcode::LLVMFDiv => InstructionOpcode::FDiv,
@@ -186,6 +190,8 @@ impl InstructionOpcode {
             InstructionOpcode::CleanupRet => LLVMOpcode::LLVMCleanupRet,
             InstructionOpcode::ExtractElement => LLVMOpcode::LLVMExtractElement,
             InstructionOpcode::ExtractValue => LLVMOpcode::LLVMExtractValue,
+            #[cfg(feature = "llvm8-0")]
+            InstructionOpcode::FNeg => LLVMOpcode::LLVMFNeg,
             InstructionOpcode::FAdd => LLVMOpcode::LLVMFAdd,
             InstructionOpcode::FCmp => LLVMOpcode::LLVMFCmp,
             InstructionOpcode::FDiv => LLVMOpcode::LLVMFDiv,
