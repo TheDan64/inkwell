@@ -1119,15 +1119,14 @@ fn test_consts() {
     assert_eq!(i16_val.get_zero_extended_constant(), Some(u16::max_value() as u64));
     assert_eq!(i32_val.get_zero_extended_constant(), Some(u32::max_value() as u64));
     assert_eq!(i64_val.get_zero_extended_constant(), Some(u64::max_value() as u64));
-    assert_eq!(i128_val.get_zero_extended_constant(), Some(u128::max_value() as u64));
+    assert_eq!(i128_val.get_zero_extended_constant(), None);
 
-    // How does a bool get sign extended to -1??
     assert_eq!(bool_val.get_sign_extended_constant(), Some(-1));
     assert_eq!(i8_val.get_sign_extended_constant(), Some(-1));
     assert_eq!(i16_val.get_sign_extended_constant(), Some(-1));
     assert_eq!(i32_val.get_sign_extended_constant(), Some(-1));
     assert_eq!(i64_val.get_sign_extended_constant(), Some(-1));
-    assert_eq!(i128_val.get_sign_extended_constant(), Some(-1));
+    assert_eq!(i128_val.get_sign_extended_constant(), None);
 
     assert_eq!(f16_val.get_constant(), Some((1.2001953125, false)));
     assert_eq!(f32_val.get_constant(), Some((3.4000000953674316, false)));
