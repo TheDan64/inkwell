@@ -848,17 +848,18 @@ fn test_globals() {
     assert!(!global.is_declaration());
     assert_eq!(global.get_section(), &*CString::new("not sure what goes here").unwrap());
 
+    // Either linkage is non-local or visibility is default.
+    global.set_visibility(GlobalVisibility::Default);
     global.set_linkage(Private);
 
     assert_eq!(global.get_linkage(), Private);
-    // Setting linkage seems to reset visibility
-    assert_eq!(global.get_visibility(), GlobalVisibility::Default);
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
                   feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     global.set_unnamed_address(UnnamedAddress::Global);
     global.set_dll_storage_class(DLLStorageClass::Export);
     global.set_thread_local(false);
+    global.set_linkage(External);
     global.set_visibility(GlobalVisibility::Protected);
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
