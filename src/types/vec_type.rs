@@ -133,33 +133,6 @@ impl VectorType {
         VectorValue::new(vec_value)
     }
 
-    /// Creates a null `VectorValue` of this `VectorType`.
-    /// It will be automatically assigned this `VectorType`'s `Context`.
-    ///
-    /// # Example
-    /// ```
-    /// use inkwell::context::Context;
-    /// use inkwell::types::FloatType;
-    ///
-    /// // Global Context
-    /// let f32_type = FloatType::f32_type();
-    /// let f32_vec_type = f32_type.vec_type(7);
-    /// let f32_vec_null = f32_vec_type.const_null();
-    ///
-    /// assert!(f32_vec_null.is_null());
-    ///
-    /// // Custom Context
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    /// let f32_vec_type = f32_type.vec_type(7);
-    /// let f32_vec_null = f32_vec_type.const_null();
-    ///
-    /// assert!(f32_vec_null.is_null());
-    /// ```
-    pub fn const_null(&self) -> VectorValue {
-        VectorValue::new(self.vec_type.const_null())
-    }
-
     /// Creates a constant zero value of this `VectorType`.
     ///
     /// # Example

@@ -138,27 +138,6 @@ impl FloatType {
         FloatValue::new(value)
     }
 
-    /// Creates a constant null value of this `FloatType`.
-    /// It will be automatically assigned this `FloatType`'s `Context`.
-    ///
-    /// # Example
-    /// ```
-    /// use inkwell::context::Context;
-    /// use inkwell::types::FloatType;
-    ///
-    /// // Global Context
-    /// let f32_type = FloatType::f32_type();
-    /// let f32_value = f32_type.const_null();
-    ///
-    /// // Custom Context
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    /// let f32_value = f32_type.const_null();
-    /// ```
-    pub fn const_null(&self) -> FloatValue {
-        FloatValue::new(self.float_type.const_null())
-    }
-
     /// Creates a constant zero value of this `FloatType`.
     ///
     /// # Example
@@ -170,7 +149,7 @@ impl FloatType {
     /// let f32_type = context.f32_type();
     /// let f32_zero = f32_type.const_zero();
     ///
-    /// assert_eq!(f32_zero.print_to_string().to_string(), "f32 0");
+    /// assert_eq!(f32_zero.print_to_string().to_string(), "float 0.000000e+00");
     /// ```
     pub fn const_zero(&self) -> FloatValue {
         FloatValue::new(self.float_type.const_zero())

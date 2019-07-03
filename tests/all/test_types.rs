@@ -235,7 +235,7 @@ fn test_sized_types() {
 }
 
 #[test]
-fn test_const_null() {
+fn test_const_zero() {
     let context = Context::create();
     let bool_type = context.bool_type();
     let i8_type = context.i8_type();
@@ -318,57 +318,6 @@ fn test_const_null() {
     assert_eq!(*ptr_zero.print_to_string(), *CString::new("double* null").unwrap());
     assert_eq!(*vec_zero.print_to_string(), *CString::new("<42 x double> zeroinitializer").unwrap());
     assert_eq!(*array_zero.print_to_string(), *CString::new("[42 x double] zeroinitializer").unwrap());
-
-    let bool_null = bool_type.const_null();
-    let i8_null = i8_type.const_null();
-    let i16_null = i16_type.const_null();
-    let i32_null = i32_type.const_null();
-    let i64_null = i64_type.const_null();
-    let i128_null = i128_type.const_null();
-    let f16_null = f16_type.const_null();
-    let f32_null = f32_type.const_null();
-    let f64_null = f64_type.const_null();
-    let f80_null = f80_type.const_null();
-    let f128_null = f128_type.const_null();
-    let ppc_f128_null = ppc_f128_type.const_null();
-    let struct_null = struct_type.const_null();
-    let ptr_null = ptr_type.const_null();
-    let vec_null = vec_type.const_null();
-    let array_null = array_type.const_null();
-
-    assert!(bool_null.is_null());
-    assert!(i8_null.is_null());
-    assert!(i16_null.is_null());
-    assert!(i32_null.is_null());
-    assert!(i64_null.is_null());
-    assert!(i128_null.is_null());
-    assert!(f16_null.is_null());
-    assert!(f32_null.is_null());
-    assert!(f64_null.is_null());
-    assert!(f80_null.is_null());
-    assert!(f128_null.is_null());
-    assert!(ppc_f128_null.is_null());
-    assert!(struct_null.is_null());
-    assert!(ptr_null.is_null());
-    assert!(vec_null.is_null());
-    assert!(array_null.is_null());
-
-    assert_eq!(*bool_null.print_to_string(), *CString::new("i1 null").unwrap());
-    assert_eq!(*i8_null.print_to_string(), *CString::new("i8 null").unwrap());
-    assert_eq!(*i16_null.print_to_string(), *CString::new("i16 null").unwrap());
-    assert_eq!(*i32_null.print_to_string(), *CString::new("i32 null").unwrap());
-    assert_eq!(*i64_null.print_to_string(), *CString::new("i64 null").unwrap());
-    assert_eq!(*i128_null.print_to_string(), *CString::new("i128 null").unwrap());
-    assert_eq!(*f16_null.print_to_string(), *CString::new("half null").unwrap());
-    assert_eq!(*f32_null.print_to_string(), *CString::new("float null").unwrap());
-    assert_eq!(*f64_null.print_to_string(), *CString::new("double null").unwrap());
-    assert_eq!(*f80_null.print_to_string(), *CString::new("x86_fp80 null").unwrap());
-    assert_eq!(*f128_null.print_to_string(), *CString::new("fp128 null").unwrap());
-    assert_eq!(*ppc_f128_null.print_to_string(), *CString::new("ppc_fp128 null").unwrap());
-    assert_eq!(*struct_null.print_to_string(), *CString::new("{ i8, fp128 } null").unwrap());
-    assert_eq!(*ptr_null.print_to_string(), *CString::new("double* null").unwrap());
-    assert_eq!(*vec_null.print_to_string(), *CString::new("<42 x double> null").unwrap());
-    assert_eq!(*array_null.print_to_string(), *CString::new("[42 x double] null").unwrap());
 }
 
 #[test]

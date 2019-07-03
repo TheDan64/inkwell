@@ -208,7 +208,7 @@ impl PointerType {
     /// assert!(f32_ptr_null.is_null());
     /// ```
     pub fn const_null(&self) -> PointerValue {
-        PointerValue::new(self.ptr_type.const_null())
+        PointerValue::new(self.ptr_type.const_zero())
     }
 
     // REVIEW: Unlike the other const_zero functions, this one becomes null instead of a 0 value. Maybe remove?
