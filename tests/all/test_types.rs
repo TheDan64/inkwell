@@ -174,7 +174,6 @@ fn test_sized_types() {
     assert!(!fn_type3.is_sized());
     assert!(!fn_type4.is_sized());
 
-    assert!(void_type.ptr_type(AddressSpace::Generic).is_sized());
     assert!(bool_type.ptr_type(AddressSpace::Generic).is_sized());
     assert!(i8_type.ptr_type(AddressSpace::Generic).is_sized());
     assert!(i16_type.ptr_type(AddressSpace::Generic).is_sized());
@@ -193,8 +192,6 @@ fn test_sized_types() {
     assert!(struct_type4.ptr_type(AddressSpace::Generic).is_sized());
     assert!(opaque_struct_type.ptr_type(AddressSpace::Generic).is_sized());
 
-    // REVIEW: You can't have array of void right?
-    assert!(void_type.ptr_type(AddressSpace::Generic).array_type(42).is_sized());
     assert!(bool_type.array_type(42).is_sized());
     assert!(i8_type.array_type(42).is_sized());
     assert!(i16_type.array_type(42).is_sized());
@@ -213,8 +210,6 @@ fn test_sized_types() {
     assert!(struct_type4.array_type(0).is_sized());
     assert!(!opaque_struct_type.array_type(0).is_sized());
 
-    // REVIEW: You can't have vec of void right?
-    assert!(void_type.ptr_type(AddressSpace::Generic).vec_type(42).is_sized());
     assert!(bool_type.vec_type(42).is_sized());
     assert!(i8_type.vec_type(42).is_sized());
     assert!(i16_type.vec_type(42).is_sized());
@@ -349,13 +344,8 @@ fn test_ptr_type() {
     assert_eq!(ptr_type.get_address_space(), AddressSpace::Generic);
     assert_eq!(ptr_type.get_element_type().into_int_type(), i8_type);
 
-    // Void ptr:
-    let void_type = context.void_type();
-    let void_ptr_type = void_type.ptr_type(AddressSpace::Generic);
-
-    assert_eq!(void_ptr_type.get_element_type().into_void_type(), void_type);
-
     // Fn ptr:
+    let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
     let fn_ptr_type = fn_type.ptr_type(AddressSpace::Generic);
 

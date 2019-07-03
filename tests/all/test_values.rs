@@ -1193,15 +1193,15 @@ fn test_non_fn_ptr_called() {
     let context = Context::create();
     let builder = context.create_builder();
     let module = context.create_module("my_mod");
-    let void_type = context.void_type();
-    let void_ptr_type = void_type.ptr_type(AddressSpace::Generic);
-    let fn_type = void_type.fn_type(&[void_ptr_type.into()], false);
+    let i8_type = context.i8_type();
+    let i8_ptr_type = i8_type.ptr_type(AddressSpace::Generic);
+    let fn_type = i8_type.fn_type(&[i8_ptr_type.into()], false);
     let fn_value = module.add_function("my_func", fn_type, None);
     let bb = fn_value.append_basic_block("entry");
-    let void_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
+    let i8_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
 
     builder.position_at_end(&bb);
-    builder.build_call(void_ptr_param, &[], "call");
+    builder.build_call(i8_ptr_param, &[], "call");
     builder.build_return(None);
 
     assert!(module.verify().is_ok());
