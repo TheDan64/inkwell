@@ -222,11 +222,6 @@ fn test_sized_types() {
     assert!(f80_type.vec_type(42).is_sized());
     assert!(f128_type.vec_type(42).is_sized());
     assert!(ppc_f128_type.vec_type(42).is_sized());
-    assert!(struct_type.vec_type(42).is_sized());
-    assert!(struct_type2.vec_type(42).is_sized());
-    assert!(struct_type3.vec_type(42).is_sized());
-    assert!(struct_type4.vec_type(42).is_sized());
-    assert!(!opaque_struct_type.vec_type(42).is_sized());
 }
 
 #[test]
@@ -320,10 +315,8 @@ fn test_vec_type() {
     let context = Context::create();
     let int = context.i8_type();
     let vec_type = int.vec_type(42);
-    let vec_type2 = vec_type.vec_type(7);
 
     assert_eq!(vec_type.get_size(), 42);
-    assert_eq!(vec_type2.get_element_type().into_vector_type(), vec_type);
 }
 
 #[test]
