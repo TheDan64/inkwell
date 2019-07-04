@@ -199,25 +199,6 @@ impl VectorType {
 
     }
 
-    /// Creates a `VectorType` with this `VectorType` for its element type.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    /// let f32_vector_type = f32_type.vec_type(3);
-    /// let f32_vector_vector_type = f32_vector_type.vec_type(3);
-    ///
-    /// assert_eq!(f32_vector_vector_type.get_size(), 3);
-    /// assert_eq!(f32_vector_vector_type.get_element_type().into_vector_type(), f32_vector_type);
-    /// ```
-    pub fn vec_type(&self, size: u32) -> VectorType {
-        self.vec_type.vec_type(size)
-    }
-
     /// Creates a `PointerType` with this `VectorType` for its element type.
     ///
     /// # Example

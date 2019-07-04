@@ -459,25 +459,6 @@ impl StructType {
         is_opaque
     }
 
-    /// Creates a `VectorType` with this `StructType` for its element type.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
-    /// let struct_vec_type = struct_type.vec_type(3);
-    ///
-    /// assert_eq!(struct_vec_type.get_size(), 3);
-    /// assert_eq!(struct_vec_type.get_element_type().into_struct_type(), struct_type);
-    /// ```
-    pub fn vec_type(&self, size: u32) -> VectorType {
-        self.struct_type.vec_type(size)
-    }
-
     /// Creates a constant `ArrayValue`.
     ///
     /// # Example
