@@ -9,6 +9,34 @@ use crate::types::traits::AsTypeRef;
 use crate::types::{Type, ArrayType, BasicTypeEnum, VectorType, PointerType, FunctionType};
 use crate::values::{AsValueRef, ArrayValue, GenericValue, IntValue};
 
+/// How to interpret a string or digits used to construct an integer constant.
+#[derive(Clone, Copy, Debug, EnumAsGetters, EnumIntoGetters, EnumToGetters, Eq, Hash, PartialEq)]
+pub enum StringRadix {
+    /// Binary 0 or 1
+    Binary = 2,
+    /// Octal 0-7
+    Octal = 8,
+    /// Decimal 0-9
+    Decimal = 10,
+    /// Hexadecimal with upper or lowercase letters up to F.
+    Hexadecimal = 16,
+    /// Alphanumeric, 0-9 and all 26 letters in upper or lowercase.
+    Alphanumeric = 36,
+}
+impl StringRadix {
+    /// Create a radix from a base.
+    pub fn from_u8(value: u8) -> Option<StringRadix> {
+        match value {
+            2 => Some(StringRadix::Binary),
+            8 => Some(StringRadix::Octal),
+            10 => Some(StringRadix::Decimal),
+            16 => Some(StringRadix::Hexadecimal),
+            36 => Some(StringRadix::Alphanumeric),
+            _ => None
+        }
+   }
+}
+
 /// An `IntType` is the type of an integer constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct IntType {
@@ -209,29 +237,27 @@ impl IntType {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
+    /// use inkwell::types::StringRadix;
     ///
     /// let context = Context::create();
     /// let i8_type = context.i8_type();
-    /// let i8_val = i8_type.const_int_from_string("0121", 10);
+    /// let i8_val = i8_type.const_int_from_string("0121", StringRadix::Decimal);
     ///
     /// assert_eq!(i8_val.print_to_string().to_string(), "i8 121");
     ///
-    /// let i8_val = i8_type.const_int_from_string("0121", 3);
+    /// let i8_val = i8_type.const_int_from_string("0121", StringRadix::from_u8(10).unwrap());
     ///
     /// assert_eq!(i8_val.print_to_string().to_string(), "i8 16");
     ///
-    /// // Unexpected outputs:
-    /// let i8_val = i8_type.const_int_from_string("0121", 2);
+    /// // Unsafe executions, LLVM may terminate with an assertion failure or
+    /// // execute undefined behaviour in C++ code.
+    /// let i8_val = i8_type.const_int_from_string("0121", StringRadix::Binary);
     ///
-    /// assert_eq!(i8_val.print_to_string().to_string(), "i8 3");
-    ///
-    /// let i8_val = i8_type.const_int_from_string("ABCD", 2);
-    ///
-    /// assert_eq!(i8_val.print_to_string().to_string(), "i8 -15");
+    /// let i8_val = i8_type.const_int_from_string("ABCD", StringRadix::Binary);
     /// ```
-    pub fn const_int_from_string(&self, slice: &str, radix: u8) -> IntValue {
+    pub fn const_int_from_string(&self, slice: &str, radix: StringRadix) -> IntValue {
         let value = unsafe {
-            LLVMConstIntOfStringAndSize(self.as_type_ref(), slice.as_ptr() as *const i8, slice.len() as u32, radix)
+            LLVMConstIntOfStringAndSize(self.as_type_ref(), slice.as_ptr() as *const i8, slice.len() as u32, radix as u8)
         };
 
         IntValue::new(value)

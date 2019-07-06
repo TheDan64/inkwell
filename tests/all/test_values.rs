@@ -3,7 +3,7 @@ extern crate inkwell;
 use self::inkwell::{DLLStorageClass, FloatPredicate, GlobalVisibility, ThreadLocalMode, AddressSpace};
 use self::inkwell::context::Context;
 use self::inkwell::module::Linkage::*;
-use self::inkwell::types::{StructType, VectorType};
+use self::inkwell::types::{StringRadix, StructType, VectorType};
 use self::inkwell::values::{InstructionOpcode::*, MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID, VectorValue};
 #[llvm_versions(7.0 => latest)]
 use self::inkwell::comdat::ComdatSelectionKind;
@@ -711,23 +711,13 @@ fn test_function_value_no_params() {
 fn test_value_from_string() {
     let context = Context::create();
     let i8_type = context.i8_type();
-    let i8_val = i8_type.const_int_from_string("0121", 10);
+    let i8_val = i8_type.const_int_from_string("0121", StringRadix::Decimal);
 
     assert_eq!(*i8_val.print_to_string(), *CString::new("i8 121").unwrap());
 
-    let i8_val = i8_type.const_int_from_string("0121", 3);
+    let i8_val = i8_type.const_int_from_string("0121", StringRadix::from_u8(10).unwrap());
 
-    assert_eq!(*i8_val.print_to_string(), *CString::new("i8 16").unwrap());
-
-    // LLVM will not throw an error, just parse until it can parse no more (and
-    // possibly spit out something completely unexpected):
-    let i8_val = i8_type.const_int_from_string("0121", 2);
-
-    assert_eq!(*i8_val.print_to_string(), *CString::new("i8 3").unwrap());
-
-    let i8_val = i8_type.const_int_from_string("ABCD", 2);
-
-    assert_eq!(*i8_val.print_to_string(), *CString::new("i8 -15").unwrap());
+    assert_eq!(i8_val.print_to_string().to_string(), "i8 121");
 
     // Floats
     let f64_type = context.f64_type();

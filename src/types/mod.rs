@@ -24,7 +24,7 @@ pub use crate::types::array_type::ArrayType;
 pub use crate::types::enums::{AnyTypeEnum, BasicTypeEnum};
 pub use crate::types::float_type::FloatType;
 pub use crate::types::fn_type::FunctionType;
-pub use crate::types::int_type::IntType;
+pub use crate::types::int_type::{IntType, StringRadix};
 pub use crate::types::ptr_type::PointerType;
 pub use crate::types::struct_type::StructType;
 pub use crate::types::traits::{AnyType, BasicType, IntMathType, FloatMathType, PointerMathType};
