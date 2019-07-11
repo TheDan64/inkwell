@@ -130,6 +130,18 @@ matrix:
             - *BASE_PACKAGES
             - llvm-7-dev
       rust: nightly-2019-01-15
+    - env:
+        - LLVM_VERSION="8.0"
+      <<: *BASE
+      addons:
+        apt:
+          sources:
+            - *BASE_SOURCES
+            - llvm-toolchain-trusty-8
+          packages:
+            - *BASE_PACKAGES
+            - llvm-8-dev
+      rust: nightly-2019-01-15
     - deploy: # Documentation build; Only latest supported LLVM version for now
         provider: pages
         skip-cleanup: true
@@ -139,10 +151,10 @@ matrix:
         on:
           branch: master
       before_install:
-        - export PATH=/usr/lib/llvm-7/bin/:$HOME/.local/bin:$PATH
-        - export LLVM_PATH=/usr/share/llvm-7/cmake/
+        - export PATH=/usr/lib/llvm-8/bin/:$HOME/.local/bin:$PATH
+        - export LLVM_PATH=/usr/share/llvm-8/cmake/
       script:
-        - cargo doc --no-default-features --features llvm7-0 --color=always
+        - cargo doc --no-default-features --features llvm8-0 --color=always
         - echo '<meta http-equiv="refresh" content="1; url=inkwell/index.html">' > target/doc/index.html
       rust: nightly
       name: "GitHub IO Documentation Deployment"
@@ -157,7 +169,8 @@ matrix:
             # - llvm-toolchain-trusty-4.0
             # - llvm-toolchain-trusty-5.0
             # - llvm-toolchain-trusty-6.0
-            - llvm-toolchain-trusty-7
+            # - llvm-toolchain-trusty-7
+            - llvm-toolchain-trusty-8
           packages:
             - *BASE_PACKAGES
             # - llvm-3.6-dev
@@ -167,7 +180,8 @@ matrix:
             # - llvm-4.0-dev
             # - llvm-5.0-dev
             # - llvm-6.0-dev
-            - llvm-7-dev
+            # - llvm-7-dev
+            - llvm-8-dev
 
 env:
   global:
