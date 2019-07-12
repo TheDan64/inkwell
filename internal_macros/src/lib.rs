@@ -18,19 +18,19 @@ use syn::{Token, LitFloat, Ident, Item};
 
 const FEATURES_ENV: &'static str = env!("INKWELL_FEATURES");
 
-// Fetches a vector of feature version strings, e.g. llvm8-0
+/// Fetches a vector of feature version strings, e.g. llvm8-0
 fn get_feature_versions() -> Vec<&'static str> {
     FEATURES_ENV
         .split(',')
         .collect()
 }
 
-// Gets the index of the feature version that represents `latest`
+/// Gets the index of the feature version that represents `latest`
 fn get_latest_feature_index(features: &[&str]) -> usize {
     features.len() - 1
 }
 
-// Gets the index of the feature version that matches the input string
+/// Gets the index of the feature version that matches the input string
 fn get_feature_index(features: &[&str], feature: String, span: Span) -> Result<usize> {
     let feat = feature.as_str();
     match features.iter().position(|&s| s == feat) {
@@ -39,7 +39,7 @@ fn get_feature_index(features: &[&str], feature: String, span: Span) -> Result<u
     }
 }
 
-// Gets a vector of feature versions represented by the given VersionType
+/// Gets a vector of feature versions represented by the given VersionType
 fn get_features(vt: VersionType) -> Result<Vec<&'static str>> {
     let features = get_feature_versions();
     let latest = get_latest_feature_index(&features);
@@ -94,8 +94,8 @@ fn get_features(vt: VersionType) -> Result<Vec<&'static str>> {
     }
 }
 
-// Converts a version number as a float to its feature version 
-// string form (e.g. 8.0 => llvm8-0)
+/// Converts a version number as a float to its feature version 
+/// string form (e.g. 8.0 ..= llvm8-0)
 fn f64_to_feature_string(float: f64) -> String {
     let int = float as u64;
 

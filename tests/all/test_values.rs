@@ -323,7 +323,7 @@ fn test_verify_fn() {
 
     #[cfg(not(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0")))]
     assert!(!function.verify(false));
-    // REVIEW: Why does 3.9 -> 7.0 return true here? LLVM bug? Bugfix?
+     // REVIEW: Why does 3.9 -> 8.0 return true here? LLVM bug? Bugfix?
     #[cfg(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0"))]
     assert!(function.verify(false));
 
