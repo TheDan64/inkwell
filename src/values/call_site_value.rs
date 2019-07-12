@@ -13,7 +13,7 @@ use crate::values::FunctionValue;
 /// A value resulting from a function call. It may have function attributes applied to it.
 ///
 /// This struct may be removed in the future in favor of an `InstructionValue<CallSite>` type.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy, Hash)]
 pub struct CallSiteValue(Value);
 
 impl CallSiteValue {
