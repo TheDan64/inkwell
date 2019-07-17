@@ -7,7 +7,7 @@ build = "build.rs"
 
 [dependencies]
 quote = "0.6"
-syn = { version = "0.15", features = ["full"] }
+syn = { version = "0.15", features = ["full", "fold"] }
 proc-macro2 = "0.4"
 
 [build-dependencies]

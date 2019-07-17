@@ -993,7 +993,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildCast(self.builder, op.as_llvm_opcode(), from_value.as_value_ref(), to_type.as_type_ref(), c_string.as_ptr())
+            LLVMBuildCast(self.builder, op.into(), from_value.as_value_ref(), to_type.as_type_ref(), c_string.as_ptr())
         };
 
         BasicValueEnum::new(value)

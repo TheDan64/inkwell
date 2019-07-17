@@ -13,7 +13,8 @@ use crate::{IntPredicate, FloatPredicate};
 // REVIEW: Split up into structs for SubTypes on InstructionValues?
 // REVIEW: This should maybe be split up into InstructionOpcode and ConstOpcode?
 // see LLVMGetConstOpcode
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[llvm_enum(LLVMOpcode)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum InstructionOpcode {
     // Actual Instructions:
     Add,
@@ -26,19 +27,19 @@ pub enum InstructionOpcode {
     BitCast,
     Br,
     Call,
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+    #[llvm_versions(3.8..=latest)]
     CatchPad,
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+    #[llvm_versions(3.8..=latest)]
     CatchRet,
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+    #[llvm_versions(3.8..=latest)]
     CatchSwitch,
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+    #[llvm_versions(3.8..=latest)]
     CleanupPad,
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+    #[llvm_versions(3.8..=latest)]
     CleanupRet,
     ExtractElement,
     ExtractValue,
-    #[cfg(any(feature = "llvm8-0"))]
+    #[llvm_versions(8.0..=latest)]
     FNeg,
     FAdd,
     FCmp,
@@ -63,9 +64,11 @@ pub enum InstructionOpcode {
     LShr,
     Mul,
     Or,
+    #[llvm_variant(LLVMPHI)]
     Phi,
     PtrToInt,
     Resume,
+    #[llvm_variant(LLVMRet)]
     Return,
     SDiv,
     Select,
@@ -87,160 +90,6 @@ pub enum InstructionOpcode {
     VAArg,
     Xor,
     ZExt,
-}
-
-impl InstructionOpcode {
-    fn new(opcode: LLVMOpcode) -> Self {
-        match opcode {
-            LLVMOpcode::LLVMAdd => InstructionOpcode::Add,
-            LLVMOpcode::LLVMAddrSpaceCast => InstructionOpcode::AddrSpaceCast,
-            LLVMOpcode::LLVMAlloca => InstructionOpcode::Alloca,
-            LLVMOpcode::LLVMAnd => InstructionOpcode::And,
-            LLVMOpcode::LLVMAShr => InstructionOpcode::AShr,
-            LLVMOpcode::LLVMAtomicCmpXchg => InstructionOpcode::AtomicCmpXchg,
-            LLVMOpcode::LLVMAtomicRMW => InstructionOpcode::AtomicRMW,
-            LLVMOpcode::LLVMBitCast => InstructionOpcode::BitCast,
-            LLVMOpcode::LLVMBr => InstructionOpcode::Br,
-            LLVMOpcode::LLVMCall => InstructionOpcode::Call,
-            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
-            LLVMOpcode::LLVMCatchPad => InstructionOpcode::CatchPad,
-            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
-            LLVMOpcode::LLVMCatchRet => InstructionOpcode::CatchRet,
-            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
-            LLVMOpcode::LLVMCatchSwitch => InstructionOpcode::CatchSwitch,
-            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
-            LLVMOpcode::LLVMCleanupPad => InstructionOpcode::CleanupPad,
-            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
-            LLVMOpcode::LLVMCleanupRet => InstructionOpcode::CleanupRet,
-            LLVMOpcode::LLVMExtractElement => InstructionOpcode::ExtractElement,
-            LLVMOpcode::LLVMExtractValue => InstructionOpcode::ExtractValue,
-            #[cfg(any(feature = "llvm8-0"))]
-            LLVMOpcode::LLVMFNeg => InstructionOpcode::FNeg,
-            LLVMOpcode::LLVMFAdd => InstructionOpcode::FAdd,
-            LLVMOpcode::LLVMFCmp => InstructionOpcode::FCmp,
-            LLVMOpcode::LLVMFDiv => InstructionOpcode::FDiv,
-            LLVMOpcode::LLVMFence => InstructionOpcode::Fence,
-            LLVMOpcode::LLVMFMul => InstructionOpcode::FMul,
-            LLVMOpcode::LLVMFPExt => InstructionOpcode::FPExt,
-            LLVMOpcode::LLVMFPToSI => InstructionOpcode::FPToSI,
-            LLVMOpcode::LLVMFPToUI => InstructionOpcode::FPToUI,
-            LLVMOpcode::LLVMFPTrunc => InstructionOpcode::FPTrunc,
-            LLVMOpcode::LLVMFRem => InstructionOpcode::FRem,
-            LLVMOpcode::LLVMFSub => InstructionOpcode::FSub,
-            LLVMOpcode::LLVMGetElementPtr => InstructionOpcode::GetElementPtr,
-            LLVMOpcode::LLVMICmp => InstructionOpcode::ICmp,
-            LLVMOpcode::LLVMIndirectBr => InstructionOpcode::IndirectBr,
-            LLVMOpcode::LLVMInsertElement => InstructionOpcode::InsertElement,
-            LLVMOpcode::LLVMInsertValue => InstructionOpcode::InsertValue,
-            LLVMOpcode::LLVMIntToPtr => InstructionOpcode::IntToPtr,
-            LLVMOpcode::LLVMInvoke => InstructionOpcode::Invoke,
-            LLVMOpcode::LLVMLandingPad => InstructionOpcode::LandingPad,
-            LLVMOpcode::LLVMLoad => InstructionOpcode::Load,
-            LLVMOpcode::LLVMLShr => InstructionOpcode::LShr,
-            LLVMOpcode::LLVMMul => InstructionOpcode::Mul,
-            LLVMOpcode::LLVMOr => InstructionOpcode::Or,
-            LLVMOpcode::LLVMPHI => InstructionOpcode::Phi,
-            LLVMOpcode::LLVMPtrToInt => InstructionOpcode::PtrToInt,
-            LLVMOpcode::LLVMResume => InstructionOpcode::Resume,
-            LLVMOpcode::LLVMRet => InstructionOpcode::Return,
-            LLVMOpcode::LLVMSDiv => InstructionOpcode::SDiv,
-            LLVMOpcode::LLVMSelect => InstructionOpcode::Select,
-            LLVMOpcode::LLVMSExt => InstructionOpcode::SExt,
-            LLVMOpcode::LLVMShl => InstructionOpcode::Shl,
-            LLVMOpcode::LLVMShuffleVector => InstructionOpcode::ShuffleVector,
-            LLVMOpcode::LLVMSIToFP => InstructionOpcode::SIToFP,
-            LLVMOpcode::LLVMSRem => InstructionOpcode::SRem,
-            LLVMOpcode::LLVMStore => InstructionOpcode::Store,
-            LLVMOpcode::LLVMSub => InstructionOpcode::Sub,
-            LLVMOpcode::LLVMSwitch => InstructionOpcode::Switch,
-            LLVMOpcode::LLVMTrunc => InstructionOpcode::Trunc,
-            LLVMOpcode::LLVMUDiv => InstructionOpcode::UDiv,
-            LLVMOpcode::LLVMUIToFP => InstructionOpcode::UIToFP,
-            LLVMOpcode::LLVMUnreachable => InstructionOpcode::Unreachable,
-            LLVMOpcode::LLVMURem => InstructionOpcode::URem,
-            LLVMOpcode::LLVMUserOp1 => InstructionOpcode::UserOp1,
-            LLVMOpcode::LLVMUserOp2 => InstructionOpcode::UserOp2,
-            LLVMOpcode::LLVMVAArg => InstructionOpcode::VAArg,
-            LLVMOpcode::LLVMXor => InstructionOpcode::Xor,
-            LLVMOpcode::LLVMZExt => InstructionOpcode::ZExt,
-        }
-    }
-
-    pub(crate) fn as_llvm_opcode(&self) -> LLVMOpcode {
-        match *self {
-            InstructionOpcode::Add => LLVMOpcode::LLVMAdd,
-            InstructionOpcode::AddrSpaceCast => LLVMOpcode::LLVMAddrSpaceCast,
-            InstructionOpcode::Alloca => LLVMOpcode::LLVMAlloca,
-            InstructionOpcode::And => LLVMOpcode::LLVMAnd,
-            InstructionOpcode::AShr => LLVMOpcode::LLVMAShr,
-            InstructionOpcode::AtomicCmpXchg => LLVMOpcode::LLVMAtomicCmpXchg,
-            InstructionOpcode::AtomicRMW => LLVMOpcode::LLVMAtomicRMW,
-            InstructionOpcode::BitCast => LLVMOpcode::LLVMBitCast,
-            InstructionOpcode::Br => LLVMOpcode::LLVMBr,
-            InstructionOpcode::Call => LLVMOpcode::LLVMCall,
-            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
-            InstructionOpcode::CatchPad => LLVMOpcode::LLVMCatchPad,
-            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
-            InstructionOpcode::CatchRet => LLVMOpcode::LLVMCatchRet,
-            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
-            InstructionOpcode::CatchSwitch => LLVMOpcode::LLVMCatchSwitch,
-            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
-            InstructionOpcode::CleanupPad => LLVMOpcode::LLVMCleanupPad,
-            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
-            InstructionOpcode::CleanupRet => LLVMOpcode::LLVMCleanupRet,
-            InstructionOpcode::ExtractElement => LLVMOpcode::LLVMExtractElement,
-            InstructionOpcode::ExtractValue => LLVMOpcode::LLVMExtractValue,
-            #[cfg(any(feature = "llvm8-0"))]
-            InstructionOpcode::FNeg => LLVMOpcode::LLVMFNeg,
-            InstructionOpcode::FAdd => LLVMOpcode::LLVMFAdd,
-            InstructionOpcode::FCmp => LLVMOpcode::LLVMFCmp,
-            InstructionOpcode::FDiv => LLVMOpcode::LLVMFDiv,
-            InstructionOpcode::Fence => LLVMOpcode::LLVMFence,
-            InstructionOpcode::FMul => LLVMOpcode::LLVMFMul,
-            InstructionOpcode::FPExt => LLVMOpcode::LLVMFPExt,
-            InstructionOpcode::FPToSI => LLVMOpcode::LLVMFPToSI,
-            InstructionOpcode::FPToUI => LLVMOpcode::LLVMFPToUI,
-            InstructionOpcode::FPTrunc => LLVMOpcode::LLVMFPTrunc,
-            InstructionOpcode::FRem => LLVMOpcode::LLVMFRem,
-            InstructionOpcode::FSub => LLVMOpcode::LLVMFSub,
-            InstructionOpcode::GetElementPtr => LLVMOpcode::LLVMGetElementPtr,
-            InstructionOpcode::ICmp => LLVMOpcode::LLVMICmp,
-            InstructionOpcode::IndirectBr => LLVMOpcode::LLVMIndirectBr,
-            InstructionOpcode::InsertElement => LLVMOpcode::LLVMInsertElement,
-            InstructionOpcode::InsertValue => LLVMOpcode::LLVMInsertValue,
-            InstructionOpcode::IntToPtr => LLVMOpcode::LLVMIntToPtr,
-            InstructionOpcode::Invoke => LLVMOpcode::LLVMInvoke,
-            InstructionOpcode::LandingPad => LLVMOpcode::LLVMLandingPad,
-            InstructionOpcode::Load => LLVMOpcode::LLVMLoad,
-            InstructionOpcode::LShr => LLVMOpcode::LLVMLShr,
-            InstructionOpcode::Mul => LLVMOpcode::LLVMMul,
-            InstructionOpcode::Or => LLVMOpcode::LLVMOr,
-            InstructionOpcode::Phi => LLVMOpcode::LLVMPHI,
-            InstructionOpcode::PtrToInt => LLVMOpcode::LLVMPtrToInt,
-            InstructionOpcode::Resume => LLVMOpcode::LLVMResume,
-            InstructionOpcode::Return => LLVMOpcode::LLVMRet,
-            InstructionOpcode::SDiv => LLVMOpcode::LLVMSDiv,
-            InstructionOpcode::Select => LLVMOpcode::LLVMSelect,
-            InstructionOpcode::SExt => LLVMOpcode::LLVMSExt,
-            InstructionOpcode::Shl => LLVMOpcode::LLVMShl,
-            InstructionOpcode::ShuffleVector => LLVMOpcode::LLVMShuffleVector,
-            InstructionOpcode::SIToFP => LLVMOpcode::LLVMSIToFP,
-            InstructionOpcode::SRem => LLVMOpcode::LLVMSRem,
-            InstructionOpcode::Store => LLVMOpcode::LLVMStore,
-            InstructionOpcode::Sub => LLVMOpcode::LLVMSub,
-            InstructionOpcode::Switch => LLVMOpcode::LLVMSwitch,
-            InstructionOpcode::Trunc => LLVMOpcode::LLVMTrunc,
-            InstructionOpcode::UDiv => LLVMOpcode::LLVMUDiv,
-            InstructionOpcode::UIToFP => LLVMOpcode::LLVMUIToFP,
-            InstructionOpcode::Unreachable => LLVMOpcode::LLVMUnreachable,
-            InstructionOpcode::URem => LLVMOpcode::LLVMURem,
-            InstructionOpcode::UserOp1 => LLVMOpcode::LLVMUserOp1,
-            InstructionOpcode::UserOp2 => LLVMOpcode::LLVMUserOp2,
-            InstructionOpcode::VAArg => LLVMOpcode::LLVMVAArg,
-            InstructionOpcode::Xor => LLVMOpcode::LLVMXor,
-            InstructionOpcode::ZExt => LLVMOpcode::LLVMZExt,
-        }
-    }
 }
 
 #[derive(Debug, PartialEq, Eq, Copy, Hash)]
