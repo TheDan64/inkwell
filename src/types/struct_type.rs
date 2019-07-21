@@ -110,33 +110,6 @@ impl StructType {
         StructValue::new(value)
     }
 
-    /// Creates a null `StructValue` of this `StructType`.
-    /// It will be automatically assigned this `StructType`'s `Context`.
-    ///
-    /// # Example
-    /// ```
-    /// use inkwell::context::Context;
-    /// use inkwell::types::{FloatType, StructType};
-    ///
-    /// // Global Context
-    /// let f32_type = FloatType::f32_type();
-    /// let struct_type = StructType::struct_type(&[f32_type.into(), f32_type.into()], false);
-    /// let struct_null = struct_type.const_null();
-    ///
-    /// assert!(struct_null.is_null());
-    ///
-    /// // Custom Context
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
-    /// let struct_null = struct_type.const_null();
-    ///
-    /// assert!(struct_null.is_null());
-    /// ```
-    pub fn const_null(&self) -> StructValue {
-        StructValue::new(self.struct_type.const_null())
-    }
-
     /// Creates a constant zero value of this `StructType`.
     ///
     /// # Example
@@ -484,25 +457,6 @@ impl StructType {
         }
 
         is_opaque
-    }
-
-    /// Creates a `VectorType` with this `StructType` for its element type.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
-    /// let struct_vec_type = struct_type.vec_type(3);
-    ///
-    /// assert_eq!(struct_vec_type.get_size(), 3);
-    /// assert_eq!(struct_vec_type.get_element_type().into_struct_type(), struct_type);
-    /// ```
-    pub fn vec_type(&self, size: u32) -> VectorType {
-        self.struct_type.vec_type(size)
     }
 
     /// Creates a constant `ArrayValue`.

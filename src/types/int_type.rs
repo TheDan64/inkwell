@@ -280,26 +280,6 @@ impl IntType {
         IntValue::new(value)
     }
 
-    /// Creates a constant null value of this `IntType`.
-    ///
-    /// # Example
-    /// ```
-    /// use inkwell::context::Context;
-    /// use inkwell::types::IntType;
-    ///
-    /// // Global Context
-    /// let i32_type = IntType::i32_type();
-    /// let i32_value = i32_type.const_null();
-    ///
-    /// // Custom Context
-    /// let context = Context::create();
-    /// let i32_type = context.i32_type();
-    /// let i32_value = i32_type.const_null();
-    /// ```
-    pub fn const_null(&self) -> IntValue {
-        IntValue::new(self.int_type.const_null())
-    }
-
     /// Creates a constant zero value of this `IntType`.
     ///
     /// # Example

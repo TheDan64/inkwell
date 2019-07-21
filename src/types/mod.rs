@@ -72,14 +72,6 @@ impl Type {
         }
     }
 
-    // Even though the LLVM fuction has the word "Pointer", it doesn't seem to create
-    // a pointer at all, just a null value of the current type...
-    fn const_null(&self) -> LLVMValueRef {
-        unsafe {
-            LLVMConstPointerNull(self.type_)
-        }
-    }
-
     fn const_zero(&self) -> LLVMValueRef {
         unsafe {
             LLVMConstNull(self.type_)

@@ -834,14 +834,14 @@ impl Builder {
     /// #![allow(overflowing_literals)]
     ///
     /// // Logical Right Shift
-    /// assert_eq!(0b1100_0000 >> 2, 0b0011_0000);
-    /// assert_eq!(0b0000_0010 >> 1, 0b0000_0001);
-    /// assert_eq!(0b0000_1100 >> 2, 0b0000_0011);
+    /// assert_eq!(0b1100_0000u8 >> 2, 0b0011_0000);
+    /// assert_eq!(0b0000_0010u8 >> 1, 0b0000_0001);
+    /// assert_eq!(0b0000_1100u8 >> 2, 0b0000_0011);
     ///
     /// // Sign Extended Right Shift
     /// assert_eq!(0b0100_0000i8 >> 2, 0b0001_0000);
-    /// assert_eq!(0b1110_0000i8 >> 1, 0b1111_0000);
-    /// assert_eq!(0b1100_0000i8 >> 2, 0b1111_0000);
+    /// assert_eq!(0b1110_0000u8 as i8 >> 1, 0b1111_0000u8 as i8);
+    /// assert_eq!(0b1100_0000u8 as i8 >> 2, 0b1111_0000u8 as i8);
     /// ```
     ///
     /// In Rust, functions that could do this for 8bit values look like:

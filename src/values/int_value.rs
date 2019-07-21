@@ -420,6 +420,9 @@ impl IntValue {
         if !self.is_const() {
             return None;
         }
+        if self.get_type().get_bit_width() > 64 {
+            return None;
+        }
 
         unsafe {
             Some(LLVMConstIntGetZExtValue(self.as_value_ref()))
@@ -442,6 +445,9 @@ impl IntValue {
     pub fn get_sign_extended_constant(&self) -> Option<i64> {
         // Garbage values are produced on non constant values
         if !self.is_const() {
+            return None;
+        }
+        if self.get_type().get_bit_width() > 64 {
             return None;
         }
 

@@ -133,33 +133,6 @@ impl VectorType {
         VectorValue::new(vec_value)
     }
 
-    /// Creates a null `VectorValue` of this `VectorType`.
-    /// It will be automatically assigned this `VectorType`'s `Context`.
-    ///
-    /// # Example
-    /// ```
-    /// use inkwell::context::Context;
-    /// use inkwell::types::FloatType;
-    ///
-    /// // Global Context
-    /// let f32_type = FloatType::f32_type();
-    /// let f32_vec_type = f32_type.vec_type(7);
-    /// let f32_vec_null = f32_vec_type.const_null();
-    ///
-    /// assert!(f32_vec_null.is_null());
-    ///
-    /// // Custom Context
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    /// let f32_vec_type = f32_type.vec_type(7);
-    /// let f32_vec_null = f32_vec_type.const_null();
-    ///
-    /// assert!(f32_vec_null.is_null());
-    /// ```
-    pub fn const_null(&self) -> VectorValue {
-        VectorValue::new(self.vec_type.const_null())
-    }
-
     /// Creates a constant zero value of this `VectorType`.
     ///
     /// # Example
@@ -224,25 +197,6 @@ impl VectorType {
     pub fn get_element_type(&self) -> BasicTypeEnum {
         self.vec_type.get_element_type().to_basic_type_enum()
 
-    }
-
-    /// Creates a `VectorType` with this `VectorType` for its element type.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    /// let f32_vector_type = f32_type.vec_type(3);
-    /// let f32_vector_vector_type = f32_vector_type.vec_type(3);
-    ///
-    /// assert_eq!(f32_vector_vector_type.get_size(), 3);
-    /// assert_eq!(f32_vector_vector_type.get_element_type().into_vector_type(), f32_vector_type);
-    /// ```
-    pub fn vec_type(&self, size: u32) -> VectorType {
-        self.vec_type.vec_type(size)
     }
 
     /// Creates a `PointerType` with this `VectorType` for its element type.
