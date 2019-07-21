@@ -455,6 +455,10 @@ impl CallSiteValue {
 
     /// Shortcut for setting the alignment `Attribute` for this `CallSiteValue`.
     ///
+    /// # Panics
+    ///
+    /// When the alignment is not a power of 2.
+    ///
     /// # Example
     ///
     /// ```no_run
@@ -475,6 +479,8 @@ impl CallSiteValue {
     /// call_site_value.set_param_alignment_attribute(0, 2);
     /// ```
     pub fn set_param_alignment_attribute(&self, index: u32, alignment: u32) {
+        assert_eq!(alignment.count_ones(), 1, "Alignment must be a power of two.");
+
         unsafe {
             LLVMSetInstrParamAlignment(self.as_value_ref(), index, alignment)
         }

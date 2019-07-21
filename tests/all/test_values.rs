@@ -60,7 +60,7 @@ fn test_call_site() {
 
     assert_eq!(call_site.get_call_convention(), 2);
 
-    call_site.set_param_alignment_attribute(0, 12);
+    call_site.set_param_alignment_attribute(0, 16);
 }
 
 #[test]
