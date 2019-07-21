@@ -4,7 +4,7 @@ use std::ffi::CString;
 
 use self::inkwell::AddressSpace;
 use self::inkwell::context::Context;
-use self::inkwell::types::{FloatType, IntType, StructType, VoidType};
+use self::inkwell::types::{BasicType, FloatType, IntType, StructType, VoidType};
 
 #[test]
 fn test_struct_type() {
@@ -344,4 +344,25 @@ fn test_ptr_type() {
 
     assert_eq!(fn_ptr_type.get_element_type().into_function_type(), fn_type);
     assert_eq!(*fn_ptr_type.get_context(), context);
+}
+
+#[test]
+fn test_basic_type_enum() {
+    let context = Context::create();
+    let addr = AddressSpace::Generic;
+    let int = context.i32_type();
+    let types: &[&dyn BasicType] = &[
+        // ints and floats
+        &int, &context.i64_type(), &context.f32_type(), &context.f64_type(),
+        // derived types
+        &int.array_type(0), &int.ptr_type(addr),
+        &context.struct_type(&[int.as_basic_type_enum()], false),
+        &int.vec_type(0)
+    ];
+    for basic_type in types {
+        assert_eq!(basic_type.as_basic_type_enum().ptr_type(addr),
+                   basic_type.ptr_type(addr));
+        assert_eq!(basic_type.as_basic_type_enum().array_type(0),
+                   basic_type.array_type(0));
+    }
 }

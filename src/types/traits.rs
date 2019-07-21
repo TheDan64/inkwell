@@ -2,6 +2,7 @@ use llvm_sys::prelude::LLVMTypeRef;
 
 use std::fmt::Debug;
 
+use crate::AddressSpace;
 use crate::types::{IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VectorType, VoidType, Type};
 use crate::types::enums::{AnyTypeEnum, BasicTypeEnum};
 use crate::values::{IntMathValue, FloatMathValue, PointerMathValue, IntValue, FloatValue, PointerValue, VectorValue};
@@ -40,6 +41,16 @@ pub trait BasicType: AnyType {
     /// Create a function type from this `BasicType`.
     fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
         Type::new(self.as_type_ref()).fn_type(param_types, is_var_args)
+    }
+
+    /// Create an array type from this `BasicType`.
+    fn array_type(&self, size: u32) -> ArrayType {
+        Type::new(self.as_type_ref()).array_type(size)
+    }
+
+    /// Create a pointer type from this `BasicType`.
+    fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
+        Type::new(self.as_type_ref()).ptr_type(address_space)
     }
 }
 
