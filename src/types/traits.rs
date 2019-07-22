@@ -38,17 +38,52 @@ pub trait BasicType: AnyType {
         BasicTypeEnum::new(self.as_type_ref())
     }
 
-    /// Create a function type from this `BasicType`.
+    /// Create a `FunctionType` with this `BasicType` as its return type.
+    ///
+    /// Example:
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::types::BasicType;
+    ///
+    /// let context = Context::create();
+    /// let int = context.i32_type();
+    /// let int_basic_type = int.as_basic_type_enum();
+    /// assert_eq!(int_basic_type.fn_type(&[], false), int.fn_type(&[], false));
+    /// ```
     fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
         Type::new(self.as_type_ref()).fn_type(param_types, is_var_args)
     }
 
-    /// Create an array type from this `BasicType`.
+    /// Create an `ArrayType` with this `BasicType` as its elements.
+    ///
+    /// Example:
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::types::BasicType;
+    ///
+    /// let context = Context::create();
+    /// let int = context.i32_type();
+    /// let int_basic_type = int.as_basic_type_enum();
+    /// assert_eq!(int_basic_type.array_type(32), int.array_type(32));
+    /// ```
     fn array_type(&self, size: u32) -> ArrayType {
         Type::new(self.as_type_ref()).array_type(size)
     }
 
-    /// Create a pointer type from this `BasicType`.
+    /// Create a `PointerType` that points to this `BasicType`.
+    ///
+    /// Example:
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::types::BasicType;
+    /// use inkwell::AddressSpace;
+    ///
+    /// let context = Context::create();
+    /// let int = context.i32_type();
+    /// let int_basic_type = int.as_basic_type_enum();
+    /// let addr_space = AddressSpace::Generic;
+    /// assert_eq!(int_basic_type.ptr_type(addr_space), int.ptr_type(addr_space));
+    /// ```
     fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
         Type::new(self.as_type_ref()).ptr_type(address_space)
     }
