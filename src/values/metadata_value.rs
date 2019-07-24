@@ -1,9 +1,9 @@
 use llvm_sys::core::{LLVMMDNode, LLVMMDString, LLVMIsAMDNode, LLVMIsAMDString, LLVMGetMDString, LLVMGetMDNodeNumOperands, LLVMGetMDNodeOperands, LLVMGetMDKindID};
 use llvm_sys::prelude::LLVMValueRef;
 
-#[llvm_versions(7.0 => latest)]
+#[llvm_versions(7.0..=latest)]
 use llvm_sys::prelude::LLVMMetadataRef;
-#[llvm_versions(7.0 => latest)]
+#[llvm_versions(7.0..=latest)]
 use llvm_sys::core::LLVMValueAsMetadata;
 
 use crate::support::LLVMString;
@@ -32,6 +32,8 @@ pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 23;
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 25;
 #[cfg(feature = "llvm7-0")]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 25;
+#[cfg(feature = "llvm8-0")]
+pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 26;
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct MetadataValue {
@@ -51,7 +53,7 @@ impl MetadataValue {
         }
     }
 
-    #[llvm_versions(7.0 => latest)]
+    #[llvm_versions(7.0..=latest)]
     pub(crate) fn as_metadata_ref(&self) -> LLVMMetadataRef {
         unsafe {
             LLVMValueAsMetadata(self.as_value_ref())
@@ -72,7 +74,7 @@ impl MetadataValue {
         }
     }
 
-    pub fn create_node(values: &[&BasicValue]) -> Self {
+    pub fn create_node(values: &[&dyn BasicValue]) -> Self {
         let mut tuple_values: Vec<LLVMValueRef> = values.iter()
                                                         .map(|val| val.as_value_ref())
                                                         .collect();

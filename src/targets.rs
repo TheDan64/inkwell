@@ -1,7 +1,9 @@
-#[llvm_versions(7.0 => latest)]
+#[llvm_versions(7.0..=latest)]
 use either::Either;
 use llvm_sys::target::{LLVMTargetDataRef, LLVMCopyStringRepOfTargetData, LLVMSizeOfTypeInBits, LLVMCreateTargetData, LLVMByteOrder, LLVMPointerSize, LLVMByteOrdering, LLVMStoreSizeOfType, LLVMABISizeOfType, LLVMABIAlignmentOfType, LLVMCallFrameAlignmentOfType, LLVMPreferredAlignmentOfType, LLVMPreferredAlignmentOfGlobal, LLVMElementAtOffset, LLVMOffsetOfElement, LLVMDisposeTargetData, LLVMPointerSizeForAS, LLVMIntPtrType, LLVMIntPtrTypeForAS, LLVMIntPtrTypeInContext, LLVMIntPtrTypeForASInContext};
 use llvm_sys::target_machine::{LLVMGetFirstTarget, LLVMTargetRef, LLVMGetNextTarget, LLVMGetTargetFromName, LLVMGetTargetFromTriple, LLVMGetTargetName, LLVMGetTargetDescription, LLVMTargetHasJIT, LLVMTargetHasTargetMachine, LLVMTargetHasAsmBackend, LLVMTargetMachineRef, LLVMDisposeTargetMachine, LLVMGetTargetMachineTarget, LLVMGetTargetMachineTriple, LLVMSetTargetMachineAsmVerbosity, LLVMCreateTargetMachine, LLVMGetTargetMachineCPU, LLVMGetTargetMachineFeatureString, LLVMGetDefaultTargetTriple, LLVMAddAnalysisPasses, LLVMCodeGenOptLevel, LLVMCodeModel, LLVMRelocMode, LLVMCodeGenFileType, LLVMTargetMachineEmitToMemoryBuffer, LLVMTargetMachineEmitToFile};
+#[llvm_versions(4.0..=latest)]
+use llvm_sys::target_machine::LLVMCreateTargetDataLayout;
 
 use crate::{AddressSpace, OptimizationLevel};
 use crate::context::Context;
@@ -244,7 +246,7 @@ impl Target {
     }
 
     // TODOC: Called R600 in 3.6
-    #[llvm_versions(3.7 => latest)]
+    #[llvm_versions(3.7..=latest)]
     pub fn initialize_amd_gpu(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeAMDGPUTarget, LLVMInitializeAMDGPUTargetInfo, LLVMInitializeAMDGPUTargetMC, LLVMInitializeAMDGPUAsmPrinter, LLVMInitializeAMDGPUAsmParser};
 
@@ -357,7 +359,7 @@ impl Target {
         }
     }
 
-    #[llvm_versions(3.6 => 3.8)]
+    #[llvm_versions(3.6..=3.8)]
     pub fn initialize_cpp_backend(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeCppBackendTarget, LLVMInitializeCppBackendTargetInfo, LLVMInitializeCppBackendTargetMC};
 
@@ -491,7 +493,7 @@ impl Target {
     }
 
     // TODOC: Disassembler only supported in LLVM 4.0+
-    #[llvm_versions(3.7 => latest)]
+    #[llvm_versions(3.7..=latest)]
     pub fn initialize_bpf(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeBPFTarget, LLVMInitializeBPFTargetInfo, LLVMInitializeBPFTargetMC, LLVMInitializeBPFAsmPrinter};
 
@@ -525,7 +527,7 @@ impl Target {
         }
     }
 
-    #[llvm_versions(4.0 => latest)]
+    #[llvm_versions(4.0..=latest)]
     pub fn initialize_lanai(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeLanaiTargetInfo, LLVMInitializeLanaiTarget, LLVMInitializeLanaiTargetMC, LLVMInitializeLanaiAsmPrinter, LLVMInitializeLanaiAsmParser, LLVMInitializeLanaiDisassembler};
 
@@ -563,7 +565,7 @@ impl Target {
     // We can revisit this issue if someone wants RISCV support in inkwell, or if
     // llvm-sys starts supporting expiramental llvm targets. See
     // https://lists.llvm.org/pipermail/llvm-dev/2017-August/116347.html for more info
-    #[cfg(feature = "llvm4-0")]
+    #[llvm_versions(4.0)]
     pub fn initialize_riscv(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeRISCVTargetInfo, LLVMInitializeRISCVTarget, LLVMInitializeRISCVTargetMC};
 
@@ -584,6 +586,37 @@ impl Target {
 
             if config.machine_code {
                 LLVMInitializeRISCVTargetMC()
+            }
+        }
+    }
+
+    #[llvm_versions(8.0..=latest)]
+    pub fn initialize_webassembly(config: &InitializationConfig) {
+        use llvm_sys::target::{LLVMInitializeWebAssemblyTargetInfo, LLVMInitializeWebAssemblyTarget, LLVMInitializeWebAssemblyTargetMC, LLVMInitializeWebAssemblyAsmPrinter, LLVMInitializeWebAssemblyAsmParser, LLVMInitializeWebAssemblyDisassembler};
+
+        unsafe {
+            if config.base {
+                LLVMInitializeWebAssemblyTarget()
+            }
+
+            if config.info {
+                LLVMInitializeWebAssemblyTargetInfo()
+            }
+
+            if config.asm_printer {
+                LLVMInitializeWebAssemblyAsmPrinter()
+            }
+
+            if config.asm_parser {
+                LLVMInitializeWebAssemblyAsmParser()
+            }
+
+            if config.disassembler {
+                LLVMInitializeWebAssemblyDisassembler()
+            }
+
+            if config.machine_code {
+                LLVMInitializeWebAssemblyTargetMC()
             }
         }
     }
@@ -839,7 +872,7 @@ impl TargetMachine {
         LLVMString::new(llvm_string)
     }
 
-    #[llvm_versions(7.0 => latest)]
+    #[llvm_versions(7.0..=latest)]
     pub fn normalize_target_triple(triple: Either<&str, &CStr>) -> LLVMString {
         use llvm_sys::target_machine::LLVMNormalizeTargetTriple;
 
@@ -866,7 +899,7 @@ impl TargetMachine {
     /// # Example Output
     ///
     /// `x86_64-pc-linux-gnu`
-    #[llvm_versions(7.0 => latest)]
+    #[llvm_versions(7.0..=latest)]
     pub fn get_host_cpu_name() -> LLVMString {
         use llvm_sys::target_machine::LLVMGetHostCPUName;
 
@@ -882,7 +915,7 @@ impl TargetMachine {
     /// # Example Output
     ///
     /// `+sse2,+cx16,+sahf,-tbm`
-    #[llvm_versions(7.0 => latest)]
+    #[llvm_versions(7.0..=latest)]
     pub fn get_host_cpu_features() -> LLVMString {
         use llvm_sys::target_machine::LLVMGetHostCPUFeatures;
 
@@ -905,6 +938,16 @@ impl TargetMachine {
         unsafe {
             CStr::from_ptr(LLVMGetTargetMachineFeatureString(self.target_machine))
         }
+    }
+
+    /// Create TargetData from this target machine
+    #[llvm_versions(4.0..=latest)]
+    pub fn get_target_data(&self) -> TargetData {
+        let data_layout = unsafe {
+            LLVMCreateTargetDataLayout(self.target_machine)
+        };
+
+        TargetData::new(data_layout)
     }
 
     pub fn set_asm_verbosity(&self, verbosity: bool) {
@@ -1102,7 +1145,7 @@ impl TargetData {
     }
 
     // REVIEW: Does this only work if Sized?
-    pub fn get_bit_size(&self, type_: &AnyType) -> u64 {
+    pub fn get_bit_size(&self, type_: &dyn AnyType) -> u64 {
         unsafe {
             LLVMSizeOfTypeInBits(self.target_data, type_.as_type_ref())
         }
@@ -1137,31 +1180,31 @@ impl TargetData {
         }
     }
 
-    pub fn get_store_size(&self, type_: &AnyType) -> u64 {
+    pub fn get_store_size(&self, type_: &dyn AnyType) -> u64 {
         unsafe {
             LLVMStoreSizeOfType(self.target_data, type_.as_type_ref())
         }
     }
 
-    pub fn get_abi_size(&self, type_: &AnyType) -> u64 {
+    pub fn get_abi_size(&self, type_: &dyn AnyType) -> u64 {
         unsafe {
             LLVMABISizeOfType(self.target_data, type_.as_type_ref())
         }
     }
 
-    pub fn get_abi_alignment(&self, type_: &AnyType) -> u32 {
+    pub fn get_abi_alignment(&self, type_: &dyn AnyType) -> u32 {
         unsafe {
             LLVMABIAlignmentOfType(self.target_data, type_.as_type_ref())
         }
     }
 
-    pub fn get_call_frame_alignment(&self, type_: &AnyType) -> u32 {
+    pub fn get_call_frame_alignment(&self, type_: &dyn AnyType) -> u32 {
         unsafe {
             LLVMCallFrameAlignmentOfType(self.target_data, type_.as_type_ref())
         }
     }
 
-    pub fn get_preferred_alignment(&self, type_: &AnyType) -> u32 {
+    pub fn get_preferred_alignment(&self, type_: &dyn AnyType) -> u32 {
         unsafe {
             LLVMPreferredAlignmentOfType(self.target_data, type_.as_type_ref())
         }

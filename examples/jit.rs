@@ -40,7 +40,7 @@ fn jit_compile_sum(
     unsafe { execution_engine.get_function("sum").ok() }
 }
 
-fn main() -> Result<(), Box<Error>> {
+fn main() -> Result<(), Box<dyn Error>> {
     let context = Context::create();
     let module = context.create_module("sum");
     let builder = context.create_builder();

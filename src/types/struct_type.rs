@@ -1,5 +1,5 @@
 use llvm_sys::core::{LLVMConstNamedStruct, LLVMConstStruct, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMStructSetBody, LLVMConstArray};
-#[llvm_versions(3.7 => latest)]
+#[llvm_versions(3.7..=latest)]
 use llvm_sys::core::LLVMStructGetTypeAtIndex;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
@@ -41,7 +41,7 @@ impl StructType {
     ///
     /// assert_eq!(struct_type.get_field_type_at_index(0).unwrap().into_float_type(), f32_type);
     /// ```
-    #[llvm_versions(3.7 => latest)]
+    #[llvm_versions(3.7..=latest)]
     pub fn get_field_type_at_index(&self, index: u32) -> Option<BasicTypeEnum> {
         // LLVM doesn't seem to just return null if opaque.
         // TODO: One day, with SubTypes (& maybe specialization?) we could just
@@ -402,7 +402,7 @@ impl StructType {
 
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of an `StructType` to stderr. Not available in newer LLVM versions.
-    #[llvm_versions(3.7 => 4.0)]
+    #[llvm_versions(3.7..=4.0)]
     pub fn print_to_stderr(&self) {
         self.struct_type.print_to_stderr()
     }

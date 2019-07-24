@@ -67,7 +67,7 @@ impl Builder {
     /// builder.position_at_end(&entry);
     /// builder.build_return(Some(&i32_arg));
     /// ```
-    pub fn build_return(&self, value: Option<&BasicValue>) -> InstructionValue {
+    pub fn build_return(&self, value: Option<&dyn BasicValue>) -> InstructionValue {
         let value = unsafe {
             value.map_or_else(|| LLVMBuildRetVoid(self.builder), |value| LLVMBuildRet(self.builder, value.as_value_ref()))
         };
@@ -993,7 +993,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildCast(self.builder, op.as_llvm_opcode(), from_value.as_value_ref(), to_type.as_type_ref(), c_string.as_ptr())
+            LLVMBuildCast(self.builder, op.into(), from_value.as_value_ref(), to_type.as_type_ref(), c_string.as_ptr())
         };
 
         BasicValueEnum::new(value)

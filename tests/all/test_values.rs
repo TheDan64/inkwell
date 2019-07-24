@@ -5,7 +5,7 @@ use self::inkwell::context::Context;
 use self::inkwell::module::Linkage::*;
 use self::inkwell::types::{StructType, VectorType};
 use self::inkwell::values::{InstructionOpcode::*, MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID, VectorValue};
-#[llvm_versions(7.0 => latest)]
+#[llvm_versions(7.0..=latest)]
 use self::inkwell::comdat::ComdatSelectionKind;
 
 use std::ffi::CString;
@@ -321,10 +321,10 @@ fn test_verify_fn() {
 
     let function = module.add_function("fn", fn_type, None);
 
-    #[cfg(not(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0")))]
+    #[cfg(not(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0")))]
     assert!(!function.verify(false));
-    // REVIEW: Why does 3.9 -> 7.0 return true here? LLVM bug? Bugfix?
-    #[cfg(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0"))]
+     // REVIEW: Why does 3.9 -> 8.0 return true here? LLVM bug? Bugfix?
+    #[cfg(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0"))]
     assert!(function.verify(false));
 
     let basic_block = context.append_basic_block(&function, "entry");
@@ -787,7 +787,7 @@ fn test_global_byte_array() {
 
 #[test]
 fn test_globals() {
-    #[llvm_versions(7.0 => latest)]
+    #[llvm_versions(7.0..=latest)]
     use self::inkwell::values::UnnamedAddress;
 
     let context = Context::create();
@@ -814,7 +814,7 @@ fn test_globals() {
     assert!(!global.has_unnamed_addr());
     assert!(!global.is_externally_initialized());
     // REVIEW: Segfaults in 4.0 -> 7.0
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0")))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0")))]
     assert_eq!(global.get_section(), &*CString::new("").unwrap());
     assert_eq!(global.get_dll_storage_class(), DLLStorageClass::default());
     assert_eq!(global.get_visibility(), GlobalVisibility::default());
