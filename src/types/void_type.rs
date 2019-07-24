@@ -7,8 +7,8 @@ use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
 use crate::types::{Type, BasicTypeEnum, FunctionType, PointerType};
 
-/// A `VoidType` is a special type with no possible direct instances. It's particularly
-/// useful as a pointer element type or a function return type.
+/// A `VoidType` is a special type with no possible direct instances. It's only
+/// useful as a function return type.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct VoidType {
     void_type: Type,
@@ -24,7 +24,7 @@ impl VoidType {
     }
 
     // REVIEW: Always false -> const fn?
-    /// Gets whether or not this `VectorType` is sized or not. This may always
+    /// Gets whether or not this `VoidType` is sized or not. This may always
     /// be false and as such this function may be removed in the future.
     ///
     /// # Example
@@ -55,24 +55,6 @@ impl VoidType {
     /// ```
     pub fn get_context(&self) -> ContextRef {
         self.void_type.get_context()
-    }
-
-    /// Creates a `PointerType` with this `VoidType` for its element type.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    /// use inkwell::AddressSpace;
-    ///
-    /// let context = Context::create();
-    /// let void_type = context.void_type();
-    /// let void_ptr_type = void_type.ptr_type(AddressSpace::Generic);
-    ///
-    /// assert_eq!(void_ptr_type.get_element_type().into_void_type(), void_type);
-    /// ```
-    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
-        self.void_type.ptr_type(address_space)
     }
 
     /// Creates a `FunctionType` with this `VoidType` for its return type.
@@ -118,7 +100,7 @@ impl VoidType {
 
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of a `VoidType` to stderr. Not available in newer LLVM versions.
-    #[llvm_versions(3.7 => 4.0)]
+    #[llvm_versions(3.7..=4.0)]
     pub fn print_to_stderr(&self) {
         self.void_type.print_to_stderr()
     }

@@ -155,7 +155,7 @@ impl<'a> Lexer<'a> {
                 Ok(Token::Comment)
             },
 
-            '.' | '0' ... '9' => {
+            '.' | '0' ..= '9' => {
                 // Parse number literal
                 loop {
                     let ch = match chars.peek() {
@@ -175,7 +175,7 @@ impl<'a> Lexer<'a> {
                 Ok(Token::Number(src[start..pos].parse().unwrap()))
             },
 
-            'a' ... 'z' | 'A' ... 'Z' | '_' => {
+            'a' ..= 'z' | 'A' ..= 'Z' | '_' => {
                 // Parse identifier
                 loop {
                     let ch = match chars.peek() {

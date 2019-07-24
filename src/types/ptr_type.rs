@@ -178,7 +178,7 @@ impl PointerType {
 
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of an `IntType` to stderr. Not available in newer LLVM versions.
-    #[llvm_versions(3.7 => 4.0)]
+    #[llvm_versions(3.7..=4.0)]
     pub fn print_to_stderr(&self) {
         self.ptr_type.print_to_stderr()
     }
@@ -208,7 +208,7 @@ impl PointerType {
     /// assert!(f32_ptr_null.is_null());
     /// ```
     pub fn const_null(&self) -> PointerValue {
-        PointerValue::new(self.ptr_type.const_null())
+        PointerValue::new(self.ptr_type.const_zero())
     }
 
     // REVIEW: Unlike the other const_zero functions, this one becomes null instead of a 0 value. Maybe remove?

@@ -4,7 +4,7 @@ use std::ffi::CString;
 
 use self::inkwell::AddressSpace;
 use self::inkwell::context::Context;
-use self::inkwell::types::{FloatType, IntType, StructType, VoidType};
+use self::inkwell::types::{BasicType, FloatType, IntType, StructType, VoidType};
 
 #[test]
 fn test_struct_type() {
@@ -174,7 +174,6 @@ fn test_sized_types() {
     assert!(!fn_type3.is_sized());
     assert!(!fn_type4.is_sized());
 
-    assert!(void_type.ptr_type(AddressSpace::Generic).is_sized());
     assert!(bool_type.ptr_type(AddressSpace::Generic).is_sized());
     assert!(i8_type.ptr_type(AddressSpace::Generic).is_sized());
     assert!(i16_type.ptr_type(AddressSpace::Generic).is_sized());
@@ -193,8 +192,6 @@ fn test_sized_types() {
     assert!(struct_type4.ptr_type(AddressSpace::Generic).is_sized());
     assert!(opaque_struct_type.ptr_type(AddressSpace::Generic).is_sized());
 
-    // REVIEW: You can't have array of void right?
-    assert!(void_type.ptr_type(AddressSpace::Generic).array_type(42).is_sized());
     assert!(bool_type.array_type(42).is_sized());
     assert!(i8_type.array_type(42).is_sized());
     assert!(i16_type.array_type(42).is_sized());
@@ -213,8 +210,6 @@ fn test_sized_types() {
     assert!(struct_type4.array_type(0).is_sized());
     assert!(!opaque_struct_type.array_type(0).is_sized());
 
-    // REVIEW: You can't have vec of void right?
-    assert!(void_type.ptr_type(AddressSpace::Generic).vec_type(42).is_sized());
     assert!(bool_type.vec_type(42).is_sized());
     assert!(i8_type.vec_type(42).is_sized());
     assert!(i16_type.vec_type(42).is_sized());
@@ -227,15 +222,10 @@ fn test_sized_types() {
     assert!(f80_type.vec_type(42).is_sized());
     assert!(f128_type.vec_type(42).is_sized());
     assert!(ppc_f128_type.vec_type(42).is_sized());
-    assert!(struct_type.vec_type(42).is_sized());
-    assert!(struct_type2.vec_type(42).is_sized());
-    assert!(struct_type3.vec_type(42).is_sized());
-    assert!(struct_type4.vec_type(42).is_sized());
-    assert!(!opaque_struct_type.vec_type(42).is_sized());
 }
 
 #[test]
-fn test_const_null() {
+fn test_const_zero() {
     let context = Context::create();
     let bool_type = context.bool_type();
     let i8_type = context.i8_type();
@@ -318,57 +308,6 @@ fn test_const_null() {
     assert_eq!(*ptr_zero.print_to_string(), *CString::new("double* null").unwrap());
     assert_eq!(*vec_zero.print_to_string(), *CString::new("<42 x double> zeroinitializer").unwrap());
     assert_eq!(*array_zero.print_to_string(), *CString::new("[42 x double] zeroinitializer").unwrap());
-
-    let bool_null = bool_type.const_null();
-    let i8_null = i8_type.const_null();
-    let i16_null = i16_type.const_null();
-    let i32_null = i32_type.const_null();
-    let i64_null = i64_type.const_null();
-    let i128_null = i128_type.const_null();
-    let f16_null = f16_type.const_null();
-    let f32_null = f32_type.const_null();
-    let f64_null = f64_type.const_null();
-    let f80_null = f80_type.const_null();
-    let f128_null = f128_type.const_null();
-    let ppc_f128_null = ppc_f128_type.const_null();
-    let struct_null = struct_type.const_null();
-    let ptr_null = ptr_type.const_null();
-    let vec_null = vec_type.const_null();
-    let array_null = array_type.const_null();
-
-    assert!(bool_null.is_null());
-    assert!(i8_null.is_null());
-    assert!(i16_null.is_null());
-    assert!(i32_null.is_null());
-    assert!(i64_null.is_null());
-    assert!(i128_null.is_null());
-    assert!(f16_null.is_null());
-    assert!(f32_null.is_null());
-    assert!(f64_null.is_null());
-    assert!(f80_null.is_null());
-    assert!(f128_null.is_null());
-    assert!(ppc_f128_null.is_null());
-    assert!(struct_null.is_null());
-    assert!(ptr_null.is_null());
-    assert!(vec_null.is_null());
-    assert!(array_null.is_null());
-
-    assert_eq!(*bool_null.print_to_string(), *CString::new("i1 null").unwrap());
-    assert_eq!(*i8_null.print_to_string(), *CString::new("i8 null").unwrap());
-    assert_eq!(*i16_null.print_to_string(), *CString::new("i16 null").unwrap());
-    assert_eq!(*i32_null.print_to_string(), *CString::new("i32 null").unwrap());
-    assert_eq!(*i64_null.print_to_string(), *CString::new("i64 null").unwrap());
-    assert_eq!(*i128_null.print_to_string(), *CString::new("i128 null").unwrap());
-    assert_eq!(*f16_null.print_to_string(), *CString::new("half null").unwrap());
-    assert_eq!(*f32_null.print_to_string(), *CString::new("float null").unwrap());
-    assert_eq!(*f64_null.print_to_string(), *CString::new("double null").unwrap());
-    assert_eq!(*f80_null.print_to_string(), *CString::new("x86_fp80 null").unwrap());
-    assert_eq!(*f128_null.print_to_string(), *CString::new("fp128 null").unwrap());
-    assert_eq!(*ppc_f128_null.print_to_string(), *CString::new("ppc_fp128 null").unwrap());
-    assert_eq!(*struct_null.print_to_string(), *CString::new("{ i8, fp128 } null").unwrap());
-    assert_eq!(*ptr_null.print_to_string(), *CString::new("double* null").unwrap());
-    assert_eq!(*vec_null.print_to_string(), *CString::new("<42 x double> null").unwrap());
-    assert_eq!(*array_null.print_to_string(), *CString::new("[42 x double] null").unwrap());
 }
 
 #[test]
@@ -376,10 +315,8 @@ fn test_vec_type() {
     let context = Context::create();
     let int = context.i8_type();
     let vec_type = int.vec_type(42);
-    let vec_type2 = vec_type.vec_type(7);
 
     assert_eq!(vec_type.get_size(), 42);
-    assert_eq!(vec_type2.get_element_type().into_vector_type(), vec_type);
 }
 
 #[test]
@@ -400,16 +337,32 @@ fn test_ptr_type() {
     assert_eq!(ptr_type.get_address_space(), AddressSpace::Generic);
     assert_eq!(ptr_type.get_element_type().into_int_type(), i8_type);
 
-    // Void ptr:
-    let void_type = context.void_type();
-    let void_ptr_type = void_type.ptr_type(AddressSpace::Generic);
-
-    assert_eq!(void_ptr_type.get_element_type().into_void_type(), void_type);
-
     // Fn ptr:
+    let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
     let fn_ptr_type = fn_type.ptr_type(AddressSpace::Generic);
 
     assert_eq!(fn_ptr_type.get_element_type().into_function_type(), fn_type);
     assert_eq!(*fn_ptr_type.get_context(), context);
+}
+
+#[test]
+fn test_basic_type_enum() {
+    let context = Context::create();
+    let addr = AddressSpace::Generic;
+    let int = context.i32_type();
+    let types: &[&dyn BasicType] = &[
+        // ints and floats
+        &int, &context.i64_type(), &context.f32_type(), &context.f64_type(),
+        // derived types
+        &int.array_type(0), &int.ptr_type(addr),
+        &context.struct_type(&[int.as_basic_type_enum()], false),
+        &int.vec_type(0)
+    ];
+    for basic_type in types {
+        assert_eq!(basic_type.as_basic_type_enum().ptr_type(addr),
+                   basic_type.ptr_type(addr));
+        assert_eq!(basic_type.as_basic_type_enum().array_type(0),
+                   basic_type.array_type(0));
+    }
 }

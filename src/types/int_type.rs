@@ -306,26 +306,6 @@ impl IntType {
         IntValue::new(value)
     }
 
-    /// Creates a constant null value of this `IntType`.
-    ///
-    /// # Example
-    /// ```
-    /// use inkwell::context::Context;
-    /// use inkwell::types::IntType;
-    ///
-    /// // Global Context
-    /// let i32_type = IntType::i32_type();
-    /// let i32_value = i32_type.const_null();
-    ///
-    /// // Custom Context
-    /// let context = Context::create();
-    /// let i32_type = context.i32_type();
-    /// let i32_value = i32_type.const_null();
-    /// ```
-    pub fn const_null(&self) -> IntValue {
-        IntValue::new(self.int_type.const_null())
-    }
-
     /// Creates a constant zero value of this `IntType`.
     ///
     /// # Example
@@ -499,7 +479,7 @@ impl IntType {
 
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of an `IntType` to stderr. Not available in newer LLVM versions.
-    #[llvm_versions(3.7 => 4.0)]
+    #[llvm_versions(3.7..=4.0)]
     pub fn print_to_stderr(&self) {
         self.int_type.print_to_stderr()
     }

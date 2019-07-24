@@ -661,6 +661,7 @@ fn test_bitcast() {
     let void_type = context.void_type();
     let f32_type = context.f32_type();
     let i32_type = context.i32_type();
+    let f64_type = context.f64_type();
     let i64_type = context.i64_type();
     let i32_ptr_type = i32_type.ptr_type(AddressSpace::Generic);
     let i64_ptr_type = i64_type.ptr_type(AddressSpace::Generic);
@@ -670,6 +671,7 @@ fn test_bitcast() {
         f32_type.into(),
         i32_vec_type.into(),
         i32_ptr_type.into(),
+        f64_type.into(),
     ];
     let fn_type = void_type.fn_type(&arg_types, false);
     let fn_value = module.add_function("bc", fn_type, None);
@@ -679,6 +681,7 @@ fn test_bitcast() {
     let f32_arg = fn_value.get_nth_param(1).unwrap();
     let i32_vec_arg = fn_value.get_nth_param(2).unwrap();
     let i32_ptr_arg = fn_value.get_nth_param(3).unwrap();
+    let f64_arg = fn_value.get_nth_param(4).unwrap();
 
     builder.position_at_end(&entry);
 
@@ -695,7 +698,7 @@ fn test_bitcast() {
     let first_iv = cast.as_instruction_value().unwrap();
 
     builder.position_before(&first_iv);
-    builder.build_bitcast(f32_arg, i64_type, "f32toi64");
+    builder.build_bitcast(f64_arg, i64_type, "f64toi64");
 
-    assert!(module.verify().is_err());
+    assert!(module.verify().is_ok());
 }

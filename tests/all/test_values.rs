@@ -5,7 +5,7 @@ use self::inkwell::context::Context;
 use self::inkwell::module::Linkage::*;
 use self::inkwell::types::{StringRadix, StructType, VectorType};
 use self::inkwell::values::{InstructionOpcode::*, MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID, VectorValue};
-#[llvm_versions(7.0 => latest)]
+#[llvm_versions(7.0..=latest)]
 use self::inkwell::comdat::ComdatSelectionKind;
 
 use std::ffi::CString;
@@ -60,7 +60,7 @@ fn test_call_site() {
 
     assert_eq!(call_site.get_call_convention(), 2);
 
-    call_site.set_param_alignment_attribute(0, 12);
+    call_site.set_param_alignment_attribute(0, 16);
 }
 
 #[test]
@@ -321,10 +321,10 @@ fn test_verify_fn() {
 
     let function = module.add_function("fn", fn_type, None);
 
-    #[cfg(not(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0")))]
+    #[cfg(not(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0")))]
     assert!(!function.verify(false));
-    // REVIEW: Why does 3.9 -> 7.0 return true here? LLVM bug? Bugfix?
-    #[cfg(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0"))]
+     // REVIEW: Why does 3.9 -> 8.0 return true here? LLVM bug? Bugfix?
+    #[cfg(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0"))]
     assert!(function.verify(false));
 
     let basic_block = context.append_basic_block(&function, "entry");
@@ -777,7 +777,7 @@ fn test_global_byte_array() {
 
 #[test]
 fn test_globals() {
-    #[llvm_versions(7.0 => latest)]
+    #[llvm_versions(7.0..=latest)]
     use self::inkwell::values::UnnamedAddress;
 
     let context = Context::create();
@@ -804,7 +804,7 @@ fn test_globals() {
     assert!(!global.has_unnamed_addr());
     assert!(!global.is_externally_initialized());
     // REVIEW: Segfaults in 4.0 -> 7.0
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0")))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0")))]
     assert_eq!(global.get_section(), &*CString::new("").unwrap());
     assert_eq!(global.get_dll_storage_class(), DLLStorageClass::default());
     assert_eq!(global.get_visibility(), GlobalVisibility::default());
@@ -838,17 +838,18 @@ fn test_globals() {
     assert!(!global.is_declaration());
     assert_eq!(global.get_section(), &*CString::new("not sure what goes here").unwrap());
 
+    // Either linkage is non-local or visibility is default.
+    global.set_visibility(GlobalVisibility::Default);
     global.set_linkage(Private);
 
     assert_eq!(global.get_linkage(), Private);
-    // Setting linkage seems to reset visibility
-    assert_eq!(global.get_visibility(), GlobalVisibility::Default);
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
                   feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     global.set_unnamed_address(UnnamedAddress::Global);
     global.set_dll_storage_class(DLLStorageClass::Export);
     global.set_thread_local(false);
+    global.set_linkage(External);
     global.set_visibility(GlobalVisibility::Protected);
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
@@ -1109,15 +1110,14 @@ fn test_consts() {
     assert_eq!(i16_val.get_zero_extended_constant(), Some(u16::max_value() as u64));
     assert_eq!(i32_val.get_zero_extended_constant(), Some(u32::max_value() as u64));
     assert_eq!(i64_val.get_zero_extended_constant(), Some(u64::max_value() as u64));
-    assert_eq!(i128_val.get_zero_extended_constant(), Some(u128::max_value() as u64));
+    assert_eq!(i128_val.get_zero_extended_constant(), None);
 
-    // How does a bool get sign extended to -1??
     assert_eq!(bool_val.get_sign_extended_constant(), Some(-1));
     assert_eq!(i8_val.get_sign_extended_constant(), Some(-1));
     assert_eq!(i16_val.get_sign_extended_constant(), Some(-1));
     assert_eq!(i32_val.get_sign_extended_constant(), Some(-1));
     assert_eq!(i64_val.get_sign_extended_constant(), Some(-1));
-    assert_eq!(i128_val.get_sign_extended_constant(), Some(-1));
+    assert_eq!(i128_val.get_sign_extended_constant(), None);
 
     assert_eq!(f16_val.get_constant(), Some((1.2001953125, false)));
     assert_eq!(f32_val.get_constant(), Some((3.4000000953674316, false)));
@@ -1183,15 +1183,15 @@ fn test_non_fn_ptr_called() {
     let context = Context::create();
     let builder = context.create_builder();
     let module = context.create_module("my_mod");
-    let void_type = context.void_type();
-    let void_ptr_type = void_type.ptr_type(AddressSpace::Generic);
-    let fn_type = void_type.fn_type(&[void_ptr_type.into()], false);
+    let i8_type = context.i8_type();
+    let i8_ptr_type = i8_type.ptr_type(AddressSpace::Generic);
+    let fn_type = i8_type.fn_type(&[i8_ptr_type.into()], false);
     let fn_value = module.add_function("my_func", fn_type, None);
     let bb = fn_value.append_basic_block("entry");
-    let void_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
+    let i8_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
 
     builder.position_at_end(&bb);
-    builder.build_call(void_ptr_param, &[], "call");
+    builder.build_call(i8_ptr_param, &[], "call");
     builder.build_return(None);
 
     assert!(module.verify().is_ok());

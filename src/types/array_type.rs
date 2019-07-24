@@ -174,34 +174,6 @@ impl ArrayType {
         ArrayValue::new(value)
     }
 
-    /// Creates a null `ArrayValue` of this `ArrayType`.
-    /// It will be automatically assigned this `ArrayType`'s `Context`.
-    ///
-    /// # Example
-    /// ```
-    /// use inkwell::context::Context;
-    /// use inkwell::types::FloatType;
-    /// use inkwell::AddressSpace;
-    ///
-    /// // Global Context
-    /// let f32_type = FloatType::f32_type();
-    /// let f32_array_type = f32_type.array_type(7);
-    /// let f32_array_null = f32_array_type.const_null();
-    ///
-    /// assert!(f32_array_null.is_null());
-    ///
-    /// // Custom Context
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    /// let f32_array_type = f32_type.array_type(7);
-    /// let f32_array_null = f32_array_type.const_null();
-    ///
-    /// assert!(f32_array_null.is_null());
-    /// ```
-    pub fn const_null(&self) -> ArrayValue {
-        ArrayValue::new(self.array_type.const_null())
-    }
-
     /// Creates a constant zero value of this `ArrayType`.
     ///
     /// # Example
@@ -244,7 +216,7 @@ impl ArrayType {
 
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of an `ArrayType` to stderr. Not available in newer LLVM versions.
-    #[llvm_versions(3.7 => 4.0)]
+    #[llvm_versions(3.7..=4.0)]
     pub fn print_to_stderr(&self) {
         self.array_type.print_to_stderr()
     }

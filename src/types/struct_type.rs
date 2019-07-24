@@ -1,5 +1,5 @@
 use llvm_sys::core::{LLVMConstNamedStruct, LLVMConstStruct, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMStructSetBody, LLVMConstArray};
-#[llvm_versions(3.7 => latest)]
+#[llvm_versions(3.7..=latest)]
 use llvm_sys::core::LLVMStructGetTypeAtIndex;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
@@ -41,7 +41,7 @@ impl StructType {
     ///
     /// assert_eq!(struct_type.get_field_type_at_index(0).unwrap().into_float_type(), f32_type);
     /// ```
-    #[llvm_versions(3.7 => latest)]
+    #[llvm_versions(3.7..=latest)]
     pub fn get_field_type_at_index(&self, index: u32) -> Option<BasicTypeEnum> {
         // LLVM doesn't seem to just return null if opaque.
         // TODO: One day, with SubTypes (& maybe specialization?) we could just
@@ -108,33 +108,6 @@ impl StructType {
         };
 
         StructValue::new(value)
-    }
-
-    /// Creates a null `StructValue` of this `StructType`.
-    /// It will be automatically assigned this `StructType`'s `Context`.
-    ///
-    /// # Example
-    /// ```
-    /// use inkwell::context::Context;
-    /// use inkwell::types::{FloatType, StructType};
-    ///
-    /// // Global Context
-    /// let f32_type = FloatType::f32_type();
-    /// let struct_type = StructType::struct_type(&[f32_type.into(), f32_type.into()], false);
-    /// let struct_null = struct_type.const_null();
-    ///
-    /// assert!(struct_null.is_null());
-    ///
-    /// // Custom Context
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
-    /// let struct_null = struct_type.const_null();
-    ///
-    /// assert!(struct_null.is_null());
-    /// ```
-    pub fn const_null(&self) -> StructValue {
-        StructValue::new(self.struct_type.const_null())
     }
 
     /// Creates a constant zero value of this `StructType`.
@@ -429,7 +402,7 @@ impl StructType {
 
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of an `StructType` to stderr. Not available in newer LLVM versions.
-    #[llvm_versions(3.7 => 4.0)]
+    #[llvm_versions(3.7..=4.0)]
     pub fn print_to_stderr(&self) {
         self.struct_type.print_to_stderr()
     }
@@ -484,25 +457,6 @@ impl StructType {
         }
 
         is_opaque
-    }
-
-    /// Creates a `VectorType` with this `StructType` for its element type.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
-    /// let struct_vec_type = struct_type.vec_type(3);
-    ///
-    /// assert_eq!(struct_vec_type.get_size(), 3);
-    /// assert_eq!(struct_vec_type.get_element_type().into_struct_type(), struct_type);
-    /// ```
-    pub fn vec_type(&self, size: u32) -> VectorType {
-        self.struct_type.vec_type(size)
     }
 
     /// Creates a constant `ArrayValue`.
