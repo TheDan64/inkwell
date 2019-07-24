@@ -711,11 +711,11 @@ fn test_function_value_no_params() {
 fn test_value_from_string() {
     let context = Context::create();
     let i8_type = context.i8_type();
-    let i8_val = i8_type.const_int_from_string("0121", StringRadix::Decimal);
+    let i8_val = i8_type.const_int_from_string("0121", StringRadix::Decimal).unwrap();
 
     assert_eq!(*i8_val.print_to_string(), *CString::new("i8 121").unwrap());
 
-    let i8_val = i8_type.const_int_from_string("0121", StringRadix::from_u8(10).unwrap());
+    let i8_val = i8_type.const_int_from_string("0121", StringRadix::from_u8(10).unwrap()).unwrap();
 
     assert_eq!(i8_val.print_to_string().to_string(), "i8 121");
 

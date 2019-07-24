@@ -9,6 +9,8 @@ use crate::types::traits::AsTypeRef;
 use crate::types::{Type, ArrayType, BasicTypeEnum, VectorType, PointerType, FunctionType};
 use crate::values::{AsValueRef, ArrayValue, GenericValue, IntValue};
 
+use regex::Regex;
+
 /// How to interpret a string or digits used to construct an integer constant.
 #[derive(Clone, Copy, Debug, EnumAsGetters, EnumIntoGetters, EnumToGetters, Eq, Hash, PartialEq)]
 pub enum StringRadix {
@@ -34,7 +36,18 @@ impl StringRadix {
             36 => Some(StringRadix::Alphanumeric),
             _ => None
         }
-   }
+    }
+
+    /// Create a Regex that matches valid strings for the given radix.
+    pub fn to_regex(&self) -> Regex {
+        match self {
+            StringRadix::Binary => Regex::new(r"^[-+]?[01]+$").unwrap(),
+            StringRadix::Octal => Regex::new(r"^[-+]?[0-7]+$").unwrap(),
+            StringRadix::Decimal => Regex::new(r"^[-+]?[0-9]+$").unwrap(),
+            StringRadix::Hexadecimal => Regex::new(r"^[-+]?[0-9abcdefABCDEF]+$").unwrap(),
+            StringRadix::Alphanumeric => Regex::new(r"^[-+]?[0-9[:alpha:]]+$").unwrap(),
+        }
+    }
 }
 
 /// An `IntType` is the type of an integer constant or variable.
@@ -241,7 +254,7 @@ impl IntType {
     ///
     /// let context = Context::create();
     /// let i8_type = context.i8_type();
-    /// let i8_val = i8_type.const_int_from_string("0121", StringRadix::Decimal);
+    /// let i8_val = i8_type.const_int_from_string("0121", StringRadix::Decimal).unwrap();
     ///
     /// assert_eq!(i8_val.print_to_string().to_string(), "i8 121");
     ///
@@ -255,12 +268,14 @@ impl IntType {
     ///
     /// let i8_val = i8_type.const_int_from_string("ABCD", StringRadix::Binary);
     /// ```
-    pub fn const_int_from_string(&self, slice: &str, radix: StringRadix) -> IntValue {
+    pub fn const_int_from_string(&self, slice: &str, radix: StringRadix) -> Option<IntValue> {
+        if !radix.to_regex().is_match(slice) {
+            return None
+        }
         let value = unsafe {
             LLVMConstIntOfStringAndSize(self.as_type_ref(), slice.as_ptr() as *const i8, slice.len() as u32, radix as u8)
         };
-
-        IntValue::new(value)
+        Some(IntValue::new(value))
     }
 
     /// Create a constant `IntValue` of arbitrary precision.
