@@ -258,15 +258,15 @@ impl IntType {
     ///
     /// assert_eq!(i8_val.print_to_string().to_string(), "i8 121");
     ///
-    /// let i8_val = i8_type.const_int_from_string("0121", StringRadix::from_u8(10).unwrap());
+    /// let i8_val = i8_type.const_int_from_string("0121", StringRadix::from_u8(10).unwrap()).unwrap();
     ///
     /// assert_eq!(i8_val.print_to_string().to_string(), "i8 16");
     ///
-    /// // Unsafe executions, LLVM may terminate with an assertion failure or
-    /// // execute undefined behaviour in C++ code.
     /// let i8_val = i8_type.const_int_from_string("0121", StringRadix::Binary);
+    /// assert!(i8_val.is_none());
     ///
     /// let i8_val = i8_type.const_int_from_string("ABCD", StringRadix::Binary);
+    /// assert!(i8_val.is_none());
     /// ```
     pub fn const_int_from_string(&self, slice: &str, radix: StringRadix) -> Option<IntValue> {
         if !radix.to_regex().is_match(slice) {
