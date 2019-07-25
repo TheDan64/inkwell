@@ -1,10 +1,11 @@
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::core::{LLVMConstExtractValue, LLVMConstInsertValue};
 
+use std::convert::TryFrom;
 use std::fmt::Debug;
 
 use crate::values::{ArrayValue, AggregateValueEnum, BasicValueUse, CallSiteValue, GlobalValue, StructValue, BasicValueEnum, AnyValueEnum, IntValue, FloatValue, PointerValue, PhiValue, VectorValue, FunctionValue, InstructionValue, Value};
-use crate::types::{IntMathType, FloatMathType, PointerMathType, IntType, FloatType, PointerType, VectorType};
+use crate::types::{ArrayType, BasicTypeEnum, IntMathType, FloatMathType, PointerMathType, IntType, FloatType, PointerType, StructType, VectorType};
 
 // This is an ugly privacy hack so that Type can stay private to this module
 // and so that super traits using this trait will be not be implementable
@@ -124,3 +125,47 @@ trait_value_set! {BasicValue: ArrayValue, BasicValueEnum, AggregateValueEnum, In
 math_trait_value_set! {IntMathValue: (IntValue => IntType), (VectorValue => VectorType)}
 math_trait_value_set! {FloatMathValue: (FloatValue => FloatType), (VectorValue => VectorType)}
 math_trait_value_set! {PointerMathValue: (PointerValue => PointerType), (VectorValue => VectorType)}
+
+macro_rules! impl_try_from_basic_value_enum {
+    ($value_name:ident) => (
+        impl TryFrom<BasicValueEnum> for $value_name {
+            type Error = &'static str;
+            
+            fn try_from(value: BasicValueEnum) -> Result<Self, Self::Error> {
+                match value {
+                    BasicValueEnum::$value_name(value) => Ok(value),
+                    _ => Err("bad try from"),
+                }
+            }
+        }
+    )
+}
+
+impl_try_from_basic_value_enum!(ArrayValue);
+impl_try_from_basic_value_enum!(IntValue);
+impl_try_from_basic_value_enum!(FloatValue);
+impl_try_from_basic_value_enum!(PointerValue);
+impl_try_from_basic_value_enum!(StructValue);
+impl_try_from_basic_value_enum!(VectorValue);
+
+macro_rules! impl_try_from_basic_type_enum {
+    ($type_name:ident) => (
+        impl TryFrom<BasicTypeEnum> for $type_name {
+            type Error = &'static str;
+            
+            fn try_from(ty: BasicTypeEnum) -> Result<Self, Self::Error> {
+                match ty {
+                    BasicTypeEnum::$type_name(ty) => Ok(ty),
+                    _ => Err("bad try from"),
+                }
+            }
+        }
+    )
+}
+
+impl_try_from_basic_type_enum!(ArrayType);
+impl_try_from_basic_type_enum!(FloatType);
+impl_try_from_basic_type_enum!(IntType);
+impl_try_from_basic_type_enum!(PointerType);
+impl_try_from_basic_type_enum!(StructType);
+impl_try_from_basic_type_enum!(VectorType);
