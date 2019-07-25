@@ -27,7 +27,7 @@ either = "1.5"
 enum-methods = "0.0.8"
 inkwell_internal_macros = { path = "./internal_macros", version = "0.1.0" }
 libc = "0.2"
-llvm-sys = "80.0"
+llvm-sys = "80.1"
 regex = "1"
 
 [badges]
