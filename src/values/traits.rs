@@ -130,7 +130,7 @@ macro_rules! impl_try_from_basic_value_enum {
     ($value_name:ident) => (
         impl TryFrom<BasicValueEnum> for $value_name {
             type Error = &'static str;
-            
+
             fn try_from(value: BasicValueEnum) -> Result<Self, Self::Error> {
                 match value {
                     BasicValueEnum::$value_name(value) => Ok(value),
@@ -152,7 +152,7 @@ macro_rules! impl_try_from_basic_type_enum {
     ($type_name:ident) => (
         impl TryFrom<BasicTypeEnum> for $type_name {
             type Error = &'static str;
-            
+
             fn try_from(ty: BasicTypeEnum) -> Result<Self, Self::Error> {
                 match ty {
                     BasicTypeEnum::$type_name(ty) => Ok(ty),
