@@ -1,5 +1,6 @@
 use llvm_sys::prelude::LLVMTypeRef;
 
+use std::convert::TryFrom;
 use std::fmt::Debug;
 
 use crate::AddressSpace;
