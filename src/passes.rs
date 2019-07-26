@@ -209,6 +209,21 @@ pub struct PassManager<T> {
     sub_type: PhantomData<T>,
 }
 
+impl PassManager<FunctionValue> {
+    // return true means some pass modified the module, not an error occurred
+    pub fn initialize(&self) -> bool {
+        unsafe {
+            LLVMInitializeFunctionPassManager(self.pass_manager) == 1
+        }
+    }
+
+    pub fn finalize(&self) -> bool {
+        unsafe {
+            LLVMFinalizeFunctionPassManager(self.pass_manager) == 1
+        }
+    }
+}
+
 impl<T: PassManagerSubType> PassManager<T> {
     pub(crate) fn new(pass_manager: LLVMPassManagerRef) -> Self {
         assert!(!pass_manager.is_null());
@@ -225,19 +240,6 @@ impl<T: PassManagerSubType> PassManager<T> {
         };
 
         PassManager::new(pass_manager)
-    }
-
-    // return true means some pass modified the module, not an error occurred
-    pub fn initialize(&self) -> bool {
-        unsafe {
-            LLVMInitializeFunctionPassManager(self.pass_manager) == 1
-        }
-    }
-
-    pub fn finalize(&self) -> bool {
-        unsafe {
-            LLVMFinalizeFunctionPassManager(self.pass_manager) == 1
-        }
     }
 
     /// This method returns true if any of the passes modified the function or module

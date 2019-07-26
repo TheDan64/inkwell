@@ -82,15 +82,7 @@ fn test_init_all_passes_for_module() {
         pass_manager.add_loop_unroll_and_jam_pass();
     }
 
-    assert!(!pass_manager.initialize());
-    assert!(!pass_manager.finalize());
-
     pass_manager.run_on(&module);
-
-    assert!(!pass_manager.initialize());
-    assert!(!pass_manager.finalize());
-
-    // TODO: Test when initialize and finalize are true
 }
 
 #[test]
@@ -125,6 +117,9 @@ fn test_pass_manager_builder() {
     #[cfg(not(feature = "llvm4-0"))]
     assert!(!fn_pass_manager.run_on(&fn_value));
 
+    assert!(!fn_pass_manager.initialize());
+    assert!(!fn_pass_manager.finalize());
+    
     let module_pass_manager = PassManager::create(());
 
     pass_manager_builder.populate_module_pass_manager(&module_pass_manager);
