@@ -96,7 +96,7 @@ fn get_features(vt: VersionType) -> Result<Vec<&'static str>> {
     }
 }
 
-/// Converts a version number as a float to its feature version 
+/// Converts a version number as a float to its feature version
 /// string form (e.g. 8.0 ..= llvm8-0)
 fn f64_to_feature_string(float: f64) -> String {
     let int = float as u64;
@@ -245,9 +245,9 @@ impl FeatureSet {
                 }
             }
             Err(err) => {
-                // We've hit an error, but we can't break out yet, 
+                // We've hit an error, but we can't break out yet,
                 // so we set the error in the FeatureSet state and
-                // avoid any further modifications until we can produce 
+                // avoid any further modifications until we can produce
                 // the error
                 self.set_error(err);
                 attr.clone()
@@ -285,20 +285,20 @@ impl Fold for FeatureSet {
 
 /// This macro can be used to specify version constraints for an enum/struct/union or
 /// other item which can be decorated with an attribute.
-/// 
+///
 /// To use with enum variants or struct fields, you need to decorate the parent item with
 /// the `#[llvm_versioned_item]` attribute, as this is the hook we need to modify the AST
 /// of those items
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```ignore
 /// // Inclusive range from 3.6 up to and including 3.9
 /// #[llvm_versions(3.6..=3.9)]
-/// 
+///
 /// // Exclusive range from 3.6 up to but not including 4.0
 /// #[llvm_versions(3.6..4.0)]
-/// 
+///
 /// // Inclusive range from 3.6 up to and including the latest release
 /// #[llvm_versions(3.6..=latest)]
 /// ```
@@ -323,9 +323,9 @@ pub fn llvm_versions(attribute_args: TokenStream, attributee: TokenStream) -> To
 
 /// This attribute is used to decorate enums, structs, or unions which may contain
 /// variants/fields which make use of `#[llvm_versions(..)]`
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```ignore
 /// #[llvm_versioned_item]
 /// enum InstructionOpcode {
@@ -477,20 +477,20 @@ impl Parse for LLVMEnumType {
             decl,
             variants,
         })
-    } 
+    }
 }
 
 /// This attribute macro allows you to decorate an enum declaration which represents
 /// an LLVM enum with versioning constraints and/or custom variant names. There are
 /// a few expectations around the LLVM and Rust enums:
-/// 
+///
 /// - Both enums have the same number of variants
 /// - The name of the LLVM variant can be derived by appending 'LLVM' to the Rust variant
-/// 
+///
 /// The latter can be worked around manually with `#[llvm_variant]` if desired.
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```ignore
 /// #[llvm_enum(LLVMOpcode)]
 /// enum InstructionOpcode {
@@ -503,7 +503,7 @@ impl Parse for LLVMEnumType {
 ///     ...
 /// }
 /// ```
-/// 
+///
 /// The use of `#[llvm_variant(NAME)]` allows you to override the default
 /// naming scheme by providing the variant name which the source enum maps
 /// to. In the above example, `Ret` was deemed unnecessarily concise, so the
