@@ -45,7 +45,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.6-dev
-      rust: nightly-2019-01-15
+      rust: nightly-2019-07-25
     - env:
         - LLVM_VERSION="3.7"
       <<: *BASE
@@ -57,7 +57,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.7-dev
-      rust: nightly-2019-01-15
+      rust: nightly-2019-07-25
     - env:
         - LLVM_VERSION="3.8"
       <<: *BASE
@@ -69,7 +69,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.8-dev
-      rust: nightly-2019-01-15
+      rust: nightly-2019-07-25
     # 3.9 seems to have a linking issue :/
     # - env:
     #     - LLVM_VERSION="3.9"
@@ -93,7 +93,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-4.0-dev
-      rust: nightly-2019-01-15
+      rust: nightly-2019-07-25
     - env:
         - LLVM_VERSION="5.0"
       <<: *BASE
@@ -105,7 +105,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-5.0-dev
-      rust: nightly-2019-01-15
+      rust: nightly-2019-07-25
     - env:
         - LLVM_VERSION="6.0"
       <<: *BASE
@@ -117,7 +117,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-6.0-dev
-      rust: nightly-2019-01-15
+      rust: nightly-2019-07-25
     - env:
         - LLVM_VERSION="7.0"
       <<: *BASE
@@ -129,7 +129,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-7-dev
-      rust: nightly-2019-01-15
+      rust: nightly-2019-07-25
     - env:
         - LLVM_VERSION="8.0"
       <<: *BASE
@@ -141,7 +141,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-8-dev
-      rust: nightly-2019-01-15
+      rust: nightly-2019-07-25
     - deploy: # Documentation build; Only latest supported LLVM version for now
         provider: pages
         skip-cleanup: true
@@ -188,7 +188,7 @@ env:
     - RUSTFLAGS="-C link-dead-code -C target-cpu=native -l ffi"
 
 after_success: |
-  if [[ "$TRAVIS_RUST_VERSION" == nightly-2019-01-15 ]]; then
+  if [[ "$TRAVIS_RUST_VERSION" == nightly-2019-07-25 ]]; then
     cargo tarpaulin --features "llvm${LLVM_VERSION_DASH}" --ignore-tests --out Xml
     bash <(curl -s https://codecov.io/bash)
   fi
