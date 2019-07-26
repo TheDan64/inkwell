@@ -5,7 +5,7 @@ use std::convert::TryFrom;
 use std::fmt::Debug;
 
 use crate::values::{ArrayValue, AggregateValueEnum, BasicValueUse, CallSiteValue, GlobalValue, StructValue, BasicValueEnum, AnyValueEnum, IntValue, FloatValue, PointerValue, PhiValue, VectorValue, FunctionValue, InstructionValue, Value};
-use crate::types::{ArrayType, BasicTypeEnum, IntMathType, FloatMathType, PointerMathType, IntType, FloatType, PointerType, StructType, VectorType};
+use crate::types::{IntMathType, FloatMathType, PointerMathType, IntType, FloatType, PointerType, VectorType};
 
 // This is an ugly privacy hack so that Type can stay private to this module
 // and so that super traits using this trait will be not be implementable

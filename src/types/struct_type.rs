@@ -10,7 +10,7 @@ use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
-use crate::types::{Type, BasicTypeEnum, ArrayType, PointerType, FunctionType, VectorType};
+use crate::types::{Type, BasicTypeEnum, ArrayType, PointerType, FunctionType};
 use crate::values::{ArrayValue, BasicValueEnum, StructValue, IntValue, AsValueRef};
 
 /// A `StructType` is the type of a heterogeneous container of types.
@@ -395,7 +395,7 @@ impl StructType {
         raw_vec.iter().map(|val| BasicTypeEnum::new(*val)).collect()
     }
 
-    /// Prints the definition of a `VectorType` to a `LLVMString`.
+    /// Prints the definition of a `StructType` to a `LLVMString`.
     pub fn print_to_string(&self) -> LLVMString {
         self.struct_type.print_to_string()
     }
