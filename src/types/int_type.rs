@@ -1,6 +1,7 @@
 use llvm_sys::core::{LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMConstInt, LLVMConstAllOnes, LLVMIntType, LLVMGetIntTypeWidth, LLVMConstIntOfStringAndSize, LLVMConstIntOfArbitraryPrecision, LLVMConstArray};
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfInt;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
+use regex::Regex;
 
 use crate::AddressSpace;
 use crate::context::ContextRef;
@@ -9,7 +10,7 @@ use crate::types::traits::AsTypeRef;
 use crate::types::{Type, ArrayType, BasicTypeEnum, VectorType, PointerType, FunctionType};
 use crate::values::{AsValueRef, ArrayValue, GenericValue, IntValue};
 
-use regex::Regex;
+use std::convert::TryFrom;
 
 /// How to interpret a string or digits used to construct an integer constant.
 #[derive(Clone, Copy, Debug, EnumAsGetters, EnumIntoGetters, EnumToGetters, Eq, Hash, PartialEq)]
@@ -25,19 +26,23 @@ pub enum StringRadix {
     /// Alphanumeric, 0-9 and all 26 letters in upper or lowercase.
     Alphanumeric = 36,
 }
-impl StringRadix {
-    /// Create a radix from a base.
-    pub fn from_u8(value: u8) -> Option<StringRadix> {
+
+impl TryFrom<u8> for StringRadix {
+    type Error = ();
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            2 => Some(StringRadix::Binary),
-            8 => Some(StringRadix::Octal),
-            10 => Some(StringRadix::Decimal),
-            16 => Some(StringRadix::Hexadecimal),
-            36 => Some(StringRadix::Alphanumeric),
-            _ => None
+            2 => Ok(StringRadix::Binary),
+            8 => Ok(StringRadix::Octal),
+            10 => Ok(StringRadix::Decimal),
+            16 => Ok(StringRadix::Hexadecimal),
+            36 => Ok(StringRadix::Alphanumeric),
+            _ => Err(()),
         }
     }
+}
 
+impl StringRadix {
     /// Create a Regex that matches valid strings for the given radix.
     pub fn to_regex(&self) -> Regex {
         match self {
@@ -249,6 +254,8 @@ impl IntType {
     /// # Example
     ///
     /// ```no_run
+    /// use std::convert::TryFrom;
+    ///
     /// use inkwell::context::Context;
     /// use inkwell::types::StringRadix;
     ///
@@ -258,7 +265,7 @@ impl IntType {
     ///
     /// assert_eq!(i8_val.print_to_string().to_string(), "i8 121");
     ///
-    /// let i8_val = i8_type.const_int_from_string("0121", StringRadix::from_u8(10).unwrap()).unwrap();
+    /// let i8_val = i8_type.const_int_from_string("0121", StringRadix::try_from(10).unwrap()).unwrap();
     ///
     /// assert_eq!(i8_val.print_to_string().to_string(), "i8 16");
     ///

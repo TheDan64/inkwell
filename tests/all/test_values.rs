@@ -8,6 +8,7 @@ use self::inkwell::values::{InstructionOpcode::*, MetadataValue, FIRST_CUSTOM_ME
 #[llvm_versions(7.0..=latest)]
 use self::inkwell::comdat::ComdatSelectionKind;
 
+use std::convert::TryFrom;
 use std::ffi::CString;
 
 // TODO: Test GlobalValues used as PointerValues
@@ -715,7 +716,7 @@ fn test_value_from_string() {
 
     assert_eq!(*i8_val.print_to_string(), *CString::new("i8 121").unwrap());
 
-    let i8_val = i8_type.const_int_from_string("0121", StringRadix::from_u8(10).unwrap()).unwrap();
+    let i8_val = i8_type.const_int_from_string("0121", StringRadix::try_from(10).unwrap()).unwrap();
 
     assert_eq!(i8_val.print_to_string().to_string(), "i8 121");
 
