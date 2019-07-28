@@ -1,6 +1,7 @@
 extern crate inkwell;
 
 use self::inkwell::{DLLStorageClass, FloatPredicate, GlobalVisibility, ThreadLocalMode, AddressSpace};
+use self::inkwell::attributes::AttributeLoc;
 use self::inkwell::context::Context;
 use self::inkwell::module::Linkage::*;
 use self::inkwell::types::{StringRadix, StructType, VectorType};
@@ -61,7 +62,7 @@ fn test_call_site() {
 
     assert_eq!(call_site.get_call_convention(), 2);
 
-    call_site.set_param_alignment_attribute(0, 16);
+    call_site.set_alignment_attribute(AttributeLoc::Return, 16);
 }
 
 #[test]

@@ -189,3 +189,28 @@ impl Attribute {
         }
     }
 }
+
+/// An `AttributeLoc` determines where on a function an attribute is assigned to.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum AttributeLoc {
+    /// Assign to the `FunctionValue`'s return type.
+    Return,
+    /// Assign to one of the `FunctionValue`'s params (0-indexed).
+    Param(u32),
+    /// Assign to the `FunctionValue` itself.
+    Function,
+}
+
+impl AttributeLoc {
+    pub(crate) fn get_index(&self) -> u32 {
+        match self {
+            AttributeLoc::Return => 0,
+            AttributeLoc::Param(index) => {
+                assert!(*index <= u32::max_value() - 2, "Param index must be <= u32::max_value() - 2");
+
+                index + 1
+            },
+            AttributeLoc::Function => u32::max_value(),
+        }
+    }
+}
