@@ -4,7 +4,8 @@ use llvm_sys::core::{LLVMIsTailCall, LLVMSetTailCall, LLVMGetTypeKind, LLVMTypeO
 use llvm_sys::prelude::LLVMValueRef;
 
 #[llvm_versions(3.9..=latest)]
-use crate::attributes::{Attribute, AttributeLoc};
+use crate::attributes::{Attribute};
+use crate::attributes::AttributeLoc;
 use crate::support::LLVMString;
 use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, Value};
 #[llvm_versions(3.9..=latest)]
