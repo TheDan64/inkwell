@@ -112,12 +112,16 @@ fn test_pass_manager_builder() {
     builder.position_at_end(&entry);
     builder.build_return(None);
 
+    #[cfg(not(feature = "llvm3-7"))]
+    assert!(!fn_pass_manager.initialize());
+    #[cfg(feature = "llvm3-7")]
+    fn_pass_manager.initialize();
+
     // TODO: Test with actual changes? Would be true in that case
     // REVIEW: Segfaults in 4.0
     #[cfg(not(feature = "llvm4-0"))]
     assert!(!fn_pass_manager.run_on(&fn_value));
 
-    assert!(!fn_pass_manager.initialize());
     assert!(!fn_pass_manager.finalize());
     
     let module_pass_manager = PassManager::create(());
