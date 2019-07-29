@@ -20,7 +20,6 @@ extern crate inkwell_internal_macros;
 #[macro_use]
 pub mod support;
 #[deny(missing_docs)]
-#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
 pub mod attributes;
 #[deny(missing_docs)]
 #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",

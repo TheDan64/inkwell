@@ -1,18 +1,23 @@
 //! `Attribute`s are optional modifiers to functions, function parameters, and return types.
 
+#[llvm_versions(3.9..=latest)]
 use llvm_sys::prelude::LLVMAttributeRef;
+#[llvm_versions(3.9..=latest)]
 use llvm_sys::core::{LLVMGetEnumAttributeKindForName, LLVMGetLastEnumAttributeKind, LLVMGetEnumAttributeKind, LLVMGetEnumAttributeValue, LLVMGetStringAttributeKind, LLVMGetStringAttributeValue, LLVMIsEnumAttribute, LLVMIsStringAttribute};
 
+#[llvm_versions(3.9..=latest)]
 use std::ffi::CStr;
 
 // SubTypes: Attribute<Enum>, Attribute<String>
 /// Functions, function parameters, and return types can have `Attribute`s to indicate
 /// how they should be treated by optimizations and code generation.
+#[llvm_versions(3.9..=latest)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Attribute {
     pub(crate) attribute: LLVMAttributeRef,
 }
 
+#[llvm_versions(3.9..=latest)]
 impl Attribute {
     pub(crate) fn new(attribute: LLVMAttributeRef) -> Self {
         debug_assert!(!attribute.is_null());
