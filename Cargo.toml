@@ -11,7 +11,7 @@ categories = ["development-tools::ffi"]
 edition = "2018"
 
 [features]
-default = []
+default = ['target-all']
 llvm3-6 = []
 llvm3-7 = []
 llvm3-8 = []
@@ -21,6 +21,38 @@ llvm5-0 = []
 llvm6-0 = []
 llvm7-0 = []
 llvm8-0 = []
+target-x86 = []
+target-arm = []
+target-mips = []
+target-aarch64 = []
+target-amdgpu = []
+target-systemz = []
+target-hexagon = []
+target-nvptx = []
+target-msp430 = []
+target-xcore = []
+target-powerpc = []
+target-sparc = []
+target-bpf = []
+target-lanai = []
+target-webassembly = []
+target-all = [
+    'target-x86',
+    'target-arm',
+    'target-mips',
+    'target-aarch64',
+    'target-amdgpu',
+    'target-systemz',
+    'target-hexagon',
+    'target-nvptx',
+    'target-msp430',
+    'target-xcore',
+    'target-powerpc',
+    'target-sparc',
+    'target-bpf',
+    'target-lanai',
+    'target-webassembly'
+]
 
 [dependencies]
 either = "1.5"

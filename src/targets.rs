@@ -95,6 +95,7 @@ impl Target {
     }
 
     // REVIEW: Should this just initialize all? Is opt into each a good idea?
+    #[cfg(feature = "target-x86")]
     pub fn initialize_x86(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeX86Target, LLVMInitializeX86TargetInfo, LLVMInitializeX86TargetMC, LLVMInitializeX86Disassembler, LLVMInitializeX86AsmPrinter, LLVMInitializeX86AsmParser};
 
@@ -125,6 +126,7 @@ impl Target {
         }
     }
 
+    #[cfg(feature = "target-arm")]
     pub fn initialize_arm(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeARMTarget, LLVMInitializeARMTargetInfo, LLVMInitializeARMTargetMC, LLVMInitializeARMDisassembler, LLVMInitializeARMAsmPrinter, LLVMInitializeARMAsmParser};
 
@@ -155,6 +157,7 @@ impl Target {
         }
     }
 
+    #[cfg(feature = "target-mips")]
     pub fn initialize_mips(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeMipsTarget, LLVMInitializeMipsTargetInfo, LLVMInitializeMipsTargetMC, LLVMInitializeMipsDisassembler, LLVMInitializeMipsAsmPrinter, LLVMInitializeMipsAsmParser};
 
@@ -185,6 +188,7 @@ impl Target {
         }
     }
 
+    #[cfg(feature = "target-aarch64")]
     pub fn initialize_aarch64(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeAArch64Target, LLVMInitializeAArch64TargetInfo, LLVMInitializeAArch64TargetMC, LLVMInitializeAArch64Disassembler, LLVMInitializeAArch64AsmPrinter, LLVMInitializeAArch64AsmParser};
 
@@ -246,6 +250,7 @@ impl Target {
     }
 
     // TODOC: Called R600 in 3.6
+    #[cfg(feature = "target-amdgpu")]
     #[llvm_versions(3.7..=latest)]
     pub fn initialize_amd_gpu(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeAMDGPUTarget, LLVMInitializeAMDGPUTargetInfo, LLVMInitializeAMDGPUTargetMC, LLVMInitializeAMDGPUAsmPrinter, LLVMInitializeAMDGPUAsmParser};
@@ -275,6 +280,7 @@ impl Target {
         }
     }
 
+    #[cfg(feature = "target-systemz")]
     pub fn initialize_system_z(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeSystemZTarget, LLVMInitializeSystemZTargetInfo, LLVMInitializeSystemZTargetMC, LLVMInitializeSystemZDisassembler, LLVMInitializeSystemZAsmPrinter, LLVMInitializeSystemZAsmParser};
 
@@ -305,6 +311,7 @@ impl Target {
         }
     }
 
+    #[cfg(feature = "target-hexagon")]
     pub fn initialize_hexagon(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeHexagonTarget, LLVMInitializeHexagonTargetInfo, LLVMInitializeHexagonTargetMC, LLVMInitializeHexagonDisassembler, LLVMInitializeHexagonAsmPrinter};
 
@@ -333,6 +340,7 @@ impl Target {
         }
     }
 
+    #[cfg(feature = "target-nvptx")]
     pub fn initialize_nvptx(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeNVPTXTarget, LLVMInitializeNVPTXTargetInfo, LLVMInitializeNVPTXTargetMC, LLVMInitializeNVPTXAsmPrinter};
 
@@ -378,6 +386,7 @@ impl Target {
         }
     }
 
+    #[cfg(feature = "target-msp430")]
     pub fn initialize_msp430(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeMSP430Target, LLVMInitializeMSP430TargetInfo, LLVMInitializeMSP430TargetMC, LLVMInitializeMSP430AsmPrinter};
 
@@ -404,6 +413,7 @@ impl Target {
         }
     }
 
+    #[cfg(feature = "target-xcore")]
     pub fn initialize_x_core(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeXCoreTarget, LLVMInitializeXCoreTargetInfo, LLVMInitializeXCoreTargetMC, LLVMInitializeXCoreDisassembler, LLVMInitializeXCoreAsmPrinter};
 
@@ -432,6 +442,7 @@ impl Target {
         }
     }
 
+    #[cfg(feature = "target-powerpc")]
     pub fn initialize_power_pc(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializePowerPCTarget, LLVMInitializePowerPCTargetInfo, LLVMInitializePowerPCTargetMC, LLVMInitializePowerPCDisassembler, LLVMInitializePowerPCAsmPrinter, LLVMInitializePowerPCAsmParser};
 
@@ -462,6 +473,7 @@ impl Target {
         }
     }
 
+    #[cfg(feature = "target-sparc")]
     pub fn initialize_sparc(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeSparcTarget, LLVMInitializeSparcTargetInfo, LLVMInitializeSparcTargetMC, LLVMInitializeSparcDisassembler, LLVMInitializeSparcAsmPrinter, LLVMInitializeSparcAsmParser};
 
@@ -493,6 +505,7 @@ impl Target {
     }
 
     // TODOC: Disassembler only supported in LLVM 4.0+
+    #[cfg(feature = "target-bpf")]
     #[llvm_versions(3.7..=latest)]
     pub fn initialize_bpf(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeBPFTarget, LLVMInitializeBPFTargetInfo, LLVMInitializeBPFTargetMC, LLVMInitializeBPFAsmPrinter};
@@ -527,6 +540,7 @@ impl Target {
         }
     }
 
+    #[cfg(feature = "target-lanai")]
     #[llvm_versions(4.0..=latest)]
     pub fn initialize_lanai(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeLanaiTargetInfo, LLVMInitializeLanaiTarget, LLVMInitializeLanaiTargetMC, LLVMInitializeLanaiAsmPrinter, LLVMInitializeLanaiAsmParser, LLVMInitializeLanaiDisassembler};
@@ -590,6 +604,7 @@ impl Target {
         }
     }
 
+    #[cfg(feature = "target-webassembly")]
     #[llvm_versions(8.0..=latest)]
     pub fn initialize_webassembly(config: &InitializationConfig) {
         use llvm_sys::target::{LLVMInitializeWebAssemblyTargetInfo, LLVMInitializeWebAssemblyTarget, LLVMInitializeWebAssemblyTargetMC, LLVMInitializeWebAssemblyAsmPrinter, LLVMInitializeWebAssemblyAsmParser, LLVMInitializeWebAssemblyDisassembler};
