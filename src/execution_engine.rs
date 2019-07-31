@@ -22,17 +22,7 @@ pub enum FunctionLookupError {
     FunctionNotFound, // 404!
 }
 
-impl Error for FunctionLookupError {
-    // This method is deprecated on nighty so it's probably not
-    // something we should worry about
-    fn description(&self) -> &str {
-        self.as_str()
-    }
-
-    fn cause(&self) -> Option<&dyn Error> {
-        None
-    }
-}
+impl Error for FunctionLookupError {}
 
 impl FunctionLookupError {
     fn as_str(&self) -> &str {
