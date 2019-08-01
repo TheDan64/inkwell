@@ -95,6 +95,10 @@ impl BasicBlock {
     /// assert_eq!(basic_block3.get_previous_basic_block().unwrap(), basic_block2);
     /// ```
     pub fn get_previous_basic_block(&self) -> Option<BasicBlock> {
+        if self.get_parent().is_none() {
+            return None;
+        }
+
         let bb = unsafe {
             LLVMGetPreviousBasicBlock(self.basic_block)
         };
@@ -130,6 +134,10 @@ impl BasicBlock {
     /// assert!(basic_block3.get_next_basic_block().is_none());
     /// ```
     pub fn get_next_basic_block(&self) -> Option<BasicBlock> {
+        if self.get_parent().is_none() {
+            return None;
+        }
+ 
         let bb = unsafe {
             LLVMGetNextBasicBlock(self.basic_block)
         };
