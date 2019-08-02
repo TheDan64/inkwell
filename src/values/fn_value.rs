@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMGetPreviousFunction, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetBasicBlocks, LLVMAppendBasicBlock, LLVMDeleteFunction, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetEntryBasicBlock, LLVMGetIntrinsicID, LLVMGetFunctionCallConv, LLVMSetFunctionCallConv, LLVMGetGC, LLVMSetGC, LLVMSetLinkage, LLVMSetParamAlignment, LLVMGetParams};
+use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMGetPreviousFunction, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetBasicBlocks, LLVMAppendBasicBlock, LLVMDeleteFunction, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetIntrinsicID, LLVMGetFunctionCallConv, LLVMSetFunctionCallConv, LLVMGetGC, LLVMSetGC, LLVMSetLinkage, LLVMSetParamAlignment, LLVMGetParams};
 #[llvm_versions(3.7..=latest)]
 use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
 #[llvm_versions(3.9..=latest)]
@@ -123,22 +123,6 @@ impl FunctionValue {
         Some(BasicValueEnum::new(param))
     }
 
-    // REVIEW: Odd behavior, a function with no BBs returns a ptr
-    // that isn't actually a basic_block and seems to get corrupted
-    // Should check filed LLVM bugs - maybe just return None since
-    // we can catch it with "LLVMIsABasicBlock"
-    pub fn get_entry_basic_block(&self) -> Option<BasicBlock> {
-        let bb = unsafe {
-            LLVMGetEntryBasicBlock(self.as_value_ref())
-        };
-
-        BasicBlock::new(bb)
-    }
-
-    // REVIEW: Odd behavior, a function with no BBs returns a ptr
-    // that isn't actually a basic_block and seems to get corrupted
-    // Should check filed LLVM bugs - maybe just return None since
-    // we can catch it with "LLVMIsABasicBlock"
     pub fn get_first_basic_block(&self) -> Option<BasicBlock> {
         let bb = unsafe {
             LLVMGetFirstBasicBlock(self.as_value_ref())

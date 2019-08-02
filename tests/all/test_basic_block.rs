@@ -18,11 +18,7 @@ fn test_basic_block_ordering() {
 
     let function = module.add_function("testing", fn_type, None);
 
-    // REVIEW: Possibly LLVM bug - gives a basic block ptr that isn't
-    // actually a basic block instead of returning nullptr. Simplest solution
-    // may be to just return None if LLVMIsABB doesn't pass
-    // assert!(function.get_entry_basic_block().is_none());
-    // assert!(function.get_first_basic_block().is_none());
+    assert!(function.get_first_basic_block().is_none());
 
     let basic_block = context.append_basic_block(&function, "entry");
     let basic_block4 = context.insert_basic_block_after(&basic_block, "block4");
@@ -58,7 +54,7 @@ fn test_basic_block_ordering() {
 
     function.append_basic_block("block6");
 
-    let bb1 = function.get_entry_basic_block().unwrap();
+    let bb1 = function.get_first_basic_block().unwrap();
     let bb4 = basic_block5.get_previous_basic_block().unwrap();
 
     assert_eq!(bb1, basic_block3);

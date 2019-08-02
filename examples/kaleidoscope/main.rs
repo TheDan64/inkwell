@@ -21,7 +21,6 @@ use std::iter::Peekable;
 use std::str::Chars;
 use std::ops::DerefMut;
 
-use self::inkwell::basic_block::BasicBlock;
 use self::inkwell::builder::Builder;
 use self::inkwell::context::Context;
 use self::inkwell::module::Module;
@@ -861,16 +860,15 @@ impl<'a> Compiler<'a> {
         self.fn_value_opt.unwrap()
     }
 
-    /// Cretes a new stack allocation instruction in the entry block of the function.
-    fn create_entry_block_alloca(&self, name: &str, entry: Option<&BasicBlock>) -> PointerValue {
+    /// Creates a new stack allocation instruction in the entry block of the function.
+    fn create_entry_block_alloca(&self, name: &str) -> PointerValue {
         let builder = self.context.create_builder();
 
-        let owned_entry = self.fn_value().get_entry_basic_block();
-        let entry = owned_entry.as_ref().or(entry).unwrap();
+        let entry = self.fn_value().get_first_basic_block().unwrap();
 
         match entry.get_first_instruction() {
             Some(first_instr) => builder.position_before(&first_instr),
-            None => builder.position_at_end(entry)
+            None => builder.position_at_end(&entry)
         }
 
         builder.build_alloca(self.context.f64_type(), name)
@@ -899,7 +897,7 @@ impl<'a> Compiler<'a> {
                         None => self.context.f64_type().const_float(0.)
                     };
 
-                    let alloca = self.create_entry_block_alloca(var_name, None);
+                    let alloca = self.create_entry_block_alloca(var_name);
 
                     self.builder.build_store(alloca, initial_val);
 
@@ -1040,7 +1038,7 @@ impl<'a> Compiler<'a> {
             Expr::For { ref var_name, ref start, ref end, ref step, ref body } => {
                 let parent = self.fn_value();
 
-                let start_alloca = self.create_entry_block_alloca(var_name, None);
+                let start_alloca = self.create_entry_block_alloca(var_name);
                 let start = self.compile_expr(start)?;
 
                 self.builder.build_store(start_alloca, start);
@@ -1132,7 +1130,7 @@ impl<'a> Compiler<'a> {
 
         for (i, arg) in function.get_param_iter().enumerate() {
             let arg_name = proto.args[i].as_str();
-            let alloca = self.create_entry_block_alloca(arg_name, Some(&entry));
+            let alloca = self.create_entry_block_alloca(arg_name);
 
             self.builder.build_store(alloca, arg);
 
