@@ -189,7 +189,7 @@ env:
 
 after_success: |
   if [[ "$TRAVIS_RUST_VERSION" == nightly-2019-07-25 ]]; then
-    cargo tarpaulin --features "llvm${LLVM_VERSION_DASH}" --ignore-tests --out Xml
+    cargo tarpaulin --features "llvm${LLVM_VERSION_DASH}" --out Xml
     bash <(curl -s https://codecov.io/bash)
   fi
 

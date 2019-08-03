@@ -1,2 +1,3 @@
 ignore:
   - "internal_macros"
+  - "tests"
