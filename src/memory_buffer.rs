@@ -98,6 +98,7 @@ impl MemoryBuffer {
         MemoryBuffer::new(memory_buffer)
     }
 
+    /// Gets a byte slice of this `MemoryBuffer`.
     pub fn as_slice(&self) -> &[u8] {
         unsafe {
             let start = LLVMGetBufferStart(self.memory_buffer);
@@ -106,17 +107,16 @@ impl MemoryBuffer {
         }
     }
 
+    /// Gets the byte size of this `MemoryBuffer`.
     pub fn get_size(&self) -> usize {
         unsafe {
             LLVMGetBufferSize(self.memory_buffer)
         }
     }
 
-    // REVIEW: I haven't yet been able to find docs or other wrappers that confirm, but my suspicion
-    // is that the method needs to take ownership of the MemoryBuffer... otherwise I see what looks like
-    // a double free in valgrind when the MemoryBuffer drops so we are `forget`ting MemoryBuffer here
-    // for now until we can confirm this is the correct thing to do
-    pub fn create_object_file(self) -> Option<ObjectFile> {
+    /// Convert this `MemoryBuffer` into an `ObjectFile`. LLVM does not currently
+    /// provide any way to determine the cause of error if conversion fails.
+    pub fn create_object_file(self) -> Result<ObjectFile, ()> {
         let object_file = unsafe {
             LLVMCreateObjectFile(self.memory_buffer)
         };
@@ -124,10 +124,10 @@ impl MemoryBuffer {
         forget(self);
 
         if object_file.is_null() {
-            return None;
+            return Err(());
         }
 
-        Some(ObjectFile::new(object_file))
+        Ok(ObjectFile::new(object_file))
     }
 }
 

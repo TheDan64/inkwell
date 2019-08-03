@@ -290,9 +290,7 @@ impl FunctionValue {
     // but not in all other versions
     #[cfg(feature = "llvm3-8")]
     pub unsafe fn get_personality_function(&self) -> Option<FunctionValue> {
-        let value = unsafe {
-            LLVMGetPersonalityFn(self.as_value_ref())
-        };
+        let value = LLVMGetPersonalityFn(self.as_value_ref());
 
         FunctionValue::new(value)
     }

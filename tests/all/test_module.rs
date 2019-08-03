@@ -123,7 +123,7 @@ fn test_write_and_load_memory_buffer() {
     let memory_buffer2 = module.write_bitcode_to_memory();
     let object_file = memory_buffer2.create_object_file();
 
-    assert!(object_file.is_none());
+    assert!(object_file.is_err());
 }
 
 #[test]
