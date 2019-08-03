@@ -1056,6 +1056,7 @@ impl<T: PassManagerSubType> PassManager<T> {
             LLVMAddAggressiveInstCombinerPass(self.pass_manager)
         }
     }
+
     #[llvm_versions(8.0..=latest)]
     pub fn add_aggressive_inst_combiner_pass(&self) {
         use llvm_sys::transforms::aggressive_instcombine::LLVMAddAggressiveInstCombinerPass;

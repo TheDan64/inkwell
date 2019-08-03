@@ -1,8 +1,12 @@
 use llvm_sys::LLVMThreadLocalMode;
 #[llvm_versions(3.6..8.0)]
-use llvm_sys::core::{LLVMGetVisibility, LLVMSetVisibility, LLVMGetSection, LLVMSetSection, LLVMIsExternallyInitialized, LLVMSetExternallyInitialized, LLVMDeleteGlobal, LLVMIsGlobalConstant, LLVMSetGlobalConstant, LLVMGetPreviousGlobal, LLVMGetNextGlobal, LLVMHasUnnamedAddr, LLVMSetUnnamedAddr, LLVMIsThreadLocal, LLVMSetThreadLocal, LLVMGetThreadLocalMode, LLVMSetThreadLocalMode, LLVMGetInitializer, LLVMSetInitializer, LLVMIsDeclaration, LLVMGetDLLStorageClass, LLVMSetDLLStorageClass, LLVMGetAlignment, LLVMSetAlignment, LLVMGetLinkage, LLVMSetLinkage};
+use llvm_sys::core::{LLVMGetVisibility, LLVMSetVisibility, LLVMGetSection, LLVMSetSection, LLVMIsExternallyInitialized, LLVMSetExternallyInitialized, LLVMDeleteGlobal, LLVMIsGlobalConstant, LLVMSetGlobalConstant, LLVMGetPreviousGlobal, LLVMGetNextGlobal, LLVMIsThreadLocal, LLVMSetThreadLocal, LLVMGetThreadLocalMode, LLVMSetThreadLocalMode, LLVMGetInitializer, LLVMSetInitializer, LLVMIsDeclaration, LLVMGetDLLStorageClass, LLVMSetDLLStorageClass, LLVMGetAlignment, LLVMSetAlignment, LLVMGetLinkage, LLVMSetLinkage};
 #[llvm_versions(8.0..=latest)]
-use llvm_sys::core::{LLVMGetVisibility, LLVMSetVisibility, LLVMGetSection, LLVMSetSection, LLVMIsExternallyInitialized, LLVMSetExternallyInitialized, LLVMDeleteGlobal, LLVMIsGlobalConstant, LLVMSetGlobalConstant, LLVMGetPreviousGlobal, LLVMGetNextGlobal, LLVMGetUnnamedAddress, LLVMSetUnnamedAddress, LLVMIsThreadLocal, LLVMSetThreadLocal, LLVMGetThreadLocalMode, LLVMSetThreadLocalMode, LLVMGetInitializer, LLVMSetInitializer, LLVMIsDeclaration, LLVMGetDLLStorageClass, LLVMSetDLLStorageClass, LLVMGetAlignment, LLVMSetAlignment, LLVMGetLinkage, LLVMSetLinkage};
+use llvm_sys::core::{LLVMGetVisibility, LLVMSetVisibility, LLVMGetSection, LLVMSetSection, LLVMIsExternallyInitialized, LLVMSetExternallyInitialized, LLVMDeleteGlobal, LLVMIsGlobalConstant, LLVMSetGlobalConstant, LLVMGetPreviousGlobal, LLVMGetNextGlobal, LLVMIsThreadLocal, LLVMSetThreadLocal, LLVMGetThreadLocalMode, LLVMSetThreadLocalMode, LLVMGetInitializer, LLVMSetInitializer, LLVMIsDeclaration, LLVMGetDLLStorageClass, LLVMSetDLLStorageClass, LLVMGetAlignment, LLVMSetAlignment, LLVMGetLinkage, LLVMSetLinkage};
+#[llvm_versions(3.6..=6.0)]
+use llvm_sys::core::{LLVMHasUnnamedAddr, LLVMSetUnnamedAddr};
+#[llvm_versions(7.0..=latest)]
+use llvm_sys::core::{LLVMGetUnnamedAddress, LLVMSetUnnamedAddress};
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::LLVMUnnamedAddr;
 use llvm_sys::prelude::LLVMValueRef;
@@ -151,14 +155,14 @@ impl GlobalValue {
         }
     }
 
-    #[llvm_versions(3.6..8.0)]
+    #[llvm_versions(3.6..7.0)]
     pub fn has_unnamed_addr(&self) -> bool {
         unsafe {
             LLVMHasUnnamedAddr(self.as_value_ref()) == 1
         }
     }
 
-    #[llvm_versions(8.0..=latest)]
+    #[llvm_versions(7.0..=latest)]
     pub fn has_unnamed_addr(&self) -> bool {
         unsafe {
             LLVMGetUnnamedAddress(self.as_value_ref()) == LLVMUnnamedAddr::LLVMGlobalUnnamedAddr
@@ -166,14 +170,14 @@ impl GlobalValue {
     }
 
 
-    #[llvm_versions(3.6..8.0)]
+    #[llvm_versions(3.6..7.0)]
     pub fn set_unnamed_addr(&self, has_unnamed_addr: bool) {
         unsafe {
             LLVMSetUnnamedAddr(self.as_value_ref(), has_unnamed_addr as i32)
         }
     }
 
-    #[llvm_versions(8.0..=latest)]
+    #[llvm_versions(7.0..=latest)]
     pub fn set_unnamed_addr(&self, has_unnamed_addr: bool) {
         unsafe {
             if has_unnamed_addr {
