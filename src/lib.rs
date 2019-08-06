@@ -16,6 +16,8 @@ extern crate libc;
 extern crate llvm_sys;
 #[macro_use]
 extern crate inkwell_internal_macros;
+#[macro_use]
+extern crate lazy_static;
 
 #[macro_use]
 pub mod support;
