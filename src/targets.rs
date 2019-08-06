@@ -1,11 +1,26 @@
 #[llvm_versions(7.0..=latest)]
 use either::Either;
-use llvm_sys::target::{LLVMTargetDataRef, LLVMCopyStringRepOfTargetData, LLVMSizeOfTypeInBits, LLVMCreateTargetData, LLVMByteOrder, LLVMPointerSize, LLVMByteOrdering, LLVMStoreSizeOfType, LLVMABISizeOfType, LLVMABIAlignmentOfType, LLVMCallFrameAlignmentOfType, LLVMPreferredAlignmentOfType, LLVMPreferredAlignmentOfGlobal, LLVMElementAtOffset, LLVMOffsetOfElement, LLVMDisposeTargetData, LLVMPointerSizeForAS, LLVMIntPtrType, LLVMIntPtrTypeForAS, LLVMIntPtrTypeInContext, LLVMIntPtrTypeForASInContext};
-use llvm_sys::target_machine::{LLVMGetFirstTarget, LLVMTargetRef, LLVMGetNextTarget, LLVMGetTargetFromName, LLVMGetTargetFromTriple, LLVMGetTargetName, LLVMGetTargetDescription, LLVMTargetHasJIT, LLVMTargetHasTargetMachine, LLVMTargetHasAsmBackend, LLVMTargetMachineRef, LLVMDisposeTargetMachine, LLVMGetTargetMachineTarget, LLVMGetTargetMachineTriple, LLVMSetTargetMachineAsmVerbosity, LLVMCreateTargetMachine, LLVMGetTargetMachineCPU, LLVMGetTargetMachineFeatureString, LLVMGetDefaultTargetTriple, LLVMAddAnalysisPasses, LLVMCodeGenOptLevel, LLVMCodeModel, LLVMRelocMode, LLVMCodeGenFileType, LLVMTargetMachineEmitToMemoryBuffer, LLVMTargetMachineEmitToFile};
+use llvm_sys::target::{
+    LLVMABIAlignmentOfType, LLVMABISizeOfType, LLVMByteOrder, LLVMByteOrdering,
+    LLVMCallFrameAlignmentOfType, LLVMCopyStringRepOfTargetData, LLVMCreateTargetData,
+    LLVMDisposeTargetData, LLVMElementAtOffset, LLVMIntPtrType, LLVMIntPtrTypeForAS,
+    LLVMIntPtrTypeForASInContext, LLVMIntPtrTypeInContext, LLVMOffsetOfElement, LLVMPointerSize,
+    LLVMPointerSizeForAS, LLVMPreferredAlignmentOfGlobal, LLVMPreferredAlignmentOfType,
+    LLVMSizeOfTypeInBits, LLVMStoreSizeOfType, LLVMTargetDataRef,
+};
 #[llvm_versions(4.0..=latest)]
 use llvm_sys::target_machine::LLVMCreateTargetDataLayout;
+use llvm_sys::target_machine::{
+    LLVMAddAnalysisPasses, LLVMCodeGenFileType, LLVMCodeGenOptLevel, LLVMCodeModel,
+    LLVMCreateTargetMachine, LLVMDisposeTargetMachine, LLVMGetDefaultTargetTriple,
+    LLVMGetFirstTarget, LLVMGetNextTarget, LLVMGetTargetDescription, LLVMGetTargetFromName,
+    LLVMGetTargetFromTriple, LLVMGetTargetMachineCPU, LLVMGetTargetMachineFeatureString,
+    LLVMGetTargetMachineTarget, LLVMGetTargetMachineTriple, LLVMGetTargetName, LLVMRelocMode,
+    LLVMSetTargetMachineAsmVerbosity, LLVMTargetHasAsmBackend, LLVMTargetHasJIT,
+    LLVMTargetHasTargetMachine, LLVMTargetMachineEmitToFile, LLVMTargetMachineEmitToMemoryBuffer,
+    LLVMTargetMachineRef, LLVMTargetRef,
+};
 
-use crate::{AddressSpace, OptimizationLevel};
 use crate::context::Context;
 use crate::data_layout::DataLayout;
 use crate::memory_buffer::MemoryBuffer;
@@ -14,6 +29,7 @@ use crate::passes::PassManager;
 use crate::support::LLVMString;
 use crate::types::{AnyType, AsTypeRef, IntType, StructType};
 use crate::values::{AsValueRef, GlobalValue};
+use crate::{AddressSpace, OptimizationLevel};
 
 use std::default::Default;
 use std::ffi::{CStr, CString};
@@ -38,7 +54,6 @@ pub enum RelocMode {
     PIC,
     DynamicNoPic,
 }
-
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum FileType {
@@ -89,15 +104,16 @@ impl Target {
     fn new(target: LLVMTargetRef) -> Self {
         assert!(!target.is_null());
 
-        Target {
-            target,
-        }
+        Target { target }
     }
 
     // REVIEW: Should this just initialize all? Is opt into each a good idea?
     #[cfg(feature = "target-x86")]
     pub fn initialize_x86(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeX86Target, LLVMInitializeX86TargetInfo, LLVMInitializeX86TargetMC, LLVMInitializeX86Disassembler, LLVMInitializeX86AsmPrinter, LLVMInitializeX86AsmParser};
+        use llvm_sys::target::{
+            LLVMInitializeX86AsmParser, LLVMInitializeX86AsmPrinter, LLVMInitializeX86Disassembler,
+            LLVMInitializeX86Target, LLVMInitializeX86TargetInfo, LLVMInitializeX86TargetMC,
+        };
 
         unsafe {
             if config.base {
@@ -128,7 +144,10 @@ impl Target {
 
     #[cfg(feature = "target-arm")]
     pub fn initialize_arm(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeARMTarget, LLVMInitializeARMTargetInfo, LLVMInitializeARMTargetMC, LLVMInitializeARMDisassembler, LLVMInitializeARMAsmPrinter, LLVMInitializeARMAsmParser};
+        use llvm_sys::target::{
+            LLVMInitializeARMAsmParser, LLVMInitializeARMAsmPrinter, LLVMInitializeARMDisassembler,
+            LLVMInitializeARMTarget, LLVMInitializeARMTargetInfo, LLVMInitializeARMTargetMC,
+        };
 
         unsafe {
             if config.base {
@@ -159,7 +178,11 @@ impl Target {
 
     #[cfg(feature = "target-mips")]
     pub fn initialize_mips(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeMipsTarget, LLVMInitializeMipsTargetInfo, LLVMInitializeMipsTargetMC, LLVMInitializeMipsDisassembler, LLVMInitializeMipsAsmPrinter, LLVMInitializeMipsAsmParser};
+        use llvm_sys::target::{
+            LLVMInitializeMipsAsmParser, LLVMInitializeMipsAsmPrinter,
+            LLVMInitializeMipsDisassembler, LLVMInitializeMipsTarget, LLVMInitializeMipsTargetInfo,
+            LLVMInitializeMipsTargetMC,
+        };
 
         unsafe {
             if config.base {
@@ -190,7 +213,11 @@ impl Target {
 
     #[cfg(feature = "target-aarch64")]
     pub fn initialize_aarch64(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeAArch64Target, LLVMInitializeAArch64TargetInfo, LLVMInitializeAArch64TargetMC, LLVMInitializeAArch64Disassembler, LLVMInitializeAArch64AsmPrinter, LLVMInitializeAArch64AsmParser};
+        use llvm_sys::target::{
+            LLVMInitializeAArch64AsmParser, LLVMInitializeAArch64AsmPrinter,
+            LLVMInitializeAArch64Disassembler, LLVMInitializeAArch64Target,
+            LLVMInitializeAArch64TargetInfo, LLVMInitializeAArch64TargetMC,
+        };
 
         unsafe {
             if config.base {
@@ -222,7 +249,10 @@ impl Target {
     // TODOC: Called AMDGPU in 3.7+
     #[cfg(feature = "llvm3-6")]
     pub fn initialize_r600(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeR600Target, LLVMInitializeR600TargetInfo, LLVMInitializeR600TargetMC, LLVMInitializeR600AsmPrinter, LLVMInitializeR600AsmParser};
+        use llvm_sys::target::{
+            LLVMInitializeR600AsmParser, LLVMInitializeR600AsmPrinter, LLVMInitializeR600Target,
+            LLVMInitializeR600TargetInfo, LLVMInitializeR600TargetMC,
+        };
 
         unsafe {
             if config.base {
@@ -253,7 +283,11 @@ impl Target {
     #[cfg(feature = "target-amdgpu")]
     #[llvm_versions(3.7..=latest)]
     pub fn initialize_amd_gpu(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeAMDGPUTarget, LLVMInitializeAMDGPUTargetInfo, LLVMInitializeAMDGPUTargetMC, LLVMInitializeAMDGPUAsmPrinter, LLVMInitializeAMDGPUAsmParser};
+        use llvm_sys::target::{
+            LLVMInitializeAMDGPUAsmParser, LLVMInitializeAMDGPUAsmPrinter,
+            LLVMInitializeAMDGPUTarget, LLVMInitializeAMDGPUTargetInfo,
+            LLVMInitializeAMDGPUTargetMC,
+        };
 
         unsafe {
             if config.base {
@@ -282,7 +316,11 @@ impl Target {
 
     #[cfg(feature = "target-systemz")]
     pub fn initialize_system_z(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeSystemZTarget, LLVMInitializeSystemZTargetInfo, LLVMInitializeSystemZTargetMC, LLVMInitializeSystemZDisassembler, LLVMInitializeSystemZAsmPrinter, LLVMInitializeSystemZAsmParser};
+        use llvm_sys::target::{
+            LLVMInitializeSystemZAsmParser, LLVMInitializeSystemZAsmPrinter,
+            LLVMInitializeSystemZDisassembler, LLVMInitializeSystemZTarget,
+            LLVMInitializeSystemZTargetInfo, LLVMInitializeSystemZTargetMC,
+        };
 
         unsafe {
             if config.base {
@@ -313,7 +351,11 @@ impl Target {
 
     #[cfg(feature = "target-hexagon")]
     pub fn initialize_hexagon(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeHexagonTarget, LLVMInitializeHexagonTargetInfo, LLVMInitializeHexagonTargetMC, LLVMInitializeHexagonDisassembler, LLVMInitializeHexagonAsmPrinter};
+        use llvm_sys::target::{
+            LLVMInitializeHexagonAsmPrinter, LLVMInitializeHexagonDisassembler,
+            LLVMInitializeHexagonTarget, LLVMInitializeHexagonTargetInfo,
+            LLVMInitializeHexagonTargetMC,
+        };
 
         unsafe {
             if config.base {
@@ -342,7 +384,10 @@ impl Target {
 
     #[cfg(feature = "target-nvptx")]
     pub fn initialize_nvptx(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeNVPTXTarget, LLVMInitializeNVPTXTargetInfo, LLVMInitializeNVPTXTargetMC, LLVMInitializeNVPTXAsmPrinter};
+        use llvm_sys::target::{
+            LLVMInitializeNVPTXAsmPrinter, LLVMInitializeNVPTXTarget,
+            LLVMInitializeNVPTXTargetInfo, LLVMInitializeNVPTXTargetMC,
+        };
 
         unsafe {
             if config.base {
@@ -369,7 +414,10 @@ impl Target {
 
     #[llvm_versions(3.6..=3.8)]
     pub fn initialize_cpp_backend(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeCppBackendTarget, LLVMInitializeCppBackendTargetInfo, LLVMInitializeCppBackendTargetMC};
+        use llvm_sys::target::{
+            LLVMInitializeCppBackendTarget, LLVMInitializeCppBackendTargetInfo,
+            LLVMInitializeCppBackendTargetMC,
+        };
 
         unsafe {
             if config.base {
@@ -388,7 +436,10 @@ impl Target {
 
     #[cfg(feature = "target-msp430")]
     pub fn initialize_msp430(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeMSP430Target, LLVMInitializeMSP430TargetInfo, LLVMInitializeMSP430TargetMC, LLVMInitializeMSP430AsmPrinter};
+        use llvm_sys::target::{
+            LLVMInitializeMSP430AsmPrinter, LLVMInitializeMSP430Target,
+            LLVMInitializeMSP430TargetInfo, LLVMInitializeMSP430TargetMC,
+        };
 
         unsafe {
             if config.base {
@@ -415,7 +466,10 @@ impl Target {
 
     #[cfg(feature = "target-xcore")]
     pub fn initialize_x_core(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeXCoreTarget, LLVMInitializeXCoreTargetInfo, LLVMInitializeXCoreTargetMC, LLVMInitializeXCoreDisassembler, LLVMInitializeXCoreAsmPrinter};
+        use llvm_sys::target::{
+            LLVMInitializeXCoreAsmPrinter, LLVMInitializeXCoreDisassembler,
+            LLVMInitializeXCoreTarget, LLVMInitializeXCoreTargetInfo, LLVMInitializeXCoreTargetMC,
+        };
 
         unsafe {
             if config.base {
@@ -444,7 +498,11 @@ impl Target {
 
     #[cfg(feature = "target-powerpc")]
     pub fn initialize_power_pc(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializePowerPCTarget, LLVMInitializePowerPCTargetInfo, LLVMInitializePowerPCTargetMC, LLVMInitializePowerPCDisassembler, LLVMInitializePowerPCAsmPrinter, LLVMInitializePowerPCAsmParser};
+        use llvm_sys::target::{
+            LLVMInitializePowerPCAsmParser, LLVMInitializePowerPCAsmPrinter,
+            LLVMInitializePowerPCDisassembler, LLVMInitializePowerPCTarget,
+            LLVMInitializePowerPCTargetInfo, LLVMInitializePowerPCTargetMC,
+        };
 
         unsafe {
             if config.base {
@@ -475,7 +533,11 @@ impl Target {
 
     #[cfg(feature = "target-sparc")]
     pub fn initialize_sparc(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeSparcTarget, LLVMInitializeSparcTargetInfo, LLVMInitializeSparcTargetMC, LLVMInitializeSparcDisassembler, LLVMInitializeSparcAsmPrinter, LLVMInitializeSparcAsmParser};
+        use llvm_sys::target::{
+            LLVMInitializeSparcAsmParser, LLVMInitializeSparcAsmPrinter,
+            LLVMInitializeSparcDisassembler, LLVMInitializeSparcTarget,
+            LLVMInitializeSparcTargetInfo, LLVMInitializeSparcTargetMC,
+        };
 
         unsafe {
             if config.base {
@@ -508,7 +570,10 @@ impl Target {
     #[cfg(feature = "target-bpf")]
     #[llvm_versions(3.7..=latest)]
     pub fn initialize_bpf(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeBPFTarget, LLVMInitializeBPFTargetInfo, LLVMInitializeBPFTargetMC, LLVMInitializeBPFAsmPrinter};
+        use llvm_sys::target::{
+            LLVMInitializeBPFAsmPrinter, LLVMInitializeBPFTarget, LLVMInitializeBPFTargetInfo,
+            LLVMInitializeBPFTargetMC,
+        };
 
         unsafe {
             if config.base {
@@ -543,7 +608,11 @@ impl Target {
     #[cfg(feature = "target-lanai")]
     #[llvm_versions(4.0..=latest)]
     pub fn initialize_lanai(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeLanaiTargetInfo, LLVMInitializeLanaiTarget, LLVMInitializeLanaiTargetMC, LLVMInitializeLanaiAsmPrinter, LLVMInitializeLanaiAsmParser, LLVMInitializeLanaiDisassembler};
+        use llvm_sys::target::{
+            LLVMInitializeLanaiAsmParser, LLVMInitializeLanaiAsmPrinter,
+            LLVMInitializeLanaiDisassembler, LLVMInitializeLanaiTarget,
+            LLVMInitializeLanaiTargetInfo, LLVMInitializeLanaiTargetMC,
+        };
 
         unsafe {
             if config.base {
@@ -581,7 +650,9 @@ impl Target {
     // https://lists.llvm.org/pipermail/llvm-dev/2017-August/116347.html for more info
     #[llvm_versions(4.0)]
     pub fn initialize_riscv(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeRISCVTargetInfo, LLVMInitializeRISCVTarget, LLVMInitializeRISCVTargetMC};
+        use llvm_sys::target::{
+            LLVMInitializeRISCVTarget, LLVMInitializeRISCVTargetInfo, LLVMInitializeRISCVTargetMC,
+        };
 
         unsafe {
             if config.base {
@@ -607,7 +678,11 @@ impl Target {
     #[cfg(feature = "target-webassembly")]
     #[llvm_versions(8.0..=latest)]
     pub fn initialize_webassembly(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVMInitializeWebAssemblyTargetInfo, LLVMInitializeWebAssemblyTarget, LLVMInitializeWebAssemblyTargetMC, LLVMInitializeWebAssemblyAsmPrinter, LLVMInitializeWebAssemblyAsmParser, LLVMInitializeWebAssemblyDisassembler};
+        use llvm_sys::target::{
+            LLVMInitializeWebAssemblyAsmParser, LLVMInitializeWebAssemblyAsmPrinter,
+            LLVMInitializeWebAssemblyDisassembler, LLVMInitializeWebAssemblyTarget,
+            LLVMInitializeWebAssemblyTargetInfo, LLVMInitializeWebAssemblyTargetMC,
+        };
 
         unsafe {
             if config.base {
@@ -637,12 +712,13 @@ impl Target {
     }
 
     pub fn initialize_native(config: &InitializationConfig) -> Result<(), String> {
-        use llvm_sys::target::{LLVM_InitializeNativeTarget, LLVM_InitializeNativeAsmParser, LLVM_InitializeNativeAsmPrinter, LLVM_InitializeNativeDisassembler};
+        use llvm_sys::target::{
+            LLVM_InitializeNativeAsmParser, LLVM_InitializeNativeAsmPrinter,
+            LLVM_InitializeNativeDisassembler, LLVM_InitializeNativeTarget,
+        };
 
         if config.base {
-            let code = unsafe {
-                LLVM_InitializeNativeTarget()
-            };
+            let code = unsafe { LLVM_InitializeNativeTarget() };
 
             if code == 1 {
                 return Err("Unknown error in initializing native target".into());
@@ -650,9 +726,7 @@ impl Target {
         }
 
         if config.asm_printer {
-            let code = unsafe {
-                LLVM_InitializeNativeAsmPrinter()
-            };
+            let code = unsafe { LLVM_InitializeNativeAsmPrinter() };
 
             if code == 1 {
                 return Err("Unknown error in initializing native asm printer".into());
@@ -660,19 +734,16 @@ impl Target {
         }
 
         if config.asm_parser {
-            let code = unsafe {
-                LLVM_InitializeNativeAsmParser()
-            };
+            let code = unsafe { LLVM_InitializeNativeAsmParser() };
 
-            if code == 1 { // REVIEW: Does parser need to go before printer?
+            if code == 1 {
+                // REVIEW: Does parser need to go before printer?
                 return Err("Unknown error in initializing native asm parser".into());
             }
         }
 
         if config.disassembler {
-            let code = unsafe {
-                LLVM_InitializeNativeDisassembler()
-            };
+            let code = unsafe { LLVM_InitializeNativeDisassembler() };
 
             if code == 1 {
                 return Err("Unknown error in initializing native disassembler".into());
@@ -683,7 +754,11 @@ impl Target {
     }
 
     pub fn initialize_all(config: &InitializationConfig) {
-        use llvm_sys::target::{LLVM_InitializeAllTargetInfos, LLVM_InitializeAllTargets, LLVM_InitializeAllTargetMCs, LLVM_InitializeAllAsmPrinters, LLVM_InitializeAllAsmParsers, LLVM_InitializeAllDisassemblers};
+        use llvm_sys::target::{
+            LLVM_InitializeAllAsmParsers, LLVM_InitializeAllAsmPrinters,
+            LLVM_InitializeAllDisassemblers, LLVM_InitializeAllTargetInfos,
+            LLVM_InitializeAllTargetMCs, LLVM_InitializeAllTargets,
+        };
 
         unsafe {
             if config.base {
@@ -712,7 +787,15 @@ impl Target {
         }
     }
 
-    pub fn create_target_machine(&self, triple: &str, cpu: &str, features: &str, level: OptimizationLevel, reloc_mode: RelocMode, code_model: CodeModel) -> Option<TargetMachine> {
+    pub fn create_target_machine(
+        &self,
+        triple: &str,
+        cpu: &str,
+        features: &str,
+        level: OptimizationLevel,
+        reloc_mode: RelocMode,
+        code_model: CodeModel,
+    ) -> Option<TargetMachine> {
         let triple = CString::new(triple).expect("Conversion to CString failed unexpectedly");
         let cpu = CString::new(cpu).expect("Conversion to CString failed unexpectedly");
         let features = CString::new(features).expect("Conversion to CString failed unexpectedly");
@@ -737,7 +820,15 @@ impl Target {
             RelocMode::DynamicNoPic => LLVMRelocMode::LLVMRelocDynamicNoPic,
         };
         let target_machine = unsafe {
-            LLVMCreateTargetMachine(self.target, triple.as_ptr(), cpu.as_ptr(), features.as_ptr(), level, reloc_mode, code_model)
+            LLVMCreateTargetMachine(
+                self.target,
+                triple.as_ptr(),
+                cpu.as_ptr(),
+                features.as_ptr(),
+                level,
+                reloc_mode,
+                code_model,
+            )
         };
 
         if target_machine.is_null() {
@@ -748,9 +839,7 @@ impl Target {
     }
 
     pub fn get_first() -> Option<Self> {
-        let target = unsafe {
-            LLVMGetFirstTarget()
-        };
+        let target = unsafe { LLVMGetFirstTarget() };
 
         if target.is_null() {
             return None;
@@ -760,9 +849,7 @@ impl Target {
     }
 
     pub fn get_next(&self) -> Option<Self> {
-        let target = unsafe {
-            LLVMGetNextTarget(self.target)
-        };
+        let target = unsafe { LLVMGetNextTarget(self.target) };
 
         if target.is_null() {
             return None;
@@ -772,15 +859,11 @@ impl Target {
     }
 
     pub fn get_name(&self) -> &CStr {
-        unsafe {
-            CStr::from_ptr(LLVMGetTargetName(self.target))
-        }
+        unsafe { CStr::from_ptr(LLVMGetTargetName(self.target)) }
     }
 
     pub fn get_description(&self) -> &CStr {
-        unsafe {
-            CStr::from_ptr(LLVMGetTargetDescription(self.target))
-        }
+        unsafe { CStr::from_ptr(LLVMGetTargetDescription(self.target)) }
     }
 
     pub fn from_name(name: &str) -> Option<Self> {
@@ -790,9 +873,7 @@ impl Target {
     }
 
     pub(crate) fn from_name_raw(c_string: *const i8) -> Option<Self> {
-        let target = unsafe {
-            LLVMGetTargetFromName(c_string)
-        };
+        let target = unsafe { LLVMGetTargetFromName(c_string) };
 
         if target.is_null() {
             return None;
@@ -806,11 +887,11 @@ impl Target {
         let mut target = ptr::null_mut();
         let mut err_string = unsafe { zeroed() };
 
-        let code = unsafe {
-            LLVMGetTargetFromTriple(c_string.as_ptr(), &mut target, &mut err_string)
-        };
+        let code =
+            unsafe { LLVMGetTargetFromTriple(c_string.as_ptr(), &mut target, &mut err_string) };
 
-        if code == 1 { // REVIEW: 1 is error value
+        if code == 1 {
+            // REVIEW: 1 is error value
             return Err(LLVMString::new(err_string));
         }
 
@@ -818,21 +899,15 @@ impl Target {
     }
 
     pub fn has_jit(&self) -> bool {
-        unsafe {
-            LLVMTargetHasJIT(self.target) == 1
-        }
+        unsafe { LLVMTargetHasJIT(self.target) == 1 }
     }
 
     pub fn has_target_machine(&self) -> bool {
-        unsafe {
-            LLVMTargetHasTargetMachine(self.target) == 1
-        }
+        unsafe { LLVMTargetHasTargetMachine(self.target) == 1 }
     }
 
     pub fn has_asm_backend(&self) -> bool {
-        unsafe {
-            LLVMTargetHasAsmBackend(self.target) == 1
-        }
+        unsafe { LLVMTargetHasAsmBackend(self.target) == 1 }
     }
 }
 
@@ -845,23 +920,17 @@ impl TargetMachine {
     fn new(target_machine: LLVMTargetMachineRef) -> Self {
         assert!(!target_machine.is_null());
 
-        TargetMachine {
-            target_machine,
-        }
+        TargetMachine { target_machine }
     }
 
     pub fn get_target(&self) -> Target {
-        let target = unsafe {
-            LLVMGetTargetMachineTarget(self.target_machine)
-        };
+        let target = unsafe { LLVMGetTargetMachineTarget(self.target_machine) };
 
         Target::new(target)
     }
 
     pub fn get_triple(&self) -> LLVMString {
-        let ptr = unsafe {
-            LLVMGetTargetMachineTriple(self.target_machine)
-        };
+        let ptr = unsafe { LLVMGetTargetMachineTriple(self.target_machine) };
 
         LLVMString::new(ptr)
     }
@@ -880,9 +949,7 @@ impl TargetMachine {
     /// assert_eq!(*default_triple, *CString::new("x86_64-pc-linux-gnu").unwrap());
     /// ```
     pub fn get_default_triple() -> LLVMString {
-        let llvm_string = unsafe {
-            LLVMGetDefaultTargetTriple()
-        };
+        let llvm_string = unsafe { LLVMGetDefaultTargetTriple() };
 
         LLVMString::new(llvm_string)
     }
@@ -893,16 +960,13 @@ impl TargetMachine {
 
         let ptr = match triple {
             Either::Left(triple_str) => {
-                let c_string = CString::new(triple_str).expect("Conversion to CString failed unexpectedly");
+                let c_string =
+                    CString::new(triple_str).expect("Conversion to CString failed unexpectedly");
 
-                unsafe {
-                    LLVMNormalizeTargetTriple(c_string.as_ptr())
-                }
-            },
-            Either::Right(triple_cstr) => {
-                unsafe {
-                    LLVMNormalizeTargetTriple(triple_cstr.as_ptr())
-                }
+                unsafe { LLVMNormalizeTargetTriple(c_string.as_ptr()) }
+            }
+            Either::Right(triple_cstr) => unsafe {
+                LLVMNormalizeTargetTriple(triple_cstr.as_ptr())
             },
         };
 
@@ -918,9 +982,7 @@ impl TargetMachine {
     pub fn get_host_cpu_name() -> LLVMString {
         use llvm_sys::target_machine::LLVMGetHostCPUName;
 
-        let ptr = unsafe {
-            LLVMGetHostCPUName()
-        };
+        let ptr = unsafe { LLVMGetHostCPUName() };
 
         LLVMString::new(ptr)
     }
@@ -934,48 +996,36 @@ impl TargetMachine {
     pub fn get_host_cpu_features() -> LLVMString {
         use llvm_sys::target_machine::LLVMGetHostCPUFeatures;
 
-        let ptr = unsafe {
-            LLVMGetHostCPUFeatures()
-        };
+        let ptr = unsafe { LLVMGetHostCPUFeatures() };
 
         LLVMString::new(ptr)
     }
 
     pub fn get_cpu(&self) -> LLVMString {
-        let ptr = unsafe {
-            LLVMGetTargetMachineCPU(self.target_machine)
-        };
+        let ptr = unsafe { LLVMGetTargetMachineCPU(self.target_machine) };
 
         LLVMString::new(ptr)
     }
 
     pub fn get_feature_string(&self) -> &CStr {
-        unsafe {
-            CStr::from_ptr(LLVMGetTargetMachineFeatureString(self.target_machine))
-        }
+        unsafe { CStr::from_ptr(LLVMGetTargetMachineFeatureString(self.target_machine)) }
     }
 
     /// Create TargetData from this target machine
     #[llvm_versions(4.0..=latest)]
     pub fn get_target_data(&self) -> TargetData {
-        let data_layout = unsafe {
-            LLVMCreateTargetDataLayout(self.target_machine)
-        };
+        let data_layout = unsafe { LLVMCreateTargetDataLayout(self.target_machine) };
 
         TargetData::new(data_layout)
     }
 
     pub fn set_asm_verbosity(&self, verbosity: bool) {
-        unsafe {
-            LLVMSetTargetMachineAsmVerbosity(self.target_machine, verbosity as i32)
-        }
+        unsafe { LLVMSetTargetMachineAsmVerbosity(self.target_machine, verbosity as i32) }
     }
 
     // TODO: Move to PassManager?
     pub fn add_analysis_passes<T>(&self, pass_manager: &PassManager<T>) {
-        unsafe {
-            LLVMAddAnalysisPasses(self.target_machine, pass_manager.pass_manager)
-        }
+        unsafe { LLVMAddAnalysisPasses(self.target_machine, pass_manager.pass_manager) }
     }
 
     /// Writes a `TargetMachine` to a `MemoryBuffer`.
@@ -1004,14 +1054,24 @@ impl TargetMachine {
     ///
     /// let buffer = target_machine.write_to_memory_buffer(&module, FileType::Assembly).unwrap();
     /// ```
-    pub fn write_to_memory_buffer(&self, module: &Module, file_type: FileType) -> Result<MemoryBuffer, LLVMString> {
+    pub fn write_to_memory_buffer(
+        &self,
+        module: &Module,
+        file_type: FileType,
+    ) -> Result<MemoryBuffer, LLVMString> {
         let mut memory_buffer = ptr::null_mut();
         let mut err_string = unsafe { zeroed() };
         let return_code = unsafe {
             let module_ptr = module.module.get();
             let file_type_ptr = file_type.as_llvm_file_type();
 
-            LLVMTargetMachineEmitToMemoryBuffer(self.target_machine, module_ptr, file_type_ptr, &mut err_string, &mut memory_buffer)
+            LLVMTargetMachineEmitToMemoryBuffer(
+                self.target_machine,
+                module_ptr,
+                file_type_ptr,
+                &mut err_string,
+                &mut memory_buffer,
+            )
         };
 
         if return_code == 1 {
@@ -1050,8 +1110,15 @@ impl TargetMachine {
     ///
     /// assert!(target_machine.write_to_file(&module, FileType::Object, &path).is_ok());
     /// ```
-    pub fn write_to_file(&self, module: &Module, file_type: FileType, path: &Path) -> Result<(), LLVMString> {
-        let path = path.to_str().expect("Did not find a valid Unicode path string");
+    pub fn write_to_file(
+        &self,
+        module: &Module,
+        file_type: FileType,
+        path: &Path,
+    ) -> Result<(), LLVMString> {
+        let path = path
+            .to_str()
+            .expect("Did not find a valid Unicode path string");
         let path_c_string = CString::new(path).expect("Conversion to CString failed unexpectedly");
         let mut err_string = unsafe { zeroed() };
         let return_code = unsafe {
@@ -1060,7 +1127,13 @@ impl TargetMachine {
             let path_ptr = path_c_string.as_ptr() as *mut _;
             let file_type_ptr = file_type.as_llvm_file_type();
 
-            LLVMTargetMachineEmitToFile(self.target_machine, module_ptr, path_ptr, file_type_ptr, &mut err_string)
+            LLVMTargetMachineEmitToFile(
+                self.target_machine,
+                module_ptr,
+                path_ptr,
+                file_type_ptr,
+                &mut err_string,
+            )
         };
 
         if return_code == 1 {
@@ -1073,9 +1146,7 @@ impl TargetMachine {
 
 impl Drop for TargetMachine {
     fn drop(&mut self) {
-        unsafe {
-            LLVMDisposeTargetMachine(self.target_machine)
-        }
+        unsafe { LLVMDisposeTargetMachine(self.target_machine) }
     }
 }
 
@@ -1095,7 +1166,7 @@ impl TargetData {
         assert!(!target_data.is_null());
 
         TargetData {
-            target_data: target_data
+            target_data: target_data,
         }
     }
 
@@ -1118,7 +1189,9 @@ impl TargetData {
     /// ```
     pub fn ptr_sized_int_type(&self, address_space: Option<AddressSpace>) -> IntType {
         let int_type_ptr = match address_space {
-            Some(address_space) => unsafe { LLVMIntPtrTypeForAS(self.target_data, address_space as u32) },
+            Some(address_space) => unsafe {
+                LLVMIntPtrTypeForAS(self.target_data, address_space as u32)
+            },
             None => unsafe { LLVMIntPtrType(self.target_data) },
         };
 
@@ -1142,9 +1215,19 @@ impl TargetData {
     /// let target_data = execution_engine.get_target_data();
     /// let int_type = target_data.ptr_sized_int_type_in_context(&context, None);
     /// ```
-    pub fn ptr_sized_int_type_in_context(&self, context: &Context, address_space: Option<AddressSpace>) -> IntType {
+    pub fn ptr_sized_int_type_in_context(
+        &self,
+        context: &Context,
+        address_space: Option<AddressSpace>,
+    ) -> IntType {
         let int_type_ptr = match address_space {
-            Some(address_space) => unsafe { LLVMIntPtrTypeForASInContext(*context.context, self.target_data, address_space as u32) },
+            Some(address_space) => unsafe {
+                LLVMIntPtrTypeForASInContext(
+                    *context.context,
+                    self.target_data,
+                    address_space as u32,
+                )
+            },
             None => unsafe { LLVMIntPtrTypeInContext(*context.context, self.target_data) },
         };
 
@@ -1152,35 +1235,27 @@ impl TargetData {
     }
 
     pub fn get_data_layout(&self) -> DataLayout {
-        let data_layout = unsafe {
-            LLVMCopyStringRepOfTargetData(self.target_data)
-        };
+        let data_layout = unsafe { LLVMCopyStringRepOfTargetData(self.target_data) };
 
         DataLayout::new_owned(data_layout)
     }
 
     // REVIEW: Does this only work if Sized?
     pub fn get_bit_size(&self, type_: &dyn AnyType) -> u64 {
-        unsafe {
-            LLVMSizeOfTypeInBits(self.target_data, type_.as_type_ref())
-        }
+        unsafe { LLVMSizeOfTypeInBits(self.target_data, type_.as_type_ref()) }
     }
 
     // TODOC: This can fail on LLVM's side(exit?), but it doesn't seem like we have any way to check this in rust
     pub fn create(str_repr: &str) -> TargetData {
         let c_string = CString::new(str_repr).expect("Conversion to CString failed unexpectedly");
 
-        let target_data = unsafe {
-            LLVMCreateTargetData(c_string.as_ptr())
-        };
+        let target_data = unsafe { LLVMCreateTargetData(c_string.as_ptr()) };
 
         TargetData::new(target_data)
     }
 
     pub fn get_byte_ordering(&self) -> ByteOrdering {
-        let byte_ordering = unsafe {
-            LLVMByteOrder(self.target_data)
-        };
+        let byte_ordering = unsafe { LLVMByteOrder(self.target_data) };
 
         match byte_ordering {
             LLVMByteOrdering::LLVMBigEndian => ByteOrdering::BigEndian,
@@ -1190,51 +1265,39 @@ impl TargetData {
 
     pub fn get_pointer_byte_size(&self, address_space: Option<AddressSpace>) -> u32 {
         match address_space {
-            Some(address_space) => unsafe { LLVMPointerSizeForAS(self.target_data, address_space as u32) },
+            Some(address_space) => unsafe {
+                LLVMPointerSizeForAS(self.target_data, address_space as u32)
+            },
             None => unsafe { LLVMPointerSize(self.target_data) },
         }
     }
 
     pub fn get_store_size(&self, type_: &dyn AnyType) -> u64 {
-        unsafe {
-            LLVMStoreSizeOfType(self.target_data, type_.as_type_ref())
-        }
+        unsafe { LLVMStoreSizeOfType(self.target_data, type_.as_type_ref()) }
     }
 
     pub fn get_abi_size(&self, type_: &dyn AnyType) -> u64 {
-        unsafe {
-            LLVMABISizeOfType(self.target_data, type_.as_type_ref())
-        }
+        unsafe { LLVMABISizeOfType(self.target_data, type_.as_type_ref()) }
     }
 
     pub fn get_abi_alignment(&self, type_: &dyn AnyType) -> u32 {
-        unsafe {
-            LLVMABIAlignmentOfType(self.target_data, type_.as_type_ref())
-        }
+        unsafe { LLVMABIAlignmentOfType(self.target_data, type_.as_type_ref()) }
     }
 
     pub fn get_call_frame_alignment(&self, type_: &dyn AnyType) -> u32 {
-        unsafe {
-            LLVMCallFrameAlignmentOfType(self.target_data, type_.as_type_ref())
-        }
+        unsafe { LLVMCallFrameAlignmentOfType(self.target_data, type_.as_type_ref()) }
     }
 
     pub fn get_preferred_alignment(&self, type_: &dyn AnyType) -> u32 {
-        unsafe {
-            LLVMPreferredAlignmentOfType(self.target_data, type_.as_type_ref())
-        }
+        unsafe { LLVMPreferredAlignmentOfType(self.target_data, type_.as_type_ref()) }
     }
 
     pub fn get_preferred_alignment_of_global(&self, value: &GlobalValue) -> u32 {
-        unsafe {
-            LLVMPreferredAlignmentOfGlobal(self.target_data, value.as_value_ref())
-        }
+        unsafe { LLVMPreferredAlignmentOfGlobal(self.target_data, value.as_value_ref()) }
     }
 
     pub fn element_at_offset(&self, struct_type: &StructType, offset: u64) -> u32 {
-        unsafe {
-            LLVMElementAtOffset(self.target_data, struct_type.as_type_ref(), offset)
-        }
+        unsafe { LLVMElementAtOffset(self.target_data, struct_type.as_type_ref(), offset) }
     }
 
     pub fn offset_of_element(&self, struct_type: &StructType, element: u32) -> Option<u64> {
@@ -1243,15 +1306,17 @@ impl TargetData {
         }
 
         unsafe {
-            Some(LLVMOffsetOfElement(self.target_data, struct_type.as_type_ref(), element))
+            Some(LLVMOffsetOfElement(
+                self.target_data,
+                struct_type.as_type_ref(),
+                element,
+            ))
         }
     }
 }
 
 impl Drop for TargetData {
     fn drop(&mut self) {
-        unsafe {
-            LLVMDisposeTargetData(self.target_data)
-        }
+        unsafe { LLVMDisposeTargetData(self.target_data) }
     }
 }
