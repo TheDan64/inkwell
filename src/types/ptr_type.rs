@@ -8,6 +8,8 @@ use crate::types::traits::AsTypeRef;
 use crate::types::{AnyTypeEnum, Type, BasicTypeEnum, ArrayType, FunctionType, VectorType};
 use crate::values::{AsValueRef, ArrayValue, PointerValue, IntValue};
 
+use std::convert::TryFrom;
+
 /// A `PointerType` is the type of a pointer constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct PointerType {
@@ -166,9 +168,11 @@ impl PointerType {
     /// assert_eq!(f32_ptr_type.get_address_space(), AddressSpace::Generic);
     /// ```
     pub fn get_address_space(&self) -> AddressSpace {
-        unsafe {
-            LLVMGetPointerAddressSpace(self.as_type_ref()).into()
-        }
+        let addr_space = unsafe {
+            LLVMGetPointerAddressSpace(self.as_type_ref())
+        };
+
+        AddressSpace::try_from(addr_space).expect("Unexpectedly found invalid AddressSpace value")
     }
 
     /// Prints the definition of a `PointerType` to a `LLVMString`.
