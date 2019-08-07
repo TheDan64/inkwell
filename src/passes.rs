@@ -82,7 +82,7 @@ impl PassManagerBuilder {
     ///
     /// # Example
     ///
-    /// ```
+    /// ```no_run
     /// use inkwell::OptimizationLevel::Aggressive;
     /// use inkwell::module::Module;
     /// use inkwell::passes::{PassManager, PassManagerBuilder};
@@ -107,7 +107,7 @@ impl PassManagerBuilder {
     ///
     /// # Example
     ///
-    /// ```
+    /// ```no_run
     /// use inkwell::OptimizationLevel::Aggressive;
     /// use inkwell::passes::{PassManager, PassManagerBuilder};
     /// use inkwell::targets::{InitializationConfig, Target};
@@ -133,7 +133,7 @@ impl PassManagerBuilder {
     ///
     /// # Example
     ///
-    /// ```
+    /// ```no_run
     /// use inkwell::OptimizationLevel::Aggressive;
     /// use inkwell::passes::{PassManager, PassManagerBuilder};
     /// use inkwell::targets::{InitializationConfig, Target};

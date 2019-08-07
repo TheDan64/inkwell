@@ -155,7 +155,7 @@ impl Module {
     /// To use your own `Context`, see [inkwell::context::create_module()](../context/struct.Context.html#method.create_module)
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::Module;
     ///
@@ -181,7 +181,7 @@ impl Module {
     /// `Linkage::ExternalLinkage` will be used.
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::{Module, Linkage};
     ///
@@ -213,7 +213,7 @@ impl Module {
     /// Gets the `Context` from which this `Module` originates.
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::{Context, ContextRef};
     /// use inkwell::module::Module;
     ///

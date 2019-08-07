@@ -255,7 +255,7 @@ impl ExecutionEngine {
     /// # Examples
     ///
     ///
-    /// ```rust
+    /// ```rust,no_run
     /// # use inkwell::targets::{InitializationConfig, Target};
     /// # use inkwell::context::Context;
     /// # use inkwell::OptimizationLevel;
