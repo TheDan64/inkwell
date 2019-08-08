@@ -11,7 +11,7 @@ categories = ["development-tools::ffi"]
 edition = "2018"
 
 [features]
-default = ['target-all']
+default = ["target-all"]
 llvm3-6 = []
 llvm3-7 = []
 llvm3-8 = []
@@ -37,22 +37,23 @@ target-bpf = []
 target-lanai = []
 target-webassembly = []
 target-all = [
-    'target-x86',
-    'target-arm',
-    'target-mips',
-    'target-aarch64',
-    'target-amdgpu',
-    'target-systemz',
-    'target-hexagon',
-    'target-nvptx',
-    'target-msp430',
-    'target-xcore',
-    'target-powerpc',
-    'target-sparc',
-    'target-bpf',
-    'target-lanai',
-    'target-webassembly'
+    "target-x86",
+    "target-arm",
+    "target-mips",
+    "target-aarch64",
+    "target-amdgpu",
+    "target-systemz",
+    "target-hexagon",
+    "target-nvptx",
+    "target-msp430",
+    "target-xcore",
+    "target-powerpc",
+    "target-sparc",
+    "target-bpf",
+    "target-lanai",
+    "target-webassembly"
 ]
+experimental = ["static-alloc"]
 
 [dependencies]
 either = "1.5"
@@ -61,6 +62,7 @@ inkwell_internal_macros = { path = "./internal_macros", version = "0.1.0" }
 libc = "0.2"
 llvm-sys = "80.1"
 regex = "1"
+static-alloc = { version = "0.1", optional = true }
 
 [badges]
 travis-ci = { repository = "TheDan64/inkwell" }

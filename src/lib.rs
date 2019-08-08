@@ -80,7 +80,6 @@ assert_unique_used_features!{"llvm3-6", "llvm3-7", "llvm3-8", "llvm3-9", "llvm4-
 ///
 /// # Remarks
 /// See also: https://llvm.org/doxygen/NVPTXBaseInfo_8h_source.html
-#[repr(u32)]
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum AddressSpace {
     Generic = 0,
