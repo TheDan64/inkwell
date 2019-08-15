@@ -1,5 +1,6 @@
 language: rust
 
+dist: trusty
 sudo: required
 cache:
   directories:

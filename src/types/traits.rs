@@ -67,6 +67,7 @@ pub trait BasicType: AnyType {
     /// let int_basic_type = int.as_basic_type_enum();
     /// assert_eq!(int_basic_type.array_type(32), int.array_type(32));
     /// ```
+    // FIXME: We shouldn't be able to create arrays of void types
     fn array_type(&self, size: u32) -> ArrayType {
         Type::new(self.as_type_ref()).array_type(size)
     }
@@ -85,6 +86,7 @@ pub trait BasicType: AnyType {
     /// let addr_space = AddressSpace::Generic;
     /// assert_eq!(int_basic_type.ptr_type(addr_space), int.ptr_type(addr_space));
     /// ```
+    // FIXME: We shouldn't be able to create pointer of void types
     fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
         Type::new(self.as_type_ref()).ptr_type(address_space)
     }
