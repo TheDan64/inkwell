@@ -1488,15 +1488,15 @@ impl Builder {
     /// builder.build_return(None);
     /// ```
     // https://llvm.org/docs/LangRef.html#atomicrmw-instruction
-    pub fn build_atomicrmw(&self, op: AtomicRMWBinOp, ptr: PointerValue, value: IntValue, ordering: AtomicOrdering) -> Result<InstructionValue, ()> {
+    pub fn build_atomicrmw(&self, op: AtomicRMWBinOp, ptr: PointerValue, value: IntValue, ordering: AtomicOrdering) -> Result<InstructionValue, &'static str> {
         // "The type of ‘<value>’ must be an integer type whose bit width is a power of two greater than or equal to eight and less than or equal to a target-specific size limit. The type of the ‘<pointer>’ operand must be a pointer to that type." -- https://releases.llvm.org/3.6.2/docs/LangRef.html#atomicrmw-instruction
         // Newer LLVM's (9+) support additional FAdd and FSub operations as well as xchg on floating point types.
         if value.get_type().get_bit_width() < 8 ||
            !value.get_type().get_bit_width().is_power_of_two() {
-            return Err(());
+            return Err("The bitwidth of value must be a power of 2 and greater than 8.");
         }
         if ptr.get_type().get_element_type() != value.get_type().into() {
-            return Err(());
+            return Err("Pointer's pointee type must match the value's type.");
         }
 
         let val = unsafe {
@@ -1530,28 +1530,28 @@ impl Builder {
     /// builder.build_return(None);
     /// ```
     // https://llvm.org/docs/LangRef.html#cmpxchg-instruction
-    pub fn build_cmpxchg<V: BasicValue>(&self, ptr: PointerValue, cmp: V, new: V, success: AtomicOrdering, failure: AtomicOrdering) -> Result<InstructionValue, ()> {
+    pub fn build_cmpxchg<V: BasicValue>(&self, ptr: PointerValue, cmp: V, new: V, success: AtomicOrdering, failure: AtomicOrdering) -> Result<InstructionValue, &'static str> {
         let cmp = cmp.as_basic_value_enum();
         let new = new.as_basic_value_enum();
         if cmp.get_type() != new.get_type() {
-            return Err(());
+            return Err("The value to compare against and the value to replace with must have the same type.");
         }
         if !cmp.as_basic_value_enum().is_int_value() && !cmp.as_basic_value_enum().is_pointer_value() {
-            return Err(());
+            return Err("The values must have pointer or integer type.");
         }
         if ptr.get_type().get_element_type().to_basic_type_enum() != cmp.get_type() {
-            return Err(());
+            return Err("The pointer does not point to an element of the value type.");
         }
 
         // "Both ordering parameters must be at least monotonic, the ordering constraint on failure must be no stronger than that on success, and the failure ordering cannot be either release or acq_rel." -- https://llvm.org/docs/LangRef.html#cmpxchg-instruction
         if success < AtomicOrdering::Monotonic || failure < AtomicOrdering::Monotonic {
-            return Err(());
+            return Err("Both success and failure orderings must be Monotonic or stronger.");
         }
         if failure > success {
-            return Err(());
+            return Err("The failure ordering may not be stronger than the success ordering.");
         }
         if failure == AtomicOrdering::Release || failure == AtomicOrdering::AcquireRelease {
-            return Err(());
+            return Err("The failure ordering may not be release or acquire release.");
         }
 
         let val = unsafe {
