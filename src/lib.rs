@@ -70,7 +70,18 @@ macro_rules! assert_unique_used_features {
     }
 }
 
-assert_unique_used_features!{"llvm3-6", "llvm3-7", "llvm3-8", "llvm3-9", "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0"}
+assert_unique_used_features!{
+    "llvm3-6",
+    "llvm3-7",
+    "llvm3-8",
+    "llvm3-9",
+    "llvm4-0",
+    "llvm5-0",
+    "llvm6-0",
+    "llvm7-0",
+    "llvm8-0",
+    "llvm9-0"
+}
 
 /// Defines the address space in which a global will be inserted.
 ///
