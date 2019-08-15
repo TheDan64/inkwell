@@ -158,7 +158,7 @@ macro_rules! enum_rename {
     ($(#[$enum_attrs:meta])* $enum_name:ident <=> $llvm_enum_name:ident {
         $($(#[$variant_attrs:meta])* $args:ident <=> $llvm_args:ident,)+
     }) => (
-        #[derive(Debug, PartialEq, Eq, Copy, Clone)]
+        #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
         $(#[$enum_attrs])*
         pub enum $enum_name {
             $(

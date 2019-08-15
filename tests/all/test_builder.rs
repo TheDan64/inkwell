@@ -740,3 +740,87 @@ fn test_atomicrmw() {
     let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Unordered);
     assert!(result.is_err());
 }
+
+#[test]
+fn test_cmpxchg() {
+    let context = Context::create();
+    let module = context.create_module("cmpxchg");
+
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_value = module.add_function("", fn_type, None);
+    let entry = fn_value.append_basic_block("entry");
+    let builder = context.create_builder();
+    builder.position_at_end(&entry);
+
+    let i32_type = context.i32_type();
+    let i64_type = context.i64_type();
+    let i32_ptr_type = i32_type.ptr_type(AddressSpace::Generic);
+    let i32_ptr_ptr_type = i32_ptr_type.ptr_type(AddressSpace::Generic);
+
+    let ptr_value = i32_ptr_type.get_undef();
+    let zero_value = i32_type.const_zero();
+    let neg_one_value = i32_type.const_all_ones();
+    let result = builder.build_cmpxchg(ptr_value, zero_value, neg_one_value, AtomicOrdering::Monotonic, AtomicOrdering::Monotonic);
+    assert!(result.is_ok());
+
+    let ptr_value = i32_ptr_type.get_undef();
+    let zero_value = i32_type.const_zero();
+    let neg_one_value = i32_type.const_all_ones();
+    let result = builder.build_cmpxchg(ptr_value, zero_value, neg_one_value, AtomicOrdering::Unordered, AtomicOrdering::Monotonic);
+    assert!(result.is_err());
+
+    let ptr_value = i32_ptr_type.get_undef();
+    let zero_value = i32_type.const_zero();
+    let neg_one_value = i32_type.const_all_ones();
+    let result = builder.build_cmpxchg(ptr_value, zero_value, neg_one_value, AtomicOrdering::Monotonic, AtomicOrdering::Unordered);
+    assert!(result.is_err());
+
+    let ptr_value = i32_ptr_type.get_undef();
+    let zero_value = i32_type.const_zero();
+    let neg_one_value = i32_type.const_all_ones();
+    let result = builder.build_cmpxchg(ptr_value, zero_value, neg_one_value, AtomicOrdering::Monotonic, AtomicOrdering::Release);
+    assert!(result.is_err());
+
+    let ptr_value = i32_ptr_type.get_undef();
+    let zero_value = i32_type.const_zero();
+    let neg_one_value = i32_type.const_all_ones();
+    let result = builder.build_cmpxchg(ptr_value, zero_value, neg_one_value, AtomicOrdering::Monotonic, AtomicOrdering::AcquireRelease);
+    assert!(result.is_err());
+
+    let ptr_value = i32_ptr_type.get_undef();
+    let zero_value = i32_type.const_zero();
+    let neg_one_value = i32_type.const_all_ones();
+    let result = builder.build_cmpxchg(ptr_value, zero_value, neg_one_value, AtomicOrdering::Monotonic, AtomicOrdering::SequentiallyConsistent);
+    assert!(result.is_err());
+
+    let ptr_value = i32_ptr_ptr_type.get_undef();
+    let zero_value = i32_type.const_zero();
+    let neg_one_value = i32_type.const_all_ones();
+    let result = builder.build_cmpxchg(ptr_value, zero_value, neg_one_value, AtomicOrdering::Monotonic, AtomicOrdering::Monotonic);
+    assert!(result.is_err());
+
+    let ptr_value = i32_ptr_type.get_undef();
+    let zero_value = i64_type.const_zero();
+    let neg_one_value = i32_type.const_all_ones();
+    let result = builder.build_cmpxchg(ptr_value, zero_value, neg_one_value, AtomicOrdering::Monotonic, AtomicOrdering::Monotonic);
+    assert!(result.is_err());
+
+    let ptr_value = i32_ptr_type.get_undef();
+    let zero_value = i32_type.const_zero();
+    let neg_one_value = i64_type.const_all_ones();
+    let result = builder.build_cmpxchg(ptr_value, zero_value, neg_one_value, AtomicOrdering::Monotonic, AtomicOrdering::Monotonic);
+    assert!(result.is_err());
+
+    let ptr_value = i32_ptr_ptr_type.get_undef();
+    let zero_value = i32_ptr_type.const_zero();
+    let neg_one_value = i32_ptr_type.const_zero();
+    let result = builder.build_cmpxchg(ptr_value, zero_value, neg_one_value, AtomicOrdering::Monotonic, AtomicOrdering::Monotonic);
+    assert!(result.is_ok());
+
+    let ptr_value = i32_ptr_type.get_undef();
+    let zero_value = i32_ptr_type.const_zero();
+    let neg_one_value = i32_ptr_type.const_zero();
+    let result = builder.build_cmpxchg(ptr_value, zero_value, neg_one_value, AtomicOrdering::Monotonic, AtomicOrdering::Monotonic);
+    assert!(result.is_err());
+}
