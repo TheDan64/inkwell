@@ -1,6 +1,6 @@
 extern crate inkwell;
 
-use self::inkwell::{AddressSpace, OptimizationLevel};
+use self::inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, OptimizationLevel};
 use self::inkwell::context::Context;
 use self::inkwell::builder::Builder;
 use self::inkwell::values::BasicValue;
@@ -701,4 +701,42 @@ fn test_bitcast() {
     builder.build_bitcast(f64_arg, i64_type, "f64toi64");
 
     assert!(module.verify().is_ok());
+}
+
+#[test]
+fn test_atomicrmw() {
+    let context = Context::create();
+    let module = context.create_module("rmw");
+
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_value = module.add_function("", fn_type, None);
+    let entry = fn_value.append_basic_block("entry");
+    let builder = context.create_builder();
+    builder.position_at_end(&entry);
+
+    let i32_type = context.i32_type();
+    let i64_type = context.i64_type();
+    let i31_type = context.custom_width_int_type(31);
+    let i4_type = context.custom_width_int_type(4);
+
+    let ptr_value = i32_type.ptr_type(AddressSpace::Generic).get_undef();
+    let zero_value = i32_type.const_zero();
+    let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Unordered);
+    assert!(result.is_ok());
+
+    let ptr_value = i64_type.ptr_type(AddressSpace::Generic).get_undef();
+    let zero_value = i32_type.const_zero();
+    let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Unordered);
+    assert!(result.is_err());
+
+    let ptr_value = i31_type.ptr_type(AddressSpace::Generic).get_undef();
+    let zero_value = i31_type.const_zero();
+    let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Unordered);
+    assert!(result.is_err());
+
+    let ptr_value = i4_type.ptr_type(AddressSpace::Generic).get_undef();
+    let zero_value = i4_type.const_zero();
+    let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Unordered);
+    assert!(result.is_err());
 }

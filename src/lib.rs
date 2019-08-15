@@ -43,7 +43,7 @@ pub mod targets;
 pub mod types;
 pub mod values;
 
-use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility, LLVMThreadLocalMode, LLVMDLLStorageClass, LLVMAtomicOrdering};
+use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility, LLVMThreadLocalMode, LLVMDLLStorageClass, LLVMAtomicOrdering, LLVMAtomicRMWBinOp};
 
 use std::convert::TryFrom;
 
@@ -182,6 +182,22 @@ enum_rename!{
         Release <=> LLVMAtomicOrderingRelease,
         AcquireRelease <=> LLVMAtomicOrderingAcquireRelease,
         SequentiallyConsistent <=> LLVMAtomicOrderingSequentiallyConsistent,
+    }
+}
+
+enum_rename!{
+    AtomicRMWBinOp <=> LLVMAtomicRMWBinOp {
+        Xchg <=> LLVMAtomicRMWBinOpXchg,
+        Add <=> LLVMAtomicRMWBinOpAdd,
+        Sub <=> LLVMAtomicRMWBinOpSub,
+        And <=> LLVMAtomicRMWBinOpAnd,
+        Nand <=> LLVMAtomicRMWBinOpNand,
+        Or <=> LLVMAtomicRMWBinOpOr,
+        Xor <=> LLVMAtomicRMWBinOpXor,
+        Max <=> LLVMAtomicRMWBinOpMax,
+        Min <=> LLVMAtomicRMWBinOpMin,
+        UMax <=> LLVMAtomicRMWBinOpUMax,
+        UMin <=> LLVMAtomicRMWBinOpUMin,
     }
 }
 
