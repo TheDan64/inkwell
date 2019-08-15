@@ -195,38 +195,48 @@ pub enum AtomicOrdering {
 #[llvm_enum(LLVMAtomicRMWBinOp)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum AtomicRMWBinOp {
-    #[llvm_variant(LLVMAtomicRMWBinOpXchg)]
     /// Stores to memory and returns the prior value.
+    #[llvm_variant(LLVMAtomicRMWBinOpXchg)]
     Xchg,
-    #[llvm_variant(LLVMAtomicRMWBinOpAdd)]
+
     /// Adds to the value in memory and returns the prior value.
+    #[llvm_variant(LLVMAtomicRMWBinOpAdd)]
     Add,
-    #[llvm_variant(LLVMAtomicRMWBinOpSub)]
+
     /// Subtract a value off the value in memory and returns the prior value.
+    #[llvm_variant(LLVMAtomicRMWBinOpSub)]
     Sub,
-    #[llvm_variant(LLVMAtomicRMWBinOpAnd)]
+
     /// Bitwise and into memory and returns the prior value.
+    #[llvm_variant(LLVMAtomicRMWBinOpAnd)]
     And,
-    #[llvm_variant(LLVMAtomicRMWBinOpNand)]
+
     /// Bitwise nands into memory and returns the prior value.
+    #[llvm_variant(LLVMAtomicRMWBinOpNand)]
     Nand,
-    #[llvm_variant(LLVMAtomicRMWBinOpOr)]
+
     /// Bitwise ors into memory and returns the prior value.
+    #[llvm_variant(LLVMAtomicRMWBinOpOr)]
     Or,
-    #[llvm_variant(LLVMAtomicRMWBinOpXor)]
+
     /// Bitwise xors into memory and returns the prior value.
+    #[llvm_variant(LLVMAtomicRMWBinOpXor)]
     Xor,
-    #[llvm_variant(LLVMAtomicRMWBinOpMax)]
+
     /// Sets memory to the signed-greater of the value provided and the value in memory. Returns the value that was in memory.
+    #[llvm_variant(LLVMAtomicRMWBinOpMax)]
     Max,
-    #[llvm_variant(LLVMAtomicRMWBinOpMin)]
+
     /// Sets memory to the signed-lesser of the value provided and the value in memory. Returns the value that was in memory.
+    #[llvm_variant(LLVMAtomicRMWBinOpMin)]
     Min,
-    #[llvm_variant(LLVMAtomicRMWBinOpUMax)]
+
     /// Sets memory to the unsigned-greater of the value provided and the value in memory. Returns the value that was in memory.
+    #[llvm_variant(LLVMAtomicRMWBinOpUMax)]
     UMax,
-    #[llvm_variant(LLVMAtomicRMWBinOpUMin)]
+
     /// Sets memory to the unsigned-lesser of the value provided and the value in memory. Returns the value that was in memory.
+    #[llvm_variant(LLVMAtomicRMWBinOpUMin)]
     UMin,
 }
 
