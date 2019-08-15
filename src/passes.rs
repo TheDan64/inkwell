@@ -1071,7 +1071,7 @@ impl<T: PassManagerSubType> PassManager<T> {
 
     #[llvm_versions(8.0..=latest)]
     pub fn add_coroutine_early_pass(&self) {
-        use llvm_sys::transforms::coroutine::LLVMAddCoroEarlyPass;
+        use llvm_sys::transforms::coroutines::LLVMAddCoroEarlyPass;
 
         unsafe {
             LLVMAddCoroEarlyPass(self.pass_manager)
@@ -1080,7 +1080,7 @@ impl<T: PassManagerSubType> PassManager<T> {
 
     #[llvm_versions(8.0..=latest)]
     pub fn add_coroutine_split_pass(&self) {
-        use llvm_sys::transforms::coroutine::LLVMAddCoroSplitPass;
+        use llvm_sys::transforms::coroutines::LLVMAddCoroSplitPass;
 
         unsafe {
             LLVMAddCoroSplitPass(self.pass_manager)
@@ -1089,7 +1089,7 @@ impl<T: PassManagerSubType> PassManager<T> {
 
     #[llvm_versions(8.0..=latest)]
     pub fn add_coroutine_elide_pass(&self) {
-        use llvm_sys::transforms::coroutine::LLVMAddCoroElidePass;
+        use llvm_sys::transforms::coroutines::LLVMAddCoroElidePass;
 
         unsafe {
             LLVMAddCoroElidePass(self.pass_manager)
@@ -1098,7 +1098,7 @@ impl<T: PassManagerSubType> PassManager<T> {
 
     #[llvm_versions(8.0..=latest)]
     pub fn add_coroutine_cleanup_pass(&self) {
-        use llvm_sys::transforms::coroutine::LLVMAddCoroCleanupPass;
+        use llvm_sys::transforms::coroutines::LLVMAddCoroCleanupPass;
 
         unsafe {
             LLVMAddCoroCleanupPass(self.pass_manager)
