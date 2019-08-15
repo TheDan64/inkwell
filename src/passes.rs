@@ -435,7 +435,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// for each pair of compatible instructions. These heuristics
     /// are intended to prevent vectorization in cases where it would
     /// not yield a performance increase of the resulting code.
-    #[llvm_versions(3.6..=6.0)]
+    #[llvm_versions(3.6..=4.0)]
     pub fn add_bb_vectorize_pass(&self) {
         use llvm_sys::transforms::vectorize::LLVMAddBBVectorizePass;
 
@@ -1048,17 +1048,11 @@ impl<T: PassManagerSubType> PassManager<T> {
         }
     }
 
-    #[llvm_versions(7.0)]
+    #[llvm_versions(7.0..=latest)]
     pub fn add_aggressive_inst_combiner_pass(&self) {
+        #[cfg(feature = "llvm7-0")]
         use llvm_sys::transforms::scalar::LLVMAddAggressiveInstCombinerPass;
-
-        unsafe {
-            LLVMAddAggressiveInstCombinerPass(self.pass_manager)
-        }
-    }
-
-    #[llvm_versions(8.0..=latest)]
-    pub fn add_aggressive_inst_combiner_pass(&self) {
+        #[cfg(not(feature = "llvm7-0"))]
         use llvm_sys::transforms::aggressive_instcombine::LLVMAddAggressiveInstCombinerPass;
 
         unsafe {
@@ -1066,13 +1060,48 @@ impl<T: PassManagerSubType> PassManager<T> {
         }
     }
 
-
     #[llvm_versions(7.0..=latest)]
     pub fn add_loop_unroll_and_jam_pass(&self) {
         use llvm_sys::transforms::scalar::LLVMAddLoopUnrollAndJamPass;
 
         unsafe {
             LLVMAddLoopUnrollAndJamPass(self.pass_manager)
+        }
+    }
+
+    #[llvm_versions(8.0..=latest)]
+    pub fn add_coroutine_early_pass(&self) {
+        use llvm_sys::transforms::coroutine::LLVMAddCoroEarlyPass;
+
+        unsafe {
+            LLVMAddCoroEarlyPass(self.pass_manager)
+        }
+    }
+
+    #[llvm_versions(8.0..=latest)]
+    pub fn add_coroutine_split_pass(&self) {
+        use llvm_sys::transforms::coroutine::LLVMAddCoroSplitPass;
+
+        unsafe {
+            LLVMAddCoroSplitPass(self.pass_manager)
+        }
+    }
+
+    #[llvm_versions(8.0..=latest)]
+    pub fn add_coroutine_elide_pass(&self) {
+        use llvm_sys::transforms::coroutine::LLVMAddCoroElidePass;
+
+        unsafe {
+            LLVMAddCoroElidePass(self.pass_manager)
+        }
+    }
+
+    #[llvm_versions(8.0..=latest)]
+    pub fn add_coroutine_cleanup_pass(&self) {
+        use llvm_sys::transforms::coroutine::LLVMAddCoroCleanupPass;
+
+        unsafe {
+            LLVMAddCoroCleanupPass(self.pass_manager)
         }
     }
 }
