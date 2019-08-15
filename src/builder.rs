@@ -1338,7 +1338,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let val = unsafe {
-            LLVMBuildFence(self.builder, atomic_ordering.as_llvm_enum(), num, c_string.as_ptr())
+            LLVMBuildFence(self.builder, atomic_ordering.into(), num, c_string.as_ptr())
         };
 
         InstructionValue::new(val)
@@ -1500,7 +1500,7 @@ impl Builder {
         }
 
         let val = unsafe {
-            LLVMBuildAtomicRMW(self.builder, op.as_llvm_enum(), ptr.as_value_ref(), value.as_value_ref(), ordering.as_llvm_enum(), false as i32)
+            LLVMBuildAtomicRMW(self.builder, op.into(), ptr.as_value_ref(), value.as_value_ref(), ordering.into(), false as i32)
         };
 
         Ok(InstructionValue::new(val))
@@ -1555,7 +1555,7 @@ impl Builder {
         }
 
         let val = unsafe {
-            LLVMBuildAtomicCmpXchg(self.builder, ptr.as_value_ref(), cmp.as_value_ref(), new.as_value_ref(), success.as_llvm_enum(), failure.as_llvm_enum(), false as i32)
+            LLVMBuildAtomicCmpXchg(self.builder, ptr.as_value_ref(), cmp.as_value_ref(), new.as_value_ref(), success.into(), failure.into(), false as i32)
         };
 
         Ok(InstructionValue::new(val))
