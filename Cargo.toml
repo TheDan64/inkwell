@@ -63,6 +63,7 @@ libc = "0.2"
 llvm-sys = "80.1"
 regex = "1"
 static-alloc = { version = "0.1", optional = true }
+lazy_static = "1.3.0"
 
 [badges]
 travis-ci = { repository = "TheDan64/inkwell" }

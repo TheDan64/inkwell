@@ -42,7 +42,7 @@ pub trait BasicType: AnyType {
     /// Create a `FunctionType` with this `BasicType` as its return type.
     ///
     /// Example:
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::types::BasicType;
     ///
@@ -58,7 +58,7 @@ pub trait BasicType: AnyType {
     /// Create an `ArrayType` with this `BasicType` as its elements.
     ///
     /// Example:
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::types::BasicType;
     ///
@@ -75,7 +75,7 @@ pub trait BasicType: AnyType {
     /// Create a `PointerType` that points to this `BasicType`.
     ///
     /// Example:
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::types::BasicType;
     /// use inkwell::AddressSpace;

@@ -191,7 +191,7 @@ impl PointerType {
     /// It will be automatically assigned this `PointerType`'s `Context`.
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::AddressSpace;
     /// use inkwell::context::Context;
     /// use inkwell::types::FloatType;

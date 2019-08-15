@@ -307,7 +307,7 @@ impl IntType {
     /// Creates an `IntValue` representing a constant value of all one bits of this `IntType`. It will be automatically assigned this `IntType`'s `Context`.
     ///
     /// # Example
-    /// ```
+    /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::types::IntType;
     ///
