@@ -1491,8 +1491,9 @@ impl Builder {
     /// ```
     // https://llvm.org/docs/LangRef.html#atomicrmw-instruction
     pub fn build_atomicrmw(&self, op: AtomicRMWBinOp, ptr: PointerValue, value: IntValue, ordering: AtomicOrdering) -> Result<IntValue, &'static str> {
+        // TODO: add support for fadd, fsub and xchg on floating point types in LLVM 9+.
+
         // "The type of ‘<value>’ must be an integer type whose bit width is a power of two greater than or equal to eight and less than or equal to a target-specific size limit. The type of the ‘<pointer>’ operand must be a pointer to that type." -- https://releases.llvm.org/3.6.2/docs/LangRef.html#atomicrmw-instruction
-        // Newer LLVM's (9+) support additional FAdd and FSub operations as well as xchg on floating point types.
         if value.get_type().get_bit_width() < 8 ||
            !value.get_type().get_bit_width().is_power_of_two() {
             return Err("The bitwidth of value must be a power of 2 and greater than 8.");
