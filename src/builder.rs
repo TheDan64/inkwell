@@ -1490,7 +1490,7 @@ impl Builder {
     /// builder.build_return(None);
     /// ```
     // https://llvm.org/docs/LangRef.html#atomicrmw-instruction
-    pub fn build_atomicrmw(&self, op: AtomicRMWBinOp, ptr: PointerValue, value: IntValue, ordering: AtomicOrdering) -> Result<InstructionValue, &'static str> {
+    pub fn build_atomicrmw(&self, op: AtomicRMWBinOp, ptr: PointerValue, value: IntValue, ordering: AtomicOrdering) -> Result<IntValue, &'static str> {
         // "The type of ‘<value>’ must be an integer type whose bit width is a power of two greater than or equal to eight and less than or equal to a target-specific size limit. The type of the ‘<pointer>’ operand must be a pointer to that type." -- https://releases.llvm.org/3.6.2/docs/LangRef.html#atomicrmw-instruction
         // Newer LLVM's (9+) support additional FAdd and FSub operations as well as xchg on floating point types.
         if value.get_type().get_bit_width() < 8 ||
@@ -1505,7 +1505,7 @@ impl Builder {
             LLVMBuildAtomicRMW(self.builder, op.into(), ptr.as_value_ref(), value.as_value_ref(), ordering.into(), false as i32)
         };
 
-        Ok(InstructionValue::new(val))
+        Ok(IntValue::new(val))
     }
 
     /// Builds a cmpxchg instruction. It allows you to atomically compare and replace memory.
@@ -1533,7 +1533,7 @@ impl Builder {
     /// ```
     // https://llvm.org/docs/LangRef.html#cmpxchg-instruction
     #[llvm_versions(3.9..=latest)]
-    pub fn build_cmpxchg<V: BasicValue>(&self, ptr: PointerValue, cmp: V, new: V, success: AtomicOrdering, failure: AtomicOrdering) -> Result<InstructionValue, &'static str> {
+    pub fn build_cmpxchg<V: BasicValue>(&self, ptr: PointerValue, cmp: V, new: V, success: AtomicOrdering, failure: AtomicOrdering) -> Result<BasicValueEnum, &'static str> {
         let cmp = cmp.as_basic_value_enum();
         let new = new.as_basic_value_enum();
         if cmp.get_type() != new.get_type() {
@@ -1561,7 +1561,11 @@ impl Builder {
             LLVMBuildAtomicCmpXchg(self.builder, ptr.as_value_ref(), cmp.as_value_ref(), new.as_value_ref(), success.into(), failure.into(), false as i32)
         };
 
-        Ok(InstructionValue::new(val))
+        if cmp.is_int_value() {
+            Ok(IntValue::new(val).into())
+        } else {
+            Ok(PointerValue::new(val).into())
+        }
     }
 }
 
