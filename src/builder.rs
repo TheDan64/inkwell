@@ -9,7 +9,7 @@ use llvm_sys::{LLVMTypeKind};
 
 use crate::{AtomicOrdering, AtomicRMWBinOp, IntPredicate, FloatPredicate};
 use crate::basic_block::BasicBlock;
-use crate::values::{AggregateValue, AggregateValueEnum, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode, CallSiteValue};
+use crate::values::{AggregateValue, AggregateValueEnum, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, StructValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode, CallSiteValue};
 use crate::types::{AsTypeRef, BasicType, IntMathType, FloatMathType, PointerType, PointerMathType};
 
 use std::ffi::CString;
@@ -1533,7 +1533,7 @@ impl Builder {
     /// ```
     // https://llvm.org/docs/LangRef.html#cmpxchg-instruction
     #[llvm_versions(3.9..=latest)]
-    pub fn build_cmpxchg<V: BasicValue>(&self, ptr: PointerValue, cmp: V, new: V, success: AtomicOrdering, failure: AtomicOrdering) -> Result<BasicValueEnum, &'static str> {
+    pub fn build_cmpxchg<V: BasicValue>(&self, ptr: PointerValue, cmp: V, new: V, success: AtomicOrdering, failure: AtomicOrdering) -> Result<StructValue, &'static str> {
         let cmp = cmp.as_basic_value_enum();
         let new = new.as_basic_value_enum();
         if cmp.get_type() != new.get_type() {
@@ -1561,11 +1561,7 @@ impl Builder {
             LLVMBuildAtomicCmpXchg(self.builder, ptr.as_value_ref(), cmp.as_value_ref(), new.as_value_ref(), success.into(), failure.into(), false as i32)
         };
 
-        if cmp.is_int_value() {
-            Ok(IntValue::new(val).into())
-        } else {
-            Ok(PointerValue::new(val).into())
-        }
+        Ok(StructValue::new(val).into())
     }
 }
 
