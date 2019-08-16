@@ -43,7 +43,7 @@ pub mod targets;
 pub mod types;
 pub mod values;
 
-use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility, LLVMThreadLocalMode, LLVMDLLStorageClass, LLVMAtomicOrdering};
+use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility, LLVMThreadLocalMode, LLVMDLLStorageClass, LLVMAtomicOrdering, LLVMAtomicRMWBinOp};
 
 use std::convert::TryFrom;
 
@@ -173,16 +173,71 @@ enum_rename!{
 }
 
 // REVIEW: Maybe this belongs in some sort of prelude?
-enum_rename!{
-    AtomicOrdering <=> LLVMAtomicOrdering {
-        NotAtomic <=> LLVMAtomicOrderingNotAtomic,
-        Unordered <=> LLVMAtomicOrderingUnordered,
-        Monotonic <=> LLVMAtomicOrderingMonotonic,
-        Acquire <=> LLVMAtomicOrderingAcquire,
-        Release <=> LLVMAtomicOrderingRelease,
-        AcquireRelease <=> LLVMAtomicOrderingAcquireRelease,
-        SequentiallyConsistent <=> LLVMAtomicOrderingSequentiallyConsistent,
-    }
+#[llvm_enum(LLVMAtomicOrdering)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum AtomicOrdering {
+    #[llvm_variant(LLVMAtomicOrderingNotAtomic)]
+    NotAtomic,
+    #[llvm_variant(LLVMAtomicOrderingUnordered)]
+    Unordered,
+    #[llvm_variant(LLVMAtomicOrderingMonotonic)]
+    Monotonic,
+    #[llvm_variant(LLVMAtomicOrderingAcquire)]
+    Acquire,
+    #[llvm_variant(LLVMAtomicOrderingRelease)]
+    Release,
+    #[llvm_variant(LLVMAtomicOrderingAcquireRelease)]
+    AcquireRelease,
+    #[llvm_variant(LLVMAtomicOrderingSequentiallyConsistent)]
+    SequentiallyConsistent,
+}
+
+#[llvm_enum(LLVMAtomicRMWBinOp)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum AtomicRMWBinOp {
+    /// Stores to memory and returns the prior value.
+    #[llvm_variant(LLVMAtomicRMWBinOpXchg)]
+    Xchg,
+
+    /// Adds to the value in memory and returns the prior value.
+    #[llvm_variant(LLVMAtomicRMWBinOpAdd)]
+    Add,
+
+    /// Subtract a value off the value in memory and returns the prior value.
+    #[llvm_variant(LLVMAtomicRMWBinOpSub)]
+    Sub,
+
+    /// Bitwise and into memory and returns the prior value.
+    #[llvm_variant(LLVMAtomicRMWBinOpAnd)]
+    And,
+
+    /// Bitwise nands into memory and returns the prior value.
+    #[llvm_variant(LLVMAtomicRMWBinOpNand)]
+    Nand,
+
+    /// Bitwise ors into memory and returns the prior value.
+    #[llvm_variant(LLVMAtomicRMWBinOpOr)]
+    Or,
+
+    /// Bitwise xors into memory and returns the prior value.
+    #[llvm_variant(LLVMAtomicRMWBinOpXor)]
+    Xor,
+
+    /// Sets memory to the signed-greater of the value provided and the value in memory. Returns the value that was in memory.
+    #[llvm_variant(LLVMAtomicRMWBinOpMax)]
+    Max,
+
+    /// Sets memory to the signed-lesser of the value provided and the value in memory. Returns the value that was in memory.
+    #[llvm_variant(LLVMAtomicRMWBinOpMin)]
+    Min,
+
+    /// Sets memory to the unsigned-greater of the value provided and the value in memory. Returns the value that was in memory.
+    #[llvm_variant(LLVMAtomicRMWBinOpUMax)]
+    UMax,
+
+    /// Sets memory to the unsigned-lesser of the value provided and the value in memory. Returns the value that was in memory.
+    #[llvm_variant(LLVMAtomicRMWBinOpUMin)]
+    UMin,
 }
 
 /// Defines the optimization level used to compile a `Module`.
