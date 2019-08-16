@@ -1539,7 +1539,7 @@ impl Builder {
         if cmp.get_type() != new.get_type() {
             return Err("The value to compare against and the value to replace with must have the same type.");
         }
-        if !cmp.as_basic_value_enum().is_int_value() && !cmp.as_basic_value_enum().is_pointer_value() {
+        if !cmp.is_int_value() && !cmp.is_pointer_value() {
             return Err("The values must have pointer or integer type.");
         }
         if ptr.get_type().get_element_type().to_basic_type_enum() != cmp.get_type() {
