@@ -415,17 +415,9 @@ fn test_linking_modules() {
 
     let execution_engine2 = module6.create_jit_execution_engine(OptimizationLevel::None).expect("Could not create Execution Engine");
 
-    // EE owned module links in EE owned module
-    assert!(module.link_in_module(module6).is_ok());
-
-    // EE2 still seems to "work" despite merging module6 into module...
-    // But f4 is now missing from EE2 (though this is expected, I'm really
-    // suprised it "just works" without segfault TBH)
-    // TODO: Test this much more thoroughly
-    #[cfg(feature = "llvm3-6")] // Likely a LLVM bug that 3-6 says ok, but others don't
+    // EE owned module cannot link another EE owned module
+    assert!(module.link_in_module(module6).is_err());
     assert_eq!(execution_engine2.get_function_value("f4"), Ok(fn_val4));
-    #[cfg(not(feature = "llvm3-6"))]
-    assert_ne!(execution_engine2.get_function_value("f4"), Ok(fn_val4));
 }
 
 #[test]
