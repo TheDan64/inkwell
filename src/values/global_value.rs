@@ -181,9 +181,9 @@ impl GlobalValue {
     pub fn set_unnamed_addr(&self, has_unnamed_addr: bool) {
         unsafe {
             if has_unnamed_addr {
-                LLVMSetUnnamedAddress(self.as_value_ref(), UnnamedAddress::Global.as_llvm_enum())
+                LLVMSetUnnamedAddress(self.as_value_ref(), UnnamedAddress::Global.into())
             } else {
-                LLVMSetUnnamedAddress(self.as_value_ref(), UnnamedAddress::None.as_llvm_enum())
+                LLVMSetUnnamedAddress(self.as_value_ref(), UnnamedAddress::None.into())
             }
         }
     }
@@ -302,7 +302,7 @@ impl GlobalValue {
         use llvm_sys::core::LLVMSetUnnamedAddress;
 
         unsafe {
-            LLVMSetUnnamedAddress(self.as_value_ref(), address.as_llvm_enum())
+            LLVMSetUnnamedAddress(self.as_value_ref(), address.into())
         }
     }
 
@@ -331,15 +331,20 @@ impl AsValueRef for GlobalValue {
     }
 }
 
+/// This enum determines the significance of a `GlobalValue`'s address.
 #[llvm_versions(7.0..=latest)]
-enum_rename! {
-    /// This enum determines the significance of a `GlobalValue`'s address.
-    UnnamedAddress <=> LLVMUnnamedAddr {
-        /// Address of the `GlobalValue` is significant.
-        None <=> LLVMNoUnnamedAddr,
-        /// Address of the `GlobalValue` is locally insignificant.
-        Local <=> LLVMLocalUnnamedAddr,
-        /// Address of the `GlobalValue` is globally insignificant.
-        Global <=> LLVMGlobalUnnamedAddr,
-    }
+#[llvm_enum(LLVMUnnamedAddr)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum UnnamedAddress {
+    /// Address of the `GlobalValue` is significant.
+    #[llvm_variant(LLVMNoUnnamedAddr)]
+    None,
+
+    /// Address of the `GlobalValue` is locally insignificant.
+    #[llvm_variant(LLVMLocalUnnamedAddr)]
+    Local,
+
+    /// Address of the `GlobalValue` is globally insignificant.
+    #[llvm_variant(LLVMGlobalUnnamedAddr)]
+    Global,
 }

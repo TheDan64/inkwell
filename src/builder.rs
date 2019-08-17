@@ -1020,7 +1020,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildICmp(self.builder, op.as_llvm_enum(), lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
+            LLVMBuildICmp(self.builder, op.into(), lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
         T::new(value)
@@ -1032,7 +1032,7 @@ impl Builder {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildFCmp(self.builder, op.as_llvm_enum(), lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
+            LLVMBuildFCmp(self.builder, op.into(), lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr())
         };
 
         <<T::BaseType as FloatMathType>::MathConvType as IntMathType>::ValueType::new(value)
