@@ -10,7 +10,7 @@ use llvm_sys::core::{LLVMGetModuleIdentifier, LLVMSetModuleIdentifier};
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::core::{LLVMGetModuleFlag, LLVMAddModuleFlag};
 use llvm_sys::execution_engine::{LLVMCreateInterpreterForModule, LLVMCreateJITCompilerForModule, LLVMCreateExecutionEngineForModule};
-use llvm_sys::prelude::{LLVMValueRef, LLVMModuleRef};
+use llvm_sys::prelude::{LLVMValueRef, LLVMTypeRef, LLVMModuleRef};
 use llvm_sys::LLVMLinkage;
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::LLVMModuleFlagBehavior;
@@ -36,7 +36,7 @@ use crate::execution_engine::ExecutionEngine;
 use crate::memory_buffer::MemoryBuffer;
 use crate::support::LLVMString;
 use crate::targets::{Target, InitializationConfig};
-use crate::types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
+use crate::types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum, AnyTypeEnum};
 use crate::values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
 #[llvm_versions(7.0..=latest)]
 use crate::values::BasicValue;
@@ -188,6 +188,60 @@ impl<'ctx> Module<'ctx> {
         }
 
         fn_value
+    }
+
+    /// Gets the declaration for the intrinsic function given by `name` and `param_types`,
+    /// inserting the declaration in the current module if it is not yet declared.
+    ///
+    /// This function will panic if the given name is not a valid intrinsic, or if the
+    /// parameter types given do not match a valid signature of the intrinsic.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::module::Module;
+    ///
+    /// let context = Context::get_global();
+    /// let module = Module::create("my_module");
+    ///
+    /// let float_type = context.f32_type();
+    /// let exp2 = module.get_intrinsic("llvm.exp2.f32", &[float_type.into()]);
+    ///
+    /// assert_eq!(exp2.get_name().to_str(), Ok("llvm.exp2.f32"));
+    ///
+    /// let void_type = context.void_type();
+    /// let suspend_retcon = module.get_intrinsic("llvm.coro.suspend.retcon.i1", &[void_type.into()]);
+    ///
+    /// assert_eq!(suspend_retcon.get_name().to_str(), Ok("llvm.coro.suspend.retcon.i1"));
+    /// assert!(suspend_retcon.get_type().is_var_arg());
+    /// ```
+    #[llvm_versions(8.0..=latest)]
+    pub fn get_intrinsic(&self, name: &str, param_types: &[AnyTypeEnum<'ctx>]) -> FunctionValue<'ctx> {
+        use llvm_sys::core::{LLVMLookupIntrinsicID, LLVMGetIntrinsicDeclaration};
+
+        let id = unsafe {
+            let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+            let bytes = c_string.as_bytes();
+            LLVMLookupIntrinsicID(bytes.as_ptr() as *const ::libc::c_char, bytes.len())
+        };
+        if id == 0 {
+            // Equivalent to Intrinsic::not_intrinsic
+            panic!("The given name is not an LLVM intrinsic: {}", name);
+        }
+
+        let mut param_types: Vec<LLVMTypeRef> = param_types.iter()
+                                                           .map(|val| val.as_type_ref())
+                                                           .collect();
+        let value = unsafe {
+            LLVMGetIntrinsicDeclaration(self.module.get(),
+                id,
+                param_types.as_mut_ptr(),
+                param_types.len()
+            )
+        };
+        // We use unwrap() here because GetIntrinsicDeclaration will fail if the parameter types
+        // do not match the intrinsic signature
+        FunctionValue::new(value).unwrap()
     }
 
     /// Gets the `Context` from which this `Module` originates.
