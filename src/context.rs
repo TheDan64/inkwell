@@ -1,6 +1,8 @@
 //! A `Context` is an opaque owner and manager of core global data.
 
 use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMGetMDKindIDInContext, LLVMX86FP80TypeInContext, LLVMConstStringInContext, LLVMContextSetDiagnosticHandler};
+#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+use llvm_sys::core::LLVMTokenTypeInContext;
 #[llvm_versions(4.0..=latest)]
 use llvm_sys::core::{LLVMCreateEnumAttribute, LLVMCreateStringAttribute};
 use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef, LLVMDiagnosticInfoRef};
@@ -17,6 +19,8 @@ use crate::memory_buffer::MemoryBuffer;
 use crate::module::Module;
 use crate::support::LLVMString;
 use crate::types::{BasicTypeEnum, FloatType, IntType, StructType, VoidType, AsTypeRef};
+#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+use crate::types::TokenType;
 use crate::values::{AsValueRef, FunctionValue, StructValue, MetadataValue, BasicValueEnum, VectorValue};
 
 use std::ffi::CString;
@@ -194,6 +198,27 @@ impl Context {
         }
 
         Err(LLVMString::new(err_str))
+    }
+
+    /// Gets the `TokenType`. It will be assigned the current context.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let token_type = context.token_type();
+    ///
+    /// assert_eq!(*token_type.get_context(), context);
+    /// ```
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+    pub fn token_type(&self) -> TokenType {
+        let token_type = unsafe {
+            LLVMTokenTypeInContext(self.context)
+        };
+
+        TokenType::new(token_type)
     }
 
     /// Gets the `VoidType`. It will be assigned the current context.

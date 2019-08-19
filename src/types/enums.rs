@@ -3,6 +3,8 @@ use llvm_sys::LLVMTypeKind;
 use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::types::{IntType, VoidType, FunctionType, PointerType, VectorType, ArrayType, StructType, FloatType};
+#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+use crate::types::TokenType;
 use crate::types::traits::AsTypeRef;
 
 macro_rules! enum_type_set {
@@ -37,7 +39,7 @@ macro_rules! enum_type_set {
 }
 
 enum_type_set! {
-    /// A wrapper for any `BasicType`, `VoidType`, or `FunctionType`.
+    /// A wrapper for any `BasicType`, `VoidType`, `TokenType` or `FunctionType`.
     AnyTypeEnum: {
         /// A contiguous homogeneous container type.
         ArrayType,
@@ -55,6 +57,9 @@ enum_type_set! {
         VectorType,
         /// A valueless type.
         VoidType,
+        #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+        /// A valueless type used as a marker
+        TokenType,
     }
 }
 enum_type_set! {
@@ -99,11 +104,11 @@ impl<'ctx> AnyTypeEnum<'ctx> {
             LLVMTypeKind::LLVMMetadataTypeKind => panic!("FIXME: Unsupported type: Metadata"),
             LLVMTypeKind::LLVMX86_MMXTypeKind => panic!("FIXME: Unsupported type: MMX"),
             #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
-            LLVMTypeKind::LLVMTokenTypeKind => panic!("FIXME: Unsupported type: Token"),
+            LLVMTypeKind::LLVMTokenTypeKind => AnyTypeEnum::TokenType(TokenType::new(type_)),
         }
     }
 
-    /// This will panic if type is a void or function type.
+    /// This will panic if type is a void, token, or function type.
     pub(crate) fn to_basic_type_enum(&self) -> BasicTypeEnum<'ctx> {
         BasicTypeEnum::new(self.as_type_ref())
     }
@@ -230,6 +235,14 @@ impl<'ctx> AnyTypeEnum<'ctx> {
 
     pub fn is_void_type(self) -> bool {
         if let AnyTypeEnum::VoidType(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_token_type(self) -> bool {
+        if let AnyTypeEnum::TokenType(_) = self {
             true
         } else {
             false

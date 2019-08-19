@@ -19,6 +19,9 @@ mod traits;
 mod vec_type;
 #[deny(missing_docs)]
 mod void_type;
+#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+#[deny(missing_docs)]
+mod token_type;
 
 pub use crate::types::array_type::ArrayType;
 pub use crate::types::enums::{AnyTypeEnum, BasicTypeEnum};
@@ -30,6 +33,8 @@ pub use crate::types::struct_type::StructType;
 pub use crate::types::traits::{AnyType, BasicType, IntMathType, FloatMathType, PointerMathType};
 pub use crate::types::vec_type::VectorType;
 pub use crate::types::void_type::VoidType;
+#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
+pub use crate::types::token_type::TokenType;
 pub(crate) use crate::types::traits::AsTypeRef;
 
 #[llvm_versions(3.7..=4.0)]
