@@ -1285,13 +1285,17 @@ impl Module {
     /// assert!(module.link_in_module(module2).is_ok());
     /// ```
     pub fn link_in_module(&self, other: Self) -> Result<(), LLVMString> {
-        // REVIEW: Check if owned by EE? test_linking_modules seems OK as is...
+        if other.owned_by_ee.borrow().is_some() {
+            let string = "Cannot link a module which is already owned by an ExecutionEngine.\0";
+            return Err(LLVMString::create(string));
+        }
 
         #[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]
         {
             use llvm_sys::linker::{LLVMLinkerMode, LLVMLinkModules};
 
             let mut err_string = ptr::null_mut();
+            // As of 3.7, LLVMLinkerDestroySource is the only option
             let mode = LLVMLinkerMode::LLVMLinkerDestroySource;
             let code = unsafe {
                 LLVMLinkModules(self.module.get(), other.module.get(), mode, &mut err_string)
