@@ -209,7 +209,7 @@ impl InstructionValue {
     // SubTypes: Only apply to memory access and alloca instructions
     /// Sets alignment on a memory access instruction or alloca.
     pub fn set_alignment(&self, alignment: u32) -> Result<(), &'static str> {
-        if !alignment.is_power_of_two() {
+        if !alignment.is_power_of_two() && alignment != 0 {
             return Err("Alignment is not a power of 2!");
         }
         unsafe {
