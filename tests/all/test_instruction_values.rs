@@ -276,7 +276,8 @@ fn test_mem_instructions() {
     let f32_val = f32_type.const_float(::std::f64::consts::PI);
 
     let store_instruction = builder.build_store(arg1, f32_val);
-    let load_instruction = builder.build_load(arg1, "").as_instruction_value().unwrap();
+    let load = builder.build_load(arg1, "");
+    let load_instruction = load.as_instruction_value().unwrap();
 
     assert_eq!(store_instruction.get_volatile(), false);
     assert_eq!(load_instruction.get_volatile(), false);
@@ -289,17 +290,21 @@ fn test_mem_instructions() {
     assert_eq!(store_instruction.get_volatile(), false);
     assert_eq!(load_instruction.get_volatile(), false);
 
-    assert_eq!(store_instruction.get_alignment(), 0);
-    assert_eq!(load_instruction.get_alignment(), 0);
+    assert_eq!(store_instruction.get_alignment().unwrap(), 0);
+    assert_eq!(load_instruction.get_alignment().unwrap(), 0);
     assert!(store_instruction.set_alignment(16).is_ok());
     assert!(load_instruction.set_alignment(16).is_ok());
-    assert_eq!(store_instruction.get_alignment(), 16);
-    assert_eq!(load_instruction.get_alignment(), 16);
+    assert_eq!(store_instruction.get_alignment().unwrap(), 16);
+    assert_eq!(load_instruction.get_alignment().unwrap(), 16);
     assert!(store_instruction.set_alignment(0).is_ok());
     assert!(load_instruction.set_alignment(0).is_ok());
-    assert_eq!(store_instruction.get_alignment(), 0);
-    assert_eq!(load_instruction.get_alignment(), 0);
+    assert_eq!(store_instruction.get_alignment().unwrap(), 0);
+    assert_eq!(load_instruction.get_alignment().unwrap(), 0);
 
     assert!(store_instruction.set_alignment(14).is_err());
-    assert_eq!(store_instruction.get_alignment(), 0);
+    assert_eq!(store_instruction.get_alignment().unwrap(), 0);
+
+    let fadd_instruction = builder.build_float_add(load.into_float_value(), f32_val, "").as_instruction_value().unwrap();
+    assert!(fadd_instruction.get_alignment().is_err());
+    assert!(fadd_instruction.set_alignment(16).is_err());
 }
