@@ -279,16 +279,16 @@ fn test_mem_instructions() {
     let load = builder.build_load(arg1, "");
     let load_instruction = load.as_instruction_value().unwrap();
 
-    assert_eq!(store_instruction.get_volatile(), false);
-    assert_eq!(load_instruction.get_volatile(), false);
-    store_instruction.set_volatile(true);
-    load_instruction.set_volatile(true);
-    assert_eq!(store_instruction.get_volatile(), true);
-    assert_eq!(load_instruction.get_volatile(), true);
-    store_instruction.set_volatile(false);
-    load_instruction.set_volatile(false);
-    assert_eq!(store_instruction.get_volatile(), false);
-    assert_eq!(load_instruction.get_volatile(), false);
+    assert_eq!(store_instruction.get_volatile().unwrap(), false);
+    assert_eq!(load_instruction.get_volatile().unwrap(), false);
+    store_instruction.set_volatile(true).unwrap();
+    load_instruction.set_volatile(true).unwrap();
+    assert_eq!(store_instruction.get_volatile().unwrap(), true);
+    assert_eq!(load_instruction.get_volatile().unwrap(), true);
+    store_instruction.set_volatile(false).unwrap();
+    load_instruction.set_volatile(false).unwrap();
+    assert_eq!(store_instruction.get_volatile().unwrap(), false);
+    assert_eq!(load_instruction.get_volatile().unwrap(), false);
 
     assert_eq!(store_instruction.get_alignment().unwrap(), 0);
     assert_eq!(load_instruction.get_alignment().unwrap(), 0);
@@ -305,6 +305,8 @@ fn test_mem_instructions() {
     assert_eq!(store_instruction.get_alignment().unwrap(), 0);
 
     let fadd_instruction = builder.build_float_add(load.into_float_value(), f32_val, "").as_instruction_value().unwrap();
+    assert!(fadd_instruction.get_volatile().is_err());
+    assert!(fadd_instruction.set_volatile(false).is_err());
     assert!(fadd_instruction.get_alignment().is_err());
     assert!(fadd_instruction.set_alignment(16).is_err());
 }
