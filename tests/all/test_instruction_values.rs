@@ -250,3 +250,61 @@ fn test_instructions() {
 
     assert_eq!(instruction_clone, instruction_clone_copy);
 }
+
+#[test]
+fn test_mem_instructions() {
+    let context = Context::create();
+    let module = context.create_module("testing");
+    let builder = context.create_builder();
+
+    let void_type = context.void_type();
+    let f32_type = context.f32_type();
+    let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
+    let fn_type = void_type.fn_type(&[f32_ptr_type.into(), f32_type.into()], false);
+
+    let function = module.add_function("mem_inst", fn_type, None);
+    let basic_block = context.append_basic_block(&function, "entry");
+
+    builder.position_at_end(&basic_block);
+
+    let arg1 = function.get_first_param().unwrap().into_pointer_value();
+    let arg2 = function.get_nth_param(1).unwrap().into_float_value();
+
+    assert!(arg1.get_first_use().is_none());
+    assert!(arg2.get_first_use().is_none());
+
+    let f32_val = f32_type.const_float(::std::f64::consts::PI);
+
+    let store_instruction = builder.build_store(arg1, f32_val);
+    let load = builder.build_load(arg1, "");
+    let load_instruction = load.as_instruction_value().unwrap();
+
+    assert_eq!(store_instruction.get_volatile(), false);
+    assert_eq!(load_instruction.get_volatile(), false);
+    store_instruction.set_volatile(true);
+    load_instruction.set_volatile(true);
+    assert_eq!(store_instruction.get_volatile(), true);
+    assert_eq!(load_instruction.get_volatile(), true);
+    store_instruction.set_volatile(false);
+    load_instruction.set_volatile(false);
+    assert_eq!(store_instruction.get_volatile(), false);
+    assert_eq!(load_instruction.get_volatile(), false);
+
+    assert_eq!(store_instruction.get_alignment().unwrap(), 0);
+    assert_eq!(load_instruction.get_alignment().unwrap(), 0);
+    assert!(store_instruction.set_alignment(16).is_ok());
+    assert!(load_instruction.set_alignment(16).is_ok());
+    assert_eq!(store_instruction.get_alignment().unwrap(), 16);
+    assert_eq!(load_instruction.get_alignment().unwrap(), 16);
+    assert!(store_instruction.set_alignment(0).is_ok());
+    assert!(load_instruction.set_alignment(0).is_ok());
+    assert_eq!(store_instruction.get_alignment().unwrap(), 0);
+    assert_eq!(load_instruction.get_alignment().unwrap(), 0);
+
+    assert!(store_instruction.set_alignment(14).is_err());
+    assert_eq!(store_instruction.get_alignment().unwrap(), 0);
+
+    let fadd_instruction = builder.build_float_add(load.into_float_value(), f32_val, "").as_instruction_value().unwrap();
+    assert!(fadd_instruction.get_alignment().is_err());
+    assert!(fadd_instruction.set_alignment(16).is_err());
+}

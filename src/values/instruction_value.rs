@@ -1,5 +1,5 @@
 use either::{Either, Either::{Left, Right}};
-use llvm_sys::core::{LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMSetOperand, LLVMValueAsBasicBlock, LLVMIsABasicBlock, LLVMGetICmpPredicate, LLVMGetFCmpPredicate};
+use llvm_sys::core::{LLVMGetAlignment, LLVMSetAlignment, LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMSetOperand, LLVMValueAsBasicBlock, LLVMIsABasicBlock, LLVMGetICmpPredicate, LLVMGetFCmpPredicate, LLVMIsAAllocaInst, LLVMIsALoadInst, LLVMIsAStoreInst};
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::LLVMInstructionRemoveFromParent;
 use llvm_sys::LLVMOpcode;
@@ -195,6 +195,37 @@ impl InstructionValue {
     pub fn set_volatile(&self, volatile: bool) {
         unsafe {
             LLVMSetVolatile(self.as_value_ref(), volatile as i32)
+        }
+    }
+
+    // SubTypes: Only apply to memory access and alloca instructions
+    /// Returns alignment on a memory access instruction or alloca.
+    pub fn get_alignment(&self) -> Result<u32, &'static str> {
+        let value_ref = self.as_value_ref();
+        unsafe {
+            if LLVMIsAAllocaInst(value_ref).is_null() &&
+                LLVMIsALoadInst(value_ref).is_null() &&
+                LLVMIsAStoreInst(value_ref).is_null() {
+                return Err("Value is not an alloca, load or store.");
+            }
+            Ok(LLVMGetAlignment(value_ref))
+        }
+    }
+
+    // SubTypes: Only apply to memory access and alloca instructions
+    /// Sets alignment on a memory access instruction or alloca.
+    pub fn set_alignment(&self, alignment: u32) -> Result<(), &'static str> {
+        if !alignment.is_power_of_two() && alignment != 0 {
+            return Err("Alignment is not a power of 2!");
+        }
+        let value_ref = self.as_value_ref();
+        unsafe {
+            if LLVMIsAAllocaInst(value_ref).is_null() &&
+                LLVMIsALoadInst(value_ref).is_null() &&
+                LLVMIsAStoreInst(value_ref).is_null() {
+                return Err("Value is not an alloca, load or store.");
+            }
+            Ok(LLVMSetAlignment(value_ref, alignment))
         }
     }
 
