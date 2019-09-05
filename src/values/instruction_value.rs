@@ -184,17 +184,31 @@ impl InstructionValue {
 
     // SubTypes: Only apply to memory access instructions
     /// Returns whether or not a memory access instruction is volatile.
-    pub fn get_volatile(&self) -> bool {
+    pub fn get_volatile(&self) -> Result<bool, &'static str> {
+        let value_ref = self.as_value_ref();
         unsafe {
-            LLVMGetVolatile(self.as_value_ref()) == 1
+            // Although cmpxchg and atomicrmw can have volatile, LLVM's C API
+            // does not export that functionality.
+            if LLVMIsALoadInst(value_ref).is_null() &&
+                LLVMIsAStoreInst(value_ref).is_null() {
+                return Err("Value is not a load or store.");
+            }
+            Ok(LLVMGetVolatile(value_ref) == 1)
         }
     }
 
     // SubTypes: Only apply to memory access instructions
     /// Sets whether or not a memory access instruction is volatile.
-    pub fn set_volatile(&self, volatile: bool) {
+    pub fn set_volatile(&self, volatile: bool) -> Result<(), &'static str> {
+        let value_ref = self.as_value_ref();
         unsafe {
-            LLVMSetVolatile(self.as_value_ref(), volatile as i32)
+            // Although cmpxchg and atomicrmw can have volatile, LLVM's C API
+            // does not export that functionality.
+            if LLVMIsALoadInst(value_ref).is_null() &&
+                LLVMIsAStoreInst(value_ref).is_null() {
+                return Err("Value is not a load or store.");
+            }
+            Ok(LLVMSetVolatile(value_ref, volatile as i32))
         }
     }
 
