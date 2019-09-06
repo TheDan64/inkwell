@@ -1,5 +1,7 @@
 use either::{Either, Either::{Left, Right}};
-use llvm_sys::core::{LLVMGetAlignment, LLVMSetAlignment, LLVMGetOrdering, LLVMSetOrdering, LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMSetOperand, LLVMValueAsBasicBlock, LLVMIsABasicBlock, LLVMGetICmpPredicate, LLVMGetFCmpPredicate, LLVMIsAAllocaInst, LLVMIsALoadInst, LLVMIsAStoreInst};
+use llvm_sys::core::{LLVMGetAlignment, LLVMSetAlignment, LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMSetOperand, LLVMValueAsBasicBlock, LLVMIsABasicBlock, LLVMGetICmpPredicate, LLVMGetFCmpPredicate, LLVMIsAAllocaInst, LLVMIsALoadInst, LLVMIsAStoreInst};
+#[llvm_versions(3.8..=latest)]
+use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::LLVMInstructionRemoveFromParent;
 use llvm_sys::LLVMOpcode;
@@ -237,6 +239,7 @@ impl InstructionValue {
 
     // SubTypes: Only apply to memory access instructions
     /// Returns atomic ordering on a memory access instruction.
+    #[llvm_versions(3.8..=latest)]
     pub fn get_atomic_ordering(&self) -> Result<AtomicOrdering, &'static str> {
         if !self.is_a_load_inst() && !self.is_a_store_inst() {
             return Err("Value is not a load or store.");
@@ -246,6 +249,7 @@ impl InstructionValue {
 
     // SubTypes: Only apply to memory access instructions
     /// Sets atomic ordering on a memory access instruction.
+    #[llvm_versions(3.8..=latest)]
     pub fn set_atomic_ordering(&self, ordering: AtomicOrdering) -> Result<(), &'static str> {
         // Although fence and atomicrmw both have an ordering, the LLVM C API
         // does not support them. The cmpxchg instruction has two orderings and
