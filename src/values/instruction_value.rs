@@ -1,5 +1,5 @@
 use either::{Either, Either::{Left, Right}};
-use llvm_sys::core::{LLVMGetAlignment, LLVMSetAlignment, LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMSetOperand, LLVMValueAsBasicBlock, LLVMIsABasicBlock, LLVMGetICmpPredicate, LLVMGetFCmpPredicate, LLVMIsAAllocaInst, LLVMIsALoadInst, LLVMIsAStoreInst};
+use llvm_sys::core::{LLVMGetAlignment, LLVMSetAlignment, LLVMGetOrdering, LLVMSetOrdering, LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMSetOperand, LLVMValueAsBasicBlock, LLVMIsABasicBlock, LLVMGetICmpPredicate, LLVMGetFCmpPredicate, LLVMIsAAllocaInst, LLVMIsALoadInst, LLVMIsAStoreInst};
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::LLVMInstructionRemoveFromParent;
 use llvm_sys::LLVMOpcode;
@@ -8,7 +8,7 @@ use llvm_sys::prelude::LLVMValueRef;
 use crate::basic_block::BasicBlock;
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, Value};
-use crate::{IntPredicate, FloatPredicate};
+use crate::{AtomicOrdering, IntPredicate, FloatPredicate};
 
 // REVIEW: Split up into structs for SubTypes on InstructionValues?
 // REVIEW: This should maybe be split up into InstructionOpcode and ConstOpcode?
@@ -241,6 +241,45 @@ impl InstructionValue {
             }
             Ok(LLVMSetAlignment(value_ref, alignment))
         }
+    }
+
+    // SubTypes: Only apply to memory access instructions
+    /// Returns atomic ordering on a memory access instruction.
+    pub fn get_atomic_ordering(&self) -> Result<AtomicOrdering, &'static str> {
+        let value_ref = self.as_value_ref();
+        if unsafe { LLVMIsALoadInst(value_ref) }.is_null() &&
+            unsafe { LLVMIsAStoreInst(value_ref) }.is_null() {
+                return Err("Value is not a load or store.");
+            }
+        Ok(unsafe { LLVMGetOrdering(value_ref) }.into())
+    }
+
+    // SubTypes: Only apply to memory access instructions
+    /// Sets atomic ordering on a memory access instruction.
+    pub fn set_atomic_ordering(&self, ordering: AtomicOrdering) -> Result<(), &'static str> {
+        let value_ref = self.as_value_ref();
+        let is_load = !unsafe { LLVMIsALoadInst(value_ref) }.is_null();
+        let is_store = !unsafe { LLVMIsAStoreInst(value_ref) }.is_null();
+
+        // Although fence and atomicrmw both have an ordering, the LLVM C API
+        // does not support them. The cmpxchg instruction has two orderings and
+        // does not work with this API.
+        if !is_load && !is_store {
+            return Err("Value is not a load or store instruction.");
+        }
+        match ordering {
+            AtomicOrdering::Release => {
+                if is_load { return Err("The release ordering is not valid on load instructions.") }
+            }
+            AtomicOrdering::AcquireRelease => {
+                return Err("The acq_rel ordering is not valid on load or store instructions.")
+            }
+            AtomicOrdering::Acquire => {
+                if is_store { return Err("The acquire ordering is not valid on store instructions.") }
+            }
+            _ => { }
+        };
+        Ok(unsafe { LLVMSetOrdering(value_ref, ordering.into()) })
     }
 
     /// Obtains the number of operands an `InstructionValue` has.

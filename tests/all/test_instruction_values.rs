@@ -1,6 +1,6 @@
 extern crate inkwell;
 
-use self::inkwell::{AddressSpace, IntPredicate, FloatPredicate};
+use self::inkwell::{AddressSpace, AtomicOrdering, IntPredicate, FloatPredicate};
 use self::inkwell::context::Context;
 use self::inkwell::values::{BasicValue, InstructionOpcode::*};
 
@@ -304,9 +304,23 @@ fn test_mem_instructions() {
     assert!(store_instruction.set_alignment(14).is_err());
     assert_eq!(store_instruction.get_alignment().unwrap(), 0);
 
+    assert_eq!(store_instruction.get_atomic_ordering().unwrap(), AtomicOrdering::NotAtomic);
+    assert_eq!(load_instruction.get_atomic_ordering().unwrap(), AtomicOrdering::NotAtomic);
+    assert!(store_instruction.set_atomic_ordering(AtomicOrdering::Monotonic).is_ok());
+    assert_eq!(store_instruction.get_atomic_ordering().unwrap(), AtomicOrdering::Monotonic);
+    assert!(store_instruction.set_atomic_ordering(AtomicOrdering::Release).is_ok());
+    assert!(load_instruction.set_atomic_ordering(AtomicOrdering::Acquire).is_ok());
+
+    assert!(store_instruction.set_atomic_ordering(AtomicOrdering::Acquire).is_err());
+    assert!(store_instruction.set_atomic_ordering(AtomicOrdering::AcquireRelease).is_err());
+    assert!(load_instruction.set_atomic_ordering(AtomicOrdering::AcquireRelease).is_err());
+    assert!(load_instruction.set_atomic_ordering(AtomicOrdering::Release).is_err());
+
     let fadd_instruction = builder.build_float_add(load.into_float_value(), f32_val, "").as_instruction_value().unwrap();
     assert!(fadd_instruction.get_volatile().is_err());
     assert!(fadd_instruction.set_volatile(false).is_err());
     assert!(fadd_instruction.get_alignment().is_err());
     assert!(fadd_instruction.set_alignment(16).is_err());
+    assert!(fadd_instruction.get_atomic_ordering().is_err());
+    assert!(fadd_instruction.set_atomic_ordering(AtomicOrdering::NotAtomic).is_err());
 }
