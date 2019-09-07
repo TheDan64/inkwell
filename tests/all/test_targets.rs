@@ -74,6 +74,9 @@ fn test_target_and_target_machine() {
 
     let bad_target2 = Target::from_triple("sadas");
 
+    #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
+    assert_eq!(bad_target2.unwrap_err().to_string(), "No available targets are compatible with this triple, see -version for the available targets.");
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     assert_eq!(bad_target2.unwrap_err().to_string(), "No available targets are compatible with this triple.");
 
     Target::initialize_x86(&InitializationConfig::default());
