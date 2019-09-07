@@ -5,7 +5,7 @@
 [![codecov](https://codecov.io/gh/TheDan64/inkwell/branch/master/graph/badge.svg)](https://codecov.io/gh/TheDan64/inkwell)
 [![lines of code](https://tokei.rs/b1/github/TheDan64/inkwell)](https://github.com/Aaronepower/tokei)
 [![Join the chat at https://gitter.im/inkwell-rs/Lobby](https://badges.gitter.im/inkwell-rs/Lobby.svg)](https://gitter.im/inkwell-rs/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-![Minimum rustc 1.34](https://img.shields.io/badge/rustc-1.34+-brightgreen.svg)
+![Minimum rustc 1.36](https://img.shields.io/badge/rustc-1.36+-brightgreen.svg)
 
 **I**t's a **N**ew **K**ind of **W**rapper for **E**xposing **LL**VM (*S*afely)
 
@@ -13,7 +13,7 @@ Inkwell aims to help you pen your own programming languages by safely wrapping l
 
 ## Requirements
 
-* Rust 1.34+
+* Rust 1.36+
 * Rust Stable, Beta, or Nightly
 * LLVM 3.6, 3.7, 3.8, 3.9, 4.0, 5.0, 6.0, 7.0, or 8.0
 

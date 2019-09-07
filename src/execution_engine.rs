@@ -12,7 +12,7 @@ use std::rc::Rc;
 use std::ops::Deref;
 use std::ffi::CString;
 use std::fmt::{self, Debug, Display, Formatter};
-use std::mem::{forget, zeroed, transmute_copy, size_of};
+use std::mem::{forget, transmute_copy, size_of, MaybeUninit};
 
 static EE_INNER_PANIC: &str = "ExecutionEngineInner should exist until Drop";
 
@@ -224,16 +224,19 @@ impl ExecutionEngine {
             _ => ()
         }
 
-        let mut new_module = unsafe { zeroed() };
-        let mut err_string = unsafe { zeroed() };
+        let mut new_module = MaybeUninit::uninit();
+        let mut err_string = MaybeUninit::uninit();
 
         let code = unsafe {
-            LLVMRemoveModule(self.execution_engine_inner(), module.module.get(), &mut new_module, &mut err_string)
+            LLVMRemoveModule(self.execution_engine_inner(), module.module.get(), new_module.as_mut_ptr(), err_string.as_mut_ptr())
         };
 
         if code == 1 {
-            return Err(RemoveModuleError::LLVMError(LLVMString::new(err_string)));
+            let err_str = unsafe { err_string.assume_init() };
+            return Err(RemoveModuleError::LLVMError(LLVMString::new(err_str)));
         }
+
+        let new_module = unsafe { new_module.assume_init() };
 
         module.module.set(new_module);
         *module.owned_by_ee.borrow_mut() = None;
@@ -349,14 +352,16 @@ impl ExecutionEngine {
         }
 
         let c_string = CString::new(fn_name).expect("Conversion to CString failed unexpectedly");
-        let mut function = unsafe { zeroed() };
+        let mut function = MaybeUninit::uninit();
 
         let code = unsafe {
-            LLVMFindFunction(self.execution_engine_inner(), c_string.as_ptr(), &mut function)
+            LLVMFindFunction(self.execution_engine_inner(), c_string.as_ptr(), function.as_mut_ptr())
         };
 
         if code == 0 {
-            return FunctionValue::new(function).ok_or(FunctionLookupError::FunctionNotFound)
+            let fn_val = unsafe { function.assume_init() };
+
+            return FunctionValue::new(fn_val).ok_or(FunctionLookupError::FunctionNotFound)
         };
 
         Err(FunctionLookupError::FunctionNotFound)
