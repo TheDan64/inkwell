@@ -76,8 +76,10 @@ fn test_target_and_target_machine() {
 
     #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
     assert_eq!(bad_target2.unwrap_err().to_string(), "No available targets are compatible with this triple, see -version for the available targets.");
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
+    #[cfg(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0"))]
     assert_eq!(bad_target2.unwrap_err().to_string(), "No available targets are compatible with this triple.");
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0")))]
+    assert_eq!(bad_target2.unwrap_err().to_string(), "No available targets are compatible with triple \"sadas\"");
 
     Target::initialize_x86(&InitializationConfig::default());
 
