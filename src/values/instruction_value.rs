@@ -1,5 +1,7 @@
 use either::{Either, Either::{Left, Right}};
 use llvm_sys::core::{LLVMGetAlignment, LLVMSetAlignment, LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMSetOperand, LLVMValueAsBasicBlock, LLVMIsABasicBlock, LLVMGetICmpPredicate, LLVMGetFCmpPredicate, LLVMIsAAllocaInst, LLVMIsALoadInst, LLVMIsAStoreInst};
+#[llvm_versions(3.8..=latest)]
+use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::LLVMInstructionRemoveFromParent;
 use llvm_sys::LLVMOpcode;
@@ -8,7 +10,7 @@ use llvm_sys::prelude::LLVMValueRef;
 use crate::basic_block::BasicBlock;
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, Value};
-use crate::{IntPredicate, FloatPredicate};
+use crate::{AtomicOrdering, IntPredicate, FloatPredicate};
 
 // REVIEW: Split up into structs for SubTypes on InstructionValues?
 // REVIEW: This should maybe be split up into InstructionOpcode and ConstOpcode?
@@ -98,6 +100,16 @@ pub struct InstructionValue {
 }
 
 impl InstructionValue {
+    fn is_a_load_inst(&self) -> bool {
+        !unsafe { LLVMIsALoadInst(self.as_value_ref()) }.is_null()
+    }
+    fn is_a_store_inst(&self) -> bool {
+        !unsafe { LLVMIsAStoreInst(self.as_value_ref()) }.is_null()
+    }
+    fn is_a_alloca_inst(&self) -> bool {
+        !unsafe { LLVMIsAAllocaInst(self.as_value_ref()) }.is_null()
+    }
+
     pub(crate) fn new(instruction_value: LLVMValueRef) -> Self {
         debug_assert!(!instruction_value.is_null());
 
@@ -185,45 +197,32 @@ impl InstructionValue {
     // SubTypes: Only apply to memory access instructions
     /// Returns whether or not a memory access instruction is volatile.
     pub fn get_volatile(&self) -> Result<bool, &'static str> {
-        let value_ref = self.as_value_ref();
-        unsafe {
-            // Although cmpxchg and atomicrmw can have volatile, LLVM's C API
-            // does not export that functionality.
-            if LLVMIsALoadInst(value_ref).is_null() &&
-                LLVMIsAStoreInst(value_ref).is_null() {
-                return Err("Value is not a load or store.");
-            }
-            Ok(LLVMGetVolatile(value_ref) == 1)
+        // Although cmpxchg and atomicrmw can have volatile, LLVM's C API
+        // does not export that functionality.
+        if !self.is_a_load_inst() && !self.is_a_store_inst() {
+            return Err("Value is not a load or store.");
         }
+        Ok(unsafe { LLVMGetVolatile(self.as_value_ref()) } == 1)
     }
 
     // SubTypes: Only apply to memory access instructions
     /// Sets whether or not a memory access instruction is volatile.
     pub fn set_volatile(&self, volatile: bool) -> Result<(), &'static str> {
-        let value_ref = self.as_value_ref();
-        unsafe {
-            // Although cmpxchg and atomicrmw can have volatile, LLVM's C API
-            // does not export that functionality.
-            if LLVMIsALoadInst(value_ref).is_null() &&
-                LLVMIsAStoreInst(value_ref).is_null() {
-                return Err("Value is not a load or store.");
-            }
-            Ok(LLVMSetVolatile(value_ref, volatile as i32))
+        // Although cmpxchg and atomicrmw can have volatile, LLVM's C API
+        // does not export that functionality.
+        if !self.is_a_load_inst() && !self.is_a_store_inst() {
+            return Err("Value is not a load or store.");
         }
+        Ok(unsafe { LLVMSetVolatile(self.as_value_ref(), volatile as i32) })
     }
 
     // SubTypes: Only apply to memory access and alloca instructions
     /// Returns alignment on a memory access instruction or alloca.
     pub fn get_alignment(&self) -> Result<u32, &'static str> {
-        let value_ref = self.as_value_ref();
-        unsafe {
-            if LLVMIsAAllocaInst(value_ref).is_null() &&
-                LLVMIsALoadInst(value_ref).is_null() &&
-                LLVMIsAStoreInst(value_ref).is_null() {
-                return Err("Value is not an alloca, load or store.");
-            }
-            Ok(LLVMGetAlignment(value_ref))
+        if !self.is_a_alloca_inst() && !self.is_a_load_inst() && !self.is_a_store_inst() {
+            return Err("Value is not an alloca, load or store.");
         }
+        Ok(unsafe { LLVMGetAlignment(self.as_value_ref()) })
     }
 
     // SubTypes: Only apply to memory access and alloca instructions
@@ -232,15 +231,42 @@ impl InstructionValue {
         if !alignment.is_power_of_two() && alignment != 0 {
             return Err("Alignment is not a power of 2!");
         }
-        let value_ref = self.as_value_ref();
-        unsafe {
-            if LLVMIsAAllocaInst(value_ref).is_null() &&
-                LLVMIsALoadInst(value_ref).is_null() &&
-                LLVMIsAStoreInst(value_ref).is_null() {
-                return Err("Value is not an alloca, load or store.");
-            }
-            Ok(LLVMSetAlignment(value_ref, alignment))
+        if !self.is_a_alloca_inst() && !self.is_a_load_inst() && !self.is_a_store_inst() {
+            return Err("Value is not an alloca, load or store.");
         }
+        Ok(unsafe { LLVMSetAlignment(self.as_value_ref(), alignment) })
+    }
+
+    // SubTypes: Only apply to memory access instructions
+    /// Returns atomic ordering on a memory access instruction.
+    #[llvm_versions(3.8..=latest)]
+    pub fn get_atomic_ordering(&self) -> Result<AtomicOrdering, &'static str> {
+        if !self.is_a_load_inst() && !self.is_a_store_inst() {
+            return Err("Value is not a load or store.");
+        }
+        Ok(unsafe { LLVMGetOrdering(self.as_value_ref()) }.into())
+    }
+
+    // SubTypes: Only apply to memory access instructions
+    /// Sets atomic ordering on a memory access instruction.
+    #[llvm_versions(3.8..=latest)]
+    pub fn set_atomic_ordering(&self, ordering: AtomicOrdering) -> Result<(), &'static str> {
+        // Although fence and atomicrmw both have an ordering, the LLVM C API
+        // does not support them. The cmpxchg instruction has two orderings and
+        // does not work with this API.
+        if !self.is_a_load_inst() && !self.is_a_store_inst() {
+            return Err("Value is not a load or store instruction.");
+        }
+        match ordering {
+            AtomicOrdering::Release if self.is_a_load_inst() =>
+                return Err("The release ordering is not valid on load instructions."),
+            AtomicOrdering::AcquireRelease =>
+                return Err("The acq_rel ordering is not valid on load or store instructions."),
+            AtomicOrdering::Acquire if self.is_a_store_inst() =>
+                return Err("The acquire ordering is not valid on store instructions."),
+            _ => { },
+        };
+        Ok(unsafe { LLVMSetOrdering(self.as_value_ref(), ordering.into()) })
     }
 
     /// Obtains the number of operands an `InstructionValue` has.
