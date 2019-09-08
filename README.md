@@ -46,7 +46,7 @@ Documentation is automatically [deployed here](https://thedan64.github.io/inkwel
 
 ## Examples
 
-### Tari's [llvm-sys example](https://bitbucket.org/tari/llvm-sys.rs/src/ea4ac92a171da2c1851806b91e531ed3a0b41091/examples/jit-function.rs) written in safe code<sup>1</sup> with Inkwell:
+### Tari's [llvm-sys example](https://gitlab.com/taricorp/llvm-sys.rs/blob/6411edb2fed1a805b7ec5029afc9c3ae1cf6c842/examples/jit-function.rs) written in safe code<sup>1</sup> with Inkwell:
 
 ```rust
 use inkwell::OptimizationLevel;
