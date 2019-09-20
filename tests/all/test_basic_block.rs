@@ -33,8 +33,8 @@ fn test_basic_block_ordering() {
     assert_eq!(basic_blocks[2], basic_block3);
     assert_eq!(basic_blocks[3], basic_block4);
 
-    basic_block3.move_before(&basic_block2);
-    basic_block.move_after(&basic_block4);
+    assert!(basic_block3.move_before(&basic_block2).is_ok());
+    assert!(basic_block.move_after(&basic_block4).is_ok());
 
     let basic_block5 = basic_block.prepend_basic_block("block5");
     let basic_blocks = function.get_basic_blocks();
@@ -62,7 +62,7 @@ fn test_basic_block_ordering() {
     assert!(basic_block3.get_previous_basic_block().is_none());
 
     unsafe {
-        bb4.delete();
+        assert!(bb4.delete().is_ok());
     }
 
     let bb2 = basic_block5.get_previous_basic_block().unwrap();
@@ -153,21 +153,13 @@ fn test_no_parent() {
     assert_eq!(basic_block.get_parent().unwrap(), function);
     assert_eq!(basic_block.get_next_basic_block().unwrap(), basic_block2);
 
-    // TODO: Test if this method is unsafe if parent function was hard deleted
-    basic_block.remove_from_function();
+    assert!(basic_block.remove_from_function().is_ok());
 
     assert!(basic_block.get_next_basic_block().is_none());
     assert!(basic_block2.get_previous_basic_block().is_none());
 
-    // The problem here is that calling the function more than once becomes UB
-    // for some reason so we have to manually check for the parent function (in the call)
-    // until we have SubTypes to solve this at compile time by doing something like:
-    // impl BasicBlock<HasParent> { fn remove_from_function(self) -> BasicBlock<Orphan> }
-    // though having to take ownership does raise some flags for when you just want to make
-    // everything borrowable. I'm not sure it's possible to swap in place since they have
-    // different subtypes
-    basic_block.remove_from_function();
-    basic_block.remove_from_function();
+    assert!(basic_block.remove_from_function().is_err());
+    assert!(basic_block.remove_from_function().is_err());
 
     assert!(basic_block.get_parent().is_none());
 }
