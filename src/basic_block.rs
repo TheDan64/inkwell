@@ -146,7 +146,7 @@ impl BasicBlock {
     }
 
     /// Prepends one `BasicBlock` before another.
-    /// It returns `Err(())` when either `BasicBlock` has no parent, as LLVM assumes it has a parent.
+    /// It returns `Err(())` when either `BasicBlock` has no parent, as LLVM assumes they both have parents.
     ///
     /// # Example
     /// ```no_run
@@ -183,7 +183,7 @@ impl BasicBlock {
     }
 
     /// Appends one `BasicBlock` after another.
-    /// It returns `Err(())` when either `BasicBlock` has no parent, as LLVM assumes it has a parent.
+    /// It returns `Err(())` when either `BasicBlock` has no parent, as LLVM assumes they both have parents.
     ///
     /// # Example
     /// ```no_run
@@ -355,8 +355,8 @@ impl BasicBlock {
         Some(InstructionValue::new(value))
     }
 
-    /// Removes this `BasicBlock` from its parent `FunctionValue`. Does nothing if it has no parent.
-    /// It returns `Err(())` when it has no parent to remove from, as LLVM assumes it has a parent.
+    /// Removes this `BasicBlock` from its parent `FunctionValue`.
+    /// It returns `Err(())` when it has no parent to remove from.
     ///
     /// # Example
     /// ```no_run
