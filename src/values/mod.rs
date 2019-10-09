@@ -1,5 +1,6 @@
 //! A value is an instance of a type.
 
+#[deny(missing_docs)]
 mod array_value;
 #[deny(missing_docs)]
 mod basic_value_use;

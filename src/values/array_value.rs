@@ -9,6 +9,7 @@ use crate::types::ArrayType;
 use crate::values::traits::AsValueRef;
 use crate::values::{Value, InstructionValue, MetadataValue};
 
+/// An `ArrayValue` is a block of contiguous constants or variables.
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct ArrayValue {
     array_value: Value
@@ -23,50 +24,65 @@ impl ArrayValue {
         }
     }
 
+    /// Gets the string name of an `ArrayValue`. If the value is a constant, this will
+    /// return an empty string.
     pub fn get_name(&self) -> &CStr {
         self.array_value.get_name()
     }
 
+    /// Sets the name of an `ArrayValue`. If the value is a constant, this is a noop.
     pub fn set_name(&self, name: &str) {
         self.array_value.set_name(name);
     }
 
+    /// Gets the type of this `ArrayValue`.
     pub fn get_type(&self) -> ArrayType {
         ArrayType::new(self.array_value.get_type())
     }
 
+    /// Determines whether or not this value is null.
     pub fn is_null(&self) -> bool {
         self.array_value.is_null()
     }
 
+    /// Determines whether or not this value is undefined.
     pub fn is_undef(&self) -> bool {
         self.array_value.is_undef()
     }
 
+    /// Prints this `ArrayValue` to a string.
     pub fn print_to_string(&self) -> LLVMString {
         self.array_value.print_to_string()
     }
 
+    /// Prints this `ArrayValue` to standard error.
     pub fn print_to_stderr(&self) {
         self.array_value.print_to_stderr()
     }
 
+    /// Attempt to convert this `ArrayValue` to an `InstructionValue`, if possible.
     pub fn as_instruction(&self) -> Option<InstructionValue> {
         self.array_value.as_instruction()
     }
 
+    /// Determines whether or not this `ArrayValue` has any associated metadata.
     pub fn has_metadata(&self) -> bool {
         self.array_value.has_metadata()
     }
 
+    /// Gets the `MetadataValue` associated with this `ArrayValue` at a specific
+    /// `kind_id`.
     pub fn get_metadata(&self, kind_id: u32) -> Option<MetadataValue> {
         self.array_value.get_metadata(kind_id)
     }
 
+    /// Assigns a `MetadataValue` to this `ArrayValue` at a specific `kind_id`.
     pub fn set_metadata(&self, metadata: MetadataValue, kind_id: u32) {
         self.array_value.set_metadata(metadata, kind_id)
     }
 
+    /// Replaces all uses of this value with another value of the same type.
+    /// If used incorrectly this may result in invalid IR.
     pub fn replace_all_uses_with(&self, other: ArrayValue) {
         self.array_value.replace_all_uses_with(other.as_value_ref())
     }
