@@ -374,7 +374,7 @@ impl<'ctx> IntType<'ctx> {
     /// assert_eq!(i8_array_type.len(), 3);
     /// assert_eq!(i8_array_type.get_element_type().into_int_type(), i8_type);
     /// ```
-    pub fn array_type(&self, size: u32) -> ArrayType {
+    pub fn array_type(&self, size: u32) -> ArrayType<'ctx> {
         self.int_type.array_type(size)
     }
 
@@ -392,7 +392,7 @@ impl<'ctx> IntType<'ctx> {
     /// assert_eq!(i8_vector_type.get_size(), 3);
     /// assert_eq!(i8_vector_type.get_element_type().into_int_type(), i8_type);
     /// ```
-    pub fn vec_type(&self, size: u32) -> VectorType {
+    pub fn vec_type(&self, size: u32) -> VectorType<'ctx> {
         self.int_type.vec_type(size)
     }
 
@@ -474,7 +474,7 @@ impl<'ctx> IntType<'ctx> {
     ///
     /// assert_eq!(i8_ptr_type.get_element_type().into_int_type(), i8_type);
     /// ```
-    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.int_type.ptr_type(address_space)
     }
 

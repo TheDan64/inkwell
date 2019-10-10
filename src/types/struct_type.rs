@@ -42,7 +42,7 @@ impl<'ctx> StructType<'ctx> {
     /// assert_eq!(struct_type.get_field_type_at_index(0).unwrap().into_float_type(), f32_type);
     /// ```
     #[llvm_versions(3.7..=latest)]
-    pub fn get_field_type_at_index(&self, index: u32) -> Option<BasicTypeEnum> {
+    pub fn get_field_type_at_index(&self, index: u32) -> Option<BasicTypeEnum<'ctx>> {
         // LLVM doesn't seem to just return null if opaque.
         // TODO: One day, with SubTypes (& maybe specialization?) we could just
         // impl this method for non opaque structs only
@@ -243,7 +243,7 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// assert_eq!(struct_ptr_type.get_element_type().into_struct_type(), struct_type);
     /// ```
-    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.struct_type.ptr_type(address_space)
     }
 
@@ -278,7 +278,7 @@ impl<'ctx> StructType<'ctx> {
     /// assert_eq!(struct_array_type.len(), 3);
     /// assert_eq!(struct_array_type.get_element_type().into_struct_type(), struct_type);
     /// ```
-    pub fn array_type(&self, size: u32) -> ArrayType {
+    pub fn array_type(&self, size: u32) -> ArrayType<'ctx> {
         self.struct_type.array_type(size)
     }
 
@@ -334,7 +334,7 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// assert_eq!(struct_type.get_context(), Context::get_global());
     /// ```
-    pub fn struct_type(field_types: &[BasicTypeEnum], packed: bool) -> Self {
+    pub fn struct_type(field_types: &[BasicTypeEnum<'ctx>], packed: bool) -> Self {
         let mut field_types: Vec<LLVMTypeRef> = field_types.iter()
                                                            .map(|val| val.as_type_ref())
                                                            .collect();
@@ -379,7 +379,7 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// assert_eq!(struct_type.get_field_types(), &[f32_type.into(), i8_type.into()]);
     /// ```
-    pub fn get_field_types(&self) -> Vec<BasicTypeEnum> {
+    pub fn get_field_types(&self) -> Vec<BasicTypeEnum<'ctx>> {
         let count = self.count_fields();
         let mut raw_vec: Vec<LLVMTypeRef> = Vec::with_capacity(count as usize);
         let ptr = raw_vec.as_mut_ptr();
@@ -445,7 +445,7 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// assert!(!opaque_struct_type.is_opaque());
     /// ```
-    pub fn set_body(&self, field_types: &[BasicTypeEnum], packed: bool) -> bool {
+    pub fn set_body(&self, field_types: &[BasicTypeEnum<'ctx>], packed: bool) -> bool {
         let is_opaque = self.is_opaque();
         let mut field_types: Vec<LLVMTypeRef> = field_types.iter()
                                                            .map(|val| val.as_type_ref())

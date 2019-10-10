@@ -93,7 +93,7 @@ impl<'ctx> ArrayType<'ctx> {
     ///
     /// assert_eq!(i8_array_ptr_type.get_element_type().into_array_type(), i8_array_type);
     /// ```
-    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.array_type.ptr_type(address_space)
     }
 
@@ -145,7 +145,7 @@ impl<'ctx> ArrayType<'ctx> {
     /// assert_eq!(i8_array_array_type.len(), 3);
     /// assert_eq!(i8_array_array_type.get_element_type().into_array_type(), i8_array_type);
     /// ```
-    pub fn array_type(&self, size: u32) -> ArrayType {
+    pub fn array_type(&self, size: u32) -> ArrayType<'ctx> {
         self.array_type.array_type(size)
     }
 
@@ -252,7 +252,7 @@ impl<'ctx> ArrayType<'ctx> {
     ///
     /// assert_eq!(i8_array_type.get_element_type().into_int_type(), i8_type);
     /// ```
-    pub fn get_element_type(&self) -> BasicTypeEnum {
+    pub fn get_element_type(&self) -> BasicTypeEnum<'ctx> {
         self.array_type.get_element_type().to_basic_type_enum()
     }
 

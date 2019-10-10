@@ -108,13 +108,136 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         BasicTypeEnum::new(self.as_type_ref())
     }
 
-    /// TODO: Remove me
-    pub fn into_function_type(&self) -> FunctionType<'ctx> {
-        unimplemented!()
+    pub fn into_array_type(self) -> ArrayType<'ctx> {
+        if let AnyTypeEnum::ArrayType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn into_float_type(self) -> FloatType<'ctx> {
+        if let AnyTypeEnum::FloatType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn into_function_type(self) -> FunctionType<'ctx> {
+        if let AnyTypeEnum::FunctionType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn into_int_type(self) -> IntType<'ctx> {
+        if let AnyTypeEnum::IntType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn into_pointer_type(self) -> PointerType<'ctx> {
+        if let AnyTypeEnum::PointerType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn into_struct_type(self) -> StructType<'ctx> {
+        if let AnyTypeEnum::StructType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn into_vector_type(self) -> VectorType<'ctx> {
+        if let AnyTypeEnum::VectorType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn into_void_type(self) -> VoidType<'ctx> {
+        if let AnyTypeEnum::VoidType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn is_array_type(self) -> bool {
+        if let AnyTypeEnum::ArrayType(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_float_type(self) -> bool {
+        if let AnyTypeEnum::FloatType(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_function_type(self) -> bool {
+        if let AnyTypeEnum::FunctionType(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_int_type(self) -> bool {
+        if let AnyTypeEnum::IntType(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_pointer_type(self) -> bool {
+        if let AnyTypeEnum::PointerType(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_struct_type(self) -> bool {
+        if let AnyTypeEnum::StructType(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_vector_type(self) -> bool {
+        if let AnyTypeEnum::VectorType(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_void_type(self) -> bool {
+        if let AnyTypeEnum::VoidType(_) = self {
+            true
+        } else {
+            false
+        }
     }
 }
 
-impl BasicTypeEnum<'_> {
+impl<'ctx> BasicTypeEnum<'ctx> {
     pub(crate) fn new(type_: LLVMTypeRef) -> Self {
         let type_kind = unsafe {
             LLVMGetTypeKind(type_)
@@ -139,6 +262,102 @@ impl BasicTypeEnum<'_> {
             LLVMTypeKind::LLVMFunctionTypeKind => unreachable!("Unsupported basic type: FunctionType"),
             #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
             LLVMTypeKind::LLVMTokenTypeKind => unreachable!("Unsupported basic type: Token"),
+        }
+    }
+
+    pub fn into_array_type(self) -> ArrayType<'ctx> {
+        if let BasicTypeEnum::ArrayType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn into_float_type(self) -> FloatType<'ctx> {
+        if let BasicTypeEnum::FloatType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn into_int_type(self) -> IntType<'ctx> {
+        if let BasicTypeEnum::IntType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn into_pointer_type(self) -> PointerType<'ctx> {
+        if let BasicTypeEnum::PointerType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn into_struct_type(self) -> StructType<'ctx> {
+        if let BasicTypeEnum::StructType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn into_vector_type(self) -> VectorType<'ctx> {
+        if let BasicTypeEnum::VectorType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn is_array_type(self) -> bool {
+        if let BasicTypeEnum::ArrayType(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_float_type(self) -> bool {
+        if let BasicTypeEnum::FloatType(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_int_type(self) -> bool {
+        if let BasicTypeEnum::IntType(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_pointer_type(self) -> bool {
+        if let BasicTypeEnum::PointerType(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_struct_type(self) -> bool {
+        if let BasicTypeEnum::StructType(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_vector_type(self) -> bool {
+        if let BasicTypeEnum::VectorType(_) = self {
+            true
+        } else {
+            false
         }
     }
 }

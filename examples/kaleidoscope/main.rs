@@ -836,9 +836,9 @@ impl<'a> Parser<'a> {
 // ======================================================================================
 
 /// Defines the `Expr` compiler.
-pub struct Compiler<'a> {
-    pub context: &'a Context,
-    pub builder: &'a Builder,
+pub struct Compiler<'a, 'ctx> {
+    pub context: &'ctx Context,
+    pub builder: &'a Builder<'ctx>,
     pub fpm: &'a PassManager<FunctionValue>,
     pub module: &'a Module,
     pub function: &'a Function,
@@ -847,7 +847,7 @@ pub struct Compiler<'a> {
     fn_value_opt: Option<FunctionValue>
 }
 
-impl<'a> Compiler<'a> {
+impl<'a, 'ctx> Compiler<'a, 'ctx> {
     /// Gets a defined function given its name.
     #[inline]
     fn get_function(&self, name: &str) -> Option<FunctionValue> {

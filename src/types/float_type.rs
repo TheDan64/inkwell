@@ -53,7 +53,7 @@ impl<'ctx> FloatType<'ctx> {
     /// assert_eq!(f32_array_type.len(), 3);
     /// assert_eq!(f32_array_type.get_element_type().into_float_type(), f32_type);
     /// ```
-    pub fn array_type(&self, size: u32) -> ArrayType {
+    pub fn array_type(&self, size: u32) -> ArrayType<'ctx> {
         self.float_type.array_type(size)
     }
 
@@ -71,7 +71,7 @@ impl<'ctx> FloatType<'ctx> {
     /// assert_eq!(f32_vector_type.get_size(), 3);
     /// assert_eq!(f32_vector_type.get_element_type().into_float_type(), f32_type);
     /// ```
-    pub fn vec_type(&self, size: u32) -> VectorType {
+    pub fn vec_type(&self, size: u32) -> VectorType<'ctx> {
         self.float_type.vec_type(size)
     }
 
@@ -233,7 +233,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// assert_eq!(f32_ptr_type.get_element_type().into_float_type(), f32_type);
     /// ```
-    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.float_type.ptr_type(address_space)
     }
 

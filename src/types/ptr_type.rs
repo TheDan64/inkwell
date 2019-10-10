@@ -94,7 +94,7 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// assert_eq!(f32_ptr_ptr_type.get_element_type().into_pointer_type(), f32_ptr_type);
     /// ```
-    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.ptr_type.ptr_type(address_space)
     }
 
@@ -149,7 +149,7 @@ impl<'ctx> PointerType<'ctx> {
     /// assert_eq!(f32_ptr_array_type.len(), 3);
     /// assert_eq!(f32_ptr_array_type.get_element_type().into_pointer_type(), f32_ptr_type);
     /// ```
-    pub fn array_type(&self, size: u32) -> ArrayType {
+    pub fn array_type(&self, size: u32) -> ArrayType<'ctx> {
         self.ptr_type.array_type(size)
     }
 
@@ -269,7 +269,7 @@ impl<'ctx> PointerType<'ctx> {
     /// assert_eq!(f32_ptr_vec_type.get_size(), 3);
     /// assert_eq!(f32_ptr_vec_type.get_element_type().into_pointer_type(), f32_ptr_type);
     /// ```
-    pub fn vec_type(&self, size: u32) -> VectorType {
+    pub fn vec_type(&self, size: u32) -> VectorType<'ctx> {
         self.ptr_type.vec_type(size)
     }
 
@@ -288,7 +288,7 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// assert_eq!(f32_ptr_type.get_element_type().into_float_type(), f32_type);
     /// ```
-    pub fn get_element_type(&self) -> AnyTypeEnum {
+    pub fn get_element_type(&self) -> AnyTypeEnum<'ctx> {
         self.ptr_type.get_element_type()
     }
 

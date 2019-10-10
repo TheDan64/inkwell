@@ -113,9 +113,9 @@ fn test_function_type() {
     let param_types = fn_type.get_param_types();
 
     assert_eq!(param_types.len(), 3);
-    assert_eq!(*param_types[0].as_int_type(), int);
-    assert_eq!(*param_types[1].as_int_type(), int);
-    assert_eq!(*param_types[2].as_float_type(), float);
+    assert_eq!(param_types[0].into_int_type(), int);
+    assert_eq!(param_types[1].into_int_type(), int);
+    assert_eq!(param_types[2].into_float_type(), float);
 
     let fn_type = int.fn_type(&[int.into(), float.into()], true);
 

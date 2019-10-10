@@ -440,15 +440,17 @@ fn test_no_builder_double_free() {
     drop(context);
 }
 
+// TODO: Compile-fail test this:
+// let builder = {
+//     let context = Context::create();
+//
+//     context.create_builder()
+// };
+
 #[test]
 fn test_no_builder_double_free2() {
-    let builder = {
-        let context = Context::create();
-
-        context.create_builder()
-
-        // Original Context drops fine
-    };
+    let context = Context::create();
+    let builder = context.create_builder();
 
     // Builder continues to function with different context
     let context = Context::create();

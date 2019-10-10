@@ -41,7 +41,7 @@ impl<'ctx> FunctionType<'ctx> {
     ///
     /// assert_eq!(fn_ptr_type.get_element_type().into_function_type(), fn_type);
     /// ```
-    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.fn_type.ptr_type(address_space)
     }
 
@@ -79,7 +79,7 @@ impl<'ctx> FunctionType<'ctx> {
     /// assert_eq!(param_types.len(), 1);
     /// assert_eq!(param_types[0].into_float_type(), f32_type);
     /// ```
-    pub fn get_param_types(&self) -> Vec<BasicTypeEnum> {
+    pub fn get_param_types(&self) -> Vec<BasicTypeEnum<'ctx>> {
         let count = self.count_param_types();
         let mut raw_vec: Vec<LLVMTypeRef> = Vec::with_capacity(count as usize);
         let ptr = raw_vec.as_mut_ptr();
