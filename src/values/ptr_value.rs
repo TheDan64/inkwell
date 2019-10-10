@@ -8,11 +8,11 @@ use crate::types::{AsTypeRef, IntType, PointerType};
 use crate::values::{AsValueRef, InstructionValue, IntValue, Value};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-pub struct PointerValue {
-    ptr_value: Value,
+pub struct PointerValue<'ctx> {
+    ptr_value: Value<'ctx>,
 }
 
-impl PointerValue {
+impl<'ctx> PointerValue<'ctx> {
     pub(crate) fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
@@ -122,7 +122,7 @@ impl PointerValue {
     }
 }
 
-impl AsValueRef for PointerValue {
+impl AsValueRef for PointerValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.ptr_value.value
     }

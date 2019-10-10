@@ -12,11 +12,11 @@ use crate::values::{BasicValue, BasicValueEnum, InstructionValue, Value};
 /// A Phi Instruction returns a value based on which basic block branched into
 /// the Phi's containing basic block.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-pub struct PhiValue {
-    phi_value: Value
+pub struct PhiValue<'ctx> {
+    phi_value: Value<'ctx>,
 }
 
-impl PhiValue {
+impl<'ctx> PhiValue<'ctx> {
     pub(crate) fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
@@ -97,7 +97,7 @@ impl PhiValue {
     }
 }
 
-impl AsValueRef for PhiValue {
+impl AsValueRef for PhiValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.phi_value.value
     }

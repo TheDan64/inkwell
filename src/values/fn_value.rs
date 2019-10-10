@@ -7,6 +7,7 @@ use llvm_sys::core::{LLVMAddAttributeAtIndex, LLVMGetAttributeCountAtIndex, LLVM
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
 
 use std::ffi::{CStr, CString};
+use std::marker::PhantomData;
 use std::mem::forget;
 use std::fmt;
 
@@ -20,11 +21,11 @@ use crate::values::traits::AsValueRef;
 use crate::values::{BasicValueEnum, GlobalValue, Value};
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
-pub struct FunctionValue {
-    fn_value: Value,
+pub struct FunctionValue<'ctx> {
+    fn_value: Value<'ctx>,
 }
 
-impl FunctionValue {
+impl<'ctx> FunctionValue<'ctx> {
     pub(crate) fn new(value: LLVMValueRef) -> Option<Self> {
         if value.is_null() {
             return None;
@@ -189,6 +190,7 @@ impl FunctionValue {
         ParamValueIter {
             param_iter_value: self.fn_value.value,
             start: true,
+            _marker: PhantomData,
         }
     }
 
@@ -237,7 +239,7 @@ impl FunctionValue {
         LLVMDeleteFunction(self.as_value_ref())
     }
 
-    pub fn get_type<'fixme>(&self) -> FunctionType<'fixme> {
+    pub fn get_type(&self) -> FunctionType<'ctx> {
         let ptr_type = PointerType::new(self.fn_value.get_type());
 
         // FIXME: Placeholder until lifetime is bound to obj not fn
@@ -515,13 +517,13 @@ impl FunctionValue {
     }
 }
 
-impl AsValueRef for FunctionValue {
+impl AsValueRef for FunctionValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.fn_value.value
     }
 }
 
-impl fmt::Debug for FunctionValue {
+impl fmt::Debug for FunctionValue<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let llvm_value = self.print_to_string();
         let llvm_type = self.get_type();
@@ -543,13 +545,14 @@ impl fmt::Debug for FunctionValue {
 }
 
 #[derive(Debug)]
-pub struct ParamValueIter {
+pub struct ParamValueIter<'ctx> {
     param_iter_value: LLVMValueRef,
     start: bool,
+    _marker: PhantomData<&'ctx ()>,
 }
 
-impl Iterator for ParamValueIter {
-    type Item = BasicValueEnum;
+impl<'ctx> Iterator for ParamValueIter<'ctx> {
+    type Item = BasicValueEnum<'ctx>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.start {

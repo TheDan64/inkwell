@@ -18,7 +18,7 @@ pub trait AsTypeRef {
 macro_rules! trait_type_set {
     ($trait_name:ident: $($args:ident),*) => (
         $(
-            impl<'ctx> $trait_name<'ctx> for $args<'_> {}
+            impl<'ctx> $trait_name<'ctx> for $args<'ctx> {}
         )*
     );
 }
@@ -27,7 +27,7 @@ macro_rules! trait_type_set {
 /// Represents any LLVM type.
 pub trait AnyType<'ctx>: AsTypeRef + Debug {
     /// Returns an `AnyTypeEnum` that represents the current type.
-    fn as_any_type_enum(&self) -> AnyTypeEnum {
+    fn as_any_type_enum(&self) -> AnyTypeEnum<'ctx> {
         AnyTypeEnum::new(self.as_type_ref())
     }
 }
@@ -122,34 +122,34 @@ trait_type_set! {AnyType: AnyTypeEnum, BasicTypeEnum, IntType, FunctionType, Flo
 trait_type_set! {BasicType: BasicTypeEnum, IntType, FloatType, PointerType, StructType, ArrayType, VectorType}
 
 impl<'ctx> IntMathType<'ctx> for IntType<'ctx> {
-    type ValueType = IntValue;
+    type ValueType = IntValue<'ctx>;
     type MathConvType = FloatType<'ctx>;
     type PtrConvType = PointerType<'ctx>;
 }
 
 impl<'ctx> IntMathType<'ctx> for VectorType<'ctx> {
-    type ValueType = VectorValue;
+    type ValueType = VectorValue<'ctx>;
     type MathConvType = VectorType<'ctx>;
     type PtrConvType = VectorType<'ctx>;
 }
 
 impl<'ctx> FloatMathType<'ctx> for FloatType<'ctx> {
-    type ValueType = FloatValue;
+    type ValueType = FloatValue<'ctx>;
     type MathConvType = IntType<'ctx>;
 }
 
 impl<'ctx> FloatMathType<'ctx> for VectorType<'ctx> {
-    type ValueType = VectorValue;
+    type ValueType = VectorValue<'ctx>;
     type MathConvType = VectorType<'ctx>;
 }
 
 impl<'ctx> PointerMathType<'ctx> for PointerType<'ctx> {
-    type ValueType = PointerValue;
+    type ValueType = PointerValue<'ctx>;
     type PtrConvType = IntType<'ctx>;
 }
 
 impl<'ctx> PointerMathType<'ctx> for VectorType<'ctx> {
-    type ValueType = VectorValue;
+    type ValueType = VectorValue<'ctx>;
     type PtrConvType = VectorType<'ctx>;
 }
 

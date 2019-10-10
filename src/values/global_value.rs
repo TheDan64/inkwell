@@ -24,11 +24,11 @@ use crate::values::{BasicValueEnum, BasicValue, PointerValue, Value};
 // REVIEW: GlobalValues are always PointerValues. With SubTypes, we should
 // compress this into a PointerValue<Global> type
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-pub struct GlobalValue {
-    global_value: Value,
+pub struct GlobalValue<'ctx> {
+    global_value: Value<'ctx>,
 }
 
-impl GlobalValue {
+impl<'ctx> GlobalValue<'ctx> {
     pub(crate) fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
@@ -325,7 +325,7 @@ impl GlobalValue {
     }
 }
 
-impl AsValueRef for GlobalValue {
+impl AsValueRef for GlobalValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.global_value.value
     }

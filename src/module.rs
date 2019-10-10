@@ -20,6 +20,7 @@ use std::cell::{Cell, RefCell, Ref};
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::fs::File;
+use std::marker::PhantomData;
 use std::mem::{forget, MaybeUninit};
 use std::path::Path;
 use std::ptr;
@@ -131,14 +132,15 @@ enum_rename!{
 /// Represents a reference to an LLVM `Module`.
 /// The underlying module will be disposed when dropping this object.
 #[derive(Debug, PartialEq, Eq)]
-pub struct Module {
+pub struct Module<'ctx> {
     pub(crate) non_global_context: Option<Context>, // REVIEW: Could we just set context to the global context?
     data_layout: RefCell<Option<DataLayout>>,
     pub(crate) module: Cell<LLVMModuleRef>,
     pub(crate) owned_by_ee: RefCell<Option<ExecutionEngine>>,
+    _marker: PhantomData<&'ctx ()>,
 }
 
-impl Module {
+impl<'ctx> Module<'ctx> {
     pub(crate) fn new(module: LLVMModuleRef, context: Option<&Context>) -> Self {
         debug_assert!(!module.is_null());
 
@@ -147,6 +149,7 @@ impl Module {
             non_global_context: context.map(|ctx| ctx.clone()),
             owned_by_ee: RefCell::new(None),
             data_layout: RefCell::new(Some(Module::get_borrowed_data_layout(module))),
+            _marker: PhantomData,
         }
     }
 
@@ -164,7 +167,7 @@ impl Module {
     ///
     /// assert_eq!(module.get_context(), context);
     /// ```
-    pub fn create(name: &str) -> Self {
+    pub fn create(name: &str) -> Module<'static> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let module = unsafe {
@@ -194,7 +197,7 @@ impl Module {
     /// assert_eq!(fn_val.get_name().to_str(), Ok("my_function"));
     /// assert_eq!(fn_val.get_linkage(), Linkage::External);
     /// ```
-    pub fn add_function(&self, name: &str, ty: FunctionType, linkage: Option<Linkage>) -> FunctionValue {
+    pub fn add_function(&self, name: &str, ty: FunctionType<'ctx>, linkage: Option<Linkage>) -> FunctionValue<'ctx> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -255,7 +258,7 @@ impl Module {
     ///
     /// assert_eq!(fn_value, module.get_first_function().unwrap());
     /// ```
-    pub fn get_first_function(&self) -> Option<FunctionValue> {
+    pub fn get_first_function(&self) -> Option<FunctionValue<'ctx>> {
         let function = unsafe {
             LLVMGetFirstFunction(self.module.get())
         };
@@ -281,7 +284,7 @@ impl Module {
     ///
     /// assert_eq!(fn_value, module.get_last_function().unwrap());
     /// ```
-    pub fn get_last_function(&self) -> Option<FunctionValue> {
+    pub fn get_last_function(&self) -> Option<FunctionValue<'ctx>> {
         let function = unsafe {
             LLVMGetLastFunction(self.module.get())
         };
@@ -307,7 +310,7 @@ impl Module {
     ///
     /// assert_eq!(fn_value, module.get_function("my_fn").unwrap());
     /// ```
-    pub fn get_function(&self, name: &str) -> Option<FunctionValue> {
+    pub fn get_function(&self, name: &str) -> Option<FunctionValue<'ctx>> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -334,7 +337,7 @@ impl Module {
     ///
     /// assert_eq!(module.get_type("foo").unwrap(), opaque.into());
     /// ```
-    pub fn get_type(&self, name: &str) -> Option<BasicTypeEnum> {
+    pub fn get_type(&self, name: &str) -> Option<BasicTypeEnum<'ctx>> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let type_ = unsafe {
@@ -575,7 +578,7 @@ impl Module {
     /// assert_eq!(module.get_first_global().unwrap(), global);
     /// assert_eq!(module.get_last_global().unwrap(), global);
     /// ```
-    pub fn add_global<'fixme, T: BasicType<'fixme>>(&self, type_: T, address_space: Option<AddressSpace>, name: &str) -> GlobalValue {
+    pub fn add_global<'fixme, T: BasicType<'fixme>>(&self, type_: T, address_space: Option<AddressSpace>, name: &str) -> GlobalValue<'ctx> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -855,7 +858,7 @@ impl Module {
     /// assert_eq!(md_1[0].as_int_value(), &bool_val);
     /// assert_eq!(md_1[1].as_float_value(), &f32_val);
     /// ```
-    pub fn add_global_metadata(&self, key: &str, metadata: &MetadataValue) {
+    pub fn add_global_metadata(&self, key: &str, metadata: &MetadataValue<'ctx>) {
         let c_string = CString::new(key).expect("Conversion to CString failed unexpectedly");
 
         unsafe {
@@ -947,7 +950,7 @@ impl Module {
     /// assert_eq!(md_1[0].as_int_value(), &bool_val);
     /// assert_eq!(md_1[1].as_float_value(), &f32_val);
     /// ```
-    pub fn get_global_metadata(&self, key: &str) -> Vec<MetadataValue> {
+    pub fn get_global_metadata(&self, key: &str) -> Vec<MetadataValue<'ctx>> {
         let c_string = CString::new(key).expect("Conversion to CString failed unexpectedly");
         let count = self.get_global_metadata_size(key);
 
@@ -983,7 +986,7 @@ impl Module {
     ///
     /// assert_eq!(module.get_first_global().unwrap(), global);
     /// ```
-    pub fn get_first_global(&self) -> Option<GlobalValue> {
+    pub fn get_first_global(&self) -> Option<GlobalValue<'ctx>> {
         let value = unsafe {
             LLVMGetFirstGlobal(self.module.get())
         };
@@ -1013,7 +1016,7 @@ impl Module {
     ///
     /// assert_eq!(module.get_last_global().unwrap(), global);
     /// ```
-    pub fn get_last_global(&self) -> Option<GlobalValue> {
+    pub fn get_last_global(&self) -> Option<GlobalValue<'ctx>> {
         let value = unsafe {
             LLVMGetLastGlobal(self.module.get())
         };
@@ -1043,7 +1046,7 @@ impl Module {
     ///
     /// assert_eq!(module.get_global("my_global").unwrap(), global);
     /// ```
-    pub fn get_global(&self, name: &str) -> Option<GlobalValue> {
+    pub fn get_global(&self, name: &str) -> Option<GlobalValue<'ctx>> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
         let value = unsafe {
             LLVMGetNamedGlobal(self.module.get(), c_string.as_ptr())
@@ -1113,7 +1116,7 @@ impl Module {
     /// assert_eq!(module.unwrap().get_context(), Context::get_global());
     ///
     /// ```
-    pub fn parse_bitcode_from_buffer_in_context(buffer: &MemoryBuffer, context: &Context) -> Result<Self, LLVMString> {
+    pub fn parse_bitcode_from_buffer_in_context(buffer: &MemoryBuffer, context: &'ctx Context) -> Result<Self, LLVMString> {
         let mut module = MaybeUninit::uninit();
         let mut err_string = MaybeUninit::uninit();
 
@@ -1176,7 +1179,7 @@ impl Module {
     /// ```
     // LLVMGetBitcodeModuleInContext was a pain to use, so I seem to be able to achieve the same effect
     // by reusing create_from_file instead. This is basically just a convenience function.
-    pub fn parse_bitcode_from_path_in_context<P: AsRef<Path>>(path: P, context: &Context) -> Result<Self, LLVMString> {
+    pub fn parse_bitcode_from_path_in_context<P: AsRef<Path>>(path: P, context: &'ctx Context) -> Result<Self, LLVMString> {
         let buffer = MemoryBuffer::create_from_file(path.as_ref())?;
 
         Self::parse_bitcode_from_buffer_in_context(&buffer, &context)
@@ -1376,7 +1379,7 @@ impl Module {
     /// when returned from this function.
     // SubTypes: Might need to return Option<BVE, MV<Enum>, or MV<String>>
     #[llvm_versions(7.0..=latest)]
-    pub fn get_flag(&self, key: &str) -> Option<MetadataValue> {
+    pub fn get_flag(&self, key: &str) -> Option<MetadataValue<'ctx>> {
         use llvm_sys::core::LLVMMetadataAsValue;
 
         let flag = unsafe {
@@ -1400,7 +1403,7 @@ impl Module {
     /// Append a `MetadataValue` as a module wide flag. Note that using the same key twice
     /// will likely invalidate the module.
     #[llvm_versions(7.0..=latest)]
-    pub fn add_metadata_flag(&self, key: &str, behavior: FlagBehavior, flag: MetadataValue) {
+    pub fn add_metadata_flag(&self, key: &str, behavior: FlagBehavior, flag: MetadataValue<'ctx>) {
         let md = flag.as_metadata_ref();
 
         unsafe {
@@ -1412,7 +1415,7 @@ impl Module {
     /// will likely invalidate the module.
     // REVIEW: What happens if value is not const?
     #[llvm_versions(7.0..=latest)]
-    pub fn add_basic_value_flag<BV: BasicValue>(&self, key: &str, behavior: FlagBehavior, flag: BV) {
+    pub fn add_basic_value_flag<BV: BasicValue<'ctx>>(&self, key: &str, behavior: FlagBehavior, flag: BV) {
         use llvm_sys::core::LLVMValueAsMetadata;
 
         let md = unsafe {
@@ -1425,7 +1428,7 @@ impl Module {
     }
 }
 
-impl Clone for Module {
+impl Clone for Module<'_> {
     fn clone(&self) -> Self {
         // REVIEW: Is this just a LLVM 6 bug? We could conditionally compile this assertion for affected versions
         let verify = self.verify();
@@ -1442,7 +1445,7 @@ impl Clone for Module {
 
 // Module owns the data layout string, so LLVMDisposeModule will deallocate it for us.
 // which is why DataLayout must be called with `new_borrowed`
-impl Drop for Module {
+impl Drop for Module<'_> {
     fn drop(&mut self) {
         if self.owned_by_ee.borrow_mut().take().is_none() {
             unsafe {

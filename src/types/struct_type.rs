@@ -76,7 +76,7 @@ impl<'ctx> StructType<'ctx> {
     /// let struct_type = context.struct_type(&[f32_type.into()], false);
     /// let struct_val = struct_type.const_named_struct(&[f32_zero.into()]);
     /// ```
-    pub fn const_named_struct(&self, values: &[BasicValueEnum]) -> StructValue {
+    pub fn const_named_struct(&self, values: &[BasicValueEnum<'ctx>]) -> StructValue<'ctx> {
         let mut args: Vec<LLVMValueRef> = values.iter()
                                                 .map(|val| val.as_value_ref())
                                                 .collect();
@@ -99,7 +99,7 @@ impl<'ctx> StructType<'ctx> {
     /// let f32_zero = f32_type.const_float(0.);
     /// let struct_val = StructType::const_struct(&[f32_zero.into()], false);
     /// ```
-    pub fn const_struct(values: &[BasicValueEnum], packed: bool) -> StructValue {
+    pub fn const_struct(values: &[BasicValueEnum], packed: bool) -> StructValue<'ctx> {
         let mut args: Vec<LLVMValueRef> = values.iter()
                                                 .map(|val| val.as_value_ref())
                                                 .collect();
@@ -122,7 +122,7 @@ impl<'ctx> StructType<'ctx> {
     /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
     /// let struct_zero = struct_type.const_zero();
     /// ```
-    pub fn const_zero(&self) -> StructValue {
+    pub fn const_zero(&self) -> StructValue<'ctx> {
         StructValue::new(self.struct_type.const_zero())
     }
 
@@ -158,7 +158,7 @@ impl<'ctx> StructType<'ctx> {
     /// let f32_struct_type = context.struct_type(&[f32_type.into()], false);
     /// let f32_struct_type_size = f32_struct_type.size_of();
     /// ```
-    pub fn size_of(&self) -> Option<IntValue> {
+    pub fn size_of(&self) -> Option<IntValue<'ctx>> {
         if self.is_sized() {
             return Some(self.struct_type.size_of());
         }
@@ -178,7 +178,7 @@ impl<'ctx> StructType<'ctx> {
     /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
     /// let struct_type_alignment = struct_type.get_alignment();
     /// ```
-    pub fn get_alignment(&self) -> IntValue {
+    pub fn get_alignment(&self) -> IntValue<'ctx> {
         self.struct_type.get_alignment()
     }
 
@@ -422,7 +422,7 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// assert!(struct_type_undef.is_undef());
     /// ```
-    pub fn get_undef(&self) -> StructValue {
+    pub fn get_undef(&self) -> StructValue<'ctx> {
         StructValue::new(self.struct_type.get_undef())
     }
 
@@ -474,7 +474,7 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// assert!(struct_array.is_const());
     /// ```
-    pub fn const_array(&self, values: &[StructValue]) -> ArrayValue {
+    pub fn const_array(&self, values: &[StructValue<'ctx>]) -> ArrayValue<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();

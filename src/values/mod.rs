@@ -45,20 +45,23 @@ use llvm_sys::prelude::{LLVMValueRef, LLVMTypeRef};
 
 use std::ffi::CStr;
 use std::fmt;
+use std::marker::PhantomData;
 
 use crate::support::LLVMString;
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
-struct Value {
+struct Value<'ctx> {
     value: LLVMValueRef,
+    _marker: PhantomData<&'ctx ()>,
 }
 
-impl Value {
-    pub(crate) fn new(value: LLVMValueRef) -> Value {
+impl<'ctx> Value<'ctx> {
+    pub(crate) fn new(value: LLVMValueRef) -> Self {
         debug_assert!(!value.is_null(), "This should never happen since containing struct should check null ptrs");
 
         Value {
-            value: value
+            value: value,
+            _marker: PhantomData,
         }
     }
 
@@ -68,7 +71,7 @@ impl Value {
         }
     }
 
-    fn as_instruction(&self) -> Option<InstructionValue> {
+    fn as_instruction(&self) -> Option<InstructionValue<'ctx>> {
         if !self.is_instruction() {
             return None;
         }
@@ -188,7 +191,7 @@ impl Value {
     }
 }
 
-impl fmt::Debug for Value {
+impl fmt::Debug for Value<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let llvm_value = self.print_to_string();
         let llvm_type = unsafe {

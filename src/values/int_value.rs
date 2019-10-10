@@ -12,11 +12,11 @@ use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, FloatValue, InstructionValue, PointerValue, Value};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-pub struct IntValue {
-    int_value: Value,
+pub struct IntValue<'ctx> {
+    int_value: Value<'ctx>,
 }
 
-impl IntValue {
+impl<'ctx> IntValue<'ctx> {
     pub(crate) fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
@@ -33,7 +33,7 @@ impl IntValue {
         self.int_value.set_name(name);
     }
 
-    pub fn get_type(&self) -> IntType {
+    pub fn get_type(&self) -> IntType<'ctx> {
         IntType::new(self.int_value.get_type())
     }
 
@@ -53,7 +53,7 @@ impl IntValue {
         self.int_value.print_to_stderr()
     }
 
-    pub fn as_instruction(&self) -> Option<InstructionValue> {
+    pub fn as_instruction(&self) -> Option<InstructionValue<'ctx>> {
         self.int_value.as_instruction()
     }
 
@@ -270,7 +270,7 @@ impl IntValue {
     }
 
     // SubType: const_to_float impl only for unsigned types
-    pub fn const_unsigned_to_float(&self, float_type: FloatType) -> FloatValue {
+    pub fn const_unsigned_to_float(&self, float_type: FloatType<'ctx>) -> FloatValue<'ctx> {
         let value = unsafe {
             LLVMConstUIToFP(self.as_value_ref(), float_type.as_type_ref())
         };
@@ -279,7 +279,7 @@ impl IntValue {
     }
 
     // SubType: const_to_float impl only for signed types
-    pub fn const_signed_to_float(&self, float_type: FloatType) -> FloatValue {
+    pub fn const_signed_to_float(&self, float_type: FloatType<'ctx>) -> FloatValue<'ctx> {
         let value = unsafe {
             LLVMConstSIToFP(self.as_value_ref(), float_type.as_type_ref())
         };
@@ -287,7 +287,7 @@ impl IntValue {
         FloatValue::new(value)
     }
 
-    pub fn const_to_pointer(&self, ptr_type: PointerType) -> PointerValue {
+    pub fn const_to_pointer(&self, ptr_type: PointerType<'ctx>) -> PointerValue<'ctx> {
         let value = unsafe {
             LLVMConstIntToPtr(self.as_value_ref(), ptr_type.as_type_ref())
         };
@@ -295,7 +295,7 @@ impl IntValue {
         PointerValue::new(value)
     }
 
-    pub fn const_truncate(&self, int_type: IntType) -> IntValue {
+    pub fn const_truncate(&self, int_type: IntType<'ctx>) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstTrunc(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -304,7 +304,7 @@ impl IntValue {
     }
 
     // TODO: More descriptive name
-    pub fn const_s_extend(&self, int_type: IntType) -> IntValue {
+    pub fn const_s_extend(&self, int_type: IntType<'ctx>) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstSExt(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -313,7 +313,7 @@ impl IntValue {
     }
 
     // TODO: More descriptive name
-    pub fn const_z_ext(&self, int_type: IntType) -> IntValue {
+    pub fn const_z_ext(&self, int_type: IntType<'ctx>) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstZExt(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -321,7 +321,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_truncate_or_bit_cast(&self, int_type: IntType) -> IntValue {
+    pub fn const_truncate_or_bit_cast(&self, int_type: IntType<'ctx>) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstTruncOrBitCast(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -330,7 +330,7 @@ impl IntValue {
     }
 
     // TODO: More descriptive name
-    pub fn const_s_extend_or_bit_cast(&self, int_type: IntType) -> IntValue {
+    pub fn const_s_extend_or_bit_cast(&self, int_type: IntType<'ctx>) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstSExtOrBitCast(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -339,7 +339,7 @@ impl IntValue {
     }
 
     // TODO: More descriptive name
-    pub fn const_z_ext_or_bit_cast(&self, int_type: IntType) -> IntValue {
+    pub fn const_z_ext_or_bit_cast(&self, int_type: IntType<'ctx>) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstZExtOrBitCast(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -347,7 +347,7 @@ impl IntValue {
         IntValue::new(value)
     }
 
-    pub fn const_bit_cast(&self, int_type: IntType) -> IntValue {
+    pub fn const_bit_cast(&self, int_type: IntType) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstBitCast(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -356,7 +356,7 @@ impl IntValue {
     }
 
     // SubType: rhs same as lhs; return IntValue<bool>
-    pub fn const_int_compare(&self, op: IntPredicate, rhs: IntValue) -> IntValue {
+    pub fn const_int_compare(&self, op: IntPredicate, rhs: IntValue<'ctx>) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstICmp(op.into(), self.as_value_ref(), rhs.as_value_ref())
         };
@@ -365,7 +365,7 @@ impl IntValue {
     }
 
     // SubTypes: self can only be IntValue<bool>
-    pub fn const_select<BV: BasicValue>(&self, then: BV, else_: BV) -> BasicValueEnum {
+    pub fn const_select<BV: BasicValue<'ctx>>(&self, then: BV, else_: BV) -> BasicValueEnum<'ctx> {
         let value = unsafe {
             LLVMConstSelect(self.as_value_ref(), then.as_value_ref(), else_.as_value_ref())
         };
@@ -466,12 +466,12 @@ impl IntValue {
         }
     }
 
-    pub fn replace_all_uses_with(&self, other: IntValue) {
+    pub fn replace_all_uses_with(&self, other: IntValue<'ctx>) {
         self.int_value.replace_all_uses_with(other.as_value_ref())
     }
 }
 
-impl AsValueRef for IntValue {
+impl AsValueRef for IntValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.int_value.value
     }

@@ -95,11 +95,11 @@ pub enum InstructionOpcode {
 }
 
 #[derive(Debug, PartialEq, Eq, Copy, Hash)]
-pub struct InstructionValue {
-    instruction_value: Value,
+pub struct InstructionValue<'ctx> {
+    instruction_value: Value<'ctx>,
 }
 
-impl InstructionValue {
+impl<'ctx> InstructionValue<'ctx> {
     fn is_a_load_inst(&self) -> bool {
         !unsafe { LLVMIsALoadInst(self.as_value_ref()) }.is_null()
     }
@@ -190,7 +190,7 @@ impl InstructionValue {
         }
     }
 
-    pub fn replace_all_uses_with(&self, other: &InstructionValue) {
+    pub fn replace_all_uses_with(&self, other: &InstructionValue<'ctx>) {
         self.instruction_value.replace_all_uses_with(other.as_value_ref())
     }
 
@@ -392,7 +392,7 @@ impl InstructionValue {
     /// 3) Function call has two: i8 pointer %1 argument, and the free function itself
     /// 4) Void return has zero: void is not a value and does not count as an operand
     /// even though the return instruction can take values.
-    pub fn get_operand(&self, index: u32) -> Option<Either<BasicValueEnum, BasicBlock>> {
+    pub fn get_operand(&self, index: u32) -> Option<Either<BasicValueEnum<'ctx>, BasicBlock>> {
         let num_operands = self.get_num_operands();
 
         if index >= num_operands {
@@ -453,7 +453,7 @@ impl InstructionValue {
     ///
     /// assert_eq!(free_instruction.get_operand(0).unwrap().left().unwrap(), f32_val);
     /// ```
-    pub fn set_operand<BV: BasicValue>(&self, index: u32, val: BV) -> bool {
+    pub fn set_operand<BV: BasicValue<'ctx>>(&self, index: u32, val: BV) -> bool {
         let num_operands = self.get_num_operands();
 
         if index >= num_operands {
@@ -617,7 +617,7 @@ impl InstructionValue {
     }
 }
 
-impl Clone for InstructionValue {
+impl Clone for InstructionValue<'_> {
     /// Creates a clone of this `InstructionValue`, and returns it.
     /// The clone will have no parent, and no name.
     fn clone(&self) -> Self {
@@ -629,7 +629,7 @@ impl Clone for InstructionValue {
     }
 }
 
-impl AsValueRef for InstructionValue {
+impl AsValueRef for InstructionValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.instruction_value.value
     }

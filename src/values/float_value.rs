@@ -10,11 +10,11 @@ use crate::values::traits::AsValueRef;
 use crate::values::{InstructionValue, IntValue, Value};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-pub struct FloatValue {
-    float_value: Value
+pub struct FloatValue<'ctx> {
+    float_value: Value<'ctx>,
 }
 
-impl FloatValue {
+impl<'ctx> FloatValue<'ctx> {
     pub(crate) fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
@@ -202,7 +202,7 @@ impl FloatValue {
     }
 }
 
-impl AsValueRef for FloatValue {
+impl AsValueRef for FloatValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.float_value.value
     }

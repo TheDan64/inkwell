@@ -36,11 +36,11 @@ pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 25;
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 26;
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
-pub struct MetadataValue {
-    metadata_value: Value,
+pub struct MetadataValue<'ctx> {
+    metadata_value: Value<'ctx>,
 }
 
-impl MetadataValue {
+impl<'ctx> MetadataValue<'ctx> {
     pub(crate) fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
@@ -121,7 +121,7 @@ impl MetadataValue {
 
     // SubTypes: Node only one day
     // REVIEW: BasicMetadataValueEnum only if you can put metadata in metadata...
-    pub fn get_node_values(&self) -> Vec<BasicMetadataValueEnum> {
+    pub fn get_node_values(&self) -> Vec<BasicMetadataValueEnum<'ctx>> {
         if self.is_string() {
             return Vec::new();
         }
@@ -162,13 +162,13 @@ impl MetadataValue {
     }
 }
 
-impl AsValueRef for MetadataValue {
+impl AsValueRef for MetadataValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.metadata_value.value
     }
 }
 
-impl fmt::Debug for MetadataValue {
+impl fmt::Debug for MetadataValue<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut d = f.debug_struct("MetadataValue");
         d.field("address", &self.as_value_ref());

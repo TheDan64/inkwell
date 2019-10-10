@@ -8,11 +8,11 @@ use crate::values::traits::AsValueRef;
 use crate::values::{InstructionValue, Value};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-pub struct StructValue {
-    struct_value: Value
+pub struct StructValue<'ctx> {
+    struct_value: Value<'ctx>,
 }
 
-impl StructValue {
+impl<'ctx> StructValue<'ctx> {
     pub(crate) fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
@@ -58,7 +58,7 @@ impl StructValue {
     }
 }
 
-impl AsValueRef for StructValue {
+impl AsValueRef for StructValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.struct_value.value
     }

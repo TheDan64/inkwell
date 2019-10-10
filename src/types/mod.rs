@@ -144,7 +144,7 @@ impl<'ctx> Type<'ctx> {
         }
     }
 
-    fn get_alignment(&self) -> IntValue {
+    fn get_alignment(&self) -> IntValue<'ctx> {
         let val = unsafe {
             LLVMAlignOf(self.ty)
         };
@@ -178,7 +178,7 @@ impl<'ctx> Type<'ctx> {
 
     // REVIEW: Option<IntValue>? If we want to provide it on enums that
     // contain unsized types
-    fn size_of(&self) -> IntValue {
+    fn size_of(&self) -> IntValue<'ctx> {
         debug_assert!(self.is_sized());
 
         let int_value = unsafe {

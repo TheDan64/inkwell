@@ -2,6 +2,7 @@ extern crate inkwell;
 
 use self::inkwell::AddressSpace;
 use self::inkwell::context::Context;
+use self::inkwell::values::FunctionValue;
 use self::inkwell::types::{IntType, StructType};
 
 #[test]
@@ -12,6 +13,28 @@ fn test_no_context_double_free() {
     {
         int.get_context();
     }
+}
+
+
+fn compile() -> Option<FunctionValue> {
+    let context = Context::create();
+    let module = context.create_module("example");
+    let builder = context.create_builder();
+    let fn_type = context.void_type().fn_type(&[], false);
+    let function = module.add_function("do_nothing", fn_type, None);
+    let basic_block = context.append_basic_block(&function, "entry");
+
+    builder.position_at_end(&basic_block);
+    builder.build_return(None);
+
+    Some(function)
+}
+
+#[test]
+fn test_foo() {
+    let function = compile().unwrap();
+
+    function.print_to_stderr();
 }
 
 // FIXME: This isn't actually safe and stopped working as

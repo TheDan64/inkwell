@@ -55,7 +55,7 @@ impl<'ctx> VectorType<'ctx> {
     /// let f32_vec_type = f32_type.vec_type(3);
     /// let f32_vec_type_size = f32_vec_type.size_of();
     /// ```
-    pub fn size_of(&self) -> Option<IntValue> {
+    pub fn size_of(&self) -> Option<IntValue<'ctx>> {
         if self.is_sized() {
             return Some(self.vec_type.size_of())
         }
@@ -75,7 +75,7 @@ impl<'ctx> VectorType<'ctx> {
     /// let f32_vec_type = f32_type.vec_type(7);
     /// let f32_type_alignment = f32_vec_type.get_alignment();
     /// ```
-    pub fn get_alignment(&self) -> IntValue {
+    pub fn get_alignment(&self) -> IntValue<'ctx> {
         self.vec_type.get_alignment()
     }
 
@@ -122,7 +122,7 @@ impl<'ctx> VectorType<'ctx> {
     ///
     /// assert!(f32_vec_val.is_constant_vector());
     /// ```
-    pub fn const_vector<V: BasicValue>(values: &[V]) -> VectorValue {
+    pub fn const_vector<V: BasicValue<'ctx>>(values: &[V]) -> VectorValue<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();
@@ -145,7 +145,7 @@ impl<'ctx> VectorType<'ctx> {
     /// let f32_vec_type = f32_type.vec_type(7);
     /// let f32_vec_zero = f32_vec_type.const_zero();
     /// ```
-    pub fn const_zero(&self) -> VectorValue {
+    pub fn const_zero(&self) -> VectorValue<'ctx> {
         VectorValue::new(self.vec_type.const_zero())
     }
 
@@ -175,7 +175,7 @@ impl<'ctx> VectorType<'ctx> {
     ///
     /// assert!(f32_vec_undef.is_undef());
     /// ```
-    pub fn get_undef(&self) -> VectorValue {
+    pub fn get_undef(&self) -> VectorValue<'ctx> {
         VectorValue::new(self.vec_type.get_undef())
     }
 
@@ -270,7 +270,7 @@ impl<'ctx> VectorType<'ctx> {
     ///
     /// assert!(f32_array.is_const());
     /// ```
-    pub fn const_array(&self, values: &[VectorValue]) -> ArrayValue {
+    pub fn const_array(&self, values: &[VectorValue<'ctx>]) -> ArrayValue<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();
