@@ -10,11 +10,11 @@ use crate::values::{AsValueRef, ArrayValue, IntValue};
 
 /// An `ArrayType` is the type of contiguous constants or variables.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct ArrayType {
-    array_type: Type,
+pub struct ArrayType<'ctx> {
+    array_type: Type<'ctx>,
 }
 
-impl ArrayType {
+impl<'ctx> ArrayType<'ctx> {
     pub(crate) fn new(array_type: LLVMTypeRef) -> Self {
         assert!(!array_type.is_null());
 
@@ -126,7 +126,7 @@ impl ArrayType {
     /// let i8_array_type = i8_type.array_type(3);
     /// let fn_type = i8_array_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
+    pub fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.array_type.fn_type(param_types, is_var_args)
     }
 
@@ -258,8 +258,8 @@ impl ArrayType {
 
 }
 
-impl AsTypeRef for ArrayType {
+impl AsTypeRef for ArrayType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.array_type.type_
+        self.array_type.ty
     }
 }

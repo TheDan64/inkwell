@@ -40,6 +40,7 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use static_alloc::Slab;
 
 use std::fmt;
+use std::marker::PhantomData;
 use std::rc::Rc;
 
 use crate::AddressSpace;
@@ -50,16 +51,18 @@ use crate::values::IntValue;
 // Worth noting that types seem to be singletons. At the very least, primitives are.
 // Though this is likely only true per thread since LLVM claims to not be very thread-safe.
 #[derive(PartialEq, Eq, Clone, Copy)]
-struct Type {
-    type_: LLVMTypeRef,
+struct Type<'ctx> {
+    ty: LLVMTypeRef,
+    _marker: PhantomData<&'ctx ()>,
 }
 
-impl Type {
-    fn new(type_: LLVMTypeRef) -> Self {
-        assert!(!type_.is_null());
+impl<'ctx> Type<'ctx> {
+    fn new(ty: LLVMTypeRef) -> Self {
+        assert!(!ty.is_null());
 
         Type {
-            type_: type_,
+            ty,
+            _marker: PhantomData,
         }
     }
 
@@ -70,49 +73,49 @@ impl Type {
     #[llvm_versions(3.7..=4.0)]
     fn print_to_stderr(&self) {
         unsafe {
-            LLVMDumpType(self.type_);
+            LLVMDumpType(self.ty);
         }
     }
 
     fn const_zero(&self) -> LLVMValueRef {
         unsafe {
-            LLVMConstNull(self.type_)
+            LLVMConstNull(self.ty)
         }
     }
 
-    fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
+    fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         let ptr_type = unsafe {
-            LLVMPointerType(self.type_, address_space as u32)
+            LLVMPointerType(self.ty, address_space as u32)
         };
 
         PointerType::new(ptr_type)
     }
 
-    fn vec_type(&self, size: u32) -> VectorType {
+    fn vec_type(&self, size: u32) -> VectorType<'ctx> {
         assert!(size != 0, "Vectors of size zero are not allowed.");
         // -- https://llvm.org/docs/LangRef.html#vector-type
 
         let vec_type = unsafe {
-            LLVMVectorType(self.type_, size)
+            LLVMVectorType(self.ty, size)
         };
 
         VectorType::new(vec_type)
     }
 
     #[cfg(not(feature = "experimental"))]
-    fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
+    fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         let mut param_types: Vec<LLVMTypeRef> = param_types.iter()
                                                            .map(|val| val.as_type_ref())
                                                            .collect();
         let fn_type = unsafe {
-            LLVMFunctionType(self.type_, param_types.as_mut_ptr(), param_types.len() as u32, is_var_args as i32)
+            LLVMFunctionType(self.ty, param_types.as_mut_ptr(), param_types.len() as u32, is_var_args as i32)
         };
 
         FunctionType::new(fn_type)
     }
 
     #[cfg(feature = "experimental")]
-    fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
+    fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         let pool: Slab<[usize; 16]> = Slab::uninit();
         let mut fixed_vec = pool.fixed_vec(param_types.len()).expect("Found more than 16 params");
 
@@ -121,29 +124,29 @@ impl Type {
         }
 
         let fn_type = unsafe {
-            LLVMFunctionType(self.type_, fixed_vec.as_mut_ptr(), fixed_vec.len() as u32, is_var_args as i32)
+            LLVMFunctionType(self.ty, fixed_vec.as_mut_ptr(), fixed_vec.len() as u32, is_var_args as i32)
         };
 
         FunctionType::new(fn_type)
     }
 
-    fn array_type(&self, size: u32) -> ArrayType {
-        let type_ = unsafe {
-            LLVMArrayType(self.type_, size)
+    fn array_type(&self, size: u32) -> ArrayType<'ctx> {
+        let ty = unsafe {
+            LLVMArrayType(self.ty, size)
         };
 
-        ArrayType::new(type_)
+        ArrayType::new(ty)
     }
 
     fn get_undef(&self) -> LLVMValueRef {
         unsafe {
-            LLVMGetUndef(self.type_)
+            LLVMGetUndef(self.ty)
         }
     }
 
     fn get_alignment(&self) -> IntValue {
         let val = unsafe {
-            LLVMAlignOf(self.type_)
+            LLVMAlignOf(self.ty)
         };
 
         IntValue::new(val)
@@ -157,7 +160,7 @@ impl Type {
         // created without an explicit context, somehow
 
         let context = unsafe {
-            LLVMGetTypeContext(self.type_)
+            LLVMGetTypeContext(self.ty)
         };
 
         // REVIEW: This probably should be somehow using the existing context Rc
@@ -169,7 +172,7 @@ impl Type {
     // enum has only sized types for example)
     fn is_sized(&self) -> bool {
         unsafe {
-            LLVMTypeIsSized(self.type_) == 1
+            LLVMTypeIsSized(self.ty) == 1
         }
     }
 
@@ -179,7 +182,7 @@ impl Type {
         debug_assert!(self.is_sized());
 
         let int_value = unsafe {
-            LLVMSizeOf(self.type_)
+            LLVMSizeOf(self.ty)
         };
 
         IntValue::new(int_value)
@@ -187,15 +190,15 @@ impl Type {
 
     fn print_to_string(&self) -> LLVMString {
         let c_string_ptr = unsafe {
-            LLVMPrintTypeToString(self.type_)
+            LLVMPrintTypeToString(self.ty)
         };
 
         LLVMString::new(c_string_ptr)
     }
 
-    pub fn get_element_type(&self) -> AnyTypeEnum {
+    pub fn get_element_type(&self) -> AnyTypeEnum<'ctx> {
         let ptr = unsafe {
-            LLVMGetElementType(self.type_)
+            LLVMGetElementType(self.ty)
         };
 
         AnyTypeEnum::new(ptr)
@@ -203,12 +206,12 @@ impl Type {
 
 }
 
-impl fmt::Debug for Type {
+impl fmt::Debug for Type<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let llvm_type = self.print_to_string();
 
         f.debug_struct("Type")
-            .field("address", &self.type_)
+            .field("address", &self.ty)
             .field("llvm_type", &llvm_type)
             .finish()
     }

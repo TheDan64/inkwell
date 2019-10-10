@@ -11,11 +11,11 @@ use crate::values::{AsValueRef, ArrayValue, FloatValue, GenericValue, IntValue};
 
 /// A `FloatType` is the type of a floating point constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct FloatType {
-    float_type: Type,
+pub struct FloatType<'ctx> {
+    float_type: Type<'ctx>,
 }
 
-impl FloatType {
+impl<'ctx> FloatType<'ctx> {
     pub(crate) fn new(float_type: LLVMTypeRef) -> Self {
         assert!(!float_type.is_null());
 
@@ -35,7 +35,7 @@ impl FloatType {
     /// let f32_type = context.f32_type();
     /// let fn_type = f32_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
+    pub fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.float_type.fn_type(param_types, is_var_args)
     }
 
@@ -94,7 +94,7 @@ impl FloatType {
     /// ```
     pub fn const_float(&self, value: f64) -> FloatValue {
         let value = unsafe {
-            LLVMConstReal(self.float_type.type_, value)
+            LLVMConstReal(self.float_type.ty, value)
         };
 
         FloatValue::new(value)
@@ -309,7 +309,7 @@ impl FloatType {
     ///
     /// assert_eq!(x86_f80_type.get_context(), Context::get_global());
     /// ```
-    pub fn x86_f80_type() -> FloatType {
+    pub fn x86_f80_type() -> Self {
         let f128_type = unsafe {
             LLVMX86FP80Type()
         };
@@ -422,8 +422,8 @@ impl FloatType {
     }
 }
 
-impl AsTypeRef for FloatType {
+impl AsTypeRef for FloatType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.float_type.type_
+        self.float_type.ty
     }
 }

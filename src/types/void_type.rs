@@ -9,11 +9,11 @@ use crate::types::{Type, BasicTypeEnum, FunctionType};
 /// A `VoidType` is a special type with no possible direct instances. It's only
 /// useful as a function return type.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct VoidType {
-    void_type: Type,
+pub struct VoidType<'ctx> {
+    void_type: Type<'ctx>,
 }
 
-impl VoidType {
+impl<'ctx> VoidType<'ctx> {
     pub(crate) fn new(void_type: LLVMTypeRef) -> Self {
         assert!(!void_type.is_null());
 
@@ -68,7 +68,7 @@ impl VoidType {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
+    pub fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.void_type.fn_type(param_types, is_var_args)
     }
 
@@ -105,8 +105,8 @@ impl VoidType {
     }
 }
 
-impl AsTypeRef for VoidType {
+impl AsTypeRef for VoidType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.void_type.type_
+        self.void_type.ty
     }
 }

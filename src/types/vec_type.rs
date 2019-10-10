@@ -9,11 +9,11 @@ use crate::values::{AsValueRef, ArrayValue, BasicValue, VectorValue, IntValue};
 
 /// A `VectorType` is the type of a multiple value SIMD constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct VectorType {
-    vec_type: Type,
+pub struct VectorType<'ctx> {
+    vec_type: Type<'ctx>,
 }
 
-impl VectorType {
+impl<'ctx> VectorType<'ctx> {
     pub(crate) fn new(vector_type: LLVMTypeRef) -> Self {
         assert!(!vector_type.is_null());
 
@@ -230,7 +230,7 @@ impl VectorType {
     /// let f32_vec_type = f32_type.vec_type(3);
     /// let fn_type = f32_vec_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
+    pub fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.vec_type.fn_type(param_types, is_var_args)
     }
 
@@ -299,8 +299,8 @@ impl VectorType {
     }
 }
 
-impl AsTypeRef for VectorType {
+impl AsTypeRef for VectorType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.vec_type.type_
+        self.vec_type.ty
     }
 }

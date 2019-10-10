@@ -575,7 +575,7 @@ impl Module {
     /// assert_eq!(module.get_first_global().unwrap(), global);
     /// assert_eq!(module.get_last_global().unwrap(), global);
     /// ```
-    pub fn add_global<T: BasicType>(&self, type_: T, address_space: Option<AddressSpace>, name: &str) -> GlobalValue {
+    pub fn add_global<'fixme, T: BasicType<'fixme>>(&self, type_: T, address_space: Option<AddressSpace>, name: &str) -> GlobalValue {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {

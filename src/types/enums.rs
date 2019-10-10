@@ -7,16 +7,16 @@ use crate::types::traits::AsTypeRef;
 
 macro_rules! enum_type_set {
     ($(#[$enum_attrs:meta])* $enum_name:ident: { $($(#[$variant_attrs:meta])* $args:ident,)+ }) => (
-        #[derive(Debug, EnumAsGetters, EnumIntoGetters, EnumIsA, PartialEq, Eq, Clone, Copy)]
+        #[derive(Debug, PartialEq, Eq, Clone, Copy)]
         $(#[$enum_attrs])*
-        pub enum $enum_name {
+        pub enum $enum_name<'ctx> {
             $(
                 $(#[$variant_attrs])*
-                $args($args),
+                $args($args<'ctx>),
             )*
         }
 
-        impl AsTypeRef for $enum_name {
+        impl AsTypeRef for $enum_name<'_> {
             fn as_type_ref(&self) -> LLVMTypeRef {
                 match *self {
                     $(
@@ -27,7 +27,7 @@ macro_rules! enum_type_set {
         }
 
         $(
-            impl From<$args> for $enum_name {
+            impl<'ctx> From<$args<'ctx>> for $enum_name<'ctx> {
                 fn from(value: $args) -> $enum_name {
                     $enum_name::$args(value)
                 }
@@ -75,8 +75,8 @@ enum_type_set! {
     }
 }
 
-impl AnyTypeEnum {
-    pub(crate) fn new(type_: LLVMTypeRef) -> AnyTypeEnum {
+impl<'ctx> AnyTypeEnum<'ctx> {
+    pub(crate) fn new(type_: LLVMTypeRef) -> Self {
         let type_kind = unsafe {
             LLVMGetTypeKind(type_)
         };
@@ -104,13 +104,18 @@ impl AnyTypeEnum {
     }
 
     /// This will panic if type is a void or function type.
-    pub(crate) fn to_basic_type_enum(&self) -> BasicTypeEnum {
+    pub(crate) fn to_basic_type_enum(&self) -> BasicTypeEnum<'ctx> {
         BasicTypeEnum::new(self.as_type_ref())
+    }
+
+    /// TODO: Remove me
+    pub fn into_function_type(&self) -> FunctionType<'ctx> {
+        unimplemented!()
     }
 }
 
-impl BasicTypeEnum {
-    pub(crate) fn new(type_: LLVMTypeRef) -> BasicTypeEnum {
+impl BasicTypeEnum<'_> {
+    pub(crate) fn new(type_: LLVMTypeRef) -> Self {
         let type_kind = unsafe {
             LLVMGetTypeKind(type_)
         };

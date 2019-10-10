@@ -15,11 +15,11 @@ use crate::values::{ArrayValue, BasicValueEnum, StructValue, IntValue, AsValueRe
 
 /// A `StructType` is the type of a heterogeneous container of types.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct StructType {
-    struct_type: Type,
+pub struct StructType<'ctx> {
+    struct_type: Type<'ctx>,
 }
 
-impl StructType {
+impl<'ctx> StructType<'ctx> {
     pub(crate) fn new(struct_type: LLVMTypeRef) -> Self {
         assert!(!struct_type.is_null());
 
@@ -259,7 +259,7 @@ impl StructType {
     /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
     /// let fn_type = struct_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
+    pub fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.struct_type.fn_type(param_types, is_var_args)
     }
 
@@ -486,8 +486,8 @@ impl StructType {
     }
 }
 
-impl AsTypeRef for StructType {
+impl AsTypeRef for StructType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.struct_type.type_
+        self.struct_type.ty
     }
 }

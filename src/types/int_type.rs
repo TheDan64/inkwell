@@ -57,11 +57,11 @@ impl StringRadix {
 
 /// An `IntType` is the type of an integer constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct IntType {
-    int_type: Type,
+pub struct IntType<'ctx> {
+    int_type: Type<'ctx>,
 }
 
-impl IntType {
+impl<'ctx> IntType<'ctx> {
     pub(crate) fn new(int_type: LLVMTypeRef) -> Self {
         assert!(!int_type.is_null());
 
@@ -356,7 +356,7 @@ impl IntType {
     /// let i8_type = context.i8_type();
     /// let fn_type = i8_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
+    pub fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.int_type.fn_type(param_types, is_var_args)
     }
 
@@ -558,8 +558,8 @@ impl IntType {
     }
 }
 
-impl AsTypeRef for IntType {
+impl AsTypeRef for IntType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.int_type.type_
+        self.int_type.ty
     }
 }

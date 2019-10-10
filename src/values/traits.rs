@@ -28,8 +28,8 @@ macro_rules! trait_value_set {
 macro_rules! math_trait_value_set {
     ($trait_name:ident: $(($value_type:ident => $base_type:ident)),*) => (
         $(
-            impl $trait_name for $value_type {
-                type BaseType = $base_type;
+            impl<'ctx> $trait_name<'ctx> for $value_type {
+                type BaseType = $base_type<'ctx>;
                 fn new(value: LLVMValueRef) -> Self {
                     $value_type::new(value)
                 }
@@ -94,19 +94,19 @@ pub trait BasicValue: AnyValue {
 }
 
 /// Represents a value which is permitted in integer math operations
-pub trait IntMathValue: BasicValue {
-    type BaseType: IntMathType;
+pub trait IntMathValue<'ctx>: BasicValue {
+    type BaseType: IntMathType<'ctx>;
     fn new(value: LLVMValueRef) -> Self;
 }
 
 /// Represents a value which is permitted in floating point math operations
-pub trait FloatMathValue: BasicValue {
-    type BaseType: FloatMathType;
+pub trait FloatMathValue<'ctx>: BasicValue {
+    type BaseType: FloatMathType<'ctx>;
     fn new(value: LLVMValueRef) -> Self;
 }
 
-pub trait PointerMathValue: BasicValue {
-    type BaseType: PointerMathType;
+pub trait PointerMathValue<'ctx>: BasicValue {
+    type BaseType: PointerMathType<'ctx>;
     fn new(value: LLVMValueRef) -> Self;
 }
 

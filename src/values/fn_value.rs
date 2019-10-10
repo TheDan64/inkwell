@@ -237,10 +237,13 @@ impl FunctionValue {
         LLVMDeleteFunction(self.as_value_ref())
     }
 
-    pub fn get_type(&self) -> FunctionType {
+    pub fn get_type<'fixme>(&self) -> FunctionType<'fixme> {
         let ptr_type = PointerType::new(self.fn_value.get_type());
 
-        ptr_type.get_element_type().into_function_type()
+        // FIXME: Placeholder until lifetime is bound to obj not fn
+        unsafe {
+            std::mem::transmute(ptr_type.get_element_type().into_function_type())
+        }
     }
 
     // TODOC: How this works as an exception handler

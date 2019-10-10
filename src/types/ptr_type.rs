@@ -12,11 +12,11 @@ use std::convert::TryFrom;
 
 /// A `PointerType` is the type of a pointer constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct PointerType {
-    ptr_type: Type,
+pub struct PointerType<'ctx> {
+    ptr_type: Type<'ctx>,
 }
 
-impl PointerType {
+impl<'ctx> PointerType<'ctx> {
     pub(crate) fn new(ptr_type: LLVMTypeRef) -> Self {
         assert!(!ptr_type.is_null());
 
@@ -129,7 +129,7 @@ impl PointerType {
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
     /// let fn_type = f32_ptr_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
+    pub fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.ptr_type.fn_type(param_types, is_var_args)
     }
 
@@ -319,8 +319,8 @@ impl PointerType {
     }
 }
 
-impl AsTypeRef for PointerType {
+impl AsTypeRef for PointerType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.ptr_type.type_
+        self.ptr_type.ty
     }
 }
