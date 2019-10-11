@@ -58,7 +58,7 @@ impl<'ctx> PointerType<'ctx> {
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
     /// let f32_ptr_type_size = f32_ptr_type.size_of();
     /// ```
-    pub fn size_of(&self) -> IntValue {
+    pub fn size_of(&self) -> IntValue<'ctx> {
         self.ptr_type.size_of()
     }
 
@@ -75,7 +75,7 @@ impl<'ctx> PointerType<'ctx> {
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
     /// let f32_ptr_type_alignment = f32_ptr_type.get_alignment();
     /// ```
-    pub fn get_alignment(&self) -> IntValue {
+    pub fn get_alignment(&self) -> IntValue<'ctx> {
         self.ptr_type.get_alignment()
     }
 
@@ -112,7 +112,8 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// assert_eq!(*f32_ptr_type.get_context(), context);
     /// ```
-    pub fn get_context(&self) -> ContextRef {
+    // TODO: Move to AnyType trait
+    pub fn get_context(&self) -> ContextRef<'ctx> {
         self.ptr_type.get_context()
     }
 
@@ -211,7 +212,7 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// assert!(f32_ptr_null.is_null());
     /// ```
-    pub fn const_null(&self) -> PointerValue {
+    pub fn const_null(&self) -> PointerValue<'ctx> {
         PointerValue::new(self.ptr_type.const_zero())
     }
 
@@ -231,7 +232,7 @@ impl<'ctx> PointerType<'ctx> {
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
     /// let f32_ptr_zero = f32_ptr_type.const_zero();
     /// ```
-    pub fn const_zero(&self) -> PointerValue {
+    pub fn const_zero(&self) -> PointerValue<'ctx> {
         PointerValue::new(self.ptr_type.const_zero())
     }
 
@@ -249,7 +250,7 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// assert!(f32_ptr_undef.is_undef());
     /// ```
-    pub fn get_undef(&self) -> PointerValue {
+    pub fn get_undef(&self) -> PointerValue<'ctx> {
         PointerValue::new(self.ptr_type.get_undef())
     }
 
@@ -307,7 +308,7 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// assert!(f32_ptr_array.is_const());
     /// ```
-    pub fn const_array(&self, values: &[PointerValue]) -> ArrayValue {
+    pub fn const_array(&self, values: &[PointerValue<'ctx>]) -> ArrayValue<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();

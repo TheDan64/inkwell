@@ -160,10 +160,10 @@ fn test_get_type() {
 
 #[test]
 fn test_get_type_global_context() {
-    let context = Context::get_global();
+    let context = Context::get_global().lock();
     let module = Module::create("my_module");
 
-    assert_eq!(module.get_context(), context);
+    assert_eq!(*module.get_context(), *context);
     assert!(module.get_type("foo").is_none());
 
     let opaque = context.opaque_struct_type("foo");
@@ -171,29 +171,28 @@ fn test_get_type_global_context() {
     assert_eq!(module.get_type("foo").unwrap().into_struct_type(), opaque);
 }
 
-#[test]
-fn test_module_no_double_free() {
-    let _module = {
-        let context = Context::create();
+// TODO: test compile fail
+// #[test]
+// fn test_module_no_double_free() {
+    // let _module = {
+    //     let context = Context::create();
 
-        context.create_module("my_mod")
-    };
+    //     context.create_module("my_mod")
+    // };
+// }
 
-    // Context will live on in the module until here
-}
+// #[test]
+// fn test_owned_module_dropped_ee_and_context() {
+    // let _module = {
+    //     let context = Context::create();
+    //     let module = context.create_module("my_mod");
 
-#[test]
-fn test_owned_module_dropped_ee_and_context() {
-    let _module = {
-        let context = Context::create();
-        let module = context.create_module("my_mod");
-
-        module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-        module
-    };
+    //     module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    //     module
+    // };
 
     // Context and EE will live on in the module until here
-}
+// }
 
 #[test]
 fn test_parse_from_buffer() {
@@ -219,7 +218,7 @@ fn test_parse_from_buffer() {
     let module2_result = Module::parse_bitcode_from_buffer(&buffer);
 
     assert!(module2_result.is_ok());
-    assert_eq!(module2_result.unwrap().get_context(), Context::get_global());
+    assert_eq!(*module2_result.unwrap().get_context(), *Context::get_global().lock());
 
     let module3_result = Module::parse_bitcode_from_buffer_in_context(&garbage_buffer, &context);
 
@@ -266,7 +265,7 @@ fn test_parse_from_path() {
     let module3_result = Module::parse_bitcode_from_path(&temp_path);
 
     assert!(module3_result.is_ok());
-    assert_eq!(module3_result.unwrap().get_context(), Context::get_global());
+    assert_eq!(*module3_result.unwrap().get_context(), *Context::get_global().lock());
 
     let module4_result = Module::parse_bitcode_from_path_in_context(&temp_path, &context);
 

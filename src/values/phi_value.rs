@@ -25,7 +25,7 @@ impl<'ctx> PhiValue<'ctx> {
         }
     }
 
-    pub fn add_incoming(&self, incoming: &[(&dyn BasicValue, &BasicBlock)]) {
+    pub fn add_incoming(&self, incoming: &[(&dyn BasicValue<'ctx>, &BasicBlock)]) {
         let (mut values, mut basic_blocks): (Vec<LLVMValueRef>, Vec<LLVMBasicBlockRef>) = {
             incoming.iter()
                     .map(|&(v, bb)| (v.as_value_ref(), bb.basic_block))
@@ -43,7 +43,7 @@ impl<'ctx> PhiValue<'ctx> {
         }
     }
 
-    pub fn get_incoming(&self, index: u32) -> Option<(BasicValueEnum, BasicBlock)> {
+    pub fn get_incoming(&self, index: u32) -> Option<(BasicValueEnum<'ctx>, BasicBlock)> {
         if index >= self.count_incoming() {
             return None;
         }
@@ -84,15 +84,15 @@ impl<'ctx> PhiValue<'ctx> {
     }
 
     // SubType: -> InstructionValue<Phi>
-    pub fn as_instruction(&self) -> InstructionValue {
+    pub fn as_instruction(&self) -> InstructionValue<'ctx> {
         self.phi_value.as_instruction().expect("PhiValue should always be a Phi InstructionValue")
     }
 
-    pub fn replace_all_uses_with(&self, other: &PhiValue) {
+    pub fn replace_all_uses_with(&self, other: &PhiValue<'ctx>) {
         self.phi_value.replace_all_uses_with(other.as_value_ref())
     }
 
-    pub fn as_basic_value(&self) -> BasicValueEnum {
+    pub fn as_basic_value(&self) -> BasicValueEnum<'ctx> {
         BasicValueEnum::new(self.as_value_ref())
     }
 }

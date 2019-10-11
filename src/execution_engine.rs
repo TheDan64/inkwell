@@ -12,6 +12,7 @@ use std::rc::Rc;
 use std::ops::Deref;
 use std::ffi::CString;
 use std::fmt::{self, Debug, Display, Formatter};
+use std::marker::PhantomData;
 use std::mem::{forget, transmute_copy, size_of, MaybeUninit};
 
 static EE_INNER_PANIC: &str = "ExecutionEngineInner should exist until Drop";
@@ -85,19 +86,19 @@ impl Display for RemoveModuleError {
 // non_global_context is required to ensure last remaining Context ref will drop
 // after EE drop. execution_engine & target_data are an option for drop purposes
 #[derive(PartialEq, Eq, Debug)]
-pub struct ExecutionEngine {
-    non_global_context: Option<Context>,
+pub struct ExecutionEngine<'ctx> {
+    non_global_context: Option<&'ctx Context>,
     execution_engine: Option<ExecEngineInner>,
     target_data: Option<TargetData>,
     jit_mode: bool,
 }
 
-impl ExecutionEngine {
+impl<'ctx> ExecutionEngine<'ctx> {
     pub(crate) fn new(
         execution_engine: Rc<LLVMExecutionEngineRef>,
-        non_global_context: Option<Context>,
+        non_global_context: Option<&'ctx Context>,
         jit_mode: bool,
-    ) -> ExecutionEngine {
+    ) -> Self {
         assert!(!execution_engine.is_null());
 
         // REVIEW: Will we have to do this for LLVMGetExecutionEngineTargetMachine too?
@@ -160,7 +161,7 @@ impl ExecutionEngine {
     /// let fnt = ft.fn_type(&[], false);
     ///
     /// let f = module.add_function("test_fn", fnt, None);
-    /// let b = context.append_basic_block(&f, "entry");
+    /// let b = context.append_basic_block(f, "entry");
     ///
     /// builder.position_at_end(&b);
     ///
@@ -175,11 +176,11 @@ impl ExecutionEngine {
     /// let mut ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     /// ee.add_global_mapping(&extf, sumf as usize);
     ///
-    /// let result = unsafe { ee.run_function(&f, &[]) }.as_float(&ft);
+    /// let result = unsafe { ee.run_function(f, &[]) }.as_float(&ft);
     ///
     /// assert_eq!(result, 128.);
     /// ```
-    pub fn add_global_mapping(&self, value: &dyn AnyValue, addr: usize) {
+    pub fn add_global_mapping(&self, value: &dyn AnyValue<'ctx>, addr: usize) {
         unsafe {
             LLVMAddGlobalMapping(self.execution_engine_inner(), value.as_value_ref(), addr as *mut _)
         }
@@ -202,7 +203,7 @@ impl ExecutionEngine {
     ///
     /// assert!(ee.add_module(&module).is_err());
     /// ```
-    pub fn add_module(&self, module: &Module) -> Result<(), ()> {
+    pub fn add_module(&self, module: &Module<'ctx>) -> Result<(), ()> {
         unsafe {
             LLVMAddModule(self.execution_engine_inner(), module.module.get())
         }
@@ -216,7 +217,7 @@ impl ExecutionEngine {
         Ok(())
     }
 
-    pub fn remove_module(&self, module: &Module) -> Result<(), RemoveModuleError> {
+    pub fn remove_module(&self, module: &Module<'ctx>) -> Result<(), RemoveModuleError> {
         match *module.owned_by_ee.borrow() {
             Some(ref ee) if ee.execution_engine_inner() != self.execution_engine_inner() =>
                 return Err(RemoveModuleError::IncorrectModuleOwner),
@@ -273,7 +274,7 @@ impl ExecutionEngine {
     ///
     /// // Add the function to our module
     /// let f = module.add_function("test_fn", sig, None);
-    /// let b = context.append_basic_block(&f, "entry");
+    /// let b = context.append_basic_block(f, "entry");
     /// builder.position_at_end(&b);
     ///
     /// // Insert a return statement
@@ -346,7 +347,8 @@ impl ExecutionEngine {
     // REVIEW: Can also find nothing if no targeting is initialized. Maybe best to
     // do have a global flag for anything initialized. Catch is that it must be initialized
     // before EE is created
-    pub fn get_function_value(&self, fn_name: &str) -> Result<FunctionValue, FunctionLookupError> {
+    // REVIEW: Should FunctionValue lifetime be tied to self not 'ctx?
+    pub fn get_function_value(&self, fn_name: &str) -> Result<FunctionValue<'ctx>, FunctionLookupError> {
         if !self.jit_mode {
             return Err(FunctionLookupError::JITNotEnabled);
         }
@@ -369,7 +371,7 @@ impl ExecutionEngine {
 
     // TODOC: Marked as unsafe because input function could very well do something unsafe. It's up to the caller
     // to ensure that doesn't happen by defining their function correctly.
-    pub unsafe fn run_function(&self, function: &FunctionValue, args: &[&GenericValue]) -> GenericValue {
+    pub unsafe fn run_function(&self, function: FunctionValue<'ctx>, args: &[&GenericValue]) -> GenericValue {
         let mut args: Vec<LLVMGenericValueRef> = args.iter()
                                                      .map(|val| val.generic_value)
                                                      .collect();
@@ -382,7 +384,7 @@ impl ExecutionEngine {
     // TODOC: Marked as unsafe because input function could very well do something unsafe. It's up to the caller
     // to ensure that doesn't happen by defining their function correctly.
     // SubType: Only for JIT EEs?
-    pub unsafe fn run_function_as_main(&self, function: &FunctionValue, args: &[&str]) -> c_int {
+    pub unsafe fn run_function_as_main(&self, function: FunctionValue<'ctx>, args: &[&str]) -> c_int {
         let cstring_args: Vec<CString> = args.iter().map(|&arg| CString::new(arg).expect("Conversion to CString failed unexpectedly")).collect();
         let raw_args: Vec<*const _> = cstring_args.iter().map(|arg| arg.as_ptr()).collect();
 
@@ -391,7 +393,7 @@ impl ExecutionEngine {
         LLVMRunFunctionAsMain(self.execution_engine_inner(), function.as_value_ref(), raw_args.len() as u32, raw_args.as_ptr(), environment_variables.as_ptr()) // REVIEW: usize to u32 cast ok??
     }
 
-    pub fn free_fn_machine_code(&self, function: &FunctionValue) {
+    pub fn free_fn_machine_code(&self, function: FunctionValue<'ctx>) {
         unsafe {
             LLVMFreeMachineCodeForFunction(self.execution_engine_inner(), function.as_value_ref())
         }
@@ -414,7 +416,7 @@ impl ExecutionEngine {
 
 // Modules owned by the EE will be discarded by the EE so we don't
 // want owned modules to drop.
-impl Drop for ExecutionEngine {
+impl Drop for ExecutionEngine<'_> {
     fn drop(&mut self) {
         forget(
             self.target_data
@@ -429,8 +431,8 @@ impl Drop for ExecutionEngine {
     }
 }
 
-impl Clone for ExecutionEngine {
-    fn clone(&self) -> ExecutionEngine {
+impl Clone for ExecutionEngine<'_> {
+    fn clone(&self) -> Self {
         let context = self.non_global_context.clone();
         let execution_engine_rc = self.execution_engine_rc().clone();
 

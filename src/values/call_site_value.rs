@@ -99,7 +99,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// assert!(call_site_value.try_as_basic_value().is_right());
     /// ```
-    pub fn try_as_basic_value(&self) -> Either<BasicValueEnum, InstructionValue> {
+    pub fn try_as_basic_value(&self) -> Either<BasicValueEnum<'ctx>, InstructionValue<'ctx>> {
         unsafe {
             match LLVMGetTypeKind(LLVMTypeOf(self.as_value_ref())) {
                 LLVMTypeKind::LLVMVoidTypeKind => Either::Right(InstructionValue::new(self.as_value_ref())),
@@ -166,7 +166,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// assert_eq!(call_site_value.get_called_fn_value(), fn_value);
     /// ```
     #[llvm_versions(3.9..=latest)]
-    pub fn get_called_fn_value(&self) -> FunctionValue {
+    pub fn get_called_fn_value(&self) -> FunctionValue<'ctx> {
         use llvm_sys::core::LLVMGetCalledValue;
 
         let ptr = unsafe {

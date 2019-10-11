@@ -151,7 +151,7 @@ impl<'ctx> FunctionType<'ctx> {
     ///
     /// assert_eq!(*fn_type.get_context(), context);
     /// ```
-    pub fn get_context(&self) -> ContextRef {
+    pub fn get_context(&self) -> ContextRef<'ctx> {
         self.fn_type.get_context()
     }
 

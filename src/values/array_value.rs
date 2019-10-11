@@ -36,7 +36,7 @@ impl<'ctx> ArrayValue<'ctx> {
     }
 
     /// Gets the type of this `ArrayValue`.
-    pub fn get_type(&self) -> ArrayType {
+    pub fn get_type(&self) -> ArrayType<'ctx> {
         ArrayType::new(self.array_value.get_type())
     }
 

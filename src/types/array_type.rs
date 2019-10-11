@@ -54,7 +54,7 @@ impl<'ctx> ArrayType<'ctx> {
     /// let i8_array_type = i8_type.array_type(3);
     /// let i8_array_type_size = i8_array_type.size_of();
     /// ```
-    pub fn size_of(&self) -> Option<IntValue> {
+    pub fn size_of(&self) -> Option<IntValue<'ctx>> {
         if self.is_sized() {
             return Some(self.array_type.size_of())
         }
@@ -74,7 +74,7 @@ impl<'ctx> ArrayType<'ctx> {
     /// let i8_array_type = i8_type.array_type(3);
     /// let i8_array_type_alignment = i8_array_type.get_alignment();
     /// ```
-    pub fn get_alignment(&self) -> IntValue {
+    pub fn get_alignment(&self) -> IntValue<'ctx> {
         self.array_type.get_alignment()
     }
 
@@ -110,7 +110,7 @@ impl<'ctx> ArrayType<'ctx> {
     ///
     /// assert_eq!(*i8_array_type.get_context(), context);
     /// ```
-    pub fn get_context(&self) -> ContextRef {
+    pub fn get_context(&self) -> ContextRef<'ctx> {
         self.array_type.get_context()
     }
 
@@ -163,7 +163,7 @@ impl<'ctx> ArrayType<'ctx> {
     ///
     /// assert!(f32_array_array.is_const());
     /// ```
-    pub fn const_array(&self, values: &[ArrayValue]) -> ArrayValue {
+    pub fn const_array(&self, values: &[ArrayValue<'ctx>]) -> ArrayValue<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();
@@ -186,7 +186,7 @@ impl<'ctx> ArrayType<'ctx> {
     /// let i8_array_type = i8_type.array_type(3);
     /// let i8_array_zero = i8_array_type.const_zero();
     /// ```
-    pub fn const_zero(&self) -> ArrayValue {
+    pub fn const_zero(&self) -> ArrayValue<'ctx> {
         ArrayValue::new(self.array_type.const_zero())
     }
 
@@ -234,7 +234,7 @@ impl<'ctx> ArrayType<'ctx> {
     ///
     /// assert!(i8_array_undef.is_undef());
     /// ```
-    pub fn get_undef(&self) -> ArrayValue {
+    pub fn get_undef(&self) -> ArrayValue<'ctx> {
         ArrayValue::new(self.array_type.get_undef())
     }
 

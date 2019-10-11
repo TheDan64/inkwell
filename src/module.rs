@@ -133,20 +133,20 @@ enum_rename!{
 /// The underlying module will be disposed when dropping this object.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Module<'ctx> {
-    pub(crate) non_global_context: Option<Context>, // REVIEW: Could we just set context to the global context?
+    pub(crate) non_global_context: Option<&'ctx Context>, // REVIEW: Could we just set context to the global context?
     data_layout: RefCell<Option<DataLayout>>,
     pub(crate) module: Cell<LLVMModuleRef>,
-    pub(crate) owned_by_ee: RefCell<Option<ExecutionEngine>>,
+    pub(crate) owned_by_ee: RefCell<Option<ExecutionEngine<'ctx>>>,
     _marker: PhantomData<&'ctx ()>,
 }
 
 impl<'ctx> Module<'ctx> {
-    pub(crate) fn new(module: LLVMModuleRef, context: Option<&Context>) -> Self {
+    pub(crate) fn new(module: LLVMModuleRef, context: Option<&'ctx Context>) -> Self {
         debug_assert!(!module.is_null());
 
         Module {
             module: Cell::new(module),
-            non_global_context: context.map(|ctx| ctx.clone()),
+            non_global_context: context,
             owned_by_ee: RefCell::new(None),
             data_layout: RefCell::new(Some(Module::get_borrowed_data_layout(module))),
             _marker: PhantomData,
@@ -162,12 +162,12 @@ impl<'ctx> Module<'ctx> {
     /// use inkwell::context::Context;
     /// use inkwell::module::Module;
     ///
-    /// let context = Context::get_global();
+    /// let context = Context::get_global().lock();
     /// let module = Module::create("my_module");
     ///
-    /// assert_eq!(module.get_context(), context);
+    /// assert_eq!(*module.get_context(), *context);
     /// ```
-    pub fn create(name: &str) -> Module<'static> {
+    pub fn create(name: &str) -> Self {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let module = unsafe {
@@ -187,8 +187,9 @@ impl<'ctx> Module<'ctx> {
     /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::{Module, Linkage};
+    /// use inkwell::types::FunctionType;
     ///
-    /// let context = Context::get_global();
+    /// let context = Context::get_global().lock();
     /// let module = Module::create("my_module");
     ///
     /// let fn_type = context.f32_type().fn_type(&[], false);
@@ -220,10 +221,10 @@ impl<'ctx> Module<'ctx> {
     /// use inkwell::context::{Context, ContextRef};
     /// use inkwell::module::Module;
     ///
-    /// let global_context = Context::get_global();
+    /// let global_context = Context::get_global().lock();
     /// let global_module = Module::create("my_global_module");
     ///
-    /// assert_eq!(global_module.get_context(), global_context);
+    /// assert_eq!(*global_module.get_context(), *global_context);
     ///
     /// let local_context = Context::create();
     /// let local_module = local_context.create_module("my_module");
@@ -231,13 +232,12 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(*local_module.get_context(), local_context);
     /// assert_ne!(local_context, *global_context);
     /// ```
-    pub fn get_context(&self) -> ContextRef {
+    pub fn get_context(&self) -> ContextRef<'ctx> {
         let context = unsafe {
             LLVMGetModuleContext(self.module.get())
         };
 
-        // REVIEW: This probably should be somehow using the existing context Rc
-        ContextRef::new(Context::new(Rc::new(context)))
+        ContextRef::new(context)
     }
 
     /// Gets the first `FunctionValue` defined in this `Module`.
@@ -416,14 +416,14 @@ impl<'ctx> Module<'ctx> {
     ///
     /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
     ///
-    /// let context = Context::get_global();
+    /// let context = Context::get_global().lock();
     /// let module = Module::create("my_module");
     /// let execution_engine = module.create_execution_engine().unwrap();
     ///
-    /// assert_eq!(module.get_context(), context);
+    /// assert_eq!(*module.get_context(), *context);
     /// ```
     // SubType: ExecutionEngine<Basic?>
-    pub fn create_execution_engine(&self) -> Result<ExecutionEngine, LLVMString> {
+    pub fn create_execution_engine(&self) -> Result<ExecutionEngine<'ctx>, LLVMString> {
         Target::initialize_native(&InitializationConfig::default())
             .map_err(|mut err_string| {
                 err_string.push('\0');
@@ -448,7 +448,7 @@ impl<'ctx> Module<'ctx> {
             return Err(LLVMString::new(err_string));
         }
 
-        let context = self.non_global_context.clone();
+        let context = self.non_global_context;
         let execution_engine = unsafe { execution_engine.assume_init() };
         let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), context, false);
 
@@ -467,14 +467,14 @@ impl<'ctx> Module<'ctx> {
     ///
     /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
     ///
-    /// let context = Context::get_global();
+    /// let context = Context::get_global().lock();
     /// let module = Module::create("my_module");
     /// let execution_engine = module.create_interpreter_execution_engine().unwrap();
     ///
-    /// assert_eq!(module.get_context(), context);
+    /// assert_eq!(*module.get_context(), *context);
     /// ```
     // SubType: ExecutionEngine<Interpreter>
-    pub fn create_interpreter_execution_engine(&self) -> Result<ExecutionEngine, LLVMString> {
+    pub fn create_interpreter_execution_engine(&self) -> Result<ExecutionEngine<'ctx>, LLVMString> {
         Target::initialize_native(&InitializationConfig::default())
             .map_err(|mut err_string| {
                 err_string.push('\0');
@@ -520,14 +520,14 @@ impl<'ctx> Module<'ctx> {
     ///
     /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
     ///
-    /// let context = Context::get_global();
+    /// let context = Context::get_global().lock();
     /// let module = Module::create("my_module");
     /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     ///
-    /// assert_eq!(module.get_context(), context);
+    /// assert_eq!(*module.get_context(), *context);
     /// ```
     // SubType: ExecutionEngine<Jit>
-    pub fn create_jit_execution_engine(&self, opt_level: OptimizationLevel) -> Result<ExecutionEngine, LLVMString> {
+    pub fn create_jit_execution_engine(&self, opt_level: OptimizationLevel) -> Result<ExecutionEngine<'ctx>, LLVMString> {
         Target::initialize_native(&InitializationConfig::default())
             .map_err(|mut err_string| {
                 err_string.push('\0');
@@ -578,7 +578,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_first_global().unwrap(), global);
     /// assert_eq!(module.get_last_global().unwrap(), global);
     /// ```
-    pub fn add_global<'fixme, T: BasicType<'fixme>>(&self, type_: T, address_space: Option<AddressSpace>, name: &str) -> GlobalValue<'ctx> {
+    pub fn add_global<T: BasicType<'ctx>>(&self, type_: T, address_space: Option<AddressSpace>, name: &str) -> GlobalValue<'ctx> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -854,9 +854,9 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(md_0.len(), 1);
     /// assert_eq!(md_1.len(), 2);
-    /// assert_eq!(md_0[0].as_metadata_value().get_string_value(), md_string.get_string_value());
-    /// assert_eq!(md_1[0].as_int_value(), &bool_val);
-    /// assert_eq!(md_1[1].as_float_value(), &f32_val);
+    /// assert_eq!(md_0[0].into_metadata_value().get_string_value(), md_string.get_string_value());
+    /// assert_eq!(md_1[0].into_int_value(), bool_val);
+    /// assert_eq!(md_1[1].into_float_value(), f32_val);
     /// ```
     pub fn add_global_metadata(&self, key: &str, metadata: &MetadataValue<'ctx>) {
         let c_string = CString::new(key).expect("Conversion to CString failed unexpectedly");
@@ -900,9 +900,9 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(md_0.len(), 1);
     /// assert_eq!(md_1.len(), 2);
-    /// assert_eq!(md_0[0].as_metadata_value().get_string_value(), md_string.get_string_value());
-    /// assert_eq!(md_1[0].as_int_value(), &bool_val);
-    /// assert_eq!(md_1[1].as_float_value(), &f32_val);
+    /// assert_eq!(md_0[0].into_metadata_value().get_string_value(), md_string.get_string_value());
+    /// assert_eq!(md_1[0].into_int_value(), bool_val);
+    /// assert_eq!(md_1[1].into_float_value(), f32_val);
     /// ```
     pub fn get_global_metadata_size(&self, key: &str) -> u32 {
         let c_string = CString::new(key).expect("Conversion to CString failed unexpectedly");
@@ -946,9 +946,9 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(md_0.len(), 1);
     /// assert_eq!(md_1.len(), 2);
-    /// assert_eq!(md_0[0].as_metadata_value().get_string_value(), md_string.get_string_value());
-    /// assert_eq!(md_1[0].as_int_value(), &bool_val);
-    /// assert_eq!(md_1[1].as_float_value(), &f32_val);
+    /// assert_eq!(md_0[0].into_metadata_value().get_string_value(), md_string.get_string_value());
+    /// assert_eq!(md_1[0].into_int_value(), bool_val);
+    /// assert_eq!(md_1[1].into_float_value(), f32_val);
     /// ```
     pub fn get_global_metadata(&self, key: &str) -> Vec<MetadataValue<'ctx>> {
         let c_string = CString::new(key).expect("Conversion to CString failed unexpectedly");
@@ -1073,7 +1073,7 @@ impl<'ctx> Module<'ctx> {
     /// let buffer = MemoryBuffer::create_from_file(&path).unwrap();
     /// let module = Module::parse_bitcode_from_buffer(&buffer);
     ///
-    /// assert_eq!(module.unwrap().get_context(), Context::get_global());
+    /// assert_eq!(*module.unwrap().get_context(), *Context::get_global().lock());
     ///
     /// ```
     pub fn parse_bitcode_from_buffer(buffer: &MemoryBuffer) -> Result<Self, LLVMString> {
@@ -1113,7 +1113,7 @@ impl<'ctx> Module<'ctx> {
     /// let buffer = MemoryBuffer::create_from_file(&path).unwrap();
     /// let module = Module::parse_bitcode_from_buffer_in_context(&buffer, &context);
     ///
-    /// assert_eq!(module.unwrap().get_context(), Context::get_global());
+    /// assert_eq!(*module.unwrap().get_context(), *Context::get_global().lock());
     ///
     /// ```
     pub fn parse_bitcode_from_buffer_in_context(buffer: &MemoryBuffer, context: &'ctx Context) -> Result<Self, LLVMString> {
@@ -1125,7 +1125,7 @@ impl<'ctx> Module<'ctx> {
         // error diagnostics handler
         #[allow(deprecated)]
         let success = unsafe {
-            LLVMParseBitcodeInContext(*context.context, buffer.memory_buffer, module.as_mut_ptr(), err_string.as_mut_ptr())
+            LLVMParseBitcodeInContext(context.context, buffer.memory_buffer, module.as_mut_ptr(), err_string.as_mut_ptr())
         };
 
         if success != 0 {
@@ -1150,7 +1150,7 @@ impl<'ctx> Module<'ctx> {
     /// let path = Path::new("foo/bar.bc");
     /// let module = Module::parse_bitcode_from_path(&path);
     ///
-    /// assert_eq!(module.unwrap().get_context(), Context::get_global());
+    /// assert_eq!(*module.unwrap().get_context(), *Context::get_global().lock());
     ///
     /// ```
     // LLVMGetBitcodeModule was a pain to use, so I seem to be able to achieve the same effect
@@ -1390,11 +1390,11 @@ impl<'ctx> Module<'ctx> {
             return None;
         }
 
-        let global_ctx = Context::get_global();
-        let ctx = self.non_global_context.as_ref().unwrap_or(&*global_ctx);
+        let global_ctx = Context::get_global().lock();
+        let ctx = self.non_global_context.unwrap_or(&*global_ctx);
 
         let flag_value = unsafe {
-            LLVMMetadataAsValue(*ctx.context, flag)
+            LLVMMetadataAsValue(ctx.context, flag)
         };
 
         Some(MetadataValue::new(flag_value))
@@ -1439,7 +1439,7 @@ impl Clone for Module<'_> {
             LLVMCloneModule(self.module.get())
         };
 
-        Module::new(module, self.non_global_context.as_ref())
+        Module::new(module, self.non_global_context)
     }
 }
 

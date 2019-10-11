@@ -839,29 +839,29 @@ impl<'a> Parser<'a> {
 pub struct Compiler<'a, 'ctx> {
     pub context: &'ctx Context,
     pub builder: &'a Builder<'ctx>,
-    pub fpm: &'a PassManager<FunctionValue>,
-    pub module: &'a Module,
+    pub fpm: &'a PassManager<FunctionValue<'ctx>>,
+    pub module: &'a Module<'ctx>,
     pub function: &'a Function,
 
-    variables: HashMap<String, PointerValue>,
-    fn_value_opt: Option<FunctionValue>
+    variables: HashMap<String, PointerValue<'ctx>>,
+    fn_value_opt: Option<FunctionValue<'ctx>>
 }
 
 impl<'a, 'ctx> Compiler<'a, 'ctx> {
     /// Gets a defined function given its name.
     #[inline]
-    fn get_function(&self, name: &str) -> Option<FunctionValue> {
+    fn get_function(&self, name: &str) -> Option<FunctionValue<'ctx>> {
         self.module.get_function(name)
     }
 
     /// Returns the `FunctionValue` representing the function being compiled.
     #[inline]
-    fn fn_value(&self) -> FunctionValue {
+    fn fn_value(&self) -> FunctionValue<'ctx> {
         self.fn_value_opt.unwrap()
     }
 
     /// Creates a new stack allocation instruction in the entry block of the function.
-    fn create_entry_block_alloca(&self, name: &str) -> PointerValue {
+    fn create_entry_block_alloca(&self, name: &str) -> PointerValue<'ctx> {
         let builder = self.context.create_builder();
 
         let entry = self.fn_value().get_first_basic_block().unwrap();
@@ -875,7 +875,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
     }
 
     /// Compiles the specified `Expr` into an LLVM `FloatValue`.
-    fn compile_expr(&mut self, expr: &Expr) -> Result<FloatValue, &'static str> {
+    fn compile_expr(&mut self, expr: &Expr) -> Result<FloatValue<'ctx>, &'static str> {
         match *expr {
             Expr::Number(nb) => Ok(self.context.f64_type().const_float(nb)),
 
@@ -1002,9 +1002,9 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                 let cond = self.builder.build_float_compare(FloatPredicate::ONE, cond, zero_const, "ifcond");
 
                 // build branch
-                let then_bb = self.context.append_basic_block(&parent, "then");
-                let else_bb = self.context.append_basic_block(&parent, "else");
-                let cont_bb = self.context.append_basic_block(&parent, "ifcont");
+                let then_bb = self.context.append_basic_block(parent, "then");
+                let else_bb = self.context.append_basic_block(parent, "else");
+                let cont_bb = self.context.append_basic_block(parent, "ifcont");
 
                 self.builder.build_conditional_branch(cond, &then_bb, &else_bb);
 
@@ -1044,7 +1044,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                 self.builder.build_store(start_alloca, start);
 
                 // go from current block to loop block
-                let loop_bb = self.context.append_basic_block(&parent, "loop");
+                let loop_bb = self.context.append_basic_block(parent, "loop");
 
                 self.builder.build_unconditional_branch(&loop_bb);
                 self.builder.position_at_end(&loop_bb);
@@ -1071,7 +1071,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                 self.builder.build_store(start_alloca, next_var);
 
                 let end_cond = self.builder.build_float_compare(FloatPredicate::ONE, end_cond, self.context.f64_type().const_float(0.0), "loopcond");
-                let after_bb = self.context.append_basic_block(&parent, "afterloop");
+                let after_bb = self.context.append_basic_block(parent, "afterloop");
 
                 self.builder.build_conditional_branch(end_cond, &loop_bb, &after_bb);
                 self.builder.position_at_end(&after_bb);
@@ -1088,7 +1088,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
     }
 
     /// Compiles the specified `Prototype` into an extern LLVM `FunctionValue`.
-    fn compile_prototype(&self, proto: &Prototype) -> Result<FunctionValue, &'static str> {
+    fn compile_prototype(&self, proto: &Prototype) -> Result<FunctionValue<'ctx>, &'static str> {
         let ret_type = self.context.f64_type();
         let args_types = std::iter::repeat(ret_type)
             .take(proto.args.len())
@@ -1109,7 +1109,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
     }
 
     /// Compiles the specified `Function` into an LLVM `FunctionValue`.
-    fn compile_fn(&mut self) -> Result<FunctionValue, &'static str> {
+    fn compile_fn(&mut self) -> Result<FunctionValue<'ctx>, &'static str> {
         let proto = &self.function.prototype;
         let function = self.compile_prototype(proto)?;
 
@@ -1118,7 +1118,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
             return Ok(function);
         }
 
-        let entry = self.context.append_basic_block(&function, "entry");
+        let entry = self.context.append_basic_block(function, "entry");
 
         self.builder.position_at_end(&entry);
 
@@ -1157,7 +1157,13 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
     }
 
     /// Compiles the specified `Function` in the given `Context` and using the specified `Builder`, `PassManager`, and `Module`.
-    pub fn compile(context: &'a Context, builder: &'a Builder, pass_manager: &'a PassManager<FunctionValue>, module: &'a Module, function: &Function) -> Result<FunctionValue, &'static str> {
+    pub fn compile(
+        context: &'ctx Context,
+        builder: &'a Builder<'ctx>,
+        pass_manager: &'a PassManager<FunctionValue<'ctx>>,
+        module: &'a Module<'ctx>,
+        function: &Function,
+    ) -> Result<FunctionValue<'ctx>, &'static str> {
         let mut compiler = Compiler {
             context: context,
             builder: builder,

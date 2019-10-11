@@ -52,7 +52,7 @@ impl<'ctx> VoidType<'ctx> {
     ///
     /// assert_eq!(*void_type.get_context(), context);
     /// ```
-    pub fn get_context(&self) -> ContextRef {
+    pub fn get_context(&self) -> ContextRef<'ctx> {
         self.void_type.get_context()
     }
 
@@ -82,7 +82,7 @@ impl<'ctx> VoidType<'ctx> {
     ///
     /// let void_type = VoidType::void_type();
     ///
-    /// assert_eq!(void_type.get_context(), Context::get_global());
+    /// assert_eq!(*void_type.get_context(), *Context::get_global().lock());
     /// ```
     pub fn void_type() -> Self {
         let void_type = unsafe {

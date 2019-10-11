@@ -13,7 +13,7 @@ use crate::values::{AsValueRef, ArrayValue, GenericValue, IntValue};
 use std::convert::TryFrom;
 
 /// How to interpret a string or digits used to construct an integer constant.
-#[derive(Clone, Copy, Debug, EnumAsGetters, EnumIntoGetters, EnumToGetters, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum StringRadix {
     /// Binary 0 or 1
     Binary = 2,
@@ -82,7 +82,7 @@ impl<'ctx> IntType<'ctx> {
     /// let bool_type = IntType::bool_type();
     ///
     /// assert_eq!(bool_type.get_bit_width(), 1);
-    /// assert_eq!(bool_type.get_context(), Context::get_global());
+    /// assert_eq!(*bool_type.get_context(), *Context::get_global().lock());
     /// ```
     pub fn bool_type() -> Self {
         let type_ = unsafe {
@@ -104,7 +104,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i8_type = IntType::i8_type();
     ///
     /// assert_eq!(i8_type.get_bit_width(), 8);
-    /// assert_eq!(i8_type.get_context(), Context::get_global());
+    /// assert_eq!(*i8_type.get_context(), *Context::get_global().lock());
     /// ```
     pub fn i8_type() -> Self {
         let type_ = unsafe {
@@ -126,7 +126,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i16_type = IntType::i16_type();
     ///
     /// assert_eq!(i16_type.get_bit_width(), 16);
-    /// assert_eq!(i16_type.get_context(), Context::get_global());
+    /// assert_eq!(*i16_type.get_context(), *Context::get_global().lock());
     /// ```
     pub fn i16_type() -> Self {
         let type_ = unsafe {
@@ -148,7 +148,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i32_type = IntType::i32_type();
     ///
     /// assert_eq!(i32_type.get_bit_width(), 32);
-    /// assert_eq!(i32_type.get_context(), Context::get_global());
+    /// assert_eq!(*i32_type.get_context(), *Context::get_global().lock());
     /// ```
     pub fn i32_type() -> Self {
         let type_ = unsafe {
@@ -170,7 +170,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i64_type = IntType::i64_type();
     ///
     /// assert_eq!(i64_type.get_bit_width(), 64);
-    /// assert_eq!(i64_type.get_context(), Context::get_global());
+    /// assert_eq!(*i64_type.get_context(), *Context::get_global().lock());
     /// ```
     pub fn i64_type() -> Self {
         let type_ = unsafe {
@@ -192,7 +192,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i128_type = IntType::i128_type();
     ///
     /// assert_eq!(i128_type.get_bit_width(), 128);
-    /// assert_eq!(i128_type.get_context(), Context::get_global());
+    /// assert_eq!(*i128_type.get_context(), *Context::get_global().lock());
     /// ```
     pub fn i128_type() -> Self {
         // REVIEW: The docs says there's a LLVMInt128Type, but
@@ -213,7 +213,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i42_type = IntType::custom_width_int_type(42);
     ///
     /// assert_eq!(i42_type.get_bit_width(), 42);
-    /// assert_eq!(i42_type.get_context(), Context::get_global());
+    /// assert_eq!(*i42_type.get_context(), *Context::get_global().lock());
     /// ```
     pub fn custom_width_int_type(bits: u32) -> Self {
         let type_ = unsafe {
@@ -240,7 +240,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i32_value = i32_type.const_int(42, false);
     /// ```
     // TODOC: Maybe better explain sign extension
-    pub fn const_int(&self, value: u64, sign_extend: bool) -> IntValue {
+    pub fn const_int(&self, value: u64, sign_extend: bool) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstInt(self.as_type_ref(), value, sign_extend as i32)
         };
@@ -296,7 +296,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i64_type = context.i64_type();
     /// let i64_val = i64_type.const_int_arbitrary_precision(&[1, 2]);
     /// ```
-    pub fn const_int_arbitrary_precision(&self, words: &[u64]) -> IntValue {
+    pub fn const_int_arbitrary_precision(&self, words: &[u64]) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstIntOfArbitraryPrecision(self.as_type_ref(), words.len() as u32, words.as_ptr())
         };
@@ -320,7 +320,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i32_type = context.i32_type();
     /// let i32_ptr_value = i32_type.const_all_ones();
     /// ```
-    pub fn const_all_ones(&self) -> IntValue {
+    pub fn const_all_ones(&self) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstAllOnes(self.as_type_ref())
         };
@@ -341,7 +341,7 @@ impl<'ctx> IntType<'ctx> {
     ///
     /// assert_eq!(i8_zero.print_to_string().to_string(), "i8 0");
     /// ```
-    pub fn const_zero(&self) -> IntValue {
+    pub fn const_zero(&self) -> IntValue<'ctx> {
         IntValue::new(self.int_type.const_zero())
     }
 
@@ -408,7 +408,7 @@ impl<'ctx> IntType<'ctx> {
     ///
     /// assert_eq!(*i8_type.get_context(), context);
     /// ```
-    pub fn get_context(&self) -> ContextRef {
+    pub fn get_context(&self) -> ContextRef<'ctx> {
         self.int_type.get_context()
     }
 
@@ -441,7 +441,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i8_type = context.i8_type();
     /// let i8_type_size = i8_type.size_of();
     /// ```
-    pub fn size_of(&self) -> IntValue {
+    pub fn size_of(&self) -> IntValue<'ctx> {
         self.int_type.size_of()
     }
 
@@ -456,7 +456,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i8_type = context.i8_type();
     /// let i8_type_alignment = i8_type.get_alignment();
     /// ```
-    pub fn get_alignment(&self) -> IntValue {
+    pub fn get_alignment(&self) -> IntValue<'ctx> {
         self.int_type.get_alignment()
     }
 
@@ -519,7 +519,7 @@ impl<'ctx> IntType<'ctx> {
     ///
     /// assert!(i8_undef.is_undef());
     /// ```
-    pub fn get_undef(&self) -> IntValue {
+    pub fn get_undef(&self) -> IntValue<'ctx> {
         IntValue::new(self.int_type.get_undef())
     }
 
@@ -546,7 +546,7 @@ impl<'ctx> IntType<'ctx> {
     ///
     /// assert!(i8_array.is_const());
     /// ```
-    pub fn const_array(&self, values: &[IntValue]) -> ArrayValue {
+    pub fn const_array(&self, values: &[IntValue<'ctx>]) -> ArrayValue<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();

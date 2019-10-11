@@ -74,7 +74,7 @@ impl<'ctx> MetadataValue<'ctx> {
         }
     }
 
-    pub fn create_node(values: &[&dyn BasicValue]) -> Self {
+    pub fn create_node(values: &[&dyn BasicValue<'ctx>]) -> Self {
         let mut tuple_values: Vec<LLVMValueRef> = values.iter()
                                                         .map(|val| val.as_value_ref())
                                                         .collect();
@@ -157,7 +157,7 @@ impl<'ctx> MetadataValue<'ctx> {
         self.metadata_value.print_to_stderr()
     }
 
-    pub fn replace_all_uses_with(&self, other: &MetadataValue) {
+    pub fn replace_all_uses_with(&self, other: &MetadataValue<'ctx>) {
         self.metadata_value.replace_all_uses_with(other.as_value_ref())
     }
 }

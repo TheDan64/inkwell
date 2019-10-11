@@ -18,7 +18,7 @@ fn test_build_call() {
     let fn_type = f32_type.fn_type(&[], false);
 
     let function = module.add_function("get_pi", fn_type, None);
-    let basic_block = context.append_basic_block(&function, "entry");
+    let basic_block = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&basic_block);
 
@@ -27,7 +27,7 @@ fn test_build_call() {
     builder.build_return(Some(&pi));
 
     let function2 = module.add_function("wrapper", fn_type, None);
-    let basic_block2 = context.append_basic_block(&function2, "entry");
+    let basic_block2 = context.append_basic_block(function2, "entry");
 
     builder.position_at_end(&basic_block2);
 
@@ -49,7 +49,7 @@ fn test_build_call() {
     let void_type = context.void_type();
     let fn_type2 = void_type.fn_type(&[], false);
     let function3 = module.add_function("call_fn", fn_type2, None);
-    let basic_block3 = context.append_basic_block(&function3, "entry");
+    let basic_block3 = context.append_basic_block(function3, "entry");
     let fn_ptr = function3.as_global_value().as_pointer_value();
     let fn_ptr_type = fn_ptr.get_type();
 
@@ -90,7 +90,7 @@ fn test_null_checked_ptr_ops() {
     let one = i64_type.const_int(1, false);
 
     let function = module.add_function("check_null_index1", fn_type, None);
-    let entry = context.append_basic_block(&function, "entry");
+    let entry = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&entry);
 
@@ -127,7 +127,7 @@ fn test_null_checked_ptr_ops() {
     // }
 
     let function = module.add_function("check_null_index2", fn_type, None);
-    let entry = context.append_basic_block(&function, "entry");
+    let entry = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&entry);
 

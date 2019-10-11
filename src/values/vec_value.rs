@@ -168,7 +168,7 @@ impl<'ctx> VectorValue<'ctx> {
     }
 
     // SubTypes: self can only be VectoValue<IntValue<bool>>
-    pub fn const_select<BV: BasicValue<'ctx>>(&self, then: BV, else_: BV) -> BasicValueEnum {
+    pub fn const_select<BV: BasicValue<'ctx>>(&self, then: BV, else_: BV) -> BasicValueEnum<'ctx> {
         let value = unsafe {
             LLVMConstSelect(self.as_value_ref(), then.as_value_ref(), else_.as_value_ref())
         };
@@ -177,7 +177,7 @@ impl<'ctx> VectorValue<'ctx> {
     }
 
     // SubTypes: <V: VectorValue<T, Const>> self: V, right: V, mask: V -> V
-    pub fn const_shuffle_vector(&self, right: VectorValue<'ctx>, mask: VectorValue<'ctx>) -> VectorValue {
+    pub fn const_shuffle_vector(&self, right: VectorValue<'ctx>, mask: VectorValue<'ctx>) -> VectorValue<'ctx> {
         let value = unsafe {
             LLVMConstShuffleVector(self.as_value_ref(), right.as_value_ref(), mask.as_value_ref())
         };

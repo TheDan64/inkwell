@@ -195,7 +195,7 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// assert_eq!(*struct_type.get_context(), context);
     /// ```
-    pub fn get_context(&self) -> ContextRef {
+    pub fn get_context(&self) -> ContextRef<'ctx> {
         self.struct_type.get_context()
     }
 
@@ -332,7 +332,7 @@ impl<'ctx> StructType<'ctx> {
     /// let i8_type = IntType::i8_type();
     /// let struct_type = StructType::struct_type(&[f32_type.into(), i8_type.into()], false);
     ///
-    /// assert_eq!(struct_type.get_context(), Context::get_global());
+    /// assert_eq!(*struct_type.get_context(), *Context::get_global().lock());
     /// ```
     pub fn struct_type(field_types: &[BasicTypeEnum<'ctx>], packed: bool) -> Self {
         let mut field_types: Vec<LLVMTypeRef> = field_types.iter()

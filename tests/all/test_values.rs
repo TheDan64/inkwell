@@ -166,7 +166,7 @@ fn test_set_get_name() {
     let fn_type = void_type.fn_type(&fn_type_params, false);
 
     let function = module.add_function("do_stuff", fn_type, None);
-    let basic_block = context.append_basic_block(&function, "entry");
+    let basic_block = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&basic_block);
 
@@ -329,7 +329,7 @@ fn test_verify_fn() {
     #[cfg(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0"))]
     assert!(function.verify(false));
 
-    let basic_block = context.append_basic_block(&function, "entry");
+    let basic_block = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&basic_block);
     builder.build_return(None);
@@ -479,8 +479,8 @@ fn test_metadata() {
 
     assert_eq!(md_node.get_string_value(), None);
     assert_eq!(node_values.len(), 2);
-    assert_eq!(node_values[0].as_int_value(), &bool_val);
-    assert_eq!(node_values[1].as_float_value(), &f32_val);
+    assert_eq!(node_values[0].into_int_value(), bool_val);
+    assert_eq!(node_values[1].into_float_value(), f32_val);
 
     module.add_global_metadata("my_md", &md_string);
     module.add_global_metadata("my_md", &md_node);
@@ -495,9 +495,9 @@ fn test_metadata() {
 
     assert_eq!(md_0.len(), 1);
     assert_eq!(md_1.len(), 2);
-    assert_eq!(md_0[0].as_metadata_value().get_string_value(), md_string.get_string_value());
-    assert_eq!(md_1[0].as_int_value(), &bool_val);
-    assert_eq!(md_1[1].as_float_value(), &f32_val);
+    assert_eq!(md_0[0].into_metadata_value().get_string_value(), md_string.get_string_value());
+    assert_eq!(md_1[0].into_int_value(), bool_val);
+    assert_eq!(md_1[1].into_float_value(), f32_val);
 
     assert_eq!(module.get_global_metadata_size("other_md"), 0);
 
@@ -545,8 +545,7 @@ fn test_metadata() {
     let md_node_values = ret_instr.get_metadata(2).unwrap().get_node_values();
 
     assert_eq!(md_node_values.len(), 1);
-    assert_eq!(md_node_values[0].as_metadata_value().get_string_value(), md_string.get_string_value());
-
+    assert_eq!(md_node_values[0].into_metadata_value().get_string_value(), md_string.get_string_value());
 
     // New Context Metadata
     let context_metadata_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
@@ -1086,7 +1085,7 @@ fn test_consts() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[i32_type.into(), f32_type.into()], false);
     let function = module.add_function("fn", fn_type, None);
-    let basic_block = context.append_basic_block(&function, "entry");
+    let basic_block = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&basic_block);
 

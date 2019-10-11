@@ -178,7 +178,7 @@ impl<'ctx> Value<'ctx> {
         }
     }
 
-    pub fn get_first_use(&self) -> Option<BasicValueUse> {
+    pub fn get_first_use(&self) -> Option<BasicValueUse<'ctx>> {
         let use_ = unsafe {
             LLVMGetFirstUse(self.value)
         };

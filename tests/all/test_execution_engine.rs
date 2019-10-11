@@ -33,7 +33,7 @@ fn test_get_function_address() {
 
     let module = context.create_module("errors_abound");
     let fn_value = module.add_function("func", fn_type, None);
-    let basic_block = context.append_basic_block(&fn_value, "entry");
+    let basic_block = context.append_basic_block(fn_value, "entry");
 
     builder.position_at_end(&basic_block);
     builder.build_return(None);
@@ -64,10 +64,10 @@ fn test_jit_execution_engine() {
     let fn_value = module.add_function("main", fn_type, None);
     let main_argc = fn_value.get_first_param().unwrap().into_int_value();
     // let main_argv = fn_value.get_nth_param(1).unwrap();
-    let check_argc = context.append_basic_block(&fn_value, "check_argc");
-    let check_arg3 = context.append_basic_block(&fn_value, "check_arg3");
-    let error1 = context.append_basic_block(&fn_value, "error1");
-    let success = context.append_basic_block(&fn_value, "success");
+    let check_argc = context.append_basic_block(fn_value, "check_argc");
+    let check_arg3 = context.append_basic_block(fn_value, "check_arg3");
+    let error1 = context.append_basic_block(fn_value, "error1");
+    let success = context.append_basic_block(fn_value, "success");
 
     main_argc.set_name("argc");
 
@@ -97,13 +97,13 @@ fn test_jit_execution_engine() {
     let main = execution_engine.get_function_value("main").expect("Could not find main in ExecutionEngine");
 
     let ret = unsafe {
-        execution_engine.run_function_as_main(&main, &["input", "bar"])
+        execution_engine.run_function_as_main(main, &["input", "bar"])
     };
 
     assert_eq!(ret, 1, "unexpected main return code: {}", ret);
 
     let ret = unsafe {
-        execution_engine.run_function_as_main(&main, &["input", "bar", "baz"])
+        execution_engine.run_function_as_main(main, &["input", "bar", "baz"])
     };
 
     assert_eq!(ret, 42, "unexpected main return code: {}", ret);
@@ -198,27 +198,27 @@ fn test_add_remove_module() {
 //     assert!(execution_engine.get_function_value("func").is_ok());
 // }
 
+// No longer necessary with explicit lifetimes
+// #[test]
+// fn test_previous_double_free() {
+//     Target::initialize_native(&InitializationConfig::default()).unwrap();
 
-#[test]
-fn test_previous_double_free() {
-    Target::initialize_native(&InitializationConfig::default()).unwrap();
+//     let context = Context::create();
+//     let module = context.create_module("sum");
+//     let _ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
-    let context = Context::create();
-    let module = context.create_module("sum");
-    let _ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+//     drop(context);
+//     drop(module);
+// }
 
-    drop(context);
-    drop(module);
-}
+// #[test]
+// fn test_previous_double_free2() {
+//     Target::initialize_native(&InitializationConfig::default()).unwrap();
 
-#[test]
-fn test_previous_double_free2() {
-    Target::initialize_native(&InitializationConfig::default()).unwrap();
+//     let _execution_engine = {
+//         let context = Context::create();
+//         let module = context.create_module("sum");
 
-    let _execution_engine = {
-        let context = Context::create();
-        let module = context.create_module("sum");
-
-        module.create_jit_execution_engine(OptimizationLevel::None).unwrap()
-    };
-}
+//         module.create_jit_execution_engine(OptimizationLevel::None).unwrap()
+//     };
+// }

@@ -92,7 +92,7 @@ impl<'ctx> FloatType<'ctx> {
     /// let f32_type = context.f32_type();
     /// let f32_value = f32_type.const_float(42.);
     /// ```
-    pub fn const_float(&self, value: f64) -> FloatValue {
+    pub fn const_float(&self, value: f64) -> FloatValue<'ctx> {
         let value = unsafe {
             LLVMConstReal(self.float_type.ty, value)
         };
@@ -130,7 +130,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// assert_eq!(f64_val.print_to_string().to_string(), "double 0x7FF0000000000000");
     /// ```
-    pub fn const_float_from_string(&self, slice: &str) -> FloatValue {
+    pub fn const_float_from_string(&self, slice: &str) -> FloatValue<'ctx> {
         let value = unsafe {
             LLVMConstRealOfStringAndSize(self.as_type_ref(), slice.as_ptr() as *const i8, slice.len() as u32)
         };
@@ -151,7 +151,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// assert_eq!(f32_zero.print_to_string().to_string(), "float 0.000000e+00");
     /// ```
-    pub fn const_zero(&self) -> FloatValue {
+    pub fn const_zero(&self) -> FloatValue<'ctx> {
         FloatValue::new(self.float_type.const_zero())
     }
 
@@ -184,7 +184,7 @@ impl<'ctx> FloatType<'ctx> {
     /// let f32_type = context.f32_type();
     /// let f32_type_size = f32_type.size_of();
     /// ```
-    pub fn size_of(&self) -> IntValue {
+    pub fn size_of(&self) -> IntValue<'ctx> {
         self.float_type.size_of()
     }
 
@@ -199,7 +199,7 @@ impl<'ctx> FloatType<'ctx> {
     /// let f32_type = context.f32_type();
     /// let f32_type_alignment = f32_type.get_alignment();
     /// ```
-    pub fn get_alignment(&self) -> IntValue {
+    pub fn get_alignment(&self) -> IntValue<'ctx> {
         self.float_type.get_alignment()
     }
 
@@ -215,7 +215,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// assert_eq!(*f32_type.get_context(), context);
     /// ```
-    pub fn get_context(&self) -> ContextRef {
+    pub fn get_context(&self) -> ContextRef<'ctx> {
         self.float_type.get_context()
     }
 
@@ -247,7 +247,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// let f16_type = FloatType::f16_type();
     ///
-    /// assert_eq!(f16_type.get_context(), Context::get_global());
+    /// assert_eq!(*f16_type.get_context(), *Context::get_global().lock());
     /// ```
     pub fn f16_type() -> Self {
         let float_type = unsafe {
@@ -267,7 +267,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// let f32_type = FloatType::f32_type();
     ///
-    /// assert_eq!(f32_type.get_context(), Context::get_global());
+    /// assert_eq!(*f32_type.get_context(), *Context::get_global().lock());
     /// ```
     pub fn f32_type() -> Self {
         let float_type = unsafe {
@@ -287,7 +287,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// let f64_type = FloatType::f64_type();
     ///
-    /// assert_eq!(f64_type.get_context(), Context::get_global());
+    /// assert_eq!(*f64_type.get_context(), *Context::get_global().lock());
     /// ```
     pub fn f64_type() -> Self {
         let float_type = unsafe {
@@ -307,7 +307,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// let x86_f80_type = FloatType::x86_f80_type();
     ///
-    /// assert_eq!(x86_f80_type.get_context(), Context::get_global());
+    /// assert_eq!(*x86_f80_type.get_context(), *Context::get_global().lock());
     /// ```
     pub fn x86_f80_type() -> Self {
         let f128_type = unsafe {
@@ -327,7 +327,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// let f128_type = FloatType::f128_type();
     ///
-    /// assert_eq!(f128_type.get_context(), Context::get_global());
+    /// assert_eq!(*f128_type.get_context(), *Context::get_global().lock());
     /// ```
     // IEEE 754-2008’s binary128 floats according to https://internals.rust-lang.org/t/pre-rfc-introduction-of-half-and-quadruple-precision-floats-f16-and-f128/7521
     pub fn f128_type() -> Self {
@@ -348,7 +348,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// let f128_type = FloatType::ppc_f128_type();
     ///
-    /// assert_eq!(f128_type.get_context(), Context::get_global());
+    /// assert_eq!(*f128_type.get_context(), *Context::get_global().lock());
     /// ```
     // Two 64 bits according to https://internals.rust-lang.org/t/pre-rfc-introduction-of-half-and-quadruple-precision-floats-f16-and-f128/7521
     pub fn ppc_f128_type() -> Self {
@@ -383,7 +383,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// assert!(f32_undef.is_undef());
     /// ```
-    pub fn get_undef(&self) -> FloatValue {
+    pub fn get_undef(&self) -> FloatValue<'ctx> {
         FloatValue::new(self.float_type.get_undef())
     }
 
@@ -410,7 +410,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// assert!(f32_array.is_const());
     /// ```
-    pub fn const_array(&self, values: &[FloatValue]) -> ArrayValue {
+    pub fn const_array(&self, values: &[FloatValue<'ctx>]) -> ArrayValue<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();

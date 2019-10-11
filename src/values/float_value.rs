@@ -31,7 +31,7 @@ impl<'ctx> FloatValue<'ctx> {
         self.float_value.set_name(name);
     }
 
-    pub fn get_type(&self) -> FloatType {
+    pub fn get_type(&self) -> FloatType<'ctx> {
         FloatType::new(self.float_value.get_type())
     }
 
@@ -51,7 +51,7 @@ impl<'ctx> FloatValue<'ctx> {
         self.float_value.print_to_stderr()
     }
 
-    pub fn as_instruction(&self) -> Option<InstructionValue> {
+    pub fn as_instruction(&self) -> Option<InstructionValue<'ctx>> {
         self.float_value.as_instruction()
     }
 
@@ -63,7 +63,7 @@ impl<'ctx> FloatValue<'ctx> {
         FloatValue::new(value)
     }
 
-    pub fn const_add(&self, rhs: FloatValue) -> Self {
+    pub fn const_add(&self, rhs: FloatValue<'ctx>) -> Self {
         let value = unsafe {
             LLVMConstFAdd(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -71,7 +71,7 @@ impl<'ctx> FloatValue<'ctx> {
         FloatValue::new(value)
     }
 
-    pub fn const_sub(&self, rhs: FloatValue) -> Self {
+    pub fn const_sub(&self, rhs: FloatValue<'ctx>) -> Self {
         let value = unsafe {
             LLVMConstFSub(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -79,7 +79,7 @@ impl<'ctx> FloatValue<'ctx> {
         FloatValue::new(value)
     }
 
-    pub fn const_mul(&self, rhs: FloatValue) -> Self {
+    pub fn const_mul(&self, rhs: FloatValue<'ctx>) -> Self {
         let value = unsafe {
             LLVMConstFMul(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -87,7 +87,7 @@ impl<'ctx> FloatValue<'ctx> {
         FloatValue::new(value)
     }
 
-    pub fn const_div(&self, rhs: FloatValue) -> Self {
+    pub fn const_div(&self, rhs: FloatValue<'ctx>) -> Self {
         let value = unsafe {
             LLVMConstFDiv(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -95,7 +95,7 @@ impl<'ctx> FloatValue<'ctx> {
         FloatValue::new(value)
     }
 
-    pub fn const_remainder(&self, rhs: FloatValue) -> Self {
+    pub fn const_remainder(&self, rhs: FloatValue<'ctx>) -> Self {
         let value = unsafe {
             LLVMConstFRem(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -103,7 +103,7 @@ impl<'ctx> FloatValue<'ctx> {
         FloatValue::new(value)
     }
 
-    pub fn const_cast(&self, float_type: FloatType) -> Self {
+    pub fn const_cast(&self, float_type: FloatType<'ctx>) -> Self {
         let value = unsafe {
             LLVMConstFPCast(self.as_value_ref(), float_type.as_type_ref())
         };
@@ -111,7 +111,7 @@ impl<'ctx> FloatValue<'ctx> {
         FloatValue::new(value)
     }
 
-    pub fn const_to_unsigned_int(&self, int_type: IntType) -> IntValue {
+    pub fn const_to_unsigned_int(&self, int_type: IntType<'ctx>) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstFPToUI(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -119,7 +119,7 @@ impl<'ctx> FloatValue<'ctx> {
         IntValue::new(value)
     }
 
-    pub fn const_to_signed_int(&self, int_type: IntType) -> IntValue {
+    pub fn const_to_signed_int(&self, int_type: IntType<'ctx>) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstFPToSI(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -127,7 +127,7 @@ impl<'ctx> FloatValue<'ctx> {
         IntValue::new(value)
     }
 
-    pub fn const_truncate(&self, float_type: FloatType) -> FloatValue {
+    pub fn const_truncate(&self, float_type: FloatType<'ctx>) -> FloatValue<'ctx> {
         let value = unsafe {
             LLVMConstFPTrunc(self.as_value_ref(), float_type.as_type_ref())
         };
@@ -135,7 +135,7 @@ impl<'ctx> FloatValue<'ctx> {
         FloatValue::new(value)
     }
 
-    pub fn const_extend(&self, float_type: FloatType) -> FloatValue {
+    pub fn const_extend(&self, float_type: FloatType<'ctx>) -> FloatValue<'ctx> {
         let value = unsafe {
             LLVMConstFPExt(self.as_value_ref(), float_type.as_type_ref())
         };
@@ -144,7 +144,7 @@ impl<'ctx> FloatValue<'ctx> {
     }
 
     // SubType: rhs same as lhs; return IntValue<bool>
-    pub fn const_compare(&self, op: FloatPredicate, rhs: FloatValue) -> IntValue {
+    pub fn const_compare(&self, op: FloatPredicate, rhs: FloatValue<'ctx>) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstFCmp(op.into(), self.as_value_ref(), rhs.as_value_ref())
         };
@@ -197,7 +197,7 @@ impl<'ctx> FloatValue<'ctx> {
         Some((constant, lossy == 1))
     }
 
-    pub fn replace_all_uses_with(&self, other: FloatValue) {
+    pub fn replace_all_uses_with(&self, other: FloatValue<'ctx>) {
         self.float_value.replace_all_uses_with(other.as_value_ref())
     }
 }

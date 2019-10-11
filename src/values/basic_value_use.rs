@@ -2,18 +2,20 @@ use either::{Either, Either::{Left, Right}};
 use llvm_sys::core::{LLVMGetNextUse, LLVMGetUser, LLVMGetUsedValue, LLVMIsABasicBlock, LLVMValueAsBasicBlock};
 use llvm_sys::prelude::LLVMUseRef;
 
+use std::marker::PhantomData;
+
 use crate::basic_block::BasicBlock;
 use crate::values::{BasicValueEnum, InstructionValue};
 
 /// A usage of a `BasicValue` in an `InstructionValue`.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct BasicValueUse(LLVMUseRef);
+pub struct BasicValueUse<'ctx>(LLVMUseRef, PhantomData<&'ctx ()>);
 
-impl BasicValueUse {
+impl<'ctx> BasicValueUse<'ctx> {
     pub(crate) fn new(use_: LLVMUseRef) -> Self {
         debug_assert!(!use_.is_null());
 
-        BasicValueUse(use_)
+        BasicValueUse(use_, PhantomData)
     }
 
     /// Gets the next use of an `InstructionValue` or `BasicValue` if any.
@@ -34,7 +36,7 @@ impl BasicValueUse {
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
     /// let function = module.add_function("take_f32_ptr", fn_type, None);
-    /// let basic_block = context.append_basic_block(&function, "entry");
+    /// let basic_block = context.append_basic_block(function, "entry");
     ///
     /// builder.position_at_end(&basic_block);
     ///
@@ -97,7 +99,7 @@ impl BasicValueUse {
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
     /// let function = module.add_function("take_f32_ptr", fn_type, None);
-    /// let basic_block = context.append_basic_block(&function, "entry");
+    /// let basic_block = context.append_basic_block(function, "entry");
     ///
     /// builder.position_at_end(&basic_block);
     ///
@@ -113,7 +115,7 @@ impl BasicValueUse {
     /// assert_eq!(store_operand_use0.get_user(), store_instruction);
     /// assert_eq!(store_operand_use1.get_user(), store_instruction);
     /// ```
-    pub fn get_user(&self) -> InstructionValue {
+    pub fn get_user(&self) -> InstructionValue<'ctx> {
         let user = unsafe {
             LLVMGetUser(self.0)
         };
@@ -137,7 +139,7 @@ impl BasicValueUse {
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
     /// let function = module.add_function("take_f32_ptr", fn_type, None);
-    /// let basic_block = context.append_basic_block(&function, "entry");
+    /// let basic_block = context.append_basic_block(function, "entry");
     ///
     /// builder.position_at_end(&basic_block);
     ///
@@ -158,7 +160,7 @@ impl BasicValueUse {
     ///
     /// assert_eq!(bitcast_use_value, free_operand0);
     /// ```
-    pub fn get_used_value(&self) -> Either<BasicValueEnum, BasicBlock> {
+    pub fn get_used_value(&self) -> Either<BasicValueEnum<'ctx>, BasicBlock> {
         let used_value = unsafe {
             LLVMGetUsedValue(self.0)
         };

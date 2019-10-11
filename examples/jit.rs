@@ -14,17 +14,17 @@ use std::error::Error;
 /// do `unsafe` operations internally.
 type SumFunc = unsafe extern "C" fn(u64, u64, u64) -> u64;
 
-fn jit_compile_sum(
-    context: &Context,
-    module: &Module,
-    builder: &Builder,
-    execution_engine: &ExecutionEngine,
+fn jit_compile_sum<'ctx>(
+    context: &'ctx Context,
+    module: &Module<'ctx>,
+    builder: &Builder<'ctx>,
+    execution_engine: &ExecutionEngine<'ctx>,
 ) -> Option<JitFunction<SumFunc>> {
     let i64_type = context.i64_type();
     let fn_type = i64_type.fn_type(&[i64_type.into(), i64_type.into(), i64_type.into()], false);
 
     let function = module.add_function("sum", fn_type, None);
-    let basic_block = context.append_basic_block(&function, "entry");
+    let basic_block = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&basic_block);
 

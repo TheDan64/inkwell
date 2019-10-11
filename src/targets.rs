@@ -20,6 +20,7 @@ use llvm_sys::target_machine::{
     LLVMTargetHasTargetMachine, LLVMTargetMachineEmitToFile, LLVMTargetMachineEmitToMemoryBuffer,
     LLVMTargetMachineRef, LLVMTargetRef,
 };
+use parking_lot::RwLock;
 
 use crate::context::Context;
 use crate::data_layout::DataLayout;
@@ -36,7 +37,6 @@ use std::ffi::{CStr, CString};
 use std::mem::MaybeUninit;
 use std::path::Path;
 use std::ptr;
-use std::sync::RwLock;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum CodeModel {
@@ -121,32 +121,32 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeX86Target() };
         }
 
         if config.info {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeX86TargetInfo() };
         }
 
         if config.asm_printer {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeX86AsmPrinter() };
         }
 
         if config.asm_parser {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeX86AsmParser() };
         }
 
         if config.disassembler {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeX86Disassembler() };
         }
 
         if config.machine_code {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeX86TargetMC() };
         }
     }
@@ -159,32 +159,32 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeARMTarget() };
         }
 
         if config.info {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeARMTargetInfo() };
         }
 
         if config.asm_printer {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeARMAsmPrinter() };
         }
 
         if config.asm_parser {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeARMAsmParser() };
         }
 
         if config.disassembler {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeARMDisassembler() };
         }
 
         if config.machine_code {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeARMTargetMC() };
         }
     }
@@ -198,32 +198,32 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeMipsTarget() };
         }
 
         if config.info {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeMipsTargetInfo() };
         }
 
         if config.asm_printer {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeMipsAsmPrinter() };
         }
 
         if config.asm_parser {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeMipsAsmParser() };
         }
 
         if config.disassembler {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeMipsDisassembler() };
         }
 
         if config.machine_code {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeMipsTargetMC() };
         }
     }
@@ -237,32 +237,32 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeAArch64Target() };
         }
 
         if config.info {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeAArch64TargetInfo() };
         }
 
         if config.asm_printer {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeAArch64AsmPrinter() };
         }
 
         if config.asm_parser {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeAArch64AsmParser() };
         }
 
         if config.disassembler {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeAArch64Disassembler() };
         }
 
         if config.machine_code {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeAArch64TargetMC() };
         }
     }
@@ -276,27 +276,27 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeR600Target() };
         }
 
         if config.info {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeR600TargetInfo() };
         }
 
         if config.asm_printer {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeR600AsmPrinter() };
         }
 
         if config.asm_parser {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeR600AsmParser() };
         }
 
         if config.machine_code {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeR600TargetMC() };
         }
 
@@ -314,27 +314,27 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeAMDGPUTarget() };
         }
 
         if config.info {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeAMDGPUTargetInfo() };
         }
 
         if config.asm_printer {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeAMDGPUAsmPrinter() };
         }
 
         if config.asm_parser {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeAMDGPUAsmParser() };
         }
 
         if config.machine_code {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeAMDGPUTargetMC() };
         }
 
@@ -350,32 +350,32 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeSystemZTarget() };
         }
 
         if config.info {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeSystemZTargetInfo() };
         }
 
         if config.asm_printer {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeSystemZAsmPrinter() };
         }
 
         if config.asm_parser {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeSystemZAsmParser() };
         }
 
         if config.disassembler {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeSystemZDisassembler() };
         }
 
         if config.machine_code {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeSystemZTargetMC() };
         }
     }
@@ -389,29 +389,29 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeHexagonTarget() };
         }
 
         if config.info {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeHexagonTargetInfo() };
         }
 
         if config.asm_printer {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeHexagonAsmPrinter() };
         }
 
         // Asm parser status unknown
 
         if config.disassembler {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeHexagonDisassembler() };
         }
 
         if config.machine_code {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeHexagonTargetMC() };
         }
     }
@@ -424,24 +424,24 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeNVPTXTarget() };
         }
 
         if config.info {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeNVPTXTargetInfo() };
         }
 
         if config.asm_printer {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeNVPTXAsmPrinter() };
         }
 
         // Asm parser status unknown
 
         if config.machine_code {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeNVPTXTargetMC() };
         }
 
@@ -456,17 +456,17 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeCppBackendTarget() };
         }
 
         if config.info {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeCppBackendTargetInfo() };
         }
 
         if config.machine_code {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeCppBackendTargetMC() };
         }
     }
@@ -479,24 +479,24 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeMSP430Target() };
         }
 
         if config.info {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeMSP430TargetInfo() };
         }
 
         if config.asm_printer {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeMSP430AsmPrinter() };
         }
 
         // Asm parser status unknown
 
         if config.machine_code {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeMSP430TargetMC() };
         }
 
@@ -511,29 +511,29 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeXCoreTarget() };
         }
 
         if config.info {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeXCoreTargetInfo() };
         }
 
         if config.asm_printer {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeXCoreAsmPrinter() };
         }
 
         // Asm parser status unknown
 
         if config.disassembler {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeXCoreDisassembler() };
         }
 
         if config.machine_code {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeXCoreTargetMC() };
         }
     }
@@ -547,32 +547,32 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializePowerPCTarget() };
         }
 
         if config.info {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializePowerPCTargetInfo() };
         }
 
         if config.asm_printer {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializePowerPCAsmPrinter() };
         }
 
         if config.asm_parser {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializePowerPCAsmParser() };
         }
 
         if config.disassembler {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializePowerPCDisassembler() };
         }
 
         if config.machine_code {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializePowerPCTargetMC() };
         }
     }
@@ -586,32 +586,32 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeSparcTarget() };
         }
 
         if config.info {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeSparcTargetInfo() };
         }
 
         if config.asm_printer {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeSparcAsmPrinter() };
         }
 
         if config.asm_parser {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeSparcAsmParser() };
         }
 
         if config.disassembler {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeSparcDisassembler() };
         }
 
         if config.machine_code {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeSparcTargetMC() };
         }
     }
@@ -626,17 +626,17 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeBPFTarget() };
         }
 
         if config.info {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeBPFTargetInfo() };
         }
 
         if config.asm_printer {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeBPFAsmPrinter() };
         }
 
@@ -647,13 +647,13 @@ impl Target {
             if config.disassembler {
                 use llvm_sys::target::LLVMInitializeBPFDisassembler;
 
-                let _guard = TARGET_LOCK.write().unwrap();
+                let _guard = TARGET_LOCK.write();
                 unsafe { LLVMInitializeBPFDisassembler() };
             }
         }
 
         if config.machine_code {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeBPFTargetMC() };
         }
     }
@@ -668,32 +668,32 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeLanaiTarget() };
         }
 
         if config.info {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeLanaiTargetInfo() };
         }
 
         if config.asm_printer {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeLanaiAsmPrinter() };
         }
 
         if config.asm_parser {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeLanaiAsmParser() };
         }
 
         if config.disassembler {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeLanaiDisassembler() };
         }
 
         if config.machine_code {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeLanaiTargetMC() };
         }
     }
@@ -712,12 +712,12 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeRISCVTarget() };
         }
 
         if config.info {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeRISCVTargetInfo() };
         }
 
@@ -728,7 +728,7 @@ impl Target {
         // No disassembler
 
         if config.machine_code {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeRISCVTargetMC() };
         }
     }
@@ -743,32 +743,32 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeWebAssemblyTarget() };
         }
 
         if config.info {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeWebAssemblyTargetInfo() };
         }
 
         if config.asm_printer {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeWebAssemblyAsmPrinter() };
         }
 
         if config.asm_parser {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeWebAssemblyAsmParser() };
         }
 
         if config.disassembler {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeWebAssemblyDisassembler() };
         }
 
         if config.machine_code {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeWebAssemblyTargetMC() };
         }
     }
@@ -780,7 +780,7 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             let code = unsafe { LLVM_InitializeNativeTarget() };
 
             if code == 1 {
@@ -789,7 +789,7 @@ impl Target {
         }
 
         if config.asm_printer {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             let code = unsafe { LLVM_InitializeNativeAsmPrinter() };
 
             if code == 1 {
@@ -798,7 +798,7 @@ impl Target {
         }
 
         if config.asm_parser {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             let code = unsafe { LLVM_InitializeNativeAsmParser() };
 
             if code == 1 {
@@ -808,7 +808,7 @@ impl Target {
         }
 
         if config.disassembler {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             let code = unsafe { LLVM_InitializeNativeDisassembler() };
 
             if code == 1 {
@@ -827,32 +827,32 @@ impl Target {
         };
 
         if config.base {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVM_InitializeAllTargets() };
         }
 
         if config.info {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVM_InitializeAllTargetInfos() };
         }
 
         if config.asm_parser {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVM_InitializeAllAsmParsers() };
         }
 
         if config.asm_printer {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVM_InitializeAllAsmPrinters() };
         }
 
         if config.disassembler {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVM_InitializeAllDisassemblers() };
         }
 
         if config.machine_code {
-            let _guard = TARGET_LOCK.write().unwrap();
+            let _guard = TARGET_LOCK.write();
             unsafe { LLVM_InitializeAllTargetMCs() };
         }
     }
@@ -910,7 +910,7 @@ impl Target {
 
     pub fn get_first() -> Option<Self> {
         let target = {
-            let _guard = TARGET_LOCK.read().unwrap();
+            let _guard = TARGET_LOCK.read();
             unsafe { LLVMGetFirstTarget() }
         };
 
@@ -947,7 +947,7 @@ impl Target {
 
     pub(crate) fn from_name_raw(c_string: *const i8) -> Option<Self> {
         let target = {
-            let _guard = TARGET_LOCK.read().unwrap();
+            let _guard = TARGET_LOCK.read();
             unsafe { LLVMGetTargetFromName(c_string) }
         };
 
@@ -964,7 +964,7 @@ impl Target {
         let mut err_string = MaybeUninit::uninit();
 
         let code = {
-            let _guard = TARGET_LOCK.read().unwrap();
+            let _guard = TARGET_LOCK.read();
             unsafe { LLVMGetTargetFromTriple(c_string.as_ptr(), &mut target, err_string.as_mut_ptr()) }
         };
 
@@ -1261,7 +1261,7 @@ impl TargetData {
     ///
     /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
     ///
-    /// let context = Context::get_global();
+    /// let context = Context::get_global().lock();
     /// let module = context.create_module("sum");
     /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     /// let target_data = execution_engine.get_target_data();
@@ -1303,12 +1303,12 @@ impl TargetData {
         let int_type_ptr = match address_space {
             Some(address_space) => unsafe {
                 LLVMIntPtrTypeForASInContext(
-                    *context.context,
+                    context.context,
                     self.target_data,
                     address_space as u32,
                 )
             },
-            None => unsafe { LLVMIntPtrTypeInContext(*context.context, self.target_data) },
+            None => unsafe { LLVMIntPtrTypeInContext(context.context, self.target_data) },
         };
 
         IntType::new(int_type_ptr)

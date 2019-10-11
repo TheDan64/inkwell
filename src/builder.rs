@@ -74,7 +74,7 @@ impl<'ctx> Builder<'ctx> {
     /// builder.position_at_end(&entry);
     /// builder.build_return(Some(&i32_arg));
     /// ```
-    pub fn build_return(&self, value: Option<&dyn BasicValue>) -> InstructionValue {
+    pub fn build_return(&self, value: Option<&dyn BasicValue<'ctx>>) -> InstructionValue<'ctx> {
         let value = unsafe {
             value.map_or_else(|| LLVMBuildRetVoid(self.builder), |value| LLVMBuildRet(self.builder, value.as_value_ref()))
         };
@@ -105,7 +105,7 @@ impl<'ctx> Builder<'ctx> {
     /// builder.position_at_end(&entry);
     /// builder.build_aggregate_return(&[i32_three.into(), i32_seven.into()]);
     /// ```
-    pub fn build_aggregate_return(&self, values: &[BasicValueEnum]) -> InstructionValue {
+    pub fn build_aggregate_return(&self, values: &[BasicValueEnum<'ctx>]) -> InstructionValue<'ctx> {
         let mut args: Vec<LLVMValueRef> = values.iter()
                                                 .map(|val| val.as_value_ref())
                                                 .collect();
@@ -1177,13 +1177,13 @@ impl<'ctx> Builder<'ctx> {
 
     // REVIEW: What if instruction and basic_block are completely unrelated?
     // It'd be great if we could get the BB from the instruction behind the scenes
-    pub fn position_at(&self, basic_block: &BasicBlock, instruction: &InstructionValue) {
+    pub fn position_at(&self, basic_block: &BasicBlock, instruction: &InstructionValue<'ctx>) {
         unsafe {
             LLVMPositionBuilder(self.builder, basic_block.basic_block, instruction.as_value_ref())
         }
     }
 
-    pub fn position_before(&self, instruction: &InstructionValue) {
+    pub fn position_before(&self, instruction: &InstructionValue<'ctx>) {
         unsafe {
             LLVMPositionBuilderBefore(self.builder, instruction.as_value_ref())
         }
@@ -1388,7 +1388,7 @@ impl<'ctx> Builder<'ctx> {
         VectorValue::new(value)
     }
 
-    pub fn build_unreachable(&self) -> InstructionValue {
+    pub fn build_unreachable(&self) -> InstructionValue<'ctx> {
         let val = unsafe {
             LLVMBuildUnreachable(self.builder)
         };

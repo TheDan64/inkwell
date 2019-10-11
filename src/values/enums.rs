@@ -238,7 +238,53 @@ impl<'ctx> BasicValueEnum<'ctx> {
         }
     }
 
-    // TODO: into_x_value methods
+    pub fn into_array_value(self) -> ArrayValue<'ctx> {
+        if let BasicValueEnum::ArrayValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_int_value(self) -> IntValue<'ctx> {
+        if let BasicValueEnum::IntValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_float_value(self) -> FloatValue<'ctx> {
+        if let BasicValueEnum::FloatValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_pointer_value(self) -> PointerValue<'ctx> {
+        if let BasicValueEnum::PointerValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_struct_value(self) -> StructValue<'ctx> {
+        if let BasicValueEnum::StructValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_vector_value(self) -> VectorValue<'ctx> {
+        if let BasicValueEnum::VectorValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
 }
 
 impl<'ctx> AggregateValueEnum<'ctx> {
@@ -251,6 +297,38 @@ impl<'ctx> AggregateValueEnum<'ctx> {
             LLVMTypeKind::LLVMArrayTypeKind => AggregateValueEnum::ArrayValue(ArrayValue::new(value)),
             LLVMTypeKind::LLVMStructTypeKind => AggregateValueEnum::StructValue(StructValue::new(value)),
             _ => unreachable!("The given type is not an aggregate type."),
+        }
+    }
+
+    pub fn is_array_value(self) -> bool {
+        if let AggregateValueEnum::ArrayValue(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_struct_value(self) -> bool {
+        if let AggregateValueEnum::StructValue(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn into_array_value(self) -> ArrayValue<'ctx> {
+        if let AggregateValueEnum::ArrayValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_struct_value(self) -> StructValue<'ctx> {
+        if let AggregateValueEnum::StructValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
         }
     }
 }
@@ -275,6 +353,118 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
             LLVMTypeKind::LLVMVectorTypeKind => BasicMetadataValueEnum::VectorValue(VectorValue::new(value)),
             LLVMTypeKind::LLVMMetadataTypeKind => BasicMetadataValueEnum::MetadataValue(MetadataValue::new(value)),
             _ => unreachable!("Unsupported type"),
+        }
+    }
+
+    pub fn is_array_value(self) -> bool {
+        if let BasicMetadataValueEnum::ArrayValue(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_int_value(self) -> bool {
+        if let BasicMetadataValueEnum::IntValue(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_float_value(self) -> bool {
+        if let BasicMetadataValueEnum::FloatValue(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_pointer_value(self) -> bool {
+        if let BasicMetadataValueEnum::PointerValue(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_struct_value(self) -> bool {
+        if let BasicMetadataValueEnum::StructValue(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_vector_value(self) -> bool {
+        if let BasicMetadataValueEnum::VectorValue(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn is_metadata_value(self) -> bool {
+        if let BasicMetadataValueEnum::MetadataValue(_) = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn into_array_value(self) -> ArrayValue<'ctx> {
+        if let BasicMetadataValueEnum::ArrayValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_int_value(self) -> IntValue<'ctx> {
+        if let BasicMetadataValueEnum::IntValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_float_value(self) -> FloatValue<'ctx> {
+        if let BasicMetadataValueEnum::FloatValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_pointer_value(self) -> PointerValue<'ctx> {
+        if let BasicMetadataValueEnum::PointerValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_struct_value(self) -> StructValue<'ctx> {
+        if let BasicMetadataValueEnum::StructValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_vector_value(self) -> VectorValue<'ctx> {
+        if let BasicMetadataValueEnum::VectorValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_metadata_value(self) -> MetadataValue<'ctx> {
+        if let BasicMetadataValueEnum::MetadataValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
         }
     }
 }

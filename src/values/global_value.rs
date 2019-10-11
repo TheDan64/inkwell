@@ -75,7 +75,7 @@ impl<'ctx> GlobalValue<'ctx> {
         }
     }
 
-    pub fn get_initializer(&self) -> Option<BasicValueEnum> {
+    pub fn get_initializer(&self) -> Option<BasicValueEnum<'ctx>> {
         let value = unsafe {
             LLVMGetInitializer(self.as_value_ref())
         };
@@ -88,7 +88,7 @@ impl<'ctx> GlobalValue<'ctx> {
     }
 
     // SubType: This input type should be tied to the BasicType
-    pub fn set_initializer(&self, value: &dyn BasicValue) {
+    pub fn set_initializer(&self, value: &dyn BasicValue<'ctx>) {
         unsafe {
             LLVMSetInitializer(self.as_value_ref(), value.as_value_ref())
         }
@@ -244,7 +244,7 @@ impl<'ctx> GlobalValue<'ctx> {
         LLVMDeleteGlobal(self.as_value_ref())
     }
 
-    pub fn as_pointer_value(&self) -> PointerValue {
+    pub fn as_pointer_value(&self) -> PointerValue<'ctx> {
         PointerValue::new(self.as_value_ref())
     }
 

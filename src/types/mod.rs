@@ -41,10 +41,9 @@ use static_alloc::Slab;
 
 use std::fmt;
 use std::marker::PhantomData;
-use std::rc::Rc;
 
 use crate::AddressSpace;
-use crate::context::{Context, ContextRef};
+use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::values::IntValue;
 
@@ -152,19 +151,12 @@ impl<'ctx> Type<'ctx> {
         IntValue::new(val)
     }
 
-    // REVIEW: get_context could potentially be unsafe and UB if Context is shared across threads.
-    // Not currently possible AFAIK but might be in the future if we decide to support multithreading.
-    fn get_context(&self) -> ContextRef {
-        // We don't return an option because LLVM seems
-        // to always assign a context, even to types
-        // created without an explicit context, somehow
-
+    fn get_context(&self) -> ContextRef<'ctx> {
         let context = unsafe {
             LLVMGetTypeContext(self.ty)
         };
 
-        // REVIEW: This probably should be somehow using the existing context Rc
-        ContextRef::new(Context::new(Rc::new(context)))
+        ContextRef::new(context)
     }
 
     // REVIEW: This should be known at compile time, maybe as a const fn?
