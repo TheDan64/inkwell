@@ -12,7 +12,6 @@ use std::rc::Rc;
 use std::ops::Deref;
 use std::ffi::CString;
 use std::fmt::{self, Debug, Display, Formatter};
-use std::marker::PhantomData;
 use std::mem::{forget, transmute_copy, size_of, MaybeUninit};
 
 static EE_INNER_PANIC: &str = "ExecutionEngineInner should exist until Drop";
