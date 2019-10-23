@@ -245,9 +245,10 @@ impl<'ctx> FloatType<'ctx> {
     /// use inkwell::context::Context;
     /// use inkwell::types::FloatType;
     ///
+    /// let global_ctx = unsafe { Context::get_global().lock() };
     /// let f16_type = FloatType::f16_type();
     ///
-    /// assert_eq!(*f16_type.get_context(), *Context::get_global().lock());
+    /// assert_eq!(*f16_type.get_context(), *global_ctx);
     /// ```
     pub fn f16_type() -> Self {
         let float_type = unsafe {
@@ -265,9 +266,10 @@ impl<'ctx> FloatType<'ctx> {
     /// use inkwell::context::Context;
     /// use inkwell::types::FloatType;
     ///
+    /// let global_ctx = unsafe { Context::get_global().lock() };
     /// let f32_type = FloatType::f32_type();
     ///
-    /// assert_eq!(*f32_type.get_context(), *Context::get_global().lock());
+    /// assert_eq!(*f32_type.get_context(), *global_ctx);
     /// ```
     pub fn f32_type() -> Self {
         let float_type = unsafe {
@@ -285,9 +287,10 @@ impl<'ctx> FloatType<'ctx> {
     /// use inkwell::context::Context;
     /// use inkwell::types::FloatType;
     ///
+    /// let global_ctx = unsafe { Context::get_global().lock() };
     /// let f64_type = FloatType::f64_type();
     ///
-    /// assert_eq!(*f64_type.get_context(), *Context::get_global().lock());
+    /// assert_eq!(*f64_type.get_context(), *global_ctx);
     /// ```
     pub fn f64_type() -> Self {
         let float_type = unsafe {
@@ -305,9 +308,10 @@ impl<'ctx> FloatType<'ctx> {
     /// use inkwell::context::Context;
     /// use inkwell::types::FloatType;
     ///
+    /// let global_ctx = unsafe { Context::get_global().lock() };
     /// let x86_f80_type = FloatType::x86_f80_type();
     ///
-    /// assert_eq!(*x86_f80_type.get_context(), *Context::get_global().lock());
+    /// assert_eq!(*x86_f80_type.get_context(), *global_ctx);
     /// ```
     pub fn x86_f80_type() -> Self {
         let f128_type = unsafe {
@@ -325,9 +329,10 @@ impl<'ctx> FloatType<'ctx> {
     /// use inkwell::context::Context;
     /// use inkwell::types::FloatType;
     ///
+    /// let global_ctx = unsafe { Context::get_global().lock() };
     /// let f128_type = FloatType::f128_type();
     ///
-    /// assert_eq!(*f128_type.get_context(), *Context::get_global().lock());
+    /// assert_eq!(*f128_type.get_context(), *global_ctx);
     /// ```
     // IEEE 754-2008’s binary128 floats according to https://internals.rust-lang.org/t/pre-rfc-introduction-of-half-and-quadruple-precision-floats-f16-and-f128/7521
     pub fn f128_type() -> Self {
@@ -346,9 +351,10 @@ impl<'ctx> FloatType<'ctx> {
     /// use inkwell::context::Context;
     /// use inkwell::types::FloatType;
     ///
+    /// let global_ctx = unsafe { Context::get_global().lock() };
     /// let f128_type = FloatType::ppc_f128_type();
     ///
-    /// assert_eq!(*f128_type.get_context(), *Context::get_global().lock());
+    /// assert_eq!(*f128_type.get_context(), *global_ctx);
     /// ```
     // Two 64 bits according to https://internals.rust-lang.org/t/pre-rfc-introduction-of-half-and-quadruple-precision-floats-f16-and-f128/7521
     pub fn ppc_f128_type() -> Self {

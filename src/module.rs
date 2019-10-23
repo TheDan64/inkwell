@@ -155,14 +155,14 @@ impl<'ctx> Module<'ctx> {
 
     /// Creates a named `Module`. Will be automatically assigned the global context.
     ///
-    /// To use your own `Context`, see [inkwell::context::create_module()](../context/struct.Context.html#method.create_module)
+    /// Creating your own `Context` is preferred, see [inkwell::context::create_module()](../context/struct.Context.html#method.create_module)
     ///
     /// # Example
     /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::Module;
     ///
-    /// let context = Context::get_global().lock();
+    /// let context = unsafe { Context::get_global().lock() };
     /// let module = Module::create("my_module");
     ///
     /// assert_eq!(*module.get_context(), *context);
@@ -189,7 +189,7 @@ impl<'ctx> Module<'ctx> {
     /// use inkwell::module::{Module, Linkage};
     /// use inkwell::types::FunctionType;
     ///
-    /// let context = Context::get_global().lock();
+    /// let context = unsafe { Context::get_global().lock() };
     /// let module = Module::create("my_module");
     ///
     /// let fn_type = context.f32_type().fn_type(&[], false);
@@ -221,7 +221,7 @@ impl<'ctx> Module<'ctx> {
     /// use inkwell::context::{Context, ContextRef};
     /// use inkwell::module::Module;
     ///
-    /// let global_context = Context::get_global().lock();
+    /// let global_context = unsafe { Context::get_global().lock() };
     /// let global_module = Module::create("my_global_module");
     ///
     /// assert_eq!(*global_module.get_context(), *global_context);
@@ -416,7 +416,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
     ///
-    /// let context = Context::get_global().lock();
+    /// let context = unsafe { Context::get_global().lock() };
     /// let module = Module::create("my_module");
     /// let execution_engine = module.create_execution_engine().unwrap();
     ///
@@ -467,7 +467,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
     ///
-    /// let context = Context::get_global().lock();
+    /// let context = unsafe { Context::get_global().lock() };
     /// let module = Module::create("my_module");
     /// let execution_engine = module.create_interpreter_execution_engine().unwrap();
     ///
@@ -520,7 +520,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
     ///
-    /// let context = Context::get_global().lock();
+    /// let context = unsafe { Context::get_global().lock() };
     /// let module = Module::create("my_module");
     /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     ///
@@ -1072,8 +1072,9 @@ impl<'ctx> Module<'ctx> {
     /// let path = Path::new("foo/bar.bc");
     /// let buffer = MemoryBuffer::create_from_file(&path).unwrap();
     /// let module = Module::parse_bitcode_from_buffer(&buffer);
+    /// let global_ctx = unsafe { Context::get_global().lock() };
     ///
-    /// assert_eq!(*module.unwrap().get_context(), *Context::get_global().lock());
+    /// assert_eq!(*module.unwrap().get_context(), *global_ctx);
     ///
     /// ```
     pub fn parse_bitcode_from_buffer(buffer: &MemoryBuffer) -> Result<Self, LLVMString> {
@@ -1112,8 +1113,9 @@ impl<'ctx> Module<'ctx> {
     /// let context = Context::create();
     /// let buffer = MemoryBuffer::create_from_file(&path).unwrap();
     /// let module = Module::parse_bitcode_from_buffer_in_context(&buffer, &context);
+    /// let global_ctx = unsafe { Context::get_global().lock() };
     ///
-    /// assert_eq!(*module.unwrap().get_context(), *Context::get_global().lock());
+    /// assert_eq!(*module.unwrap().get_context(), *global_ctx);
     ///
     /// ```
     pub fn parse_bitcode_from_buffer_in_context(buffer: &MemoryBuffer, context: &'ctx Context) -> Result<Self, LLVMString> {
@@ -1149,8 +1151,9 @@ impl<'ctx> Module<'ctx> {
     ///
     /// let path = Path::new("foo/bar.bc");
     /// let module = Module::parse_bitcode_from_path(&path);
+    /// let global_ctx = unsafe { Context::get_global().lock() };
     ///
-    /// assert_eq!(*module.unwrap().get_context(), *Context::get_global().lock());
+    /// assert_eq!(*module.unwrap().get_context(), *global_ctx);
     ///
     /// ```
     // LLVMGetBitcodeModule was a pain to use, so I seem to be able to achieve the same effect
@@ -1390,14 +1393,25 @@ impl<'ctx> Module<'ctx> {
             return None;
         }
 
-        let global_ctx = Context::get_global().lock();
-        let ctx = self.non_global_context.unwrap_or(&*global_ctx);
-
-        let flag_value = unsafe {
+        let flag_value = self.with_context(|ctx| unsafe {
             LLVMMetadataAsValue(ctx.context, flag)
-        };
+        });
 
         Some(MetadataValue::new(flag_value))
+    }
+
+    fn with_context<F, T>(&self, f: F) -> T
+    where
+        F: FnOnce(&Context) -> T,
+    {
+        match self.non_global_context {
+            Some(ctx) => f(ctx),
+            None => {
+                let ctx = unsafe { Context::get_global().lock() };
+
+                f(&ctx)
+            },
+        }
     }
 
     /// Append a `MetadataValue` as a module wide flag. Note that using the same key twice

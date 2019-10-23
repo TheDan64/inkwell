@@ -1261,11 +1261,13 @@ impl TargetData {
     ///
     /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
     ///
-    /// let context = Context::get_global().lock();
+    /// let context = unsafe { Context::get_global().lock() };
     /// let module = context.create_module("sum");
     /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     /// let target_data = execution_engine.get_target_data();
     /// let int_type = target_data.ptr_sized_int_type(None);
+    ///
+    /// assert_eq!(*context, *int_type.get_context());
     /// ```
     pub fn ptr_sized_int_type(&self, address_space: Option<AddressSpace>) -> IntType {
         let int_type_ptr = match address_space {

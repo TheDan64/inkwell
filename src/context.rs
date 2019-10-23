@@ -78,17 +78,23 @@ impl Context {
         Context::new(context)
     }
 
-    /// Creates a `ContextRef` which references the global context singleton.
+    /// Gets a `Mutex<Context>` which points to the global context singleton.
+    /// This function is marked unsafe because another program within the same
+    /// process could easily gain access to the same LLVM context pointer and bypass
+    /// our `Mutex`. Therefore, using `Context::create()` is the preferred context
+    /// creation function when you do not specifically need the global context.
     ///
     /// # Example
     ///
     /// ```no_run
     /// use inkwell::context::Context;
     ///
-    /// let context = Context::get_global();
+    /// let context = unsafe {
+    ///     Context::get_global()
+    /// };
     /// ```
-    // TODO: Make unsafe method and add docs
-    pub fn get_global() -> &'static Mutex<Context> {
+    // FIXME: Types auto-assigned global ctx might be able to get_context w/o locking mutex
+    pub unsafe fn get_global() -> &'static Mutex<Context> {
         &GLOBAL_CTX
     }
 

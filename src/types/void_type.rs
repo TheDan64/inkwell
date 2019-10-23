@@ -80,9 +80,10 @@ impl<'ctx> VoidType<'ctx> {
     /// use inkwell::context::Context;
     /// use inkwell::types::VoidType;
     ///
+    /// let global_ctx = unsafe { Context::get_global().lock() };
     /// let void_type = VoidType::void_type();
     ///
-    /// assert_eq!(*void_type.get_context(), *Context::get_global().lock());
+    /// assert_eq!(*void_type.get_context(), *global_ctx);
     /// ```
     pub fn void_type() -> Self {
         let void_type = unsafe {

@@ -328,11 +328,12 @@ impl<'ctx> StructType<'ctx> {
     /// use inkwell::context::Context;
     /// use inkwell::types::{FloatType, IntType, StructType};
     ///
+    /// let global_ctx = unsafe { Context::get_global().lock() };
     /// let f32_type = FloatType::f32_type();
     /// let i8_type = IntType::i8_type();
     /// let struct_type = StructType::struct_type(&[f32_type.into(), i8_type.into()], false);
     ///
-    /// assert_eq!(*struct_type.get_context(), *Context::get_global().lock());
+    /// assert_eq!(*struct_type.get_context(), *global_ctx);
     /// ```
     pub fn struct_type(field_types: &[BasicTypeEnum<'ctx>], packed: bool) -> Self {
         let mut field_types: Vec<LLVMTypeRef> = field_types.iter()

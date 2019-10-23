@@ -79,10 +79,11 @@ impl<'ctx> IntType<'ctx> {
     /// use inkwell::context::Context;
     /// use inkwell::types::IntType;
     ///
+    /// let global_ctx = unsafe { Context::get_global().lock() };
     /// let bool_type = IntType::bool_type();
     ///
     /// assert_eq!(bool_type.get_bit_width(), 1);
-    /// assert_eq!(*bool_type.get_context(), *Context::get_global().lock());
+    /// assert_eq!(*bool_type.get_context(), *global_ctx);
     /// ```
     pub fn bool_type() -> Self {
         let type_ = unsafe {
@@ -101,10 +102,11 @@ impl<'ctx> IntType<'ctx> {
     /// use inkwell::context::Context;
     /// use inkwell::types::IntType;
     ///
+    /// let global_ctx = unsafe { Context::get_global().lock() };
     /// let i8_type = IntType::i8_type();
     ///
     /// assert_eq!(i8_type.get_bit_width(), 8);
-    /// assert_eq!(*i8_type.get_context(), *Context::get_global().lock());
+    /// assert_eq!(*i8_type.get_context(), *global_ctx);
     /// ```
     pub fn i8_type() -> Self {
         let type_ = unsafe {
@@ -123,10 +125,11 @@ impl<'ctx> IntType<'ctx> {
     /// use inkwell::context::Context;
     /// use inkwell::types::IntType;
     ///
+    /// let global_ctx = unsafe { Context::get_global().lock() };
     /// let i16_type = IntType::i16_type();
     ///
     /// assert_eq!(i16_type.get_bit_width(), 16);
-    /// assert_eq!(*i16_type.get_context(), *Context::get_global().lock());
+    /// assert_eq!(*i16_type.get_context(), *global_ctx);
     /// ```
     pub fn i16_type() -> Self {
         let type_ = unsafe {
@@ -145,10 +148,11 @@ impl<'ctx> IntType<'ctx> {
     /// use inkwell::context::Context;
     /// use inkwell::types::IntType;
     ///
+    /// let global_ctx = unsafe { Context::get_global().lock() };
     /// let i32_type = IntType::i32_type();
     ///
     /// assert_eq!(i32_type.get_bit_width(), 32);
-    /// assert_eq!(*i32_type.get_context(), *Context::get_global().lock());
+    /// assert_eq!(*i32_type.get_context(), *global_ctx);
     /// ```
     pub fn i32_type() -> Self {
         let type_ = unsafe {
@@ -167,10 +171,11 @@ impl<'ctx> IntType<'ctx> {
     /// use inkwell::context::Context;
     /// use inkwell::types::IntType;
     ///
+    /// let global_ctx = unsafe { Context::get_global().lock() };
     /// let i64_type = IntType::i64_type();
     ///
     /// assert_eq!(i64_type.get_bit_width(), 64);
-    /// assert_eq!(*i64_type.get_context(), *Context::get_global().lock());
+    /// assert_eq!(*i64_type.get_context(), *global_ctx);
     /// ```
     pub fn i64_type() -> Self {
         let type_ = unsafe {
@@ -189,10 +194,11 @@ impl<'ctx> IntType<'ctx> {
     /// use inkwell::context::Context;
     /// use inkwell::types::IntType;
     ///
+    /// let global_ctx = unsafe { Context::get_global().lock() };
     /// let i128_type = IntType::i128_type();
     ///
     /// assert_eq!(i128_type.get_bit_width(), 128);
-    /// assert_eq!(*i128_type.get_context(), *Context::get_global().lock());
+    /// assert_eq!(*i128_type.get_context(), *global_ctx);
     /// ```
     pub fn i128_type() -> Self {
         // REVIEW: The docs says there's a LLVMInt128Type, but
@@ -210,10 +216,11 @@ impl<'ctx> IntType<'ctx> {
     /// use inkwell::context::Context;
     /// use inkwell::types::IntType;
     ///
+    /// let global_ctx = unsafe { Context::get_global().lock() };
     /// let i42_type = IntType::custom_width_int_type(42);
     ///
     /// assert_eq!(i42_type.get_bit_width(), 42);
-    /// assert_eq!(*i42_type.get_context(), *Context::get_global().lock());
+    /// assert_eq!(*i42_type.get_context(), *global_ctx);
     /// ```
     pub fn custom_width_int_type(bits: u32) -> Self {
         let type_ = unsafe {

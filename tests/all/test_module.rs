@@ -160,7 +160,7 @@ fn test_get_type() {
 
 #[test]
 fn test_get_type_global_context() {
-    let context = Context::get_global().lock();
+    let context = unsafe { Context::get_global().lock() };
     let module = Module::create("my_module");
 
     assert_eq!(*module.get_context(), *context);
@@ -216,9 +216,10 @@ fn test_parse_from_buffer() {
 
     let buffer = module.write_bitcode_to_memory();
     let module2_result = Module::parse_bitcode_from_buffer(&buffer);
+    let global_ctx = unsafe { Context::get_global().lock() };
 
     assert!(module2_result.is_ok());
-    assert_eq!(*module2_result.unwrap().get_context(), *Context::get_global().lock());
+    assert_eq!(*module2_result.unwrap().get_context(), *global_ctx);
 
     let module3_result = Module::parse_bitcode_from_buffer_in_context(&garbage_buffer, &context);
 
@@ -263,9 +264,10 @@ fn test_parse_from_path() {
     module.write_bitcode_to_path(&temp_path);
 
     let module3_result = Module::parse_bitcode_from_path(&temp_path);
+    let global_ctx = unsafe { Context::get_global().lock() };
 
     assert!(module3_result.is_ok());
-    assert_eq!(*module3_result.unwrap().get_context(), *Context::get_global().lock());
+    assert_eq!(*module3_result.unwrap().get_context(), *global_ctx);
 
     let module4_result = Module::parse_bitcode_from_path_in_context(&temp_path, &context);
 

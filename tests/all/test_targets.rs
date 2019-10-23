@@ -283,7 +283,7 @@ fn test_ptr_sized_int() {
     let target_data = execution_engine.get_target_data();
     let address_space = AddressSpace::Global;
     let int_type = target_data.ptr_sized_int_type(None);
-    let global_ctx = Context::get_global().lock();
+    let global_ctx = unsafe { Context::get_global().lock() };
 
     assert_eq!(*int_type.get_context(), *global_ctx);
     assert_eq!(int_type.get_bit_width(), target_data.get_pointer_byte_size(None) * 8);

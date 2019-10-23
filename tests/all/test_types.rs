@@ -125,7 +125,7 @@ fn test_function_type() {
 
 #[test]
 fn test_sized_types() {
-    let context = Context::get_global().lock();
+    let context = unsafe { Context::get_global().lock() };
     let void_type = VoidType::void_type();
     let bool_type = IntType::bool_type();
     let i8_type = IntType::i8_type();
