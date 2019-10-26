@@ -6,6 +6,7 @@ use llvm_sys::core::{LLVMCreateEnumAttribute, LLVMCreateStringAttribute};
 use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef, LLVMDiagnosticInfoRef};
 use llvm_sys::ir_reader::LLVMParseIRInContext;
 use libc::c_void;
+use once_cell::sync::Lazy;
 use parking_lot::Mutex;
 
 #[llvm_versions(4.0..=latest)]
@@ -24,15 +25,13 @@ use std::mem::forget;
 use std::ops::Deref;
 use std::ptr;
 
-lazy_static! {
-    static ref GLOBAL_CTX: Mutex<Context> = {
-        let ctx = unsafe {
-            LLVMGetGlobalContext()
-        };
-
-        Mutex::new(Context::new(ctx))
+static GLOBAL_CTX: Lazy<Mutex<Context>> = Lazy::new(|| {
+    let ctx = unsafe {
+        LLVMGetGlobalContext()
     };
-}
+
+    Mutex::new(Context::new(ctx))
+});
 
 /// A `Context` is a container for all LLVM entities including `Module`s.
 ///

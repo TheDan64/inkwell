@@ -20,6 +20,7 @@ use llvm_sys::target_machine::{
     LLVMTargetHasTargetMachine, LLVMTargetMachineEmitToFile, LLVMTargetMachineEmitToMemoryBuffer,
     LLVMTargetMachineRef, LLVMTargetRef,
 };
+use once_cell::sync::Lazy;
 use parking_lot::RwLock;
 
 use crate::context::Context;
@@ -95,9 +96,7 @@ impl Default for InitializationConfig {
     }
 }
 
-lazy_static! {
-    static ref TARGET_LOCK: RwLock<()> = RwLock::new(());
-}
+static TARGET_LOCK: Lazy<RwLock<()>> = Lazy::new(|| RwLock::new(()));
 
 // NOTE: Versions verified as target-complete: 3.6, 3.7, 3.8, 3.9, 4.0
 #[derive(Debug, Eq, PartialEq)]
