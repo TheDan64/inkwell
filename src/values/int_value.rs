@@ -388,7 +388,7 @@ impl IntValue {
     /// Determines whether or not an `IntValue` is an `llvm::Constant`.
     ///
     /// Constants includes values that are not known at compile time, for
-    /// the example the address of a function casted to an integer.
+    /// example the address of a function casted to an integer.
     ///
     /// # Example
     ///
