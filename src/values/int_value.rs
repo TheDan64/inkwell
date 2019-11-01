@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMConstNot, LLVMConstNeg, LLVMConstNSWNeg, LLVMConstNUWNeg, LLVMConstAdd, LLVMConstNSWAdd, LLVMConstNUWAdd, LLVMConstSub, LLVMConstNSWSub, LLVMConstNUWSub, LLVMConstMul, LLVMConstNSWMul, LLVMConstNUWMul, LLVMConstUDiv, LLVMConstSDiv, LLVMConstSRem, LLVMConstURem, LLVMConstIntCast, LLVMConstXor, LLVMConstOr, LLVMConstAnd, LLVMConstExactSDiv, LLVMConstShl, LLVMConstLShr, LLVMConstAShr, LLVMConstUIToFP, LLVMConstSIToFP, LLVMConstIntToPtr, LLVMConstTrunc, LLVMConstSExt, LLVMConstZExt, LLVMConstTruncOrBitCast, LLVMConstSExtOrBitCast, LLVMConstZExtOrBitCast, LLVMConstBitCast, LLVMConstICmp, LLVMConstIntGetZExtValue, LLVMConstIntGetSExtValue, LLVMConstSelect};
+use llvm_sys::core::{LLVMConstNot, LLVMConstNeg, LLVMConstNSWNeg, LLVMConstNUWNeg, LLVMConstAdd, LLVMConstNSWAdd, LLVMConstNUWAdd, LLVMConstSub, LLVMConstNSWSub, LLVMConstNUWSub, LLVMConstMul, LLVMConstNSWMul, LLVMConstNUWMul, LLVMConstUDiv, LLVMConstSDiv, LLVMConstSRem, LLVMConstURem, LLVMConstIntCast, LLVMConstXor, LLVMConstOr, LLVMConstAnd, LLVMConstExactSDiv, LLVMConstShl, LLVMConstLShr, LLVMConstAShr, LLVMConstUIToFP, LLVMConstSIToFP, LLVMConstIntToPtr, LLVMConstTrunc, LLVMConstSExt, LLVMConstZExt, LLVMConstTruncOrBitCast, LLVMConstSExtOrBitCast, LLVMConstZExtOrBitCast, LLVMConstBitCast, LLVMConstICmp, LLVMConstIntGetZExtValue, LLVMConstIntGetSExtValue, LLVMConstSelect, LLVMIsAConstantInt};
 #[llvm_versions(4.0..=latest)]
 use llvm_sys::core::LLVMConstExactUDiv;
 use llvm_sys::prelude::LLVMValueRef;
@@ -385,7 +385,10 @@ impl IntValue {
         BasicValueEnum::new(value)
     }
 
-    /// Determines whether or not an `IntValue` is a constant.
+    /// Determines whether or not an `IntValue` is an `llvm::Constant`.
+    ///
+    /// Constants includes values that are not known at compile time, for
+    /// the example the address of a function casted to an integer.
     ///
     /// # Example
     ///
@@ -400,6 +403,25 @@ impl IntValue {
     /// ```
     pub fn is_const(&self) -> bool {
         self.int_value.is_const()
+    }
+
+    /// Determines whether or not an `IntValue` is an `llvm::ConstantInt`.
+    ///
+    /// ConstantInt only includes values that are known at compile time.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let i64_type = context.i64_type();
+    /// let i64_val = i64_type.const_int(12, false);
+    ///
+    /// assert!(i64_val.is_constant_int());
+    /// ```
+    pub fn is_constant_int(&self) -> bool {
+        !unsafe { LLVMIsAConstantInt(self.as_value_ref()) }.is_null()
     }
 
     /// Obtains a constant `IntValue`'s zero extended value.
@@ -417,7 +439,7 @@ impl IntValue {
     /// ```
     pub fn get_zero_extended_constant(&self) -> Option<u64> {
         // Garbage values are produced on non constant values
-        if !self.is_const() {
+        if !self.is_constant_int() {
             return None;
         }
         if self.get_type().get_bit_width() > 64 {
@@ -444,7 +466,7 @@ impl IntValue {
     /// ```
     pub fn get_sign_extended_constant(&self) -> Option<i64> {
         // Garbage values are produced on non constant values
-        if !self.is_const() {
+        if !self.is_constant_int() {
             return None;
         }
         if self.get_type().get_bit_width() > 64 {
