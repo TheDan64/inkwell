@@ -15,7 +15,7 @@ extern crate enum_methods;
 extern crate libc;
 extern crate llvm_sys;
 #[macro_use]
-extern crate inkwell_internal_macros;
+extern crate inkwell_internals;
 #[macro_use]
 extern crate lazy_static;
 

@@ -18,7 +18,7 @@ use syn::fold::Fold;
 use syn::spanned::Spanned;
 use syn::{Token, LitFloat, Ident, Item, Field, Variant, Attribute};
 
-const FEATURES_ENV: &'static str = env!("INKWELL_FEATURES");
+const FEATURES_ENV: &str = env!("INKWELL_FEATURES");
 
 /// Fetches a vector of feature version strings, e.g. llvm8-0
 fn get_feature_versions() -> Vec<&'static str> {
@@ -48,19 +48,19 @@ fn get_features(vt: VersionType) -> Result<Vec<&'static str>> {
     match vt {
         VersionType::Specific(version, span) => {
             let feature = f64_to_feature_string(version);
-            let index = get_feature_index(&features, feature, span.clone())?;
+            let index = get_feature_index(&features, feature, span)?;
             Ok(features[index..=index].to_vec())
         }
         VersionType::InclusiveRangeToLatest(version, span) => {
             let feature = f64_to_feature_string(version);
-            let index = get_feature_index(&features, feature, span.clone())?;
+            let index = get_feature_index(&features, feature, span)?;
             Ok(features[index..=latest].to_vec())
         }
         VersionType::InclusiveRange((start, start_span), (end, end_span)) => {
             let start_feature = f64_to_feature_string(start);
             let end_feature = f64_to_feature_string(end);
-            let start_index = get_feature_index(&features, start_feature, start_span.clone())?;
-            let end_index = get_feature_index(&features, end_feature, end_span.clone())?;
+            let start_index = get_feature_index(&features, start_feature, start_span)?;
+            let end_index = get_feature_index(&features, end_feature, end_span)?;
             if end_index < start_index {
                 let message = format!("Invalid version range: {} must be greater than or equal to {}", start, end);
                 Err(Error::new(end_span, message))
@@ -70,7 +70,7 @@ fn get_features(vt: VersionType) -> Result<Vec<&'static str>> {
         }
         VersionType::ExclusiveRangeToLatest(version, span) => {
             let feature = f64_to_feature_string(version);
-            let index = get_feature_index(&features, feature, span.clone())?;
+            let index = get_feature_index(&features, feature, span)?;
             if latest == index {
                 let message = format!("Invalid version range: {}..latest produces an empty feature set", version);
                 Err(Error::new(span, message))
@@ -81,8 +81,8 @@ fn get_features(vt: VersionType) -> Result<Vec<&'static str>> {
         VersionType::ExclusiveRange((start, start_span), (end, end_span)) => {
             let start_feature = f64_to_feature_string(start);
             let end_feature = f64_to_feature_string(end);
-            let start_index = get_feature_index(&features, start_feature, start_span.clone())?;
-            let end_index = get_feature_index(&features, end_feature, end_span.clone())?;
+            let start_index = get_feature_index(&features, start_feature, start_span)?;
+            let end_index = get_feature_index(&features, end_feature, end_span)?;
             if end_index == start_index {
                 let message = format!("Invalid version range: {}..{} produces an empty feature set", start, end);
                 Err(Error::new(start_span, message))
@@ -218,11 +218,11 @@ impl FeatureSet {
         self.1 = Some(err);
     }
 
-    fn to_error(self) -> Error {
+    fn into_error(self) -> Error {
         self.1.unwrap()
     }
 
-    fn to_compile_error(self) -> TokenStream {
+    fn into_compile_error(self) -> TokenStream {
         TokenStream::from(self.1.unwrap().to_compile_error())
     }
 
@@ -310,7 +310,7 @@ pub fn llvm_versions(attribute_args: TokenStream, attributee: TokenStream) -> To
     let folded = features.fold_item(attributee);
 
     if features.has_error() {
-        return features.to_compile_error();
+        return features.into_compile_error();
     }
 
     let q = quote! {
@@ -343,7 +343,7 @@ pub fn llvm_versioned_item(_attribute_args: TokenStream, attributee: TokenStream
     let folded = features.fold_item(attributee);
 
     if features.has_error() {
-        return features.to_compile_error();
+        return features.into_compile_error();
     }
 
     quote!(#folded).into()
@@ -409,7 +409,7 @@ impl EnumVariants {
         self.error = Some(Error::new(span, err));
     }
 
-    fn to_error(self) -> Error {
+    fn into_error(self) -> Error {
         self.error.unwrap()
     }
 }
@@ -429,8 +429,8 @@ impl Fold for EnumVariants {
                 if meta.nested.len() == 1 {
                     let variant_meta = meta.nested.first().unwrap();
                     // The element should be an identifier
-                    if let NestedMeta::Meta(Meta::Word(name)) = variant_meta.value().clone() {
-                        self.variants.push(EnumVariant::with_name(&variant, name.clone()));
+                    if let NestedMeta::Meta(Meta::Word(name)) = (*variant_meta.value()).clone() {
+                        self.variants.push(EnumVariant::with_name(&variant, name));
                         // Strip the llvm_variant attribute from the final AST
                         variant.attrs.retain(|attr| !attr.path.is_ident("llvm_variant"));
                         return variant;
@@ -463,13 +463,13 @@ impl Parse for LLVMEnumType {
         let mut features = FeatureSet::default();
         let decl = features.fold_item_enum(decl);
         if features.has_error() {
-            return Err(features.to_error());
+            return Err(features.into_error());
         }
 
         let mut variants = EnumVariants::default();
         let decl = variants.fold_item_enum(decl);
         if variants.has_error() {
-            return Err(variants.to_error());
+            return Err(variants.into_error());
         }
 
         Ok(Self {
