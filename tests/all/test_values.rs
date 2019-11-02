@@ -1251,3 +1251,20 @@ fn test_aggregate_returns() {
 
     assert!(module.verify().is_ok());
 }
+
+#[test]
+fn test_constant_expression() {
+    let context = Context::create();
+    let builder = context.create_builder();
+    let module = context.create_module("my_mod");
+
+    let i32_type = context.i32_type();
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+
+    let function = module.add_function("", fn_type, None);
+    let expr = builder.build_ptr_to_int(function.as_global_value().as_pointer_value(), i32_type, "");
+
+    assert!(expr.is_const());
+    assert!(!expr.is_constant_int());
+}
