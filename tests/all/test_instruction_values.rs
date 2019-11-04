@@ -356,3 +356,32 @@ fn test_atomic_ordering_mem_instructions() {
     assert!(fadd_instruction.get_atomic_ordering().is_err());
     assert!(fadd_instruction.set_atomic_ordering(AtomicOrdering::NotAtomic).is_err());
 }
+
+#[test]
+fn test_metadata_kinds() {
+    let context = Context::create();
+
+    let i8_type = context.i8_type();
+    let f32_type = context.f32_type();
+    let ptr_type = i8_type.ptr_type(AddressSpace::Generic);
+    let struct_type = context.struct_type(&[i8_type.into(), f32_type.into()], false);
+    let vector_type = i8_type.vec_type(2);
+
+    let i8_value = i8_type.const_zero();
+    let i8_array_value = i8_type.const_array(&[i8_value]);
+    let f32_value = f32_type.const_zero();
+    let ptr_value = ptr_type.const_null();
+    let struct_value = struct_type.get_undef();
+    let vector_value = vector_type.const_zero();
+
+    let md_string = context.metadata_string("lots of metadata here");
+    let md_node = context.metadata_node(&[
+        i8_array_value.into(),
+        i8_value.into(),
+        f32_value.into(),
+        ptr_value.into(),
+        struct_value.into(),
+        vector_value.into(),
+        md_string.into(),
+    ]);
+}

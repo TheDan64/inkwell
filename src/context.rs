@@ -17,7 +17,7 @@ use crate::memory_buffer::MemoryBuffer;
 use crate::module::Module;
 use crate::support::LLVMString;
 use crate::types::{BasicTypeEnum, FloatType, IntType, StructType, VoidType, AsTypeRef};
-use crate::values::{AsValueRef, FunctionValue, StructValue, MetadataValue, BasicValueEnum, VectorValue};
+use crate::values::{AsValueRef, BasicMetadataValueEnum, BasicValueEnum, FunctionValue, StructValue, MetadataValue, VectorValue};
 
 use std::ffi::CString;
 use std::marker::PhantomData;
@@ -701,8 +701,7 @@ impl Context {
     /// ```
     // REVIEW: Maybe more helpful to beginners to call this metadata_tuple?
     // REVIEW: Seems to be unassgned to anything
-    // REVIEW: Should maybe make this take &[BasicValueEnum]?
-    pub fn metadata_node(&self, values: &[BasicValueEnum]) -> MetadataValue {
+    pub fn metadata_node(&self, values: &[BasicMetadataValueEnum]) -> MetadataValue {
         let mut tuple_values: Vec<LLVMValueRef> = values.iter()
                                                         .map(|val| val.as_value_ref())
                                                         .collect();
