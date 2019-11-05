@@ -824,7 +824,6 @@ impl Module {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
-    /// use inkwell::values::MetadataValue;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
@@ -835,8 +834,8 @@ impl Module {
     ///
     /// assert_eq!(module.get_global_metadata_size("my_md"), 0);
     ///
-    /// let md_string = MetadataValue::create_string("lots of metadata here");
-    /// let md_node = MetadataValue::create_node(&[&bool_val, &f32_val]);
+    /// let md_string = context.metadata_string("lots of metadata here");
+    /// let md_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
     ///
     /// module.add_global_metadata("my_md", &md_string);
     /// module.add_global_metadata("my_md", &md_node);
@@ -870,7 +869,6 @@ impl Module {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
-    /// use inkwell::values::MetadataValue;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
@@ -881,8 +879,8 @@ impl Module {
     ///
     /// assert_eq!(module.get_global_metadata_size("my_md"), 0);
     ///
-    /// let md_string = MetadataValue::create_string("lots of metadata here");
-    /// let md_node = MetadataValue::create_node(&[&bool_val, &f32_val]);
+    /// let md_string = context.metadata_string("lots of metadata here");
+    /// let md_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
     ///
     /// module.add_global_metadata("my_md", &md_string);
     /// module.add_global_metadata("my_md", &md_node);
@@ -916,7 +914,6 @@ impl Module {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
-    /// use inkwell::values::MetadataValue;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
@@ -927,8 +924,8 @@ impl Module {
     ///
     /// assert_eq!(module.get_global_metadata_size("my_md"), 0);
     ///
-    /// let md_string = MetadataValue::create_string("lots of metadata here");
-    /// let md_node = MetadataValue::create_node(&[&bool_val, &f32_val]);
+    /// let md_string = context.metadata_string("lots of metadata here");
+    /// let md_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
     ///
     /// module.add_global_metadata("my_md", &md_string);
     /// module.add_global_metadata("my_md", &md_node);

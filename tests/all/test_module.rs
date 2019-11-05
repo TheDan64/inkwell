@@ -429,11 +429,10 @@ fn test_metadata_flags() {
         let module = context.create_module("my_module");
 
         use self::inkwell::module::FlagBehavior;
-        use self::inkwell::values::MetadataValue;
 
         assert!(module.get_flag("some_key").is_none());
 
-        let md = MetadataValue::create_string("lots of metadata here");
+        let md = context.metadata_string("lots of metadata here");
 
         module.add_metadata_flag("some_key", FlagBehavior::Error, md);
 

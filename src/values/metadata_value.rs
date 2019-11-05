@@ -74,27 +74,6 @@ impl MetadataValue {
         }
     }
 
-    pub fn create_node(values: &[&dyn BasicValue]) -> Self {
-        let mut tuple_values: Vec<LLVMValueRef> = values.iter()
-                                                        .map(|val| val.as_value_ref())
-                                                        .collect();
-        let metadata_value = unsafe {
-            LLVMMDNode(tuple_values.as_mut_ptr(), tuple_values.len() as u32)
-        };
-
-        MetadataValue::new(metadata_value)
-    }
-
-    pub fn create_string(string: &str) -> Self {
-        let c_string = CString::new(string).expect("Conversion to CString failed unexpectedly");
-
-        let metadata_value = unsafe {
-            LLVMMDString(c_string.as_ptr(), string.len() as u32)
-        };
-
-        MetadataValue::new(metadata_value)
-    }
-
     pub fn get_string_value(&self) -> Option<&CStr> {
         if self.is_node() {
             return None;

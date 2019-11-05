@@ -436,7 +436,7 @@ fn test_metadata() {
     assert_eq!(module.get_global_metadata_size("my_string_md"), 0);
     assert_eq!(module.get_global_metadata("my_string_md").len(), 0);
 
-    let md_string = MetadataValue::create_string("lots of metadata here");
+    let md_string = context.metadata_string("lots of metadata here");
 
     assert_eq!(md_string.get_node_size(), 0);
     assert_eq!(md_string.get_node_values().len(), 0);
@@ -473,7 +473,7 @@ fn test_metadata() {
     let vec_val = VectorType::const_vector(&[i8_val]);
     let fn_val = module.add_function("my_fn", fn_type, None);
 
-    let md_node = MetadataValue::create_node(&[&bool_val, &f32_val]);
+    let md_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
 
     let node_values = md_node.get_node_values();
 
