@@ -89,6 +89,9 @@ impl Type {
     }
 
     fn vec_type(&self, size: u32) -> VectorType {
+        assert!(size != 0, "Vectors of size zero are not allowed.");
+        // -- https://llvm.org/docs/LangRef.html#vector-type
+
         let vec_type = unsafe {
             LLVMVectorType(self.type_, size)
         };
