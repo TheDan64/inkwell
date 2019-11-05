@@ -32,7 +32,7 @@ impl VectorType {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// let f32_vec_type = f32_type.vec_type(40);
+    /// let f32_vec_type = f32_type.vec_type(40).unwrap();
     ///
     /// assert!(f32_vec_type.is_sized());
     /// ```
@@ -52,7 +52,7 @@ impl VectorType {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// let f32_vec_type = f32_type.vec_type(3);
+    /// let f32_vec_type = f32_type.vec_type(3).unwrap();
     /// let f32_vec_type_size = f32_vec_type.size_of();
     /// ```
     pub fn size_of(&self) -> Option<IntValue> {
@@ -72,7 +72,7 @@ impl VectorType {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// let f32_vec_type = f32_type.vec_type(7);
+    /// let f32_vec_type = f32_type.vec_type(7).unwrap();
     /// let f32_type_alignment = f32_vec_type.get_alignment();
     /// ```
     pub fn get_alignment(&self) -> IntValue {
@@ -88,7 +88,7 @@ impl VectorType {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// let f32_vector_type = f32_type.vec_type(3);
+    /// let f32_vector_type = f32_type.vec_type(3).unwrap();
     ///
     /// assert_eq!(f32_vector_type.get_size(), 3);
     /// assert_eq!(f32_vector_type.get_element_type().into_float_type(), f32_type);
@@ -142,7 +142,7 @@ impl VectorType {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// let f32_vec_type = f32_type.vec_type(7);
+    /// let f32_vec_type = f32_type.vec_type(7).unwrap();
     /// let f32_vec_zero = f32_vec_type.const_zero();
     /// ```
     pub fn const_zero(&self) -> VectorValue {
@@ -170,7 +170,7 @@ impl VectorType {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// let f32_vec_type = f32_type.vec_type(3);
+    /// let f32_vec_type = f32_type.vec_type(3).unwrap();
     /// let f32_vec_undef = f32_vec_type.get_undef();
     ///
     /// assert!(f32_vec_undef.is_undef());
@@ -189,7 +189,7 @@ impl VectorType {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// let f32_vector_type = f32_type.vec_type(3);
+    /// let f32_vector_type = f32_type.vec_type(3).unwrap();
     ///
     /// assert_eq!(f32_vector_type.get_size(), 3);
     /// assert_eq!(f32_vector_type.get_element_type().into_float_type(), f32_type);
@@ -209,7 +209,7 @@ impl VectorType {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// let f32_vec_type = f32_type.vec_type(3);
+    /// let f32_vec_type = f32_type.vec_type(3).unwrap();
     /// let f32_vec_ptr_type = f32_vec_type.ptr_type(AddressSpace::Generic);
     ///
     /// assert_eq!(f32_vec_ptr_type.get_element_type().into_vector_type(), f32_vec_type);
@@ -227,7 +227,7 @@ impl VectorType {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// let f32_vec_type = f32_type.vec_type(3);
+    /// let f32_vec_type = f32_type.vec_type(3).unwrap();
     /// let fn_type = f32_vec_type.fn_type(&[], false);
     /// ```
     pub fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
@@ -243,7 +243,7 @@ impl VectorType {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// let f32_vec_type = f32_type.vec_type(3);
+    /// let f32_vec_type = f32_type.vec_type(3).unwrap();
     /// let f32_vec_array_type = f32_vec_type.array_type(3);
     ///
     /// assert_eq!(f32_vec_array_type.len(), 3);
@@ -264,7 +264,7 @@ impl VectorType {
     /// let f32_type = context.f32_type();
     /// let f32_val = f32_type.const_float(0.);
     /// let f32_val2 = f32_type.const_float(2.);
-    /// let f32_vec_type = f32_type.vec_type(2);
+    /// let f32_vec_type = f32_type.vec_type(2).unwrap();
     /// let f32_vec_val = VectorType::const_vector(&[f32_val, f32_val2]);
     /// let f32_array = f32_vec_type.const_array(&[f32_vec_val, f32_vec_val]);
     ///
@@ -290,7 +290,7 @@ impl VectorType {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// let f32_vec_type = f32_type.vec_type(7);
+    /// let f32_vec_type = f32_type.vec_type(7).unwrap();
     ///
     /// assert_eq!(*f32_vec_type.get_context(), context);
     /// ```
