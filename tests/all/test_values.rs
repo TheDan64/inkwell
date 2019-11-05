@@ -149,7 +149,7 @@ fn test_set_get_name() {
     let void_type = context.void_type();
     let ptr_type = bool_type.ptr_type(AddressSpace::Generic);
     let struct_type = context.struct_type(&[bool_type.into()], false);
-    let vec_type = bool_type.vec_type(1).unwrap();
+    let vec_type = bool_type.vec_type(1);
 
     let module = context.create_module("types");
     let builder = context.create_builder();
@@ -268,7 +268,7 @@ fn test_undef() {
     let ptr_undef = bool_type.ptr_type(AddressSpace::Generic).get_undef();
     let array_undef = array_type.get_undef();
     let struct_undef = StructType::struct_type(&[bool_type.into()], false).get_undef();
-    let vec_undef = bool_type.vec_type(1).unwrap().get_undef();
+    let vec_undef = bool_type.vec_type(1).get_undef();
     let ppc_f128_undef = ppc_f128_type.get_undef();
 
     assert!(bool_undef.is_undef());
@@ -1213,7 +1213,7 @@ fn test_vectors() {
     let i32_type = context.i32_type();
     let i32_zero = i32_type.const_int(0, false);
     let i32_seven = i32_type.const_int(7, false);
-    let vec_type = i32_type.vec_type(2).unwrap();
+    let vec_type = i32_type.vec_type(2);
     let fn_type = i32_type.fn_type(&[vec_type.into()], false);
     let fn_value = module.add_function("my_func", fn_type, None);
     let bb = fn_value.append_basic_block("entry");

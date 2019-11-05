@@ -10,7 +10,7 @@ use self::inkwell::types::{BasicType, FloatType, IntType, StructType, VoidType};
 fn test_struct_type() {
     let context = Context::create();
     let int = context.i8_type();
-    let int_vector = int.vec_type(100).unwrap();
+    let int_vector = int.vec_type(100);
     let float = context.f32_type();
     let float_array = float.array_type(3);
     let av_struct = context.struct_type(&[int_vector.into(), float_array.into()], false);
@@ -210,18 +210,18 @@ fn test_sized_types() {
     assert!(struct_type4.array_type(0).is_sized());
     assert!(!opaque_struct_type.array_type(0).is_sized());
 
-    assert!(bool_type.vec_type(42).unwrap().is_sized());
-    assert!(i8_type.vec_type(42).unwrap().is_sized());
-    assert!(i16_type.vec_type(42).unwrap().is_sized());
-    assert!(i32_type.vec_type(42).unwrap().is_sized());
-    assert!(i64_type.vec_type(42).unwrap().is_sized());
-    assert!(i128_type.vec_type(42).unwrap().is_sized());
-    assert!(f16_type.vec_type(42).unwrap().is_sized());
-    assert!(f32_type.vec_type(42).unwrap().is_sized());
-    assert!(f64_type.vec_type(42).unwrap().is_sized());
-    assert!(f80_type.vec_type(42).unwrap().is_sized());
-    assert!(f128_type.vec_type(42).unwrap().is_sized());
-    assert!(ppc_f128_type.vec_type(42).unwrap().is_sized());
+    assert!(bool_type.vec_type(42).is_sized());
+    assert!(i8_type.vec_type(42).is_sized());
+    assert!(i16_type.vec_type(42).is_sized());
+    assert!(i32_type.vec_type(42).is_sized());
+    assert!(i64_type.vec_type(42).is_sized());
+    assert!(i128_type.vec_type(42).is_sized());
+    assert!(f16_type.vec_type(42).is_sized());
+    assert!(f32_type.vec_type(42).is_sized());
+    assert!(f64_type.vec_type(42).is_sized());
+    assert!(f80_type.vec_type(42).is_sized());
+    assert!(f128_type.vec_type(42).is_sized());
+    assert!(ppc_f128_type.vec_type(42).is_sized());
 }
 
 #[test]
@@ -241,7 +241,7 @@ fn test_const_zero() {
     let ppc_f128_type = context.ppc_f128_type();
     let struct_type = context.struct_type(&[i8_type.into(), f128_type.into()], false);
     let ptr_type = f64_type.ptr_type(AddressSpace::Generic);
-    let vec_type = f64_type.vec_type(42).unwrap();
+    let vec_type = f64_type.vec_type(42);
     let array_type = f64_type.array_type(42);
 
     bool_type.size_of();
@@ -314,7 +314,7 @@ fn test_const_zero() {
 fn test_vec_type() {
     let context = Context::create();
     let int = context.i8_type();
-    let vec_type = int.vec_type(42).unwrap();
+    let vec_type = int.vec_type(42);
 
     assert_eq!(vec_type.get_size(), 42);
 }
@@ -357,7 +357,7 @@ fn test_basic_type_enum() {
         // derived types
         &int.array_type(0), &int.ptr_type(addr),
         &context.struct_type(&[int.as_basic_type_enum()], false),
-        &int.vec_type(2).unwrap()
+        &int.vec_type(0)
     ];
     for basic_type in types {
         assert_eq!(basic_type.as_basic_type_enum().ptr_type(addr),

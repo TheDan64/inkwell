@@ -66,12 +66,12 @@ impl FloatType {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// let f32_vector_type = f32_type.vec_type(3).unwrap();
+    /// let f32_vector_type = f32_type.vec_type(3);
     ///
     /// assert_eq!(f32_vector_type.get_size(), 3);
     /// assert_eq!(f32_vector_type.get_element_type().into_float_type(), f32_type);
     /// ```
-    pub fn vec_type(&self, size: u32) -> Result<VectorType, &'static str> {
+    pub fn vec_type(&self, size: u32) -> VectorType {
         self.float_type.vec_type(size)
     }
 

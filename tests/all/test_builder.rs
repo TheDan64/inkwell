@@ -477,10 +477,10 @@ fn test_no_builder_double_free2() {
 fn test_vector_convert_ops() {
     let context = Context::create();
     let module = context.create_module("test");
-    let int8_vec_type = context.i8_type().vec_type(3).unwrap();
-    let int32_vec_type = context.i32_type().vec_type(3).unwrap();
-    let float32_vec_type = context.f32_type().vec_type(3).unwrap();
-    let float16_vec_type = context.f16_type().vec_type(3).unwrap();
+    let int8_vec_type = context.i8_type().vec_type(3);
+    let int32_vec_type = context.i32_type().vec_type(3);
+    let float32_vec_type = context.f32_type().vec_type(3);
+    let float16_vec_type = context.f16_type().vec_type(3);
 
     // Here we're building a function that takes in a <3 x i8> and returns it casted to and from a <3 x i32>
     // Casting to and from means we can ensure the cast build functions return a vector when one is provided.
@@ -527,9 +527,9 @@ fn test_vector_convert_ops() {
 fn test_vector_binary_ops() {
     let context = Context::create();
     let module = context.create_module("test");
-    let int32_vec_type = context.i32_type().vec_type(2).unwrap();
-    let float32_vec_type = context.f32_type().vec_type(2).unwrap();
-    let bool_vec_type = context.bool_type().vec_type(2).unwrap();
+    let int32_vec_type = context.i32_type().vec_type(2);
+    let float32_vec_type = context.f32_type().vec_type(2);
+    let bool_vec_type = context.bool_type().vec_type(2);
 
     // Here we're building a function that takes in three <2 x i32>s and returns them added together as a <2 x i32>
     let fn_type = int32_vec_type.fn_type(&[int32_vec_type.into(), int32_vec_type.into(), int32_vec_type.into()], false);
@@ -583,9 +583,9 @@ fn test_vector_binary_ops() {
 fn test_vector_pointer_ops() {
     let context = Context::create();
     let module = context.create_module("test");
-    let int32_vec_type = context.i32_type().vec_type(4).unwrap();
-    let i8_ptr_vec_type = context.i8_type().ptr_type(AddressSpace::Generic).vec_type(4).unwrap();
-    let bool_vec_type = context.bool_type().vec_type(4).unwrap();
+    let int32_vec_type = context.i32_type().vec_type(4);
+    let i8_ptr_vec_type = context.i8_type().ptr_type(AddressSpace::Generic).vec_type(4);
+    let bool_vec_type = context.bool_type().vec_type(4);
 
     // Here we're building a function that takes a <4 x i32>, converts it to a <4 x i8*> and returns a
     // <4 x bool> if the pointer is null
@@ -665,7 +665,7 @@ fn test_bitcast() {
     let i64_type = context.i64_type();
     let i32_ptr_type = i32_type.ptr_type(AddressSpace::Generic);
     let i64_ptr_type = i64_type.ptr_type(AddressSpace::Generic);
-    let i32_vec_type = i32_type.vec_type(2).unwrap();
+    let i32_vec_type = i32_type.vec_type(2);
     let arg_types = [
         i32_type.into(),
         f32_type.into(),

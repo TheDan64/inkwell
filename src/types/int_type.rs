@@ -387,12 +387,12 @@ impl IntType {
     ///
     /// let context = Context::create();
     /// let i8_type = context.i8_type();
-    /// let i8_vector_type = i8_type.vec_type(3).unwrap();
+    /// let i8_vector_type = i8_type.vec_type(3);
     ///
     /// assert_eq!(i8_vector_type.get_size(), 3);
     /// assert_eq!(i8_vector_type.get_element_type().into_int_type(), i8_type);
     /// ```
-    pub fn vec_type(&self, size: u32) -> Result<VectorType, &'static str> {
+    pub fn vec_type(&self, size: u32) -> VectorType {
         self.int_type.vec_type(size)
     }
 
