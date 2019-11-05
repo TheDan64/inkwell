@@ -264,12 +264,12 @@ impl PointerType {
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
-    /// let f32_ptr_vec_type = f32_ptr_type.vec_type(3);
+    /// let f32_ptr_vec_type = f32_ptr_type.vec_type(3).unwrap();
     ///
     /// assert_eq!(f32_ptr_vec_type.get_size(), 3);
     /// assert_eq!(f32_ptr_vec_type.get_element_type().into_pointer_type(), f32_ptr_type);
     /// ```
-    pub fn vec_type(&self, size: u32) -> VectorType {
+    pub fn vec_type(&self, size: u32) -> Result<VectorType, &'static str> {
         self.ptr_type.vec_type(size)
     }
 

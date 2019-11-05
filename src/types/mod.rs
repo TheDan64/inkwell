@@ -88,12 +88,16 @@ impl Type {
         PointerType::new(ptr_type)
     }
 
-    fn vec_type(&self, size: u32) -> VectorType {
+    fn vec_type(&self, size: u32) -> Result<VectorType, &'static str> {
+        if size == 0 {
+            return Err("The size must be greater than zero.");
+        }
+
         let vec_type = unsafe {
             LLVMVectorType(self.type_, size)
         };
 
-        VectorType::new(vec_type)
+        Ok(VectorType::new(vec_type))
     }
 
     #[cfg(not(feature = "experimental"))]
