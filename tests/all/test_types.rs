@@ -357,7 +357,7 @@ fn test_basic_type_enum() {
         // derived types
         &int.array_type(0), &int.ptr_type(addr),
         &context.struct_type(&[int.as_basic_type_enum()], false),
-        &int.vec_type(0)
+        &int.vec_type(1)
     ];
     for basic_type in types {
         assert_eq!(basic_type.as_basic_type_enum().ptr_type(addr),
@@ -365,4 +365,12 @@ fn test_basic_type_enum() {
         assert_eq!(basic_type.as_basic_type_enum().array_type(0),
                    basic_type.array_type(0));
     }
+}
+
+#[test]
+#[should_panic]
+fn test_no_vector_zero() {
+    let context = Context::create();
+    let int = context.i32_type();
+    int.vec_type(0);
 }
