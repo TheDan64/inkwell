@@ -1270,7 +1270,7 @@ impl Builder {
     /// let module = context.create_module("av");
     /// let i32_type = context.i32_type();
     /// let i32_zero = i32_type.const_int(0, false);
-    /// let vec_type = i32_type.vec_type(2).unwrap();
+    /// let vec_type = i32_type.vec_type(2);
     /// let fn_type = i32_type.fn_type(&[vec_type.into()], false);
     /// let fn_value = module.add_function("vec_fn", fn_type, None);
     /// let builder = context.create_builder();
@@ -1307,7 +1307,7 @@ impl Builder {
     /// let i32_type = context.i32_type();
     /// let i32_zero = i32_type.const_int(0, false);
     /// let i32_seven = i32_type.const_int(7, false);
-    /// let vec_type = i32_type.vec_type(2).unwrap();
+    /// let vec_type = i32_type.vec_type(2);
     /// let fn_type = void_type.fn_type(&[vec_type.into()], false);
     /// let fn_value = module.add_function("vec_fn", fn_type, None);
     /// let builder = context.create_builder();
