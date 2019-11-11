@@ -59,25 +59,15 @@ impl MemoryBuffer {
         Ok(MemoryBuffer::new(memory_buffer))
     }
 
-    // REVIEW: Does this make more sense to take a byte array as input?
-    /// This will create a new `MemoryBuffer` from the given input.
-    ///
     /// This function is likely slightly cheaper than `create_from_memory_range_copy` since it intentionally
     /// leaks data to LLVM so that it doesn't have to reallocate. `create_from_memory_range_copy` may be removed
     /// in the future
-    pub fn create_from_memory_range(input: &str, name: &str) -> Self {
-        let input_c_string = CString::new(input).expect("Conversion to CString failed unexpectedly");
+    pub fn create_from_memory_range(input: &[u8], name: &str) -> Self {
         let name_c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let memory_buffer = unsafe {
-            LLVMCreateMemoryBufferWithMemoryRange(input_c_string.as_ptr(), input.len(), name_c_string.as_ptr(), false as i32)
+            LLVMCreateMemoryBufferWithMemoryRange(input.as_ptr() as *const i8, input.len(), name_c_string.as_ptr(), false as i32)
         };
-
-        // LLVM seems to want to take ownership of input_c_string, which is why we need to forget it
-        // This originally was discovered when not forgetting it caused a subsequent as_slice call
-        // to sometimes return partially garbage data
-        // REVIEW: Does this apply to name_c_string as well?
-        forget(input_c_string);
 
         MemoryBuffer::new(memory_buffer)
     }
@@ -87,12 +77,11 @@ impl MemoryBuffer {
     /// This function is likely slightly more expensive than `create_from_memory_range` since it does not leak
     /// data to LLVM, forcing LLVM to make a copy. This function may be removed in the future in favor of
     /// `create_from_memory_range`
-    pub fn create_from_memory_range_copy(input: &str, name: &str) -> Self {
-        let input_c_string = CString::new(input).expect("Conversion to CString failed unexpectedly");
+    pub fn create_from_memory_range_copy(input: &[u8], name: &str) -> Self {
         let name_c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let memory_buffer = unsafe {
-            LLVMCreateMemoryBufferWithMemoryRangeCopy(input_c_string.as_ptr(), input.len(), name_c_string.as_ptr())
+            LLVMCreateMemoryBufferWithMemoryRangeCopy(input.as_ptr() as *const i8, input.len(), name_c_string.as_ptr())
         };
 
         MemoryBuffer::new(memory_buffer)
