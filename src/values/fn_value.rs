@@ -17,7 +17,7 @@ use crate::module::Linkage;
 use crate::support::LLVMString;
 use crate::types::{FunctionType, PointerType};
 use crate::values::traits::AsValueRef;
-use crate::values::{BasicValueEnum, GlobalValue, MetadataValue, Value};
+use crate::values::{BasicValueEnum, GlobalValue, Value};
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct FunctionValue {
@@ -241,18 +241,6 @@ impl FunctionValue {
         let ptr_type = PointerType::new(self.fn_value.get_type());
 
         ptr_type.get_element_type().into_function_type()
-    }
-
-    pub fn has_metadata(&self) -> bool {
-        self.fn_value.has_metadata()
-    }
-
-    pub fn get_metadata(&self, kind_id: u32) -> Option<MetadataValue> {
-        self.fn_value.get_metadata(kind_id)
-    }
-
-    pub fn set_metadata(&self, metadata: MetadataValue, kind_id: u32) {
-        self.fn_value.set_metadata(metadata, kind_id)
     }
 
     // TODOC: How this works as an exception handler

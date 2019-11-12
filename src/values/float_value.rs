@@ -7,7 +7,7 @@ use crate::FloatPredicate;
 use crate::support::LLVMString;
 use crate::types::{AsTypeRef, FloatType, IntType};
 use crate::values::traits::AsValueRef;
-use crate::values::{InstructionValue, IntValue, Value, MetadataValue};
+use crate::values::{InstructionValue, IntValue, Value};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct FloatValue {
@@ -141,18 +141,6 @@ impl FloatValue {
         };
 
         FloatValue::new(value)
-    }
-
-    pub fn has_metadata(&self) -> bool {
-        self.float_value.has_metadata()
-    }
-
-    pub fn get_metadata(&self, kind_id: u32) -> Option<MetadataValue> {
-        self.float_value.get_metadata(kind_id)
-    }
-
-    pub fn set_metadata(&self, metadata: MetadataValue, kind_id: u32) {
-        self.float_value.set_metadata(metadata, kind_id)
     }
 
     // SubType: rhs same as lhs; return IntValue<bool>

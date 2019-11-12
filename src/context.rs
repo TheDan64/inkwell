@@ -648,10 +648,21 @@ impl Context {
     /// let f32_zero = f32_type.const_float(0.);
     /// let md_node = context.metadata_node(&[i8_two.into(), f32_zero.into()]);
     /// let f32_one = f32_type.const_float(1.);
+    /// let void_type = context.void_type();
+    ///
+    /// let builder = context.create_builder();
+    /// let module = context.create_module("my_mod");
+    /// let fn_type = void_type.fn_type(&[f32_type.into()], false);
+    /// let fn_value = module.add_function("my_func", fn_type, None);
+    /// let entry_block = fn_value.append_basic_block("entry");
+    ///
+    /// builder.position_at_end(&entry_block);
+    ///
+    /// let ret_instr = builder.build_return(None);
     ///
     /// assert!(md_node.is_node());
     ///
-    /// f32_one.set_metadata(md_node, 0);
+    /// ret_instr.set_metadata(md_node, 0);
     /// ```
     // REVIEW: Maybe more helpful to beginners to call this metadata_tuple?
     // REVIEW: Seems to be unassgned to anything
@@ -678,12 +689,23 @@ impl Context {
     /// let md_string = context.metadata_string("Floats are awesome!");
     /// let f32_type = context.f32_type();
     /// let f32_one = f32_type.const_float(1.);
+    /// let void_type = context.void_type();
+    ///
+    /// let builder = context.create_builder();
+    /// let module = context.create_module("my_mod");
+    /// let fn_type = void_type.fn_type(&[f32_type.into()], false);
+    /// let fn_value = module.add_function("my_func", fn_type, None);
+    /// let entry_block = fn_value.append_basic_block("entry");
+    ///
+    /// builder.position_at_end(&entry_block);
+    ///
+    /// let ret_instr = builder.build_return(None);
     ///
     /// assert!(md_string.is_string());
     ///
-    /// f32_one.set_metadata(md_string, 0);
+    /// ret_instr.set_metadata(md_string, 0);
     /// ```
-    // REVIEW: Seems to be unassgned to anything
+    // REVIEW: Seems to be unassigned to anything
     pub fn metadata_string(&self, string: &str) -> MetadataValue {
         let c_string = CString::new(string).expect("Conversion to CString failed unexpectedly");
 

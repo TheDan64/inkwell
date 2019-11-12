@@ -40,7 +40,7 @@ pub use crate::values::traits::{AnyValue, AggregateValue, BasicValue, IntMathVal
 pub use crate::values::vec_value::VectorValue;
 pub(crate) use crate::values::traits::AsValueRef;
 
-use llvm_sys::core::{LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDumpValue, LLVMIsAInstruction, LLVMGetMetadata, LLVMHasMetadata, LLVMSetMetadata, LLVMReplaceAllUsesWith, LLVMGetFirstUse};
+use llvm_sys::core::{LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDumpValue, LLVMIsAInstruction, LLVMReplaceAllUsesWith, LLVMGetFirstUse};
 use llvm_sys::prelude::{LLVMValueRef, LLVMTypeRef};
 
 use std::ffi::CStr;
@@ -164,32 +164,6 @@ impl Value {
     fn print_to_stderr(&self) {
         unsafe {
             LLVMDumpValue(self.value)
-        }
-    }
-
-    fn has_metadata(&self) -> bool {
-        unsafe {
-            LLVMHasMetadata(self.value) == 1
-        }
-    }
-
-    // SubTypes: -> Option<MetadataValue<Node>>
-    // TODOC: This always returns a metadata node, which can be used to get its node values
-    fn get_metadata(&self, kind_id: u32) -> Option<MetadataValue> {
-        let metadata_value = unsafe {
-            LLVMGetMetadata(self.value, kind_id)
-        };
-
-        if metadata_value.is_null() {
-            return None;
-        }
-
-        Some(MetadataValue::new(metadata_value))
-    }
-
-    fn set_metadata(&self, metadata: MetadataValue, kind_id: u32) {
-        unsafe {
-            LLVMSetMetadata(self.value, kind_id, metadata.as_value_ref())
         }
     }
 
