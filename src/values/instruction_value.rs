@@ -1,5 +1,5 @@
 use either::{Either, Either::{Left, Right}};
-use llvm_sys::core::{LLVMGetAlignment, LLVMSetAlignment, LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMSetOperand, LLVMValueAsBasicBlock, LLVMIsABasicBlock, LLVMGetICmpPredicate, LLVMGetFCmpPredicate, LLVMIsAAllocaInst, LLVMIsALoadInst, LLVMIsAStoreInst};
+use llvm_sys::core::{LLVMGetAlignment, LLVMSetAlignment, LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMSetOperand, LLVMValueAsBasicBlock, LLVMIsABasicBlock, LLVMGetICmpPredicate, LLVMGetFCmpPredicate, LLVMIsAAllocaInst, LLVMIsALoadInst, LLVMIsAStoreInst, LLVMGetMetadata, LLVMHasMetadata, LLVMSetMetadata};
 #[llvm_versions(3.8..=latest)]
 use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
 #[llvm_versions(3.9..=latest)]
@@ -9,7 +9,7 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use crate::basic_block::BasicBlock;
 use crate::values::traits::AsValueRef;
-use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, Value};
+use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, Value, MetadataValue};
 use crate::{AtomicOrdering, IntPredicate, FloatPredicate};
 
 // REVIEW: Split up into structs for SubTypes on InstructionValues?
@@ -584,6 +584,35 @@ impl InstructionValue {
             Some(FloatPredicate::new(pred))
         } else {
             None
+        }
+    }
+
+    /// Determines whether or not this `Instruction` has any associated metadata.
+    pub fn has_metadata(&self) -> bool {
+        unsafe {
+            LLVMHasMetadata(self.instruction_value.value) == 1
+        }
+    }
+
+    /// Gets the `MetadataValue` associated with this `Instruction` at a specific
+    /// `kind_id`.
+    pub fn get_metadata(&self, kind_id: u32) -> Option<MetadataValue> {
+        let metadata_value = unsafe {
+            LLVMGetMetadata(self.instruction_value.value, kind_id)
+        };
+
+        if metadata_value.is_null() {
+            return None;
+        }
+
+        Some(MetadataValue::new(metadata_value))
+    }
+
+    /// Determines whether or not this `Instruction` has any associated metadata
+    /// `kind_id`.
+    pub fn set_metadata(&self, metadata: MetadataValue, kind_id: u32) {
+        unsafe {
+            LLVMSetMetadata(self.instruction_value.value, kind_id, metadata.as_value_ref())
         }
     }
 }

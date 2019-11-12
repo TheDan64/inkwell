@@ -9,7 +9,7 @@ use crate::IntPredicate;
 use crate::support::LLVMString;
 use crate::types::{AsTypeRef, FloatType, PointerType, IntType};
 use crate::values::traits::AsValueRef;
-use crate::values::{BasicValue, BasicValueEnum, FloatValue, InstructionValue, PointerValue, Value, MetadataValue};
+use crate::values::{BasicValue, BasicValueEnum, FloatValue, InstructionValue, PointerValue, Value};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct IntValue {
@@ -353,18 +353,6 @@ impl IntValue {
         };
 
         IntValue::new(value)
-    }
-
-    pub fn has_metadata(&self) -> bool {
-        self.int_value.has_metadata()
-    }
-
-    pub fn get_metadata(&self, kind_id: u32) -> Option<MetadataValue> {
-        self.int_value.get_metadata(kind_id)
-    }
-
-    pub fn set_metadata(&self, metadata: MetadataValue, kind_id: u32) {
-        self.int_value.set_metadata(metadata, kind_id)
     }
 
     // SubType: rhs same as lhs; return IntValue<bool>
