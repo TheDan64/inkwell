@@ -1406,10 +1406,8 @@ impl<'ctx> Module<'ctx> {
     {
         match self.non_global_context {
             Some(ctx) => f(ctx),
-            None => {
-                let ctx = unsafe { Context::get_global().lock() };
-
-                f(&ctx)
+            None => unsafe {
+                Context::get_global(|ctx_lock| f(&*ctx_lock))
             },
         }
     }

@@ -74,23 +74,25 @@ impl<'ctx> MetadataValue<'ctx> {
         }
     }
 
+    /// This function creates a `MetadataValue` node in the global `Context`.
     pub fn create_node(values: &[&dyn BasicValue<'ctx>]) -> Self {
         let mut tuple_values: Vec<LLVMValueRef> = values.iter()
                                                         .map(|val| val.as_value_ref())
                                                         .collect();
-        let metadata_value = unsafe {
+        let metadata_value = Context::get_global(|_ctx| unsafe {
             LLVMMDNode(tuple_values.as_mut_ptr(), tuple_values.len() as u32)
-        };
+        });
 
         MetadataValue::new(metadata_value)
     }
 
+    /// This function creates a `MetadataValue` string in the global `Context`.
     pub fn create_string(string: &str) -> Self {
         let c_string = CString::new(string).expect("Conversion to CString failed unexpectedly");
 
-        let metadata_value = unsafe {
+        let metadata_value = Context::get_global(|_ctx| unsafe {
             LLVMMDString(c_string.as_ptr(), string.len() as u32)
-        };
+        });
 
         MetadataValue::new(metadata_value)
     }

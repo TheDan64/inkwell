@@ -7,7 +7,7 @@ use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef, LLVMDiagnosti
 use llvm_sys::ir_reader::LLVMParseIRInContext;
 use libc::c_void;
 use once_cell::sync::Lazy;
-use parking_lot::Mutex;
+use parking_lot::{Mutex, MutexGuard};
 
 #[llvm_versions(4.0..=latest)]
 use crate::attributes::Attribute;
@@ -24,7 +24,15 @@ use std::marker::PhantomData;
 use std::mem::forget;
 use std::ops::Deref;
 use std::ptr;
+use std::thread_local;
 
+// The idea of using a Mutex<Context> here and a thread local'd MutexGuard<Context> in
+// GLOBAL_CTX_LOCK is to ensure two things:
+// 1) Only one thread has access to the global context at a time.
+// 2) The thread has shared access across different points in the thread.
+// This is still technically unsafe because another program in the same process
+// could also be accessing the global context via the C API. `get_context` has been
+// marked unsafe for this reason. Iff this isn't the case then this should be fully safe.
 static GLOBAL_CTX: Lazy<Mutex<Context>> = Lazy::new(|| {
     let ctx = unsafe {
         LLVMGetGlobalContext()
@@ -32,6 +40,10 @@ static GLOBAL_CTX: Lazy<Mutex<Context>> = Lazy::new(|| {
 
     Mutex::new(Context::new(ctx))
 });
+
+thread_local! {
+    pub(crate) static GLOBAL_CTX_LOCK: Lazy<MutexGuard<'static, Context>> = Lazy::new(GLOBAL_CTX.lock);
+}
 
 /// A `Context` is a container for all LLVM entities including `Module`s.
 ///
@@ -93,8 +105,11 @@ impl Context {
     /// };
     /// ```
     // FIXME: Types auto-assigned global ctx might be able to get_context w/o locking mutex
-    pub unsafe fn get_global() -> &'static Mutex<Context> {
-        &GLOBAL_CTX
+    pub unsafe fn get_global<F, R>(func: F) -> R
+    where
+        F: FnOnce(&MutexGuard<'static, Context>) -> R,
+    {
+        GLOBAL_CTX_LOCK.with(|lazy| func(&*lazy))
     }
 
     /// Creates a new `Builder` for a `Context`.
