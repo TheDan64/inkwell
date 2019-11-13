@@ -171,7 +171,7 @@ impl<'ctx> Module<'ctx> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let module = unsafe {
-            LLVMModuleCreateWithName(c_string.as_ptr())
+            Context::get_global(|_ctx| LLVMModuleCreateWithName(c_string.as_ptr()))
         };
 
         Module::new(module, None)

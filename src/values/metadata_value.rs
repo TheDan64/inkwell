@@ -6,6 +6,7 @@ use llvm_sys::prelude::LLVMMetadataRef;
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::core::LLVMValueAsMetadata;
 
+use crate::context::Context;
 use crate::support::LLVMString;
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicMetadataValueEnum, Value};
@@ -79,9 +80,11 @@ impl<'ctx> MetadataValue<'ctx> {
         let mut tuple_values: Vec<LLVMValueRef> = values.iter()
                                                         .map(|val| val.as_value_ref())
                                                         .collect();
-        let metadata_value = Context::get_global(|_ctx| unsafe {
-            LLVMMDNode(tuple_values.as_mut_ptr(), tuple_values.len() as u32)
-        });
+        let metadata_value = unsafe {
+            Context::get_global(|_ctx| {
+                LLVMMDNode(tuple_values.as_mut_ptr(), tuple_values.len() as u32)
+            }
+        )};
 
         MetadataValue::new(metadata_value)
     }
@@ -90,9 +93,11 @@ impl<'ctx> MetadataValue<'ctx> {
     pub fn create_string(string: &str) -> Self {
         let c_string = CString::new(string).expect("Conversion to CString failed unexpectedly");
 
-        let metadata_value = Context::get_global(|_ctx| unsafe {
-            LLVMMDString(c_string.as_ptr(), string.len() as u32)
-        });
+        let metadata_value = unsafe {
+            Context::get_global(|_ctx| {
+                LLVMMDString(c_string.as_ptr(), string.len() as u32)
+            }
+        )};
 
         MetadataValue::new(metadata_value)
     }

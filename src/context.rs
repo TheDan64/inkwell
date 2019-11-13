@@ -42,7 +42,9 @@ static GLOBAL_CTX: Lazy<Mutex<Context>> = Lazy::new(|| {
 });
 
 thread_local! {
-    pub(crate) static GLOBAL_CTX_LOCK: Lazy<MutexGuard<'static, Context>> = Lazy::new(GLOBAL_CTX.lock);
+    pub(crate) static GLOBAL_CTX_LOCK: Lazy<MutexGuard<'static, Context>> = Lazy::new(|| {
+        GLOBAL_CTX.lock()
+    });
 }
 
 /// A `Context` is a container for all LLVM entities including `Module`s.
@@ -107,7 +109,7 @@ impl Context {
     // FIXME: Types auto-assigned global ctx might be able to get_context w/o locking mutex
     pub unsafe fn get_global<F, R>(func: F) -> R
     where
-        F: FnOnce(&MutexGuard<'static, Context>) -> R,
+        F: FnOnce(&Context) -> R,
     {
         GLOBAL_CTX_LOCK.with(|lazy| func(&*lazy))
     }

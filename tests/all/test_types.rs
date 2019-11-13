@@ -125,7 +125,6 @@ fn test_function_type() {
 
 #[test]
 fn test_sized_types() {
-    let context = unsafe { Context::get_global().lock() };
     let void_type = VoidType::void_type();
     let bool_type = IntType::bool_type();
     let i8_type = IntType::i8_type();
@@ -143,7 +142,6 @@ fn test_sized_types() {
     let struct_type2 = StructType::struct_type(&[], false);
     let struct_type3 = StructType::struct_type(&[i8_type.into(), f128_type.into()], true);
     let struct_type4 = StructType::struct_type(&[], true);
-    let opaque_struct_type = context.opaque_struct_type("opaque");
     let fn_type = void_type.fn_type(&[], false);
     let fn_type2 = i8_type.fn_type(&[], false);
     let fn_type3 = void_type.fn_type(&[i32_type.into(), struct_type.into()], false);
@@ -168,7 +166,6 @@ fn test_sized_types() {
     assert!(struct_type2.is_sized());
     assert!(struct_type3.is_sized());
     assert!(struct_type4.is_sized());
-    assert!(!opaque_struct_type.is_sized());
     assert!(!fn_type.is_sized());
     assert!(!fn_type2.is_sized());
     assert!(!fn_type3.is_sized());
@@ -190,7 +187,6 @@ fn test_sized_types() {
     assert!(struct_type2.ptr_type(AddressSpace::Generic).is_sized());
     assert!(struct_type3.ptr_type(AddressSpace::Generic).is_sized());
     assert!(struct_type4.ptr_type(AddressSpace::Generic).is_sized());
-    assert!(opaque_struct_type.ptr_type(AddressSpace::Generic).is_sized());
 
     assert!(bool_type.array_type(42).is_sized());
     assert!(i8_type.array_type(42).is_sized());
@@ -208,7 +204,6 @@ fn test_sized_types() {
     assert!(struct_type2.array_type(0).is_sized());
     assert!(struct_type3.array_type(0).is_sized());
     assert!(struct_type4.array_type(0).is_sized());
-    assert!(!opaque_struct_type.array_type(0).is_sized());
 
     assert!(bool_type.vec_type(42).is_sized());
     assert!(i8_type.vec_type(42).is_sized());
@@ -222,6 +217,17 @@ fn test_sized_types() {
     assert!(f80_type.vec_type(42).is_sized());
     assert!(f128_type.vec_type(42).is_sized());
     assert!(ppc_f128_type.vec_type(42).is_sized());
+
+
+    unsafe {
+        Context::get_global(|global_ctx| {
+            let opaque_struct_type = global_ctx.opaque_struct_type("opaque");
+
+            assert!(!opaque_struct_type.is_sized());
+            assert!(opaque_struct_type.ptr_type(AddressSpace::Generic).is_sized());
+            assert!(!opaque_struct_type.array_type(0).is_sized());
+        }
+    )};
 }
 
 #[test]

@@ -9,6 +9,7 @@ use llvm_sys::{LLVMTypeKind};
 
 use crate::{AtomicOrdering, AtomicRMWBinOp, IntPredicate, FloatPredicate};
 use crate::basic_block::BasicBlock;
+use crate::context::Context;
 use crate::values::{AggregateValue, AggregateValueEnum, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode, CallSiteValue};
 #[llvm_versions(3.9..=latest)]
 use crate::values::StructValue;
@@ -44,7 +45,7 @@ impl<'ctx> Builder<'ctx> {
     /// ```
     pub fn create() -> Self {
         let builder = unsafe {
-            LLVMCreateBuilder()
+            Context::get_global(|_ctx| LLVMCreateBuilder())
         };
 
         Builder::new(builder)
