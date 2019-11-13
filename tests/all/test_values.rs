@@ -443,35 +443,35 @@ fn test_metadata() {
     assert_eq!(md_string.get_string_value().unwrap(), &*CString::new("lots of metadata here").unwrap());
 
     let bool_type = context.bool_type();
-    let i8_type = context.i8_type();
+    // let i8_type = context.i8_type();
     // let i16_type = context.i16_type();
     // let i32_type = context.i32_type();
-    let i64_type = context.i64_type();
+    // let i64_type = context.i64_type();
     // let i128_type = context.i128_type();
     // let f16_type = context.f16_type();
     let f32_type = context.f32_type();
-    let f64_type = context.f64_type();
-    let f128_type = context.f128_type();
-    let array_type = f64_type.array_type(42);
+    // let f64_type = context.f64_type();
+    // let f128_type = context.f128_type();
+    // let array_type = f64_type.array_type(42);
     // let ppc_f128_type = context.ppc_f128_type();
-    let fn_type = bool_type.fn_type(&[i64_type.into(), array_type.into()], false);
+    // let fn_type = bool_type.fn_type(&[i64_type.into(), array_type.into()], false);
 
     let bool_val = bool_type.const_int(0, false);
-    let i8_val = i8_type.const_int(0, false);
+    // let i8_val = i8_type.const_int(0, false);
     // let i16_val = i16_type.const_int(0, false);
     // let i32_val = i32_type.const_int(0, false);
     // let i64_val = i64_type.const_int(0, false);
     // let i128_val = i128_type.const_int(0, false);
     // let f16_val = f16_type.const_float(0.0);
     let f32_val = f32_type.const_float(0.0);
-    let f64_val = f64_type.const_float(0.0);
-    let f128_val = f128_type.const_float(0.0);
+    // let f64_val = f64_type.const_float(0.0);
+    // let f128_val = f128_type.const_float(0.0);
     // let ppc_f128_val = ppc_f128_type.const_float(0.0);
-    let ptr_val = bool_type.ptr_type(AddressSpace::Generic).const_null();
-    let array_val = f64_type.const_array(&[f64_val]);
-    let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
-    let vec_val = VectorType::const_vector(&[i8_val]);
-    let fn_val = module.add_function("my_fn", fn_type, None);
+    // let ptr_val = bool_type.ptr_type(AddressSpace::Generic).const_null();
+    // let array_val = f64_type.const_array(&[f64_val]);
+    // let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
+    // let vec_val = VectorType::const_vector(&[i8_val]);
+    // let fn_val = module.add_function("my_fn", fn_type, None);
 
     let md_node = MetadataValue::create_node(&[&bool_val, &f32_val]);
 
@@ -524,82 +524,29 @@ fn test_metadata() {
     // assert!(!vec_val.has_metadata());
     // assert!(!fn_val.has_metadata());
 
-    bool_val.set_metadata(md_string, 3);
+    let builder = context.create_builder();
+    let module = context.create_module("my_mod");
+    let void_type = context.void_type();
+    let bool_type = context.bool_type();
+    let fn_type = void_type.fn_type(&[bool_type.into()], false);
+    let fn_value = module.add_function("my_func", fn_type, None);
 
-    assert!(bool_val.has_metadata());
-    assert!(bool_val.get_metadata(1).is_none());
-    assert!(bool_val.get_metadata(2).is_none());
+    let entry_block = fn_value.append_basic_block("entry");
 
-    let md_node_values = bool_val.get_metadata(3).unwrap().get_node_values();
+    builder.position_at_end(&entry_block);
 
-    assert_eq!(md_node_values.len(), 1);
-    assert_eq!(md_node_values[0].as_metadata_value().get_string_value(), md_string.get_string_value());
+    let ret_instr = builder.build_return(None);
 
-    f128_val.set_metadata(md_node, 3);
+    ret_instr.set_metadata(md_string, 2);
 
-    assert!(f128_val.has_metadata());
-    assert!(f128_val.get_metadata(1).is_none());
-    assert!(f128_val.get_metadata(2).is_none());
+    assert!(ret_instr.has_metadata());
+    assert!(ret_instr.get_metadata(1).is_none());
 
-    let md_node_values = f128_val.get_metadata(3).unwrap().get_node_values();
-
-    assert_eq!(md_node_values.len(), 2);
-    assert_eq!(md_node_values[0].as_int_value(), &bool_val);
-    assert_eq!(md_node_values[1].as_float_value(), &f32_val);
-
-    array_val.set_metadata(md_string, 2);
-
-    assert!(array_val.has_metadata());
-    assert!(array_val.get_metadata(1).is_none());
-
-    let md_node_values = array_val.get_metadata(2).unwrap().get_node_values();
+    let md_node_values = ret_instr.get_metadata(2).unwrap().get_node_values();
 
     assert_eq!(md_node_values.len(), 1);
     assert_eq!(md_node_values[0].as_metadata_value().get_string_value(), md_string.get_string_value());
 
-    struct_val.set_metadata(md_node, 4);
-
-    assert!(struct_val.has_metadata());
-    assert!(struct_val.get_metadata(1).is_none());
-    assert!(struct_val.get_metadata(2).is_none());
-    assert!(struct_val.get_metadata(3).is_none());
-
-    let md_node_values = struct_val.get_metadata(4).unwrap().get_node_values();
-
-    assert_eq!(md_node_values.len(), 2);
-    assert_eq!(md_node_values[0].as_int_value(), &bool_val);
-    assert_eq!(md_node_values[1].as_float_value(), &f32_val);
-
-    vec_val.set_metadata(md_string, 1);
-
-    assert!(vec_val.has_metadata());
-
-    let md_node_values = vec_val.get_metadata(1).unwrap().get_node_values();
-
-    assert_eq!(md_node_values.len(), 1);
-    assert_eq!(md_node_values[0].as_metadata_value().get_string_value(), md_string.get_string_value());
-
-    fn_val.set_metadata(md_node, 4);
-
-    assert!(fn_val.has_metadata());
-    assert!(fn_val.get_metadata(1).is_none());
-    assert!(fn_val.get_metadata(2).is_none());
-    assert!(fn_val.get_metadata(3).is_none());
-
-    let md_node_values = fn_val.get_metadata(4).unwrap().get_node_values();
-
-    assert_eq!(md_node_values.len(), 2);
-    assert_eq!(md_node_values[0].as_int_value(), &bool_val);
-    assert_eq!(md_node_values[1].as_float_value(), &f32_val);
-
-    ptr_val.set_metadata(md_string, 1);
-
-    assert!(ptr_val.has_metadata());
-
-    let md_node_values = ptr_val.get_metadata(1).unwrap().get_node_values();
-
-    assert_eq!(md_node_values.len(), 1);
-    assert_eq!(md_node_values[0].as_metadata_value().get_string_value(), md_string.get_string_value());
 
     // New Context Metadata
     let context_metadata_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);

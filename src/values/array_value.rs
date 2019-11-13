@@ -7,7 +7,7 @@ use std::fmt;
 use crate::support::LLVMString;
 use crate::types::ArrayType;
 use crate::values::traits::AsValueRef;
-use crate::values::{Value, InstructionValue, MetadataValue};
+use crate::values::{Value, InstructionValue};
 
 /// An `ArrayValue` is a block of contiguous constants or variables.
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
@@ -65,21 +65,6 @@ impl ArrayValue {
         self.array_value.as_instruction()
     }
 
-    /// Determines whether or not this `ArrayValue` has any associated metadata.
-    pub fn has_metadata(&self) -> bool {
-        self.array_value.has_metadata()
-    }
-
-    /// Gets the `MetadataValue` associated with this `ArrayValue` at a specific
-    /// `kind_id`.
-    pub fn get_metadata(&self, kind_id: u32) -> Option<MetadataValue> {
-        self.array_value.get_metadata(kind_id)
-    }
-
-    /// Assigns a `MetadataValue` to this `ArrayValue` at a specific `kind_id`.
-    pub fn set_metadata(&self, metadata: MetadataValue, kind_id: u32) {
-        self.array_value.set_metadata(metadata, kind_id)
-    }
 
     /// Replaces all uses of this value with another value of the same type.
     /// If used incorrectly this may result in invalid IR.
