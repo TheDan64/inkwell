@@ -11,7 +11,6 @@ use std::ffi::CString;
 use std::fs::{File, remove_file};
 use std::io::Read;
 use std::path::Path;
-use std::str::from_utf8;
 
 #[test]
 fn test_write_bitcode_to_path() {
@@ -129,20 +128,20 @@ fn test_write_and_load_memory_buffer() {
 #[test]
 fn test_garbage_ir_fails_create_module_from_ir() {
     let context = Context::create();
-    let memory_buffer = MemoryBuffer::create_from_memory_range("garbage ir data", "my_ir");
+    let memory_buffer = MemoryBuffer::create_from_memory_range(b"garbage ir data", "my_ir");
 
     assert_eq!(memory_buffer.get_size(), 15);
-    assert_eq!(from_utf8(memory_buffer.as_slice()).unwrap(), "garbage ir data");
+    assert_eq!(memory_buffer.as_slice(), b"garbage ir data");
     assert!(context.create_module_from_ir(memory_buffer).is_err());
 }
 
 #[test]
 fn test_garbage_ir_fails_create_module_from_ir_copy() {
     let context = Context::create();
-    let memory_buffer = MemoryBuffer::create_from_memory_range_copy("garbage ir data", "my_ir");
+    let memory_buffer = MemoryBuffer::create_from_memory_range_copy(b"garbage ir data", "my_ir");
 
     assert_eq!(memory_buffer.get_size(), 15);
-    assert_eq!(from_utf8(memory_buffer.as_slice()).unwrap(), "garbage ir data");
+    assert_eq!(memory_buffer.as_slice(), b"garbage ir data");
     assert!(context.create_module_from_ir(memory_buffer).is_err());
 }
 
@@ -199,7 +198,7 @@ fn test_owned_module_dropped_ee_and_context() {
 #[test]
 fn test_parse_from_buffer() {
     let context = Context::create();
-    let garbage_buffer = MemoryBuffer::create_from_memory_range("garbage ir data", "my_ir");
+    let garbage_buffer = MemoryBuffer::create_from_memory_range(b"garbage ir data", "my_ir");
     let module_result = Module::parse_bitcode_from_buffer(&garbage_buffer);
 
     assert!(module_result.is_err());
