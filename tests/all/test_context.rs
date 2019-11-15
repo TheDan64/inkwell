@@ -59,17 +59,9 @@ fn test_basic_block_context() {
     let fn_type = void_type.fn_type(&[], false);
     let fn_value = module.add_function("my_fn", fn_type, None);
     // REVIEW: Should get rid of this if it uses global ctx?
-    let basic_block = fn_value.append_basic_block("entry");
+    let basic_block = context.append_basic_block(fn_value, "entry");
 
-    unsafe {
-        Context::get_global(|global_ctx| {
-            assert_eq!(*basic_block.get_context(), *global_ctx);
-        })
-    };
-
-    let basic_block2 = context.append_basic_block(fn_value, "entry2");
-
-    assert_eq!(*basic_block2.get_context(), context);
+    assert_eq!(*basic_block.get_context(), context);
 }
 
 // REVIEW: Is it bad that StructType, which uses global ctx, uses types of

@@ -1,7 +1,7 @@
 //! A `Builder` enables you to build instructions.
 
 use either::{Either, Left, Right};
-use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildAtomicRMW, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf, LLVMBuildExtractElement, LLVMBuildInsertElement, LLVMBuildIntToPtr, LLVMBuildPtrToInt, LLVMInsertIntoBuilderWithName, LLVMClearInsertionPosition, LLVMCreateBuilder, LLVMPositionBuilder, LLVMPositionBuilderBefore, LLVMBuildAggregateRet, LLVMBuildStructGEP, LLVMBuildInBoundsGEP, LLVMBuildPtrDiff, LLVMBuildNSWAdd, LLVMBuildNUWAdd, LLVMBuildNSWSub, LLVMBuildNUWSub, LLVMBuildNSWMul, LLVMBuildNUWMul, LLVMBuildSDiv, LLVMBuildSRem, LLVMBuildURem, LLVMBuildFRem, LLVMBuildNSWNeg, LLVMBuildNUWNeg, LLVMBuildFPToUI, LLVMBuildFPToSI, LLVMBuildSIToFP, LLVMBuildUIToFP, LLVMBuildFPTrunc, LLVMBuildFPExt, LLVMBuildIntCast, LLVMBuildFPCast, LLVMBuildSExtOrBitCast, LLVMBuildZExtOrBitCast, LLVMBuildTruncOrBitCast, LLVMBuildSwitch, LLVMAddCase, LLVMBuildShl, LLVMBuildAShr, LLVMBuildLShr, LLVMBuildGlobalString, LLVMBuildGlobalStringPtr, LLVMBuildExactSDiv, LLVMBuildTrunc, LLVMBuildSExt, LLVMBuildZExt, LLVMBuildSelect, LLVMBuildAddrSpaceCast, LLVMBuildBitCast, LLVMBuildShuffleVector, LLVMBuildVAArg, LLVMBuildIndirectBr, LLVMAddDestination};
+use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc, LLVMBuildAtomicRMW, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv, LLVMBuildFence, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFree, LLVMBuildFSub, LLVMBuildGEP, LLVMBuildICmp, LLVMBuildInsertValue, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildSub, LLVMBuildUDiv, LLVMBuildUnreachable, LLVMBuildXor, LLVMDisposeBuilder, LLVMGetElementType, LLVMGetInsertBlock, LLVMGetReturnType, LLVMGetTypeKind, LLVMInsertIntoBuilder, LLVMPositionBuilderAtEnd, LLVMTypeOf, LLVMBuildExtractElement, LLVMBuildInsertElement, LLVMBuildIntToPtr, LLVMBuildPtrToInt, LLVMInsertIntoBuilderWithName, LLVMClearInsertionPosition, LLVMPositionBuilder, LLVMPositionBuilderBefore, LLVMBuildAggregateRet, LLVMBuildStructGEP, LLVMBuildInBoundsGEP, LLVMBuildPtrDiff, LLVMBuildNSWAdd, LLVMBuildNUWAdd, LLVMBuildNSWSub, LLVMBuildNUWSub, LLVMBuildNSWMul, LLVMBuildNUWMul, LLVMBuildSDiv, LLVMBuildSRem, LLVMBuildURem, LLVMBuildFRem, LLVMBuildNSWNeg, LLVMBuildNUWNeg, LLVMBuildFPToUI, LLVMBuildFPToSI, LLVMBuildSIToFP, LLVMBuildUIToFP, LLVMBuildFPTrunc, LLVMBuildFPExt, LLVMBuildIntCast, LLVMBuildFPCast, LLVMBuildSExtOrBitCast, LLVMBuildZExtOrBitCast, LLVMBuildTruncOrBitCast, LLVMBuildSwitch, LLVMAddCase, LLVMBuildShl, LLVMBuildAShr, LLVMBuildLShr, LLVMBuildGlobalString, LLVMBuildGlobalStringPtr, LLVMBuildExactSDiv, LLVMBuildTrunc, LLVMBuildSExt, LLVMBuildZExt, LLVMBuildSelect, LLVMBuildAddrSpaceCast, LLVMBuildBitCast, LLVMBuildShuffleVector, LLVMBuildVAArg, LLVMBuildIndirectBr, LLVMAddDestination};
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::LLVMBuildAtomicCmpXchg;
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
@@ -9,7 +9,6 @@ use llvm_sys::{LLVMTypeKind};
 
 use crate::{AtomicOrdering, AtomicRMWBinOp, IntPredicate, FloatPredicate};
 use crate::basic_block::BasicBlock;
-use crate::context::Context;
 use crate::values::{AggregateValue, AggregateValueEnum, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode, CallSiteValue};
 #[llvm_versions(3.9..=latest)]
 use crate::values::StructValue;
@@ -34,23 +33,6 @@ impl<'ctx> Builder<'ctx> {
         }
     }
 
-    /// Creates a `Builder` belonging to the global `Context`.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::builder::Builder;
-    ///
-    /// let builder = Builder::create();
-    /// ```
-    pub fn create() -> Self {
-        let builder = unsafe {
-            Context::get_global(|_ctx| LLVMCreateBuilder())
-        };
-
-        Builder::new(builder)
-    }
-
     // REVIEW: Would probably make this API a bit simpler by taking Into<Option<&BasicValue>>
     // So that you could just do build_return(&value) or build_return(None). Is that frowned upon?
     /// Builds a function return instruction. It should be provided with `None` if the return type
@@ -69,7 +51,7 @@ impl<'ctx> Builder<'ctx> {
     /// let arg_types = [i32_type.into()];
     /// let fn_type = i32_type.fn_type(&arg_types, false);
     /// let fn_value = module.add_function("ret", fn_type, None);
-    /// let entry = fn_value.append_basic_block("entry");
+    /// let entry = context.append_basic_block(fn_value, "entry");
     /// let i32_arg = fn_value.get_first_param().unwrap();
     ///
     /// builder.position_at_end(&entry);
@@ -101,7 +83,7 @@ impl<'ctx> Builder<'ctx> {
     /// let struct_type = context.struct_type(&[i32_type.into(), i32_type.into()], false);
     /// let fn_type = struct_type.fn_type(&[], false);
     /// let fn_value = module.add_function("ret", fn_type, None);
-    /// let entry = fn_value.append_basic_block("entry");
+    /// let entry = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(&entry);
     /// builder.build_aggregate_return(&[i32_three.into(), i32_seven.into()]);
@@ -133,7 +115,7 @@ impl<'ctx> Builder<'ctx> {
     /// let i32_type = context.i32_type();
     /// let fn_type = i32_type.fn_type(&[i32_type.into()], false);
     /// let fn_value = module.add_function("ret", fn_type, None);
-    /// let entry = fn_value.append_basic_block("entry");
+    /// let entry = context.append_basic_block(fn_value, "entry");
     /// let i32_arg = fn_value.get_first_param().unwrap();
     ///
     /// builder.position_at_end(&entry);
@@ -242,7 +224,7 @@ impl<'ctx> Builder<'ctx> {
     /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Generic);
     /// let fn_type = void_type.fn_type(&[i32_ptr_type.into(), i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("ret", fn_type, None);
-    /// let entry = fn_value.append_basic_block("entry");
+    /// let entry = context.append_basic_block(fn_value, "entry");
     /// let i32_ptr_param1 = fn_value.get_first_param().unwrap().into_pointer_value();
     /// let i32_ptr_param2 = fn_value.get_nth_param(1).unwrap().into_pointer_value();
     ///
@@ -293,7 +275,7 @@ impl<'ctx> Builder<'ctx> {
     /// let i32_seven = i32_type.const_int(7, false);
     /// let fn_type = void_type.fn_type(&[i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("ret", fn_type, None);
-    /// let entry = fn_value.append_basic_block("entry");
+    /// let entry = context.append_basic_block(fn_value, "entry");
     /// let i32_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
     ///
     /// builder.position_at_end(&entry);
@@ -324,7 +306,7 @@ impl<'ctx> Builder<'ctx> {
     /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Generic);
     /// let fn_type = i32_type.fn_type(&[i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("ret", fn_type, None);
-    /// let entry = fn_value.append_basic_block("entry");
+    /// let entry = context.append_basic_block(fn_value, "entry");
     /// let i32_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
     ///
     /// builder.position_at_end(&entry);
@@ -524,7 +506,7 @@ impl<'ctx> Builder<'ctx> {
     /// let fn_type = void_type.fn_type(&arg_types, false);
     /// let fn_value = module.add_function("bc", fn_type, None);
     /// let builder = context.create_builder();
-    /// let entry = fn_value.append_basic_block("entry");
+    /// let entry = context.append_basic_block(fn_value, "entry");
     /// let i32_arg = fn_value.get_first_param().unwrap();
     ///
     /// builder.position_at_end(&entry);
@@ -835,7 +817,7 @@ impl<'ctx> Builder<'ctx> {
     /// let function = module.add_function("left_shift", fn_type, None);
     /// let value = function.get_first_param().unwrap().into_int_value();
     /// let n = function.get_nth_param(1).unwrap().into_int_value();
-    /// let entry_block = function.append_basic_block("entry");
+    /// let entry_block = context.append_basic_block(function, "entry");
     ///
     /// builder.position_at_end(&entry_block);
     ///
@@ -907,7 +889,7 @@ impl<'ctx> Builder<'ctx> {
     /// let function = module.add_function("right_shift", fn_type, None);
     /// let value = function.get_first_param().unwrap().into_int_value();
     /// let n = function.get_nth_param(1).unwrap().into_int_value();
-    /// let entry_block = function.append_basic_block("entry");
+    /// let entry_block = context.append_basic_block(function, "entry");
     ///
     /// builder.position_at_end(&entry_block);
     ///
@@ -1214,7 +1196,7 @@ impl<'ctx> Builder<'ctx> {
     /// let fn_type = void_type.fn_type(&[], false);
     /// let fn_value = module.add_function("av_fn", fn_type, None);
     /// let builder = context.create_builder();
-    /// let entry = fn_value.append_basic_block("entry");
+    /// let entry = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(&entry);
     ///
@@ -1276,7 +1258,7 @@ impl<'ctx> Builder<'ctx> {
     /// let fn_type = void_type.fn_type(&[], false);
     /// let fn_value = module.add_function("av_fn", fn_type, None);
     /// let builder = context.create_builder();
-    /// let entry = fn_value.append_basic_block("entry");
+    /// let entry = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(&entry);
     ///
@@ -1329,7 +1311,7 @@ impl<'ctx> Builder<'ctx> {
     /// let fn_type = i32_type.fn_type(&[vec_type.into()], false);
     /// let fn_value = module.add_function("vec_fn", fn_type, None);
     /// let builder = context.create_builder();
-    /// let entry = fn_value.append_basic_block("entry");
+    /// let entry = context.append_basic_block(fn_value, "entry");
     /// let vector_param = fn_value.get_first_param().unwrap().into_vector_value();
     ///
     /// builder.position_at_end(&entry);
@@ -1366,7 +1348,7 @@ impl<'ctx> Builder<'ctx> {
     /// let fn_type = void_type.fn_type(&[vec_type.into()], false);
     /// let fn_value = module.add_function("vec_fn", fn_type, None);
     /// let builder = context.create_builder();
-    /// let entry = fn_value.append_basic_block("entry");
+    /// let entry = context.append_basic_block(fn_value, "entry");
     /// let vector_param = fn_value.get_first_param().unwrap().into_vector_value();
     ///
     /// builder.position_at_end(&entry);
@@ -1550,7 +1532,7 @@ impl<'ctx> Builder<'ctx> {
     /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Generic);
     /// let fn_type = void_type.fn_type(&[i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("rmw", fn_type, None);
-    /// let entry = fn_value.append_basic_block("entry");
+    /// let entry = context.append_basic_block(fn_value, "entry");
     /// let i32_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
     /// let builder = context.create_builder();
     /// builder.position_at_end(&entry);
@@ -1594,7 +1576,7 @@ impl<'ctx> Builder<'ctx> {
     /// let i32_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
     /// let i32_seven = i32_type.const_int(7, false);
     /// let i32_eight = i32_type.const_int(8, false);
-    /// let entry = fn_value.append_basic_block("entry");
+    /// let entry = context.append_basic_block(fn_value, "entry");
     /// let builder = context.create_builder();
     /// builder.position_at_end(&entry);
     /// builder.build_cmpxchg(i32_ptr_param, i32_seven, i32_eight, AtomicOrdering::AcquireRelease, AtomicOrdering::Monotonic);

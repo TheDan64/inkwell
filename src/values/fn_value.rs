@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMGetPreviousFunction, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetBasicBlocks, LLVMAppendBasicBlock, LLVMDeleteFunction, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetIntrinsicID, LLVMGetFunctionCallConv, LLVMSetFunctionCallConv, LLVMGetGC, LLVMSetGC, LLVMSetLinkage, LLVMSetParamAlignment, LLVMGetParams};
+use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMGetPreviousFunction, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetBasicBlocks, LLVMDeleteFunction, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetIntrinsicID, LLVMGetFunctionCallConv, LLVMSetFunctionCallConv, LLVMGetGC, LLVMSetGC, LLVMSetLinkage, LLVMSetParamAlignment, LLVMGetParams};
 #[llvm_versions(3.7..=latest)]
 use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
 #[llvm_versions(3.9..=latest)]
@@ -130,18 +130,6 @@ impl<'ctx> FunctionValue<'ctx> {
         };
 
         BasicBlock::new(bb)
-    }
-
-    // TODOC: This applies the global context to the basic block. To keep the existing context
-    // prefer context.append_basic_block()
-    pub fn append_basic_block(&self, name: &str) -> BasicBlock {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
-
-        let bb = unsafe {
-            LLVMAppendBasicBlock(self.as_value_ref(), c_string.as_ptr())
-        };
-
-        BasicBlock::new(bb).expect("Appending basic block should never fail")
     }
 
     pub fn get_nth_param(&self, nth: u32) -> Option<BasicValueEnum<'ctx>> {

@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMConstNamedStruct, LLVMConstStruct, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMStructSetBody, LLVMConstArray};
+use llvm_sys::core::{LLVMConstNamedStruct, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMStructSetBody, LLVMConstArray};
 #[llvm_versions(3.7..=latest)]
 use llvm_sys::core::LLVMStructGetTypeAtIndex;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
@@ -82,30 +82,6 @@ impl<'ctx> StructType<'ctx> {
                                                 .collect();
         let value = unsafe {
             LLVMConstNamedStruct(self.as_type_ref(), args.as_mut_ptr(), args.len() as u32)
-        };
-
-        StructValue::new(value)
-    }
-
-    /// Creates a `StructValue` based on the input values rather than an existing `StructType`.
-    /// It will be assigned the global `Context`.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    /// let f32_zero = f32_type.const_float(0.);
-    /// let struct_val = context.const_struct(&[f32_zero.into()], false);
-    /// ```
-    pub fn const_struct(values: &[BasicValueEnum], packed: bool) -> StructValue<'ctx> {
-        let mut args: Vec<LLVMValueRef> = values.iter()
-                                                .map(|val| val.as_value_ref())
-                                                .collect();
-        let value = unsafe {
-            LLVMConstStruct(args.as_mut_ptr(), args.len() as u32, packed as i32)
         };
 
         StructValue::new(value)

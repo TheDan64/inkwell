@@ -36,7 +36,7 @@ fn test_basic_block_ordering() {
     assert!(basic_block3.move_before(&basic_block2).is_ok());
     assert!(basic_block.move_after(&basic_block4).is_ok());
 
-    let basic_block5 = basic_block.prepend_basic_block("block5");
+    let basic_block5 = context.prepend_basic_block(&basic_block, "block5");
     let basic_blocks = function.get_basic_blocks();
 
     assert_eq!(basic_blocks.len(), 5);
@@ -52,7 +52,7 @@ fn test_basic_block_ordering() {
     assert_ne!(basic_blocks[3], basic_block4);
     assert_ne!(basic_blocks[4], basic_block5);
 
-    function.append_basic_block("block6");
+    context.append_basic_block(function, "block6");
 
     let bb1 = function.get_first_basic_block().unwrap();
     let bb4 = basic_block5.get_previous_basic_block().unwrap();

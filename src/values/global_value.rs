@@ -145,7 +145,7 @@ impl<'ctx> GlobalValue<'ctx> {
     ///
     /// assert!(fn_value.as_global_value().is_declaration());
     ///
-    /// fn_value.append_basic_block("entry");
+    /// context.append_basic_block(fn_value, "entry");
     ///
     /// assert!(!fn_value.as_global_value().is_declaration());
     /// ```

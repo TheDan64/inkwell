@@ -77,7 +77,7 @@ fn test_attributes_on_function_values() {
     let i32_type = context.i32_type();
     let fn_type = void_type.fn_type(&[i32_type.into()], false);
     let fn_value = module.add_function("my_fn", fn_type, None);
-    let entry_bb = fn_value.append_basic_block("entry");
+    let entry_bb = context.append_basic_block(fn_value, "entry");
     let string_attribute = context.create_string_attribute("my_key", "my_val");
     let alignstack_attribute = Attribute::get_named_enum_kind_id("alignstack");
     let enum_attribute = context.create_enum_attribute(alignstack_attribute, 1);
@@ -121,7 +121,7 @@ fn test_attributes_on_call_site_values() {
     let i32_type = context.i32_type();
     let fn_type = void_type.fn_type(&[i32_type.into()], false);
     let fn_value = module.add_function("my_fn", fn_type, None);
-    let entry_bb = fn_value.append_basic_block("entry");
+    let entry_bb = context.append_basic_block(fn_value, "entry");
     let string_attribute = context.create_string_attribute("my_key", "my_val");
     let alignstack_attribute = Attribute::get_named_enum_kind_id("alignstack");
     let align_attribute = Attribute::get_named_enum_kind_id("align");

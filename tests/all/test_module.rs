@@ -106,7 +106,7 @@ fn test_write_and_load_memory_buffer() {
     let void_type = context.void_type();
     let function_type = void_type.fn_type(&[], false);
     let function = module.add_function("my_fn", function_type, None);
-    let basic_block = function.append_basic_block("entry");
+    let basic_block = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&basic_block);
     builder.build_return(None);
@@ -209,7 +209,7 @@ fn test_parse_from_buffer() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
     let f = module.add_function("f", fn_type, None);
-    let basic_block = f.append_basic_block("entry");
+    let basic_block = context.append_basic_block(f, "entry");
     let builder = context.create_builder();
 
     builder.position_at_end(&basic_block);
@@ -250,7 +250,7 @@ fn test_parse_from_path() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
     let f = module.add_function("f", fn_type, None);
-    let basic_block = f.append_basic_block("entry");
+    let basic_block = context.append_basic_block(f, "entry");
     let builder = context.create_builder();
 
     builder.position_at_end(&basic_block);
@@ -278,7 +278,7 @@ fn test_clone() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
     let f = module.add_function("f", fn_type, None);
-    let basic_block = f.append_basic_block("entry");
+    let basic_block = context.append_basic_block(f, "entry");
     let builder = context.create_builder();
 
     builder.position_at_end(&basic_block);
@@ -297,7 +297,7 @@ fn test_print_to_file() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
     let f = module.add_function("f", fn_type, None);
-    let basic_block = f.append_basic_block("entry");
+    let basic_block = context.append_basic_block(f, "entry");
     let builder = context.create_builder();
 
     builder.position_at_end(&basic_block);
@@ -356,7 +356,7 @@ fn test_linking_modules() {
     let builder = context.create_builder();
     let fn_type = void_type.fn_type(&[], false);
     let fn_val = module.add_function("f", fn_type, None);
-    let basic_block = fn_val.append_basic_block("entry");
+    let basic_block = context.append_basic_block(fn_val, "entry");
 
     builder.position_at_end(&basic_block);
     builder.build_return(None);
@@ -370,7 +370,7 @@ fn test_linking_modules() {
 
     let module3 = context.create_module("mod3");
     let fn_val2 = module3.add_function("f2", fn_type, None);
-    let basic_block2 = fn_val2.append_basic_block("entry");
+    let basic_block2 = context.append_basic_block(fn_val2, "entry");
 
     builder.position_at_end(&basic_block2);
     builder.build_return(None);
@@ -390,7 +390,7 @@ fn test_linking_modules() {
 
     let module5 = context.create_module("mod5");
     let fn_val3 = module5.add_function("f2", fn_type, None);
-    let basic_block3 = fn_val3.append_basic_block("entry");
+    let basic_block3 = context.append_basic_block(fn_val3, "entry");
 
     builder.position_at_end(&basic_block3);
     builder.build_return(None);
@@ -404,7 +404,7 @@ fn test_linking_modules() {
 
     let module6 = context.create_module("mod5");
     let fn_val4 = module6.add_function("f4", fn_type, None);
-    let basic_block4 = fn_val4.append_basic_block("entry");
+    let basic_block4 = context.append_basic_block(fn_val4, "entry");
 
     builder.position_at_end(&basic_block4);
     builder.build_return(None);
@@ -463,7 +463,7 @@ fn test_double_ee_from_same_module() {
     let builder = context.create_builder();
     let fn_type = void_type.fn_type(&[], false);
     let fn_val = module.add_function("f", fn_type, None);
-    let basic_block = fn_val.append_basic_block("entry");
+    let basic_block = context.append_basic_block(fn_val, "entry");
 
     builder.position_at_end(&basic_block);
     builder.build_return(None);

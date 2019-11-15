@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMConstInsertElement, LLVMConstExtractElement, LLVMIsConstantString, LLVMConstString, LLVMGetElementAsConstant, LLVMGetAsString, LLVMConstSelect, LLVMConstShuffleVector};
+use llvm_sys::core::{LLVMIsAConstantVector, LLVMIsAConstantDataVector, LLVMConstInsertElement, LLVMConstExtractElement, LLVMIsConstantString, LLVMGetElementAsConstant, LLVMGetAsString, LLVMConstSelect, LLVMConstShuffleVector};
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
@@ -110,29 +110,10 @@ impl<'ctx> VectorValue<'ctx> {
     /// # Example
     ///
     /// ```no_run
-    /// use inkwell::values::VectorValue;
+    /// use inkwell::context::Context;
     ///
-    /// let string = VectorValue::const_string("my_string", false);
-    ///
-    /// assert_eq!(string.print_to_string().to_string(), "[9 x i8] c\"my_string\"");
-    /// ```
-    // SubTypes: Should return VectorValue<IntValue<i8>>
-    pub fn const_string(string: &str, null_terminated: bool) -> Self {
-        let ptr = unsafe {
-            LLVMConstString(string.as_ptr() as *const i8, string.len() as u32, !null_terminated as i32)
-        };
-
-        VectorValue::new(ptr)
-    }
-
-    /// Creates a const string which may be null terminated.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::values::VectorValue;
-    ///
-    /// let string = VectorValue::const_string("my_string", false);
+    /// let context = Context::create();
+    /// let string = context.const_string("my_string", false);
     ///
     /// assert!(string.is_const_string());
     /// ```

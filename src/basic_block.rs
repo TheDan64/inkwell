@@ -1,6 +1,6 @@
 //! A `BasicBlock` is a container of instructions.
 
-use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMInsertBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDeleteBasicBlock, LLVMGetPreviousBasicBlock, LLVMRemoveBasicBlockFromParent, LLVMGetFirstInstruction, LLVMGetLastInstruction, LLVMGetTypeContext, LLVMBasicBlockAsValue};
+use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDeleteBasicBlock, LLVMGetPreviousBasicBlock, LLVMRemoveBasicBlockFromParent, LLVMGetFirstInstruction, LLVMGetLastInstruction, LLVMGetTypeContext, LLVMBasicBlockAsValue};
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::LLVMGetBasicBlockName;
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
@@ -9,7 +9,7 @@ use crate::context::ContextRef;
 use crate::values::{FunctionValue, InstructionValue};
 
 use std::fmt;
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 
 /// A `BasicBlock` is a container of instructions.
 ///
@@ -216,36 +216,6 @@ impl BasicBlock {
         }
 
         Ok(())
-    }
-
-    /// Prepends a new `BasicBlock` before this one.
-    ///
-    /// # Example
-    /// ```no_run
-    /// use inkwell::context::Context;
-    /// use inkwell::module::Module;
-    /// use inkwell::builder::Builder;
-    ///
-    /// let context = Context::create();
-    /// let module = context.create_module("my_module");
-    /// let void_type = context.void_type();
-    /// let fn_type = void_type.fn_type(&[], false);
-    /// let function = module.add_function("do_nothing", fn_type, None);
-    ///
-    /// let basic_block1 = context.append_basic_block(function, "entry");
-    /// let basic_block2 = basic_block1.prepend_basic_block("previous");
-    ///
-    /// assert!(basic_block1.get_next_basic_block().is_none());
-    /// assert_eq!(basic_block2.get_next_basic_block().unwrap(), basic_block1);
-    /// ```
-    pub fn prepend_basic_block(&self, name: &str) -> BasicBlock {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
-
-        let bb = unsafe {
-            LLVMInsertBasicBlock(self.basic_block, c_string.as_ptr())
-        };
-
-        BasicBlock::new(bb).expect("Prepending basic block should never fail")
     }
 
     /// Obtains the first `InstructionValue` in this `BasicBlock`, if any.

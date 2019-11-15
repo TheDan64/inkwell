@@ -619,7 +619,7 @@ impl<'ctx> Module<'ctx> {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// let f = module.add_function("f", fn_type, None);
-    /// let basic_block = f.append_basic_block("entry");
+    /// let basic_block = context.append_basic_block(f, "entry");
     /// let builder = context.create_builder();
     ///
     /// builder.position_at_end(&basic_block);

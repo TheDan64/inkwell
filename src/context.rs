@@ -166,7 +166,7 @@ impl Context {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// let fn_val = module.add_function("my_fn", fn_type, None);
-    /// let basic_block = fn_val.append_basic_block("entry");
+    /// let basic_block = context.append_basic_block(fn_val, "entry");
     ///
     /// builder.position_at_end(&basic_block);
     /// builder.build_return(None);
