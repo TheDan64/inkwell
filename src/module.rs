@@ -387,10 +387,10 @@ impl<'ctx> Module<'ctx> {
     /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
     ///
     /// let context = Context::create();
-    /// let module = create.create("my_module");
+    /// let module = context.create_module("my_module");
     /// let execution_engine = module.create_execution_engine().unwrap();
     ///
-    /// assert_eq!(*module.get_context(), *context);
+    /// assert_eq!(*module.get_context(), context);
     /// ```
     // SubType: ExecutionEngine<Basic?>
     pub fn create_execution_engine(&self) -> Result<ExecutionEngine<'ctx>, LLVMString> {
@@ -438,10 +438,10 @@ impl<'ctx> Module<'ctx> {
     /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
     ///
     /// let context = Context::create();
-    /// let module = create.create("my_module");
+    /// let module = context.create_module("my_module");
     /// let execution_engine = module.create_interpreter_execution_engine().unwrap();
     ///
-    /// assert_eq!(*module.get_context(), *context);
+    /// assert_eq!(*module.get_context(), context);
     /// ```
     // SubType: ExecutionEngine<Interpreter>
     pub fn create_interpreter_execution_engine(&self) -> Result<ExecutionEngine<'ctx>, LLVMString> {
@@ -491,7 +491,7 @@ impl<'ctx> Module<'ctx> {
     /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
     ///
     /// let context = Context::create();
-    /// let module = context.create("my_module");
+    /// let module = context.create_module("my_module");
     /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     ///
     /// assert_eq!(*module.get_context(), *context);
@@ -808,7 +808,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_global_metadata_size("my_md"), 0);
     ///
     /// let md_string = context.metadata_string("lots of metadata here");
-    /// let md_node = context.metadata_node(&[&bool_val, &f32_val]);
+    /// let md_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
     ///
     /// module.add_global_metadata("my_md", &md_string);
     /// module.add_global_metadata("my_md", &md_node);
@@ -842,7 +842,6 @@ impl<'ctx> Module<'ctx> {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
-    /// use inkwell::values::MetadataValue;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
@@ -853,8 +852,8 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(module.get_global_metadata_size("my_md"), 0);
     ///
-    /// let md_string = MetadataValue::create_string("lots of metadata here");
-    /// let md_node = MetadataValue::create_node(&[&bool_val, &f32_val]);
+    /// let md_string = context.metadata_string("lots of metadata here");
+    /// let md_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
     ///
     /// module.add_global_metadata("my_md", &md_string);
     /// module.add_global_metadata("my_md", &md_node);
@@ -888,7 +887,6 @@ impl<'ctx> Module<'ctx> {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
-    /// use inkwell::values::MetadataValue;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
@@ -899,8 +897,8 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(module.get_global_metadata_size("my_md"), 0);
     ///
-    /// let md_string = MetadataValue::create_string("lots of metadata here");
-    /// let md_node = MetadataValue::create_node(&[&bool_val, &f32_val]);
+    /// let md_string = context.metadata_string("lots of metadata here");
+    /// let md_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
     ///
     /// module.add_global_metadata("my_md", &md_string);
     /// module.add_global_metadata("my_md", &md_node);
@@ -1042,9 +1040,8 @@ impl<'ctx> Module<'ctx> {
     /// let context = Context::create();
     /// let buffer = MemoryBuffer::create_from_file(&path).unwrap();
     /// let module = Module::parse_bitcode_from_buffer(&buffer, &context);
-    /// let global_ctx = unsafe { Context::get_global().lock() };
     ///
-    /// assert_eq!(*module.unwrap().get_context(), *global_ctx);
+    /// assert_eq!(*module.unwrap().get_context(), context);
     ///
     /// ```
     pub fn parse_bitcode_from_buffer(buffer: &MemoryBuffer, context: &'ctx Context) -> Result<Self, LLVMString> {
@@ -1080,7 +1077,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// let path = Path::new("foo/bar.bc");
     /// let context = Context::create();
-    /// let module = Module::parse_bitcode_from_path_in_context(&path, &context);
+    /// let module = Module::parse_bitcode_from_path(&path, &context);
     ///
     /// assert_eq!(*module.unwrap().get_context(), context);
     ///

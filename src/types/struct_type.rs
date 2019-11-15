@@ -95,6 +95,7 @@ impl<'ctx> StructType<'ctx> {
     /// ```no_run
     /// use inkwell::context::Context;
     ///
+    /// let context = Context::create();
     /// let f32_type = context.f32_type();
     /// let f32_zero = f32_type.const_float(0.);
     /// let struct_val = context.const_struct(&[f32_zero.into()], false);
