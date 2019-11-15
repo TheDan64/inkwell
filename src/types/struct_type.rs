@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMConstNamedStruct, LLVMConstStruct, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMStructSetBody, LLVMConstArray};
+use llvm_sys::core::{LLVMConstNamedStruct, LLVMConstStruct, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMStructSetBody, LLVMConstArray};
 #[llvm_versions(3.7..=latest)]
 use llvm_sys::core::LLVMStructGetTypeAtIndex;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
@@ -93,11 +93,11 @@ impl<'ctx> StructType<'ctx> {
     /// # Example
     ///
     /// ```no_run
-    /// use inkwell::types::{FloatType, StructType};
+    /// use inkwell::context::Context;
     ///
-    /// let f32_type = FloatType::f32_type();
+    /// let f32_type = context.f32_type();
     /// let f32_zero = f32_type.const_float(0.);
-    /// let struct_val = StructType::const_struct(&[f32_zero.into()], false);
+    /// let struct_val = context.const_struct(&[f32_zero.into()], false);
     /// ```
     pub fn const_struct(values: &[BasicValueEnum], packed: bool) -> StructValue<'ctx> {
         let mut args: Vec<LLVMValueRef> = values.iter()
@@ -318,32 +318,6 @@ impl<'ctx> StructType<'ctx> {
         unsafe {
             LLVMIsOpaqueStruct(self.as_type_ref()) == 1
         }
-    }
-
-    /// Creates a `StructType` definiton from heterogeneous types in the global `Context`.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    /// use inkwell::types::{FloatType, IntType, StructType};
-    ///
-    /// let global_ctx = unsafe { Context::get_global().lock() };
-    /// let f32_type = FloatType::f32_type();
-    /// let i8_type = IntType::i8_type();
-    /// let struct_type = StructType::struct_type(&[f32_type.into(), i8_type.into()], false);
-    ///
-    /// assert_eq!(*struct_type.get_context(), *global_ctx);
-    /// ```
-    pub fn struct_type(field_types: &[BasicTypeEnum<'ctx>], packed: bool) -> Self {
-        let mut field_types: Vec<LLVMTypeRef> = field_types.iter()
-                                                           .map(|val| val.as_type_ref())
-                                                           .collect();
-        let struct_type = unsafe {
-            LLVMStructType(field_types.as_mut_ptr(), field_types.len() as u32, packed as i32)
-        };
-
-        StructType::new(struct_type)
     }
 
     /// Counts the number of field types.

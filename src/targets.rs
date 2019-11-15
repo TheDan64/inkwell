@@ -3,7 +3,7 @@ use either::Either;
 use llvm_sys::target::{
     LLVMABIAlignmentOfType, LLVMABISizeOfType, LLVMByteOrder, LLVMByteOrdering,
     LLVMCallFrameAlignmentOfType, LLVMCopyStringRepOfTargetData, LLVMCreateTargetData,
-    LLVMDisposeTargetData, LLVMElementAtOffset, LLVMIntPtrType, LLVMIntPtrTypeForAS,
+    LLVMDisposeTargetData, LLVMElementAtOffset,
     LLVMIntPtrTypeForASInContext, LLVMIntPtrTypeInContext, LLVMOffsetOfElement, LLVMPointerSize,
     LLVMPointerSizeForAS, LLVMPreferredAlignmentOfGlobal, LLVMPreferredAlignmentOfType,
     LLVMSizeOfTypeInBits, LLVMStoreSizeOfType, LLVMTargetDataRef,
@@ -1247,36 +1247,6 @@ impl TargetData {
         TargetData {
             target_data: target_data,
         }
-    }
-
-    /// Gets the `IntType` representing a bit width of a pointer. It will be assigned the global context.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::OptimizationLevel;
-    /// use inkwell::context::Context;
-    /// use inkwell::targets::{InitializationConfig, Target};
-    ///
-    /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
-    ///
-    /// let context = unsafe { Context::get_global().lock() };
-    /// let module = context.create_module("sum");
-    /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-    /// let target_data = execution_engine.get_target_data();
-    /// let int_type = target_data.ptr_sized_int_type(None);
-    ///
-    /// assert_eq!(*context, *int_type.get_context());
-    /// ```
-    pub fn ptr_sized_int_type(&self, address_space: Option<AddressSpace>) -> IntType {
-        let int_type_ptr = match address_space {
-            Some(address_space) => unsafe {
-                LLVMIntPtrTypeForAS(self.target_data, address_space as u32)
-            },
-            None => unsafe { LLVMIntPtrType(self.target_data) },
-        };
-
-        IntType::new(int_type_ptr)
     }
 
     /// Gets the `IntType` representing a bit width of a pointer. It will be assigned the referenced context.

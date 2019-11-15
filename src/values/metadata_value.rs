@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMMDNode, LLVMMDString, LLVMIsAMDNode, LLVMIsAMDString, LLVMGetMDString, LLVMGetMDNodeNumOperands, LLVMGetMDNodeOperands, LLVMGetMDKindID};
+use llvm_sys::core::{LLVMIsAMDNode, LLVMIsAMDString, LLVMGetMDString, LLVMGetMDNodeNumOperands, LLVMGetMDNodeOperands, LLVMGetMDKindID};
 use llvm_sys::prelude::LLVMValueRef;
 
 #[llvm_versions(7.0..=latest)]
@@ -6,12 +6,11 @@ use llvm_sys::prelude::LLVMMetadataRef;
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::core::LLVMValueAsMetadata;
 
-use crate::context::Context;
 use crate::support::LLVMString;
 use crate::values::traits::AsValueRef;
-use crate::values::{BasicValue, BasicMetadataValueEnum, Value};
+use crate::values::{BasicMetadataValueEnum, Value};
 
-use std::ffi::{CString, CStr};
+use std::ffi::CStr;
 use std::fmt;
 use std::mem::forget;
 use std::slice::from_raw_parts;
@@ -73,33 +72,6 @@ impl<'ctx> MetadataValue<'ctx> {
         unsafe {
             LLVMIsAMDString(self.as_value_ref()) == self.as_value_ref()
         }
-    }
-
-    /// This function creates a `MetadataValue` node in the global `Context`.
-    pub fn create_node(values: &[&dyn BasicValue<'ctx>]) -> Self {
-        let mut tuple_values: Vec<LLVMValueRef> = values.iter()
-                                                        .map(|val| val.as_value_ref())
-                                                        .collect();
-        let metadata_value = unsafe {
-            Context::get_global(|_ctx| {
-                LLVMMDNode(tuple_values.as_mut_ptr(), tuple_values.len() as u32)
-            }
-        )};
-
-        MetadataValue::new(metadata_value)
-    }
-
-    /// This function creates a `MetadataValue` string in the global `Context`.
-    pub fn create_string(string: &str) -> Self {
-        let c_string = CString::new(string).expect("Conversion to CString failed unexpectedly");
-
-        let metadata_value = unsafe {
-            Context::get_global(|_ctx| {
-                LLVMMDString(c_string.as_ptr(), string.len() as u32)
-            }
-        )};
-
-        MetadataValue::new(metadata_value)
     }
 
     pub fn get_string_value(&self) -> Option<&CStr> {

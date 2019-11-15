@@ -1,4 +1,3 @@
-use llvm_sys::core::LLVMVoidType;
 use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::context::ContextRef;
@@ -70,27 +69,6 @@ impl<'ctx> VoidType<'ctx> {
     /// ```
     pub fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.void_type.fn_type(param_types, is_var_args)
-    }
-
-    /// Gets the `VoidType`. It will be assigned the global context.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    /// use inkwell::types::VoidType;
-    ///
-    /// let global_ctx = unsafe { Context::get_global().lock() };
-    /// let void_type = VoidType::void_type();
-    ///
-    /// assert_eq!(*void_type.get_context(), *global_ctx);
-    /// ```
-    pub fn void_type() -> Self {
-        let void_type = unsafe {
-            LLVMVoidType()
-        };
-
-        VoidType::new(void_type)
     }
 
     /// Prints the definition of a `VoidType` to a `LLVMString`.

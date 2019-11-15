@@ -4,7 +4,7 @@ use std::ffi::CString;
 
 use self::inkwell::AddressSpace;
 use self::inkwell::context::Context;
-use self::inkwell::types::{BasicType, FloatType, IntType, StructType, VoidType};
+use self::inkwell::types::BasicType;
 
 #[test]
 fn test_struct_type() {
@@ -125,23 +125,29 @@ fn test_function_type() {
 
 #[test]
 fn test_sized_types() {
-    let void_type = VoidType::void_type();
-    let bool_type = IntType::bool_type();
-    let i8_type = IntType::i8_type();
-    let i16_type = IntType::i16_type();
-    let i32_type = IntType::i32_type();
-    let i64_type = IntType::i64_type();
-    let i128_type = IntType::i128_type();
-    let f16_type = FloatType::f16_type();
-    let f32_type = FloatType::f32_type();
-    let f64_type = FloatType::f64_type();
-    let f80_type = FloatType::x86_f80_type();
-    let f128_type = FloatType::f128_type();
-    let ppc_f128_type = FloatType::ppc_f128_type();
-    let struct_type = StructType::struct_type(&[i8_type.into(), f128_type.into()], false);
-    let struct_type2 = StructType::struct_type(&[], false);
-    let struct_type3 = StructType::struct_type(&[i8_type.into(), f128_type.into()], true);
-    let struct_type4 = StructType::struct_type(&[], true);
+    unsafe {
+        Context::get_global(sized_types)
+    }
+}
+
+fn sized_types(global_ctx: &Context) {
+    let void_type = global_ctx.void_type();
+    let bool_type = global_ctx.bool_type();
+    let i8_type = global_ctx.i8_type();
+    let i16_type = global_ctx.i16_type();
+    let i32_type = global_ctx.i32_type();
+    let i64_type = global_ctx.i64_type();
+    let i128_type = global_ctx.i128_type();
+    let f16_type = global_ctx.f16_type();
+    let f32_type = global_ctx.f32_type();
+    let f64_type = global_ctx.f64_type();
+    let f80_type = global_ctx.x86_f80_type();
+    let f128_type = global_ctx.f128_type();
+    let ppc_f128_type = global_ctx.ppc_f128_type();
+    let struct_type = global_ctx.struct_type(&[i8_type.into(), f128_type.into()], false);
+    let struct_type2 = global_ctx.struct_type(&[], false);
+    let struct_type3 = global_ctx.struct_type(&[i8_type.into(), f128_type.into()], true);
+    let struct_type4 = global_ctx.struct_type(&[], true);
     let fn_type = void_type.fn_type(&[], false);
     let fn_type2 = i8_type.fn_type(&[], false);
     let fn_type3 = void_type.fn_type(&[i32_type.into(), struct_type.into()], false);
@@ -218,16 +224,11 @@ fn test_sized_types() {
     assert!(f128_type.vec_type(42).is_sized());
     assert!(ppc_f128_type.vec_type(42).is_sized());
 
+    let opaque_struct_type = global_ctx.opaque_struct_type("opaque");
 
-    unsafe {
-        Context::get_global(|global_ctx| {
-            let opaque_struct_type = global_ctx.opaque_struct_type("opaque");
-
-            assert!(!opaque_struct_type.is_sized());
-            assert!(opaque_struct_type.ptr_type(AddressSpace::Generic).is_sized());
-            assert!(!opaque_struct_type.array_type(0).is_sized());
-        }
-    )};
+    assert!(!opaque_struct_type.is_sized());
+    assert!(opaque_struct_type.ptr_type(AddressSpace::Generic).is_sized());
+    assert!(!opaque_struct_type.array_type(0).is_sized());
 }
 
 #[test]

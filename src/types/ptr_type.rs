@@ -195,16 +195,8 @@ impl<'ctx> PointerType<'ctx> {
     /// ```no_run
     /// use inkwell::AddressSpace;
     /// use inkwell::context::Context;
-    /// use inkwell::types::FloatType;
     ///
-    /// // Global Context
-    /// let f32_type = FloatType::f32_type();
-    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
-    /// let f32_ptr_null = f32_ptr_type.const_null();
-    ///
-    /// assert!(f32_ptr_null.is_null());
-    ///
-    /// // Custom Context
+    /// // Local Context
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);

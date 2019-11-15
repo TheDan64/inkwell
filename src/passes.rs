@@ -83,11 +83,12 @@ impl PassManagerBuilder {
     /// # Example
     ///
     /// ```no_run
+    /// use inkwell::context::Context;
     /// use inkwell::OptimizationLevel::Aggressive;
-    /// use inkwell::module::Module;
     /// use inkwell::passes::{PassManager, PassManagerBuilder};
     ///
-    /// let module = Module::create("mod");
+    /// let context = Context::create();
+    /// let module = context.create_module("mod");
     /// let pass_manager_builder = PassManagerBuilder::create();
     ///
     /// pass_manager_builder.set_optimization_level(Aggressive);

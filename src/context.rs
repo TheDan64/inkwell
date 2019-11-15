@@ -103,10 +103,11 @@ impl Context {
     /// use inkwell::context::Context;
     ///
     /// let context = unsafe {
-    ///     Context::get_global()
+    ///     Context::get_global(|_global_context| {
+    ///         // do stuff
+    ///     })
     /// };
     /// ```
-    // FIXME: Types auto-assigned global ctx might be able to get_context w/o locking mutex
     pub unsafe fn get_global<F, R>(func: F) -> R
     where
         F: FnOnce(&Context) -> R,
@@ -458,6 +459,7 @@ impl Context {
     ///
     /// assert_eq!(*f128_type.get_context(), context);
     /// ```
+    // IEEE 754-2008’s binary128 floats according to https://internals.rust-lang.org/t/pre-rfc-introduction-of-half-and-quadruple-precision-floats-f16-and-f128/7521
     pub fn f128_type(&self) -> FloatType {
         let f128_type = unsafe {
             LLVMFP128TypeInContext(self.context)
@@ -481,6 +483,7 @@ impl Context {
     ///
     /// assert_eq!(*f128_type.get_context(), context);
     /// ```
+    // Two 64 bits according to https://internals.rust-lang.org/t/pre-rfc-introduction-of-half-and-quadruple-precision-floats-f16-and-f128/7521
     pub fn ppc_f128_type(&self) -> FloatType {
         let f128_type = unsafe {
             LLVMPPCFP128TypeInContext(self.context)

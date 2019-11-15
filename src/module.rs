@@ -2,9 +2,9 @@
 
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 #[allow(deprecated)]
-use llvm_sys::bit_reader::{LLVMParseBitcode, LLVMParseBitcodeInContext};
+use llvm_sys::bit_reader::LLVMParseBitcodeInContext;
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
-use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile};
+use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile};
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::{LLVMGetModuleIdentifier, LLVMSetModuleIdentifier};
 #[llvm_versions(7.0..=latest)]
@@ -153,30 +153,6 @@ impl<'ctx> Module<'ctx> {
         }
     }
 
-    /// Creates a named `Module`. Will be automatically assigned the global context.
-    ///
-    /// Creating your own `Context` is preferred, see [inkwell::context::create_module()](../context/struct.Context.html#method.create_module)
-    ///
-    /// # Example
-    /// ```no_run
-    /// use inkwell::context::Context;
-    /// use inkwell::module::Module;
-    ///
-    /// let context = unsafe { Context::get_global().lock() };
-    /// let module = Module::create("my_module");
-    ///
-    /// assert_eq!(*module.get_context(), *context);
-    /// ```
-    pub fn create(name: &str) -> Self {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
-
-        let module = unsafe {
-            Context::get_global(|_ctx| LLVMModuleCreateWithName(c_string.as_ptr()))
-        };
-
-        Module::new(module, None)
-    }
-
     /// Creates a function given its `name` and `ty`, adds it to the `Module`
     /// and returns it.
     ///
@@ -189,8 +165,8 @@ impl<'ctx> Module<'ctx> {
     /// use inkwell::module::{Module, Linkage};
     /// use inkwell::types::FunctionType;
     ///
-    /// let context = unsafe { Context::get_global().lock() };
-    /// let module = Module::create("my_module");
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
     ///
     /// let fn_type = context.f32_type().fn_type(&[], false);
     /// let fn_val = module.add_function("my_function", fn_type, None);
@@ -221,16 +197,10 @@ impl<'ctx> Module<'ctx> {
     /// use inkwell::context::{Context, ContextRef};
     /// use inkwell::module::Module;
     ///
-    /// let global_context = unsafe { Context::get_global().lock() };
-    /// let global_module = Module::create("my_global_module");
-    ///
-    /// assert_eq!(*global_module.get_context(), *global_context);
-    ///
     /// let local_context = Context::create();
     /// let local_module = local_context.create_module("my_module");
     ///
     /// assert_eq!(*local_module.get_context(), local_context);
-    /// assert_ne!(local_context, *global_context);
     /// ```
     pub fn get_context(&self) -> ContextRef<'ctx> {
         let context = unsafe {
@@ -416,8 +386,8 @@ impl<'ctx> Module<'ctx> {
     ///
     /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
     ///
-    /// let context = unsafe { Context::get_global().lock() };
-    /// let module = Module::create("my_module");
+    /// let context = Context::create();
+    /// let module = create.create("my_module");
     /// let execution_engine = module.create_execution_engine().unwrap();
     ///
     /// assert_eq!(*module.get_context(), *context);
@@ -467,8 +437,8 @@ impl<'ctx> Module<'ctx> {
     ///
     /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
     ///
-    /// let context = unsafe { Context::get_global().lock() };
-    /// let module = Module::create("my_module");
+    /// let context = Context::create();
+    /// let module = create.create("my_module");
     /// let execution_engine = module.create_interpreter_execution_engine().unwrap();
     ///
     /// assert_eq!(*module.get_context(), *context);
@@ -520,8 +490,8 @@ impl<'ctx> Module<'ctx> {
     ///
     /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
     ///
-    /// let context = unsafe { Context::get_global().lock() };
-    /// let module = Module::create("my_module");
+    /// let context = Context::create();
+    /// let module = context.create("my_module");
     /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     ///
     /// assert_eq!(*module.get_context(), *context);
@@ -827,7 +797,6 @@ impl<'ctx> Module<'ctx> {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
-    /// use inkwell::values::MetadataValue;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
@@ -838,8 +807,8 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(module.get_global_metadata_size("my_md"), 0);
     ///
-    /// let md_string = MetadataValue::create_string("lots of metadata here");
-    /// let md_node = MetadataValue::create_node(&[&bool_val, &f32_val]);
+    /// let md_string = context.metadata_string("lots of metadata here");
+    /// let md_node = context.metadata_node(&[&bool_val, &f32_val]);
     ///
     /// module.add_global_metadata("my_md", &md_string);
     /// module.add_global_metadata("my_md", &md_node);
@@ -1070,61 +1039,21 @@ impl<'ctx> Module<'ctx> {
     /// use std::path::Path;
     ///
     /// let path = Path::new("foo/bar.bc");
-    /// let buffer = MemoryBuffer::create_from_file(&path).unwrap();
-    /// let module = Module::parse_bitcode_from_buffer(&buffer);
-    /// let global_ctx = unsafe { Context::get_global().lock() };
-    ///
-    /// assert_eq!(*module.unwrap().get_context(), *global_ctx);
-    ///
-    /// ```
-    pub fn parse_bitcode_from_buffer(buffer: &MemoryBuffer) -> Result<Self, LLVMString> {
-        let mut module = MaybeUninit::uninit();
-        let mut err_string = MaybeUninit::uninit();
-
-        // LLVM has a newer version of this function w/o the error result since 3.8 but this deprecated function
-        // hasen't yet been removed even in the unreleased LLVM 7. Seems fine to use instead of switching to their
-        // error diagnostics handler
-        #[allow(deprecated)]
-        let success = unsafe {
-            LLVMParseBitcode(buffer.memory_buffer, module.as_mut_ptr(), err_string.as_mut_ptr())
-        };
-
-        if success != 0 {
-            let err_string = unsafe { err_string.assume_init() };
-            return Err(LLVMString::new(err_string));
-        }
-
-        let module = unsafe { module.assume_init() };
-
-        Ok(Module::new(module, None))
-    }
-
-    /// Creates a new `Module` from a `MemoryBuffer`.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    /// use inkwell::module::Module;
-    /// use inkwell::memory_buffer::MemoryBuffer;
-    /// use std::path::Path;
-    ///
-    /// let path = Path::new("foo/bar.bc");
     /// let context = Context::create();
     /// let buffer = MemoryBuffer::create_from_file(&path).unwrap();
-    /// let module = Module::parse_bitcode_from_buffer_in_context(&buffer, &context);
+    /// let module = Module::parse_bitcode_from_buffer(&buffer, &context);
     /// let global_ctx = unsafe { Context::get_global().lock() };
     ///
     /// assert_eq!(*module.unwrap().get_context(), *global_ctx);
     ///
     /// ```
-    pub fn parse_bitcode_from_buffer_in_context(buffer: &MemoryBuffer, context: &'ctx Context) -> Result<Self, LLVMString> {
+    pub fn parse_bitcode_from_buffer(buffer: &MemoryBuffer, context: &'ctx Context) -> Result<Self, LLVMString> {
         let mut module = MaybeUninit::uninit();
         let mut err_string = MaybeUninit::uninit();
 
         // LLVM has a newer version of this function w/o the error result since 3.8 but this deprecated function
-        // hasen't yet been removed even in the unreleased LLVM 7. Seems fine to use instead of switching to their
-        // error diagnostics handler
+        // hasen't yet been removed even in LLVM 8. Seems fine to use instead of switching to their
+        // error diagnostics handler for now.
         #[allow(deprecated)]
         let success = unsafe {
             LLVMParseBitcodeInContext(context.context, buffer.memory_buffer, module.as_mut_ptr(), err_string.as_mut_ptr())
@@ -1138,30 +1067,6 @@ impl<'ctx> Module<'ctx> {
         let module = unsafe { module.assume_init() };
 
         Ok(Module::new(module, Some(&context)))
-    }
-
-    /// A convenience function for creating a `Module` from a file.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    /// use inkwell::module::Module;
-    /// use std::path::Path;
-    ///
-    /// let path = Path::new("foo/bar.bc");
-    /// let module = Module::parse_bitcode_from_path(&path);
-    /// let global_ctx = unsafe { Context::get_global().lock() };
-    ///
-    /// assert_eq!(*module.unwrap().get_context(), *global_ctx);
-    ///
-    /// ```
-    // LLVMGetBitcodeModule was a pain to use, so I seem to be able to achieve the same effect
-    // by reusing create_from_file instead. This is basically just a convenience function.
-    pub fn parse_bitcode_from_path<P: AsRef<Path>>(path: P) -> Result<Self, LLVMString> {
-        let buffer = MemoryBuffer::create_from_file(path.as_ref())?;
-
-        Self::parse_bitcode_from_buffer(&buffer)
     }
 
     /// A convenience function for creating a `Module` from a file for a given context.
@@ -1182,10 +1087,10 @@ impl<'ctx> Module<'ctx> {
     /// ```
     // LLVMGetBitcodeModuleInContext was a pain to use, so I seem to be able to achieve the same effect
     // by reusing create_from_file instead. This is basically just a convenience function.
-    pub fn parse_bitcode_from_path_in_context<P: AsRef<Path>>(path: P, context: &'ctx Context) -> Result<Self, LLVMString> {
+    pub fn parse_bitcode_from_path<P: AsRef<Path>>(path: P, context: &'ctx Context) -> Result<Self, LLVMString> {
         let buffer = MemoryBuffer::create_from_file(path.as_ref())?;
 
-        Self::parse_bitcode_from_buffer_in_context(&buffer, &context)
+        Self::parse_bitcode_from_buffer(&buffer, &context)
     }
 
     /// Gets the name of this `Module`.

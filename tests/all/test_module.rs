@@ -162,7 +162,7 @@ fn test_get_type() {
 fn test_get_type_global_context() {
     unsafe {
         Context::get_global(|context| {
-            let module = Module::create("my_module");
+            let module = context.create_module("my_module");
 
             assert_eq!(*module.get_context(), *context);
             assert!(module.get_type("foo").is_none());
@@ -201,7 +201,7 @@ fn test_get_type_global_context() {
 fn test_parse_from_buffer() {
     let context = Context::create();
     let garbage_buffer = MemoryBuffer::create_from_memory_range(b"garbage ir data", "my_ir");
-    let module_result = Module::parse_bitcode_from_buffer(&garbage_buffer);
+    let module_result = Module::parse_bitcode_from_buffer(&garbage_buffer, &context);
 
     assert!(module_result.is_err());
 
@@ -218,22 +218,17 @@ fn test_parse_from_buffer() {
     assert!(module.verify().is_ok());
 
     let buffer = module.write_bitcode_to_memory();
-    let module2_result = Module::parse_bitcode_from_buffer(&buffer);
+    let module2_result = Module::parse_bitcode_from_buffer(&buffer, &context);
 
     assert!(module2_result.is_ok());
+    assert_eq!(*module2_result.unwrap().get_context(), context);
 
-    unsafe {
-        Context::get_global(|global_ctx| {
-            assert_eq!(*module2_result.unwrap().get_context(), *global_ctx);
-        })
-    }
-
-    let module3_result = Module::parse_bitcode_from_buffer_in_context(&garbage_buffer, &context);
+    let module3_result = Module::parse_bitcode_from_buffer(&garbage_buffer, &context);
 
     assert!(module3_result.is_err());
 
     let buffer2 = module.write_bitcode_to_memory();
-    let module4_result = Module::parse_bitcode_from_buffer_in_context(&buffer2, &context);
+    let module4_result = Module::parse_bitcode_from_buffer(&buffer2, &context);
 
     assert!(module4_result.is_ok());
     assert_eq!(*module4_result.unwrap().get_context(), context);
@@ -243,11 +238,11 @@ fn test_parse_from_buffer() {
 fn test_parse_from_path() {
     let context = Context::create();
     let garbage_path = Path::new("foo/bar");
-    let module_result = Module::parse_bitcode_from_path(&garbage_path);
+    let module_result = Module::parse_bitcode_from_path(&garbage_path, &context);
 
     assert!(module_result.is_err(), "1");
 
-    let module_result2 = Module::parse_bitcode_from_path_in_context(&garbage_path, &context);
+    let module_result2 = Module::parse_bitcode_from_path(&garbage_path, &context);
 
     assert!(module_result2.is_err(), "2");
 
@@ -270,20 +265,10 @@ fn test_parse_from_path() {
 
     module.write_bitcode_to_path(&temp_path);
 
-    let module3_result = Module::parse_bitcode_from_path(&temp_path);
+    let module3_result = Module::parse_bitcode_from_path(&temp_path, &context);
 
     assert!(module3_result.is_ok());
-
-    unsafe {
-        Context::get_global(|global_ctx| {
-            assert_eq!(*module3_result.unwrap().get_context(), *global_ctx);
-        })
-    };
-
-    let module4_result = Module::parse_bitcode_from_path_in_context(&temp_path, &context);
-
-    assert!(module4_result.is_ok());
-    assert_eq!(*module4_result.unwrap().get_context(), context);
+    assert_eq!(*module3_result.unwrap().get_context(), context);
 }
 
 #[test]
@@ -440,11 +425,10 @@ fn test_metadata_flags() {
         let module = context.create_module("my_module");
 
         use self::inkwell::module::FlagBehavior;
-        use self::inkwell::values::MetadataValue;
 
         assert!(module.get_flag("some_key").is_none());
 
-        let md = MetadataValue::create_string("lots of metadata here");
+        let md = context.metadata_string("lots of metadata here");
 
         module.add_metadata_flag("some_key", FlagBehavior::Error, md);
 

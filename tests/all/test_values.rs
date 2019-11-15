@@ -4,7 +4,7 @@ use self::inkwell::{DLLStorageClass, FloatPredicate, GlobalVisibility, ThreadLoc
 use self::inkwell::attributes::AttributeLoc;
 use self::inkwell::context::Context;
 use self::inkwell::module::Linkage::*;
-use self::inkwell::types::{StringRadix, StructType, VectorType};
+use self::inkwell::types::{StringRadix, VectorType};
 use self::inkwell::values::{InstructionOpcode::*, MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID, VectorValue};
 #[llvm_versions(7.0..=latest)]
 use self::inkwell::comdat::ComdatSelectionKind;
@@ -267,7 +267,7 @@ fn test_undef() {
     let f128_undef = f128_type.get_undef();
     let ptr_undef = bool_type.ptr_type(AddressSpace::Generic).get_undef();
     let array_undef = array_type.get_undef();
-    let struct_undef = StructType::struct_type(&[bool_type.into()], false).get_undef();
+    let struct_undef = context.struct_type(&[bool_type.into()], false).get_undef();
     let vec_undef = bool_type.vec_type(1).get_undef();
     let ppc_f128_undef = ppc_f128_type.get_undef();
 
@@ -436,7 +436,7 @@ fn test_metadata() {
     assert_eq!(module.get_global_metadata_size("my_string_md"), 0);
     assert_eq!(module.get_global_metadata("my_string_md").len(), 0);
 
-    let md_string = MetadataValue::create_string("lots of metadata here");
+    let md_string = context.metadata_string("lots of metadata here");
 
     assert_eq!(md_string.get_node_size(), 0);
     assert_eq!(md_string.get_node_values().len(), 0);
@@ -473,7 +473,7 @@ fn test_metadata() {
     // let vec_val = VectorType::const_vector(&[i8_val]);
     // let fn_val = module.add_function("my_fn", fn_type, None);
 
-    let md_node = MetadataValue::create_node(&[&bool_val, &f32_val]);
+    let md_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
 
     let node_values = md_node.get_node_values();
 
