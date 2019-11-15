@@ -494,7 +494,7 @@ impl<'ctx> Module<'ctx> {
     /// let module = context.create_module("my_module");
     /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     ///
-    /// assert_eq!(*module.get_context(), *context);
+    /// assert_eq!(*module.get_context(), context);
     /// ```
     // SubType: ExecutionEngine<Jit>
     pub fn create_jit_execution_engine(&self, opt_level: OptimizationLevel) -> Result<ExecutionEngine<'ctx>, LLVMString> {
