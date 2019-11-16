@@ -596,7 +596,7 @@ impl<'ctx> InstructionValue<'ctx> {
 
     /// Gets the `MetadataValue` associated with this `Instruction` at a specific
     /// `kind_id`.
-    pub fn get_metadata(&self, kind_id: u32) -> Option<MetadataValue> {
+    pub fn get_metadata(&self, kind_id: u32) -> Option<MetadataValue<'ctx>> {
         let metadata_value = unsafe {
             LLVMGetMetadata(self.instruction_value.value, kind_id)
         };
@@ -610,7 +610,7 @@ impl<'ctx> InstructionValue<'ctx> {
 
     /// Determines whether or not this `Instruction` has any associated metadata
     /// `kind_id`.
-    pub fn set_metadata(&self, metadata: MetadataValue, kind_id: u32) {
+    pub fn set_metadata(&self, metadata: MetadataValue<'ctx>, kind_id: u32) {
         unsafe {
             LLVMSetMetadata(self.instruction_value.value, kind_id, metadata.as_value_ref())
         }
