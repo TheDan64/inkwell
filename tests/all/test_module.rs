@@ -106,7 +106,7 @@ fn test_write_and_load_memory_buffer() {
     let void_type = context.void_type();
     let function_type = void_type.fn_type(&[], false);
     let function = module.add_function("my_fn", function_type, None);
-    let basic_block = function.append_basic_block("entry");
+    let basic_block = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&basic_block);
     builder.build_return(None);
@@ -160,46 +160,48 @@ fn test_get_type() {
 
 #[test]
 fn test_get_type_global_context() {
-    let context = Context::get_global();
-    let module = Module::create("my_module");
+    unsafe {
+        Context::get_global(|context| {
+            let module = context.create_module("my_module");
 
-    assert_eq!(module.get_context(), context);
-    assert!(module.get_type("foo").is_none());
+            assert_eq!(*module.get_context(), *context);
+            assert!(module.get_type("foo").is_none());
 
-    let opaque = context.opaque_struct_type("foo");
+            let opaque = context.opaque_struct_type("foo");
 
-    assert_eq!(module.get_type("foo").unwrap().into_struct_type(), opaque);
+            assert_eq!(module.get_type("foo").unwrap().into_struct_type(), opaque);
+        })
+    }
 }
 
-#[test]
-fn test_module_no_double_free() {
-    let _module = {
-        let context = Context::create();
+// TODO: test compile fail
+// #[test]
+// fn test_module_no_double_free() {
+    // let _module = {
+    //     let context = Context::create();
 
-        context.create_module("my_mod")
-    };
+    //     context.create_module("my_mod")
+    // };
+// }
 
-    // Context will live on in the module until here
-}
+// #[test]
+// fn test_owned_module_dropped_ee_and_context() {
+    // let _module = {
+    //     let context = Context::create();
+    //     let module = context.create_module("my_mod");
 
-#[test]
-fn test_owned_module_dropped_ee_and_context() {
-    let _module = {
-        let context = Context::create();
-        let module = context.create_module("my_mod");
-
-        module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-        module
-    };
+    //     module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    //     module
+    // };
 
     // Context and EE will live on in the module until here
-}
+// }
 
 #[test]
 fn test_parse_from_buffer() {
     let context = Context::create();
     let garbage_buffer = MemoryBuffer::create_from_memory_range(b"garbage ir data", "my_ir");
-    let module_result = Module::parse_bitcode_from_buffer(&garbage_buffer);
+    let module_result = Module::parse_bitcode_from_buffer(&garbage_buffer, &context);
 
     assert!(module_result.is_err());
 
@@ -207,7 +209,7 @@ fn test_parse_from_buffer() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
     let f = module.add_function("f", fn_type, None);
-    let basic_block = f.append_basic_block("entry");
+    let basic_block = context.append_basic_block(f, "entry");
     let builder = context.create_builder();
 
     builder.position_at_end(&basic_block);
@@ -216,17 +218,17 @@ fn test_parse_from_buffer() {
     assert!(module.verify().is_ok());
 
     let buffer = module.write_bitcode_to_memory();
-    let module2_result = Module::parse_bitcode_from_buffer(&buffer);
+    let module2_result = Module::parse_bitcode_from_buffer(&buffer, &context);
 
     assert!(module2_result.is_ok());
-    assert_eq!(module2_result.unwrap().get_context(), Context::get_global());
+    assert_eq!(*module2_result.unwrap().get_context(), context);
 
-    let module3_result = Module::parse_bitcode_from_buffer_in_context(&garbage_buffer, &context);
+    let module3_result = Module::parse_bitcode_from_buffer(&garbage_buffer, &context);
 
     assert!(module3_result.is_err());
 
     let buffer2 = module.write_bitcode_to_memory();
-    let module4_result = Module::parse_bitcode_from_buffer_in_context(&buffer2, &context);
+    let module4_result = Module::parse_bitcode_from_buffer(&buffer2, &context);
 
     assert!(module4_result.is_ok());
     assert_eq!(*module4_result.unwrap().get_context(), context);
@@ -236,11 +238,11 @@ fn test_parse_from_buffer() {
 fn test_parse_from_path() {
     let context = Context::create();
     let garbage_path = Path::new("foo/bar");
-    let module_result = Module::parse_bitcode_from_path(&garbage_path);
+    let module_result = Module::parse_bitcode_from_path(&garbage_path, &context);
 
     assert!(module_result.is_err(), "1");
 
-    let module_result2 = Module::parse_bitcode_from_path_in_context(&garbage_path, &context);
+    let module_result2 = Module::parse_bitcode_from_path(&garbage_path, &context);
 
     assert!(module_result2.is_err(), "2");
 
@@ -248,7 +250,7 @@ fn test_parse_from_path() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
     let f = module.add_function("f", fn_type, None);
-    let basic_block = f.append_basic_block("entry");
+    let basic_block = context.append_basic_block(f, "entry");
     let builder = context.create_builder();
 
     builder.position_at_end(&basic_block);
@@ -263,15 +265,10 @@ fn test_parse_from_path() {
 
     module.write_bitcode_to_path(&temp_path);
 
-    let module3_result = Module::parse_bitcode_from_path(&temp_path);
+    let module3_result = Module::parse_bitcode_from_path(&temp_path, &context);
 
     assert!(module3_result.is_ok());
-    assert_eq!(module3_result.unwrap().get_context(), Context::get_global());
-
-    let module4_result = Module::parse_bitcode_from_path_in_context(&temp_path, &context);
-
-    assert!(module4_result.is_ok());
-    assert_eq!(*module4_result.unwrap().get_context(), context);
+    assert_eq!(*module3_result.unwrap().get_context(), context);
 }
 
 #[test]
@@ -281,7 +278,7 @@ fn test_clone() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
     let f = module.add_function("f", fn_type, None);
-    let basic_block = f.append_basic_block("entry");
+    let basic_block = context.append_basic_block(f, "entry");
     let builder = context.create_builder();
 
     builder.position_at_end(&basic_block);
@@ -300,7 +297,7 @@ fn test_print_to_file() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
     let f = module.add_function("f", fn_type, None);
-    let basic_block = f.append_basic_block("entry");
+    let basic_block = context.append_basic_block(f, "entry");
     let builder = context.create_builder();
 
     builder.position_at_end(&basic_block);
@@ -359,7 +356,7 @@ fn test_linking_modules() {
     let builder = context.create_builder();
     let fn_type = void_type.fn_type(&[], false);
     let fn_val = module.add_function("f", fn_type, None);
-    let basic_block = fn_val.append_basic_block("entry");
+    let basic_block = context.append_basic_block(fn_val, "entry");
 
     builder.position_at_end(&basic_block);
     builder.build_return(None);
@@ -373,7 +370,7 @@ fn test_linking_modules() {
 
     let module3 = context.create_module("mod3");
     let fn_val2 = module3.add_function("f2", fn_type, None);
-    let basic_block2 = fn_val2.append_basic_block("entry");
+    let basic_block2 = context.append_basic_block(fn_val2, "entry");
 
     builder.position_at_end(&basic_block2);
     builder.build_return(None);
@@ -393,7 +390,7 @@ fn test_linking_modules() {
 
     let module5 = context.create_module("mod5");
     let fn_val3 = module5.add_function("f2", fn_type, None);
-    let basic_block3 = fn_val3.append_basic_block("entry");
+    let basic_block3 = context.append_basic_block(fn_val3, "entry");
 
     builder.position_at_end(&basic_block3);
     builder.build_return(None);
@@ -407,7 +404,7 @@ fn test_linking_modules() {
 
     let module6 = context.create_module("mod5");
     let fn_val4 = module6.add_function("f4", fn_type, None);
-    let basic_block4 = fn_val4.append_basic_block("entry");
+    let basic_block4 = context.append_basic_block(fn_val4, "entry");
 
     builder.position_at_end(&basic_block4);
     builder.build_return(None);
@@ -428,11 +425,10 @@ fn test_metadata_flags() {
         let module = context.create_module("my_module");
 
         use self::inkwell::module::FlagBehavior;
-        use self::inkwell::values::MetadataValue;
 
         assert!(module.get_flag("some_key").is_none());
 
-        let md = MetadataValue::create_string("lots of metadata here");
+        let md = context.metadata_string("lots of metadata here");
 
         module.add_metadata_flag("some_key", FlagBehavior::Error, md);
 
@@ -467,7 +463,7 @@ fn test_double_ee_from_same_module() {
     let builder = context.create_builder();
     let fn_type = void_type.fn_type(&[], false);
     let fn_val = module.add_function("f", fn_type, None);
-    let basic_block = fn_val.append_basic_block("entry");
+    let basic_block = context.append_basic_block(fn_val, "entry");
 
     builder.position_at_end(&basic_block);
     builder.build_return(None);

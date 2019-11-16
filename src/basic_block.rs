@@ -1,16 +1,15 @@
 //! A `BasicBlock` is a container of instructions.
 
-use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMInsertBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDeleteBasicBlock, LLVMGetPreviousBasicBlock, LLVMRemoveBasicBlockFromParent, LLVMGetFirstInstruction, LLVMGetLastInstruction, LLVMGetTypeContext, LLVMBasicBlockAsValue};
+use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDeleteBasicBlock, LLVMGetPreviousBasicBlock, LLVMRemoveBasicBlockFromParent, LLVMGetFirstInstruction, LLVMGetLastInstruction, LLVMGetTypeContext, LLVMBasicBlockAsValue};
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::LLVMGetBasicBlockName;
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
 
-use crate::context::{Context, ContextRef};
+use crate::context::ContextRef;
 use crate::values::{FunctionValue, InstructionValue};
 
 use std::fmt;
-use std::ffi::{CStr, CString};
-use std::rc::Rc;
+use std::ffi::CStr;
 
 /// A `BasicBlock` is a container of instructions.
 ///
@@ -52,7 +51,7 @@ impl BasicBlock {
     /// let fn_type = void_type.fn_type(&[], false);
     /// let function = module.add_function("do_nothing", fn_type, None);
     ///
-    /// let basic_block = context.append_basic_block(&function, "entry");
+    /// let basic_block = context.append_basic_block(function, "entry");
     ///
     /// assert_eq!(basic_block.get_parent().unwrap(), function);
     ///
@@ -82,14 +81,14 @@ impl BasicBlock {
     /// let fn_type = void_type.fn_type(&[], false);
     /// let function1 = module.add_function("do_nothing", fn_type, None);
     ///
-    /// let basic_block1 = context.append_basic_block(&function1, "entry");
+    /// let basic_block1 = context.append_basic_block(function1, "entry");
     ///
     /// assert!(basic_block1.get_previous_basic_block().is_none());
     ///
     /// let function2 = module.add_function("do_nothing", fn_type, None);
     ///
-    /// let basic_block2 = context.append_basic_block(&function2, "entry");
-    /// let basic_block3 = context.append_basic_block(&function2, "next");
+    /// let basic_block2 = context.append_basic_block(function2, "entry");
+    /// let basic_block3 = context.append_basic_block(function2, "next");
     ///
     /// assert!(basic_block2.get_previous_basic_block().is_none());
     /// assert_eq!(basic_block3.get_previous_basic_block().unwrap(), basic_block2);
@@ -120,14 +119,14 @@ impl BasicBlock {
     /// let fn_type = void_type.fn_type(&[], false);
     /// let function1 = module.add_function("do_nothing", fn_type, None);
     ///
-    /// let basic_block1 = context.append_basic_block(&function1, "entry");
+    /// let basic_block1 = context.append_basic_block(function1, "entry");
     ///
     /// assert!(basic_block1.get_next_basic_block().is_none());
     ///
     /// let function2 = module.add_function("do_nothing", fn_type, None);
     ///
-    /// let basic_block2 = context.append_basic_block(&function2, "entry");
-    /// let basic_block3 = context.append_basic_block(&function2, "next");
+    /// let basic_block2 = context.append_basic_block(function2, "entry");
+    /// let basic_block3 = context.append_basic_block(function2, "next");
     ///
     /// assert!(basic_block1.get_next_basic_block().is_none());
     /// assert_eq!(basic_block2.get_next_basic_block().unwrap(), basic_block3);
@@ -160,8 +159,8 @@ impl BasicBlock {
     /// let fn_type = void_type.fn_type(&[], false);
     /// let function = module.add_function("do_nothing", fn_type, None);
     ///
-    /// let basic_block1 = context.append_basic_block(&function, "entry");
-    /// let basic_block2 = context.append_basic_block(&function, "next");
+    /// let basic_block1 = context.append_basic_block(function, "entry");
+    /// let basic_block2 = context.append_basic_block(function, "next");
     ///
     /// basic_block2.move_before(&basic_block1);
     ///
@@ -197,8 +196,8 @@ impl BasicBlock {
     /// let fn_type = void_type.fn_type(&[], false);
     /// let function = module.add_function("do_nothing", fn_type, None);
     ///
-    /// let basic_block1 = context.append_basic_block(&function, "entry");
-    /// let basic_block2 = context.append_basic_block(&function, "next");
+    /// let basic_block1 = context.append_basic_block(function, "entry");
+    /// let basic_block2 = context.append_basic_block(function, "next");
     ///
     /// basic_block1.move_after(&basic_block2);
     ///
@@ -219,36 +218,6 @@ impl BasicBlock {
         Ok(())
     }
 
-    /// Prepends a new `BasicBlock` before this one.
-    ///
-    /// # Example
-    /// ```no_run
-    /// use inkwell::context::Context;
-    /// use inkwell::module::Module;
-    /// use inkwell::builder::Builder;
-    ///
-    /// let context = Context::create();
-    /// let module = context.create_module("my_module");
-    /// let void_type = context.void_type();
-    /// let fn_type = void_type.fn_type(&[], false);
-    /// let function = module.add_function("do_nothing", fn_type, None);
-    ///
-    /// let basic_block1 = context.append_basic_block(&function, "entry");
-    /// let basic_block2 = basic_block1.prepend_basic_block("previous");
-    ///
-    /// assert!(basic_block1.get_next_basic_block().is_none());
-    /// assert_eq!(basic_block2.get_next_basic_block().unwrap(), basic_block1);
-    /// ```
-    pub fn prepend_basic_block(&self, name: &str) -> BasicBlock {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
-
-        let bb = unsafe {
-            LLVMInsertBasicBlock(self.basic_block, c_string.as_ptr())
-        };
-
-        BasicBlock::new(bb).expect("Prepending basic block should never fail")
-    }
-
     /// Obtains the first `InstructionValue` in this `BasicBlock`, if any.
     ///
     /// # Example
@@ -264,7 +233,7 @@ impl BasicBlock {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// let function = module.add_function("do_nothing", fn_type, None);
-    /// let basic_block = context.append_basic_block(&function, "entry");
+    /// let basic_block = context.append_basic_block(function, "entry");
     ///
     /// builder.position_at_end(&basic_block);
     /// builder.build_return(None);
@@ -298,7 +267,7 @@ impl BasicBlock {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// let function = module.add_function("do_nothing", fn_type, None);
-    /// let basic_block = context.append_basic_block(&function, "entry");
+    /// let basic_block = context.append_basic_block(function, "entry");
     ///
     /// builder.position_at_end(&basic_block);
     /// builder.build_return(None);
@@ -332,7 +301,7 @@ impl BasicBlock {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// let function = module.add_function("do_nothing", fn_type, None);
-    /// let basic_block = context.append_basic_block(&function, "entry");
+    /// let basic_block = context.append_basic_block(function, "entry");
     ///
     /// builder.position_at_end(&basic_block);
     /// builder.build_return(None);
@@ -369,7 +338,7 @@ impl BasicBlock {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// let function = module.add_function("do_nothing", fn_type, None);
-    /// let basic_block = context.append_basic_block(&function, "entry");
+    /// let basic_block = context.append_basic_block(function, "entry");
     ///
     /// assert_eq!(basic_block.get_parent().unwrap(), function);
     ///
@@ -408,7 +377,7 @@ impl BasicBlock {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// let function = module.add_function("do_nothing", fn_type, None);
-    /// let basic_block = context.append_basic_block(&function, "entry");
+    /// let basic_block = context.append_basic_block(function, "entry");
     ///
     /// unsafe {
     ///     basic_block.delete();
@@ -439,17 +408,17 @@ impl BasicBlock {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// let function = module.add_function("do_nothing", fn_type, None);
-    /// let basic_block = context.append_basic_block(&function, "entry");
+    /// let basic_block = context.append_basic_block(function, "entry");
     ///
     /// assert_eq!(context, *basic_block.get_context());
     /// ```
+    // FIXME: Needs 'ctx on BB lifetime to work correctly
     pub fn get_context(&self) -> ContextRef {
         let context = unsafe {
             LLVMGetTypeContext(LLVMTypeOf(LLVMBasicBlockAsValue(self.basic_block)))
         };
 
-        // REVIEW: This probably should be somehow using the existing context Rc
-        ContextRef::new(Context::new(Rc::new(context)))
+        ContextRef::new(context)
     }
 
     /// Gets the name of a `BasicBlock`.
@@ -466,7 +435,7 @@ impl BasicBlock {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// let fn_val = module.add_function("my_fn", fn_type, None);
-    /// let bb = context.append_basic_block(&fn_val, "entry");
+    /// let bb = context.append_basic_block(fn_val, "entry");
     ///
     /// assert_eq!(*bb.get_name(), *CString::new("entry").unwrap());
     /// ```

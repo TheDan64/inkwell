@@ -15,9 +15,9 @@ use crate::values::FunctionValue;
 ///
 /// This struct may be removed in the future in favor of an `InstructionValue<CallSite>` type.
 #[derive(Debug, PartialEq, Clone, Copy, Hash)]
-pub struct CallSiteValue(Value);
+pub struct CallSiteValue<'ctx>(Value<'ctx>);
 
-impl CallSiteValue {
+impl<'ctx> CallSiteValue<'ctx> {
     pub(crate) fn new(value: LLVMValueRef) -> Self {
         CallSiteValue(Value::new(value))
     }
@@ -35,7 +35,7 @@ impl CallSiteValue {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// let fn_value = module.add_function("my_fn", fn_type, None);
-    /// let entry_bb = fn_value.append_basic_block("entry");
+    /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(&entry_bb);
     ///
@@ -62,7 +62,7 @@ impl CallSiteValue {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// let fn_value = module.add_function("my_fn", fn_type, None);
-    /// let entry_bb = fn_value.append_basic_block("entry");
+    /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(&entry_bb);
     ///
@@ -91,7 +91,7 @@ impl CallSiteValue {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// let fn_value = module.add_function("my_fn", fn_type, None);
-    /// let entry_bb = fn_value.append_basic_block("entry");
+    /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(&entry_bb);
     ///
@@ -99,7 +99,7 @@ impl CallSiteValue {
     ///
     /// assert!(call_site_value.try_as_basic_value().is_right());
     /// ```
-    pub fn try_as_basic_value(&self) -> Either<BasicValueEnum, InstructionValue> {
+    pub fn try_as_basic_value(&self) -> Either<BasicValueEnum<'ctx>, InstructionValue<'ctx>> {
         unsafe {
             match LLVMGetTypeKind(LLVMTypeOf(self.as_value_ref())) {
                 LLVMTypeKind::LLVMVoidTypeKind => Either::Right(InstructionValue::new(self.as_value_ref())),
@@ -124,7 +124,7 @@ impl CallSiteValue {
     /// let fn_value = module.add_function("my_fn", fn_type, None);
     /// let string_attribute = context.create_string_attribute("my_key", "my_val");
     /// let enum_attribute = context.create_enum_attribute(1, 1);
-    /// let entry_bb = fn_value.append_basic_block("entry");
+    /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(&entry_bb);
     ///
@@ -157,7 +157,7 @@ impl CallSiteValue {
     /// let fn_value = module.add_function("my_fn", fn_type, None);
     /// let string_attribute = context.create_string_attribute("my_key", "my_val");
     /// let enum_attribute = context.create_enum_attribute(1, 1);
-    /// let entry_bb = fn_value.append_basic_block("entry");
+    /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(&entry_bb);
     ///
@@ -166,7 +166,7 @@ impl CallSiteValue {
     /// assert_eq!(call_site_value.get_called_fn_value(), fn_value);
     /// ```
     #[llvm_versions(3.9..=latest)]
-    pub fn get_called_fn_value(&self) -> FunctionValue {
+    pub fn get_called_fn_value(&self) -> FunctionValue<'ctx> {
         use llvm_sys::core::LLVMGetCalledValue;
 
         let ptr = unsafe {
@@ -192,7 +192,7 @@ impl CallSiteValue {
     /// let fn_value = module.add_function("my_fn", fn_type, None);
     /// let string_attribute = context.create_string_attribute("my_key", "my_val");
     /// let enum_attribute = context.create_enum_attribute(1, 1);
-    /// let entry_bb = fn_value.append_basic_block("entry");
+    /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(&entry_bb);
     ///
@@ -228,7 +228,7 @@ impl CallSiteValue {
     /// let fn_value = module.add_function("my_fn", fn_type, None);
     /// let string_attribute = context.create_string_attribute("my_key", "my_val");
     /// let enum_attribute = context.create_enum_attribute(1, 1);
-    /// let entry_bb = fn_value.append_basic_block("entry");
+    /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(&entry_bb);
     ///
@@ -271,7 +271,7 @@ impl CallSiteValue {
     /// let fn_value = module.add_function("my_fn", fn_type, None);
     /// let string_attribute = context.create_string_attribute("my_key", "my_val");
     /// let enum_attribute = context.create_enum_attribute(1, 1);
-    /// let entry_bb = fn_value.append_basic_block("entry");
+    /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(&entry_bb);
     ///
@@ -314,7 +314,7 @@ impl CallSiteValue {
     /// let fn_value = module.add_function("my_fn", fn_type, None);
     /// let string_attribute = context.create_string_attribute("my_key", "my_val");
     /// let enum_attribute = context.create_enum_attribute(1, 1);
-    /// let entry_bb = fn_value.append_basic_block("entry");
+    /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(&entry_bb);
     ///
@@ -351,7 +351,7 @@ impl CallSiteValue {
     /// let fn_value = module.add_function("my_fn", fn_type, None);
     /// let string_attribute = context.create_string_attribute("my_key", "my_val");
     /// let enum_attribute = context.create_enum_attribute(1, 1);
-    /// let entry_bb = fn_value.append_basic_block("entry");
+    /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(&entry_bb);
     ///
@@ -388,7 +388,7 @@ impl CallSiteValue {
     /// let fn_value = module.add_function("my_fn", fn_type, None);
     /// let string_attribute = context.create_string_attribute("my_key", "my_val");
     /// let enum_attribute = context.create_enum_attribute(1, 1);
-    /// let entry_bb = fn_value.append_basic_block("entry");
+    /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(&entry_bb);
     ///
@@ -418,7 +418,7 @@ impl CallSiteValue {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// let fn_value = module.add_function("my_fn", fn_type, None);
-    /// let entry_bb = fn_value.append_basic_block("entry");
+    /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(&entry_bb);
     ///
@@ -445,7 +445,7 @@ impl CallSiteValue {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// let fn_value = module.add_function("my_fn", fn_type, None);
-    /// let entry_bb = fn_value.append_basic_block("entry");
+    /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(&entry_bb);
     ///
@@ -479,7 +479,7 @@ impl CallSiteValue {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// let fn_value = module.add_function("my_fn", fn_type, None);
-    /// let entry_bb = fn_value.append_basic_block("entry");
+    /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(&entry_bb);
     ///
@@ -501,7 +501,7 @@ impl CallSiteValue {
     }
 }
 
-impl AsValueRef for CallSiteValue {
+impl AsValueRef for CallSiteValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.0.value
     }

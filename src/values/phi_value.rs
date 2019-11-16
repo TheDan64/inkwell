@@ -12,11 +12,11 @@ use crate::values::{BasicValue, BasicValueEnum, InstructionValue, Value};
 /// A Phi Instruction returns a value based on which basic block branched into
 /// the Phi's containing basic block.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-pub struct PhiValue {
-    phi_value: Value
+pub struct PhiValue<'ctx> {
+    phi_value: Value<'ctx>,
 }
 
-impl PhiValue {
+impl<'ctx> PhiValue<'ctx> {
     pub(crate) fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
@@ -25,7 +25,7 @@ impl PhiValue {
         }
     }
 
-    pub fn add_incoming(&self, incoming: &[(&dyn BasicValue, &BasicBlock)]) {
+    pub fn add_incoming(&self, incoming: &[(&dyn BasicValue<'ctx>, &BasicBlock)]) {
         let (mut values, mut basic_blocks): (Vec<LLVMValueRef>, Vec<LLVMBasicBlockRef>) = {
             incoming.iter()
                     .map(|&(v, bb)| (v.as_value_ref(), bb.basic_block))
@@ -43,7 +43,7 @@ impl PhiValue {
         }
     }
 
-    pub fn get_incoming(&self, index: u32) -> Option<(BasicValueEnum, BasicBlock)> {
+    pub fn get_incoming(&self, index: u32) -> Option<(BasicValueEnum<'ctx>, BasicBlock)> {
         if index >= self.count_incoming() {
             return None;
         }
@@ -84,20 +84,20 @@ impl PhiValue {
     }
 
     // SubType: -> InstructionValue<Phi>
-    pub fn as_instruction(&self) -> InstructionValue {
+    pub fn as_instruction(&self) -> InstructionValue<'ctx> {
         self.phi_value.as_instruction().expect("PhiValue should always be a Phi InstructionValue")
     }
 
-    pub fn replace_all_uses_with(&self, other: &PhiValue) {
+    pub fn replace_all_uses_with(&self, other: &PhiValue<'ctx>) {
         self.phi_value.replace_all_uses_with(other.as_value_ref())
     }
 
-    pub fn as_basic_value(&self) -> BasicValueEnum {
+    pub fn as_basic_value(&self) -> BasicValueEnum<'ctx> {
         BasicValueEnum::new(self.as_value_ref())
     }
 }
 
-impl AsValueRef for PhiValue {
+impl AsValueRef for PhiValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.phi_value.value
     }

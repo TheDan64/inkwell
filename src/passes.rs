@@ -83,11 +83,12 @@ impl PassManagerBuilder {
     /// # Example
     ///
     /// ```no_run
+    /// use inkwell::context::Context;
     /// use inkwell::OptimizationLevel::Aggressive;
-    /// use inkwell::module::Module;
     /// use inkwell::passes::{PassManager, PassManagerBuilder};
     ///
-    /// let module = Module::create("mod");
+    /// let context = Context::create();
+    /// let module = context.create_module("mod");
     /// let pass_manager_builder = PassManagerBuilder::create();
     ///
     /// pass_manager_builder.set_optimization_level(Aggressive);
@@ -173,7 +174,7 @@ pub trait PassManagerSubType {
     unsafe fn run_in_pass_manager(&self, pass_manager: &PassManager<Self>) -> bool where Self: Sized;
 }
 
-impl PassManagerSubType for Module {
+impl PassManagerSubType for Module<'_> {
     type Input = ();
 
     unsafe fn create<I: Borrow<Self::Input>>(_: I) -> LLVMPassManagerRef {
@@ -187,8 +188,8 @@ impl PassManagerSubType for Module {
 
 // With GATs https://github.com/rust-lang/rust/issues/44265 this could be
 // type Input<'a> = &'a Module;
-impl PassManagerSubType for FunctionValue {
-    type Input = Module;
+impl<'ctx> PassManagerSubType for FunctionValue<'ctx> {
+    type Input = Module<'ctx>;
 
     unsafe fn create<I: Borrow<Self::Input>>(input: I) -> LLVMPassManagerRef {
         LLVMCreateFunctionPassManagerForModule(input.borrow().module.get())
@@ -209,7 +210,7 @@ pub struct PassManager<T> {
     sub_type: PhantomData<T>,
 }
 
-impl PassManager<FunctionValue> {
+impl PassManager<FunctionValue<'_>> {
     // return true means some pass modified the module, not an error occurred
     pub fn initialize(&self) -> bool {
         unsafe {

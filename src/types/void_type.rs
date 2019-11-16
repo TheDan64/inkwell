@@ -1,4 +1,3 @@
-use llvm_sys::core::LLVMVoidType;
 use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::context::ContextRef;
@@ -9,11 +8,11 @@ use crate::types::{Type, BasicTypeEnum, FunctionType};
 /// A `VoidType` is a special type with no possible direct instances. It's only
 /// useful as a function return type.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct VoidType {
-    void_type: Type,
+pub struct VoidType<'ctx> {
+    void_type: Type<'ctx>,
 }
 
-impl VoidType {
+impl<'ctx> VoidType<'ctx> {
     pub(crate) fn new(void_type: LLVMTypeRef) -> Self {
         assert!(!void_type.is_null());
 
@@ -52,7 +51,7 @@ impl VoidType {
     ///
     /// assert_eq!(*void_type.get_context(), context);
     /// ```
-    pub fn get_context(&self) -> ContextRef {
+    pub fn get_context(&self) -> ContextRef<'ctx> {
         self.void_type.get_context()
     }
 
@@ -68,28 +67,8 @@ impl VoidType {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
+    pub fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.void_type.fn_type(param_types, is_var_args)
-    }
-
-    /// Gets the `VoidType`. It will be assigned the global context.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    /// use inkwell::types::VoidType;
-    ///
-    /// let void_type = VoidType::void_type();
-    ///
-    /// assert_eq!(void_type.get_context(), Context::get_global());
-    /// ```
-    pub fn void_type() -> Self {
-        let void_type = unsafe {
-            LLVMVoidType()
-        };
-
-        VoidType::new(void_type)
     }
 
     /// Prints the definition of a `VoidType` to a `LLVMString`.
@@ -105,8 +84,8 @@ impl VoidType {
     }
 }
 
-impl AsTypeRef for VoidType {
+impl AsTypeRef for VoidType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.void_type.type_
+        self.void_type.ty
     }
 }

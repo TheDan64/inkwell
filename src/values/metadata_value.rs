@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMMDNode, LLVMMDString, LLVMIsAMDNode, LLVMIsAMDString, LLVMGetMDString, LLVMGetMDNodeNumOperands, LLVMGetMDNodeOperands, LLVMGetMDKindID};
+use llvm_sys::core::{LLVMIsAMDNode, LLVMIsAMDString, LLVMGetMDString, LLVMGetMDNodeNumOperands, LLVMGetMDNodeOperands};
 use llvm_sys::prelude::LLVMValueRef;
 
 #[llvm_versions(7.0..=latest)]
@@ -8,9 +8,9 @@ use llvm_sys::core::LLVMValueAsMetadata;
 
 use crate::support::LLVMString;
 use crate::values::traits::AsValueRef;
-use crate::values::{BasicValue, BasicMetadataValueEnum, Value};
+use crate::values::{BasicMetadataValueEnum, Value};
 
-use std::ffi::{CString, CStr};
+use std::ffi::CStr;
 use std::fmt;
 use std::mem::forget;
 use std::slice::from_raw_parts;
@@ -36,11 +36,11 @@ pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 25;
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 26;
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
-pub struct MetadataValue {
-    metadata_value: Value,
+pub struct MetadataValue<'ctx> {
+    metadata_value: Value<'ctx>,
 }
 
-impl MetadataValue {
+impl<'ctx> MetadataValue<'ctx> {
     pub(crate) fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
@@ -74,27 +74,6 @@ impl MetadataValue {
         }
     }
 
-    pub fn create_node(values: &[&dyn BasicValue]) -> Self {
-        let mut tuple_values: Vec<LLVMValueRef> = values.iter()
-                                                        .map(|val| val.as_value_ref())
-                                                        .collect();
-        let metadata_value = unsafe {
-            LLVMMDNode(tuple_values.as_mut_ptr(), tuple_values.len() as u32)
-        };
-
-        MetadataValue::new(metadata_value)
-    }
-
-    pub fn create_string(string: &str) -> Self {
-        let c_string = CString::new(string).expect("Conversion to CString failed unexpectedly");
-
-        let metadata_value = unsafe {
-            LLVMMDString(c_string.as_ptr(), string.len() as u32)
-        };
-
-        MetadataValue::new(metadata_value)
-    }
-
     pub fn get_string_value(&self) -> Option<&CStr> {
         if self.is_node() {
             return None;
@@ -121,7 +100,7 @@ impl MetadataValue {
 
     // SubTypes: Node only one day
     // REVIEW: BasicMetadataValueEnum only if you can put metadata in metadata...
-    pub fn get_node_values(&self) -> Vec<BasicMetadataValueEnum> {
+    pub fn get_node_values(&self) -> Vec<BasicMetadataValueEnum<'ctx>> {
         if self.is_string() {
             return Vec::new();
         }
@@ -141,14 +120,6 @@ impl MetadataValue {
         slice.iter().map(|val| BasicMetadataValueEnum::new(*val)).collect()
     }
 
-    // What is this even useful for
-    pub fn get_kind_id(key: &str) -> u32 {
-        unsafe {
-            // REVIEW: Why does str give us *u8 but LLVM wants *i8?
-            LLVMGetMDKindID(key.as_ptr() as *const i8, key.len() as u32)
-        }
-    }
-
     pub fn print_to_string(&self) -> LLVMString {
         self.metadata_value.print_to_string()
     }
@@ -157,18 +128,18 @@ impl MetadataValue {
         self.metadata_value.print_to_stderr()
     }
 
-    pub fn replace_all_uses_with(&self, other: &MetadataValue) {
+    pub fn replace_all_uses_with(&self, other: &MetadataValue<'ctx>) {
         self.metadata_value.replace_all_uses_with(other.as_value_ref())
     }
 }
 
-impl AsValueRef for MetadataValue {
+impl AsValueRef for MetadataValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.metadata_value.value
     }
 }
 
-impl fmt::Debug for MetadataValue {
+impl fmt::Debug for MetadataValue<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut d = f.debug_struct("MetadataValue");
         d.field("address", &self.as_value_ref());

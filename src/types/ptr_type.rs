@@ -12,11 +12,11 @@ use std::convert::TryFrom;
 
 /// A `PointerType` is the type of a pointer constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct PointerType {
-    ptr_type: Type,
+pub struct PointerType<'ctx> {
+    ptr_type: Type<'ctx>,
 }
 
-impl PointerType {
+impl<'ctx> PointerType<'ctx> {
     pub(crate) fn new(ptr_type: LLVMTypeRef) -> Self {
         assert!(!ptr_type.is_null());
 
@@ -58,7 +58,7 @@ impl PointerType {
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
     /// let f32_ptr_type_size = f32_ptr_type.size_of();
     /// ```
-    pub fn size_of(&self) -> IntValue {
+    pub fn size_of(&self) -> IntValue<'ctx> {
         self.ptr_type.size_of()
     }
 
@@ -75,7 +75,7 @@ impl PointerType {
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
     /// let f32_ptr_type_alignment = f32_ptr_type.get_alignment();
     /// ```
-    pub fn get_alignment(&self) -> IntValue {
+    pub fn get_alignment(&self) -> IntValue<'ctx> {
         self.ptr_type.get_alignment()
     }
 
@@ -94,7 +94,7 @@ impl PointerType {
     ///
     /// assert_eq!(f32_ptr_ptr_type.get_element_type().into_pointer_type(), f32_ptr_type);
     /// ```
-    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.ptr_type.ptr_type(address_space)
     }
 
@@ -112,7 +112,8 @@ impl PointerType {
     ///
     /// assert_eq!(*f32_ptr_type.get_context(), context);
     /// ```
-    pub fn get_context(&self) -> ContextRef {
+    // TODO: Move to AnyType trait
+    pub fn get_context(&self) -> ContextRef<'ctx> {
         self.ptr_type.get_context()
     }
 
@@ -129,7 +130,7 @@ impl PointerType {
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
     /// let fn_type = f32_ptr_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
+    pub fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.ptr_type.fn_type(param_types, is_var_args)
     }
 
@@ -149,7 +150,7 @@ impl PointerType {
     /// assert_eq!(f32_ptr_array_type.len(), 3);
     /// assert_eq!(f32_ptr_array_type.get_element_type().into_pointer_type(), f32_ptr_type);
     /// ```
-    pub fn array_type(&self, size: u32) -> ArrayType {
+    pub fn array_type(&self, size: u32) -> ArrayType<'ctx> {
         self.ptr_type.array_type(size)
     }
 
@@ -194,16 +195,8 @@ impl PointerType {
     /// ```no_run
     /// use inkwell::AddressSpace;
     /// use inkwell::context::Context;
-    /// use inkwell::types::FloatType;
     ///
-    /// // Global Context
-    /// let f32_type = FloatType::f32_type();
-    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
-    /// let f32_ptr_null = f32_ptr_type.const_null();
-    ///
-    /// assert!(f32_ptr_null.is_null());
-    ///
-    /// // Custom Context
+    /// // Local Context
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
@@ -211,7 +204,7 @@ impl PointerType {
     ///
     /// assert!(f32_ptr_null.is_null());
     /// ```
-    pub fn const_null(&self) -> PointerValue {
+    pub fn const_null(&self) -> PointerValue<'ctx> {
         PointerValue::new(self.ptr_type.const_zero())
     }
 
@@ -231,7 +224,7 @@ impl PointerType {
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
     /// let f32_ptr_zero = f32_ptr_type.const_zero();
     /// ```
-    pub fn const_zero(&self) -> PointerValue {
+    pub fn const_zero(&self) -> PointerValue<'ctx> {
         PointerValue::new(self.ptr_type.const_zero())
     }
 
@@ -249,7 +242,7 @@ impl PointerType {
     ///
     /// assert!(f32_ptr_undef.is_undef());
     /// ```
-    pub fn get_undef(&self) -> PointerValue {
+    pub fn get_undef(&self) -> PointerValue<'ctx> {
         PointerValue::new(self.ptr_type.get_undef())
     }
 
@@ -269,7 +262,7 @@ impl PointerType {
     /// assert_eq!(f32_ptr_vec_type.get_size(), 3);
     /// assert_eq!(f32_ptr_vec_type.get_element_type().into_pointer_type(), f32_ptr_type);
     /// ```
-    pub fn vec_type(&self, size: u32) -> VectorType {
+    pub fn vec_type(&self, size: u32) -> VectorType<'ctx> {
         self.ptr_type.vec_type(size)
     }
 
@@ -288,7 +281,7 @@ impl PointerType {
     ///
     /// assert_eq!(f32_ptr_type.get_element_type().into_float_type(), f32_type);
     /// ```
-    pub fn get_element_type(&self) -> AnyTypeEnum {
+    pub fn get_element_type(&self) -> AnyTypeEnum<'ctx> {
         self.ptr_type.get_element_type()
     }
 
@@ -307,7 +300,7 @@ impl PointerType {
     ///
     /// assert!(f32_ptr_array.is_const());
     /// ```
-    pub fn const_array(&self, values: &[PointerValue]) -> ArrayValue {
+    pub fn const_array(&self, values: &[PointerValue<'ctx>]) -> ArrayValue<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();
@@ -319,8 +312,8 @@ impl PointerType {
     }
 }
 
-impl AsTypeRef for PointerType {
+impl AsTypeRef for PointerType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.ptr_type.type_
+        self.ptr_type.ty
     }
 }

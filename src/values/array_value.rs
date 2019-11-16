@@ -11,11 +11,11 @@ use crate::values::{Value, InstructionValue};
 
 /// An `ArrayValue` is a block of contiguous constants or variables.
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
-pub struct ArrayValue {
-    array_value: Value
+pub struct ArrayValue<'ctx> {
+    array_value: Value<'ctx>,
 }
 
-impl ArrayValue {
+impl<'ctx> ArrayValue<'ctx> {
     pub(crate) fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
@@ -36,7 +36,7 @@ impl ArrayValue {
     }
 
     /// Gets the type of this `ArrayValue`.
-    pub fn get_type(&self) -> ArrayType {
+    pub fn get_type(&self) -> ArrayType<'ctx> {
         ArrayType::new(self.array_value.get_type())
     }
 
@@ -61,14 +61,13 @@ impl ArrayValue {
     }
 
     /// Attempt to convert this `ArrayValue` to an `InstructionValue`, if possible.
-    pub fn as_instruction(&self) -> Option<InstructionValue> {
+    pub fn as_instruction(&self) -> Option<InstructionValue<'ctx>> {
         self.array_value.as_instruction()
     }
 
-
     /// Replaces all uses of this value with another value of the same type.
     /// If used incorrectly this may result in invalid IR.
-    pub fn replace_all_uses_with(&self, other: ArrayValue) {
+    pub fn replace_all_uses_with(&self, other: ArrayValue<'ctx>) {
         self.array_value.replace_all_uses_with(other.as_value_ref())
     }
 
@@ -91,13 +90,13 @@ impl ArrayValue {
     }
 }
 
-impl AsValueRef for ArrayValue {
+impl AsValueRef for ArrayValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.array_value.value
     }
 }
 
-impl fmt::Debug for ArrayValue {
+impl fmt::Debug for ArrayValue<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let llvm_value = self.print_to_string();
         let llvm_type = self.get_type();

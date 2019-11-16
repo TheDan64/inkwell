@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMGetPreviousFunction, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetBasicBlocks, LLVMAppendBasicBlock, LLVMDeleteFunction, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetIntrinsicID, LLVMGetFunctionCallConv, LLVMSetFunctionCallConv, LLVMGetGC, LLVMSetGC, LLVMSetLinkage, LLVMSetParamAlignment, LLVMGetParams};
+use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMGetPreviousFunction, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetBasicBlocks, LLVMDeleteFunction, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetIntrinsicID, LLVMGetFunctionCallConv, LLVMSetFunctionCallConv, LLVMGetGC, LLVMSetGC, LLVMSetLinkage, LLVMSetParamAlignment, LLVMGetParams};
 #[llvm_versions(3.7..=latest)]
 use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
 #[llvm_versions(3.9..=latest)]
@@ -7,6 +7,7 @@ use llvm_sys::core::{LLVMAddAttributeAtIndex, LLVMGetAttributeCountAtIndex, LLVM
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
 
 use std::ffi::{CStr, CString};
+use std::marker::PhantomData;
 use std::mem::forget;
 use std::fmt;
 
@@ -20,11 +21,11 @@ use crate::values::traits::AsValueRef;
 use crate::values::{BasicValueEnum, GlobalValue, Value};
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
-pub struct FunctionValue {
-    fn_value: Value,
+pub struct FunctionValue<'ctx> {
+    fn_value: Value<'ctx>,
 }
 
-impl FunctionValue {
+impl<'ctx> FunctionValue<'ctx> {
     pub(crate) fn new(value: LLVMValueRef) -> Option<Self> {
         if value.is_null() {
             return None;
@@ -99,7 +100,7 @@ impl FunctionValue {
         FunctionValue::new(function)
     }
 
-    pub fn get_first_param(&self) -> Option<BasicValueEnum> {
+    pub fn get_first_param(&self) -> Option<BasicValueEnum<'ctx>> {
         let param = unsafe {
             LLVMGetFirstParam(self.as_value_ref())
         };
@@ -111,7 +112,7 @@ impl FunctionValue {
         Some(BasicValueEnum::new(param))
     }
 
-    pub fn get_last_param(&self) -> Option<BasicValueEnum> {
+    pub fn get_last_param(&self) -> Option<BasicValueEnum<'ctx>> {
         let param = unsafe {
             LLVMGetLastParam(self.as_value_ref())
         };
@@ -131,19 +132,7 @@ impl FunctionValue {
         BasicBlock::new(bb)
     }
 
-    // TODOC: This applies the global context to the basic block. To keep the existing context
-    // prefer context.append_basic_block()
-    pub fn append_basic_block(&self, name: &str) -> BasicBlock {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
-
-        let bb = unsafe {
-            LLVMAppendBasicBlock(self.as_value_ref(), c_string.as_ptr())
-        };
-
-        BasicBlock::new(bb).expect("Appending basic block should never fail")
-    }
-
-    pub fn get_nth_param(&self, nth: u32) -> Option<BasicValueEnum> {
+    pub fn get_nth_param(&self, nth: u32) -> Option<BasicValueEnum<'ctx>> {
         let count = self.count_params();
 
         if nth + 1 > count {
@@ -185,14 +174,15 @@ impl FunctionValue {
         raw_vec.iter().map(|val| BasicBlock::new(*val).unwrap()).collect()
     }
 
-    pub fn get_param_iter(&self) -> ParamValueIter {
+    pub fn get_param_iter(&self) -> ParamValueIter<'ctx> {
         ParamValueIter {
             param_iter_value: self.fn_value.value,
             start: true,
+            _marker: PhantomData,
         }
     }
 
-    pub fn get_params(&self) -> Vec<BasicValueEnum> {
+    pub fn get_params(&self) -> Vec<BasicValueEnum<'ctx>> {
         let count = self.count_params();
         let mut raw_vec: Vec<LLVMValueRef> = Vec::with_capacity(count as usize);
         let ptr = raw_vec.as_mut_ptr();
@@ -237,10 +227,13 @@ impl FunctionValue {
         LLVMDeleteFunction(self.as_value_ref())
     }
 
-    pub fn get_type(&self) -> FunctionType {
+    pub fn get_type(&self) -> FunctionType<'ctx> {
         let ptr_type = PointerType::new(self.fn_value.get_type());
 
-        ptr_type.get_element_type().into_function_type()
+        // FIXME: Placeholder until lifetime is bound to obj not fn
+        unsafe {
+            std::mem::transmute(ptr_type.get_element_type().into_function_type())
+        }
     }
 
     // TODOC: How this works as an exception handler
@@ -254,7 +247,7 @@ impl FunctionValue {
     }
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-8")))]
-    pub fn get_personality_function(&self) -> Option<FunctionValue> {
+    pub fn get_personality_function(&self) -> Option<FunctionValue<'ctx>> {
         // This prevents a segfault in 3.9+ when not having a pfn
         // however that segfault will unforuntately still happen in 3.8
         // because LLVMHasPersonalityFn doesn't exist yet :(
@@ -277,14 +270,14 @@ impl FunctionValue {
     // avoided in later LLVM versions. Therefore this fn is unsafe in 3.8
     // but not in all other versions
     #[cfg(feature = "llvm3-8")]
-    pub unsafe fn get_personality_function(&self) -> Option<FunctionValue> {
+    pub unsafe fn get_personality_function(&self) -> Option<FunctionValue<'ctx>> {
         let value = LLVMGetPersonalityFn(self.as_value_ref());
 
         FunctionValue::new(value)
     }
 
     #[llvm_versions(3.7..=latest)]
-    pub fn set_personality_function(&self, personality_fn: FunctionValue) {
+    pub fn set_personality_function(&self, personality_fn: FunctionValue<'ctx>) {
         unsafe {
             LLVMSetPersonalityFn(self.as_value_ref(), personality_fn.as_value_ref())
         }
@@ -322,7 +315,7 @@ impl FunctionValue {
         }
     }
 
-    pub fn replace_all_uses_with(&self, other: FunctionValue) {
+    pub fn replace_all_uses_with(&self, other: FunctionValue<'ctx>) {
         self.fn_value.replace_all_uses_with(other.as_value_ref())
     }
 
@@ -507,18 +500,18 @@ impl FunctionValue {
     /// Gets the `GlobalValue` version of this `FunctionValue`. This allows
     /// you to further inspect its global properties or even convert it to
     /// a `PointerValue`.
-    pub fn as_global_value(&self) -> GlobalValue {
+    pub fn as_global_value(&self) -> GlobalValue<'ctx> {
         GlobalValue::new(self.as_value_ref())
     }
 }
 
-impl AsValueRef for FunctionValue {
+impl AsValueRef for FunctionValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.fn_value.value
     }
 }
 
-impl fmt::Debug for FunctionValue {
+impl fmt::Debug for FunctionValue<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let llvm_value = self.print_to_string();
         let llvm_type = self.get_type();
@@ -540,13 +533,14 @@ impl fmt::Debug for FunctionValue {
 }
 
 #[derive(Debug)]
-pub struct ParamValueIter {
+pub struct ParamValueIter<'ctx> {
     param_iter_value: LLVMValueRef,
     start: bool,
+    _marker: PhantomData<&'ctx ()>,
 }
 
-impl Iterator for ParamValueIter {
-    type Item = BasicValueEnum;
+impl<'ctx> Iterator for ParamValueIter<'ctx> {
+    type Item = BasicValueEnum<'ctx>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.start {

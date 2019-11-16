@@ -13,12 +13,12 @@ use crate::types::{PointerType, Type, BasicTypeEnum};
 
 /// A `FunctionType` is the type of a function variable.
 #[derive(PartialEq, Eq, Clone, Copy)]
-pub struct FunctionType {
-    fn_type: Type,
+pub struct FunctionType<'ctx> {
+    fn_type: Type<'ctx>,
 }
 
-impl FunctionType {
-    pub(crate) fn new(fn_type: LLVMTypeRef) -> FunctionType {
+impl<'ctx> FunctionType<'ctx> {
+    pub(crate) fn new(fn_type: LLVMTypeRef) -> Self {
         assert!(!fn_type.is_null());
 
         FunctionType {
@@ -41,7 +41,7 @@ impl FunctionType {
     ///
     /// assert_eq!(fn_ptr_type.get_element_type().into_function_type(), fn_type);
     /// ```
-    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.fn_type.ptr_type(address_space)
     }
 
@@ -79,7 +79,7 @@ impl FunctionType {
     /// assert_eq!(param_types.len(), 1);
     /// assert_eq!(param_types[0].into_float_type(), f32_type);
     /// ```
-    pub fn get_param_types(&self) -> Vec<BasicTypeEnum> {
+    pub fn get_param_types(&self) -> Vec<BasicTypeEnum<'ctx>> {
         let count = self.count_param_types();
         let mut raw_vec: Vec<LLVMTypeRef> = Vec::with_capacity(count as usize);
         let ptr = raw_vec.as_mut_ptr();
@@ -151,7 +151,7 @@ impl FunctionType {
     ///
     /// assert_eq!(*fn_type.get_context(), context);
     /// ```
-    pub fn get_context(&self) -> ContextRef {
+    pub fn get_context(&self) -> ContextRef<'ctx> {
         self.fn_type.get_context()
     }
 
@@ -180,7 +180,7 @@ impl FunctionType {
     ///
     /// assert_eq!(fn_type.get_return_type().unwrap().into_float_type(), f32_type);
     /// ```
-    pub fn get_return_type(&self) -> Option<BasicTypeEnum> {
+    pub fn get_return_type(&self) -> Option<BasicTypeEnum<'ctx>> {
         let ty = unsafe {
             LLVMGetReturnType(self.as_type_ref())
         };
@@ -204,7 +204,7 @@ impl FunctionType {
     // }
 }
 
-impl fmt::Debug for FunctionType {
+impl fmt::Debug for FunctionType<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let llvm_type = self.print_to_string();
 
@@ -216,8 +216,8 @@ impl fmt::Debug for FunctionType {
     }
 }
 
-impl AsTypeRef for FunctionType {
+impl AsTypeRef for FunctionType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.fn_type.type_
+        self.fn_type.ty
     }
 }

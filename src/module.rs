@@ -2,9 +2,9 @@
 
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 #[allow(deprecated)]
-use llvm_sys::bit_reader::{LLVMParseBitcode, LLVMParseBitcodeInContext};
+use llvm_sys::bit_reader::LLVMParseBitcodeInContext;
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
-use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile};
+use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile};
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::{LLVMGetModuleIdentifier, LLVMSetModuleIdentifier};
 #[llvm_versions(7.0..=latest)]
@@ -20,6 +20,7 @@ use std::cell::{Cell, RefCell, Ref};
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::fs::File;
+use std::marker::PhantomData;
 use std::mem::{forget, MaybeUninit};
 use std::path::Path;
 use std::ptr;
@@ -131,47 +132,25 @@ enum_rename!{
 /// Represents a reference to an LLVM `Module`.
 /// The underlying module will be disposed when dropping this object.
 #[derive(Debug, PartialEq, Eq)]
-pub struct Module {
-    pub(crate) non_global_context: Option<Context>, // REVIEW: Could we just set context to the global context?
+pub struct Module<'ctx> {
+    pub(crate) non_global_context: Option<&'ctx Context>, // REVIEW: Could we just set context to the global context?
     data_layout: RefCell<Option<DataLayout>>,
     pub(crate) module: Cell<LLVMModuleRef>,
-    pub(crate) owned_by_ee: RefCell<Option<ExecutionEngine>>,
+    pub(crate) owned_by_ee: RefCell<Option<ExecutionEngine<'ctx>>>,
+    _marker: PhantomData<&'ctx ()>,
 }
 
-impl Module {
-    pub(crate) fn new(module: LLVMModuleRef, context: Option<&Context>) -> Self {
+impl<'ctx> Module<'ctx> {
+    pub(crate) fn new(module: LLVMModuleRef, context: Option<&'ctx Context>) -> Self {
         debug_assert!(!module.is_null());
 
         Module {
             module: Cell::new(module),
-            non_global_context: context.map(|ctx| ctx.clone()),
+            non_global_context: context,
             owned_by_ee: RefCell::new(None),
             data_layout: RefCell::new(Some(Module::get_borrowed_data_layout(module))),
+            _marker: PhantomData,
         }
-    }
-
-    /// Creates a named `Module`. Will be automatically assigned the global context.
-    ///
-    /// To use your own `Context`, see [inkwell::context::create_module()](../context/struct.Context.html#method.create_module)
-    ///
-    /// # Example
-    /// ```no_run
-    /// use inkwell::context::Context;
-    /// use inkwell::module::Module;
-    ///
-    /// let context = Context::get_global();
-    /// let module = Module::create("my_module");
-    ///
-    /// assert_eq!(module.get_context(), context);
-    /// ```
-    pub fn create(name: &str) -> Self {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
-
-        let module = unsafe {
-            LLVMModuleCreateWithName(c_string.as_ptr())
-        };
-
-        Module::new(module, None)
     }
 
     /// Creates a function given its `name` and `ty`, adds it to the `Module`
@@ -184,9 +163,10 @@ impl Module {
     /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::module::{Module, Linkage};
+    /// use inkwell::types::FunctionType;
     ///
-    /// let context = Context::get_global();
-    /// let module = Module::create("my_module");
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
     ///
     /// let fn_type = context.f32_type().fn_type(&[], false);
     /// let fn_val = module.add_function("my_function", fn_type, None);
@@ -194,7 +174,7 @@ impl Module {
     /// assert_eq!(fn_val.get_name().to_str(), Ok("my_function"));
     /// assert_eq!(fn_val.get_linkage(), Linkage::External);
     /// ```
-    pub fn add_function(&self, name: &str, ty: FunctionType, linkage: Option<Linkage>) -> FunctionValue {
+    pub fn add_function(&self, name: &str, ty: FunctionType<'ctx>, linkage: Option<Linkage>) -> FunctionValue<'ctx> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -217,24 +197,17 @@ impl Module {
     /// use inkwell::context::{Context, ContextRef};
     /// use inkwell::module::Module;
     ///
-    /// let global_context = Context::get_global();
-    /// let global_module = Module::create("my_global_module");
-    ///
-    /// assert_eq!(global_module.get_context(), global_context);
-    ///
     /// let local_context = Context::create();
     /// let local_module = local_context.create_module("my_module");
     ///
     /// assert_eq!(*local_module.get_context(), local_context);
-    /// assert_ne!(local_context, *global_context);
     /// ```
-    pub fn get_context(&self) -> ContextRef {
+    pub fn get_context(&self) -> ContextRef<'ctx> {
         let context = unsafe {
             LLVMGetModuleContext(self.module.get())
         };
 
-        // REVIEW: This probably should be somehow using the existing context Rc
-        ContextRef::new(Context::new(Rc::new(context)))
+        ContextRef::new(context)
     }
 
     /// Gets the first `FunctionValue` defined in this `Module`.
@@ -255,7 +228,7 @@ impl Module {
     ///
     /// assert_eq!(fn_value, module.get_first_function().unwrap());
     /// ```
-    pub fn get_first_function(&self) -> Option<FunctionValue> {
+    pub fn get_first_function(&self) -> Option<FunctionValue<'ctx>> {
         let function = unsafe {
             LLVMGetFirstFunction(self.module.get())
         };
@@ -281,7 +254,7 @@ impl Module {
     ///
     /// assert_eq!(fn_value, module.get_last_function().unwrap());
     /// ```
-    pub fn get_last_function(&self) -> Option<FunctionValue> {
+    pub fn get_last_function(&self) -> Option<FunctionValue<'ctx>> {
         let function = unsafe {
             LLVMGetLastFunction(self.module.get())
         };
@@ -307,7 +280,7 @@ impl Module {
     ///
     /// assert_eq!(fn_value, module.get_function("my_fn").unwrap());
     /// ```
-    pub fn get_function(&self, name: &str) -> Option<FunctionValue> {
+    pub fn get_function(&self, name: &str) -> Option<FunctionValue<'ctx>> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -334,7 +307,7 @@ impl Module {
     ///
     /// assert_eq!(module.get_type("foo").unwrap(), opaque.into());
     /// ```
-    pub fn get_type(&self, name: &str) -> Option<BasicTypeEnum> {
+    pub fn get_type(&self, name: &str) -> Option<BasicTypeEnum<'ctx>> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let type_ = unsafe {
@@ -413,14 +386,14 @@ impl Module {
     ///
     /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
     ///
-    /// let context = Context::get_global();
-    /// let module = Module::create("my_module");
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
     /// let execution_engine = module.create_execution_engine().unwrap();
     ///
-    /// assert_eq!(module.get_context(), context);
+    /// assert_eq!(*module.get_context(), context);
     /// ```
     // SubType: ExecutionEngine<Basic?>
-    pub fn create_execution_engine(&self) -> Result<ExecutionEngine, LLVMString> {
+    pub fn create_execution_engine(&self) -> Result<ExecutionEngine<'ctx>, LLVMString> {
         Target::initialize_native(&InitializationConfig::default())
             .map_err(|mut err_string| {
                 err_string.push('\0');
@@ -445,7 +418,7 @@ impl Module {
             return Err(LLVMString::new(err_string));
         }
 
-        let context = self.non_global_context.clone();
+        let context = self.non_global_context;
         let execution_engine = unsafe { execution_engine.assume_init() };
         let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), context, false);
 
@@ -464,14 +437,14 @@ impl Module {
     ///
     /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
     ///
-    /// let context = Context::get_global();
-    /// let module = Module::create("my_module");
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
     /// let execution_engine = module.create_interpreter_execution_engine().unwrap();
     ///
-    /// assert_eq!(module.get_context(), context);
+    /// assert_eq!(*module.get_context(), context);
     /// ```
     // SubType: ExecutionEngine<Interpreter>
-    pub fn create_interpreter_execution_engine(&self) -> Result<ExecutionEngine, LLVMString> {
+    pub fn create_interpreter_execution_engine(&self) -> Result<ExecutionEngine<'ctx>, LLVMString> {
         Target::initialize_native(&InitializationConfig::default())
             .map_err(|mut err_string| {
                 err_string.push('\0');
@@ -517,14 +490,14 @@ impl Module {
     ///
     /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
     ///
-    /// let context = Context::get_global();
-    /// let module = Module::create("my_module");
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
     /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     ///
-    /// assert_eq!(module.get_context(), context);
+    /// assert_eq!(*module.get_context(), context);
     /// ```
     // SubType: ExecutionEngine<Jit>
-    pub fn create_jit_execution_engine(&self, opt_level: OptimizationLevel) -> Result<ExecutionEngine, LLVMString> {
+    pub fn create_jit_execution_engine(&self, opt_level: OptimizationLevel) -> Result<ExecutionEngine<'ctx>, LLVMString> {
         Target::initialize_native(&InitializationConfig::default())
             .map_err(|mut err_string| {
                 err_string.push('\0');
@@ -575,7 +548,7 @@ impl Module {
     /// assert_eq!(module.get_first_global().unwrap(), global);
     /// assert_eq!(module.get_last_global().unwrap(), global);
     /// ```
-    pub fn add_global<T: BasicType>(&self, type_: T, address_space: Option<AddressSpace>, name: &str) -> GlobalValue {
+    pub fn add_global<T: BasicType<'ctx>>(&self, type_: T, address_space: Option<AddressSpace>, name: &str) -> GlobalValue<'ctx> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -646,7 +619,7 @@ impl Module {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// let f = module.add_function("f", fn_type, None);
-    /// let basic_block = f.append_basic_block("entry");
+    /// let basic_block = context.append_basic_block(f, "entry");
     /// let builder = context.create_builder();
     ///
     /// builder.position_at_end(&basic_block);
@@ -824,7 +797,6 @@ impl Module {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
-    /// use inkwell::values::MetadataValue;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
@@ -835,8 +807,8 @@ impl Module {
     ///
     /// assert_eq!(module.get_global_metadata_size("my_md"), 0);
     ///
-    /// let md_string = MetadataValue::create_string("lots of metadata here");
-    /// let md_node = MetadataValue::create_node(&[&bool_val, &f32_val]);
+    /// let md_string = context.metadata_string("lots of metadata here");
+    /// let md_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
     ///
     /// module.add_global_metadata("my_md", &md_string);
     /// module.add_global_metadata("my_md", &md_node);
@@ -851,11 +823,11 @@ impl Module {
     ///
     /// assert_eq!(md_0.len(), 1);
     /// assert_eq!(md_1.len(), 2);
-    /// assert_eq!(md_0[0].as_metadata_value().get_string_value(), md_string.get_string_value());
-    /// assert_eq!(md_1[0].as_int_value(), &bool_val);
-    /// assert_eq!(md_1[1].as_float_value(), &f32_val);
+    /// assert_eq!(md_0[0].into_metadata_value().get_string_value(), md_string.get_string_value());
+    /// assert_eq!(md_1[0].into_int_value(), bool_val);
+    /// assert_eq!(md_1[1].into_float_value(), f32_val);
     /// ```
-    pub fn add_global_metadata(&self, key: &str, metadata: &MetadataValue) {
+    pub fn add_global_metadata(&self, key: &str, metadata: &MetadataValue<'ctx>) {
         let c_string = CString::new(key).expect("Conversion to CString failed unexpectedly");
 
         unsafe {
@@ -870,7 +842,6 @@ impl Module {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
-    /// use inkwell::values::MetadataValue;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
@@ -881,8 +852,8 @@ impl Module {
     ///
     /// assert_eq!(module.get_global_metadata_size("my_md"), 0);
     ///
-    /// let md_string = MetadataValue::create_string("lots of metadata here");
-    /// let md_node = MetadataValue::create_node(&[&bool_val, &f32_val]);
+    /// let md_string = context.metadata_string("lots of metadata here");
+    /// let md_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
     ///
     /// module.add_global_metadata("my_md", &md_string);
     /// module.add_global_metadata("my_md", &md_node);
@@ -897,9 +868,9 @@ impl Module {
     ///
     /// assert_eq!(md_0.len(), 1);
     /// assert_eq!(md_1.len(), 2);
-    /// assert_eq!(md_0[0].as_metadata_value().get_string_value(), md_string.get_string_value());
-    /// assert_eq!(md_1[0].as_int_value(), &bool_val);
-    /// assert_eq!(md_1[1].as_float_value(), &f32_val);
+    /// assert_eq!(md_0[0].into_metadata_value().get_string_value(), md_string.get_string_value());
+    /// assert_eq!(md_1[0].into_int_value(), bool_val);
+    /// assert_eq!(md_1[1].into_float_value(), f32_val);
     /// ```
     pub fn get_global_metadata_size(&self, key: &str) -> u32 {
         let c_string = CString::new(key).expect("Conversion to CString failed unexpectedly");
@@ -916,7 +887,6 @@ impl Module {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
-    /// use inkwell::values::MetadataValue;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
@@ -927,8 +897,8 @@ impl Module {
     ///
     /// assert_eq!(module.get_global_metadata_size("my_md"), 0);
     ///
-    /// let md_string = MetadataValue::create_string("lots of metadata here");
-    /// let md_node = MetadataValue::create_node(&[&bool_val, &f32_val]);
+    /// let md_string = context.metadata_string("lots of metadata here");
+    /// let md_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
     ///
     /// module.add_global_metadata("my_md", &md_string);
     /// module.add_global_metadata("my_md", &md_node);
@@ -943,11 +913,11 @@ impl Module {
     ///
     /// assert_eq!(md_0.len(), 1);
     /// assert_eq!(md_1.len(), 2);
-    /// assert_eq!(md_0[0].as_metadata_value().get_string_value(), md_string.get_string_value());
-    /// assert_eq!(md_1[0].as_int_value(), &bool_val);
-    /// assert_eq!(md_1[1].as_float_value(), &f32_val);
+    /// assert_eq!(md_0[0].into_metadata_value().get_string_value(), md_string.get_string_value());
+    /// assert_eq!(md_1[0].into_int_value(), bool_val);
+    /// assert_eq!(md_1[1].into_float_value(), f32_val);
     /// ```
-    pub fn get_global_metadata(&self, key: &str) -> Vec<MetadataValue> {
+    pub fn get_global_metadata(&self, key: &str) -> Vec<MetadataValue<'ctx>> {
         let c_string = CString::new(key).expect("Conversion to CString failed unexpectedly");
         let count = self.get_global_metadata_size(key);
 
@@ -983,7 +953,7 @@ impl Module {
     ///
     /// assert_eq!(module.get_first_global().unwrap(), global);
     /// ```
-    pub fn get_first_global(&self) -> Option<GlobalValue> {
+    pub fn get_first_global(&self) -> Option<GlobalValue<'ctx>> {
         let value = unsafe {
             LLVMGetFirstGlobal(self.module.get())
         };
@@ -1013,7 +983,7 @@ impl Module {
     ///
     /// assert_eq!(module.get_last_global().unwrap(), global);
     /// ```
-    pub fn get_last_global(&self) -> Option<GlobalValue> {
+    pub fn get_last_global(&self) -> Option<GlobalValue<'ctx>> {
         let value = unsafe {
             LLVMGetLastGlobal(self.module.get())
         };
@@ -1043,7 +1013,7 @@ impl Module {
     ///
     /// assert_eq!(module.get_global("my_global").unwrap(), global);
     /// ```
-    pub fn get_global(&self, name: &str) -> Option<GlobalValue> {
+    pub fn get_global(&self, name: &str) -> Option<GlobalValue<'ctx>> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
         let value = unsafe {
             LLVMGetNamedGlobal(self.module.get(), c_string.as_ptr())
@@ -1067,62 +1037,23 @@ impl Module {
     /// use std::path::Path;
     ///
     /// let path = Path::new("foo/bar.bc");
-    /// let buffer = MemoryBuffer::create_from_file(&path).unwrap();
-    /// let module = Module::parse_bitcode_from_buffer(&buffer);
-    ///
-    /// assert_eq!(module.unwrap().get_context(), Context::get_global());
-    ///
-    /// ```
-    pub fn parse_bitcode_from_buffer(buffer: &MemoryBuffer) -> Result<Self, LLVMString> {
-        let mut module = MaybeUninit::uninit();
-        let mut err_string = MaybeUninit::uninit();
-
-        // LLVM has a newer version of this function w/o the error result since 3.8 but this deprecated function
-        // hasen't yet been removed even in the unreleased LLVM 7. Seems fine to use instead of switching to their
-        // error diagnostics handler
-        #[allow(deprecated)]
-        let success = unsafe {
-            LLVMParseBitcode(buffer.memory_buffer, module.as_mut_ptr(), err_string.as_mut_ptr())
-        };
-
-        if success != 0 {
-            let err_string = unsafe { err_string.assume_init() };
-            return Err(LLVMString::new(err_string));
-        }
-
-        let module = unsafe { module.assume_init() };
-
-        Ok(Module::new(module, None))
-    }
-
-    /// Creates a new `Module` from a `MemoryBuffer`.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    /// use inkwell::module::Module;
-    /// use inkwell::memory_buffer::MemoryBuffer;
-    /// use std::path::Path;
-    ///
-    /// let path = Path::new("foo/bar.bc");
     /// let context = Context::create();
     /// let buffer = MemoryBuffer::create_from_file(&path).unwrap();
-    /// let module = Module::parse_bitcode_from_buffer_in_context(&buffer, &context);
+    /// let module = Module::parse_bitcode_from_buffer(&buffer, &context);
     ///
-    /// assert_eq!(module.unwrap().get_context(), Context::get_global());
+    /// assert_eq!(*module.unwrap().get_context(), context);
     ///
     /// ```
-    pub fn parse_bitcode_from_buffer_in_context(buffer: &MemoryBuffer, context: &Context) -> Result<Self, LLVMString> {
+    pub fn parse_bitcode_from_buffer(buffer: &MemoryBuffer, context: &'ctx Context) -> Result<Self, LLVMString> {
         let mut module = MaybeUninit::uninit();
         let mut err_string = MaybeUninit::uninit();
 
         // LLVM has a newer version of this function w/o the error result since 3.8 but this deprecated function
-        // hasen't yet been removed even in the unreleased LLVM 7. Seems fine to use instead of switching to their
-        // error diagnostics handler
+        // hasen't yet been removed even in LLVM 8. Seems fine to use instead of switching to their
+        // error diagnostics handler for now.
         #[allow(deprecated)]
         let success = unsafe {
-            LLVMParseBitcodeInContext(*context.context, buffer.memory_buffer, module.as_mut_ptr(), err_string.as_mut_ptr())
+            LLVMParseBitcodeInContext(context.context, buffer.memory_buffer, module.as_mut_ptr(), err_string.as_mut_ptr())
         };
 
         if success != 0 {
@@ -1133,29 +1064,6 @@ impl Module {
         let module = unsafe { module.assume_init() };
 
         Ok(Module::new(module, Some(&context)))
-    }
-
-    /// A convenience function for creating a `Module` from a file.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    /// use inkwell::module::Module;
-    /// use std::path::Path;
-    ///
-    /// let path = Path::new("foo/bar.bc");
-    /// let module = Module::parse_bitcode_from_path(&path);
-    ///
-    /// assert_eq!(module.unwrap().get_context(), Context::get_global());
-    ///
-    /// ```
-    // LLVMGetBitcodeModule was a pain to use, so I seem to be able to achieve the same effect
-    // by reusing create_from_file instead. This is basically just a convenience function.
-    pub fn parse_bitcode_from_path<P: AsRef<Path>>(path: P) -> Result<Self, LLVMString> {
-        let buffer = MemoryBuffer::create_from_file(path.as_ref())?;
-
-        Self::parse_bitcode_from_buffer(&buffer)
     }
 
     /// A convenience function for creating a `Module` from a file for a given context.
@@ -1169,17 +1077,17 @@ impl Module {
     ///
     /// let path = Path::new("foo/bar.bc");
     /// let context = Context::create();
-    /// let module = Module::parse_bitcode_from_path_in_context(&path, &context);
+    /// let module = Module::parse_bitcode_from_path(&path, &context);
     ///
     /// assert_eq!(*module.unwrap().get_context(), context);
     ///
     /// ```
     // LLVMGetBitcodeModuleInContext was a pain to use, so I seem to be able to achieve the same effect
     // by reusing create_from_file instead. This is basically just a convenience function.
-    pub fn parse_bitcode_from_path_in_context<P: AsRef<Path>>(path: P, context: &Context) -> Result<Self, LLVMString> {
+    pub fn parse_bitcode_from_path<P: AsRef<Path>>(path: P, context: &'ctx Context) -> Result<Self, LLVMString> {
         let buffer = MemoryBuffer::create_from_file(path.as_ref())?;
 
-        Self::parse_bitcode_from_buffer_in_context(&buffer, &context)
+        Self::parse_bitcode_from_buffer(&buffer, &context)
     }
 
     /// Gets the name of this `Module`.
@@ -1376,7 +1284,7 @@ impl Module {
     /// when returned from this function.
     // SubTypes: Might need to return Option<BVE, MV<Enum>, or MV<String>>
     #[llvm_versions(7.0..=latest)]
-    pub fn get_flag(&self, key: &str) -> Option<MetadataValue> {
+    pub fn get_flag(&self, key: &str) -> Option<MetadataValue<'ctx>> {
         use llvm_sys::core::LLVMMetadataAsValue;
 
         let flag = unsafe {
@@ -1387,20 +1295,29 @@ impl Module {
             return None;
         }
 
-        let global_ctx = Context::get_global();
-        let ctx = self.non_global_context.as_ref().unwrap_or(&*global_ctx);
-
-        let flag_value = unsafe {
-            LLVMMetadataAsValue(*ctx.context, flag)
-        };
+        let flag_value = self.with_context(|ctx| unsafe {
+            LLVMMetadataAsValue(ctx.context, flag)
+        });
 
         Some(MetadataValue::new(flag_value))
+    }
+
+    fn with_context<F, T>(&self, f: F) -> T
+    where
+        F: FnOnce(&Context) -> T,
+    {
+        match self.non_global_context {
+            Some(ctx) => f(ctx),
+            None => unsafe {
+                Context::get_global(|ctx_lock| f(&*ctx_lock))
+            },
+        }
     }
 
     /// Append a `MetadataValue` as a module wide flag. Note that using the same key twice
     /// will likely invalidate the module.
     #[llvm_versions(7.0..=latest)]
-    pub fn add_metadata_flag(&self, key: &str, behavior: FlagBehavior, flag: MetadataValue) {
+    pub fn add_metadata_flag(&self, key: &str, behavior: FlagBehavior, flag: MetadataValue<'ctx>) {
         let md = flag.as_metadata_ref();
 
         unsafe {
@@ -1412,7 +1329,7 @@ impl Module {
     /// will likely invalidate the module.
     // REVIEW: What happens if value is not const?
     #[llvm_versions(7.0..=latest)]
-    pub fn add_basic_value_flag<BV: BasicValue>(&self, key: &str, behavior: FlagBehavior, flag: BV) {
+    pub fn add_basic_value_flag<BV: BasicValue<'ctx>>(&self, key: &str, behavior: FlagBehavior, flag: BV) {
         use llvm_sys::core::LLVMValueAsMetadata;
 
         let md = unsafe {
@@ -1425,7 +1342,7 @@ impl Module {
     }
 }
 
-impl Clone for Module {
+impl Clone for Module<'_> {
     fn clone(&self) -> Self {
         // REVIEW: Is this just a LLVM 6 bug? We could conditionally compile this assertion for affected versions
         let verify = self.verify();
@@ -1436,13 +1353,13 @@ impl Clone for Module {
             LLVMCloneModule(self.module.get())
         };
 
-        Module::new(module, self.non_global_context.as_ref())
+        Module::new(module, self.non_global_context)
     }
 }
 
 // Module owns the data layout string, so LLVMDisposeModule will deallocate it for us.
 // which is why DataLayout must be called with `new_borrowed`
-impl Drop for Module {
+impl Drop for Module<'_> {
     fn drop(&mut self) {
         if self.owned_by_ee.borrow_mut().take().is_none() {
             unsafe {

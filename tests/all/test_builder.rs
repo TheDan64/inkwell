@@ -2,7 +2,6 @@ extern crate inkwell;
 
 use self::inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, OptimizationLevel};
 use self::inkwell::context::Context;
-use self::inkwell::builder::Builder;
 use self::inkwell::values::BasicValue;
 
 // use std::ffi::CString;
@@ -18,7 +17,7 @@ fn test_build_call() {
     let fn_type = f32_type.fn_type(&[], false);
 
     let function = module.add_function("get_pi", fn_type, None);
-    let basic_block = context.append_basic_block(&function, "entry");
+    let basic_block = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&basic_block);
 
@@ -27,7 +26,7 @@ fn test_build_call() {
     builder.build_return(Some(&pi));
 
     let function2 = module.add_function("wrapper", fn_type, None);
-    let basic_block2 = context.append_basic_block(&function2, "entry");
+    let basic_block2 = context.append_basic_block(function2, "entry");
 
     builder.position_at_end(&basic_block2);
 
@@ -49,7 +48,7 @@ fn test_build_call() {
     let void_type = context.void_type();
     let fn_type2 = void_type.fn_type(&[], false);
     let function3 = module.add_function("call_fn", fn_type2, None);
-    let basic_block3 = context.append_basic_block(&function3, "entry");
+    let basic_block3 = context.append_basic_block(function3, "entry");
     let fn_ptr = function3.as_global_value().as_pointer_value();
     let fn_ptr_type = fn_ptr.get_type();
 
@@ -90,7 +89,7 @@ fn test_null_checked_ptr_ops() {
     let one = i64_type.const_int(1, false);
 
     let function = module.add_function("check_null_index1", fn_type, None);
-    let entry = context.append_basic_block(&function, "entry");
+    let entry = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&entry);
 
@@ -98,8 +97,8 @@ fn test_null_checked_ptr_ops() {
 
     let is_null = builder.build_is_null(ptr, "is_null");
 
-    let ret_0 = function.append_basic_block("ret_0");
-    let ret_idx = function.append_basic_block("ret_idx");
+    let ret_0 = context.append_basic_block(function, "ret_0");
+    let ret_idx = context.append_basic_block(function, "ret_idx");
 
     builder.build_conditional_branch(is_null, &ret_0, &ret_idx);
 
@@ -127,7 +126,7 @@ fn test_null_checked_ptr_ops() {
     // }
 
     let function = module.add_function("check_null_index2", fn_type, None);
-    let entry = context.append_basic_block(&function, "entry");
+    let entry = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&entry);
 
@@ -135,8 +134,8 @@ fn test_null_checked_ptr_ops() {
 
     let is_not_null = builder.build_is_not_null(ptr, "is_not_null");
 
-    let ret_idx = function.append_basic_block("ret_idx");
-    let ret_0 = function.append_basic_block("ret_0");
+    let ret_idx = context.append_basic_block(function, "ret_idx");
+    let ret_0 = context.append_basic_block(function, "ret_0");
 
     builder.build_conditional_branch(is_not_null, &ret_idx, &ret_0);
 
@@ -186,7 +185,7 @@ fn test_binary_ops() {
     let bool_type = context.bool_type();
     let fn_type = bool_type.fn_type(&[bool_type.into(), bool_type.into()], false);
     let fn_value = module.add_function("and", fn_type, None);
-    let entry = fn_value.append_basic_block("entry");
+    let entry = context.append_basic_block(fn_value, "entry");
 
     builder.position_at_end(&entry);
 
@@ -203,7 +202,7 @@ fn test_binary_ops() {
     // }
 
     let fn_value = module.add_function("or", fn_type, None);
-    let entry = fn_value.append_basic_block("entry");
+    let entry = context.append_basic_block(fn_value, "entry");
 
     builder.position_at_end(&entry);
 
@@ -220,7 +219,7 @@ fn test_binary_ops() {
     // }
 
     let fn_value = module.add_function("xor", fn_type, None);
-    let entry = fn_value.append_basic_block("entry");
+    let entry = context.append_basic_block(fn_value, "entry");
 
     builder.position_at_end(&entry);
 
@@ -281,10 +280,10 @@ fn test_switch() {
     let i8_two = i8_type.const_int(2, false);
     let i8_42 = i8_type.const_int(42, false);
     let i8_255 = i8_type.const_int(255, false);
-    let entry = fn_value.append_basic_block("entry");
-    let check = fn_value.append_basic_block("check");
-    let elif = fn_value.append_basic_block("elif");
-    let else_ = fn_value.append_basic_block("else");
+    let entry = context.append_basic_block(fn_value, "entry");
+    let check = context.append_basic_block(fn_value, "check");
+    let elif = context.append_basic_block(fn_value, "elif");
+    let else_ = context.append_basic_block(fn_value, "else");
     let value = fn_value.get_first_param().unwrap().into_int_value();
 
     builder.position_at_end(&entry);
@@ -330,7 +329,7 @@ fn test_bit_shifts() {
     let value = fn_value.get_first_param().unwrap().into_int_value();
     let bits = fn_value.get_nth_param(1).unwrap().into_int_value();
 
-    let entry = fn_value.append_basic_block("entry");
+    let entry = context.append_basic_block(fn_value, "entry");
 
     builder.position_at_end(&entry);
 
@@ -346,7 +345,7 @@ fn test_bit_shifts() {
     let value = fn_value.get_first_param().unwrap().into_int_value();
     let bits = fn_value.get_nth_param(1).unwrap().into_int_value();
 
-    let entry = fn_value.append_basic_block("entry");
+    let entry = context.append_basic_block(fn_value, "entry");
 
     builder.position_at_end(&entry);
 
@@ -362,7 +361,7 @@ fn test_bit_shifts() {
     let value = fn_value.get_first_param().unwrap().into_int_value();
     let bits = fn_value.get_nth_param(1).unwrap().into_int_value();
 
-    let entry = fn_value.append_basic_block("entry");
+    let entry = context.append_basic_block(fn_value, "entry");
 
     builder.position_at_end(&entry);
 
@@ -406,13 +405,6 @@ fn test_bit_shifts() {
 }
 
 #[test]
-fn test_global_builder() {
-    // Unfortunately LLVM doesn't provide us with a get_context method like it does for
-    // modules and types, so we can't assert it actualy is of the same global context...
-    Builder::create();
-}
-
-#[test]
 fn test_unconditional_branch() {
     let context = Context::create();
     let builder = context.create_builder();
@@ -420,9 +412,9 @@ fn test_unconditional_branch() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
     let fn_value = module.add_function("my_fn", fn_type, None);
-    let entry_bb = fn_value.append_basic_block("entry");
-    let skipped_bb = fn_value.append_basic_block("skipped");
-    let end_bb = fn_value.append_basic_block("end");
+    let entry_bb = context.append_basic_block(fn_value, "entry");
+    let skipped_bb = context.append_basic_block(fn_value, "skipped");
+    let end_bb = context.append_basic_block(fn_value, "end");
 
     builder.position_at_end(&entry_bb);
     builder.build_unconditional_branch(&end_bb);
@@ -440,15 +432,17 @@ fn test_no_builder_double_free() {
     drop(context);
 }
 
+// TODO: Compile-fail test this:
+// let builder = {
+//     let context = Context::create();
+//
+//     context.create_builder()
+// };
+
 #[test]
 fn test_no_builder_double_free2() {
-    let builder = {
-        let context = Context::create();
-
-        context.create_builder()
-
-        // Original Context drops fine
-    };
+    let context = Context::create();
+    let builder = context.create_builder();
 
     // Builder continues to function with different context
     let context = Context::create();
@@ -456,7 +450,7 @@ fn test_no_builder_double_free2() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
     let fn_value = module.add_function("my_fn", fn_type, None);
-    let entry = fn_value.append_basic_block("entry");
+    let entry = context.append_basic_block(fn_value, "entry");
 
     builder.position_at_end(&entry);
     // FIXME: Builder segfaults when making build calls with different context
@@ -486,7 +480,7 @@ fn test_vector_convert_ops() {
     // Casting to and from means we can ensure the cast build functions return a vector when one is provided.
     let fn_type = int32_vec_type.fn_type(&[int8_vec_type.into()], false);
     let fn_value = module.add_function("test_int_vec_cast", fn_type, None);
-    let entry = fn_value.append_basic_block("entry");
+    let entry = context.append_basic_block(fn_value, "entry");
     let builder = context.create_builder();
 
     builder.position_at_end(&entry);
@@ -499,7 +493,7 @@ fn test_vector_convert_ops() {
     // Here we're building a function that takes in a <3 x f32> and returns it casted to and from a <3 x f16>
     let fn_type = float16_vec_type.fn_type(&[float32_vec_type.into()], false);
     let fn_value = module.add_function("test_float_vec_cast", fn_type, None);
-    let entry = fn_value.append_basic_block("entry");
+    let entry = context.append_basic_block(fn_value, "entry");
     let builder = context.create_builder();
 
     builder.position_at_end(&entry);
@@ -512,7 +506,7 @@ fn test_vector_convert_ops() {
     // Here we're building a function that takes in a <3 x f32> and returns it casted to and from a <3 x i32>
     let fn_type = int32_vec_type.fn_type(&[float32_vec_type.into()], false);
     let fn_value = module.add_function("test_float_to_int_vec_cast", fn_type, None);
-    let entry = fn_value.append_basic_block("entry");
+    let entry = context.append_basic_block(fn_value, "entry");
     let builder = context.create_builder();
 
     builder.position_at_end(&entry);
@@ -534,7 +528,7 @@ fn test_vector_binary_ops() {
     // Here we're building a function that takes in three <2 x i32>s and returns them added together as a <2 x i32>
     let fn_type = int32_vec_type.fn_type(&[int32_vec_type.into(), int32_vec_type.into(), int32_vec_type.into()], false);
     let fn_value = module.add_function("test_int_vec_add", fn_type, None);
-    let entry = fn_value.append_basic_block("entry");
+    let entry = context.append_basic_block(fn_value, "entry");
     let builder = context.create_builder();
 
     builder.position_at_end(&entry);
@@ -550,7 +544,7 @@ fn test_vector_binary_ops() {
     // <2 x f32>
     let fn_type = float32_vec_type.fn_type(&[float32_vec_type.into(), float32_vec_type.into(), float32_vec_type.into()], false);
     let fn_value = module.add_function("test_float_vec_mul", fn_type, None);
-    let entry = fn_value.append_basic_block("entry");
+    let entry = context.append_basic_block(fn_value, "entry");
     let builder = context.create_builder();
 
     builder.position_at_end(&entry);
@@ -566,7 +560,7 @@ fn test_vector_binary_ops() {
     // as a <2 x bool>
     let fn_type = bool_vec_type.fn_type(&[float32_vec_type.into(), float32_vec_type.into(), bool_vec_type.into()], false);
     let fn_value = module.add_function("test_float_vec_compare", fn_type, None);
-    let entry = fn_value.append_basic_block("entry");
+    let entry = context.append_basic_block(fn_value, "entry");
     let builder = context.create_builder();
 
     builder.position_at_end(&entry);
@@ -591,7 +585,7 @@ fn test_vector_pointer_ops() {
     // <4 x bool> if the pointer is null
     let fn_type = bool_vec_type.fn_type(&[int32_vec_type.into()], false);
     let fn_value = module.add_function("test_ptr_null", fn_type, None);
-    let entry = fn_value.append_basic_block("entry");
+    let entry = context.append_basic_block(fn_value, "entry");
     let builder = context.create_builder();
 
     builder.position_at_end(&entry);
@@ -614,7 +608,7 @@ fn test_insert_value() {
     let fn_type = void_type.fn_type(&[], false);
     let fn_value = module.add_function("av_fn", fn_type, None);
     let builder = context.create_builder();
-    let entry = fn_value.append_basic_block("entry");
+    let entry = context.append_basic_block(fn_value, "entry");
 
     builder.position_at_end(&entry);
 
@@ -676,7 +670,7 @@ fn test_bitcast() {
     let fn_type = void_type.fn_type(&arg_types, false);
     let fn_value = module.add_function("bc", fn_type, None);
     let builder = context.create_builder();
-    let entry = fn_value.append_basic_block("entry");
+    let entry = context.append_basic_block(fn_value, "entry");
     let i32_arg = fn_value.get_first_param().unwrap();
     let f32_arg = fn_value.get_nth_param(1).unwrap();
     let i32_vec_arg = fn_value.get_nth_param(2).unwrap();
@@ -711,7 +705,7 @@ fn test_atomicrmw() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
     let fn_value = module.add_function("", fn_type, None);
-    let entry = fn_value.append_basic_block("entry");
+    let entry = context.append_basic_block(fn_value, "entry");
     let builder = context.create_builder();
     builder.position_at_end(&entry);
 
@@ -750,7 +744,7 @@ fn test_cmpxchg() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
     let fn_value = module.add_function("", fn_type, None);
-    let entry = fn_value.append_basic_block("entry");
+    let entry = context.append_basic_block(fn_value, "entry");
     let builder = context.create_builder();
     builder.position_at_end(&entry);
 

@@ -10,11 +10,11 @@ use crate::values::{AsValueRef, ArrayValue, IntValue};
 
 /// An `ArrayType` is the type of contiguous constants or variables.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct ArrayType {
-    array_type: Type,
+pub struct ArrayType<'ctx> {
+    array_type: Type<'ctx>,
 }
 
-impl ArrayType {
+impl<'ctx> ArrayType<'ctx> {
     pub(crate) fn new(array_type: LLVMTypeRef) -> Self {
         assert!(!array_type.is_null());
 
@@ -54,7 +54,7 @@ impl ArrayType {
     /// let i8_array_type = i8_type.array_type(3);
     /// let i8_array_type_size = i8_array_type.size_of();
     /// ```
-    pub fn size_of(&self) -> Option<IntValue> {
+    pub fn size_of(&self) -> Option<IntValue<'ctx>> {
         if self.is_sized() {
             return Some(self.array_type.size_of())
         }
@@ -74,7 +74,7 @@ impl ArrayType {
     /// let i8_array_type = i8_type.array_type(3);
     /// let i8_array_type_alignment = i8_array_type.get_alignment();
     /// ```
-    pub fn get_alignment(&self) -> IntValue {
+    pub fn get_alignment(&self) -> IntValue<'ctx> {
         self.array_type.get_alignment()
     }
 
@@ -93,7 +93,7 @@ impl ArrayType {
     ///
     /// assert_eq!(i8_array_ptr_type.get_element_type().into_array_type(), i8_array_type);
     /// ```
-    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.array_type.ptr_type(address_space)
     }
 
@@ -110,7 +110,7 @@ impl ArrayType {
     ///
     /// assert_eq!(*i8_array_type.get_context(), context);
     /// ```
-    pub fn get_context(&self) -> ContextRef {
+    pub fn get_context(&self) -> ContextRef<'ctx> {
         self.array_type.get_context()
     }
 
@@ -126,7 +126,7 @@ impl ArrayType {
     /// let i8_array_type = i8_type.array_type(3);
     /// let fn_type = i8_array_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
+    pub fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.array_type.fn_type(param_types, is_var_args)
     }
 
@@ -145,7 +145,7 @@ impl ArrayType {
     /// assert_eq!(i8_array_array_type.len(), 3);
     /// assert_eq!(i8_array_array_type.get_element_type().into_array_type(), i8_array_type);
     /// ```
-    pub fn array_type(&self, size: u32) -> ArrayType {
+    pub fn array_type(&self, size: u32) -> ArrayType<'ctx> {
         self.array_type.array_type(size)
     }
 
@@ -163,7 +163,7 @@ impl ArrayType {
     ///
     /// assert!(f32_array_array.is_const());
     /// ```
-    pub fn const_array(&self, values: &[ArrayValue]) -> ArrayValue {
+    pub fn const_array(&self, values: &[ArrayValue<'ctx>]) -> ArrayValue<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();
@@ -186,7 +186,7 @@ impl ArrayType {
     /// let i8_array_type = i8_type.array_type(3);
     /// let i8_array_zero = i8_array_type.const_zero();
     /// ```
-    pub fn const_zero(&self) -> ArrayValue {
+    pub fn const_zero(&self) -> ArrayValue<'ctx> {
         ArrayValue::new(self.array_type.const_zero())
     }
 
@@ -234,7 +234,7 @@ impl ArrayType {
     ///
     /// assert!(i8_array_undef.is_undef());
     /// ```
-    pub fn get_undef(&self) -> ArrayValue {
+    pub fn get_undef(&self) -> ArrayValue<'ctx> {
         ArrayValue::new(self.array_type.get_undef())
     }
 
@@ -252,14 +252,14 @@ impl ArrayType {
     ///
     /// assert_eq!(i8_array_type.get_element_type().into_int_type(), i8_type);
     /// ```
-    pub fn get_element_type(&self) -> BasicTypeEnum {
+    pub fn get_element_type(&self) -> BasicTypeEnum<'ctx> {
         self.array_type.get_element_type().to_basic_type_enum()
     }
 
 }
 
-impl AsTypeRef for ArrayType {
+impl AsTypeRef for ArrayType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.array_type.type_
+        self.array_type.ty
     }
 }

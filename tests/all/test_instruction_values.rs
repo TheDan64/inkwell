@@ -15,7 +15,7 @@ fn test_operands() {
     let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
 
     let function = module.add_function("take_f32_ptr", fn_type, None);
-    let basic_block = context.append_basic_block(&function, "entry");
+    let basic_block = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&basic_block);
 
@@ -142,8 +142,8 @@ fn test_basic_block_operand() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
     let function = module.add_function("bb_op", fn_type, None);
-    let basic_block = context.append_basic_block(&function, "entry");
-    let basic_block2 = context.append_basic_block(&function, "exit");
+    let basic_block = context.append_basic_block(function, "entry");
+    let basic_block2 = context.append_basic_block(function, "exit");
 
     builder.position_at_end(&basic_block);
 
@@ -170,7 +170,7 @@ fn test_get_next_use() {
     let f32_type = context.f32_type();
     let fn_type = f32_type.fn_type(&[f32_type.into()], false);
     let function = module.add_function("take_f32", fn_type, None);
-    let basic_block = context.append_basic_block(&function, "entry");
+    let basic_block = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&basic_block);
 
@@ -204,7 +204,7 @@ fn test_instructions() {
     let fn_type = void_type.fn_type(&[f32_ptr_type.into(), f32_type.into()], false);
 
     let function = module.add_function("free_f32", fn_type, None);
-    let basic_block = context.append_basic_block(&function, "entry");
+    let basic_block = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&basic_block);
 
@@ -263,7 +263,7 @@ fn test_mem_instructions() {
     let fn_type = void_type.fn_type(&[f32_ptr_type.into(), f32_type.into()], false);
 
     let function = module.add_function("mem_inst", fn_type, None);
-    let basic_block = context.append_basic_block(&function, "entry");
+    let basic_block = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&basic_block);
 
@@ -324,7 +324,7 @@ fn test_atomic_ordering_mem_instructions() {
     let fn_type = void_type.fn_type(&[f32_ptr_type.into(), f32_type.into()], false);
 
     let function = module.add_function("mem_inst", fn_type, None);
-    let basic_block = context.append_basic_block(&function, "entry");
+    let basic_block = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&basic_block);
 

@@ -17,7 +17,7 @@ pub trait AsValueRef {
 macro_rules! trait_value_set {
     ($trait_name:ident: $($args:ident),*) => (
         $(
-            impl $trait_name for $args {}
+            impl<'ctx> $trait_name<'ctx> for $args<'ctx> {}
         )*
 
         // REVIEW: Possible encompassing methods to implement:
@@ -28,8 +28,8 @@ macro_rules! trait_value_set {
 macro_rules! math_trait_value_set {
     ($trait_name:ident: $(($value_type:ident => $base_type:ident)),*) => (
         $(
-            impl $trait_name for $value_type {
-                type BaseType = $base_type;
+            impl<'ctx> $trait_name<'ctx> for $value_type<'ctx> {
+                type BaseType = $base_type<'ctx>;
                 fn new(value: LLVMValueRef) -> Self {
                     $value_type::new(value)
                 }
@@ -39,16 +39,16 @@ macro_rules! math_trait_value_set {
 }
 
 /// Represents an aggregate value, built on top of other values.
-pub trait AggregateValue: BasicValue {
+pub trait AggregateValue<'ctx>: BasicValue<'ctx> {
     /// Returns an enum containing a typed version of the `AggregateValue`.
-    fn as_aggregate_value_enum(&self) -> AggregateValueEnum {
+    fn as_aggregate_value_enum(&self) -> AggregateValueEnum<'ctx> {
         AggregateValueEnum::new(self.as_value_ref())
     }
 
     // REVIEW: How does LLVM treat out of bound index? Maybe we should return an Option?
     // or is that only in bounds GEP
     // REVIEW: Should this be AggregatePointerValue?
-    fn const_extract_value(&self, indexes: &mut [u32]) -> BasicValueEnum {
+    fn const_extract_value(&self, indexes: &mut [u32]) -> BasicValueEnum<'ctx> {
         let value = unsafe {
             LLVMConstExtractValue(self.as_value_ref(), indexes.as_mut_ptr(), indexes.len() as u32)
         };
@@ -57,7 +57,7 @@ pub trait AggregateValue: BasicValue {
     }
 
     // SubTypes: value should really be T in self: VectorValue<T> I think
-    fn const_insert_value<BV: BasicValue>(&self, value: BV, indexes: &mut [u32]) -> BasicValueEnum {
+    fn const_insert_value<BV: BasicValue<'ctx>>(&self, value: BV, indexes: &mut [u32]) -> BasicValueEnum<'ctx> {
         let value = unsafe {
             LLVMConstInsertValue(self.as_value_ref(), value.as_value_ref(), indexes.as_mut_ptr(), indexes.len() as u32)
         };
@@ -67,15 +67,15 @@ pub trait AggregateValue: BasicValue {
 }
 
 /// Represents a basic value, which can be used both by itself, or in an `AggregateValue`.
-pub trait BasicValue: AnyValue {
+pub trait BasicValue<'ctx>: AnyValue<'ctx> {
     /// Returns an enum containing a typed version of the `BasicValue`.
-    fn as_basic_value_enum(&self) -> BasicValueEnum {
+    fn as_basic_value_enum(&self) -> BasicValueEnum<'ctx> {
         BasicValueEnum::new(self.as_value_ref())
     }
 
     /// Most `BasicValue`s are the byproduct of an instruction
     /// and so are convertable into an `InstructionValue`
-    fn as_instruction_value(&self) -> Option<InstructionValue> {
+    fn as_instruction_value(&self) -> Option<InstructionValue<'ctx>> {
         let value = Value::new(self.as_value_ref());
 
         if !value.is_instruction() {
@@ -94,27 +94,27 @@ pub trait BasicValue: AnyValue {
 }
 
 /// Represents a value which is permitted in integer math operations
-pub trait IntMathValue: BasicValue {
-    type BaseType: IntMathType;
+pub trait IntMathValue<'ctx>: BasicValue<'ctx> {
+    type BaseType: IntMathType<'ctx>;
     fn new(value: LLVMValueRef) -> Self;
 }
 
 /// Represents a value which is permitted in floating point math operations
-pub trait FloatMathValue: BasicValue {
-    type BaseType: FloatMathType;
+pub trait FloatMathValue<'ctx>: BasicValue<'ctx> {
+    type BaseType: FloatMathType<'ctx>;
     fn new(value: LLVMValueRef) -> Self;
 }
 
-pub trait PointerMathValue: BasicValue {
-    type BaseType: PointerMathType;
+pub trait PointerMathValue<'ctx>: BasicValue<'ctx> {
+    type BaseType: PointerMathType<'ctx>;
     fn new(value: LLVMValueRef) -> Self;
 }
 
 // REVIEW: print_to_string might be a good candidate to live here?
 /// Defines any struct wrapping an LLVM value.
-pub trait AnyValue: AsValueRef + Debug {
+pub trait AnyValue<'ctx>: AsValueRef + Debug {
     /// Returns an enum containing a typed version of `AnyValue`.
-    fn as_any_value_enum(&self) -> AnyValueEnum {
+    fn as_any_value_enum(&self) -> AnyValueEnum<'ctx> {
         AnyValueEnum::new(self.as_value_ref())
     }
 }
@@ -128,10 +128,10 @@ math_trait_value_set! {PointerMathValue: (PointerValue => PointerType), (VectorV
 
 macro_rules! impl_try_from_basic_value_enum {
     ($value_name:ident) => (
-        impl TryFrom<BasicValueEnum> for $value_name {
+        impl<'ctx> TryFrom<BasicValueEnum<'ctx>> for $value_name<'ctx> {
             type Error = &'static str;
 
-            fn try_from(value: BasicValueEnum) -> Result<Self, Self::Error> {
+            fn try_from(value: BasicValueEnum<'ctx>) -> Result<Self, Self::Error> {
                 match value {
                     BasicValueEnum::$value_name(value) => Ok(value),
                     _ => Err("bad try from"),

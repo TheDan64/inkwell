@@ -18,24 +18,24 @@ pub trait AsTypeRef {
 macro_rules! trait_type_set {
     ($trait_name:ident: $($args:ident),*) => (
         $(
-            impl $trait_name for $args {}
+            impl<'ctx> $trait_name<'ctx> for $args<'ctx> {}
         )*
     );
 }
 
 // REVIEW: print_to_string might be a good candidate to live here?
 /// Represents any LLVM type.
-pub trait AnyType: AsTypeRef + Debug {
+pub trait AnyType<'ctx>: AsTypeRef + Debug {
     /// Returns an `AnyTypeEnum` that represents the current type.
-    fn as_any_type_enum(&self) -> AnyTypeEnum {
+    fn as_any_type_enum(&self) -> AnyTypeEnum<'ctx> {
         AnyTypeEnum::new(self.as_type_ref())
     }
 }
 
 /// Represents a basic LLVM type, that may be used in functions and struct definitions.
-pub trait BasicType: AnyType {
+pub trait BasicType<'ctx>: AnyType<'ctx> {
     /// Returns a `BasicTypeEnum` that represents the current type.
-    fn as_basic_type_enum(&self) -> BasicTypeEnum {
+    fn as_basic_type_enum(&self) -> BasicTypeEnum<'ctx> {
         BasicTypeEnum::new(self.as_type_ref())
     }
 
@@ -51,7 +51,7 @@ pub trait BasicType: AnyType {
     /// let int_basic_type = int.as_basic_type_enum();
     /// assert_eq!(int_basic_type.fn_type(&[], false), int.fn_type(&[], false));
     /// ```
-    fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
+    fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         Type::new(self.as_type_ref()).fn_type(param_types, is_var_args)
     }
 
@@ -68,7 +68,7 @@ pub trait BasicType: AnyType {
     /// assert_eq!(int_basic_type.array_type(32), int.array_type(32));
     /// ```
     // FIXME: We shouldn't be able to create arrays of void types
-    fn array_type(&self, size: u32) -> ArrayType {
+    fn array_type(&self, size: u32) -> ArrayType<'ctx> {
         Type::new(self.as_type_ref()).array_type(size)
     }
 
@@ -87,78 +87,78 @@ pub trait BasicType: AnyType {
     /// assert_eq!(int_basic_type.ptr_type(addr_space), int.ptr_type(addr_space));
     /// ```
     // FIXME: We shouldn't be able to create pointer of void types
-    fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
+    fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         Type::new(self.as_type_ref()).ptr_type(address_space)
     }
 }
 
 /// Represents an LLVM type that can have integer math operations applied to it.
-pub trait IntMathType: BasicType {
+pub trait IntMathType<'ctx>: BasicType<'ctx> {
     /// The value instance of an int or int vector type.
-    type ValueType: IntMathValue;
+    type ValueType: IntMathValue<'ctx>;
     /// The type for int to float or int vector to float vector conversions.
-    type MathConvType: FloatMathType;
+    type MathConvType: FloatMathType<'ctx>;
     /// The type for int to pointer or int vector to pointer vector conversions.
-    type PtrConvType: PointerMathType;
+    type PtrConvType: PointerMathType<'ctx>;
 }
 
 /// Represents an LLVM type that can have floating point math operations applied to it.
-pub trait FloatMathType: BasicType {
+pub trait FloatMathType<'ctx>: BasicType<'ctx> {
     /// The value instance of a float or float vector type.
-    type ValueType: FloatMathValue;
+    type ValueType: FloatMathValue<'ctx>;
     /// The type for float to int or float vector to int vector conversions.
-    type MathConvType: IntMathType;
+    type MathConvType: IntMathType<'ctx>;
 }
 
 /// Represents an LLVM type that can have pointer operations applied to it.
-pub trait PointerMathType: BasicType {
+pub trait PointerMathType<'ctx>: BasicType<'ctx> {
     /// The value instance of a pointer type.
-    type ValueType: PointerMathValue;
+    type ValueType: PointerMathValue<'ctx>;
     /// The type for pointer to int or pointer vector to int conversions.
-    type PtrConvType: IntMathType;
+    type PtrConvType: IntMathType<'ctx>;
 }
 
 trait_type_set! {AnyType: AnyTypeEnum, BasicTypeEnum, IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VoidType, VectorType}
 trait_type_set! {BasicType: BasicTypeEnum, IntType, FloatType, PointerType, StructType, ArrayType, VectorType}
 
-impl IntMathType for IntType {
-    type ValueType = IntValue;
-    type MathConvType = FloatType;
-    type PtrConvType = PointerType;
+impl<'ctx> IntMathType<'ctx> for IntType<'ctx> {
+    type ValueType = IntValue<'ctx>;
+    type MathConvType = FloatType<'ctx>;
+    type PtrConvType = PointerType<'ctx>;
 }
 
-impl IntMathType for VectorType {
-    type ValueType = VectorValue;
-    type MathConvType = VectorType;
-    type PtrConvType = VectorType;
+impl<'ctx> IntMathType<'ctx> for VectorType<'ctx> {
+    type ValueType = VectorValue<'ctx>;
+    type MathConvType = VectorType<'ctx>;
+    type PtrConvType = VectorType<'ctx>;
 }
 
-impl FloatMathType for FloatType {
-    type ValueType = FloatValue;
-    type MathConvType = IntType;
+impl<'ctx> FloatMathType<'ctx> for FloatType<'ctx> {
+    type ValueType = FloatValue<'ctx>;
+    type MathConvType = IntType<'ctx>;
 }
 
-impl FloatMathType for VectorType {
-    type ValueType = VectorValue;
-    type MathConvType = VectorType;
+impl<'ctx> FloatMathType<'ctx> for VectorType<'ctx> {
+    type ValueType = VectorValue<'ctx>;
+    type MathConvType = VectorType<'ctx>;
 }
 
-impl PointerMathType for PointerType {
-    type ValueType = PointerValue;
-    type PtrConvType = IntType;
+impl<'ctx> PointerMathType<'ctx> for PointerType<'ctx> {
+    type ValueType = PointerValue<'ctx>;
+    type PtrConvType = IntType<'ctx>;
 }
 
-impl PointerMathType for VectorType {
-    type ValueType = VectorValue;
-    type PtrConvType = VectorType;
+impl<'ctx> PointerMathType<'ctx> for VectorType<'ctx> {
+    type ValueType = VectorValue<'ctx>;
+    type PtrConvType = VectorType<'ctx>;
 }
 
 macro_rules! impl_try_from_basic_type_enum {
     ($type_name:ident) => (
-        impl TryFrom<BasicTypeEnum> for $type_name {
+        impl<'ctx> TryFrom<BasicTypeEnum<'ctx>> for $type_name<'ctx> {
             type Error = &'static str;
 
-            fn try_from(ty: BasicTypeEnum) -> Result<Self, Self::Error> {
+            fn try_from(ty: BasicTypeEnum<'ctx>) -> Result<Self, Self::Error> {
                 match ty {
                     BasicTypeEnum::$type_name(ty) => Ok(ty),
                     _ => Err("bad try from"),

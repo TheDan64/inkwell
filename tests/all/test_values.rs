@@ -4,8 +4,8 @@ use self::inkwell::{DLLStorageClass, FloatPredicate, GlobalVisibility, ThreadLoc
 use self::inkwell::attributes::AttributeLoc;
 use self::inkwell::context::Context;
 use self::inkwell::module::Linkage::*;
-use self::inkwell::types::{StringRadix, StructType, VectorType};
-use self::inkwell::values::{InstructionOpcode::*, MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID, VectorValue};
+use self::inkwell::types::{StringRadix, VectorType};
+use self::inkwell::values::{InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
 #[llvm_versions(7.0..=latest)]
 use self::inkwell::comdat::ComdatSelectionKind;
 
@@ -166,7 +166,7 @@ fn test_set_get_name() {
     let fn_type = void_type.fn_type(&fn_type_params, false);
 
     let function = module.add_function("do_stuff", fn_type, None);
-    let basic_block = context.append_basic_block(&function, "entry");
+    let basic_block = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&basic_block);
 
@@ -267,7 +267,7 @@ fn test_undef() {
     let f128_undef = f128_type.get_undef();
     let ptr_undef = bool_type.ptr_type(AddressSpace::Generic).get_undef();
     let array_undef = array_type.get_undef();
-    let struct_undef = StructType::struct_type(&[bool_type.into()], false).get_undef();
+    let struct_undef = context.struct_type(&[bool_type.into()], false).get_undef();
     let vec_undef = bool_type.vec_type(1).get_undef();
     let ppc_f128_undef = ppc_f128_type.get_undef();
 
@@ -329,7 +329,7 @@ fn test_verify_fn() {
     #[cfg(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0"))]
     assert!(function.verify(false));
 
-    let basic_block = context.append_basic_block(&function, "entry");
+    let basic_block = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&basic_block);
     builder.build_return(None);
@@ -351,84 +351,57 @@ fn test_metadata() {
     // or a new lookup
 
     assert_eq!(context.get_kind_id("foo"), FIRST_CUSTOM_METADATA_KIND_ID);
-    assert_eq!(MetadataValue::get_kind_id("foo"), FIRST_CUSTOM_METADATA_KIND_ID);
     assert_eq!(context.get_kind_id("bar"), FIRST_CUSTOM_METADATA_KIND_ID + 1);
-    assert_eq!(MetadataValue::get_kind_id("bar"), FIRST_CUSTOM_METADATA_KIND_ID + 1);
 
     // Predefined
     assert_eq!(context.get_kind_id("dbg"), 0);
-    assert_eq!(MetadataValue::get_kind_id("dbg"), 0);
     assert_eq!(context.get_kind_id("tbaa"), 1);
-    assert_eq!(MetadataValue::get_kind_id("tbaa"), 1);
     assert_eq!(context.get_kind_id("prof"), 2);
-    assert_eq!(MetadataValue::get_kind_id("prof"), 2);
     assert_eq!(context.get_kind_id("fpmath"), 3);
-    assert_eq!(MetadataValue::get_kind_id("fpmath"), 3);
     assert_eq!(context.get_kind_id("range"), 4);
-    assert_eq!(MetadataValue::get_kind_id("range"), 4);
     assert_eq!(context.get_kind_id("tbaa.struct"), 5);
-    assert_eq!(MetadataValue::get_kind_id("tbaa.struct"), 5);
     assert_eq!(context.get_kind_id("invariant.load"), 6);
-    assert_eq!(MetadataValue::get_kind_id("invariant.load"), 6);
     assert_eq!(context.get_kind_id("alias.scope"), 7);
-    assert_eq!(MetadataValue::get_kind_id("alias.scope"), 7);
     assert_eq!(context.get_kind_id("noalias"), 8);
-    assert_eq!(MetadataValue::get_kind_id("noalias"), 8);
     assert_eq!(context.get_kind_id("nontemporal"), 9);
-    assert_eq!(MetadataValue::get_kind_id("nontemporal"), 9);
     assert_eq!(context.get_kind_id("llvm.mem.parallel_loop_access"), 10);
-    assert_eq!(MetadataValue::get_kind_id("llvm.mem.parallel_loop_access"), 10);
     assert_eq!(context.get_kind_id("nonnull"), 11);
-    assert_eq!(MetadataValue::get_kind_id("nonnull"), 11);
 
     #[cfg(not(feature = "llvm3-6"))]
     {
         assert_eq!(context.get_kind_id("dereferenceable"), 12);
-        assert_eq!(MetadataValue::get_kind_id("dereferenceable"), 12);
         assert_eq!(context.get_kind_id("dereferenceable_or_null"), 13);
-        assert_eq!(MetadataValue::get_kind_id("dereferenceable_or_null"), 13);
     }
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
     {
         assert_eq!(context.get_kind_id("make.implicit"), 14);
-        assert_eq!(MetadataValue::get_kind_id("make.implicit"), 14);
         assert_eq!(context.get_kind_id("unpredictable"), 15);
-        assert_eq!(MetadataValue::get_kind_id("unpredictable"), 15);
         assert_eq!(context.get_kind_id("invariant.group"), 16);
-        assert_eq!(MetadataValue::get_kind_id("invariant.group"), 16);
         assert_eq!(context.get_kind_id("align"), 17);
-        assert_eq!(MetadataValue::get_kind_id("align"), 17);
     }
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     {
         assert_eq!(context.get_kind_id("llvm.loop"), 18);
-        assert_eq!(MetadataValue::get_kind_id("llvm.loop"), 18);
         assert_eq!(context.get_kind_id("type"), 19);
-        assert_eq!(MetadataValue::get_kind_id("type"), 19);
     }
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
     {
         assert_eq!(context.get_kind_id("section_prefix"), 20);
-        assert_eq!(MetadataValue::get_kind_id("section_prefix"), 20);
         assert_eq!(context.get_kind_id("absolute_symbol"), 21);
-        assert_eq!(MetadataValue::get_kind_id("absolute_symbol"), 21);
     }
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0")))]
     {
         assert_eq!(context.get_kind_id("associated"), 22);
-        assert_eq!(MetadataValue::get_kind_id("associated"), 22);
     }
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0")))]
     {
         assert_eq!(context.get_kind_id("callees"), 23);
-        assert_eq!(MetadataValue::get_kind_id("callees"), 23);
         assert_eq!(context.get_kind_id("irr_loop"), 24);
-        assert_eq!(MetadataValue::get_kind_id("irr_loop"), 24);
     }
 
     // TODO: 7+?
@@ -436,7 +409,7 @@ fn test_metadata() {
     assert_eq!(module.get_global_metadata_size("my_string_md"), 0);
     assert_eq!(module.get_global_metadata("my_string_md").len(), 0);
 
-    let md_string = MetadataValue::create_string("lots of metadata here");
+    let md_string = context.metadata_string("lots of metadata here");
 
     assert_eq!(md_string.get_node_size(), 0);
     assert_eq!(md_string.get_node_values().len(), 0);
@@ -473,14 +446,14 @@ fn test_metadata() {
     // let vec_val = VectorType::const_vector(&[i8_val]);
     // let fn_val = module.add_function("my_fn", fn_type, None);
 
-    let md_node = MetadataValue::create_node(&[&bool_val, &f32_val]);
+    let md_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
 
     let node_values = md_node.get_node_values();
 
     assert_eq!(md_node.get_string_value(), None);
     assert_eq!(node_values.len(), 2);
-    assert_eq!(node_values[0].as_int_value(), &bool_val);
-    assert_eq!(node_values[1].as_float_value(), &f32_val);
+    assert_eq!(node_values[0].into_int_value(), bool_val);
+    assert_eq!(node_values[1].into_float_value(), f32_val);
 
     module.add_global_metadata("my_md", &md_string);
     module.add_global_metadata("my_md", &md_node);
@@ -495,9 +468,9 @@ fn test_metadata() {
 
     assert_eq!(md_0.len(), 1);
     assert_eq!(md_1.len(), 2);
-    assert_eq!(md_0[0].as_metadata_value().get_string_value(), md_string.get_string_value());
-    assert_eq!(md_1[0].as_int_value(), &bool_val);
-    assert_eq!(md_1[1].as_float_value(), &f32_val);
+    assert_eq!(md_0[0].into_metadata_value().get_string_value(), md_string.get_string_value());
+    assert_eq!(md_1[0].into_int_value(), bool_val);
+    assert_eq!(md_1[1].into_float_value(), f32_val);
 
     assert_eq!(module.get_global_metadata_size("other_md"), 0);
 
@@ -531,7 +504,7 @@ fn test_metadata() {
     let fn_type = void_type.fn_type(&[bool_type.into()], false);
     let fn_value = module.add_function("my_func", fn_type, None);
 
-    let entry_block = fn_value.append_basic_block("entry");
+    let entry_block = context.append_basic_block(fn_value, "entry");
 
     builder.position_at_end(&entry_block);
 
@@ -545,8 +518,7 @@ fn test_metadata() {
     let md_node_values = ret_instr.get_metadata(2).unwrap().get_node_values();
 
     assert_eq!(md_node_values.len(), 1);
-    assert_eq!(md_node_values[0].as_metadata_value().get_string_value(), md_string.get_string_value());
-
+    assert_eq!(md_node_values[0].into_metadata_value().get_string_value(), md_string.get_string_value());
 
     // New Context Metadata
     let context_metadata_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
@@ -887,9 +859,9 @@ fn test_phi_values() {
 
     assert!(fn_value.as_global_value().is_declaration());
 
-    let entry_block = fn_value.append_basic_block("entry");
-    let then_block = fn_value.append_basic_block("then");
-    let else_block = fn_value.append_basic_block("else");
+    let entry_block = context.append_basic_block(fn_value, "entry");
+    let then_block = context.append_basic_block(fn_value, "then");
+    let else_block = context.append_basic_block(fn_value, "else");
 
     assert!(!fn_value.as_global_value().is_declaration());
 
@@ -934,7 +906,7 @@ fn test_allocations() {
     let i32_three = i32_type.const_int(3, false);
     let fn_type = void_type.fn_type(&[], false);
     let fn_value = module.add_function("my_func", fn_type, None);
-    let entry_block = fn_value.append_basic_block("entry");
+    let entry_block = context.append_basic_block(fn_value, "entry");
 
     builder.position_at_end(&entry_block);
 
@@ -964,15 +936,15 @@ fn test_allocations() {
 
 #[test]
 fn test_string_values() {
-    let string = VectorValue::const_string("my_string", false);
-    let string_null = VectorValue::const_string("my_string", true);
+    let context = Context::create();
+    let string = context.const_string("my_string", false);
+    let string_null = context.const_string("my_string", true);
 
     assert_eq!(string.print_to_string().to_string(), "[9 x i8] c\"my_string\"");
     assert_eq!(string_null.print_to_string().to_string(), "[10 x i8] c\"my_string\\00\"");
     assert!(string.is_const_string());
     assert!(string_null.is_const_string());
 
-    let context = Context::create();
     let i8_type = context.i8_type();
     let string = context.const_string("my_string", false);
     let string_null = context.const_string("my_string", true);
@@ -1086,7 +1058,7 @@ fn test_consts() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[i32_type.into(), f32_type.into()], false);
     let function = module.add_function("fn", fn_type, None);
-    let basic_block = context.append_basic_block(&function, "entry");
+    let basic_block = context.append_basic_block(function, "entry");
 
     builder.position_at_end(&basic_block);
 
@@ -1110,7 +1082,7 @@ fn test_function_value_to_global_to_pointer() {
 
     assert!(fn_global_value.is_declaration());
 
-    let bb = fn_value.append_basic_block("entry");
+    let bb = context.append_basic_block(fn_value, "entry");
 
     builder.position_at_end(&bb);
     builder.build_return(None);
@@ -1142,7 +1114,7 @@ fn test_non_fn_ptr_called() {
     let i8_ptr_type = i8_type.ptr_type(AddressSpace::Generic);
     let fn_type = i8_type.fn_type(&[i8_ptr_type.into()], false);
     let fn_value = module.add_function("my_func", fn_type, None);
-    let bb = fn_value.append_basic_block("entry");
+    let bb = context.append_basic_block(fn_value, "entry");
     let i8_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
 
     builder.position_at_end(&bb);
@@ -1163,7 +1135,7 @@ fn test_vectors() {
     let vec_type = i32_type.vec_type(2);
     let fn_type = i32_type.fn_type(&[vec_type.into()], false);
     let fn_value = module.add_function("my_func", fn_type, None);
-    let bb = fn_value.append_basic_block("entry");
+    let bb = context.append_basic_block(fn_value, "entry");
     let vector_param = fn_value.get_first_param().unwrap().into_vector_value();
 
     builder.position_at_end(&bb);
@@ -1188,7 +1160,7 @@ fn test_aggregate_returns() {
     let struct_type = context.struct_type(&[i32_type.into(), i32_type.into()], false);
     let fn_type = struct_type.fn_type(&[i32_ptr_type.into(), i32_ptr_type.into()], false);
     let fn_value = module.add_function("my_func", fn_type, None);
-    let bb = fn_value.append_basic_block("entry");
+    let bb = context.append_basic_block(fn_value, "entry");
     let ptr_param1 = fn_value.get_first_param().unwrap().into_pointer_value();
     let ptr_param2 = fn_value.get_nth_param(1).unwrap().into_pointer_value();
 

@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMConstNamedStruct, LLVMConstStruct, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMStructSetBody, LLVMConstArray};
+use llvm_sys::core::{LLVMConstNamedStruct, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMStructSetBody, LLVMConstArray};
 #[llvm_versions(3.7..=latest)]
 use llvm_sys::core::LLVMStructGetTypeAtIndex;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
@@ -15,11 +15,11 @@ use crate::values::{ArrayValue, BasicValueEnum, StructValue, IntValue, AsValueRe
 
 /// A `StructType` is the type of a heterogeneous container of types.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct StructType {
-    struct_type: Type,
+pub struct StructType<'ctx> {
+    struct_type: Type<'ctx>,
 }
 
-impl StructType {
+impl<'ctx> StructType<'ctx> {
     pub(crate) fn new(struct_type: LLVMTypeRef) -> Self {
         assert!(!struct_type.is_null());
 
@@ -42,7 +42,7 @@ impl StructType {
     /// assert_eq!(struct_type.get_field_type_at_index(0).unwrap().into_float_type(), f32_type);
     /// ```
     #[llvm_versions(3.7..=latest)]
-    pub fn get_field_type_at_index(&self, index: u32) -> Option<BasicTypeEnum> {
+    pub fn get_field_type_at_index(&self, index: u32) -> Option<BasicTypeEnum<'ctx>> {
         // LLVM doesn't seem to just return null if opaque.
         // TODO: One day, with SubTypes (& maybe specialization?) we could just
         // impl this method for non opaque structs only
@@ -76,35 +76,12 @@ impl StructType {
     /// let struct_type = context.struct_type(&[f32_type.into()], false);
     /// let struct_val = struct_type.const_named_struct(&[f32_zero.into()]);
     /// ```
-    pub fn const_named_struct(&self, values: &[BasicValueEnum]) -> StructValue {
+    pub fn const_named_struct(&self, values: &[BasicValueEnum<'ctx>]) -> StructValue<'ctx> {
         let mut args: Vec<LLVMValueRef> = values.iter()
                                                 .map(|val| val.as_value_ref())
                                                 .collect();
         let value = unsafe {
             LLVMConstNamedStruct(self.as_type_ref(), args.as_mut_ptr(), args.len() as u32)
-        };
-
-        StructValue::new(value)
-    }
-
-    /// Creates a `StructValue` based on the input values rather than an existing `StructType`.
-    /// It will be assigned the global `Context`.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::types::{FloatType, StructType};
-    ///
-    /// let f32_type = FloatType::f32_type();
-    /// let f32_zero = f32_type.const_float(0.);
-    /// let struct_val = StructType::const_struct(&[f32_zero.into()], false);
-    /// ```
-    pub fn const_struct(values: &[BasicValueEnum], packed: bool) -> StructValue {
-        let mut args: Vec<LLVMValueRef> = values.iter()
-                                                .map(|val| val.as_value_ref())
-                                                .collect();
-        let value = unsafe {
-            LLVMConstStruct(args.as_mut_ptr(), args.len() as u32, packed as i32)
         };
 
         StructValue::new(value)
@@ -122,7 +99,7 @@ impl StructType {
     /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
     /// let struct_zero = struct_type.const_zero();
     /// ```
-    pub fn const_zero(&self) -> StructValue {
+    pub fn const_zero(&self) -> StructValue<'ctx> {
         StructValue::new(self.struct_type.const_zero())
     }
 
@@ -158,7 +135,7 @@ impl StructType {
     /// let f32_struct_type = context.struct_type(&[f32_type.into()], false);
     /// let f32_struct_type_size = f32_struct_type.size_of();
     /// ```
-    pub fn size_of(&self) -> Option<IntValue> {
+    pub fn size_of(&self) -> Option<IntValue<'ctx>> {
         if self.is_sized() {
             return Some(self.struct_type.size_of());
         }
@@ -178,7 +155,7 @@ impl StructType {
     /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
     /// let struct_type_alignment = struct_type.get_alignment();
     /// ```
-    pub fn get_alignment(&self) -> IntValue {
+    pub fn get_alignment(&self) -> IntValue<'ctx> {
         self.struct_type.get_alignment()
     }
 
@@ -195,7 +172,7 @@ impl StructType {
     ///
     /// assert_eq!(*struct_type.get_context(), context);
     /// ```
-    pub fn get_context(&self) -> ContextRef {
+    pub fn get_context(&self) -> ContextRef<'ctx> {
         self.struct_type.get_context()
     }
 
@@ -243,7 +220,7 @@ impl StructType {
     ///
     /// assert_eq!(struct_ptr_type.get_element_type().into_struct_type(), struct_type);
     /// ```
-    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.struct_type.ptr_type(address_space)
     }
 
@@ -259,7 +236,7 @@ impl StructType {
     /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
     /// let fn_type = struct_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
+    pub fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.struct_type.fn_type(param_types, is_var_args)
     }
 
@@ -278,7 +255,7 @@ impl StructType {
     /// assert_eq!(struct_array_type.len(), 3);
     /// assert_eq!(struct_array_type.get_element_type().into_struct_type(), struct_type);
     /// ```
-    pub fn array_type(&self, size: u32) -> ArrayType {
+    pub fn array_type(&self, size: u32) -> ArrayType<'ctx> {
         self.struct_type.array_type(size)
     }
 
@@ -320,31 +297,6 @@ impl StructType {
         }
     }
 
-    /// Creates a `StructType` definiton from heterogeneous types in the global `Context`.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    /// use inkwell::types::{FloatType, IntType, StructType};
-    ///
-    /// let f32_type = FloatType::f32_type();
-    /// let i8_type = IntType::i8_type();
-    /// let struct_type = StructType::struct_type(&[f32_type.into(), i8_type.into()], false);
-    ///
-    /// assert_eq!(struct_type.get_context(), Context::get_global());
-    /// ```
-    pub fn struct_type(field_types: &[BasicTypeEnum], packed: bool) -> Self {
-        let mut field_types: Vec<LLVMTypeRef> = field_types.iter()
-                                                           .map(|val| val.as_type_ref())
-                                                           .collect();
-        let struct_type = unsafe {
-            LLVMStructType(field_types.as_mut_ptr(), field_types.len() as u32, packed as i32)
-        };
-
-        StructType::new(struct_type)
-    }
-
     /// Counts the number of field types.
     ///
     /// # Example
@@ -379,7 +331,7 @@ impl StructType {
     ///
     /// assert_eq!(struct_type.get_field_types(), &[f32_type.into(), i8_type.into()]);
     /// ```
-    pub fn get_field_types(&self) -> Vec<BasicTypeEnum> {
+    pub fn get_field_types(&self) -> Vec<BasicTypeEnum<'ctx>> {
         let count = self.count_fields();
         let mut raw_vec: Vec<LLVMTypeRef> = Vec::with_capacity(count as usize);
         let ptr = raw_vec.as_mut_ptr();
@@ -422,7 +374,7 @@ impl StructType {
     ///
     /// assert!(struct_type_undef.is_undef());
     /// ```
-    pub fn get_undef(&self) -> StructValue {
+    pub fn get_undef(&self) -> StructValue<'ctx> {
         StructValue::new(self.struct_type.get_undef())
     }
 
@@ -445,7 +397,7 @@ impl StructType {
     ///
     /// assert!(!opaque_struct_type.is_opaque());
     /// ```
-    pub fn set_body(&self, field_types: &[BasicTypeEnum], packed: bool) -> bool {
+    pub fn set_body(&self, field_types: &[BasicTypeEnum<'ctx>], packed: bool) -> bool {
         let is_opaque = self.is_opaque();
         let mut field_types: Vec<LLVMTypeRef> = field_types.iter()
                                                            .map(|val| val.as_type_ref())
@@ -474,7 +426,7 @@ impl StructType {
     ///
     /// assert!(struct_array.is_const());
     /// ```
-    pub fn const_array(&self, values: &[StructValue]) -> ArrayValue {
+    pub fn const_array(&self, values: &[StructValue<'ctx>]) -> ArrayValue<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();
@@ -486,8 +438,8 @@ impl StructType {
     }
 }
 
-impl AsTypeRef for StructType {
+impl AsTypeRef for StructType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.struct_type.type_
+        self.struct_type.ty
     }
 }

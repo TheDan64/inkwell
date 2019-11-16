@@ -9,11 +9,11 @@ use crate::values::{AsValueRef, ArrayValue, BasicValue, VectorValue, IntValue};
 
 /// A `VectorType` is the type of a multiple value SIMD constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub struct VectorType {
-    vec_type: Type,
+pub struct VectorType<'ctx> {
+    vec_type: Type<'ctx>,
 }
 
-impl VectorType {
+impl<'ctx> VectorType<'ctx> {
     pub(crate) fn new(vector_type: LLVMTypeRef) -> Self {
         assert!(!vector_type.is_null());
 
@@ -55,7 +55,7 @@ impl VectorType {
     /// let f32_vec_type = f32_type.vec_type(3);
     /// let f32_vec_type_size = f32_vec_type.size_of();
     /// ```
-    pub fn size_of(&self) -> Option<IntValue> {
+    pub fn size_of(&self) -> Option<IntValue<'ctx>> {
         if self.is_sized() {
             return Some(self.vec_type.size_of())
         }
@@ -75,7 +75,7 @@ impl VectorType {
     /// let f32_vec_type = f32_type.vec_type(7);
     /// let f32_type_alignment = f32_vec_type.get_alignment();
     /// ```
-    pub fn get_alignment(&self) -> IntValue {
+    pub fn get_alignment(&self) -> IntValue<'ctx> {
         self.vec_type.get_alignment()
     }
 
@@ -122,7 +122,7 @@ impl VectorType {
     ///
     /// assert!(f32_vec_val.is_constant_vector());
     /// ```
-    pub fn const_vector<V: BasicValue>(values: &[V]) -> VectorValue {
+    pub fn const_vector<V: BasicValue<'ctx>>(values: &[V]) -> VectorValue<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();
@@ -145,7 +145,7 @@ impl VectorType {
     /// let f32_vec_type = f32_type.vec_type(7);
     /// let f32_vec_zero = f32_vec_type.const_zero();
     /// ```
-    pub fn const_zero(&self) -> VectorValue {
+    pub fn const_zero(&self) -> VectorValue<'ctx> {
         VectorValue::new(self.vec_type.const_zero())
     }
 
@@ -175,7 +175,7 @@ impl VectorType {
     ///
     /// assert!(f32_vec_undef.is_undef());
     /// ```
-    pub fn get_undef(&self) -> VectorValue {
+    pub fn get_undef(&self) -> VectorValue<'ctx> {
         VectorValue::new(self.vec_type.get_undef())
     }
 
@@ -194,7 +194,7 @@ impl VectorType {
     /// assert_eq!(f32_vector_type.get_size(), 3);
     /// assert_eq!(f32_vector_type.get_element_type().into_float_type(), f32_type);
     /// ```
-    pub fn get_element_type(&self) -> BasicTypeEnum {
+    pub fn get_element_type(&self) -> BasicTypeEnum<'ctx> {
         self.vec_type.get_element_type().to_basic_type_enum()
 
     }
@@ -214,7 +214,7 @@ impl VectorType {
     ///
     /// assert_eq!(f32_vec_ptr_type.get_element_type().into_vector_type(), f32_vec_type);
     /// ```
-    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.vec_type.ptr_type(address_space)
     }
 
@@ -230,7 +230,7 @@ impl VectorType {
     /// let f32_vec_type = f32_type.vec_type(3);
     /// let fn_type = f32_vec_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(&self, param_types: &[BasicTypeEnum], is_var_args: bool) -> FunctionType {
+    pub fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.vec_type.fn_type(param_types, is_var_args)
     }
 
@@ -249,7 +249,7 @@ impl VectorType {
     /// assert_eq!(f32_vec_array_type.len(), 3);
     /// assert_eq!(f32_vec_array_type.get_element_type().into_vector_type(), f32_vec_type);
     /// ```
-    pub fn array_type(&self, size: u32) -> ArrayType {
+    pub fn array_type(&self, size: u32) -> ArrayType<'ctx> {
         self.vec_type.array_type(size)
     }
 
@@ -270,7 +270,7 @@ impl VectorType {
     ///
     /// assert!(f32_array.is_const());
     /// ```
-    pub fn const_array(&self, values: &[VectorValue]) -> ArrayValue {
+    pub fn const_array(&self, values: &[VectorValue<'ctx>]) -> ArrayValue<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();
@@ -294,13 +294,13 @@ impl VectorType {
     ///
     /// assert_eq!(*f32_vec_type.get_context(), context);
     /// ```
-    pub fn get_context(&self) -> ContextRef {
+    pub fn get_context(&self) -> ContextRef<'ctx> {
         self.vec_type.get_context()
     }
 }
 
-impl AsTypeRef for VectorType {
+impl AsTypeRef for VectorType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.vec_type.type_
+        self.vec_type.ty
     }
 }
