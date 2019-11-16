@@ -504,7 +504,7 @@ fn test_metadata() {
     let fn_type = void_type.fn_type(&[bool_type.into()], false);
     let fn_value = module.add_function("my_func", fn_type, None);
 
-    let entry_block = fn_value.append_basic_block("entry");
+    let entry_block = context.append_basic_block(fn_value, "entry");
 
     builder.position_at_end(&entry_block);
 

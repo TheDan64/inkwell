@@ -689,7 +689,7 @@ impl Context {
     /// let module = context.create_module("my_mod");
     /// let fn_type = void_type.fn_type(&[f32_type.into()], false);
     /// let fn_value = module.add_function("my_func", fn_type, None);
-    /// let entry_block = fn_value.append_basic_block("entry");
+    /// let entry_block = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(&entry_block);
     ///
@@ -730,7 +730,7 @@ impl Context {
     /// let module = context.create_module("my_mod");
     /// let fn_type = void_type.fn_type(&[f32_type.into()], false);
     /// let fn_value = module.add_function("my_func", fn_type, None);
-    /// let entry_block = fn_value.append_basic_block("entry");
+    /// let entry_block = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(&entry_block);
     ///
