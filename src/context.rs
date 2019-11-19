@@ -1,6 +1,7 @@
 //! A `Context` is an opaque owner and manager of core global data.
 
-use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMGetMDKindIDInContext, LLVMX86FP80TypeInContext, LLVMConstStringInContext, LLVMContextSetDiagnosticHandler};
+use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMGetMDKindIDInContext, LLVMX86FP80TypeInContext, LLVMConstStringInContext, LLVMContextSetDiagnosticHandler};
+#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
 #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
 use llvm_sys::core::LLVMTokenTypeInContext;
 #[llvm_versions(4.0..=latest)]
@@ -93,6 +94,11 @@ impl Context {
         };
 
         Context::new(context)
+    }
+
+    /// Creates a `ContextRef` referencing this context, and bound to its lifetime
+    pub fn as_ref<'ctx>(&'ctx self) -> ContextRef<'ctx> {
+        ContextRef::new(self.context)
     }
 
     /// Gets a `Mutex<Context>` which points to the global context singleton.
@@ -727,12 +733,108 @@ impl Context {
     // REVIEW: Maybe more helpful to beginners to call this metadata_tuple?
     // REVIEW: Seems to be unassgned to anything
     // REVIEW: Should maybe make this take &[BasicValueEnum]?
+    #[llvm_versions(3.6..9.0)]
     pub fn metadata_node(&self, values: &[BasicValueEnum]) -> MetadataValue {
+        use llvm_sys::core::LLVMMDNodeInContext;
         let mut tuple_values: Vec<LLVMValueRef> = values.iter()
                                                         .map(|val| val.as_value_ref())
                                                         .collect();
         let metadata_value = unsafe {
             LLVMMDNodeInContext(self.context, tuple_values.as_mut_ptr(), tuple_values.len() as u32)
+        };
+
+        MetadataValue::new(metadata_value)
+    }
+
+    /// Creates a `MetadataValue` tuple of heterogeneous types (a "Node") for the current context. It can be assigned to a value.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let i8_type = context.i8_type();
+    /// let i8_two = i8_type.const_int(2, false);
+    /// let f32_type = context.f32_type();
+    /// let f32_zero = f32_type.const_float(0.);
+    /// let md_node = context.metadata_node(&[i8_two.into(), f32_zero.into()]);
+    /// let f32_one = f32_type.const_float(1.);
+    /// let void_type = context.void_type();
+    ///
+    /// let builder = context.create_builder();
+    /// let module = context.create_module("my_mod");
+    /// let fn_type = void_type.fn_type(&[f32_type.into()], false);
+    /// let fn_value = module.add_function("my_func", fn_type, None);
+    /// let entry_block = context.append_basic_block(fn_value, "entry");
+    ///
+    /// builder.position_at_end(&entry_block);
+    ///
+    /// let ret_instr = builder.build_return(None);
+    ///
+    /// assert!(md_node.is_node());
+    ///
+    /// ret_instr.set_metadata(md_node, 0);
+    /// ```
+    // REVIEW: Maybe more helpful to beginners to call this metadata_tuple?
+    // REVIEW: Seems to be unassgned to anything
+    // REVIEW: Should maybe make this take &[BasicValueEnum]?
+    #[llvm_versions(9.0..=latest)]
+    pub fn metadata_node(&self, values: &[BasicValueEnum]) -> MetadataValue {
+        use llvm_sys::prelude::LLVMMetadataRef;
+        use llvm_sys::core::LLVMMetadataAsValue;
+        use llvm_sys::core::LLVMMDNodeInContext2;
+        let mut mds: Vec<LLVMMetadataRef> = values.iter()
+                                                  .map(MetadataValue::from)
+                                                  .map(|md| md.as_metadata_ref())
+                                                  .collect();
+        let md = unsafe {
+            LLVMMDNodeInContext2(self.context, mds.as_mut_ptr(), mds.len())
+        };
+
+        let value = unsafe {
+            LLVMMetadataAsValue(self.context, md)
+        };
+
+        MetadataValue::new(value)
+    }
+
+    /// Creates a `MetadataValue` string for the current context. It can be assigned to a value.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let md_string = context.metadata_string("Floats are awesome!");
+    /// let f32_type = context.f32_type();
+    /// let f32_one = f32_type.const_float(1.);
+    /// let void_type = context.void_type();
+    ///
+    /// let builder = context.create_builder();
+    /// let module = context.create_module("my_mod");
+    /// let fn_type = void_type.fn_type(&[f32_type.into()], false);
+    /// let fn_value = module.add_function("my_func", fn_type, None);
+    /// let entry_block = context.append_basic_block(fn_value, "entry");
+    ///
+    /// builder.position_at_end(&entry_block);
+    ///
+    /// let ret_instr = builder.build_return(None);
+    ///
+    /// assert!(md_string.is_string());
+    ///
+    /// ret_instr.set_metadata(md_string, 0);
+    /// ```
+    // REVIEW: Seems to be unassigned to anything
+    #[llvm_versions(3.6..9.0)]
+    pub fn metadata_string(&self, string: &str) -> MetadataValue {
+        use llvm_sys::core::LLVMMDStringInContext;
+
+        let c_string = CString::new(string).expect("Conversion to CString failed unexpectedly");
+
+        let metadata_value = unsafe {
+            LLVMMDStringInContext(self.context, c_string.as_ptr(), string.len() as u32)
         };
 
         MetadataValue::new(metadata_value)
@@ -766,14 +868,22 @@ impl Context {
     /// ret_instr.set_metadata(md_string, 0);
     /// ```
     // REVIEW: Seems to be unassigned to anything
+    #[llvm_versions(9.0..=latest)]
     pub fn metadata_string(&self, string: &str) -> MetadataValue {
+        use llvm_sys::core::LLVMMetadataAsValue;
+        use llvm_sys::core::LLVMMDStringInContext2;
+
         let c_string = CString::new(string).expect("Conversion to CString failed unexpectedly");
 
-        let metadata_value = unsafe {
-            LLVMMDStringInContext(self.context, c_string.as_ptr(), string.len() as u32)
+        let md = unsafe {
+            LLVMMDStringInContext2(self.context, c_string.as_ptr(), string.len())
         };
 
-        MetadataValue::new(metadata_value)
+        let value = unsafe {
+            LLVMMetadataAsValue(self.context, md)
+        };
+
+        MetadataValue::new(value)
     }
 
     /// Obtains the index of a metadata kind id. If the string doesn't exist, LLVM will add it at index `FIRST_CUSTOM_METADATA_KIND_ID` onward.
@@ -900,7 +1010,7 @@ impl Drop for Context {
 #[derive(Debug, PartialEq, Eq)]
 pub struct ContextRef<'ctx> {
     context: Option<Context>,
-    _marker: PhantomData<&'ctx ()>,
+    _marker: PhantomData<&'ctx Context>,
 }
 
 impl ContextRef<'_> {

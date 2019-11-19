@@ -133,11 +133,21 @@ impl<'ctx> MetadataValue<'ctx> {
     pub fn replace_all_uses_with(&self, other: &MetadataValue<'ctx>) {
         self.metadata_value.replace_all_uses_with(other.as_value_ref())
     }
+
+    pub fn as_value_ref(&self) -> LLVMValueRef {
+        self.metadata_value.value
+    }
 }
 
-impl AsValueRef for MetadataValue<'_> {
-    fn as_value_ref(&self) -> LLVMValueRef {
-        self.metadata_value.value
+//impl AsValueRef for MetadataValue<'_> {
+    //fn as_value_ref(&self) -> LLVMValueRef {
+        //self.metadata_value.value
+    //}
+//}
+
+impl<'ctx, V: 'ctx + AsValueRef> From<V> for MetadataValue<'ctx> {
+    fn from(value: V) -> MetadataValue<'ctx> {
+        MetadataValue::new(value.as_value_ref())
     }
 }
 

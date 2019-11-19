@@ -14,6 +14,17 @@ pub trait AsValueRef {
     fn as_value_ref(&self) -> LLVMValueRef;
 }
 
+impl<T, V> AsValueRef for T
+where
+    V: AsValueRef,
+    T: core::ops::Deref<Target=V>,
+{
+    #[inline]
+    fn as_value_ref(&self) -> LLVMValueRef {
+        self.deref().as_value_ref()
+    }
+}
+
 macro_rules! trait_value_set {
     ($trait_name:ident: $($args:ident),*) => (
         $(

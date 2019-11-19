@@ -98,6 +98,7 @@ fn test_module_owned_data_layout_disposed_safely() {
     context.create_module("test");
 }
 
+#[llvm_versions(3.6..9.0)]
 #[test]
 fn test_write_and_load_memory_buffer() {
     let context = Context::create();
@@ -123,6 +124,34 @@ fn test_write_and_load_memory_buffer() {
     let object_file = memory_buffer2.create_object_file();
 
     assert!(object_file.is_err());
+}
+
+#[llvm_versions(9.0..=latest)]
+#[test]
+fn test_write_and_load_memory_buffer() {
+    let context = Context::create();
+    let module = context.create_module("my_module");
+    let builder = context.create_builder();
+    let void_type = context.void_type();
+    let function_type = void_type.fn_type(&[], false);
+    let function = module.add_function("my_fn", function_type, None);
+    let basic_block = context.append_basic_block(function, "entry");
+
+    builder.position_at_end(&basic_block);
+    builder.build_return(None);
+
+    let memory_buffer = module.write_bitcode_to_memory();
+
+    assert!(memory_buffer.get_size() > 0);
+
+    let module2 = context.create_module_from_ir(memory_buffer).unwrap();
+
+    assert_eq!(module2.get_function("my_fn").unwrap().print_to_string(), function.print_to_string());
+
+    let memory_buffer2 = module.write_bitcode_to_memory();
+    let object_file = memory_buffer2.create_object_file(context.as_ref());
+
+    assert!(object_file.is_ok());
 }
 
 #[test]

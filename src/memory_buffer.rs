@@ -1,12 +1,12 @@
 use llvm_sys::core::{LLVMCreateMemoryBufferWithContentsOfFile, LLVMCreateMemoryBufferWithSTDIN, LLVMCreateMemoryBufferWithMemoryRange, LLVMCreateMemoryBufferWithMemoryRangeCopy, LLVMGetBufferStart, LLVMGetBufferSize, LLVMDisposeMemoryBuffer};
 use llvm_sys::prelude::LLVMMemoryBufferRef;
-use llvm_sys::object::LLVMCreateObjectFile;
 
-use crate::object_file::ObjectFile;
 use crate::support::LLVMString;
+#[llvm_versions(9.0..=latest)]
+use crate::context::ContextRef;
 
 use std::ffi::CString;
-use std::mem::{forget, MaybeUninit};
+use std::mem::MaybeUninit;
 use std::path::Path;
 use std::ptr;
 use std::slice;
@@ -107,18 +107,29 @@ impl MemoryBuffer {
 
     /// Convert this `MemoryBuffer` into an `ObjectFile`. LLVM does not currently
     /// provide any way to determine the cause of error if conversion fails.
-    pub fn create_object_file(self) -> Result<ObjectFile, ()> {
+    #[llvm_versions(3.6..9.0)]
+    pub fn create_object_file<'ctx>(self) -> Result<crate::object_file::ObjectFile<'ctx>, ()> {
+        use llvm_sys::object::LLVMCreateObjectFile;
+        use crate::object_file::ObjectFile;
+
         let object_file = unsafe {
             LLVMCreateObjectFile(self.memory_buffer)
         };
 
-        forget(self);
+        core::mem::forget(self);
 
         if object_file.is_null() {
             return Err(());
         }
 
         Ok(ObjectFile::new(object_file))
+    }
+
+    #[llvm_versions(9.0..=latest)]
+    pub fn create_object_file<'ctx>(self, context: ContextRef<'ctx>) -> Result<crate::object_file::Binary<'ctx>, LLVMString> {
+        use crate::object_file::Binary;
+
+        Binary::create(self, context)
     }
 }
 

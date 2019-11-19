@@ -37,7 +37,7 @@ use crate::memory_buffer::MemoryBuffer;
 use crate::support::LLVMString;
 use crate::targets::{Target, InitializationConfig};
 use crate::types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum, AnyTypeEnum};
-use crate::values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
+use crate::values::{FunctionValue, GlobalValue, MetadataValue};
 #[llvm_versions(7.0..=latest)]
 use crate::values::BasicValue;
 
