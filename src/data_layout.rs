@@ -9,7 +9,7 @@ pub struct DataLayout {
 }
 
 impl DataLayout {
-    pub(crate) fn new_owned(data_layout: *const i8) -> DataLayout {
+    pub(crate) fn new_owned(data_layout: *const ::libc::c_char) -> DataLayout {
         debug_assert!(!data_layout.is_null());
 
         DataLayout {
@@ -17,7 +17,7 @@ impl DataLayout {
         }
     }
 
-    pub(crate) fn new_borrowed(data_layout: *const i8) -> DataLayout {
+    pub(crate) fn new_borrowed(data_layout: *const ::libc::c_char) -> DataLayout {
         debug_assert!(!data_layout.is_null());
 
         DataLayout {
@@ -29,7 +29,7 @@ impl DataLayout {
         self.data_layout.as_str()
     }
 
-    pub fn as_ptr(&self) -> *const i8 {
+    pub fn as_ptr(&self) -> *const ::libc::c_char {
         match self.data_layout {
             LLVMStringOrRaw::Owned(ref llvm_string) => llvm_string.ptr,
             LLVMStringOrRaw::Borrowed(ptr) => ptr,

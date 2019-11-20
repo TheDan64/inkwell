@@ -31,8 +31,7 @@ impl MemoryBuffer {
         let mut err_string = MaybeUninit::uninit();
 
         let return_code = unsafe {
-            // REVIEW: Unclear why this expects *const i8 instead of *const u8
-            LLVMCreateMemoryBufferWithContentsOfFile(path.as_ptr() as *const i8, &mut memory_buffer, err_string.as_mut_ptr())
+            LLVMCreateMemoryBufferWithContentsOfFile(path.as_ptr() as *const ::libc::c_char, &mut memory_buffer, err_string.as_mut_ptr())
         };
 
         // TODO: Verify 1 is error code (LLVM can be inconsistent)
@@ -68,7 +67,7 @@ impl MemoryBuffer {
         let name_c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let memory_buffer = unsafe {
-            LLVMCreateMemoryBufferWithMemoryRange(input.as_ptr() as *const i8, input.len(), name_c_string.as_ptr(), false as i32)
+            LLVMCreateMemoryBufferWithMemoryRange(input.as_ptr() as *const ::libc::c_char, input.len(), name_c_string.as_ptr(), false as i32)
         };
 
         MemoryBuffer::new(memory_buffer)
@@ -83,7 +82,7 @@ impl MemoryBuffer {
         let name_c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let memory_buffer = unsafe {
-            LLVMCreateMemoryBufferWithMemoryRangeCopy(input.as_ptr() as *const i8, input.len(), name_c_string.as_ptr())
+            LLVMCreateMemoryBufferWithMemoryRangeCopy(input.as_ptr() as *const ::libc::c_char, input.len(), name_c_string.as_ptr())
         };
 
         MemoryBuffer::new(memory_buffer)

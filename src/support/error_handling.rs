@@ -22,7 +22,7 @@ use libc::c_void;
 // }
 // and will be called before LLVM calls C exit()
 /// Installs an error handler to be called before LLVM exits.
-pub unsafe fn install_fatal_error_handler(handler: extern "C" fn(*const i8)) {
+pub unsafe fn install_fatal_error_handler(handler: extern "C" fn(*const ::libc::c_char)) {
     LLVMInstallFatalErrorHandler(Some(handler))
 }
 
@@ -44,7 +44,7 @@ impl DiagnosticInfo {
         }
     }
 
-    pub(crate) fn get_description(&self) -> *mut i8 {
+    pub(crate) fn get_description(&self) -> *mut ::libc::c_char {
         unsafe {
             LLVMGetDiagInfoDescription(self.diagnostic_info)
         }
@@ -69,10 +69,10 @@ pub(crate) extern "C" fn get_error_str_diagnostic_handler(diagnostic_info: LLVMD
     let diagnostic_info = DiagnosticInfo::new(diagnostic_info);
 
     if diagnostic_info.severity_is_error() {
-        let i8_ptr_ptr = void_ptr as *mut *mut c_void as *mut *mut i8;
+        let c_ptr_ptr = void_ptr as *mut *mut c_void as *mut *mut ::libc::c_char;
 
         unsafe {
-            *i8_ptr_ptr = diagnostic_info.get_description();
+            *c_ptr_ptr = diagnostic_info.get_description();
         }
     }
 }

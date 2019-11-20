@@ -122,7 +122,7 @@ impl<'ctx> IntType<'ctx> {
             return None
         }
         let value = unsafe {
-            LLVMConstIntOfStringAndSize(self.as_type_ref(), slice.as_ptr() as *const i8, slice.len() as u32, radix as u8)
+            LLVMConstIntOfStringAndSize(self.as_type_ref(), slice.as_ptr() as *const ::libc::c_char, slice.len() as u32, radix as u8)
         };
         Some(IntValue::new(value))
     }

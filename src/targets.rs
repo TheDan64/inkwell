@@ -944,7 +944,7 @@ impl Target {
         Self::from_name_raw(c_string.as_ptr())
     }
 
-    pub(crate) fn from_name_raw(c_string: *const i8) -> Option<Self> {
+    pub(crate) fn from_name_raw(c_string: *const ::libc::c_char) -> Option<Self> {
         let target = {
             let _guard = TARGET_LOCK.read();
             unsafe { LLVMGetTargetFromName(c_string) }
