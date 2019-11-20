@@ -116,7 +116,7 @@ impl<'ctx> Value<'ctx> {
             use llvm_sys::core::LLVMSetValueName2;
 
             unsafe {
-                LLVMSetValueName2(self.value, name.as_ptr() as *const i8, name.len())
+                LLVMSetValueName2(self.value, name.as_ptr() as *const ::libc::c_char, name.len())
             }
         }
     }

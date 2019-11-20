@@ -752,7 +752,7 @@ impl<'ctx> Module<'ctx> {
         let path = CString::new(path_str).expect("Could not convert path to CString");
         let mut err_string = MaybeUninit::uninit();
         let return_code = unsafe {
-            LLVMPrintModuleToFile(self.module.get(), path.as_ptr() as *const i8, err_string.as_mut_ptr())
+            LLVMPrintModuleToFile(self.module.get(), path.as_ptr() as *const ::libc::c_char, err_string.as_mut_ptr())
         };
 
         if return_code == 1 {
@@ -782,7 +782,7 @@ impl<'ctx> Module<'ctx> {
             use llvm_sys::core::LLVMSetModuleInlineAsm2;
 
             unsafe {
-                LLVMSetModuleInlineAsm2(self.module.get(), asm.as_ptr() as *const i8, asm.len())
+                LLVMSetModuleInlineAsm2(self.module.get(), asm.as_ptr() as *const ::libc::c_char, asm.len())
             }
         }
     }
@@ -1133,7 +1133,7 @@ impl<'ctx> Module<'ctx> {
     #[llvm_versions(3.9..=latest)]
     pub fn set_name(&self, name: &str) {
         unsafe {
-            LLVMSetModuleIdentifier(self.module.get(), name.as_ptr() as *const i8, name.len())
+            LLVMSetModuleIdentifier(self.module.get(), name.as_ptr() as *const ::libc::c_char, name.len())
         }
     }
 
@@ -1192,7 +1192,7 @@ impl<'ctx> Module<'ctx> {
         use llvm_sys::core::LLVMSetSourceFileName;
 
         unsafe {
-            LLVMSetSourceFileName(self.module.get(), file_name.as_ptr() as *const i8, file_name.len())
+            LLVMSetSourceFileName(self.module.get(), file_name.as_ptr() as *const ::libc::c_char, file_name.len())
         }
     }
 
@@ -1242,8 +1242,8 @@ impl<'ctx> Module<'ctx> {
 
             let context = self.get_context();
 
-            let mut char_ptr: *mut i8 = ptr::null_mut();
-            let char_ptr_ptr = &mut char_ptr as *mut *mut i8 as *mut *mut c_void as *mut c_void;
+            let mut char_ptr: *mut ::libc::c_char = ptr::null_mut();
+            let char_ptr_ptr = &mut char_ptr as *mut *mut ::libc::c_char as *mut *mut c_void as *mut c_void;
 
             // Newer LLVM versions don't use an out ptr anymore which was really straightforward...
             // Here we assign an error handler to extract the error message, if any, for us.
@@ -1288,7 +1288,7 @@ impl<'ctx> Module<'ctx> {
         use llvm_sys::core::LLVMMetadataAsValue;
 
         let flag = unsafe {
-            LLVMGetModuleFlag(self.module.get(), key.as_ptr() as *const i8, key.len())
+            LLVMGetModuleFlag(self.module.get(), key.as_ptr() as *const ::libc::c_char, key.len())
         };
 
         if flag.is_null() {
@@ -1321,7 +1321,7 @@ impl<'ctx> Module<'ctx> {
         let md = flag.as_metadata_ref();
 
         unsafe {
-            LLVMAddModuleFlag(self.module.get(), behavior.as_llvm_enum(), key.as_ptr() as *mut i8, key.len(), md)
+            LLVMAddModuleFlag(self.module.get(), behavior.as_llvm_enum(), key.as_ptr() as *mut ::libc::c_char, key.len(), md)
         }
     }
 
@@ -1337,7 +1337,7 @@ impl<'ctx> Module<'ctx> {
         };
 
         unsafe {
-            LLVMAddModuleFlag(self.module.get(), behavior.as_llvm_enum(), key.as_ptr() as *mut i8, key.len(), md)
+            LLVMAddModuleFlag(self.module.get(), behavior.as_llvm_enum(), key.as_ptr() as *mut ::libc::c_char, key.len(), md)
         }
     }
 }

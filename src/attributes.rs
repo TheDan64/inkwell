@@ -83,7 +83,7 @@ impl Attribute {
     /// ```
     pub fn get_named_enum_kind_id(name: &str) -> u32 {
         unsafe {
-            LLVMGetEnumAttributeKindForName(name.as_ptr() as *const i8, name.len())
+            LLVMGetEnumAttributeKindForName(name.as_ptr() as *const ::libc::c_char, name.len())
         }
     }
 

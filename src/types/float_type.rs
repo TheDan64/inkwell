@@ -127,7 +127,7 @@ impl<'ctx> FloatType<'ctx> {
     /// ```
     pub fn const_float_from_string(&self, slice: &str) -> FloatValue<'ctx> {
         let value = unsafe {
-            LLVMConstRealOfStringAndSize(self.as_type_ref(), slice.as_ptr() as *const i8, slice.len() as u32)
+            LLVMConstRealOfStringAndSize(self.as_type_ref(), slice.as_ptr() as *const ::libc::c_char, slice.len() as u32)
         };
 
         FloatValue::new(value)

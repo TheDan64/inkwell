@@ -394,7 +394,7 @@ impl<'ctx> FunctionValue<'ctx> {
     #[llvm_versions(3.9..=latest)]
     pub fn remove_string_attribute(&self, loc: AttributeLoc, key: &str) {
         unsafe {
-            LLVMRemoveStringAttributeAtIndex(self.as_value_ref(), loc.get_index(), key.as_ptr() as *const i8, key.len() as u32)
+            LLVMRemoveStringAttributeAtIndex(self.as_value_ref(), loc.get_index(), key.as_ptr() as *const ::libc::c_char, key.len() as u32)
         }
     }
 
@@ -479,7 +479,7 @@ impl<'ctx> FunctionValue<'ctx> {
     #[llvm_versions(3.9..=latest)]
     pub fn get_string_attribute(&self, loc: AttributeLoc, key: &str) -> Option<Attribute> {
         let ptr = unsafe {
-            LLVMGetStringAttributeAtIndex(self.as_value_ref(), loc.get_index(), key.as_ptr() as *const i8, key.len() as u32)
+            LLVMGetStringAttributeAtIndex(self.as_value_ref(), loc.get_index(), key.as_ptr() as *const ::libc::c_char, key.len() as u32)
         };
 
         if ptr.is_null() {

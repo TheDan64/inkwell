@@ -288,7 +288,7 @@ impl<'ctx> CallSiteValue<'ctx> {
         use llvm_sys::core::LLVMGetCallSiteStringAttribute;
 
         let ptr = unsafe {
-            LLVMGetCallSiteStringAttribute(self.as_value_ref(), loc.get_index(), key.as_ptr() as *const i8, key.len() as u32)
+            LLVMGetCallSiteStringAttribute(self.as_value_ref(), loc.get_index(), key.as_ptr() as *const ::libc::c_char, key.len() as u32)
         };
 
         if ptr.is_null() {
@@ -368,7 +368,7 @@ impl<'ctx> CallSiteValue<'ctx> {
         use llvm_sys::core::LLVMRemoveCallSiteStringAttribute;
 
         unsafe {
-            LLVMRemoveCallSiteStringAttribute(self.as_value_ref(), loc.get_index(), key.as_ptr() as *const i8, key.len() as u32)
+            LLVMRemoveCallSiteStringAttribute(self.as_value_ref(), loc.get_index(), key.as_ptr() as *const ::libc::c_char, key.len() as u32)
         }
     }
 
