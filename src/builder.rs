@@ -1540,7 +1540,13 @@ impl<'ctx> Builder<'ctx> {
     /// builder.build_return(None);
     /// ```
     // https://llvm.org/docs/LangRef.html#atomicrmw-instruction
-    pub fn build_atomicrmw(&self, op: AtomicRMWBinOp, ptr: PointerValue<'ctx>, value: IntValue<'ctx>, ordering: AtomicOrdering) -> Result<IntValue, &'static str> {
+    pub fn build_atomicrmw(
+        &self,
+        op: AtomicRMWBinOp,
+        ptr: PointerValue<'ctx>,
+        value: IntValue<'ctx>,
+        ordering: AtomicOrdering,
+    ) -> Result<IntValue<'ctx>, &'static str> {
         // TODO: add support for fadd, fsub and xchg on floating point types in LLVM 9+.
 
         // "The type of ‘<value>’ must be an integer type whose bit width is a power of two greater than or equal to eight and less than or equal to a target-specific size limit. The type of the ‘<pointer>’ operand must be a pointer to that type." -- https://releases.llvm.org/3.6.2/docs/LangRef.html#atomicrmw-instruction
