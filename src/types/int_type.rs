@@ -117,7 +117,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i8_val = i8_type.const_int_from_string("ABCD", StringRadix::Binary);
     /// assert!(i8_val.is_none());
     /// ```
-    pub fn const_int_from_string(&self, slice: &str, radix: StringRadix) -> Option<IntValue> {
+    pub fn const_int_from_string(&self, slice: &str, radix: StringRadix) -> Option<IntValue<'ctx>> {
         if !radix.to_regex().is_match(slice) {
             return None
         }
