@@ -210,13 +210,15 @@ impl<'ctx> FunctionValue<'ctx> {
         self.fn_value.get_name()
     }
 
-    pub fn view_function_config(&self) {
+    /// View the control flow graph and produce a .dot file
+    pub fn view_function_cfg(&self) {
         unsafe {
             LLVMViewFunctionCFG(self.as_value_ref())
         }
     }
 
-    pub fn view_function_config_only(&self) {
+    /// Only view the control flow graph
+    pub fn view_function_cfg_only(&self) {
         unsafe {
             LLVMViewFunctionCFGOnly(self.as_value_ref())
         }
