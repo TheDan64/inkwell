@@ -51,7 +51,6 @@ target-all = [
     "target-sparc",
     "target-bpf",
     "target-lanai",
-    "target-webassembly"
 ]
 experimental = ["static-alloc"]
 

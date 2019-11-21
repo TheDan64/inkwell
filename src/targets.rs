@@ -733,7 +733,7 @@ impl Target {
     }
 
     #[cfg(feature = "target-webassembly")]
-    #[llvm_versions(8.0..=latest)]
+    #[llvm_versions(7.0..=latest)]
     pub fn initialize_webassembly(config: &InitializationConfig) {
         use llvm_sys::target::{
             LLVMInitializeWebAssemblyAsmParser, LLVMInitializeWebAssemblyAsmPrinter,
