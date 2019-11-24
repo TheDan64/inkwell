@@ -113,7 +113,7 @@ impl<'ctx> VectorValue<'ctx> {
     /// use inkwell::context::Context;
     ///
     /// let context = Context::create();
-    /// let string = context.const_string("my_string", false);
+    /// let string = context.const_string(b"my_string", false);
     ///
     /// assert!(string.is_const_string());
     /// ```
