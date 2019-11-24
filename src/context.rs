@@ -835,12 +835,12 @@ impl Context {
     /// use inkwell::context::Context;
     ///
     /// let context = Context::create();
-    /// let string = context.const_string("my_string", false);
+    /// let string = context.const_string(b"my_string", false);
     ///
     /// assert_eq!(string.print_to_string().to_string(), "[9 x i8] c\"my_string\"");
     /// ```
     // SubTypes: Should return VectorValue<IntValue<i8>>
-    pub fn const_string(&self, string: &str, null_terminated: bool) -> VectorValue {
+    pub fn const_string(&self, string: &[u8], null_terminated: bool) -> VectorValue {
         let ptr = unsafe {
             LLVMConstStringInContext(self.context, string.as_ptr() as *const ::libc::c_char, string.len() as u32, !null_terminated as i32)
         };

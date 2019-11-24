@@ -937,8 +937,8 @@ fn test_allocations() {
 #[test]
 fn test_string_values() {
     let context = Context::create();
-    let string = context.const_string("my_string", false);
-    let string_null = context.const_string("my_string", true);
+    let string = context.const_string(b"my_string", false);
+    let string_null = context.const_string(b"my_string", true);
 
     assert_eq!(string.print_to_string().to_string(), "[9 x i8] c\"my_string\"");
     assert_eq!(string_null.print_to_string().to_string(), "[10 x i8] c\"my_string\\00\"");
@@ -946,8 +946,8 @@ fn test_string_values() {
     assert!(string_null.is_const_string());
 
     let i8_type = context.i8_type();
-    let string = context.const_string("my_string", false);
-    let string_null = context.const_string("my_string", true);
+    let string = context.const_string(b"my_string", false);
+    let string_null = context.const_string(b"my_string", true);
 
     assert!(!string.is_constant_vector());
     assert!(!string_null.is_constant_vector());
