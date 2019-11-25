@@ -375,7 +375,7 @@ fn test_metadata_kinds() {
     let vector_value = vector_type.const_zero();
 
     let md_string = context.metadata_string("lots of metadata here");
-    let md_node = context.metadata_node(&[
+    context.metadata_node(&[
         i8_array_value.into(),
         i8_value.into(),
         f32_value.into(),
