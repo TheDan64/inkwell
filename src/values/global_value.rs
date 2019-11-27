@@ -37,7 +37,7 @@ impl<'ctx> GlobalValue<'ctx> {
         }
     }
 
-    pub fn get_previous_global(&self) -> Option<GlobalValue> {
+    pub fn get_previous_global(&self) -> Option<GlobalValue<'ctx>> {
         let value = unsafe {
             LLVMGetPreviousGlobal(self.as_value_ref())
         };
@@ -49,7 +49,7 @@ impl<'ctx> GlobalValue<'ctx> {
         Some(GlobalValue::new(value))
     }
 
-    pub fn get_next_global(&self) -> Option<GlobalValue> {
+    pub fn get_next_global(&self) -> Option<GlobalValue<'ctx>> {
         let value = unsafe {
             LLVMGetNextGlobal(self.as_value_ref())
         };
