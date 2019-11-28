@@ -516,3 +516,47 @@ macro_rules! impl_unsafe_fn {
 }
 
 impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J, K, L, M);
+
+#[cfg(all(feature = "experimental", not(any(feature = "llvm3-6", feature = "llvm3-7"))))]
+pub mod experimental {
+    #[llvm_versions(3.8..=latest)]
+    use llvm_sys::orc::{LLVMOrcCreateInstance, LLVMOrcDisposeInstance, LLVMOrcJITStackRef, LLVMOrcAddEagerlyCompiledIR, LLVMOrcAddLazilyCompiledIR};
+    use crate::module::Module;
+    use crate::targets::TargetMachine;
+    use std::mem::MaybeUninit;
+
+    // TODO
+    #[derive(Debug)]
+    pub struct Orc(LLVMOrcJITStackRef);
+
+    impl Orc {
+        pub fn create(target_machine: TargetMachine) -> Self {
+            let stack_ref = unsafe {
+                LLVMOrcCreateInstance(target_machine.target_machine)
+            };
+
+            Orc(stack_ref)
+        }
+
+        pub fn add_compiled_ir<'ctx>(&self, module: &Module<'ctx>, lazily: bool) -> Result<(), ()> {
+            // let handle = MaybeUninit::uninit();
+            // let _err =  if lazily {
+            //     unsafe { LLVMOrcAddLazilyCompiledIR(self.0, handle.as_mut_ptr(), module.module.get(), sym_resolve, sym_resolve_ctx) }
+            // } else {
+            //     unsafe { LLVMOrcAddEagerlyCompiledIR(self.0, handle.as_mut_ptr(), module.module.get(), sym_resolve, sym_resolve_ctx) }
+            // };
+
+            Ok(())
+        }
+    }
+
+    impl Drop for Orc {
+        fn drop(&mut self) {
+            // REVIEW: This returns an LLVMErrorRef, not sure what we can do with it...
+            // print to stderr maybe?
+            unsafe {
+                LLVMOrcDisposeInstance(self.0);
+            }
+        }
+    }
+}

@@ -990,7 +990,7 @@ impl Target {
 
 #[derive(Debug)]
 pub struct TargetMachine {
-    target_machine: LLVMTargetMachineRef,
+    pub(crate) target_machine: LLVMTargetMachineRef,
 }
 
 impl TargetMachine {
