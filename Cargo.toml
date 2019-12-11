@@ -21,6 +21,9 @@ llvm5-0 = []
 llvm6-0 = []
 llvm7-0 = []
 llvm8-0 = []
+# Don't link aganist LLVM libraries. This is useful if another dependency is
+# installing LLVM. See llvm-sys for more details.
+no-llvm-linking = ["llvm-sys/no-llvm-linking"]
 target-x86 = []
 target-arm = []
 target-mips = []
