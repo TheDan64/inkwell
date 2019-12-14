@@ -18,14 +18,9 @@ use syn::fold::Fold;
 use syn::spanned::Spanned;
 use syn::{Token, LitFloat, Ident, Item, Field, Variant, Attribute};
 
-const FEATURES_ENV: &str = env!("INKWELL_FEATURES");
-
-/// Fetches a vector of feature version strings, e.g. llvm8-0
-fn get_feature_versions() -> Vec<&'static str> {
-    FEATURES_ENV
-        .split(',')
-        .collect()
-}
+// This array should match the LLVM features in the top level Cargo manifest
+const FEATURE_VERSIONS: [&str; 9] =
+    ["llvm3-6", "llvm3-7", "llvm3-8", "llvm3-9", "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0"];
 
 /// Gets the index of the feature version that represents `latest`
 fn get_latest_feature_index(features: &[&str]) -> usize {
@@ -43,7 +38,7 @@ fn get_feature_index(features: &[&str], feature: String, span: Span) -> Result<u
 
 /// Gets a vector of feature versions represented by the given VersionType
 fn get_features(vt: VersionType) -> Result<Vec<&'static str>> {
-    let features = get_feature_versions();
+    let features = FEATURE_VERSIONS;
     let latest = get_latest_feature_index(&features);
     match vt {
         VersionType::Specific(version, span) => {
@@ -189,7 +184,7 @@ struct FeatureSet(Vec<&'static str>, Option<Error>);
 impl Default for FeatureSet {
     fn default() -> Self {
         // Default to all versions
-        Self(get_feature_versions(), None)
+        Self(FEATURE_VERSIONS.to_vec(), None)
     }
 }
 impl Parse for FeatureSet {
