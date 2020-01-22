@@ -903,6 +903,7 @@ fn test_allocations() {
     let module = context.create_module("my_mod");
     let void_type = context.void_type();
     let i32_type = context.i32_type();
+    let unsized_type = context.opaque_struct_type("my_struct");
     let i32_three = i32_type.const_int(3, false);
     let fn_type = void_type.fn_type(&[], false);
     let fn_value = module.add_function("my_func", fn_type, None);
@@ -932,6 +933,14 @@ fn test_allocations() {
     let heap_array = builder.build_array_malloc(i32_type, i32_three, "heap_array");
 
     assert_eq!(*heap_array.get_type().print_to_string(), *CString::new("i32*").unwrap());
+
+    let bad_malloc_res = std::panic::catch_unwind(|| builder.build_malloc(unsized_type, ""));
+
+    assert!(bad_malloc_res.is_err());
+
+    let bad_array_malloc_res = std::panic::catch_unwind(|| builder.build_array_malloc(unsized_type, i32_three, ""));
+
+    assert!(bad_array_malloc_res.is_err());
 }
 
 #[test]

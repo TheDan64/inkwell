@@ -373,6 +373,19 @@ impl<'ctx> Builder<'ctx> {
 
     // TODOC: Heap allocation
     pub fn build_array_malloc<T: BasicType<'ctx>>(&self, ty: T, size: IntValue<'ctx>, name: &str) -> PointerValue<'ctx> {
+        // LLVMBulidArrayMalloc segfaults if ty is unsized
+        let is_sized = match ty.as_basic_type_enum() {
+            BasicTypeEnum::ArrayType(ty) => ty.is_sized(),
+            BasicTypeEnum::FloatType(ty) => ty.is_sized(),
+            BasicTypeEnum::IntType(ty) => ty.is_sized(),
+            BasicTypeEnum::PointerType(ty) => ty.is_sized(),
+            BasicTypeEnum::StructType(ty) => ty.is_sized(),
+            BasicTypeEnum::VectorType(ty) => ty.is_sized(),
+        };
+        if !is_sized {
+            panic!("Cannot build malloc call for an unsized type {:?}", ty);
+        }
+
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
