@@ -928,17 +928,19 @@ fn test_allocations() {
 
     let heap_ptr = builder.build_malloc(i32_type, "heap_ptr");
 
-    assert_eq!(*heap_ptr.get_type().print_to_string(), *CString::new("i32*").unwrap());
+    assert!(heap_ptr.is_ok());
+    assert_eq!(*heap_ptr.unwrap().get_type().print_to_string(), *CString::new("i32*").unwrap());
 
     let heap_array = builder.build_array_malloc(i32_type, i32_three, "heap_array");
 
-    assert_eq!(*heap_array.get_type().print_to_string(), *CString::new("i32*").unwrap());
+    assert!(heap_array.is_ok());
+    assert_eq!(*heap_array.unwrap().get_type().print_to_string(), *CString::new("i32*").unwrap());
 
-    let bad_malloc_res = std::panic::catch_unwind(|| builder.build_malloc(unsized_type, ""));
+    let bad_malloc_res = builder.build_malloc(unsized_type, "");
 
     assert!(bad_malloc_res.is_err());
 
-    let bad_array_malloc_res = std::panic::catch_unwind(|| builder.build_array_malloc(unsized_type, i32_three, ""));
+    let bad_array_malloc_res = builder.build_array_malloc(unsized_type, i32_three, "");
 
     assert!(bad_array_malloc_res.is_err());
 }

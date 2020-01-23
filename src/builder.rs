@@ -348,7 +348,7 @@ impl<'ctx> Builder<'ctx> {
     }
 
     // TODOC: Heap allocation
-    pub fn build_malloc<T: BasicType<'ctx>>(&self, ty: T, name: &str) -> PointerValue<'ctx> {
+    pub fn build_malloc<T: BasicType<'ctx>>(&self, ty: T, name: &str) -> Result<PointerValue<'ctx>, &'static str> {
         // LLVMBulidMalloc segfaults if ty is unsized
         let is_sized = match ty.as_basic_type_enum() {
             BasicTypeEnum::ArrayType(ty) => ty.is_sized(),
@@ -359,7 +359,7 @@ impl<'ctx> Builder<'ctx> {
             BasicTypeEnum::VectorType(ty) => ty.is_sized(),
         };
         if !is_sized {
-            panic!("Cannot build malloc call for an unsized type {:?}", ty);
+            return Err("Cannot build malloc call for an unsized type");
         }
 
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
@@ -368,11 +368,16 @@ impl<'ctx> Builder<'ctx> {
             LLVMBuildMalloc(self.builder, ty.as_type_ref(), c_string.as_ptr())
         };
 
-        PointerValue::new(value)
+        Ok(PointerValue::new(value))
     }
 
     // TODOC: Heap allocation
-    pub fn build_array_malloc<T: BasicType<'ctx>>(&self, ty: T, size: IntValue<'ctx>, name: &str) -> PointerValue<'ctx> {
+    pub fn build_array_malloc<T: BasicType<'ctx>>(
+        &self,
+        ty: T,
+        size: IntValue<'ctx>,
+        name: &str
+    ) -> Result<PointerValue<'ctx>, &'static str> {
         // LLVMBulidArrayMalloc segfaults if ty is unsized
         let is_sized = match ty.as_basic_type_enum() {
             BasicTypeEnum::ArrayType(ty) => ty.is_sized(),
@@ -383,7 +388,7 @@ impl<'ctx> Builder<'ctx> {
             BasicTypeEnum::VectorType(ty) => ty.is_sized(),
         };
         if !is_sized {
-            panic!("Cannot build malloc call for an unsized type {:?}", ty);
+            return Err("Cannot build array malloc call for an unsized type");
         }
 
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
@@ -392,7 +397,7 @@ impl<'ctx> Builder<'ctx> {
             LLVMBuildArrayMalloc(self.builder, ty.as_type_ref(), size.as_value_ref(), c_string.as_ptr())
         };
 
-        PointerValue::new(value)
+        Ok(PointerValue::new(value))
     }
 
     // SubType: <P>(&self, ptr: PointerValue<P>) -> InstructionValue {
