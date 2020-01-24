@@ -321,25 +321,23 @@ impl<'ctx> Module<'ctx> {
         Some(BasicTypeEnum::new(type_))
     }
 
-    /// Sets a `Target` to this `Module`.
+    /// Assigns a `TargetTriple` to this `Module`.
     ///
     /// # Example
     ///
     /// ```rust,no_run
     /// use inkwell::context::Context;
-    /// use inkwell::targets::Target;
-    ///
-    /// Target::initialize_x86(&Default::default());
+    /// use inkwell::targets::TargetTriple;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("mod");
-    /// let target = Target::from_name("x86-64").unwrap();
+    /// let triple = TargetTriple::create("x86_64-pc-linux-gnu");
     ///
-    /// assert!(module.get_target().is_none());
+    /// assert_eq!(module.get_target(), TargetTriple::create(""));
     ///
-    /// module.set_target(&target);
+    /// module.set_target(&triple);
     ///
-    /// assert_eq!(module.get_target().unwrap(), target);
+    /// assert_eq!(module.get_target(), triple);
     /// ```
     pub fn set_target(&self, target_triple: &TargetTriple) {
         unsafe {
@@ -347,25 +345,24 @@ impl<'ctx> Module<'ctx> {
         }
     }
 
-    /// Gets the `Target` assigned to this `Module`, if any.
+    /// Gets the `TargetTriple` assigned to this `Module`. If none has been
+    /// assigned, the triple will default to "".
     ///
     /// # Example
     ///
     /// ```rust,no_run
     /// use inkwell::context::Context;
-    /// use inkwell::targets::Target;
-    ///
-    /// Target::initialize_x86(&Default::default());
+    /// use inkwell::targets::TargetTriple;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("mod");
-    /// let target = Target::from_name("x86-64").unwrap();
+    /// let triple = TargetTriple::create("x86_64-pc-linux-gnu");
     ///
-    /// assert!(module.get_target().is_none());
+    /// assert_eq!(module.get_target(), TargetTriple::create(""));
     ///
-    /// module.set_target(&target);
+    /// module.set_target(&triple);
     ///
-    /// assert_eq!(module.get_target().unwrap(), target);
+    /// assert_eq!(module.get_target(), triple);
     /// ```
     pub fn get_target(&self) -> TargetTriple {
         // REVIEW: This isn't an owned LLVMString, is it? If so, need to deallocate.
