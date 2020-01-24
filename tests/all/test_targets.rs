@@ -2,7 +2,7 @@ extern crate inkwell;
 
 use self::inkwell::{AddressSpace, OptimizationLevel};
 use self::inkwell::context::Context;
-use self::inkwell::targets::{ByteOrdering, CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetData, TargetMachine};
+use self::inkwell::targets::{ByteOrdering, CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetData, TargetMachine, TargetTriple};
 
 use std::env::temp_dir;
 use std::ffi::CString;
@@ -72,7 +72,7 @@ fn test_target_and_target_machine() {
 
     assert!(bad_target.is_none());
 
-    let bad_target2 = Target::from_triple("sadas");
+    let bad_target2 = Target::from_triple(&TargetTriple::create("sadas"));
 
     #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
     assert_eq!(bad_target2.unwrap_err().to_string(), "No available targets are compatible with this triple, see -version for the available targets.");
@@ -87,7 +87,7 @@ fn test_target_and_target_machine() {
 
     assert!(good_target.is_some());
 
-    let good_target2 = Target::from_triple("x86_64-pc-linux-gnu");
+    let good_target2 = Target::from_triple(&TargetTriple::create("x86_64-pc-linux-gnu"));
 
     assert!(good_target2.is_ok(), "{}", good_target2.unwrap_err());
 
@@ -110,7 +110,15 @@ fn test_target_and_target_machine() {
 
     assert_eq!(*next_target.get_name(), *CString::new("x86").unwrap());
 
-    let target_machine = good_target.create_target_machine("x86_64-pc-linux-gnu", "x86-64", "+avx2", OptimizationLevel::Default, RelocMode::Default, CodeModel::Default).unwrap();
+    let target_machine = good_target.create_target_machine(
+        &TargetTriple::create("x86_64-pc-linux-gnu"),
+        "x86-64",
+        "+avx2",
+        OptimizationLevel::Default,
+        RelocMode::Default,
+        CodeModel::Default
+    )
+    .unwrap();
 
     // TODO: Test target_machine failure
 
@@ -119,18 +127,18 @@ fn test_target_and_target_machine() {
     let triple = target_machine.get_triple();
 
     assert_eq!(target_machine.get_target(), good_target);
-    assert_eq!(*triple, *CString::new("x86_64-pc-linux-gnu").unwrap());
+    assert_eq!(triple.as_str(), CString::new("x86_64-pc-linux-gnu").unwrap().as_c_str());
     assert_eq!(*target_machine.get_cpu(), *CString::new("x86-64").unwrap());
     assert_eq!(*target_machine.get_feature_string(), *CString::new("+avx2").unwrap());
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
                   feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     {
-        use either::Either::{Left, Right};
-
         // TODO: Try and find a triple that actually gets normalized..
-        assert_eq!(*TargetMachine::normalize_target_triple(Left("x86_64-pc-linux-gnu")), *CString::new("x86_64-pc-linux-gnu").unwrap());
-        assert_eq!(*TargetMachine::normalize_target_triple(Right(&*triple)), *CString::new("x86_64-pc-linux-gnu").unwrap());
+        assert_eq!(
+            TargetMachine::normalize_target_triple(&triple).as_str(),
+            CString::new("x86_64-pc-linux-gnu").unwrap().as_c_str(),
+        );
 
         let _host_name = TargetMachine::get_host_cpu_name();
         let _host_cpu_features = TargetMachine::get_host_cpu_features();
@@ -140,7 +148,7 @@ fn test_target_and_target_machine() {
 #[test]
 fn test_default_target_triple() {
     let default_target_triple = TargetMachine::get_default_triple();
-    let default_target_triple = default_target_triple.to_str().unwrap();
+    let default_target_triple = default_target_triple.as_str().to_string_lossy();
 
     #[cfg(target_os = "linux")]
     let cond = default_target_triple == "x86_64-pc-linux-gnu" ||
@@ -306,7 +314,15 @@ fn test_write_target_machine_to_file() {
     Target::initialize_x86(&InitializationConfig::default());
 
     let target = Target::from_name("x86-64").unwrap();
-    let target_machine = target.create_target_machine("x86_64-pc-linux-gnu", "x86-64", "+avx2", OptimizationLevel::Less, RelocMode::Static, CodeModel::Small).unwrap();
+    let target_machine = target.create_target_machine(
+        &TargetTriple::create("x86_64-pc-linux-gnu"),
+        "x86-64",
+        "+avx2",
+        OptimizationLevel::Less,
+        RelocMode::Static,
+        CodeModel::Small
+    )
+    .unwrap();
     let mut path = temp_dir();
 
     path.push("temp.asm");
@@ -342,7 +358,15 @@ fn test_write_target_machine_to_memory_buffer() {
     Target::initialize_x86(&InitializationConfig::default());
 
     let target = Target::from_name("x86-64").unwrap();
-    let target_machine = target.create_target_machine("x86_64-pc-linux-gnu", "x86-64", "+avx2", OptimizationLevel::Aggressive, RelocMode::PIC, CodeModel::Medium).unwrap();
+    let target_machine = target.create_target_machine(
+        &TargetTriple::create("x86_64-pc-linux-gnu"),
+        "x86-64",
+        "+avx2",
+        OptimizationLevel::Aggressive,
+        RelocMode::PIC,
+        CodeModel::Medium
+    )
+    .unwrap();
 
     let context = Context::create();
     let module = context.create_module("my_module");
