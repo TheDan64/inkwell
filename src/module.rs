@@ -395,12 +395,12 @@ impl<'ctx> Module<'ctx> {
             .map_err(|mut err_string| {
                 err_string.push('\0');
 
-                LLVMString::create(&err_string)
+                LLVMString::create_from_str(&err_string)
             })?;
 
         if self.owned_by_ee.borrow().is_some() {
             let string = "This module is already owned by an ExecutionEngine.\0";
-            return Err(LLVMString::create(string));
+            return Err(LLVMString::create_from_str(string));
         }
 
         let mut execution_engine = MaybeUninit::uninit();
@@ -446,12 +446,12 @@ impl<'ctx> Module<'ctx> {
             .map_err(|mut err_string| {
                 err_string.push('\0');
 
-                LLVMString::create(&err_string)
+                LLVMString::create_from_str(&err_string)
             })?;
 
         if self.owned_by_ee.borrow().is_some() {
             let string = "This module is already owned by an ExecutionEngine.\0";
-            return Err(LLVMString::create(string));
+            return Err(LLVMString::create_from_str(string));
         }
 
         let mut execution_engine = MaybeUninit::uninit();
@@ -499,12 +499,12 @@ impl<'ctx> Module<'ctx> {
             .map_err(|mut err_string| {
                 err_string.push('\0');
 
-                LLVMString::create(&err_string)
+                LLVMString::create_from_str(&err_string)
             })?;
 
         if self.owned_by_ee.borrow().is_some() {
             let string = "This module is already owned by an ExecutionEngine.\0";
-            return Err(LLVMString::create(string));
+            return Err(LLVMString::create_from_str(string));
         }
 
         let mut execution_engine = MaybeUninit::uninit();
@@ -1209,7 +1209,7 @@ impl<'ctx> Module<'ctx> {
     pub fn link_in_module(&self, other: Self) -> Result<(), LLVMString> {
         if other.owned_by_ee.borrow().is_some() {
             let string = "Cannot link a module which is already owned by an ExecutionEngine.\0";
-            return Err(LLVMString::create(string));
+            return Err(LLVMString::create_from_str(string));
         }
 
         #[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]

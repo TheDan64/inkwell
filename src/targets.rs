@@ -119,11 +119,10 @@ impl TargetTriple {
     }
 
     pub fn create(target_triple: &str) -> TargetTriple {
-        let mut target_triple_copy = target_triple.to_owned();
-        target_triple_copy.push('\0');
+        let c_string = CString::new(target_triple).expect("Conversion to CString failed unexpectedly");
 
         TargetTriple {
-            target_triple: LLVMStringOrRaw::Owned(LLVMString::create(&target_triple_copy))
+            target_triple: LLVMStringOrRaw::Owned(LLVMString::create_from_c_str(c_string.as_c_str()))
         }
     }
 
