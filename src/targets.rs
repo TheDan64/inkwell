@@ -28,13 +28,14 @@ use crate::data_layout::DataLayout;
 use crate::memory_buffer::MemoryBuffer;
 use crate::module::Module;
 use crate::passes::PassManager;
-use crate::support::LLVMString;
+use crate::support::{LLVMString, LLVMStringOrRaw};
 use crate::types::{AnyType, AsTypeRef, IntType, StructType};
 use crate::values::{AsValueRef, GlobalValue};
 use crate::{AddressSpace, OptimizationLevel};
 
 use std::default::Default;
 use std::ffi::{CStr, CString};
+use std::fmt;
 use std::mem::MaybeUninit;
 use std::path::Path;
 use std::ptr;
@@ -93,6 +94,64 @@ impl Default for InitializationConfig {
             info: true,
             machine_code: true,
         }
+    }
+}
+
+#[derive(Eq)]
+pub struct TargetTriple {
+    pub(crate) target_triple: LLVMStringOrRaw,
+}
+
+impl TargetTriple {
+    pub(crate) fn new_owned(target_triple: *const ::libc::c_char) -> TargetTriple {
+        debug_assert!(!target_triple.is_null());
+
+        TargetTriple {
+            target_triple: LLVMStringOrRaw::Owned(LLVMString::new(target_triple)),
+        }
+    }
+
+    pub(crate) fn new_borrowed(target_triple: *const ::libc::c_char) -> TargetTriple {
+        debug_assert!(!target_triple.is_null());
+
+        TargetTriple {
+            target_triple: LLVMStringOrRaw::Borrowed(target_triple),
+        }
+    }
+
+    pub fn create(target_triple: &str) -> TargetTriple {
+        let mut target_triple_copy = target_triple.to_owned();
+        target_triple_copy.push('\0');
+
+        TargetTriple {
+            target_triple: LLVMStringOrRaw::Owned(LLVMString::create(&target_triple_copy))
+        }
+    }
+
+    pub fn as_str(&self) -> &CStr {
+        self.target_triple.as_str()
+    }
+
+    pub fn as_ptr(&self) -> *const ::libc::c_char {
+        match self.target_triple {
+            LLVMStringOrRaw::Owned(ref llvm_string) => llvm_string.ptr,
+            LLVMStringOrRaw::Borrowed(ptr) => ptr,
+        }
+    }
+}
+
+impl PartialEq for TargetTriple {
+    fn eq(&self, other: &TargetTriple) -> bool {
+        self.as_str() == other.as_str()
+    }
+}
+
+impl fmt::Debug for TargetTriple {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("DataLayout")
+            .field("address", &self.as_ptr())
+            .field("repr", &self.as_str())
+            .finish()
     }
 }
 

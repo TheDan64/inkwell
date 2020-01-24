@@ -35,7 +35,7 @@ use crate::data_layout::DataLayout;
 use crate::execution_engine::ExecutionEngine;
 use crate::memory_buffer::MemoryBuffer;
 use crate::support::LLVMString;
-use crate::targets::{Target, InitializationConfig};
+use crate::targets::{InitializationConfig, Target, TargetTriple};
 use crate::types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
 use crate::values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
 #[llvm_versions(7.0..=latest)]
@@ -341,9 +341,9 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(module.get_target().unwrap(), target);
     /// ```
-    pub fn set_target(&self, target: &Target) {
+    pub fn set_target(&self, target_triple: &TargetTriple) {
         unsafe {
-            LLVMSetTarget(self.module.get(), target.get_name().as_ptr())
+            LLVMSetTarget(self.module.get(), target_triple.as_ptr())
         }
     }
 
@@ -367,13 +367,13 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(module.get_target().unwrap(), target);
     /// ```
-    pub fn get_target(&self) -> Option<Target> {
+    pub fn get_target(&self) -> TargetTriple {
         // REVIEW: This isn't an owned LLVMString, is it? If so, need to deallocate.
         let target_str = unsafe {
             LLVMGetTarget(self.module.get())
         };
 
-        Target::from_name_raw(target_str)
+        TargetTriple::new_borrowed(target_str)
     }
 
     /// Creates an `ExecutionEngine` from this `Module`.
