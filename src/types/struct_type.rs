@@ -10,7 +10,7 @@ use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
-use crate::types::{Type, BasicTypeEnum, ArrayType, PointerType, FunctionType};
+use crate::types::{ArrayType, BasicType, BasicTypeEnum, PointerType, FunctionType, Type};
 use crate::values::{ArrayValue, BasicValueEnum, StructValue, IntValue, AsValueRef};
 
 /// A `StructType` is the type of a heterogeneous container of types.
@@ -101,25 +101,6 @@ impl<'ctx> StructType<'ctx> {
     /// ```
     pub fn const_zero(&self) -> StructValue<'ctx> {
         StructValue::new(self.struct_type.const_zero())
-    }
-
-    // REVIEW: Can be false if opaque. To make a const fn, we'd have to have
-    // have separate impls for Struct<Opaque> and StructType<T*>
-    /// Gets whether or not this `StructType` is sized or not.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    /// let f32_struct_type = context.struct_type(&[f32_type.into()], false);
-    ///
-    /// assert!(f32_struct_type.is_sized());
-    /// ```
-    pub fn is_sized(&self) -> bool {
-        self.struct_type.is_sized()
     }
 
     // TODO: impl it only for StructType<T*>?

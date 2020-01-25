@@ -5,7 +5,7 @@ use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
-use crate::types::{AnyTypeEnum, Type, BasicTypeEnum, ArrayType, FunctionType, VectorType};
+use crate::types::{AnyTypeEnum, BasicTypeEnum, ArrayType, FunctionType, Type, VectorType};
 use crate::values::{AsValueRef, ArrayValue, PointerValue, IntValue};
 
 use std::convert::TryFrom;
@@ -23,26 +23,6 @@ impl<'ctx> PointerType<'ctx> {
         PointerType {
             ptr_type: Type::new(ptr_type),
         }
-    }
-
-    // REVIEW: Always true -> const fn on trait?
-    /// Gets whether or not this `PointerType` is sized or not. This is likely
-    /// always true and may be removed in the future.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    /// use inkwell::AddressSpace;
-    ///
-    /// let context = Context::create();
-    /// let i8_type = context.i8_type();
-    /// let i8_ptr_type = i8_type.ptr_type(AddressSpace::Generic);
-    ///
-    /// assert!(i8_ptr_type.is_sized());
-    /// ```
-    pub fn is_sized(&self) -> bool {
-        self.ptr_type.is_sized()
     }
 
     /// Gets the size of this `PointerType`. Value may vary depending on the target architecture.

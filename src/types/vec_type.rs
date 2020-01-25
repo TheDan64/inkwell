@@ -4,7 +4,7 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
-use crate::types::{ArrayType, BasicTypeEnum, Type, traits::AsTypeRef, FunctionType, PointerType};
+use crate::types::{ArrayType, BasicTypeEnum, BasicType, Type, traits::AsTypeRef, FunctionType, PointerType};
 use crate::values::{AsValueRef, ArrayValue, BasicValue, VectorValue, IntValue};
 
 /// A `VectorType` is the type of a multiple value SIMD constant or variable.
@@ -22,26 +22,8 @@ impl<'ctx> VectorType<'ctx> {
         }
     }
 
-    // REVIEW: Can be unsized if inner type is opaque struct
-    /// Gets whether or not this `VectorType` is sized or not.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    /// let f32_vec_type = f32_type.vec_type(40);
-    ///
-    /// assert!(f32_vec_type.is_sized());
-    /// ```
-    pub fn is_sized(&self) -> bool {
-        self.vec_type.is_sized()
-    }
-
     // TODO: impl only for VectorType<!StructType<Opaque>>
-    // REVIEW: What about Opaque struct hiding in deeper levels?
+    // REVIEW: What about Opaque struct hiding in deeper levels
     // like VectorType<ArrayType<StructType<Opaque>>>?
     /// Gets the size of this `VectorType`. Value may vary depending on the target architecture.
     ///
