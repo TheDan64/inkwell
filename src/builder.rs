@@ -12,7 +12,7 @@ use crate::basic_block::BasicBlock;
 use crate::values::{AggregateValue, AggregateValueEnum, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode, CallSiteValue};
 #[llvm_versions(3.9..=latest)]
 use crate::values::StructValue;
-use crate::types::{AsTypeRef, BasicType, IntMathType, FloatMathType, PointerType, PointerMathType};
+use crate::types::{AsTypeRef, BasicType, BasicTypeEnum, IntMathType, FloatMathType, PointerType, PointerMathType};
 
 use std::ffi::CString;
 use std::marker::PhantomData;
@@ -348,25 +348,56 @@ impl<'ctx> Builder<'ctx> {
     }
 
     // TODOC: Heap allocation
-    pub fn build_malloc<T: BasicType<'ctx>>(&self, ty: T, name: &str) -> PointerValue<'ctx> {
+    pub fn build_malloc<T: BasicType<'ctx>>(&self, ty: T, name: &str) -> Result<PointerValue<'ctx>, &'static str> {
+        // LLVMBulidMalloc segfaults if ty is unsized
+        let is_sized = match ty.as_basic_type_enum() {
+            BasicTypeEnum::ArrayType(ty) => ty.is_sized(),
+            BasicTypeEnum::FloatType(ty) => ty.is_sized(),
+            BasicTypeEnum::IntType(ty) => ty.is_sized(),
+            BasicTypeEnum::PointerType(ty) => ty.is_sized(),
+            BasicTypeEnum::StructType(ty) => ty.is_sized(),
+            BasicTypeEnum::VectorType(ty) => ty.is_sized(),
+        };
+        if !is_sized {
+            return Err("Cannot build malloc call for an unsized type");
+        }
+
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildMalloc(self.builder, ty.as_type_ref(), c_string.as_ptr())
         };
 
-        PointerValue::new(value)
+        Ok(PointerValue::new(value))
     }
 
     // TODOC: Heap allocation
-    pub fn build_array_malloc<T: BasicType<'ctx>>(&self, ty: T, size: IntValue<'ctx>, name: &str) -> PointerValue<'ctx> {
+    pub fn build_array_malloc<T: BasicType<'ctx>>(
+        &self,
+        ty: T,
+        size: IntValue<'ctx>,
+        name: &str
+    ) -> Result<PointerValue<'ctx>, &'static str> {
+        // LLVMBulidArrayMalloc segfaults if ty is unsized
+        let is_sized = match ty.as_basic_type_enum() {
+            BasicTypeEnum::ArrayType(ty) => ty.is_sized(),
+            BasicTypeEnum::FloatType(ty) => ty.is_sized(),
+            BasicTypeEnum::IntType(ty) => ty.is_sized(),
+            BasicTypeEnum::PointerType(ty) => ty.is_sized(),
+            BasicTypeEnum::StructType(ty) => ty.is_sized(),
+            BasicTypeEnum::VectorType(ty) => ty.is_sized(),
+        };
+        if !is_sized {
+            return Err("Cannot build array malloc call for an unsized type");
+        }
+
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
             LLVMBuildArrayMalloc(self.builder, ty.as_type_ref(), size.as_value_ref(), c_string.as_ptr())
         };
 
-        PointerValue::new(value)
+        Ok(PointerValue::new(value))
     }
 
     // SubType: <P>(&self, ptr: PointerValue<P>) -> InstructionValue {
