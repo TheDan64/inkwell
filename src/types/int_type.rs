@@ -249,24 +249,6 @@ impl<'ctx> IntType<'ctx> {
         self.int_type.get_context()
     }
 
-    // REVIEW: Always true -> const fn on trait?
-    /// Gets whether or not this `IntType` is sized or not. This is likely
-    /// always true and may be removed in the future.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let i8_type = context.i8_type();
-    ///
-    /// assert!(i8_type.is_sized());
-    /// ```
-    pub fn is_sized(&self) -> bool {
-        self.int_type.is_sized()
-    }
-
     /// Gets the size of this `IntType`. Value may vary depending on the target architecture.
     ///
     /// # Example

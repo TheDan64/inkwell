@@ -5,7 +5,7 @@ use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
-use crate::types::{Type, BasicTypeEnum, PointerType, FunctionType};
+use crate::types::{Type, BasicTypeEnum, BasicType, PointerType, FunctionType};
 use crate::values::{AsValueRef, ArrayValue, IntValue};
 
 /// An `ArrayType` is the type of contiguous constants or variables.
@@ -21,24 +21,6 @@ impl<'ctx> ArrayType<'ctx> {
         ArrayType {
             array_type: Type::new(array_type),
         }
-    }
-
-    // REVIEW: Can be unsized if inner type is opaque struct
-    /// Gets whether or not this `ArrayType` is sized or not.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let i8_type = context.i8_type();
-    /// let i8_array_type = i8_type.array_type(3);
-    ///
-    /// assert!(i8_array_type.is_sized());
-    /// ```
-    pub fn is_sized(&self) -> bool {
-        self.array_type.is_sized()
     }
 
     // TODO: impl only for ArrayType<!StructType<Opaque>>

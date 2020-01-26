@@ -90,7 +90,7 @@ pub trait BasicValue<'ctx>: AnyValue<'ctx> {
     }
 
     // REVIEW: Possible encompassing methods to implement:
-    // is_sized, get/set metadata
+    // get/set metadata
 }
 
 /// Represents a value which is permitted in integer math operations

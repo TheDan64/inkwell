@@ -150,24 +150,6 @@ impl<'ctx> FloatType<'ctx> {
         FloatValue::new(self.float_type.const_zero())
     }
 
-    // REVIEW: Always true -> const fn?
-    /// Gets whether or not this `FloatType` is sized or not. This is likely
-    /// always true and may be removed in the future.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    ///
-    /// assert!(f32_type.is_sized());
-    /// ```
-    pub fn is_sized(&self) -> bool {
-        self.float_type.is_sized()
-    }
-
     /// Gets the size of this `FloatType`. Value may vary depending on the target architecture.
     ///
     /// # Example
