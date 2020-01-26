@@ -37,7 +37,7 @@ use llvm_sys::core::LLVMDumpType;
 use llvm_sys::core::{LLVMAlignOf, LLVMGetTypeContext, LLVMFunctionType, LLVMArrayType, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMTypeIsSized, LLVMSizeOf, LLVMVectorType, LLVMGetElementType, LLVMConstNull};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 #[cfg(feature = "experimental")]
-use static_alloc::Slab;
+use static_alloc::Bump;
 
 use std::fmt;
 use std::marker::PhantomData;
@@ -115,15 +115,19 @@ impl<'ctx> Type<'ctx> {
 
     #[cfg(feature = "experimental")]
     fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
-        let pool: Slab<[usize; 16]> = Slab::uninit();
-        let mut fixed_vec = pool.fixed_vec(param_types.len()).expect("Found more than 16 params");
+        let pool: Bump<[usize; 16]> = Bump::uninit();
+        let mut pool_start = None;
 
-        for param_type in param_types {
-            fixed_vec.push(param_type.as_type_ref()).expect("Unexpected error");
+        for (i, param_type) in param_types.iter().enumerate() {
+            let addr = pool.leak(param_type.as_type_ref()).expect("Found more than 16 params");
+
+            if i == 0 {
+                pool_start = Some(addr as *mut _);
+            }
         }
 
         let fn_type = unsafe {
-            LLVMFunctionType(self.ty, fixed_vec.as_mut_ptr(), fixed_vec.len() as u32, is_var_args as i32)
+            LLVMFunctionType(self.ty, pool_start.unwrap_or(std::ptr::null_mut()), param_types.len() as u32, is_var_args as i32)
         };
 
         FunctionType::new(fn_type)
