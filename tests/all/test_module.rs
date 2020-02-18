@@ -4,7 +4,7 @@ use self::inkwell::OptimizationLevel;
 use self::inkwell::context::Context;
 use self::inkwell::memory_buffer::MemoryBuffer;
 use self::inkwell::module::Module;
-use self::inkwell::targets::TargetTriple;
+use self::inkwell::targets::{Target, TargetTriple};
 
 use std::env::temp_dir;
 use std::ffi::CString;
@@ -316,13 +316,14 @@ fn test_print_to_file() {
 
 #[test]
 fn test_get_set_target() {
+    Target::initialize_x86(&Default::default());
     let context = Context::create();
     let module = context.create_module("mod");
     let triple = TargetTriple::create("x86_64-pc-linux-gnu");
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     assert_eq!(*module.get_name(), *CString::new("mod").unwrap());
-    assert_eq!(module.get_target(), TargetTriple::create(""));
+    assert_eq!(module.get_target_triple(), TargetTriple::create(""));
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
                   feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
@@ -330,11 +331,11 @@ fn test_get_set_target() {
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     module.set_name("mod2");
-    module.set_target(&triple);
+    module.set_target_triple(&triple);
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     assert_eq!(*module.get_name(), *CString::new("mod2").unwrap());
-    assert_eq!(module.get_target(), triple);
+    assert_eq!(module.get_target_triple(), triple);
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
                   feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]

@@ -327,19 +327,20 @@ impl<'ctx> Module<'ctx> {
     ///
     /// ```rust,no_run
     /// use inkwell::context::Context;
-    /// use inkwell::targets::TargetTriple;
+    /// use inkwell::targets::{Target, TargetTriple};
     ///
+    /// Target::initialize_x86(&Default::default());
     /// let context = Context::create();
     /// let module = context.create_module("mod");
     /// let triple = TargetTriple::create("x86_64-pc-linux-gnu");
     ///
-    /// assert_eq!(module.get_target(), TargetTriple::create(""));
+    /// assert_eq!(module.get_target_triple(), TargetTriple::create(""));
     ///
-    /// module.set_target(&triple);
+    /// module.set_target_triple(&triple);
     ///
-    /// assert_eq!(module.get_target(), triple);
+    /// assert_eq!(module.get_target_triple(), triple);
     /// ```
-    pub fn set_target(&self, target_triple: &TargetTriple) {
+    pub fn set_target_triple(&self, target_triple: &TargetTriple) {
         unsafe {
             LLVMSetTarget(self.module.get(), target_triple.as_ptr())
         }
@@ -352,19 +353,20 @@ impl<'ctx> Module<'ctx> {
     ///
     /// ```rust,no_run
     /// use inkwell::context::Context;
-    /// use inkwell::targets::TargetTriple;
+    /// use inkwell::targets::{Target, TargetTriple};
     ///
+    /// Target::initialize_x86(&Default::default());
     /// let context = Context::create();
     /// let module = context.create_module("mod");
     /// let triple = TargetTriple::create("x86_64-pc-linux-gnu");
     ///
-    /// assert_eq!(module.get_target(), TargetTriple::create(""));
+    /// assert_eq!(module.get_target_triple(), TargetTriple::create(""));
     ///
-    /// module.set_target(&triple);
+    /// module.set_target_triple(&triple);
     ///
-    /// assert_eq!(module.get_target(), triple);
+    /// assert_eq!(module.get_target_triple(), triple);
     /// ```
-    pub fn get_target(&self) -> TargetTriple {
+    pub fn get_target_triple(&self) -> TargetTriple {
         // REVIEW: This isn't an owned LLVMString, is it? If so, need to deallocate.
         let target_str = unsafe {
             LLVMGetTarget(self.module.get())
