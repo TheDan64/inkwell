@@ -323,7 +323,7 @@ fn test_get_set_target() {
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     assert_eq!(*module.get_name(), *CString::new("mod").unwrap());
-    assert_eq!(module.get_target_triple(), TargetTriple::create(""));
+    assert_eq!(module.get_triple(), TargetTriple::create(""));
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
                   feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
@@ -331,11 +331,11 @@ fn test_get_set_target() {
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     module.set_name("mod2");
-    module.set_target_triple(&triple);
+    module.set_triple(&triple);
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     assert_eq!(*module.get_name(), *CString::new("mod2").unwrap());
-    assert_eq!(module.get_target_triple(), triple);
+    assert_eq!(module.get_triple(), triple);
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
                   feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]

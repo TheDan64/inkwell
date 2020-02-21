@@ -334,13 +334,13 @@ impl<'ctx> Module<'ctx> {
     /// let module = context.create_module("mod");
     /// let triple = TargetTriple::create("x86_64-pc-linux-gnu");
     ///
-    /// assert_eq!(module.get_target_triple(), TargetTriple::create(""));
+    /// assert_eq!(module.get_triple(), TargetTriple::create(""));
     ///
-    /// module.set_target_triple(&triple);
+    /// module.set_triple(&triple);
     ///
-    /// assert_eq!(module.get_target_triple(), triple);
+    /// assert_eq!(module.get_triple(), triple);
     /// ```
-    pub fn set_target_triple(&self, target_triple: &TargetTriple) {
+    pub fn set_triple(&self, target_triple: &TargetTriple) {
         unsafe {
             LLVMSetTarget(self.module.get(), target_triple.as_ptr())
         }
@@ -360,19 +360,19 @@ impl<'ctx> Module<'ctx> {
     /// let module = context.create_module("mod");
     /// let triple = TargetTriple::create("x86_64-pc-linux-gnu");
     ///
-    /// assert_eq!(module.get_target_triple(), TargetTriple::create(""));
+    /// assert_eq!(module.get_triple(), TargetTriple::create(""));
     ///
-    /// module.set_target_triple(&triple);
+    /// module.set_triple(&triple);
     ///
-    /// assert_eq!(module.get_target_triple(), triple);
+    /// assert_eq!(module.get_triple(), triple);
     /// ```
-    pub fn get_target_triple(&self) -> TargetTriple {
+    pub fn get_triple(&self) -> TargetTriple {
         // REVIEW: This isn't an owned LLVMString, is it? If so, need to deallocate.
         let target_str = unsafe {
             LLVMGetTarget(self.module.get())
         };
 
-        TargetTriple::new_borrowed(target_str)
+        TargetTriple::new(LLVMString::create_from_c_str(unsafe { CStr::from_ptr(target_str) }))
     }
 
     /// Creates an `ExecutionEngine` from this `Module`.

@@ -27,7 +27,7 @@ use crate::data_layout::DataLayout;
 use crate::memory_buffer::MemoryBuffer;
 use crate::module::Module;
 use crate::passes::PassManager;
-use crate::support::{LLVMString, LLVMStringOrRaw};
+use crate::support::LLVMString;
 use crate::types::{AnyType, AsTypeRef, IntType, StructType};
 use crate::values::{AsValueRef, GlobalValue};
 use crate::{AddressSpace, OptimizationLevel};
@@ -98,23 +98,13 @@ impl Default for InitializationConfig {
 
 #[derive(Eq)]
 pub struct TargetTriple {
-    pub(crate) target_triple: LLVMStringOrRaw,
+    pub(crate) target_triple: LLVMString,
 }
 
 impl TargetTriple {
-    pub(crate) fn new_owned(target_triple: *const ::libc::c_char) -> TargetTriple {
-        debug_assert!(!target_triple.is_null());
-
+    pub(crate) fn new(target_triple: LLVMString) -> TargetTriple {
         TargetTriple {
-            target_triple: LLVMStringOrRaw::Owned(LLVMString::new(target_triple)),
-        }
-    }
-
-    pub(crate) fn new_borrowed(target_triple: *const ::libc::c_char) -> TargetTriple {
-        debug_assert!(!target_triple.is_null());
-
-        TargetTriple {
-            target_triple: LLVMStringOrRaw::Borrowed(target_triple),
+            target_triple,
         }
     }
 
@@ -122,34 +112,34 @@ impl TargetTriple {
         let c_string = CString::new(target_triple).expect("Conversion to CString failed unexpectedly");
 
         TargetTriple {
-            target_triple: LLVMStringOrRaw::Owned(LLVMString::create_from_c_str(c_string.as_c_str()))
+            target_triple: LLVMString::create_from_c_str(c_string.as_c_str())
         }
     }
 
     pub fn as_str(&self) -> &CStr {
-        self.target_triple.as_str()
+        unsafe { CStr::from_ptr(self.as_ptr()) }
     }
 
     pub fn as_ptr(&self) -> *const ::libc::c_char {
-        match self.target_triple {
-            LLVMStringOrRaw::Owned(ref llvm_string) => llvm_string.ptr,
-            LLVMStringOrRaw::Borrowed(ptr) => ptr,
-        }
+        self.target_triple.as_ptr()
     }
 }
 
 impl PartialEq for TargetTriple {
     fn eq(&self, other: &TargetTriple) -> bool {
-        self.as_str() == other.as_str()
+        self.target_triple == other.target_triple
     }
 }
 
 impl fmt::Debug for TargetTriple {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("DataLayout")
-            .field("address", &self.as_ptr())
-            .field("repr", &self.as_str())
-            .finish()
+        write!(f, "TargetTriple({:?})", self.target_triple)
+    }
+}
+
+impl fmt::Display for TargetTriple {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write!(f, "TargetTriple({:?})", self.target_triple)
     }
 }
 
@@ -1064,7 +1054,7 @@ impl TargetMachine {
     pub fn get_triple(&self) -> TargetTriple {
         let ptr = unsafe { LLVMGetTargetMachineTriple(self.target_machine) };
 
-        TargetTriple::new_owned(ptr)
+        TargetTriple::new(LLVMString::new(ptr))
     }
 
     /// Gets the default triple for the current system.
@@ -1083,7 +1073,7 @@ impl TargetMachine {
     pub fn get_default_triple() -> TargetTriple {
         let llvm_string = unsafe { LLVMGetDefaultTargetTriple() };
 
-        TargetTriple::new_owned(llvm_string)
+        TargetTriple::new(LLVMString::new(llvm_string))
     }
 
     #[llvm_versions(7.0..=latest)]
@@ -1092,7 +1082,7 @@ impl TargetMachine {
 
         let normalized = unsafe { LLVMNormalizeTargetTriple(triple.as_ptr()) };
 
-        TargetTriple::new_owned(normalized)
+        TargetTriple::new(LLVMString::new(normalized))
     }
 
     /// Gets a string containing the host CPU's name (triple).
