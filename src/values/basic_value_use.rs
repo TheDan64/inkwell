@@ -160,7 +160,7 @@ impl<'ctx> BasicValueUse<'ctx> {
     ///
     /// assert_eq!(bitcast_use_value, free_operand0);
     /// ```
-    pub fn get_used_value(&self) -> Either<BasicValueEnum<'ctx>, BasicBlock> {
+    pub fn get_used_value(&self) -> Either<BasicValueEnum<'ctx>, BasicBlock<'ctx>> {
         let used_value = unsafe {
             LLVMGetUsedValue(self.0)
         };

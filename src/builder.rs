@@ -408,7 +408,7 @@ impl<'ctx> Builder<'ctx> {
         }
     }
 
-    pub fn get_insert_block(&self) -> Option<BasicBlock> {
+    pub fn get_insert_block(&self) -> Option<BasicBlock<'ctx>> {
         let bb = unsafe {
             LLVMGetInsertBlock(self.builder)
         };
@@ -1078,7 +1078,7 @@ impl<'ctx> Builder<'ctx> {
         <<T::BaseType as FloatMathType>::MathConvType as IntMathType>::ValueType::new(value)
     }
 
-    pub fn build_unconditional_branch(&self, destination_block: BasicBlock) -> InstructionValue<'ctx> {
+    pub fn build_unconditional_branch(&self, destination_block: BasicBlock<'ctx>) -> InstructionValue<'ctx> {
         let value = unsafe {
             LLVMBuildBr(self.builder, destination_block.basic_block)
         };
@@ -1089,8 +1089,8 @@ impl<'ctx> Builder<'ctx> {
     pub fn build_conditional_branch(
         &self,
         comparison: IntValue<'ctx>,
-        then_block: BasicBlock,
-        else_block: BasicBlock,
+        then_block: BasicBlock<'ctx>,
+        else_block: BasicBlock<'ctx>,
     ) -> InstructionValue<'ctx> {
         let value = unsafe {
             LLVMBuildCondBr(self.builder, comparison.as_value_ref(), then_block.basic_block, else_block.basic_block)
@@ -1102,7 +1102,7 @@ impl<'ctx> Builder<'ctx> {
     pub fn build_indirect_branch<BV: BasicValue<'ctx>>(
         &self,
         address: BV,
-        destinations: &[BasicBlock],
+        destinations: &[BasicBlock<'ctx>],
     ) -> InstructionValue<'ctx> {
         let value = unsafe {
             LLVMBuildIndirectBr(self.builder, address.as_value_ref(), destinations.len() as u32)
@@ -1175,7 +1175,7 @@ impl<'ctx> Builder<'ctx> {
 
     // REVIEW: What if instruction and basic_block are completely unrelated?
     // It'd be great if we could get the BB from the instruction behind the scenes
-    pub fn position_at(&self, basic_block: BasicBlock, instruction: &InstructionValue<'ctx>) {
+    pub fn position_at(&self, basic_block: BasicBlock<'ctx>, instruction: &InstructionValue<'ctx>) {
         unsafe {
             LLVMPositionBuilder(self.builder, basic_block.basic_block, instruction.as_value_ref())
         }
@@ -1187,7 +1187,7 @@ impl<'ctx> Builder<'ctx> {
         }
     }
 
-    pub fn position_at_end(&self, basic_block: BasicBlock) {
+    pub fn position_at_end(&self, basic_block: BasicBlock<'ctx>) {
         unsafe {
             LLVMPositionBuilderAtEnd(self.builder, basic_block.basic_block);
         }
@@ -1464,7 +1464,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Returning InstructionValue is the safe move here; but if the value means something
     // (IE the result of the switch) it should probably return BasicValueEnum?
     // SubTypes: I think value and case values must be the same subtype (maybe). Case value might need to be constants
-    pub fn build_switch(&self, value: IntValue<'ctx>, else_block: BasicBlock, cases: &[(IntValue<'ctx>, BasicBlock)]) -> InstructionValue<'ctx> {
+    pub fn build_switch(&self, value: IntValue<'ctx>, else_block: BasicBlock<'ctx>, cases: &[(IntValue<'ctx>, BasicBlock<'ctx>)]) -> InstructionValue<'ctx> {
         let switch_value = unsafe {
             LLVMBuildSwitch(self.builder, value.as_value_ref(), else_block.basic_block, cases.len() as u32)
         };

@@ -174,7 +174,7 @@ impl<'ctx> InstructionValue<'ctx> {
     // but I doubt LLVM returns null if the parent BB (or grandparent FN)
     // was deleted... Invalid memory is more likely. Cloned IV will have no
     // parent?
-    pub fn get_parent(&self) -> Option<BasicBlock> {
+    pub fn get_parent(&self) -> Option<BasicBlock<'ctx>> {
         let value = unsafe {
             LLVMGetInstructionParent(self.as_value_ref())
         };
@@ -392,7 +392,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// 3) Function call has two: i8 pointer %1 argument, and the free function itself
     /// 4) Void return has zero: void is not a value and does not count as an operand
     /// even though the return instruction can take values.
-    pub fn get_operand(&self, index: u32) -> Option<Either<BasicValueEnum<'ctx>, BasicBlock>> {
+    pub fn get_operand(&self, index: u32) -> Option<Either<BasicValueEnum<'ctx>, BasicBlock<'ctx>>> {
         let num_operands = self.get_num_operands();
 
         if index >= num_operands {

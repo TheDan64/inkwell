@@ -1028,8 +1028,8 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                 let phi = self.builder.build_phi(self.context.f64_type(), "iftmp");
 
                 phi.add_incoming(&[
-                    (&then_val, &then_bb),
-                    (&else_val, &else_bb)
+                    (&then_val, then_bb),
+                    (&else_val, else_bb)
                 ]);
 
                 Ok(phi.as_basic_value().into_float_value())

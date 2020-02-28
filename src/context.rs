@@ -617,7 +617,7 @@ impl Context {
     ///
     /// assert_eq!(fn_value.count_basic_blocks(), 1);
     ///
-    /// let last_basic_block = context.insert_basic_block_after(&entry_basic_block, "last");
+    /// let last_basic_block = context.insert_basic_block_after(entry_basic_block, "last");
     ///
     /// assert_eq!(fn_value.count_basic_blocks(), 2);
     /// assert_eq!(fn_value.get_first_basic_block().unwrap(), entry_basic_block);
@@ -626,9 +626,9 @@ impl Context {
     // REVIEW: What happens when using these methods and the BasicBlock doesn't have a parent?
     // Should they be callable at all? Needs testing to see what LLVM will do, I suppose. See below unwrap.
     // Maybe need SubTypes: BasicBlock<HasParent>, BasicBlock<Orphan>?
-    pub fn insert_basic_block_after(&self, basic_block: &BasicBlock, name: &str) -> BasicBlock {
+    pub fn insert_basic_block_after(&self, basic_block: BasicBlock, name: &str) -> BasicBlock {
         match basic_block.get_next_basic_block() {
-            Some(next_basic_block) => self.prepend_basic_block(&next_basic_block, name),
+            Some(next_basic_block) => self.prepend_basic_block(next_basic_block, name),
             None => {
                 let parent_fn = basic_block.get_parent().unwrap();
 
@@ -653,13 +653,13 @@ impl Context {
     ///
     /// assert_eq!(fn_value.count_basic_blocks(), 1);
     ///
-    /// let first_basic_block = context.prepend_basic_block(&entry_basic_block, "first");
+    /// let first_basic_block = context.prepend_basic_block(entry_basic_block, "first");
     ///
     /// assert_eq!(fn_value.count_basic_blocks(), 2);
     /// assert_eq!(fn_value.get_first_basic_block().unwrap(), first_basic_block);
     /// assert_eq!(fn_value.get_last_basic_block().unwrap(), entry_basic_block);
     /// ```
-    pub fn prepend_basic_block(&self, basic_block: &BasicBlock, name: &str) -> BasicBlock {
+    pub fn prepend_basic_block(&self, basic_block: BasicBlock, name: &str) -> BasicBlock {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let bb = unsafe {

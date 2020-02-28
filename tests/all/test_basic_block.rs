@@ -21,9 +21,9 @@ fn test_basic_block_ordering() {
     assert!(function.get_first_basic_block().is_none());
 
     let basic_block = context.append_basic_block(function, "entry");
-    let basic_block4 = context.insert_basic_block_after(&basic_block, "block4");
-    let basic_block2 = context.insert_basic_block_after(&basic_block, "block2");
-    let basic_block3 = context.prepend_basic_block(&basic_block4, "block3");
+    let basic_block4 = context.insert_basic_block_after(basic_block, "block4");
+    let basic_block2 = context.insert_basic_block_after(basic_block, "block2");
+    let basic_block3 = context.prepend_basic_block(basic_block4, "block3");
 
     let basic_blocks = function.get_basic_blocks();
 
@@ -36,7 +36,7 @@ fn test_basic_block_ordering() {
     assert!(basic_block3.move_before(basic_block2).is_ok());
     assert!(basic_block.move_after(basic_block4).is_ok());
 
-    let basic_block5 = context.prepend_basic_block(&basic_block, "block5");
+    let basic_block5 = context.prepend_basic_block(basic_block, "block5");
     let basic_blocks = function.get_basic_blocks();
 
     assert_eq!(basic_blocks.len(), 5);

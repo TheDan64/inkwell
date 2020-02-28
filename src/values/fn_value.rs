@@ -124,7 +124,7 @@ impl<'ctx> FunctionValue<'ctx> {
         Some(BasicValueEnum::new(param))
     }
 
-    pub fn get_first_basic_block(&self) -> Option<BasicBlock> {
+    pub fn get_first_basic_block(&self) -> Option<BasicBlock<'ctx>> {
         let bb = unsafe {
             LLVMGetFirstBasicBlock(self.as_value_ref())
         };
@@ -158,7 +158,7 @@ impl<'ctx> FunctionValue<'ctx> {
         }
     }
 
-    pub fn get_basic_blocks(&self) -> Vec<BasicBlock> {
+    pub fn get_basic_blocks(&self) -> Vec<BasicBlock<'ctx>> {
         let count = self.count_basic_blocks();
         let mut raw_vec: Vec<LLVMBasicBlockRef> = Vec::with_capacity(count as usize);
         let ptr = raw_vec.as_mut_ptr();
@@ -198,7 +198,7 @@ impl<'ctx> FunctionValue<'ctx> {
         raw_vec.iter().map(|val| BasicValueEnum::new(*val)).collect()
     }
 
-    pub fn get_last_basic_block(&self) -> Option<BasicBlock> {
+    pub fn get_last_basic_block(&self) -> Option<BasicBlock<'ctx>> {
         let bb = unsafe {
             LLVMGetLastBasicBlock(self.fn_value.value)
         };

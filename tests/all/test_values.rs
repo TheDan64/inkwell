@@ -879,8 +879,8 @@ fn test_phi_values() {
     assert_eq!(*phi.print_to_string(), *CString::new("  %if = phi i1 ").unwrap());
 
     phi.add_incoming(&[
-        (&false_val, &then_block),
-        (&true_val, &else_block),
+        (&false_val, then_block),
+        (&true_val, else_block),
     ]);
 
     assert_eq!(phi.count_incoming(), 2);
