@@ -19,7 +19,7 @@ fn test_build_call() {
     let function = module.add_function("get_pi", fn_type, None);
     let basic_block = context.append_basic_block(function, "entry");
 
-    builder.position_at_end(&basic_block);
+    builder.position_at_end(basic_block);
 
     let pi = f32_type.const_float(::std::f64::consts::PI);
 
@@ -28,7 +28,7 @@ fn test_build_call() {
     let function2 = module.add_function("wrapper", fn_type, None);
     let basic_block2 = context.append_basic_block(function2, "entry");
 
-    builder.position_at_end(&basic_block2);
+    builder.position_at_end(basic_block2);
 
     let pi2_call_site = builder.build_call(function, &[], "get_pi");
 
@@ -52,7 +52,7 @@ fn test_build_call() {
     let fn_ptr = function3.as_global_value().as_pointer_value();
     let fn_ptr_type = fn_ptr.get_type();
 
-    builder.position_at_end(&basic_block3);
+    builder.position_at_end(basic_block3);
 
     let alloca = builder.build_alloca(fn_ptr_type, "alloca");
 
@@ -91,7 +91,7 @@ fn test_null_checked_ptr_ops() {
     let function = module.add_function("check_null_index1", fn_type, None);
     let entry = context.append_basic_block(function, "entry");
 
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
 
     let ptr = function.get_first_param().unwrap().into_pointer_value();
 
@@ -100,12 +100,12 @@ fn test_null_checked_ptr_ops() {
     let ret_0 = context.append_basic_block(function, "ret_0");
     let ret_idx = context.append_basic_block(function, "ret_idx");
 
-    builder.build_conditional_branch(is_null, &ret_0, &ret_idx);
+    builder.build_conditional_branch(is_null, ret_0, ret_idx);
 
-    builder.position_at_end(&ret_0);
+    builder.position_at_end(ret_0);
     builder.build_return(Some(&neg_one));
 
-    builder.position_at_end(&ret_idx);
+    builder.position_at_end(ret_idx);
 
     // FIXME: This might not work if compiled on non 64bit devices. Ideally we'd
     // be able to create pointer sized ints easily
@@ -128,7 +128,7 @@ fn test_null_checked_ptr_ops() {
     let function = module.add_function("check_null_index2", fn_type, None);
     let entry = context.append_basic_block(function, "entry");
 
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
 
     let ptr = function.get_first_param().unwrap().into_pointer_value();
 
@@ -137,12 +137,12 @@ fn test_null_checked_ptr_ops() {
     let ret_idx = context.append_basic_block(function, "ret_idx");
     let ret_0 = context.append_basic_block(function, "ret_0");
 
-    builder.build_conditional_branch(is_not_null, &ret_idx, &ret_0);
+    builder.build_conditional_branch(is_not_null, ret_idx, ret_0);
 
-    builder.position_at_end(&ret_0);
+    builder.position_at_end(ret_0);
     builder.build_return(Some(&neg_one));
 
-    builder.position_at_end(&ret_idx);
+    builder.position_at_end(ret_idx);
 
     // FIXME: This might not work if compiled on non 64bit devices. Ideally we'd
     // be able to create pointer sized ints easily
@@ -187,7 +187,7 @@ fn test_binary_ops() {
     let fn_value = module.add_function("and", fn_type, None);
     let entry = context.append_basic_block(fn_value, "entry");
 
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
 
     let left = fn_value.get_first_param().unwrap().into_int_value();
     let right = fn_value.get_last_param().unwrap().into_int_value();
@@ -204,7 +204,7 @@ fn test_binary_ops() {
     let fn_value = module.add_function("or", fn_type, None);
     let entry = context.append_basic_block(fn_value, "entry");
 
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
 
     let left = fn_value.get_first_param().unwrap().into_int_value();
     let right = fn_value.get_last_param().unwrap().into_int_value();
@@ -221,7 +221,7 @@ fn test_binary_ops() {
     let fn_value = module.add_function("xor", fn_type, None);
     let entry = context.append_basic_block(fn_value, "entry");
 
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
 
     let left = fn_value.get_first_param().unwrap().into_int_value();
     let right = fn_value.get_last_param().unwrap().into_int_value();
@@ -286,16 +286,16 @@ fn test_switch() {
     let else_ = context.append_basic_block(fn_value, "else");
     let value = fn_value.get_first_param().unwrap().into_int_value();
 
-    builder.position_at_end(&entry);
-    builder.build_switch(value, &else_, &[(i8_zero, &check), (i8_42, &elif)]);
+    builder.position_at_end(entry);
+    builder.build_switch(value, else_, &[(i8_zero, check), (i8_42, elif)]);
 
-    builder.position_at_end(&check);
+    builder.position_at_end(check);
     builder.build_return(Some(&i8_one));
 
-    builder.position_at_end(&elif);
+    builder.position_at_end(elif);
     builder.build_return(Some(&i8_255));
 
-    builder.position_at_end(&else_);
+    builder.position_at_end(else_);
 
     let double = builder.build_int_mul(value, i8_two, "double");
 
@@ -331,7 +331,7 @@ fn test_bit_shifts() {
 
     let entry = context.append_basic_block(fn_value, "entry");
 
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
 
     let shift = builder.build_left_shift(value, bits, "shl");
 
@@ -347,7 +347,7 @@ fn test_bit_shifts() {
 
     let entry = context.append_basic_block(fn_value, "entry");
 
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
 
     let shift = builder.build_right_shift(value, bits, false, "shr");
 
@@ -363,7 +363,7 @@ fn test_bit_shifts() {
 
     let entry = context.append_basic_block(fn_value, "entry");
 
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
 
     let shift = builder.build_right_shift(value, bits, true, "shr");
 
@@ -416,10 +416,10 @@ fn test_unconditional_branch() {
     let skipped_bb = context.append_basic_block(fn_value, "skipped");
     let end_bb = context.append_basic_block(fn_value, "end");
 
-    builder.position_at_end(&entry_bb);
-    builder.build_unconditional_branch(&end_bb);
+    builder.position_at_end(entry_bb);
+    builder.build_unconditional_branch(end_bb);
 
-    builder.position_at_end(&skipped_bb);
+    builder.position_at_end(skipped_bb);
     builder.build_unreachable();
 }
 
@@ -452,7 +452,7 @@ fn test_no_builder_double_free2() {
     let fn_value = module.add_function("my_fn", fn_type, None);
     let entry = context.append_basic_block(fn_value, "entry");
 
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
     // FIXME: Builder segfaults when making build calls with different context
     // as of newer rust versions(late 2018+?). Maybe this isn't actually something
     // you're suppose to do in LLVM and LTO(?) has made it a more prominent issue?
@@ -483,7 +483,7 @@ fn test_vector_convert_ops() {
     let entry = context.append_basic_block(fn_value, "entry");
     let builder = context.create_builder();
 
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
     let in_vec = fn_value.get_first_param().unwrap().into_vector_value();
     let casted_vec = builder.build_int_cast(in_vec, int32_vec_type, "casted_vec");
     let _uncasted_vec = builder.build_int_cast(casted_vec, int8_vec_type, "uncasted_vec");
@@ -496,7 +496,7 @@ fn test_vector_convert_ops() {
     let entry = context.append_basic_block(fn_value, "entry");
     let builder = context.create_builder();
 
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
     let in_vec = fn_value.get_first_param().unwrap().into_vector_value();
     let casted_vec = builder.build_float_cast(in_vec, float16_vec_type, "casted_vec");
     let _uncasted_vec = builder.build_float_cast(casted_vec, float32_vec_type, "uncasted_vec");
@@ -509,7 +509,7 @@ fn test_vector_convert_ops() {
     let entry = context.append_basic_block(fn_value, "entry");
     let builder = context.create_builder();
 
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
     let in_vec = fn_value.get_first_param().unwrap().into_vector_value();
     let casted_vec = builder.build_float_to_signed_int(in_vec, int32_vec_type, "casted_vec");
     let _uncasted_vec = builder.build_signed_int_to_float(casted_vec, float32_vec_type, "uncasted_vec");
@@ -531,7 +531,7 @@ fn test_vector_binary_ops() {
     let entry = context.append_basic_block(fn_value, "entry");
     let builder = context.create_builder();
 
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
     let p1_vec = fn_value.get_first_param().unwrap().into_vector_value();
     let p2_vec = fn_value.get_nth_param(1).unwrap().into_vector_value();
     let p3_vec = fn_value.get_nth_param(2).unwrap().into_vector_value();
@@ -547,7 +547,7 @@ fn test_vector_binary_ops() {
     let entry = context.append_basic_block(fn_value, "entry");
     let builder = context.create_builder();
 
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
     let p1_vec = fn_value.get_first_param().unwrap().into_vector_value();
     let p2_vec = fn_value.get_nth_param(1).unwrap().into_vector_value();
     let p3_vec = fn_value.get_nth_param(2).unwrap().into_vector_value();
@@ -563,7 +563,7 @@ fn test_vector_binary_ops() {
     let entry = context.append_basic_block(fn_value, "entry");
     let builder = context.create_builder();
 
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
     let p1_vec = fn_value.get_first_param().unwrap().into_vector_value();
     let p2_vec = fn_value.get_nth_param(1).unwrap().into_vector_value();
     let p3_vec = fn_value.get_nth_param(2).unwrap().into_vector_value();
@@ -588,7 +588,7 @@ fn test_vector_pointer_ops() {
     let entry = context.append_basic_block(fn_value, "entry");
     let builder = context.create_builder();
 
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
     let in_vec = fn_value.get_first_param().unwrap().into_vector_value();
     let ptr_vec = builder.build_int_to_ptr(in_vec, i8_ptr_vec_type, "ptr_vec");
     let is_null_vec = builder.build_is_null(ptr_vec, "is_null_vec");
@@ -610,7 +610,7 @@ fn test_insert_value() {
     let builder = context.create_builder();
     let entry = context.append_basic_block(fn_value, "entry");
 
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
 
     let array_alloca = builder.build_alloca(array_type, "array_alloca");
     let array = builder.build_load(array_alloca, "array_load").into_array_value();
@@ -677,7 +677,7 @@ fn test_bitcast() {
     let i32_ptr_arg = fn_value.get_nth_param(3).unwrap();
     let f64_arg = fn_value.get_nth_param(4).unwrap();
 
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
 
     let cast = builder.build_bitcast(i32_arg, f32_type, "i32tof32");
 
@@ -707,7 +707,7 @@ fn test_atomicrmw() {
     let fn_value = module.add_function("", fn_type, None);
     let entry = context.append_basic_block(fn_value, "entry");
     let builder = context.create_builder();
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
 
     let i32_type = context.i32_type();
     let i64_type = context.i64_type();
@@ -746,7 +746,7 @@ fn test_cmpxchg() {
     let fn_value = module.add_function("", fn_type, None);
     let entry = context.append_basic_block(fn_value, "entry");
     let builder = context.create_builder();
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
 
     let i32_type = context.i32_type();
     let i64_type = context.i64_type();

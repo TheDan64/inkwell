@@ -82,7 +82,7 @@ fn test_attributes_on_function_values() {
     let alignstack_attribute = Attribute::get_named_enum_kind_id("alignstack");
     let enum_attribute = context.create_enum_attribute(alignstack_attribute, 1);
 
-    builder.position_at_end(&entry_bb);
+    builder.position_at_end(entry_bb);
     builder.build_return(None);
 
     assert_eq!(fn_value.count_attributes(AttributeLoc::Return), 0);
@@ -127,7 +127,7 @@ fn test_attributes_on_call_site_values() {
     let align_attribute = Attribute::get_named_enum_kind_id("align");
     let enum_attribute = context.create_enum_attribute(alignstack_attribute, 1);
 
-    builder.position_at_end(&entry_bb);
+    builder.position_at_end(entry_bb);
 
     let call_site_value = builder.build_call(fn_value, &[i32_type.const_int(1, false).into()], "my_fn");
 

@@ -162,13 +162,13 @@ impl BasicBlock {
     /// let basic_block1 = context.append_basic_block(function, "entry");
     /// let basic_block2 = context.append_basic_block(function, "next");
     ///
-    /// basic_block2.move_before(&basic_block1);
+    /// basic_block2.move_before(basic_block1);
     ///
     /// assert!(basic_block1.get_next_basic_block().is_none());
     /// assert_eq!(basic_block2.get_next_basic_block().unwrap(), basic_block1);
     /// ```
     // REVIEW: What happens if blocks are from different scopes?
-    pub fn move_before(&self, basic_block: &BasicBlock) -> Result<(), ()> {
+    pub fn move_before(&self, basic_block: BasicBlock) -> Result<(), ()> {
         // This method is UB if the parent no longer exists, so we must check for parent (or encode into type system)
         if self.get_parent().is_none() || basic_block.get_parent().is_none() {
             return Err(());
@@ -199,13 +199,13 @@ impl BasicBlock {
     /// let basic_block1 = context.append_basic_block(function, "entry");
     /// let basic_block2 = context.append_basic_block(function, "next");
     ///
-    /// basic_block1.move_after(&basic_block2);
+    /// basic_block1.move_after(basic_block2);
     ///
     /// assert!(basic_block1.get_next_basic_block().is_none());
     /// assert_eq!(basic_block2.get_next_basic_block().unwrap(), basic_block1);
     /// ```
     // REVIEW: What happens if blocks are from different scopes?
-    pub fn move_after(&self, basic_block: &BasicBlock) -> Result<(), ()> {
+    pub fn move_after(&self, basic_block: BasicBlock) -> Result<(), ()> {
         // This method is UB if the parent no longer exists, so we must check for parent (or encode into type system)
         if self.get_parent().is_none() || basic_block.get_parent().is_none() {
             return Err(());
@@ -235,7 +235,7 @@ impl BasicBlock {
     /// let function = module.add_function("do_nothing", fn_type, None);
     /// let basic_block = context.append_basic_block(function, "entry");
     ///
-    /// builder.position_at_end(&basic_block);
+    /// builder.position_at_end(basic_block);
     /// builder.build_return(None);
     ///
     /// assert_eq!(basic_block.get_first_instruction().unwrap().get_opcode(), InstructionOpcode::Return);
@@ -269,7 +269,7 @@ impl BasicBlock {
     /// let function = module.add_function("do_nothing", fn_type, None);
     /// let basic_block = context.append_basic_block(function, "entry");
     ///
-    /// builder.position_at_end(&basic_block);
+    /// builder.position_at_end(basic_block);
     /// builder.build_return(None);
     ///
     /// assert_eq!(basic_block.get_last_instruction().unwrap().get_opcode(), InstructionOpcode::Return);
@@ -303,7 +303,7 @@ impl BasicBlock {
     /// let function = module.add_function("do_nothing", fn_type, None);
     /// let basic_block = context.append_basic_block(function, "entry");
     ///
-    /// builder.position_at_end(&basic_block);
+    /// builder.position_at_end(basic_block);
     /// builder.build_return(None);
     ///
     /// assert_eq!(basic_block.get_terminator().unwrap().get_opcode(), InstructionOpcode::Return);

@@ -20,7 +20,7 @@ fn test_tari_example() {
     let function = module.add_function("sum", fn_type, None);
     let basic_block = context.append_basic_block(function, "entry");
 
-    builder.position_at_end(&basic_block);
+    builder.position_at_end(basic_block);
 
     let x = function.get_nth_param(0).unwrap().into_int_value();
     let y = function.get_nth_param(1).unwrap().into_int_value();

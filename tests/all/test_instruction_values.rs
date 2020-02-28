@@ -17,7 +17,7 @@ fn test_operands() {
     let function = module.add_function("take_f32_ptr", fn_type, None);
     let basic_block = context.append_basic_block(function, "entry");
 
-    builder.position_at_end(&basic_block);
+    builder.position_at_end(basic_block);
 
     let arg1 = function.get_first_param().unwrap().into_pointer_value();
     let f32_val = f32_type.const_float(::std::f64::consts::PI);
@@ -145,9 +145,9 @@ fn test_basic_block_operand() {
     let basic_block = context.append_basic_block(function, "entry");
     let basic_block2 = context.append_basic_block(function, "exit");
 
-    builder.position_at_end(&basic_block);
+    builder.position_at_end(basic_block);
 
-    let branch_instruction = builder.build_unconditional_branch(&basic_block2);
+    let branch_instruction = builder.build_unconditional_branch(basic_block2);
     let bb_operand = branch_instruction.get_operand(0).unwrap().right().unwrap();
 
     assert_eq!(bb_operand, basic_block2);
@@ -156,7 +156,7 @@ fn test_basic_block_operand() {
 
     assert_eq!(bb_operand_use.get_used_value().right().unwrap(), basic_block2);
 
-    builder.position_at_end(&basic_block2);
+    builder.position_at_end(basic_block2);
     builder.build_return(None);
 
     assert!(module.verify().is_ok());
@@ -172,7 +172,7 @@ fn test_get_next_use() {
     let function = module.add_function("take_f32", fn_type, None);
     let basic_block = context.append_basic_block(function, "entry");
 
-    builder.position_at_end(&basic_block);
+    builder.position_at_end(basic_block);
 
     let arg1 = function.get_first_param().unwrap().into_float_value();
     let f32_val = f32_type.const_float(::std::f64::consts::PI);
@@ -206,7 +206,7 @@ fn test_instructions() {
     let function = module.add_function("free_f32", fn_type, None);
     let basic_block = context.append_basic_block(function, "entry");
 
-    builder.position_at_end(&basic_block);
+    builder.position_at_end(basic_block);
 
     let arg1 = function.get_first_param().unwrap().into_pointer_value();
     let arg2 = function.get_nth_param(1).unwrap().into_float_value();
@@ -265,7 +265,7 @@ fn test_mem_instructions() {
     let function = module.add_function("mem_inst", fn_type, None);
     let basic_block = context.append_basic_block(function, "entry");
 
-    builder.position_at_end(&basic_block);
+    builder.position_at_end(basic_block);
 
     let arg1 = function.get_first_param().unwrap().into_pointer_value();
     let arg2 = function.get_nth_param(1).unwrap().into_float_value();
@@ -326,7 +326,7 @@ fn test_atomic_ordering_mem_instructions() {
     let function = module.add_function("mem_inst", fn_type, None);
     let basic_block = context.append_basic_block(function, "entry");
 
-    builder.position_at_end(&basic_block);
+    builder.position_at_end(basic_block);
 
     let arg1 = function.get_first_param().unwrap().into_pointer_value();
     let arg2 = function.get_nth_param(1).unwrap().into_float_value();

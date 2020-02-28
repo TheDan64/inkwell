@@ -868,7 +868,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
 
         match entry.get_first_instruction() {
             Some(first_instr) => builder.position_before(&first_instr),
-            None => builder.position_at_end(&entry)
+            None => builder.position_at_end(entry)
         }
 
         builder.build_alloca(self.context.f64_type(), name)
@@ -1006,24 +1006,24 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                 let else_bb = self.context.append_basic_block(parent, "else");
                 let cont_bb = self.context.append_basic_block(parent, "ifcont");
 
-                self.builder.build_conditional_branch(cond, &then_bb, &else_bb);
+                self.builder.build_conditional_branch(cond, then_bb, else_bb);
 
                 // build then block
-                self.builder.position_at_end(&then_bb);
+                self.builder.position_at_end(then_bb);
                 let then_val = self.compile_expr(consequence)?;
-                self.builder.build_unconditional_branch(&cont_bb);
+                self.builder.build_unconditional_branch(cont_bb);
 
                 let then_bb = self.builder.get_insert_block().unwrap();
 
                 // build else block
-                self.builder.position_at_end(&else_bb);
+                self.builder.position_at_end(else_bb);
                 let else_val = self.compile_expr(alternative)?;
-                self.builder.build_unconditional_branch(&cont_bb);
+                self.builder.build_unconditional_branch(cont_bb);
 
                 let else_bb = self.builder.get_insert_block().unwrap();
 
                 // emit merge block
-                self.builder.position_at_end(&cont_bb);
+                self.builder.position_at_end(cont_bb);
 
                 let phi = self.builder.build_phi(self.context.f64_type(), "iftmp");
 
@@ -1046,8 +1046,8 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                 // go from current block to loop block
                 let loop_bb = self.context.append_basic_block(parent, "loop");
 
-                self.builder.build_unconditional_branch(&loop_bb);
-                self.builder.position_at_end(&loop_bb);
+                self.builder.build_unconditional_branch(loop_bb);
+                self.builder.position_at_end(loop_bb);
 
                 let old_val = self.variables.remove(var_name.as_str());
 
@@ -1073,8 +1073,8 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                 let end_cond = self.builder.build_float_compare(FloatPredicate::ONE, end_cond, self.context.f64_type().const_float(0.0), "loopcond");
                 let after_bb = self.context.append_basic_block(parent, "afterloop");
 
-                self.builder.build_conditional_branch(end_cond, &loop_bb, &after_bb);
-                self.builder.position_at_end(&after_bb);
+                self.builder.build_conditional_branch(end_cond, loop_bb, after_bb);
+                self.builder.position_at_end(after_bb);
 
                 self.variables.remove(var_name);
 
@@ -1120,7 +1120,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
 
         let entry = self.context.append_basic_block(function, "entry");
 
-        self.builder.position_at_end(&entry);
+        self.builder.position_at_end(entry);
 
         // update fn field
         self.fn_value_opt = Some(function);

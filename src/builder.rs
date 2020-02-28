@@ -54,7 +54,7 @@ impl<'ctx> Builder<'ctx> {
     /// let entry = context.append_basic_block(fn_value, "entry");
     /// let i32_arg = fn_value.get_first_param().unwrap();
     ///
-    /// builder.position_at_end(&entry);
+    /// builder.position_at_end(entry);
     /// builder.build_return(Some(&i32_arg));
     /// ```
     pub fn build_return(&self, value: Option<&dyn BasicValue<'ctx>>) -> InstructionValue<'ctx> {
@@ -85,7 +85,7 @@ impl<'ctx> Builder<'ctx> {
     /// let fn_value = module.add_function("ret", fn_type, None);
     /// let entry = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry);
+    /// builder.position_at_end(entry);
     /// builder.build_aggregate_return(&[i32_three.into(), i32_seven.into()]);
     /// ```
     pub fn build_aggregate_return(&self, values: &[BasicValueEnum<'ctx>]) -> InstructionValue<'ctx> {
@@ -118,7 +118,7 @@ impl<'ctx> Builder<'ctx> {
     /// let entry = context.append_basic_block(fn_value, "entry");
     /// let i32_arg = fn_value.get_first_param().unwrap();
     ///
-    /// builder.position_at_end(&entry);
+    /// builder.position_at_end(entry);
     ///
     /// let ret_val = builder.build_call(fn_value, &[i32_arg], "call")
     ///     .try_as_basic_value()
@@ -228,7 +228,7 @@ impl<'ctx> Builder<'ctx> {
     /// let i32_ptr_param1 = fn_value.get_first_param().unwrap().into_pointer_value();
     /// let i32_ptr_param2 = fn_value.get_nth_param(1).unwrap().into_pointer_value();
     ///
-    /// builder.position_at_end(&entry);
+    /// builder.position_at_end(entry);
     /// builder.build_ptr_diff(i32_ptr_param1, i32_ptr_param2, "diff");
     /// builder.build_return(None);
     /// ```
@@ -278,7 +278,7 @@ impl<'ctx> Builder<'ctx> {
     /// let entry = context.append_basic_block(fn_value, "entry");
     /// let i32_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
     ///
-    /// builder.position_at_end(&entry);
+    /// builder.position_at_end(entry);
     /// builder.build_store(i32_ptr_param, i32_seven);
     /// builder.build_return(None);
     /// ```
@@ -309,7 +309,7 @@ impl<'ctx> Builder<'ctx> {
     /// let entry = context.append_basic_block(fn_value, "entry");
     /// let i32_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
     ///
-    /// builder.position_at_end(&entry);
+    /// builder.position_at_end(entry);
     ///
     /// let pointee = builder.build_load(i32_ptr_param, "load");
     ///
@@ -524,7 +524,7 @@ impl<'ctx> Builder<'ctx> {
     /// let entry = context.append_basic_block(fn_value, "entry");
     /// let i32_arg = fn_value.get_first_param().unwrap();
     ///
-    /// builder.position_at_end(&entry);
+    /// builder.position_at_end(entry);
     ///
     /// builder.build_bitcast(i32_arg, f32_type, "i32tof32");
     /// builder.build_return(None);
@@ -834,7 +834,7 @@ impl<'ctx> Builder<'ctx> {
     /// let n = function.get_nth_param(1).unwrap().into_int_value();
     /// let entry_block = context.append_basic_block(function, "entry");
     ///
-    /// builder.position_at_end(&entry_block);
+    /// builder.position_at_end(entry_block);
     ///
     /// let shift = builder.build_left_shift(value, n, "left_shift"); // value << n
     ///
@@ -906,7 +906,7 @@ impl<'ctx> Builder<'ctx> {
     /// let n = function.get_nth_param(1).unwrap().into_int_value();
     /// let entry_block = context.append_basic_block(function, "entry");
     ///
-    /// builder.position_at_end(&entry_block);
+    /// builder.position_at_end(entry_block);
     ///
     /// // Whether or not your right shift is sign extended (true) or logical (false) depends
     /// // on the boolean input parameter:
@@ -1078,7 +1078,7 @@ impl<'ctx> Builder<'ctx> {
         <<T::BaseType as FloatMathType>::MathConvType as IntMathType>::ValueType::new(value)
     }
 
-    pub fn build_unconditional_branch(&self, destination_block: &BasicBlock) -> InstructionValue<'ctx> {
+    pub fn build_unconditional_branch(&self, destination_block: BasicBlock) -> InstructionValue<'ctx> {
         let value = unsafe {
             LLVMBuildBr(self.builder, destination_block.basic_block)
         };
@@ -1089,8 +1089,8 @@ impl<'ctx> Builder<'ctx> {
     pub fn build_conditional_branch(
         &self,
         comparison: IntValue<'ctx>,
-        then_block: &BasicBlock,
-        else_block: &BasicBlock,
+        then_block: BasicBlock,
+        else_block: BasicBlock,
     ) -> InstructionValue<'ctx> {
         let value = unsafe {
             LLVMBuildCondBr(self.builder, comparison.as_value_ref(), then_block.basic_block, else_block.basic_block)
@@ -1102,7 +1102,7 @@ impl<'ctx> Builder<'ctx> {
     pub fn build_indirect_branch<BV: BasicValue<'ctx>>(
         &self,
         address: BV,
-        destinations: &[&BasicBlock],
+        destinations: &[BasicBlock],
     ) -> InstructionValue<'ctx> {
         let value = unsafe {
             LLVMBuildIndirectBr(self.builder, address.as_value_ref(), destinations.len() as u32)
@@ -1175,7 +1175,7 @@ impl<'ctx> Builder<'ctx> {
 
     // REVIEW: What if instruction and basic_block are completely unrelated?
     // It'd be great if we could get the BB from the instruction behind the scenes
-    pub fn position_at(&self, basic_block: &BasicBlock, instruction: &InstructionValue<'ctx>) {
+    pub fn position_at(&self, basic_block: BasicBlock, instruction: &InstructionValue<'ctx>) {
         unsafe {
             LLVMPositionBuilder(self.builder, basic_block.basic_block, instruction.as_value_ref())
         }
@@ -1187,7 +1187,7 @@ impl<'ctx> Builder<'ctx> {
         }
     }
 
-    pub fn position_at_end(&self, basic_block: &BasicBlock) {
+    pub fn position_at_end(&self, basic_block: BasicBlock) {
         unsafe {
             LLVMPositionBuilderAtEnd(self.builder, basic_block.basic_block);
         }
@@ -1213,7 +1213,7 @@ impl<'ctx> Builder<'ctx> {
     /// let builder = context.create_builder();
     /// let entry = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry);
+    /// builder.position_at_end(entry);
     ///
     /// let array_alloca = builder.build_alloca(array_type, "array_alloca");
     /// let array = builder.build_load(array_alloca, "array_load").into_array_value();
@@ -1275,7 +1275,7 @@ impl<'ctx> Builder<'ctx> {
     /// let builder = context.create_builder();
     /// let entry = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry);
+    /// builder.position_at_end(entry);
     ///
     /// let array_alloca = builder.build_alloca(array_type, "array_alloca");
     /// let array = builder.build_load(array_alloca, "array_load").into_array_value();
@@ -1329,7 +1329,7 @@ impl<'ctx> Builder<'ctx> {
     /// let entry = context.append_basic_block(fn_value, "entry");
     /// let vector_param = fn_value.get_first_param().unwrap().into_vector_value();
     ///
-    /// builder.position_at_end(&entry);
+    /// builder.position_at_end(entry);
     ///
     /// let extracted = builder.build_extract_element(vector_param, i32_zero, "insert");
     ///
@@ -1366,7 +1366,7 @@ impl<'ctx> Builder<'ctx> {
     /// let entry = context.append_basic_block(fn_value, "entry");
     /// let vector_param = fn_value.get_first_param().unwrap().into_vector_value();
     ///
-    /// builder.position_at_end(&entry);
+    /// builder.position_at_end(entry);
     /// builder.build_insert_element(vector_param, i32_seven, i32_zero, "insert");
     /// builder.build_return(None);
     /// ```
@@ -1464,7 +1464,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Returning InstructionValue is the safe move here; but if the value means something
     // (IE the result of the switch) it should probably return BasicValueEnum?
     // SubTypes: I think value and case values must be the same subtype (maybe). Case value might need to be constants
-    pub fn build_switch(&self, value: IntValue<'ctx>, else_block: &BasicBlock, cases: &[(IntValue<'ctx>, &BasicBlock)]) -> InstructionValue<'ctx> {
+    pub fn build_switch(&self, value: IntValue<'ctx>, else_block: BasicBlock, cases: &[(IntValue<'ctx>, BasicBlock)]) -> InstructionValue<'ctx> {
         let switch_value = unsafe {
             LLVMBuildSwitch(self.builder, value.as_value_ref(), else_block.basic_block, cases.len() as u32)
         };
@@ -1550,7 +1550,7 @@ impl<'ctx> Builder<'ctx> {
     /// let entry = context.append_basic_block(fn_value, "entry");
     /// let i32_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
     /// let builder = context.create_builder();
-    /// builder.position_at_end(&entry);
+    /// builder.position_at_end(entry);
     /// builder.build_atomicrmw(AtomicRMWBinOp::Add, i32_ptr_param, i32_seven, AtomicOrdering::Unordered);
     /// builder.build_return(None);
     /// ```
@@ -1599,7 +1599,7 @@ impl<'ctx> Builder<'ctx> {
     /// let i32_eight = i32_type.const_int(8, false);
     /// let entry = context.append_basic_block(fn_value, "entry");
     /// let builder = context.create_builder();
-    /// builder.position_at_end(&entry);
+    /// builder.position_at_end(entry);
     /// builder.build_cmpxchg(i32_ptr_param, i32_seven, i32_eight, AtomicOrdering::AcquireRelease, AtomicOrdering::Monotonic);
     /// builder.build_return(None);
     /// ```

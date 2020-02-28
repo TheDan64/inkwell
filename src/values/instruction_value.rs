@@ -289,7 +289,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let function = module.add_function("take_f32_ptr", fn_type, None);
     /// let basic_block = context.append_basic_block(function, "entry");
     ///
-    /// builder.position_at_end(&basic_block);
+    /// builder.position_at_end(basic_block);
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
     /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
@@ -351,7 +351,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let function = module.add_function("take_f32_ptr", fn_type, None);
     /// let basic_block = context.append_basic_block(function, "entry");
     ///
-    /// builder.position_at_end(&basic_block);
+    /// builder.position_at_end(basic_block);
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
     /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
@@ -440,7 +440,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let function = module.add_function("take_f32_ptr", fn_type, None);
     /// let basic_block = context.append_basic_block(function, "entry");
     ///
-    /// builder.position_at_end(&basic_block);
+    /// builder.position_at_end(basic_block);
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
     /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
@@ -485,7 +485,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let function = module.add_function("take_f32_ptr", fn_type, None);
     /// let basic_block = context.append_basic_block(function, "entry");
     ///
-    /// builder.position_at_end(&basic_block);
+    /// builder.position_at_end(basic_block);
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
     /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
@@ -533,7 +533,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let function = module.add_function("take_f32_ptr", fn_type, None);
     /// let basic_block = context.append_basic_block(function, "entry");
     ///
-    /// builder.position_at_end(&basic_block);
+    /// builder.position_at_end(basic_block);
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
     /// let f32_val = f32_type.const_float(::std::f64::consts::PI);

@@ -162,7 +162,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
     /// let f = module.add_function("test_fn", fnt, None);
     /// let b = context.append_basic_block(f, "entry");
     ///
-    /// builder.position_at_end(&b);
+    /// builder.position_at_end(b);
     ///
     /// let extf = module.add_function("sumf", ft.fn_type(&[ft.into(), ft.into()], false), None);
     ///
@@ -274,7 +274,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
     /// // Add the function to our module
     /// let f = module.add_function("test_fn", sig, None);
     /// let b = context.append_basic_block(f, "entry");
-    /// builder.position_at_end(&b);
+    /// builder.position_at_end(b);
     ///
     /// // Insert a return statement
     /// let ret = double.const_float(64.0);

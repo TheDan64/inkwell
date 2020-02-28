@@ -35,7 +35,7 @@ fn test_get_function_address() {
     let fn_value = module.add_function("func", fn_type, None);
     let basic_block = context.append_basic_block(fn_value, "entry");
 
-    builder.position_at_end(&basic_block);
+    builder.position_at_end(basic_block);
     builder.build_return(None);
 
     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
@@ -72,23 +72,23 @@ fn test_jit_execution_engine() {
     main_argc.set_name("argc");
 
     // If anything goes wrong, jump to returning 1
-    builder.position_at_end(&error1);
+    builder.position_at_end(error1);
     builder.build_return(Some(&one_i32));
 
     // If successful, jump to returning 42
-    builder.position_at_end(&success);
+    builder.position_at_end(success);
     builder.build_return(Some(&fourtytwo_i32));
 
     // See if argc == 3
-    builder.position_at_end(&check_argc);
+    builder.position_at_end(check_argc);
 
     let eq = IntPredicate::EQ;
     let argc_check = builder.build_int_compare(eq, main_argc, three_i32, "argc_cmp");
 
-    builder.build_conditional_branch(argc_check, &check_arg3, &error1);
+    builder.build_conditional_branch(argc_check, check_arg3, error1);
 
-    builder.position_at_end(&check_arg3);
-    builder.build_unconditional_branch(&success);
+    builder.position_at_end(check_arg3);
+    builder.build_unconditional_branch(success);
 
     Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
 
@@ -181,7 +181,7 @@ fn test_add_remove_module() {
 //     let fn_value = module.add_function("func", fn_type, None);
 //     let basic_block = context.append_basic_block(&fn_value, "entry");
 
-//     builder.position_at_end(&basic_block);
+//     builder.position_at_end(basic_block);
 //     builder.build_return(None);
 
 //     assert_eq!(execution_engine.get_function_value("errors"), Err(FunctionLookupError::JITNotEnabled));

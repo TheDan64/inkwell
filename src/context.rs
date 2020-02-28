@@ -31,7 +31,7 @@ use std::thread_local;
 // 1) Only one thread has access to the global context at a time.
 // 2) The thread has shared access across different points in the thread.
 // This is still technically unsafe because another program in the same process
-// could also be accessing the global context via the C API. `get_context` has been
+// could also be accessing the global context via the C API. `get_global` has been
 // marked unsafe for this reason. Iff this isn't the case then this should be fully safe.
 static GLOBAL_CTX: Lazy<Mutex<Context>> = Lazy::new(|| {
     let ctx = unsafe {
@@ -168,7 +168,7 @@ impl Context {
     /// let fn_val = module.add_function("my_fn", fn_type, None);
     /// let basic_block = context.append_basic_block(fn_val, "entry");
     ///
-    /// builder.position_at_end(&basic_block);
+    /// builder.position_at_end(basic_block);
     /// builder.build_return(None);
     ///
     /// let memory_buffer = module.write_bitcode_to_memory();
@@ -691,7 +691,7 @@ impl Context {
     /// let fn_value = module.add_function("my_func", fn_type, None);
     /// let entry_block = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry_block);
+    /// builder.position_at_end(entry_block);
     ///
     /// let ret_instr = builder.build_return(None);
     ///
@@ -731,7 +731,7 @@ impl Context {
     /// let fn_value = module.add_function("my_func", fn_type, None);
     /// let entry_block = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry_block);
+    /// builder.position_at_end(entry_block);
     ///
     /// let ret_instr = builder.build_return(None);
     ///
