@@ -136,7 +136,7 @@ fn test_target_and_target_machine() {
     {
         // TODO: Try and find a triple that actually gets normalized..
         assert_eq!(
-            TargetMachine::normalize_target_triple(&triple).as_str(),
+            TargetMachine::normalize_triple(&triple).as_str(),
             CString::new("x86_64-pc-linux-gnu").unwrap().as_c_str(),
         );
 
@@ -146,18 +146,18 @@ fn test_target_and_target_machine() {
 }
 
 #[test]
-fn test_default_target_triple() {
-    let default_target_triple = TargetMachine::get_default_triple();
-    let default_target_triple = default_target_triple.as_str().to_string_lossy();
+fn test_default_triple() {
+    let default_triple = TargetMachine::get_default_triple();
+    let default_triple = default_triple.as_str().to_string_lossy();
 
     #[cfg(target_os = "linux")]
-    let cond = default_target_triple == "x86_64-pc-linux-gnu" ||
-               default_target_triple == "x86_64-unknown-linux-gnu";
+    let cond = default_triple == "x86_64-pc-linux-gnu" ||
+               default_triple == "x86_64-unknown-linux-gnu";
 
     #[cfg(target_os = "macos")]
-    let cond = default_target_triple.starts_with("x86_64-apple-darwin");
+    let cond = default_triple.starts_with("x86_64-apple-darwin");
 
-    assert!(cond, "Unexpected target triple: {}", default_target_triple);
+    assert!(cond, "Unexpected target triple: {}", default_triple);
 
     // TODO: CFG for other supported major OSes
 }

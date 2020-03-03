@@ -97,21 +97,21 @@ impl Default for InitializationConfig {
 
 #[derive(Eq)]
 pub struct TargetTriple {
-    pub(crate) target_triple: LLVMString,
+    pub(crate) triple: LLVMString,
 }
 
 impl TargetTriple {
-    pub(crate) fn new(target_triple: LLVMString) -> TargetTriple {
+    pub(crate) fn new(triple: LLVMString) -> TargetTriple {
         TargetTriple {
-            target_triple,
+            triple,
         }
     }
 
-    pub fn create(target_triple: &str) -> TargetTriple {
-        let c_string = CString::new(target_triple).expect("Conversion to CString failed unexpectedly");
+    pub fn create(triple: &str) -> TargetTriple {
+        let c_string = CString::new(triple).expect("Conversion to CString failed unexpectedly");
 
         TargetTriple {
-            target_triple: LLVMString::create_from_c_str(c_string.as_c_str())
+            triple: LLVMString::create_from_c_str(c_string.as_c_str())
         }
     }
 
@@ -120,25 +120,25 @@ impl TargetTriple {
     }
 
     pub fn as_ptr(&self) -> *const ::libc::c_char {
-        self.target_triple.as_ptr()
+        self.triple.as_ptr()
     }
 }
 
 impl PartialEq for TargetTriple {
     fn eq(&self, other: &TargetTriple) -> bool {
-        self.target_triple == other.target_triple
+        self.triple == other.triple
     }
 }
 
 impl fmt::Debug for TargetTriple {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "TargetTriple({:?})", self.target_triple)
+        write!(f, "TargetTriple({:?})", self.triple)
     }
 }
 
 impl fmt::Display for TargetTriple {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "TargetTriple({:?})", self.target_triple)
+        write!(f, "TargetTriple({:?})", self.triple)
     }
 }
 
@@ -1002,13 +1002,13 @@ impl Target {
         Some(Target::new(target))
     }
 
-    pub fn from_triple(target_triple: &TargetTriple) -> Result<Self, LLVMString> {
+    pub fn from_triple(triple: &TargetTriple) -> Result<Self, LLVMString> {
         let mut target = ptr::null_mut();
         let mut err_string = MaybeUninit::uninit();
 
         let code = {
             let _guard = TARGET_LOCK.read();
-            unsafe { LLVMGetTargetFromTriple(target_triple.as_ptr(), &mut target, err_string.as_mut_ptr()) }
+            unsafe { LLVMGetTargetFromTriple(triple.as_ptr(), &mut target, err_string.as_mut_ptr()) }
         };
 
         if code == 1 {
@@ -1076,7 +1076,7 @@ impl TargetMachine {
     }
 
     #[llvm_versions(7.0..=latest)]
-    pub fn normalize_target_triple(triple: &TargetTriple) -> TargetTriple {
+    pub fn normalize_triple(triple: &TargetTriple) -> TargetTriple {
         use llvm_sys::target_machine::LLVMNormalizeTargetTriple;
 
         let normalized = unsafe { LLVMNormalizeTargetTriple(triple.as_ptr()) };

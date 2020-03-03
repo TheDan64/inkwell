@@ -340,9 +340,9 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(module.get_triple(), triple);
     /// ```
-    pub fn set_triple(&self, target_triple: &TargetTriple) {
+    pub fn set_triple(&self, triple: &TargetTriple) {
         unsafe {
-            LLVMSetTarget(self.module.get(), target_triple.as_ptr())
+            LLVMSetTarget(self.module.get(), triple.as_ptr())
         }
     }
 
