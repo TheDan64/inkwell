@@ -25,7 +25,7 @@ impl<'ctx> PhiValue<'ctx> {
         }
     }
 
-    pub fn add_incoming(&self, incoming: &[(&dyn BasicValue<'ctx>, &BasicBlock)]) {
+    pub fn add_incoming(&self, incoming: &[(&dyn BasicValue<'ctx>, BasicBlock<'ctx>)]) {
         let (mut values, mut basic_blocks): (Vec<LLVMValueRef>, Vec<LLVMBasicBlockRef>) = {
             incoming.iter()
                     .map(|&(v, bb)| (v.as_value_ref(), bb.basic_block))
@@ -43,7 +43,7 @@ impl<'ctx> PhiValue<'ctx> {
         }
     }
 
-    pub fn get_incoming(&self, index: u32) -> Option<(BasicValueEnum<'ctx>, BasicBlock)> {
+    pub fn get_incoming(&self, index: u32) -> Option<(BasicValueEnum<'ctx>, BasicBlock<'ctx>)> {
         if index >= self.count_incoming() {
             return None;
         }

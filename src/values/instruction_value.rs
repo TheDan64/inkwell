@@ -174,7 +174,7 @@ impl<'ctx> InstructionValue<'ctx> {
     // but I doubt LLVM returns null if the parent BB (or grandparent FN)
     // was deleted... Invalid memory is more likely. Cloned IV will have no
     // parent?
-    pub fn get_parent(&self) -> Option<BasicBlock> {
+    pub fn get_parent(&self) -> Option<BasicBlock<'ctx>> {
         let value = unsafe {
             LLVMGetInstructionParent(self.as_value_ref())
         };
@@ -289,7 +289,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let function = module.add_function("take_f32_ptr", fn_type, None);
     /// let basic_block = context.append_basic_block(function, "entry");
     ///
-    /// builder.position_at_end(&basic_block);
+    /// builder.position_at_end(basic_block);
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
     /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
@@ -351,7 +351,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let function = module.add_function("take_f32_ptr", fn_type, None);
     /// let basic_block = context.append_basic_block(function, "entry");
     ///
-    /// builder.position_at_end(&basic_block);
+    /// builder.position_at_end(basic_block);
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
     /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
@@ -392,7 +392,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// 3) Function call has two: i8 pointer %1 argument, and the free function itself
     /// 4) Void return has zero: void is not a value and does not count as an operand
     /// even though the return instruction can take values.
-    pub fn get_operand(&self, index: u32) -> Option<Either<BasicValueEnum<'ctx>, BasicBlock>> {
+    pub fn get_operand(&self, index: u32) -> Option<Either<BasicValueEnum<'ctx>, BasicBlock<'ctx>>> {
         let num_operands = self.get_num_operands();
 
         if index >= num_operands {
@@ -440,7 +440,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let function = module.add_function("take_f32_ptr", fn_type, None);
     /// let basic_block = context.append_basic_block(function, "entry");
     ///
-    /// builder.position_at_end(&basic_block);
+    /// builder.position_at_end(basic_block);
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
     /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
@@ -485,7 +485,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let function = module.add_function("take_f32_ptr", fn_type, None);
     /// let basic_block = context.append_basic_block(function, "entry");
     ///
-    /// builder.position_at_end(&basic_block);
+    /// builder.position_at_end(basic_block);
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
     /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
@@ -533,7 +533,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let function = module.add_function("take_f32_ptr", fn_type, None);
     /// let basic_block = context.append_basic_block(function, "entry");
     ///
-    /// builder.position_at_end(&basic_block);
+    /// builder.position_at_end(basic_block);
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
     /// let f32_val = f32_type.const_float(::std::f64::consts::PI);

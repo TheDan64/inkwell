@@ -31,7 +31,7 @@ use std::thread_local;
 // 1) Only one thread has access to the global context at a time.
 // 2) The thread has shared access across different points in the thread.
 // This is still technically unsafe because another program in the same process
-// could also be accessing the global context via the C API. `get_context` has been
+// could also be accessing the global context via the C API. `get_global` has been
 // marked unsafe for this reason. Iff this isn't the case then this should be fully safe.
 static GLOBAL_CTX: Lazy<Mutex<Context>> = Lazy::new(|| {
     let ctx = unsafe {
@@ -168,7 +168,7 @@ impl Context {
     /// let fn_val = module.add_function("my_fn", fn_type, None);
     /// let basic_block = context.append_basic_block(fn_val, "entry");
     ///
-    /// builder.position_at_end(&basic_block);
+    /// builder.position_at_end(basic_block);
     /// builder.build_return(None);
     ///
     /// let memory_buffer = module.write_bitcode_to_memory();
@@ -617,7 +617,7 @@ impl Context {
     ///
     /// assert_eq!(fn_value.count_basic_blocks(), 1);
     ///
-    /// let last_basic_block = context.insert_basic_block_after(&entry_basic_block, "last");
+    /// let last_basic_block = context.insert_basic_block_after(entry_basic_block, "last");
     ///
     /// assert_eq!(fn_value.count_basic_blocks(), 2);
     /// assert_eq!(fn_value.get_first_basic_block().unwrap(), entry_basic_block);
@@ -626,9 +626,9 @@ impl Context {
     // REVIEW: What happens when using these methods and the BasicBlock doesn't have a parent?
     // Should they be callable at all? Needs testing to see what LLVM will do, I suppose. See below unwrap.
     // Maybe need SubTypes: BasicBlock<HasParent>, BasicBlock<Orphan>?
-    pub fn insert_basic_block_after(&self, basic_block: &BasicBlock, name: &str) -> BasicBlock {
+    pub fn insert_basic_block_after(&self, basic_block: BasicBlock, name: &str) -> BasicBlock {
         match basic_block.get_next_basic_block() {
-            Some(next_basic_block) => self.prepend_basic_block(&next_basic_block, name),
+            Some(next_basic_block) => self.prepend_basic_block(next_basic_block, name),
             None => {
                 let parent_fn = basic_block.get_parent().unwrap();
 
@@ -653,13 +653,13 @@ impl Context {
     ///
     /// assert_eq!(fn_value.count_basic_blocks(), 1);
     ///
-    /// let first_basic_block = context.prepend_basic_block(&entry_basic_block, "first");
+    /// let first_basic_block = context.prepend_basic_block(entry_basic_block, "first");
     ///
     /// assert_eq!(fn_value.count_basic_blocks(), 2);
     /// assert_eq!(fn_value.get_first_basic_block().unwrap(), first_basic_block);
     /// assert_eq!(fn_value.get_last_basic_block().unwrap(), entry_basic_block);
     /// ```
-    pub fn prepend_basic_block(&self, basic_block: &BasicBlock, name: &str) -> BasicBlock {
+    pub fn prepend_basic_block(&self, basic_block: BasicBlock, name: &str) -> BasicBlock {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let bb = unsafe {
@@ -691,7 +691,7 @@ impl Context {
     /// let fn_value = module.add_function("my_func", fn_type, None);
     /// let entry_block = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry_block);
+    /// builder.position_at_end(entry_block);
     ///
     /// let ret_instr = builder.build_return(None);
     ///
@@ -731,7 +731,7 @@ impl Context {
     /// let fn_value = module.add_function("my_func", fn_type, None);
     /// let entry_block = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry_block);
+    /// builder.position_at_end(entry_block);
     ///
     /// let ret_instr = builder.build_return(None);
     ///

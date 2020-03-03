@@ -28,7 +28,7 @@ impl<'ctx> CodeGen<'ctx> {
         let function = self.module.add_function("sum", fn_type, None);
         let basic_block = self.context.append_basic_block(function, "entry");
 
-        self.builder.position_at_end(&basic_block);
+        self.builder.position_at_end(basic_block);
 
         let x = function.get_nth_param(0)?.into_int_value();
         let y = function.get_nth_param(1)?.into_int_value();

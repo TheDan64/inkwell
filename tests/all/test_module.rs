@@ -108,7 +108,7 @@ fn test_write_and_load_memory_buffer() {
     let function = module.add_function("my_fn", function_type, None);
     let basic_block = context.append_basic_block(function, "entry");
 
-    builder.position_at_end(&basic_block);
+    builder.position_at_end(basic_block);
     builder.build_return(None);
 
     let memory_buffer = module.write_bitcode_to_memory();
@@ -212,7 +212,7 @@ fn test_parse_from_buffer() {
     let basic_block = context.append_basic_block(f, "entry");
     let builder = context.create_builder();
 
-    builder.position_at_end(&basic_block);
+    builder.position_at_end(basic_block);
     builder.build_return(None);
 
     assert!(module.verify().is_ok());
@@ -253,7 +253,7 @@ fn test_parse_from_path() {
     let basic_block = context.append_basic_block(f, "entry");
     let builder = context.create_builder();
 
-    builder.position_at_end(&basic_block);
+    builder.position_at_end(basic_block);
     builder.build_return(None);
 
     assert!(module.verify().is_ok(), "3");
@@ -281,7 +281,7 @@ fn test_clone() {
     let basic_block = context.append_basic_block(f, "entry");
     let builder = context.create_builder();
 
-    builder.position_at_end(&basic_block);
+    builder.position_at_end(basic_block);
     builder.build_return(None);
 
     let module2 = module.clone();
@@ -300,7 +300,7 @@ fn test_print_to_file() {
     let basic_block = context.append_basic_block(f, "entry");
     let builder = context.create_builder();
 
-    builder.position_at_end(&basic_block);
+    builder.position_at_end(basic_block);
     builder.build_return(None);
 
     let bad_path = Path::new("/tmp/some/silly/path/that/sure/doesn't/exist");
@@ -357,7 +357,7 @@ fn test_linking_modules() {
     let fn_val = module.add_function("f", fn_type, None);
     let basic_block = context.append_basic_block(fn_val, "entry");
 
-    builder.position_at_end(&basic_block);
+    builder.position_at_end(basic_block);
     builder.build_return(None);
 
     let module2 = context.create_module("mod2");
@@ -371,7 +371,7 @@ fn test_linking_modules() {
     let fn_val2 = module3.add_function("f2", fn_type, None);
     let basic_block2 = context.append_basic_block(fn_val2, "entry");
 
-    builder.position_at_end(&basic_block2);
+    builder.position_at_end(basic_block2);
     builder.build_return(None);
 
     // Unowned module links in unowned module
@@ -391,7 +391,7 @@ fn test_linking_modules() {
     let fn_val3 = module5.add_function("f2", fn_type, None);
     let basic_block3 = context.append_basic_block(fn_val3, "entry");
 
-    builder.position_at_end(&basic_block3);
+    builder.position_at_end(basic_block3);
     builder.build_return(None);
 
     // EE owned module links in unowned module which has
@@ -405,7 +405,7 @@ fn test_linking_modules() {
     let fn_val4 = module6.add_function("f4", fn_type, None);
     let basic_block4 = context.append_basic_block(fn_val4, "entry");
 
-    builder.position_at_end(&basic_block4);
+    builder.position_at_end(basic_block4);
     builder.build_return(None);
 
     let execution_engine2 = module6.create_jit_execution_engine(OptimizationLevel::None).expect("Could not create Execution Engine");
@@ -464,7 +464,7 @@ fn test_double_ee_from_same_module() {
     let fn_val = module.add_function("f", fn_type, None);
     let basic_block = context.append_basic_block(fn_val, "entry");
 
-    builder.position_at_end(&basic_block);
+    builder.position_at_end(basic_block);
     builder.build_return(None);
 
     module.create_execution_engine().expect("Could not create Execution Engine");

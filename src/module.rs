@@ -621,7 +621,7 @@ impl<'ctx> Module<'ctx> {
     /// let basic_block = context.append_basic_block(f, "entry");
     /// let builder = context.create_builder();
     ///
-    /// builder.position_at_end(&basic_block);
+    /// builder.position_at_end(basic_block);
     /// builder.build_return(None);
     ///
     /// let buffer = module.write_bitcode_to_memory();

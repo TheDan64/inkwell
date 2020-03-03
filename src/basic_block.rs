@@ -10,6 +10,7 @@ use crate::values::{FunctionValue, InstructionValue};
 
 use std::fmt;
 use std::ffi::CStr;
+use std::marker::PhantomData;
 
 /// A `BasicBlock` is a container of instructions.
 ///
@@ -19,11 +20,12 @@ use std::ffi::CStr;
 /// instruction. `BasicBlock`s are allowed to be malformed prior to running validation because it may be useful
 /// when constructing or modifying a program.
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
-pub struct BasicBlock {
+pub struct BasicBlock<'ctx> {
     pub(crate) basic_block: LLVMBasicBlockRef,
+    _marker: PhantomData<&'ctx ()>,
 }
 
-impl BasicBlock {
+impl<'ctx> BasicBlock<'ctx> {
     pub(crate) fn new(basic_block: LLVMBasicBlockRef) -> Option<Self> {
         if basic_block.is_null() {
             return None;
@@ -34,7 +36,7 @@ impl BasicBlock {
             assert!(!LLVMIsABasicBlock(basic_block as LLVMValueRef).is_null())
         }
 
-        Some(BasicBlock { basic_block })
+        Some(BasicBlock { basic_block, _marker: PhantomData })
     }
 
     /// Obtains the `FunctionValue` that this `BasicBlock` belongs to, if any.
@@ -59,7 +61,7 @@ impl BasicBlock {
     ///
     /// assert!(basic_block.get_parent().is_none());
     /// ```
-    pub fn get_parent(&self) -> Option<FunctionValue> {
+    pub fn get_parent(&self) -> Option<FunctionValue<'ctx>> {
         let value = unsafe {
             LLVMGetBasicBlockParent(self.basic_block)
         };
@@ -93,7 +95,7 @@ impl BasicBlock {
     /// assert!(basic_block2.get_previous_basic_block().is_none());
     /// assert_eq!(basic_block3.get_previous_basic_block().unwrap(), basic_block2);
     /// ```
-    pub fn get_previous_basic_block(&self) -> Option<BasicBlock> {
+    pub fn get_previous_basic_block(&self) -> Option<BasicBlock<'ctx>> {
         if self.get_parent().is_none() {
             return None;
         }
@@ -132,7 +134,7 @@ impl BasicBlock {
     /// assert_eq!(basic_block2.get_next_basic_block().unwrap(), basic_block3);
     /// assert!(basic_block3.get_next_basic_block().is_none());
     /// ```
-    pub fn get_next_basic_block(&self) -> Option<BasicBlock> {
+    pub fn get_next_basic_block(&self) -> Option<BasicBlock<'ctx>> {
         if self.get_parent().is_none() {
             return None;
         }
@@ -162,13 +164,13 @@ impl BasicBlock {
     /// let basic_block1 = context.append_basic_block(function, "entry");
     /// let basic_block2 = context.append_basic_block(function, "next");
     ///
-    /// basic_block2.move_before(&basic_block1);
+    /// basic_block2.move_before(basic_block1);
     ///
     /// assert!(basic_block1.get_next_basic_block().is_none());
     /// assert_eq!(basic_block2.get_next_basic_block().unwrap(), basic_block1);
     /// ```
     // REVIEW: What happens if blocks are from different scopes?
-    pub fn move_before(&self, basic_block: &BasicBlock) -> Result<(), ()> {
+    pub fn move_before(&self, basic_block: BasicBlock<'ctx>) -> Result<(), ()> {
         // This method is UB if the parent no longer exists, so we must check for parent (or encode into type system)
         if self.get_parent().is_none() || basic_block.get_parent().is_none() {
             return Err(());
@@ -199,13 +201,13 @@ impl BasicBlock {
     /// let basic_block1 = context.append_basic_block(function, "entry");
     /// let basic_block2 = context.append_basic_block(function, "next");
     ///
-    /// basic_block1.move_after(&basic_block2);
+    /// basic_block1.move_after(basic_block2);
     ///
     /// assert!(basic_block1.get_next_basic_block().is_none());
     /// assert_eq!(basic_block2.get_next_basic_block().unwrap(), basic_block1);
     /// ```
     // REVIEW: What happens if blocks are from different scopes?
-    pub fn move_after(&self, basic_block: &BasicBlock) -> Result<(), ()> {
+    pub fn move_after(&self, basic_block: BasicBlock<'ctx>) -> Result<(), ()> {
         // This method is UB if the parent no longer exists, so we must check for parent (or encode into type system)
         if self.get_parent().is_none() || basic_block.get_parent().is_none() {
             return Err(());
@@ -235,12 +237,12 @@ impl BasicBlock {
     /// let function = module.add_function("do_nothing", fn_type, None);
     /// let basic_block = context.append_basic_block(function, "entry");
     ///
-    /// builder.position_at_end(&basic_block);
+    /// builder.position_at_end(basic_block);
     /// builder.build_return(None);
     ///
     /// assert_eq!(basic_block.get_first_instruction().unwrap().get_opcode(), InstructionOpcode::Return);
     /// ```
-    pub fn get_first_instruction(&self) -> Option<InstructionValue> {
+    pub fn get_first_instruction(&self) -> Option<InstructionValue<'ctx>> {
         let value = unsafe {
             LLVMGetFirstInstruction(self.basic_block)
         };
@@ -269,12 +271,12 @@ impl BasicBlock {
     /// let function = module.add_function("do_nothing", fn_type, None);
     /// let basic_block = context.append_basic_block(function, "entry");
     ///
-    /// builder.position_at_end(&basic_block);
+    /// builder.position_at_end(basic_block);
     /// builder.build_return(None);
     ///
     /// assert_eq!(basic_block.get_last_instruction().unwrap().get_opcode(), InstructionOpcode::Return);
     /// ```
-    pub fn get_last_instruction(&self) -> Option<InstructionValue> {
+    pub fn get_last_instruction(&self) -> Option<InstructionValue<'ctx>> {
         let value = unsafe {
             LLVMGetLastInstruction(self.basic_block)
         };
@@ -303,7 +305,7 @@ impl BasicBlock {
     /// let function = module.add_function("do_nothing", fn_type, None);
     /// let basic_block = context.append_basic_block(function, "entry");
     ///
-    /// builder.position_at_end(&basic_block);
+    /// builder.position_at_end(basic_block);
     /// builder.build_return(None);
     ///
     /// assert_eq!(basic_block.get_terminator().unwrap().get_opcode(), InstructionOpcode::Return);
@@ -312,7 +314,7 @@ impl BasicBlock {
     // if getting a value over an instruction is preferable
     // TODOC: Every BB must have a terminating instruction or else it is invalid
     // REVIEW: Unclear how this differs from get_last_instruction
-    pub fn get_terminator(&self) -> Option<InstructionValue> {
+    pub fn get_terminator(&self) -> Option<InstructionValue<'ctx>> {
         let value = unsafe {
             LLVMGetBasicBlockTerminator(self.basic_block)
         };
@@ -412,8 +414,7 @@ impl BasicBlock {
     ///
     /// assert_eq!(context, *basic_block.get_context());
     /// ```
-    // FIXME: Needs 'ctx on BB lifetime to work correctly
-    pub fn get_context(&self) -> ContextRef {
+    pub fn get_context(&self) -> ContextRef<'ctx> {
         let context = unsafe {
             LLVMGetTypeContext(LLVMTypeOf(LLVMBasicBlockAsValue(self.basic_block)))
         };
@@ -451,7 +452,7 @@ impl BasicBlock {
     }
 }
 
-impl fmt::Debug for BasicBlock {
+impl fmt::Debug for BasicBlock<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let llvm_value = unsafe {
             CStr::from_ptr(LLVMPrintValueToString(self.basic_block as LLVMValueRef))

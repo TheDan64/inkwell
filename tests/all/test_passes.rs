@@ -117,7 +117,7 @@ fn test_pass_manager_builder() {
     let builder = context.create_builder();
     let entry = context.append_basic_block(fn_value, "entry");
 
-    builder.position_at_end(&entry);
+    builder.position_at_end(entry);
     builder.build_return(None);
 
     #[cfg(not(feature = "llvm3-7"))]

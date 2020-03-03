@@ -37,7 +37,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// let fn_value = module.add_function("my_fn", fn_type, None);
     /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry_bb);
+    /// builder.position_at_end(entry_bb);
     ///
     /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
     ///
@@ -64,7 +64,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// let fn_value = module.add_function("my_fn", fn_type, None);
     /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry_bb);
+    /// builder.position_at_end(entry_bb);
     ///
     /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
     ///
@@ -93,7 +93,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// let fn_value = module.add_function("my_fn", fn_type, None);
     /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry_bb);
+    /// builder.position_at_end(entry_bb);
     ///
     /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
     ///
@@ -126,7 +126,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// let enum_attribute = context.create_enum_attribute(1, 1);
     /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry_bb);
+    /// builder.position_at_end(entry_bb);
     ///
     /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
     ///
@@ -159,7 +159,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// let enum_attribute = context.create_enum_attribute(1, 1);
     /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry_bb);
+    /// builder.position_at_end(entry_bb);
     ///
     /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
     ///
@@ -194,7 +194,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// let enum_attribute = context.create_enum_attribute(1, 1);
     /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry_bb);
+    /// builder.position_at_end(entry_bb);
     ///
     /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
     ///
@@ -230,7 +230,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// let enum_attribute = context.create_enum_attribute(1, 1);
     /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry_bb);
+    /// builder.position_at_end(entry_bb);
     ///
     /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
     ///
@@ -273,7 +273,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// let enum_attribute = context.create_enum_attribute(1, 1);
     /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry_bb);
+    /// builder.position_at_end(entry_bb);
     ///
     /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
     ///
@@ -316,7 +316,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// let enum_attribute = context.create_enum_attribute(1, 1);
     /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry_bb);
+    /// builder.position_at_end(entry_bb);
     ///
     /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
     ///
@@ -353,7 +353,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// let enum_attribute = context.create_enum_attribute(1, 1);
     /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry_bb);
+    /// builder.position_at_end(entry_bb);
     ///
     /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
     ///
@@ -390,7 +390,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// let enum_attribute = context.create_enum_attribute(1, 1);
     /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry_bb);
+    /// builder.position_at_end(entry_bb);
     ///
     /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
     ///
@@ -420,7 +420,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// let fn_value = module.add_function("my_fn", fn_type, None);
     /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry_bb);
+    /// builder.position_at_end(entry_bb);
     ///
     /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
     ///
@@ -447,7 +447,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// let fn_value = module.add_function("my_fn", fn_type, None);
     /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry_bb);
+    /// builder.position_at_end(entry_bb);
     ///
     /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
     ///
@@ -481,7 +481,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// let fn_value = module.add_function("my_fn", fn_type, None);
     /// let entry_bb = context.append_basic_block(fn_value, "entry");
     ///
-    /// builder.position_at_end(&entry_bb);
+    /// builder.position_at_end(entry_bb);
     ///
     /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
     ///
