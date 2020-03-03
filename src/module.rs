@@ -16,7 +16,6 @@ use llvm_sys::LLVMLinkage;
 use llvm_sys::LLVMModuleFlagBehavior;
 
 use std::cell::{Cell, RefCell, Ref};
-#[llvm_versions(3.9..=latest)]
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::fs::File;
