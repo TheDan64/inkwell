@@ -16,7 +16,6 @@ use llvm_sys::LLVMLinkage;
 use llvm_sys::LLVMModuleFlagBehavior;
 
 use std::cell::{Cell, RefCell, Ref};
-#[llvm_versions(3.9..=latest)]
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::fs::File;
@@ -35,7 +34,7 @@ use crate::data_layout::DataLayout;
 use crate::execution_engine::ExecutionEngine;
 use crate::memory_buffer::MemoryBuffer;
 use crate::support::LLVMString;
-use crate::targets::{Target, InitializationConfig};
+use crate::targets::{InitializationConfig, Target, TargetTriple};
 use crate::types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
 use crate::values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
 #[llvm_versions(7.0..=latest)]
@@ -321,59 +320,58 @@ impl<'ctx> Module<'ctx> {
         Some(BasicTypeEnum::new(type_))
     }
 
-    /// Sets a `Target` to this `Module`.
+    /// Assigns a `TargetTriple` to this `Module`.
     ///
     /// # Example
     ///
     /// ```rust,no_run
     /// use inkwell::context::Context;
-    /// use inkwell::targets::Target;
+    /// use inkwell::targets::{Target, TargetTriple};
     ///
     /// Target::initialize_x86(&Default::default());
-    ///
     /// let context = Context::create();
     /// let module = context.create_module("mod");
-    /// let target = Target::from_name("x86-64").unwrap();
+    /// let triple = TargetTriple::create("x86_64-pc-linux-gnu");
     ///
-    /// assert!(module.get_target().is_none());
+    /// assert_eq!(module.get_triple(), TargetTriple::create(""));
     ///
-    /// module.set_target(&target);
+    /// module.set_triple(&triple);
     ///
-    /// assert_eq!(module.get_target().unwrap(), target);
+    /// assert_eq!(module.get_triple(), triple);
     /// ```
-    pub fn set_target(&self, target: &Target) {
+    pub fn set_triple(&self, triple: &TargetTriple) {
         unsafe {
-            LLVMSetTarget(self.module.get(), target.get_name().as_ptr())
+            LLVMSetTarget(self.module.get(), triple.as_ptr())
         }
     }
 
-    /// Gets the `Target` assigned to this `Module`, if any.
+    /// Gets the `TargetTriple` assigned to this `Module`. If none has been
+    /// assigned, the triple will default to "".
     ///
     /// # Example
     ///
     /// ```rust,no_run
     /// use inkwell::context::Context;
-    /// use inkwell::targets::Target;
+    /// use inkwell::targets::{Target, TargetTriple};
     ///
     /// Target::initialize_x86(&Default::default());
-    ///
     /// let context = Context::create();
     /// let module = context.create_module("mod");
-    /// let target = Target::from_name("x86-64").unwrap();
+    /// let triple = TargetTriple::create("x86_64-pc-linux-gnu");
     ///
-    /// assert!(module.get_target().is_none());
+    /// assert_eq!(module.get_triple(), TargetTriple::create(""));
     ///
-    /// module.set_target(&target);
+    /// module.set_triple(&triple);
     ///
-    /// assert_eq!(module.get_target().unwrap(), target);
+    /// assert_eq!(module.get_triple(), triple);
     /// ```
-    pub fn get_target(&self) -> Option<Target> {
+    pub fn get_triple(&self) -> TargetTriple {
         // REVIEW: This isn't an owned LLVMString, is it? If so, need to deallocate.
         let target_str = unsafe {
             LLVMGetTarget(self.module.get())
         };
 
-        Target::from_name_raw(target_str)
+        TargetTriple::new(LLVMString::create_from_c_str(unsafe { CStr::from_ptr(target_str) }))
     }
 
     /// Creates an `ExecutionEngine` from this `Module`.
@@ -398,12 +396,12 @@ impl<'ctx> Module<'ctx> {
             .map_err(|mut err_string| {
                 err_string.push('\0');
 
-                LLVMString::create(&err_string)
+                LLVMString::create_from_str(&err_string)
             })?;
 
         if self.owned_by_ee.borrow().is_some() {
             let string = "This module is already owned by an ExecutionEngine.\0";
-            return Err(LLVMString::create(string));
+            return Err(LLVMString::create_from_str(string));
         }
 
         let mut execution_engine = MaybeUninit::uninit();
@@ -449,12 +447,12 @@ impl<'ctx> Module<'ctx> {
             .map_err(|mut err_string| {
                 err_string.push('\0');
 
-                LLVMString::create(&err_string)
+                LLVMString::create_from_str(&err_string)
             })?;
 
         if self.owned_by_ee.borrow().is_some() {
             let string = "This module is already owned by an ExecutionEngine.\0";
-            return Err(LLVMString::create(string));
+            return Err(LLVMString::create_from_str(string));
         }
 
         let mut execution_engine = MaybeUninit::uninit();
@@ -502,12 +500,12 @@ impl<'ctx> Module<'ctx> {
             .map_err(|mut err_string| {
                 err_string.push('\0');
 
-                LLVMString::create(&err_string)
+                LLVMString::create_from_str(&err_string)
             })?;
 
         if self.owned_by_ee.borrow().is_some() {
             let string = "This module is already owned by an ExecutionEngine.\0";
-            return Err(LLVMString::create(string));
+            return Err(LLVMString::create_from_str(string));
         }
 
         let mut execution_engine = MaybeUninit::uninit();
@@ -1212,7 +1210,7 @@ impl<'ctx> Module<'ctx> {
     pub fn link_in_module(&self, other: Self) -> Result<(), LLVMString> {
         if other.owned_by_ee.borrow().is_some() {
             let string = "Cannot link a module which is already owned by an ExecutionEngine.\0";
-            return Err(LLVMString::create(string));
+            return Err(LLVMString::create_from_str(string));
         }
 
         #[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]

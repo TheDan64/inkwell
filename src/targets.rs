@@ -1,5 +1,3 @@
-#[llvm_versions(7.0..=latest)]
-use either::Either;
 use llvm_sys::target::{
     LLVMABIAlignmentOfType, LLVMABISizeOfType, LLVMByteOrder, LLVMByteOrdering,
     LLVMCallFrameAlignmentOfType, LLVMCopyStringRepOfTargetData, LLVMCreateTargetData,
@@ -35,6 +33,7 @@ use crate::{AddressSpace, OptimizationLevel};
 
 use std::default::Default;
 use std::ffi::{CStr, CString};
+use std::fmt;
 use std::mem::MaybeUninit;
 use std::path::Path;
 use std::ptr;
@@ -93,6 +92,53 @@ impl Default for InitializationConfig {
             info: true,
             machine_code: true,
         }
+    }
+}
+
+#[derive(Eq)]
+pub struct TargetTriple {
+    pub(crate) triple: LLVMString,
+}
+
+impl TargetTriple {
+    pub(crate) fn new(triple: LLVMString) -> TargetTriple {
+        TargetTriple {
+            triple,
+        }
+    }
+
+    pub fn create(triple: &str) -> TargetTriple {
+        let c_string = CString::new(triple).expect("Conversion to CString failed unexpectedly");
+
+        TargetTriple {
+            triple: LLVMString::create_from_c_str(c_string.as_c_str())
+        }
+    }
+
+    pub fn as_str(&self) -> &CStr {
+        unsafe { CStr::from_ptr(self.as_ptr()) }
+    }
+
+    pub fn as_ptr(&self) -> *const ::libc::c_char {
+        self.triple.as_ptr()
+    }
+}
+
+impl PartialEq for TargetTriple {
+    fn eq(&self, other: &TargetTriple) -> bool {
+        self.triple == other.triple
+    }
+}
+
+impl fmt::Debug for TargetTriple {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "TargetTriple({:?})", self.triple)
+    }
+}
+
+impl fmt::Display for TargetTriple {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        write!(f, "TargetTriple({:?})", self.triple)
     }
 }
 
@@ -858,14 +904,13 @@ impl Target {
 
     pub fn create_target_machine(
         &self,
-        triple: &str,
+        triple: &TargetTriple,
         cpu: &str,
         features: &str,
         level: OptimizationLevel,
         reloc_mode: RelocMode,
         code_model: CodeModel,
     ) -> Option<TargetMachine> {
-        let triple = CString::new(triple).expect("Conversion to CString failed unexpectedly");
         let cpu = CString::new(cpu).expect("Conversion to CString failed unexpectedly");
         let features = CString::new(features).expect("Conversion to CString failed unexpectedly");
         let level = match level {
@@ -957,14 +1002,13 @@ impl Target {
         Some(Target::new(target))
     }
 
-    pub fn from_triple(triple: &str) -> Result<Self, LLVMString> {
-        let c_string = CString::new(triple).expect("Conversion to CString failed unexpectedly");
+    pub fn from_triple(triple: &TargetTriple) -> Result<Self, LLVMString> {
         let mut target = ptr::null_mut();
         let mut err_string = MaybeUninit::uninit();
 
         let code = {
             let _guard = TARGET_LOCK.read();
-            unsafe { LLVMGetTargetFromTriple(c_string.as_ptr(), &mut target, err_string.as_mut_ptr()) }
+            unsafe { LLVMGetTargetFromTriple(triple.as_ptr(), &mut target, err_string.as_mut_ptr()) }
         };
 
         if code == 1 {
@@ -1006,10 +1050,10 @@ impl TargetMachine {
         Target::new(target)
     }
 
-    pub fn get_triple(&self) -> LLVMString {
+    pub fn get_triple(&self) -> TargetTriple {
         let ptr = unsafe { LLVMGetTargetMachineTriple(self.target_machine) };
 
-        LLVMString::new(ptr)
+        TargetTriple::new(LLVMString::new(ptr))
     }
 
     /// Gets the default triple for the current system.
@@ -1023,31 +1067,21 @@ impl TargetMachine {
     ///
     /// let default_triple = TargetMachine::get_default_triple();
     ///
-    /// assert_eq!(*default_triple, *CString::new("x86_64-pc-linux-gnu").unwrap());
+    /// assert_eq!(default_triple.as_str(), CString::new("x86_64-pc-linux-gnu").unwrap().as_c_str());
     /// ```
-    pub fn get_default_triple() -> LLVMString {
+    pub fn get_default_triple() -> TargetTriple {
         let llvm_string = unsafe { LLVMGetDefaultTargetTriple() };
 
-        LLVMString::new(llvm_string)
+        TargetTriple::new(LLVMString::new(llvm_string))
     }
 
     #[llvm_versions(7.0..=latest)]
-    pub fn normalize_target_triple(triple: Either<&str, &CStr>) -> LLVMString {
+    pub fn normalize_triple(triple: &TargetTriple) -> TargetTriple {
         use llvm_sys::target_machine::LLVMNormalizeTargetTriple;
 
-        let ptr = match triple {
-            Either::Left(triple_str) => {
-                let c_string =
-                    CString::new(triple_str).expect("Conversion to CString failed unexpectedly");
+        let normalized = unsafe { LLVMNormalizeTargetTriple(triple.as_ptr()) };
 
-                unsafe { LLVMNormalizeTargetTriple(c_string.as_ptr()) }
-            }
-            Either::Right(triple_cstr) => unsafe {
-                LLVMNormalizeTargetTriple(triple_cstr.as_ptr())
-            },
-        };
-
-        LLVMString::new(ptr)
+        TargetTriple::new(LLVMString::new(normalized))
     }
 
     /// Gets a string containing the host CPU's name (triple).
@@ -1112,7 +1146,7 @@ impl TargetMachine {
     /// ```no_run
     /// use inkwell::OptimizationLevel;
     /// use inkwell::context::Context;
-    /// use inkwell::targets::{CodeModel, RelocMode, FileType, Target, TargetMachine, InitializationConfig};
+    /// use inkwell::targets::{CodeModel, RelocMode, FileType, Target, TargetMachine, TargetTriple, InitializationConfig};
     ///
     /// Target::initialize_x86(&InitializationConfig::default());
     ///
@@ -1120,7 +1154,15 @@ impl TargetMachine {
     /// let reloc = RelocMode::Default;
     /// let model = CodeModel::Default;
     /// let target = Target::from_name("x86-64").unwrap();
-    /// let target_machine = target.create_target_machine("x86_64-pc-linux-gnu", "x86-64", "+avx2", opt, reloc, model).unwrap();
+    /// let target_machine = target.create_target_machine(
+    ///     &TargetTriple::create("x86_64-pc-linux-gnu"),
+    ///     "x86-64",
+    ///     "+avx2",
+    ///     opt,
+    ///     reloc,
+    ///     model
+    /// )
+    /// .unwrap();
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
@@ -1166,7 +1208,7 @@ impl TargetMachine {
     /// ```no_run
     /// use inkwell::OptimizationLevel;
     /// use inkwell::context::Context;
-    /// use inkwell::targets::{CodeModel, RelocMode, FileType, Target, TargetMachine, InitializationConfig};
+    /// use inkwell::targets::{CodeModel, RelocMode, FileType, Target, TargetMachine, TargetTriple, InitializationConfig};
     ///
     /// use std::path::Path;
     ///
@@ -1177,7 +1219,15 @@ impl TargetMachine {
     /// let model = CodeModel::Default;
     /// let path = Path::new("/tmp/some/path/main.asm");
     /// let target = Target::from_name("x86-64").unwrap();
-    /// let target_machine = target.create_target_machine("x86_64-pc-linux-gnu", "x86-64", "+avx2", opt, reloc, model).unwrap();
+    /// let target_machine = target.create_target_machine(
+    ///     &TargetTriple::create("x86_64-pc-linux-gnu"),
+    ///     "x86-64",
+    ///     "+avx2",
+    ///     opt,
+    ///     reloc,
+    ///     model
+    /// )
+    /// .unwrap();
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
