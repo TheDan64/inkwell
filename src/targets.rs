@@ -108,8 +108,10 @@ impl TargetTriple {
     }
 
     pub fn create(triple: &str) -> TargetTriple {
+        let c_string = CString::new(triple).expect("Conversion to CString failed unexpectedly");
+
         TargetTriple {
-            triple: LLVMString::create_from_str(triple)
+            triple: LLVMString::create_from_c_str(c_string.as_c_str())
         }
     }
 
