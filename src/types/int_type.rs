@@ -261,7 +261,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i8_type_size = i8_type.size_of();
     /// ```
     pub fn size_of(&self) -> IntValue<'ctx> {
-        self.int_type.size_of()
+        self.int_type.size_of().unwrap()
     }
 
     /// Gets the alignment of this `IntType`. Value may vary depending on the target architecture.

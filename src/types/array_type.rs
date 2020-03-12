@@ -5,7 +5,7 @@ use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
-use crate::types::{Type, BasicTypeEnum, BasicType, PointerType, FunctionType};
+use crate::types::{Type, BasicTypeEnum, PointerType, FunctionType};
 use crate::values::{AsValueRef, ArrayValue, IntValue};
 
 /// An `ArrayType` is the type of contiguous constants or variables.
@@ -37,11 +37,7 @@ impl<'ctx> ArrayType<'ctx> {
     /// let i8_array_type_size = i8_array_type.size_of();
     /// ```
     pub fn size_of(&self) -> Option<IntValue<'ctx>> {
-        if self.is_sized() {
-            return Some(self.array_type.size_of())
-        }
-
-        None
+        self.array_type.size_of()
     }
 
     /// Gets the alignment of this `ArrayType`. Value may vary depending on the target architecture.

@@ -39,7 +39,7 @@ impl<'ctx> PointerType<'ctx> {
     /// let f32_ptr_type_size = f32_ptr_type.size_of();
     /// ```
     pub fn size_of(&self) -> IntValue<'ctx> {
-        self.ptr_type.size_of()
+        self.ptr_type.size_of().unwrap()
     }
 
     /// Gets the alignment of this `PointerType`. Value may vary depending on the target architecture.
