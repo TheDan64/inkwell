@@ -10,7 +10,7 @@ use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
-use crate::types::{ArrayType, BasicType, BasicTypeEnum, PointerType, FunctionType, Type};
+use crate::types::{ArrayType, BasicTypeEnum, PointerType, FunctionType, Type};
 use crate::values::{ArrayValue, BasicValueEnum, StructValue, IntValue, AsValueRef};
 
 /// A `StructType` is the type of a heterogeneous container of types.
@@ -117,11 +117,7 @@ impl<'ctx> StructType<'ctx> {
     /// let f32_struct_type_size = f32_struct_type.size_of();
     /// ```
     pub fn size_of(&self) -> Option<IntValue<'ctx>> {
-        if self.is_sized() {
-            return Some(self.struct_type.size_of());
-        }
-
-        None
+        self.struct_type.size_of()
     }
 
     /// Gets the alignment of this `StructType`. Value may vary depending on the target architecture.

@@ -75,6 +75,23 @@ pub trait BasicType<'ctx>: AnyType<'ctx> {
         Type::new(self.as_type_ref()).is_sized()
     }
 
+    /// Gets the size of this `BasicType`. Value may vary depending on the target architecture.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::types::BasicType;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_basic_type = f32_type.as_basic_type_enum();
+    /// let f32_type_size = f32_basic_type.size_of();
+    /// ```
+    fn size_of(&self) -> Option<IntValue<'ctx>> {
+        Type::new(self.as_type_ref()).size_of()
+    }
+
     /// Create an `ArrayType` with this `BasicType` as its elements.
     ///
     /// Example:

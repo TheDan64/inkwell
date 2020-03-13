@@ -172,16 +172,16 @@ impl<'ctx> Type<'ctx> {
         }
     }
 
-    // REVIEW: Option<IntValue>? If we want to provide it on enums that
-    // contain unsized types
-    fn size_of(&self) -> IntValue<'ctx> {
-        debug_assert!(self.is_sized());
+    fn size_of(&self) -> Option<IntValue<'ctx>> {
+        if !self.is_sized() {
+            return None;
+        }
 
         let int_value = unsafe {
             LLVMSizeOf(self.ty)
         };
 
-        IntValue::new(int_value)
+        Some(IntValue::new(int_value))
     }
 
     fn print_to_string(&self) -> LLVMString {

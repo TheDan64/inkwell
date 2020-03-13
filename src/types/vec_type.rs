@@ -4,7 +4,7 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
-use crate::types::{ArrayType, BasicTypeEnum, BasicType, Type, traits::AsTypeRef, FunctionType, PointerType};
+use crate::types::{ArrayType, BasicTypeEnum, Type, traits::AsTypeRef, FunctionType, PointerType};
 use crate::values::{AsValueRef, ArrayValue, BasicValue, VectorValue, IntValue};
 
 /// A `VectorType` is the type of a multiple value SIMD constant or variable.
@@ -38,11 +38,7 @@ impl<'ctx> VectorType<'ctx> {
     /// let f32_vec_type_size = f32_vec_type.size_of();
     /// ```
     pub fn size_of(&self) -> Option<IntValue<'ctx>> {
-        if self.is_sized() {
-            return Some(self.vec_type.size_of())
-        }
-
-        None
+        self.vec_type.size_of()
     }
 
     /// Gets the alignment of this `VectorType`. Value may vary depending on the target architecture.

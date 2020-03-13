@@ -371,6 +371,8 @@ fn test_basic_type_enum() {
                    basic_type.ptr_type(addr));
         assert_eq!(basic_type.as_basic_type_enum().array_type(0),
                    basic_type.array_type(0));
+        assert_eq!(basic_type.as_basic_type_enum().size_of(),
+                   basic_type.size_of());
     }
 }
 

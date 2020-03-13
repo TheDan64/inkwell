@@ -4,6 +4,7 @@ use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::types::{IntType, VoidType, FunctionType, PointerType, VectorType, ArrayType, StructType, FloatType};
 use crate::types::traits::AsTypeRef;
+use crate::values::IntValue;
 
 macro_rules! enum_type_set {
     ($(#[$enum_attrs:meta])* $enum_name:ident: { $($(#[$variant_attrs:meta])* $args:ident,)+ }) => (
@@ -233,6 +234,19 @@ impl<'ctx> AnyTypeEnum<'ctx> {
             true
         } else {
             false
+        }
+    }
+
+    pub fn size_of(&self) -> Option<IntValue<'ctx>> {
+        match self {
+            AnyTypeEnum::ArrayType(t) => t.size_of(),
+            AnyTypeEnum::FloatType(t) => Some(t.size_of()),
+            AnyTypeEnum::IntType(t) => Some(t.size_of()),
+            AnyTypeEnum::PointerType(t) => Some(t.size_of()),
+            AnyTypeEnum::StructType(t) => t.size_of(),
+            AnyTypeEnum::VectorType(t) => t.size_of(),
+            AnyTypeEnum::VoidType(_) => None,
+            AnyTypeEnum::FunctionType(_) => None,
         }
     }
 }
