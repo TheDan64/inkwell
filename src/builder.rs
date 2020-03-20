@@ -357,13 +357,13 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
     #[llvm_versions(8.0..=latest)]
-    pub fn build_memcpy<T: IntMathValue<'ctx>>(
+    pub fn build_memcpy(
         &self,
         dest: PointerValue<'ctx>,
         dest_align_bytes: u32,
         src: PointerValue<'ctx>,
         src_align_bytes: u32,
-        size: T,
+        size: IntValue<'ctx>,
     ) -> Result<PointerValue<'ctx>, &'static str> {
         let value = unsafe {
             LLVMBuildMemCpy(
@@ -385,13 +385,13 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
     #[llvm_versions(8.0..=latest)]
-    pub fn build_memmove<T: IntMathValue<'ctx>>(
+    pub fn build_memmove(
         &self,
         dest: PointerValue<'ctx>,
         dest_align_bytes: u32,
         src: PointerValue<'ctx>,
         src_align_bytes: u32,
-        size: T,
+        size: IntValue<'ctx>,
     ) -> Result<PointerValue<'ctx>, &'static str> {
         let value = unsafe {
             LLVMBuildMemMove(
