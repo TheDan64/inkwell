@@ -349,6 +349,8 @@ impl<'ctx> Builder<'ctx> {
         PointerValue::new(value)
     }
 
+    /// Build a [memcpy](https://llvm.org/docs/LangRef.html#llvm-memcpy-intrinsic) instruction.
+    ///
     /// Alignment arguments are specified in bytes, and should always be a power of 2.
     ///
     /// The final argument should be a pointer-sized integer.
@@ -377,6 +379,8 @@ impl<'ctx> Builder<'ctx> {
         Ok(PointerValue::new(value))
     }
 
+    /// Build a [memmove](http://llvm.org/docs/LangRef.html#llvm-memmove-intrinsic) instruction.
+    ///
     /// Alignment arguments are specified in bytes, and should always be a power of 2.
     ///
     /// The final argument should be a pointer-sized integer.
