@@ -5,9 +5,7 @@ use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArray
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::LLVMBuildAtomicCmpXchg;
 #[llvm_versions(8.0..=latest)]
-use llvm_sys::core::LLVMBuildMemCpy;
-#[llvm_versions(8.0..=latest)]
-use llvm_sys::core::LLVMBuildMemMove;
+use llvm_sys::core::{LLVMBuildMemCpy, LLVMBuildMemMove};
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use llvm_sys::{LLVMTypeKind};
 
