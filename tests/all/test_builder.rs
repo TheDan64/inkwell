@@ -649,6 +649,56 @@ fn test_insert_value() {
 }
 
 #[test]
+fn test_memcpy() {
+    // 1. Allocate an array with a few elements.
+    // 2. Memcpy from the first half of the array to the second half.
+    // 3. Run the code in an execution engine and verify the array's contents.
+    let context = Context::create();
+    let module = context.create_module("av");
+    let i32_type = context.i32_type();
+    let i64_type = context.i64_type();
+    let array_len = 4;
+    let fn_type = i32_type.ptr_type(AddressSpace::Generic).fn_type(&[], false);
+    let fn_value = module.add_function("test_fn", fn_type, None);
+    let builder = context.create_builder();
+    let entry = context.append_basic_block(fn_value, "entry");
+
+    builder.position_at_end(entry);
+
+    let len_value = i64_type.const_int(array_len as u64, false);
+    let array_ptr = builder.build_array_malloc(i32_type, len_value, "array_ptr").unwrap();
+
+    // Initialize the array with the values [1, 2, 3, 4]
+    for index in 0..4 {
+        let index_val = i32_type.const_int(index, false);
+        let elem_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
+        let int_val = i32_type.const_int(index + 1, false);
+
+        builder.build_store(elem_ptr, int_val);
+    }
+
+    // Memcpy the first half of the array over the second half of the array.
+    // TODO run the memcpy here
+
+    builder.build_return(Some(&array_ptr));
+
+    // Verify the module
+    if let Err(errors) = module.verify() {
+        panic!("Errors defining module: {:?}", errors);
+    }
+
+    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+
+    unsafe {
+        let func = execution_engine.get_function::<unsafe extern "C" fn() -> *const i32>("test_fn").unwrap();
+        let actual = std::slice::from_raw_parts(func.call(), array_len as usize);
+
+        assert_eq!(&[1, 2, 1, 2], actual);
+    }
+}
+
+
+#[test]
 fn test_bitcast() {
     let context = Context::create();
     let module = context.create_module("bc");
