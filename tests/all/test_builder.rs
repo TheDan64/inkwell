@@ -678,7 +678,14 @@ fn test_memcpy() {
     }
 
     // Memcpy the first half of the array over the second half of the array.
-    // TODO run the memcpy here
+    let elems_to_copy = 2;
+    let bytes_to_copy = elems_to_copy * std::mem::size_of::<i32>();
+    let size_val = i64_type.const_int(bytes_to_copy as u64, false);
+    let alignment = 8;
+    let index_val = i32_type.const_int(2, false);
+    let dest_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
+
+    builder.build_memcpy(dest_ptr, alignment, array_ptr, alignment, size_val).unwrap();
 
     builder.build_return(Some(&array_ptr));
 
