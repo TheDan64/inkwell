@@ -163,3 +163,22 @@ fn test_no_parent() {
 
     assert!(basic_block.get_parent().is_none());
 }
+
+#[test]
+fn test_rauw() {
+    let context = Context::create();
+    let builder = context.create_builder();
+    let module = context.create_module("my_mod");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_val = module.add_function("my_fn", fn_type, None);
+    let entry = context.append_basic_block(fn_val, "entry");
+    let bb1 = context.append_basic_block(fn_val, "bb1");
+    let bb2 = context.append_basic_block(fn_val, "bb2");
+    builder.position_at_end(entry);
+    let branch_inst = builder.build_unconditional_branch(bb1);
+
+    bb1.replace_all_uses_with(&bb2);
+
+    assert_eq!(branch_inst.get_operand(0).unwrap().right().unwrap(), bb2);
+}

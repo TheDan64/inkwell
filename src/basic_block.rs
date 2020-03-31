@@ -1,6 +1,6 @@
 //! A `BasicBlock` is a container of instructions.
 
-use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDeleteBasicBlock, LLVMGetPreviousBasicBlock, LLVMRemoveBasicBlockFromParent, LLVMGetFirstInstruction, LLVMGetLastInstruction, LLVMGetTypeContext, LLVMBasicBlockAsValue};
+use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDeleteBasicBlock, LLVMGetPreviousBasicBlock, LLVMRemoveBasicBlockFromParent, LLVMGetFirstInstruction, LLVMGetLastInstruction, LLVMGetTypeContext, LLVMBasicBlockAsValue, LLVMReplaceAllUsesWith};
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::LLVMGetBasicBlockName;
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
@@ -448,6 +448,37 @@ impl<'ctx> BasicBlock<'ctx> {
 
         unsafe {
             CStr::from_ptr(ptr)
+        }
+    }
+
+    /// Replaces all uses of this basic block with another.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let builder = context.create_builder();
+    /// let module = context.create_module("my_mod");
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let fn_val = module.add_function("my_fn", fn_type, None);
+    /// let entry = context.append_basic_block(fn_val, "entry");
+    /// let bb1 = context.append_basic_block(fn_val, "bb1");
+    /// let bb2 = context.append_basic_block(fn_val, "bb2");
+    /// builder.position_at_end(entry);
+    /// let branch_inst = builder.build_unconditional_branch(bb1);
+    ///
+    /// bb1.replace_all_uses_with(&bb2);
+    ///
+    /// assert_eq!(branch_inst.get_operand(0).unwrap().right().unwrap(), bb2);
+    /// ```
+    pub fn replace_all_uses_with(&self, other: &BasicBlock<'ctx>) {
+        let value = unsafe { LLVMBasicBlockAsValue(self.basic_block) };
+        let other = unsafe { LLVMBasicBlockAsValue(other.basic_block) };
+        unsafe {
+            LLVMReplaceAllUsesWith(value, other);
         }
     }
 }
