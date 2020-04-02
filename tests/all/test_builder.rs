@@ -649,6 +649,29 @@ fn test_insert_value() {
     assert!(module.verify().is_ok());
 }
 
+#[test]
+#[llvm_versions(8.0..=latest)]
+fn test_alignment_bytes() {
+    let verify_alignment = |alignment: u32| {
+        let context = Context::create();
+        let module = context.create_module("av");
+
+        run_memcpy_on(&context, &module, alignment);
+
+        if alignment == 0 || alignment.is_power_of_two() {
+            assert!(module.verify().is_ok(), "alignment of {:?} was neither 0 nor a power of 2, but did not verify for memcpy.", alignment);
+        } else {
+            assert!(module.verify().is_err(), "alignment of {:?} was neither 0 nor a power of 2, yet verification passed for memcpy when it should not have.", alignment);
+        }
+    };
+
+    for alignment in 0..32 {
+        verify_alignment(alignment);
+    }
+
+    verify_alignment(u32::max_value());
+}
+
 #[llvm_versions(8.0..=latest)]
 fn run_memcpy_on<'ctx>(context: &'ctx Context, module: &Module<'ctx>, alignment: u32) {
     let i32_type = context.i32_type();
