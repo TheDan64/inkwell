@@ -477,8 +477,12 @@ impl<'ctx> BasicBlock<'ctx> {
     pub fn replace_all_uses_with(&self, other: &BasicBlock<'ctx>) {
         let value = unsafe { LLVMBasicBlockAsValue(self.basic_block) };
         let other = unsafe { LLVMBasicBlockAsValue(other.basic_block) };
-        unsafe {
-            LLVMReplaceAllUsesWith(value, other);
+
+        // LLVM may infinite-loop when they aren't distinct, which is UB in C++.
+        if value != other {
+            unsafe {
+                LLVMReplaceAllUsesWith(value, other);
+            }
         }
     }
 }
