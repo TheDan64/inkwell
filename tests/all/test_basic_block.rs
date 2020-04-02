@@ -178,6 +178,7 @@ fn test_rauw() {
     builder.position_at_end(entry);
     let branch_inst = builder.build_unconditional_branch(bb1);
 
+    bb1.replace_all_uses_with(&bb1);  // no-op
     bb1.replace_all_uses_with(&bb2);
 
     assert_eq!(branch_inst.get_operand(0).unwrap().right().unwrap(), bb2);
