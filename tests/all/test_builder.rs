@@ -2,6 +2,7 @@ extern crate inkwell;
 
 use self::inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, OptimizationLevel};
 use self::inkwell::context::Context;
+use self::inkwell::module::Module;
 use self::inkwell::values::BasicValue;
 
 // use std::ffi::CString;
@@ -648,14 +649,8 @@ fn test_insert_value() {
     assert!(module.verify().is_ok());
 }
 
-#[test]
 #[llvm_versions(8.0..=latest)]
-fn test_memcpy() {
-    // 1. Allocate an array with a few elements.
-    // 2. Memcpy from the first half of the array to the second half.
-    // 3. Run the code in an execution engine and verify the array's contents.
-    let context = Context::create();
-    let module = context.create_module("av");
+fn run_memcpy_on<'ctx>(context: &'ctx Context, module: &Module<'ctx>, alignment: u32) {
     let i32_type = context.i32_type();
     let i64_type = context.i64_type();
     let array_len = 4;
@@ -682,13 +677,24 @@ fn test_memcpy() {
     let elems_to_copy = 2;
     let bytes_to_copy = elems_to_copy * std::mem::size_of::<i32>();
     let size_val = i64_type.const_int(bytes_to_copy as u64, false);
-    let alignment = 8;
     let index_val = i32_type.const_int(2, false);
     let dest_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
 
     builder.build_memcpy(dest_ptr, alignment, array_ptr, alignment, size_val);
 
     builder.build_return(Some(&array_ptr));
+}
+
+#[test]
+#[llvm_versions(8.0..=latest)]
+fn test_memcpy() {
+    // 1. Allocate an array with a few elements.
+    // 2. Memcpy from the first half of the array to the second half.
+    // 3. Run the code in an execution engine and verify the array's contents.
+    let context = Context::create();
+    let module = context.create_module("av");
+
+    run_memcpy_on(&context, &module, 8);
 
     // Verify the module
     if let Err(errors) = module.verify() {
@@ -699,7 +705,7 @@ fn test_memcpy() {
 
     unsafe {
         let func = execution_engine.get_function::<unsafe extern "C" fn() -> *const i32>("test_fn").unwrap();
-        let actual = std::slice::from_raw_parts(func.call(), array_len as usize);
+        let actual = std::slice::from_raw_parts(func.call(), 4);
 
         assert_eq!(&[1, 2, 1, 2], actual);
     }
