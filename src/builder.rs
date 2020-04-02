@@ -364,7 +364,7 @@ impl<'ctx> Builder<'ctx> {
         src: PointerValue<'ctx>,
         src_align_bytes: u32,
         size: IntValue<'ctx>,
-    ) -> Result<PointerValue<'ctx>, &'static str> {
+    ) -> PointerValue<'ctx> {
         let value = unsafe {
             LLVMBuildMemCpy(
                 self.builder,
@@ -376,7 +376,7 @@ impl<'ctx> Builder<'ctx> {
             )
         };
 
-        Ok(PointerValue::new(value))
+        PointerValue::new(value)
     }
 
     /// Build a [memmove](http://llvm.org/docs/LangRef.html#llvm-memmove-intrinsic) instruction.
@@ -394,7 +394,7 @@ impl<'ctx> Builder<'ctx> {
         src: PointerValue<'ctx>,
         src_align_bytes: u32,
         size: IntValue<'ctx>,
-    ) -> Result<PointerValue<'ctx>, &'static str> {
+    ) -> PointerValue<'ctx> {
         let value = unsafe {
             LLVMBuildMemMove(
                 self.builder,
@@ -406,7 +406,7 @@ impl<'ctx> Builder<'ctx> {
             )
         };
 
-        Ok(PointerValue::new(value))
+        PointerValue::new(value)
     }
 
     // TODOC: Heap allocation

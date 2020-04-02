@@ -686,7 +686,7 @@ fn test_memcpy() {
     let index_val = i32_type.const_int(2, false);
     let dest_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
 
-    builder.build_memcpy(dest_ptr, alignment, array_ptr, alignment, size_val).unwrap();
+    builder.build_memcpy(dest_ptr, alignment, array_ptr, alignment, size_val);
 
     builder.build_return(Some(&array_ptr));
 
