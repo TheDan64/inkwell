@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMTypeOf, LLVMGetTypeKind};
+use llvm_sys::core::{LLVMIsAInstruction, LLVMTypeOf, LLVMGetTypeKind};
 use llvm_sys::LLVMTypeKind;
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -71,7 +71,12 @@ impl<'ctx> AnyValueEnum<'ctx> {
             LLVMTypeKind::LLVMArrayTypeKind => AnyValueEnum::ArrayValue(ArrayValue::new(value)),
             LLVMTypeKind::LLVMVectorTypeKind => AnyValueEnum::VectorValue(VectorValue::new(value)),
             LLVMTypeKind::LLVMFunctionTypeKind => AnyValueEnum::FunctionValue(FunctionValue::new(value).unwrap()),
-            LLVMTypeKind::LLVMVoidTypeKind => panic!("Void values shouldn't exist."),
+            LLVMTypeKind::LLVMVoidTypeKind => {
+                if unsafe { LLVMIsAInstruction(value) }.is_null() {
+                    panic!("Void value isn't an instruction.");
+                }
+                AnyValueEnum::InstructionValue(InstructionValue::new(value))
+            },
             LLVMTypeKind::LLVMMetadataTypeKind => panic!("Metadata values are not supported as AnyValue's."),
             _ => panic!("The given type is not supported.")
         }
@@ -157,7 +162,77 @@ impl<'ctx> AnyValueEnum<'ctx> {
         }
     }
 
-    // TODO: into_x_value methods
+    pub fn into_array_value(self) -> ArrayValue<'ctx> {
+        if let AnyValueEnum::ArrayValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_int_value(self) -> IntValue<'ctx> {
+        if let AnyValueEnum::IntValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_float_value(self) -> FloatValue<'ctx> {
+        if let AnyValueEnum::FloatValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_phi_value(self) -> PhiValue<'ctx> {
+        if let AnyValueEnum::PhiValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_function_value(self) -> FunctionValue<'ctx> {
+        if let AnyValueEnum::FunctionValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_pointer_value(self) -> PointerValue<'ctx> {
+        if let AnyValueEnum::PointerValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_struct_value(self) -> StructValue<'ctx> {
+        if let AnyValueEnum::StructValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_vector_value(self) -> VectorValue<'ctx> {
+        if let AnyValueEnum::VectorValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
+
+    pub fn into_instruction_value(self) -> InstructionValue<'ctx> {
+        if let AnyValueEnum::InstructionValue(v) = self {
+            v
+        } else {
+            panic!("Found {:?} but expected a different variant", self)
+        }
+    }
 }
 
 impl<'ctx> BasicValueEnum<'ctx> {

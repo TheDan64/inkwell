@@ -109,8 +109,8 @@ fn test_operands() {
     assert!(store_operand_use1.get_next_use().is_none());
     assert_eq!(store_operand_use1, arg1_second_use);
 
-    assert_eq!(store_operand_use0.get_user(), store_instruction);
-    assert_eq!(store_operand_use1.get_user(), store_instruction);
+    assert_eq!(store_operand_use0.get_user().into_instruction_value(), store_instruction);
+    assert_eq!(store_operand_use1.get_user().into_instruction_value(), store_instruction);
     assert_eq!(store_operand_use0.get_used_value().left().unwrap(), f32_val);
     assert_eq!(store_operand_use1.get_used_value().left().unwrap(), arg1);
 
@@ -185,7 +185,7 @@ fn test_get_next_use() {
     let first_use = f32_val.get_first_use().unwrap();
 
     assert_eq!(first_use.get_user(), add_pi1.as_instruction_value().unwrap());
-    assert_eq!(first_use.get_next_use().map(|x| x.get_user()), add_pi0.as_instruction_value());
+    assert_eq!(first_use.get_next_use().map(|x| x.get_user().into_float_value()), Some(add_pi0));
     assert!(arg1.get_first_use().is_some());
     assert!(module.verify().is_ok());
 }

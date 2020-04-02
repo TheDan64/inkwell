@@ -5,9 +5,9 @@ use llvm_sys::prelude::LLVMUseRef;
 use std::marker::PhantomData;
 
 use crate::basic_block::BasicBlock;
-use crate::values::{BasicValueEnum, InstructionValue};
+use crate::values::{AnyValueEnum, BasicValueEnum};
 
-/// A usage of a `BasicValue` in an `InstructionValue`.
+/// A usage of a `BasicValue` in another value.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct BasicValueUse<'ctx>(LLVMUseRef, PhantomData<&'ctx ()>);
 
@@ -18,7 +18,7 @@ impl<'ctx> BasicValueUse<'ctx> {
         BasicValueUse(use_, PhantomData)
     }
 
-    /// Gets the next use of an `InstructionValue` or `BasicValue` if any.
+    /// Gets the next use of a `BasicValue` if any.
     ///
     /// The following example,
     ///
@@ -83,7 +83,7 @@ impl<'ctx> BasicValueUse<'ctx> {
         Some(Self::new(use_))
     }
 
-    /// Gets the user(an `InstructionValue`) of this use.
+    /// Gets the user (an `AnyValueEnum`) of this use.
     ///
     /// ```no_run
     /// use inkwell::AddressSpace;
@@ -115,15 +115,15 @@ impl<'ctx> BasicValueUse<'ctx> {
     /// assert_eq!(store_operand_use0.get_user(), store_instruction);
     /// assert_eq!(store_operand_use1.get_user(), store_instruction);
     /// ```
-    pub fn get_user(&self) -> InstructionValue<'ctx> {
+    pub fn get_user(&self) -> AnyValueEnum<'ctx> {
         let user = unsafe {
             LLVMGetUser(self.0)
         };
 
-        InstructionValue::new(user)
+        AnyValueEnum::new(user)
     }
 
-    /// Gets the used value(a `BasicValueEnum` or `BasicBlock`) of this use.
+    /// Gets the used value (a `BasicValueEnum` or `BasicBlock`) of this use.
     ///
     /// ```no_run
     /// use inkwell::AddressSpace;
