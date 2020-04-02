@@ -649,6 +649,7 @@ fn test_insert_value() {
 }
 
 #[test]
+#[llvm_versions(8.0..=latest)]
 fn test_memcpy() {
     // 1. Allocate an array with a few elements.
     // 2. Memcpy from the first half of the array to the second half.
