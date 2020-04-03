@@ -173,8 +173,11 @@ impl<'ctx> Value<'ctx> {
     // REVIEW: I think this is memory safe, though it may result in an IR error
     // if used incorrectly, which is OK.
     fn replace_all_uses_with(&self, other: LLVMValueRef) {
-        unsafe {
-            LLVMReplaceAllUsesWith(self.value, other)
+        // LLVM may infinite-loop when they aren't distinct, which is UB in C++.
+        if self.value != other {
+            unsafe {
+                LLVMReplaceAllUsesWith(self.value, other)
+            }
         }
     }
 
