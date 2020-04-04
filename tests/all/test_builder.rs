@@ -648,8 +648,8 @@ fn test_insert_value() {
     assert!(module.verify().is_ok());
 }
 
-#[test]
 #[llvm_versions(8.0..=latest)]
+#[test]
 fn test_alignment_bytes() {
     let verify_alignment = |alignment: u32| {
         let context = Context::create();
@@ -707,8 +707,8 @@ fn run_memcpy_on<'ctx>(context: &'ctx Context, module: &self::inkwell::module::M
     builder.build_return(Some(&array_ptr));
 }
 
-#[test]
 #[llvm_versions(8.0..=latest)]
+#[test]
 fn test_memcpy() {
     // 1. Allocate an array with a few elements.
     // 2. Memcpy from the first half of the array to the second half.
