@@ -2,7 +2,6 @@ extern crate inkwell;
 
 use self::inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, OptimizationLevel};
 use self::inkwell::context::Context;
-use self::inkwell::module::Module;
 use self::inkwell::values::BasicValue;
 
 // use std::ffi::CString;
@@ -673,7 +672,7 @@ fn test_alignment_bytes() {
 }
 
 #[llvm_versions(8.0..=latest)]
-fn run_memcpy_on<'ctx>(context: &'ctx Context, module: &Module<'ctx>, alignment: u32) {
+fn run_memcpy_on<'ctx>(context: &'ctx Context, module: &self::inkwell::module::Module<'ctx>, alignment: u32) {
     let i32_type = context.i32_type();
     let i64_type = context.i64_type();
     let array_len = 4;
