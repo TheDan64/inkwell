@@ -1,4 +1,5 @@
 extern crate inkwell;
+extern crate regex;
 
 use self::inkwell::{AddressSpace, OptimizationLevel};
 use self::inkwell::context::Context;
@@ -9,6 +10,8 @@ use std::ffi::CString;
 use std::fs::{File, remove_file};
 use std::io::Read;
 use std::str::from_utf8;
+
+use regex::Regex;
 
 // REVIEW: Inconsistently failing on different tries :(
 // #[test]
@@ -173,14 +176,12 @@ fn test_target_data() {
 
     let data_layout = target_data.get_data_layout();
 
-    #[cfg(target_os = "linux")]
-    assert_eq!(data_layout.as_str(), &*CString::new("e-m:e-i64:64-f80:128-n8:16:32:64-S128").unwrap());
-
-    #[cfg(target_os = "macos")]
-    assert_eq!(
-        data_layout.as_str(),
-        &*CString::new("e-m:o-i64:64-f80:128-n8:16:32:64-S128").unwrap()
-    );
+    // https://llvm.org/docs/LangRef.html#data-layout
+    let datalayout_specification_re = Regex::new("[Ee]|S\\d+|P\\d+|A\\d+|p(\\d+)?:\\d+:\\d+(:\\d+)?|i\\d+:\\d+(:\\d+)?|v\\d+:\\d+(:\\d+)?|f\\d+:\\d+(:\\d+)?|a:\\d+(:\\d)?|F[in]\\d+|m:[emoxw]|n\\d+(:\\d)*|ni:\\d+(:\\d)*").unwrap();
+    for specification in data_layout.as_str().to_str().unwrap().split("-") {
+        assert!(datalayout_specification_re.is_match(specification));
+    }
+    assert!(data_layout.as_str().to_str().unwrap().matches("-").count() > 2);
 
     #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
     assert_eq!(*module.get_data_layout().as_str(), *CString::new("").unwrap());
