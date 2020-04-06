@@ -24,13 +24,6 @@ fn test_enum_attribute_kinds() {
     assert_eq!(Attribute::get_named_enum_kind_id("builtin"), 5);
     assert_eq!(Attribute::get_named_enum_kind_id("cold"), 7);
     assert_eq!(Attribute::get_named_enum_kind_id("convergent"), 8);
-    assert_eq!(Attribute::get_named_enum_kind_id("inaccessiblememonly"), 13);
-    assert_eq!(Attribute::get_named_enum_kind_id("inaccessiblemem_or_argmemonly"), 14);
-    assert_eq!(Attribute::get_named_enum_kind_id("inlinehint"), 15);
-    assert_eq!(Attribute::get_named_enum_kind_id("jumptable"), 16);
-    assert_eq!(Attribute::get_named_enum_kind_id("minsize"), 17);
-    assert_eq!(Attribute::get_named_enum_kind_id("naked"), 18);
-    assert_eq!(Attribute::get_named_enum_kind_id("nobuiltin"), 21);
 
     // REVIEW: The LLVM docs suggest these fn attrs exist, but don't turn up:
     // assert_eq!(Attribute::get_named_enum_kind_id("no-jump-tables"), 19);
@@ -49,11 +42,6 @@ fn test_enum_attribute_kinds() {
     assert_eq!(Attribute::get_named_enum_kind_id("byval"), 6);
     assert_eq!(Attribute::get_named_enum_kind_id("dereferenceable"), 9);
     assert_eq!(Attribute::get_named_enum_kind_id("dereferenceable_or_null"), 10);
-    assert_eq!(Attribute::get_named_enum_kind_id("inalloca"), 11);
-    assert_eq!(Attribute::get_named_enum_kind_id("inreg"), 12);
-    assert_eq!(Attribute::get_named_enum_kind_id("nest"), 19);
-    assert_eq!(Attribute::get_named_enum_kind_id("noalias"), 20);
-    assert_eq!(Attribute::get_named_enum_kind_id("nocapture"), 22);
 }
 
 #[test]
