@@ -190,7 +190,7 @@ matrix:
         - export PATH=/usr/lib/llvm-8/bin/:$HOME/.local/bin:$PATH
         - export LLVM_PATH=/usr/share/llvm-8/cmake/
       script:
-        - cargo doc --no-default-features --features "target-all,llvm8-0" --color=always
+        - cargo doc --no-default-features --features "target-all,llvm10-0" --color=always
         - echo '<meta http-equiv="refresh" content="1; url=inkwell/index.html">' > target/doc/index.html
       rust: nightly
       name: "GitHub IO Documentation Deployment"
@@ -206,7 +206,9 @@ matrix:
             # - llvm-toolchain-trusty-5.0
             # - llvm-toolchain-trusty-6.0
             # - llvm-toolchain-trusty-7
-            - llvm-toolchain-trusty-8
+            # - llvm-toolchain-trusty-8
+            # - llvm-toolchain-trusty-9
+            - llvm-toolchain-trusty-10
           packages:
             - *BASE_PACKAGES
             # - llvm-3.6-dev
@@ -217,7 +219,10 @@ matrix:
             # - llvm-5.0-dev
             # - llvm-6.0-dev
             # - llvm-7-dev
-            - llvm-8-dev
+            # - llvm-8-dev
+            # - llvm-9-dev
+            - llvm-10-dev
+      dist: bionic
 
 env:
   global:
