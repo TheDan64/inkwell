@@ -29,6 +29,8 @@ pub enum InstructionOpcode {
     BitCast,
     Br,
     Call,
+    #[llvm_versions(9.0..=latest)]
+    CallBr,
     #[llvm_versions(3.8..=latest)]
     CatchPad,
     #[llvm_versions(3.8..=latest)]
@@ -52,6 +54,8 @@ pub enum InstructionOpcode {
     FPToSI,
     FPToUI,
     FPTrunc,
+    #[llvm_versions(10.0..=latest)]
+    Freeze,
     FRem,
     FSub,
     GetElementPtr,

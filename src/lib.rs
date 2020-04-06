@@ -70,7 +70,7 @@ macro_rules! assert_unique_used_features {
     }
 }
 
-assert_unique_used_features!{"llvm3-6", "llvm3-7", "llvm3-8", "llvm3-9", "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0"}
+assert_unique_used_features!{"llvm3-6", "llvm3-7", "llvm3-8", "llvm3-9", "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0", "llvm10-0"}
 
 /// Defines the address space in which a global will be inserted.
 ///
@@ -282,6 +282,21 @@ pub enum AtomicRMWBinOp {
     /// Sets memory to the unsigned-lesser of the value provided and the value in memory. Returns the value that was in memory.
     #[llvm_variant(LLVMAtomicRMWBinOpUMin)]
     UMin,
+
+    /// Adds to the float-typed value in memory and returns the prior value.
+    // TODO: Fix typo OP -> Op once https://gitlab.com/taricorp/llvm-sys.rs/-/merge_requests/3 is merged.
+    // Although this was added in LLVM 9, it wasn't exposed to the C API
+    // until 10.0.
+    #[llvm_versions(10.0..=latest)]
+    #[llvm_variant(LLVMAtomicRMWBinOPFAdd)]
+    FAdd,
+
+    /// Subtract a float-typed value off the value in memory and returns the prior value.
+    // Although this was added in LLVM 9, it wasn't exposed to the C API
+    // until 10.0.
+    #[llvm_versions(10.0..=latest)]
+    #[llvm_variant(LLVMAtomicRMWBinOpFSub)]
+    FSub,
 }
 
 /// Defines the optimization level used to compile a `Module`.
