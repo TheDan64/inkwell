@@ -41,12 +41,12 @@ matrix:
         apt:
           sources:
             - *BASE_SOURCES
-            - llvm-toolchain-precise-3.6
+            - llvm-toolchain-trusty-3.6
           packages:
             - *BASE_PACKAGES
             - llvm-3.6-dev
       rust: nightly-2019-07-25
-      dist: precise
+      dist: trusty
     - env:
         - LLVM_VERSION="3.7"
       <<: *BASE
@@ -54,12 +54,12 @@ matrix:
         apt:
           sources:
             - *BASE_SOURCES
-            - llvm-toolchain-precise-3.7
+            - llvm-toolchain-trusty-3.7
           packages:
             - *BASE_PACKAGES
             - llvm-3.7-dev
       rust: nightly-2019-07-25
-      dist: precise
+      dist: trusty
     - env:
         - LLVM_VERSION="3.8"
       <<: *BASE
@@ -67,12 +67,12 @@ matrix:
         apt:
           sources:
             - *BASE_SOURCES
-            - llvm-toolchain-precise-3.8
+            - llvm-toolchain-trusty-3.8
           packages:
             - *BASE_PACKAGES
             - llvm-3.8-dev
       rust: nightly-2019-07-25
-      dist: precise
+      dist: trusty
     # 3.9 seems to have a linking issue :/
     # - env:
     #     - LLVM_VERSION="3.9"
