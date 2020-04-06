@@ -1,6 +1,5 @@
 language: rust
 
-dist: trusty
 sudo: required
 cache:
   directories:
@@ -47,6 +46,7 @@ matrix:
             - *BASE_PACKAGES
             - llvm-3.6-dev
       rust: nightly-2019-07-25
+      dist: precise
     - env:
         - LLVM_VERSION="3.7"
       <<: *BASE
@@ -59,6 +59,7 @@ matrix:
             - *BASE_PACKAGES
             - llvm-3.7-dev
       rust: nightly-2019-07-25
+      dist: precise
     - env:
         - LLVM_VERSION="3.8"
       <<: *BASE
@@ -71,6 +72,7 @@ matrix:
             - *BASE_PACKAGES
             - llvm-3.8-dev
       rust: nightly-2019-07-25
+      dist: precise
     # 3.9 seems to have a linking issue :/
     # - env:
     #     - LLVM_VERSION="3.9"
@@ -83,6 +85,8 @@ matrix:
     #       packages:
     #         - *BASE_PACKAGES
     #         - llvm-3.9-dev
+    #       rust: nightly-2019-07-25
+    #       dist: trusty
     - env:
         - LLVM_VERSION="4.0"
       <<: *BASE
@@ -95,6 +99,7 @@ matrix:
             - *BASE_PACKAGES
             - llvm-4.0-dev
       rust: nightly-2019-07-25
+      dist: trusty
     - env:
         - LLVM_VERSION="5.0"
       <<: *BASE
@@ -107,6 +112,7 @@ matrix:
             - *BASE_PACKAGES
             - llvm-5.0-dev
       rust: nightly-2019-07-25
+      dist: trusty
     - env:
         - LLVM_VERSION="6.0"
       <<: *BASE
@@ -119,6 +125,7 @@ matrix:
             - *BASE_PACKAGES
             - llvm-6.0-dev
       rust: nightly-2019-07-25
+      dist: trusty
     - env:
         - LLVM_VERSION="7.0"
       <<: *BASE
@@ -131,6 +138,7 @@ matrix:
             - *BASE_PACKAGES
             - llvm-7-dev
       rust: nightly-2019-07-25
+      dist: trusty
     - env:
         - LLVM_VERSION="8.0"
       <<: *BASE
@@ -143,6 +151,33 @@ matrix:
             - *BASE_PACKAGES
             - llvm-8-dev
       rust: nightly-2019-07-25
+      dist: trusty
+    - env:
+        - LLVM_VERSION="9.0"
+      <<: *BASE
+      addons:
+        apt:
+          sources:
+            - *BASE_SOURCES
+            - llvm-toolchain-bionic-9
+          packages:
+            - *BASE_PACKAGES
+            - llvm-9-dev
+      rust: nightly-2019-07-25
+      dist: bionic
+    - env:
+        - LLVM_VERSION="10.0"
+      <<: *BASE
+      addons:
+        apt:
+          sources:
+            - *BASE_SOURCES
+            - llvm-toolchain-trusty-10
+          packages:
+            - *BASE_PACKAGES
+            - llvm-10-dev
+      rust: nightly-2019-07-25
+      dist: bionic
     - deploy: # Documentation build; Only latest supported LLVM version for now
         provider: pages
         skip-cleanup: true
