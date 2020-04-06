@@ -172,7 +172,7 @@ matrix:
         apt:
           sources:
             - *BASE_SOURCES
-            - llvm-toolchain-trusty-10
+            - llvm-toolchain-bionic-10
           packages:
             - *BASE_PACKAGES
             - llvm-10-dev
@@ -207,8 +207,8 @@ matrix:
             # - llvm-toolchain-trusty-6.0
             # - llvm-toolchain-trusty-7
             # - llvm-toolchain-trusty-8
-            # - llvm-toolchain-trusty-9
-            - llvm-toolchain-trusty-10
+            # - llvm-toolchain-bionic-9
+            - llvm-toolchain-bionic-10
           packages:
             - *BASE_PACKAGES
             # - llvm-3.6-dev
