@@ -182,11 +182,14 @@ impl<'ctx> InstructionValue<'ctx> {
         BasicBlock::new(value)
     }
 
-    // REVIEW: See if necessary to check opcode == Call first.
-    // Does it always return false otherwise?
     pub fn is_tail_call(&self) -> bool {
-        unsafe {
-            LLVMIsTailCall(self.as_value_ref()) == 1
+        // LLVMIsTailCall has UB if the value is not an llvm::CallInst*.
+        if self.get_opcode() == InstructionOpcode::Call {
+            unsafe {
+                LLVMIsTailCall(self.as_value_ref()) == 1
+            }
+        } else {
+            false
         }
     }
 
