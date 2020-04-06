@@ -187,8 +187,8 @@ matrix:
         on:
           branch: master
       before_install:
-        - export PATH=/usr/lib/llvm-8/bin/:$HOME/.local/bin:$PATH
-        - export LLVM_PATH=/usr/share/llvm-8/cmake/
+        - export PATH=/usr/lib/llvm-10/bin/:$HOME/.local/bin:$PATH
+        - export LLVM_PATH=/usr/share/llvm-10/cmake/
       script:
         - cargo doc --no-default-features --features "target-all,llvm10-0" --color=always
         - echo '<meta http-equiv="refresh" content="1; url=inkwell/index.html">' > target/doc/index.html
