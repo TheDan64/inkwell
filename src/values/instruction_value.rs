@@ -183,6 +183,7 @@ impl<'ctx> InstructionValue<'ctx> {
     }
 
     pub fn is_tail_call(&self) -> bool {
+        // LLVMIsTailCall has UB if the value is not an llvm::CallInst*.
         if self.get_opcode() == InstructionOpcode::Call {
             unsafe {
                 LLVMIsTailCall(self.as_value_ref()) == 1
