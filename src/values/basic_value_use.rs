@@ -18,7 +18,7 @@ impl<'ctx> BasicValueUse<'ctx> {
         BasicValueUse(use_, PhantomData)
     }
 
-    /// Gets the next use of a `BasicValue` if any.
+    /// Gets the next use of an `InstructionValue` or `BasicValue` if any.
     ///
     /// The following example,
     ///
