@@ -284,11 +284,10 @@ pub enum AtomicRMWBinOp {
     UMin,
 
     /// Adds to the float-typed value in memory and returns the prior value.
-    // TODO: Fix typo OP -> Op once https://gitlab.com/taricorp/llvm-sys.rs/-/merge_requests/3 is merged.
     // Although this was added in LLVM 9, it wasn't exposed to the C API
     // until 10.0.
     #[llvm_versions(10.0..=latest)]
-    #[llvm_variant(LLVMAtomicRMWBinOPFAdd)]
+    #[llvm_variant(LLVMAtomicRMWBinOpFAdd)]
     FAdd,
 
     /// Subtract a float-typed value off the value in memory and returns the prior value.
