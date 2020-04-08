@@ -39,6 +39,8 @@ Supported versions:
 | 6.0.x        | llvm6-0       |
 | 7.0.x        | llvm7-0       |
 | 8.0.x        | llvm8-0       |
+| 9.0.x        | llvm9-0       |
+| 10.0.x       | llvm10-0      |
 
 ## Documentation
 
