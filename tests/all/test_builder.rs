@@ -648,6 +648,161 @@ fn test_insert_value() {
     assert!(module.verify().is_ok());
 }
 
+#[llvm_versions(8.0..=latest)]
+#[test]
+fn test_alignment_bytes() {
+    let verify_alignment = |alignment: u32| {
+        let context = Context::create();
+        let module = context.create_module("av");
+
+        run_memcpy_on(&context, &module, alignment);
+
+        if alignment == 0 || alignment.is_power_of_two() {
+            assert!(module.verify().is_ok(), "alignment of {:?} was neither 0 nor a power of 2, but did not verify for memcpy.", alignment);
+        } else {
+            assert!(module.verify().is_err(), "alignment of {:?} was neither 0 nor a power of 2, yet verification passed for memcpy when it should not have.", alignment);
+        }
+
+        run_memmove_on(&context, &module, alignment);
+
+        if alignment == 0 || alignment.is_power_of_two() {
+            assert!(module.verify().is_ok(), "alignment of {:?} was neither 0 nor a power of 2, but did not verify for memmov.", alignment);
+        } else {
+            assert!(module.verify().is_err(), "alignment of {:?} was neither 0 nor a power of 2, yet verification passed for memmov when it should not have.", alignment);
+        }
+    };
+
+    for alignment in 0..32 {
+        verify_alignment(alignment);
+    }
+
+    verify_alignment(u32::max_value());
+}
+
+#[llvm_versions(8.0..=latest)]
+fn run_memcpy_on<'ctx>(context: &'ctx Context, module: &self::inkwell::module::Module<'ctx>, alignment: u32) {
+    let i32_type = context.i32_type();
+    let i64_type = context.i64_type();
+    let array_len = 4;
+    let fn_type = i32_type.ptr_type(AddressSpace::Generic).fn_type(&[], false);
+    let fn_value = module.add_function("test_fn", fn_type, None);
+    let builder = context.create_builder();
+    let entry = context.append_basic_block(fn_value, "entry");
+
+    builder.position_at_end(entry);
+
+    let len_value = i64_type.const_int(array_len as u64, false);
+    let array_ptr = builder.build_array_malloc(i32_type, len_value, "array_ptr").unwrap();
+
+    // Initialize the array with the values [1, 2, 3, 4]
+    for index in 0..4 {
+        let index_val = i32_type.const_int(index, false);
+        let elem_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
+        let int_val = i32_type.const_int(index + 1, false);
+
+        builder.build_store(elem_ptr, int_val);
+    }
+
+    // Memcpy the first half of the array over the second half of the array.
+    let elems_to_copy = 2;
+    let bytes_to_copy = elems_to_copy * std::mem::size_of::<i32>();
+    let size_val = i64_type.const_int(bytes_to_copy as u64, false);
+    let index_val = i32_type.const_int(2, false);
+    let dest_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
+
+    builder.build_memcpy(dest_ptr, alignment, array_ptr, alignment, size_val);
+
+    builder.build_return(Some(&array_ptr));
+}
+
+#[llvm_versions(8.0..=latest)]
+#[test]
+fn test_memcpy() {
+    // 1. Allocate an array with a few elements.
+    // 2. Memcpy from the first half of the array to the second half.
+    // 3. Run the code in an execution engine and verify the array's contents.
+    let context = Context::create();
+    let module = context.create_module("av");
+
+    run_memcpy_on(&context, &module, 8);
+
+    // Verify the module
+    if let Err(errors) = module.verify() {
+        panic!("Errors defining module: {:?}", errors);
+    }
+
+    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+
+    unsafe {
+        let func = execution_engine.get_function::<unsafe extern "C" fn() -> *const i32>("test_fn").unwrap();
+        let actual = std::slice::from_raw_parts(func.call(), 4);
+
+        assert_eq!(&[1, 2, 1, 2], actual);
+    }
+}
+
+#[llvm_versions(8.0..=latest)]
+fn run_memmove_on<'ctx>(context: &'ctx Context, module: &self::inkwell::module::Module<'ctx>, alignment: u32) {
+    let i32_type = context.i32_type();
+    let i64_type = context.i64_type();
+    let array_len = 4;
+    let fn_type = i32_type.ptr_type(AddressSpace::Generic).fn_type(&[], false);
+    let fn_value = module.add_function("test_fn", fn_type, None);
+    let builder = context.create_builder();
+    let entry = context.append_basic_block(fn_value, "entry");
+
+    builder.position_at_end(entry);
+
+    let len_value = i64_type.const_int(array_len as u64, false);
+    let array_ptr = builder.build_array_malloc(i32_type, len_value, "array_ptr").unwrap();
+
+    // Initialize the array with the values [1, 2, 3, 4]
+    for index in 0..4 {
+        let index_val = i32_type.const_int(index, false);
+        let elem_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
+        let int_val = i32_type.const_int(index + 1, false);
+
+        builder.build_store(elem_ptr, int_val);
+    }
+
+    // Memcpy the first half of the array over the second half of the array.
+    let elems_to_copy = 2;
+    let bytes_to_copy = elems_to_copy * std::mem::size_of::<i32>();
+    let size_val = i64_type.const_int(bytes_to_copy as u64, false);
+    let index_val = i32_type.const_int(2, false);
+    let dest_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
+
+    builder.build_memmove(dest_ptr, alignment, array_ptr, alignment, size_val);
+
+    builder.build_return(Some(&array_ptr));
+}
+
+#[llvm_versions(8.0..=latest)]
+#[test]
+fn test_memmove() {
+    // 1. Allocate an array with a few elements.
+    // 2. Memmove from the first half of the array to the second half.
+    // 3. Run the code in an execution engine and verify the array's contents.
+    let context = Context::create();
+    let module = context.create_module("av");
+
+    run_memcpy_on(&context, &module, 8);
+
+    // Verify the module
+    if let Err(errors) = module.verify() {
+        panic!("Errors defining module: {:?}", errors);
+    }
+
+    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+
+    unsafe {
+        let func = execution_engine.get_function::<unsafe extern "C" fn() -> *const i32>("test_fn").unwrap();
+        let actual = std::slice::from_raw_parts(func.call(), 4);
+
+        assert_eq!(&[1, 2, 1, 2], actual);
+    }
+}
+
 #[test]
 fn test_bitcast() {
     let context = Context::create();
