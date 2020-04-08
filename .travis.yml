@@ -202,9 +202,9 @@ matrix:
         apt:
           sources:
             - *BASE_SOURCES
-            # - llvm-toolchain-trusty-3.6
-            # - llvm-toolchain-trusty-3.7
-            # - llvm-toolchain-trusty-3.8
+            # - llvm-toolchain-precise-3.6
+            # - llvm-toolchain-precise-3.7
+            # - llvm-toolchain-precise-3.8
             # - llvm-toolchain-trusty-3.9
             # - llvm-toolchain-trusty-4.0
             # - llvm-toolchain-trusty-5.0
