@@ -183,3 +183,23 @@ fn test_rauw() {
 
     assert_eq!(branch_inst.get_operand(0).unwrap().right().unwrap(), bb2);
 }
+
+#[test]
+fn test_get_first_use() {
+    let context = Context::create();
+    let module = context.create_module("ivs");
+    let builder = context.create_builder();
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_val = module.add_function("my_fn", fn_type, None);
+    let entry = context.append_basic_block(fn_val, "entry");
+    let bb1 = context.append_basic_block(fn_val, "bb1");
+    let bb2 = context.append_basic_block(fn_val, "bb2");
+    builder.position_at_end(entry);
+    let branch_inst = builder.build_unconditional_branch(bb1);
+
+    assert!(bb2.get_first_use().is_none());
+    assert!(bb1.get_first_use().is_some());
+    assert_eq!(bb1.get_first_use().unwrap().get_user(), branch_inst);
+    assert!(bb1.get_first_use().unwrap().get_next_use().is_none());
+}
