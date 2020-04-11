@@ -351,7 +351,8 @@ impl<'ctx> Builder<'ctx> {
 
     /// Build a [memcpy](https://llvm.org/docs/LangRef.html#llvm-memcpy-intrinsic) instruction.
     ///
-    /// Alignment arguments are specified in bytes, and should always be a power of 2.
+    /// Alignment arguments are specified in bytes, and should always be
+    /// both a power of 2 and under 2^64.
     ///
     /// The final argument should be a pointer-sized integer.
     ///
@@ -364,7 +365,15 @@ impl<'ctx> Builder<'ctx> {
         src: PointerValue<'ctx>,
         src_align_bytes: u32,
         size: IntValue<'ctx>,
-    ) -> PointerValue<'ctx> {
+    ) -> Result<PointerValue<'ctx>, &'static str> {
+        if !is_alignment_ok(src_align_bytes) {
+            return Err("The src_align_bytes argument to build_memcpy was not a power of 2.");
+        }
+
+        if !is_alignment_ok(dest_align_bytes) {
+            return Err("The dest_align_bytes argument to build_memcpy was not a power of 2.");
+        }
+
         let value = unsafe {
             LLVMBuildMemCpy(
                 self.builder,
@@ -376,12 +385,13 @@ impl<'ctx> Builder<'ctx> {
             )
         };
 
-        PointerValue::new(value)
+        Ok(PointerValue::new(value))
     }
 
     /// Build a [memmove](http://llvm.org/docs/LangRef.html#llvm-memmove-intrinsic) instruction.
     ///
-    /// Alignment arguments are specified in bytes, and should always be a power of 2.
+    /// Alignment arguments are specified in bytes, and should always be
+    /// both a power of 2 and under 2^64.
     ///
     /// The final argument should be a pointer-sized integer.
     ///
@@ -394,7 +404,15 @@ impl<'ctx> Builder<'ctx> {
         src: PointerValue<'ctx>,
         src_align_bytes: u32,
         size: IntValue<'ctx>,
-    ) -> PointerValue<'ctx> {
+    ) -> Result<PointerValue<'ctx>, &'static str> {
+        if !is_alignment_ok(src_align_bytes) {
+            return Err("The src_align_bytes argument to build_memmove was not a power of 2 under 2^64.");
+        }
+
+        if !is_alignment_ok(dest_align_bytes) {
+            return Err("The dest_align_bytes argument to build_memmove was not a power of 2 under 2^64.");
+        }
+
         let value = unsafe {
             LLVMBuildMemMove(
                 self.builder,
@@ -406,7 +424,7 @@ impl<'ctx> Builder<'ctx> {
             )
         };
 
-        PointerValue::new(value)
+        Ok(PointerValue::new(value))
     }
 
     // TODOC: Heap allocation
@@ -1705,6 +1723,15 @@ impl<'ctx> Builder<'ctx> {
         Ok(StructValue::new(val).into())
     }
 }
+
+/// Used by build_memcpy and build_memmove
+fn is_alignment_ok(align: u32) -> bool {
+    // This replicates the assertions LLVM runs.
+    //
+    // See https://github.com/TheDan64/inkwell/issues/168
+    align > 0 && align.is_power_of_two() && (align as f64).log2() < 64.0
+}
+
 
 impl Drop for Builder<'_> {
     fn drop(&mut self) {
