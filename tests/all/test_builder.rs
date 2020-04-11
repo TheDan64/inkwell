@@ -648,27 +648,33 @@ fn test_insert_value() {
     assert!(module.verify().is_ok());
 }
 
+fn is_alignment_ok(align: u32) -> bool {
+    // This replicates the assertions LLVM runs.
+    //
+    // See https://github.com/TheDan64/inkwell/issues/168
+    align > 0 && align.is_power_of_two() && (align as f64).log2() < 64.0
+}
+
 #[llvm_versions(8.0..=latest)]
 #[test]
 fn test_alignment_bytes() {
     let verify_alignment = |alignment: u32| {
         let context = Context::create();
         let module = context.create_module("av");
+        let result = run_memcpy_on(&context, &module, alignment);
 
-        run_memcpy_on(&context, &module, alignment);
-
-        if alignment == 0 || alignment.is_power_of_two() {
-            assert!(module.verify().is_ok(), "alignment of {:?} was neither 0 nor a power of 2, but did not verify for memcpy.", alignment);
+        if is_alignment_ok(alignment) {
+            assert!(result.is_ok() && module.verify().is_ok(), "alignment of {} was a power of 2 under 2^64, but did not verify for memcpy.", alignment);
         } else {
-            assert!(module.verify().is_err(), "alignment of {:?} was neither 0 nor a power of 2, yet verification passed for memcpy when it should not have.", alignment);
+            assert!(result.is_err(), "alignment of {} was a power of 2 under 2^64, yet verification passed for memcpy when it should not have.", alignment);
         }
 
-        run_memmove_on(&context, &module, alignment);
+        let result = run_memmove_on(&context, &module, alignment);
 
-        if alignment == 0 || alignment.is_power_of_two() {
-            assert!(module.verify().is_ok(), "alignment of {:?} was neither 0 nor a power of 2, but did not verify for memmov.", alignment);
+        if is_alignment_ok(alignment) {
+            assert!(result.is_ok() && module.verify().is_ok(), "alignment of {} was a power of 2 under 2^64, but did not verify for memmove.", alignment);
         } else {
-            assert!(module.verify().is_err(), "alignment of {:?} was neither 0 nor a power of 2, yet verification passed for memmov when it should not have.", alignment);
+            assert!(result.is_err(), "alignment of {} was a power of 2 under 2^64, yet verification passed for memmove when it should not have.", alignment);
         }
     };
 
@@ -680,7 +686,7 @@ fn test_alignment_bytes() {
 }
 
 #[llvm_versions(8.0..=latest)]
-fn run_memcpy_on<'ctx>(context: &'ctx Context, module: &self::inkwell::module::Module<'ctx>, alignment: u32) {
+fn run_memcpy_on<'ctx>(context: &'ctx Context, module: &self::inkwell::module::Module<'ctx>, alignment: u32) -> Result<(), &'static str> {
     let i32_type = context.i32_type();
     let i64_type = context.i64_type();
     let array_len = 4;
@@ -710,9 +716,11 @@ fn run_memcpy_on<'ctx>(context: &'ctx Context, module: &self::inkwell::module::M
     let index_val = i32_type.const_int(2, false);
     let dest_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
 
-    builder.build_memcpy(dest_ptr, alignment, array_ptr, alignment, size_val);
+    builder.build_memcpy(dest_ptr, alignment, array_ptr, alignment, size_val)?;
 
     builder.build_return(Some(&array_ptr));
+
+    Ok(())
 }
 
 #[llvm_versions(8.0..=latest)]
@@ -724,7 +732,7 @@ fn test_memcpy() {
     let context = Context::create();
     let module = context.create_module("av");
 
-    run_memcpy_on(&context, &module, 8);
+    assert!(run_memcpy_on(&context, &module, 8).is_ok());
 
     // Verify the module
     if let Err(errors) = module.verify() {
@@ -742,7 +750,7 @@ fn test_memcpy() {
 }
 
 #[llvm_versions(8.0..=latest)]
-fn run_memmove_on<'ctx>(context: &'ctx Context, module: &self::inkwell::module::Module<'ctx>, alignment: u32) {
+fn run_memmove_on<'ctx>(context: &'ctx Context, module: &self::inkwell::module::Module<'ctx>, alignment: u32) -> Result<(), &'static str> {
     let i32_type = context.i32_type();
     let i64_type = context.i64_type();
     let array_len = 4;
@@ -772,9 +780,11 @@ fn run_memmove_on<'ctx>(context: &'ctx Context, module: &self::inkwell::module::
     let index_val = i32_type.const_int(2, false);
     let dest_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
 
-    builder.build_memmove(dest_ptr, alignment, array_ptr, alignment, size_val);
+    builder.build_memmove(dest_ptr, alignment, array_ptr, alignment, size_val)?;
 
     builder.build_return(Some(&array_ptr));
+
+    Ok(())
 }
 
 #[llvm_versions(8.0..=latest)]
@@ -786,7 +796,7 @@ fn test_memmove() {
     let context = Context::create();
     let module = context.create_module("av");
 
-    run_memcpy_on(&context, &module, 8);
+    assert!(run_memcpy_on(&context, &module, 8).is_ok());
 
     // Verify the module
     if let Err(errors) = module.verify() {
