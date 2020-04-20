@@ -108,9 +108,14 @@ impl Section {
         }
     }
 
-    pub fn get_name(&self) -> &CStr {
-        unsafe {
-            CStr::from_ptr(LLVMGetSectionName(self.section))
+    pub fn get_name(&self) -> Option<&CStr> {
+        let name = unsafe {
+            LLVMGetSectionName(self.section)
+        }
+        if !name.is_null() {
+            CStr::from_ptr(name)
+        } else {
+            None
         }
     }
 
@@ -302,9 +307,14 @@ impl Symbol {
         }
     }
 
-    pub fn get_name(&self) -> &CStr {
-        unsafe {
-            CStr::from_ptr(LLVMGetSymbolName(self.symbol))
+    pub fn get_name(&self) -> Option<&CStr> {
+        let name = unsafe {
+            LLVMGetSymbolName(self.symbol)
+        }
+        if !name.is_null() {
+            CStr::from_ptr(name)
+        } else {
+            None
         }
     }
 
