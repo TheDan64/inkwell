@@ -1,10 +1,8 @@
 extern crate inkwell;
 
 use self::inkwell::context::Context;
-use self::inkwell::module::Module;
 use self::inkwell::targets::{
-    ByteOrdering, CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetData,
-    TargetMachine, TargetTriple,
+    CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine,
 };
 use self::inkwell::values::BasicValue;
 use self::inkwell::OptimizationLevel;
@@ -56,28 +54,26 @@ fn test_section_iterator() {
     let mut has_section_a = false;
     let mut has_section_b = false;
     let mut has_section_c = false;
-    for (i, section) in object_file.get_sections().enumerate() {
-        // TODO: the first section has no name, skip it.
-        if i == 0 {
-            continue;
-        }
-        match section.get_name().to_str().unwrap() {
-            "A" => {
-                assert!(!has_section_a);
-                has_section_a = true;
-                assert_eq!(section.size(), 1);
+    for section in object_file.get_sections() {
+        if let Some(name) = section.get_name() {
+            match name.to_str().unwrap() {
+                "A" => {
+                    assert!(!has_section_a);
+                    has_section_a = true;
+                    assert_eq!(section.size(), 1);
+                }
+                "B" => {
+                    assert!(!has_section_b);
+                    has_section_b = true;
+                    assert_eq!(section.size(), 2);
+                }
+                "C" => {
+                    assert!(!has_section_c);
+                    has_section_c = true;
+                    assert_eq!(section.size(), 4);
+                }
+                _ => {}
             }
-            "B" => {
-                assert!(!has_section_b);
-                has_section_b = true;
-                assert_eq!(section.size(), 2);
-            }
-            "C" => {
-                assert!(!has_section_c);
-                has_section_c = true;
-                assert_eq!(section.size(), 4);
-            }
-            _ => {}
         }
     }
     assert!(has_section_a);
@@ -112,23 +108,25 @@ fn test_symbol_iterator() {
     let mut has_symbol_b = false;
     let mut has_symbol_c = false;
     for symbol in object_file.get_symbols() {
-        match symbol.get_name().to_str().unwrap() {
-            "a" => {
-                assert!(!has_symbol_a);
-                has_symbol_a = true;
-                assert_eq!(symbol.size(), 1);
+        if let Some(name) = symbol.get_name() {
+            match name.to_str().unwrap() {
+                "a" => {
+                    assert!(!has_symbol_a);
+                    has_symbol_a = true;
+                    assert_eq!(symbol.size(), 1);
+                }
+                "b" => {
+                    assert!(!has_symbol_b);
+                    has_symbol_b = true;
+                    assert_eq!(symbol.size(), 2);
+                }
+                "c" => {
+                    assert!(!has_symbol_c);
+                    has_symbol_c = true;
+                    assert_eq!(symbol.size(), 4);
+                }
+                _ => {}
             }
-            "b" => {
-                assert!(!has_symbol_b);
-                has_symbol_b = true;
-                assert_eq!(symbol.size(), 2);
-            }
-            "c" => {
-                assert!(!has_symbol_c);
-                has_symbol_c = true;
-                assert_eq!(symbol.size(), 4);
-            }
-            _ => {}
         }
     }
     assert!(has_symbol_a);
