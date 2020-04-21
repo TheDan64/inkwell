@@ -6,15 +6,15 @@ use self::inkwell::targets::{
     ByteOrdering, CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetData,
     TargetMachine, TargetTriple,
 };
+use self::inkwell::values::BasicValue;
 use self::inkwell::OptimizationLevel;
 
-#[test]
-fn test_section_iterator() {
+fn get_native_target_machine() -> TargetMachine {
     Target::initialize_native(&InitializationConfig::default())
         .expect("Failed to initialize native target");
     let target_triple = TargetMachine::get_default_triple();
     let target = Target::from_triple(&target_triple).unwrap();
-    let target_machine = target
+    target
         .create_target_machine(
             &target_triple,
             &TargetMachine::get_host_cpu_name().to_string(),
@@ -23,19 +23,29 @@ fn test_section_iterator() {
             RelocMode::Static,
             CodeModel::Small,
         )
-        .unwrap();
+        .unwrap()
+}
+
+#[test]
+fn test_section_iterator() {
+    let target_machine = get_native_target_machine();
 
     let context = Context::create();
     let mut module = context.create_module("my_module");
-    module.set_inline_assembly(
-        ".section A\n\
-        .byte 1\n\
-        .section B\n\
-        .byte 2, 2\n\
-        .section C\n\
-        .byte 3, 3, 3",
-    );
-    module.set_triple(&target_triple);
+
+    let gv_a = module.add_global(context.i8_type(), None, "a");
+    gv_a.set_initializer(&context.i8_type().const_zero().as_basic_value_enum());
+    gv_a.set_section("A");
+
+    let gv_b = module.add_global(context.i16_type(), None, "b");
+    gv_b.set_initializer(&context.i16_type().const_zero().as_basic_value_enum());
+    gv_b.set_section("B");
+
+    let gv_c = module.add_global(context.i32_type(), None, "c");
+    gv_c.set_initializer(&context.i32_type().const_zero().as_basic_value_enum());
+    gv_c.set_section("C");
+
+    module.set_triple(&target_machine.get_triple());
     module.set_data_layout(&target_machine.get_target_data().get_data_layout());
 
     let memory_buffer = target_machine
@@ -65,7 +75,7 @@ fn test_section_iterator() {
             "C" => {
                 assert!(!has_section_c);
                 has_section_c = true;
-                assert_eq!(section.size(), 3);
+                assert_eq!(section.size(), 4);
             }
             _ => {}
         }
@@ -73,4 +83,89 @@ fn test_section_iterator() {
     assert!(has_section_a);
     assert!(has_section_b);
     assert!(has_section_c);
+}
+
+#[test]
+fn test_symbol_iterator() {
+    let target_machine = get_native_target_machine();
+
+    let context = Context::create();
+    let mut module = context.create_module("my_module");
+    module
+        .add_global(context.i8_type(), None, "a")
+        .set_initializer(&context.i8_type().const_zero().as_basic_value_enum());
+    module
+        .add_global(context.i16_type(), None, "b")
+        .set_initializer(&context.i16_type().const_zero().as_basic_value_enum());
+    module
+        .add_global(context.i32_type(), None, "c")
+        .set_initializer(&context.i32_type().const_zero().as_basic_value_enum());
+    module.set_triple(&target_machine.get_triple());
+    module.set_data_layout(&target_machine.get_target_data().get_data_layout());
+
+    let memory_buffer = target_machine
+        .write_to_memory_buffer(&mut module, FileType::Object)
+        .unwrap();
+    let object_file = memory_buffer.create_object_file().unwrap();
+
+    let mut has_symbol_a = false;
+    let mut has_symbol_b = false;
+    let mut has_symbol_c = false;
+    for symbol in object_file.get_symbols() {
+        match symbol.get_name().to_str().unwrap() {
+            "a" => {
+                assert!(!has_symbol_a);
+                has_symbol_a = true;
+                assert_eq!(symbol.size(), 1);
+            }
+            "b" => {
+                assert!(!has_symbol_b);
+                has_symbol_b = true;
+                assert_eq!(symbol.size(), 2);
+            }
+            "c" => {
+                assert!(!has_symbol_c);
+                has_symbol_c = true;
+                assert_eq!(symbol.size(), 4);
+            }
+            _ => {}
+        }
+    }
+    assert!(has_symbol_a);
+    assert!(has_symbol_b);
+    assert!(has_symbol_c);
+}
+
+#[test]
+fn test_reloc_iterator() {
+    let target_machine = get_native_target_machine();
+
+    let context = Context::create();
+    let mut module = context.create_module("my_module");
+    let x_ptr = module
+        .add_global(context.i8_type(), None, "x")
+        .as_pointer_value();
+    let x_plus_4 = x_ptr
+        .const_to_int(context.i64_type())
+        .const_add(context.i64_type().const_int(4, false));
+    module
+        .add_global(context.i64_type(), None, "a")
+        .set_initializer(&x_plus_4);
+
+    module.set_triple(&target_machine.get_triple());
+    module.set_data_layout(&target_machine.get_target_data().get_data_layout());
+
+    let memory_buffer = target_machine
+        .write_to_memory_buffer(&mut module, FileType::Object)
+        .unwrap();
+    let object_file = memory_buffer.create_object_file().unwrap();
+
+    let mut found_relocation = false;
+    for section in object_file.get_sections() {
+        for reloc in section.get_relocations() {
+            found_relocation = true;
+            // We don't stop the traversal here, so as to exercise the iterators.
+        }
+    }
+    assert!(found_relocation);
 }
