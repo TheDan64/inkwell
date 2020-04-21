@@ -31,7 +31,7 @@ fn test_section_iterator() {
     let target_machine = get_native_target_machine();
 
     let context = Context::create();
-    let mut module = context.create_module("my_module");
+    let mut module = context.create_module("test_section_iterator");
 
     let gv_a = module.add_global(context.i8_type(), None, "a");
     gv_a.set_initializer(&context.i8_type().const_zero().as_basic_value_enum());
@@ -90,7 +90,7 @@ fn test_symbol_iterator() {
     let target_machine = get_native_target_machine();
 
     let context = Context::create();
-    let mut module = context.create_module("my_module");
+    let mut module = context.create_module("test_symbol_iterator");
     module
         .add_global(context.i8_type(), None, "a")
         .set_initializer(&context.i8_type().const_zero().as_basic_value_enum());
@@ -141,15 +141,18 @@ fn test_reloc_iterator() {
     let target_machine = get_native_target_machine();
 
     let context = Context::create();
-    let mut module = context.create_module("my_module");
+    let target_data = target_machine.get_target_data();
+    let intptr_t = target_data.ptr_sized_int_type_in_context(&context, None);
+
+    let mut module = context.create_module("test_reloc_iterator");
     let x_ptr = module
         .add_global(context.i8_type(), None, "x")
         .as_pointer_value();
     let x_plus_4 = x_ptr
-        .const_to_int(context.i64_type())
-        .const_add(context.i64_type().const_int(4, false));
+        .const_to_int(intptr_t)
+        .const_add(intptr_t.const_int(4, false));
     module
-        .add_global(context.i64_type(), None, "a")
+        .add_global(intptr_t, None, "a")
         .set_initializer(&x_plus_4);
 
     module.set_triple(&target_machine.get_triple());
@@ -162,7 +165,7 @@ fn test_reloc_iterator() {
 
     let mut found_relocation = false;
     for section in object_file.get_sections() {
-        for reloc in section.get_relocations() {
+        for _ in section.get_relocations() {
             found_relocation = true;
             // We don't stop the traversal here, so as to exercise the iterators.
         }
