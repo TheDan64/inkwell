@@ -111,9 +111,9 @@ impl Section {
     pub fn get_name(&self) -> Option<&CStr> {
         let name = unsafe {
             LLVMGetSectionName(self.section)
-        }
+        };
         if !name.is_null() {
-            CStr::from_ptr(name)
+            Some(unsafe { CStr::from_ptr(name) })
         } else {
             None
         }
@@ -310,9 +310,9 @@ impl Symbol {
     pub fn get_name(&self) -> Option<&CStr> {
         let name = unsafe {
             LLVMGetSymbolName(self.symbol)
-        }
+        };
         if !name.is_null() {
-            CStr::from_ptr(name)
+            Some(unsafe { CStr::from_ptr(name) })
         } else {
             None
         }
