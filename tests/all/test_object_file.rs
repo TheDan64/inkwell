@@ -9,11 +9,11 @@ use self::inkwell::types::IntType;
 use self::inkwell::values::BasicValue;
 use self::inkwell::OptimizationLevel;
 
-#[llvm_versions(4.0..=latest)]
+#[llvm_versions(7.0..=latest)]
 fn get_host_cpu_name() -> String {
     TargetMachine::get_host_cpu_name().to_string()
 }
-#[llvm_versions(4.0..=latest)]
+#[llvm_versions(7.0..=latest)]
 fn get_host_cpu_features() -> String {
     TargetMachine::get_host_cpu_features().to_string()
 }
@@ -31,11 +31,11 @@ fn apply_target_to_module<'ctx>(target_machine: &TargetMachine, module: &Module)
     module.set_data_layout(&target_machine.get_target_data().get_data_layout());
 }
 
-#[llvm_versions(3.6..4.0)]
+#[llvm_versions(3.6..7.0)]
 fn get_host_cpu_name() -> String {
     "".to_string()
 }
-#[llvm_versions(3.6..4.0)]
+#[llvm_versions(3.6..7.0)]
 fn get_host_cpu_features() -> String {
     "".to_string()
 }
