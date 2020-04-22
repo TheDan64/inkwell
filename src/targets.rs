@@ -1316,11 +1316,11 @@ impl TargetData {
     /// let target_data = execution_engine.get_target_data();
     /// let int_type = target_data.ptr_sized_int_type_in_context(&context, None);
     /// ```
-    pub fn ptr_sized_int_type_in_context(
+    pub fn ptr_sized_int_type_in_context<'ctx>(
         &self,
-        context: &Context,
+        context: &'ctx Context,
         address_space: Option<AddressSpace>,
-    ) -> IntType {
+    ) -> IntType<'ctx> {
         let int_type_ptr = match address_space {
             Some(address_space) => unsafe {
                 LLVMIntPtrTypeForASInContext(
