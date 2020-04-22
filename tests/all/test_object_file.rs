@@ -33,11 +33,11 @@ fn apply_target_to_module<'ctx>(target_machine: &TargetMachine, module: &Module)
 
 #[llvm_versions(3.6..4.0)]
 fn get_host_cpu_name() -> String {
-    ""
+    "".to_string()
 }
 #[llvm_versions(3.6..4.0)]
 fn get_host_cpu_features() -> String {
-    ""
+    "".to_string()
 }
 #[llvm_versions(3.6..4.0)]
 fn ptr_sized_int_type<'ctx>(
