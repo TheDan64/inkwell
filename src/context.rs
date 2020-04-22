@@ -924,10 +924,10 @@ impl<'ctx> ContextRef<'ctx> {
         }
     }
 
-    /// TODO: Gets a usable context object with a correct lifetime.
+    /// Gets a usable context object with a correct lifetime.
     #[cfg(feature = "experimental")]
     pub fn get(&self) -> &'ctx Context {
-        // Safety: Although strictly untrue that a reference to the context field
+        // Safety: Although strictly untrue that a local reference to the context field
         // is guarenteed to live for the entirety of 'ctx:
         // 1) ContextRef cannot outlive 'ctx
         // 2) Any method called called with this context object will inherit 'ctx,
