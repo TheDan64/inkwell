@@ -109,7 +109,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
             non_global_context,
             execution_engine: Some(ExecEngineInner(execution_engine)),
             target_data: Some(TargetData::new(target_data)),
-            jit_mode: jit_mode,
+            jit_mode,
         }
     }
 
@@ -432,7 +432,7 @@ impl Drop for ExecutionEngine<'_> {
 
 impl Clone for ExecutionEngine<'_> {
     fn clone(&self) -> Self {
-        let context = self.non_global_context.clone();
+        let context = self.non_global_context;
         let execution_engine_rc = self.execution_engine_rc().clone();
 
         ExecutionEngine::new(execution_engine_rc, context, self.jit_mode)

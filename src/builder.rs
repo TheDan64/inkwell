@@ -30,7 +30,7 @@ impl<'ctx> Builder<'ctx> {
         debug_assert!(!builder.is_null());
 
         Builder {
-            builder: builder,
+            builder,
             _marker: PhantomData,
         }
     }
@@ -1720,7 +1720,7 @@ impl<'ctx> Builder<'ctx> {
             LLVMBuildAtomicCmpXchg(self.builder, ptr.as_value_ref(), cmp.as_value_ref(), new.as_value_ref(), success.into(), failure.into(), false as i32)
         };
 
-        Ok(StructValue::new(val).into())
+        Ok(StructValue::new(val))
     }
 }
 

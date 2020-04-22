@@ -1295,7 +1295,7 @@ impl TargetData {
         assert!(!target_data.is_null());
 
         TargetData {
-            target_data: target_data,
+            target_data,
         }
     }
 
@@ -1316,6 +1316,7 @@ impl TargetData {
     /// let target_data = execution_engine.get_target_data();
     /// let int_type = target_data.ptr_sized_int_type_in_context(&context, None);
     /// ```
+    #[deprecated(note = "This method will be removed in the future. Please use Context::ptr_sized_int_type instead.")]
     pub fn ptr_sized_int_type_in_context<'ctx>(
         &self,
         context: &'ctx Context,

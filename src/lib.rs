@@ -352,8 +352,8 @@ impl ThreadLocalMode {
         }
     }
 
-    pub(crate) fn as_llvm_mode(&self) -> LLVMThreadLocalMode {
-        match *self {
+    pub(crate) fn as_llvm_mode(self) -> LLVMThreadLocalMode {
+        match self {
             ThreadLocalMode::GeneralDynamicTLSModel => LLVMThreadLocalMode::LLVMGeneralDynamicTLSModel,
             ThreadLocalMode::LocalDynamicTLSModel => LLVMThreadLocalMode::LLVMLocalDynamicTLSModel,
             ThreadLocalMode::InitialExecTLSModel => LLVMThreadLocalMode::LLVMInitialExecTLSModel,

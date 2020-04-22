@@ -468,7 +468,7 @@ impl<'ctx> Module<'ctx> {
             return Err(LLVMString::new(err_string));
         }
 
-        let context = self.non_global_context.clone();
+        let context = self.non_global_context;
         let execution_engine = unsafe { execution_engine.assume_init() };
         let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), context, false);
 
@@ -521,7 +521,7 @@ impl<'ctx> Module<'ctx> {
             return Err(LLVMString::new(err_string));
         }
 
-        let context = self.non_global_context.clone();
+        let context = self.non_global_context;
         let execution_engine = unsafe { execution_engine.assume_init() };
         let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), context, true);
 

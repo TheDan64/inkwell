@@ -60,7 +60,7 @@ impl<'ctx> Value<'ctx> {
         debug_assert!(!value.is_null(), "This should never happen since containing struct should check null ptrs");
 
         Value {
-            value: value,
+            value,
             _marker: PhantomData,
         }
     }

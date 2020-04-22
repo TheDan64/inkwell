@@ -5,10 +5,12 @@ use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMConte
 use llvm_sys::core::{LLVMCreateEnumAttribute, LLVMCreateStringAttribute};
 use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef, LLVMDiagnosticInfoRef};
 use llvm_sys::ir_reader::LLVMParseIRInContext;
+use llvm_sys::target::{LLVMIntPtrTypeForASInContext, LLVMIntPtrTypeInContext};
 use libc::c_void;
 use once_cell::sync::Lazy;
 use parking_lot::{Mutex, MutexGuard};
 
+use crate::AddressSpace;
 #[llvm_versions(4.0..=latest)]
 use crate::attributes::Attribute;
 use crate::basic_block::BasicBlock;
@@ -16,6 +18,7 @@ use crate::builder::Builder;
 use crate::memory_buffer::MemoryBuffer;
 use crate::module::Module;
 use crate::support::LLVMString;
+use crate::targets::TargetData;
 use crate::types::{BasicTypeEnum, FloatType, IntType, StructType, VoidType, AsTypeRef};
 use crate::values::{AsValueRef, BasicMetadataValueEnum, BasicValueEnum, FunctionValue, StructValue, MetadataValue, VectorValue};
 
@@ -360,6 +363,42 @@ impl Context {
         };
 
         IntType::new(int_type)
+    }
+
+    /// Gets the `IntType` representing a bit width of a pointer. It will be assigned the referenced context.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::OptimizationLevel;
+    /// use inkwell::context::Context;
+    /// use inkwell::targets::{InitializationConfig, Target};
+    ///
+    /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("sum");
+    /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    /// let target_data = execution_engine.get_target_data();
+    /// let int_type = context.ptr_sized_int_type(&target_data, None);
+    /// ```
+    pub fn ptr_sized_int_type(
+        &self,
+        target_data: &TargetData,
+        address_space: Option<AddressSpace>,
+    ) -> IntType {
+        let int_type_ptr = match address_space {
+            Some(address_space) => unsafe {
+                LLVMIntPtrTypeForASInContext(
+                    self.context,
+                    target_data.target_data,
+                    address_space as u32,
+                )
+            },
+            None => unsafe { LLVMIntPtrTypeInContext(self.context, target_data.target_data) },
+        };
+
+        IntType::new(int_type_ptr)
     }
 
     /// Gets the `FloatType` representing a 16 bit width. It will be assigned the current context.
