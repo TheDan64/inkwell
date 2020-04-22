@@ -1,11 +1,55 @@
 extern crate inkwell;
 
 use self::inkwell::context::Context;
+use self::inkwell::module::Module;
 use self::inkwell::targets::{
     CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine,
 };
+use self::inkwell::types::IntType;
 use self::inkwell::values::BasicValue;
 use self::inkwell::OptimizationLevel;
+
+#[llvm_versions(4.0..=latest)]
+fn get_host_cpu_name() -> String {
+    TargetMachine::get_host_cpu_name().to_string()
+}
+#[llvm_versions(4.0..=latest)]
+fn get_host_cpu_features() -> String {
+    TargetMachine::get_host_cpu_features().to_string()
+}
+#[llvm_versions(4.0..=latest)]
+fn ptr_sized_int_type<'ctx>(
+    target_machine: &TargetMachine,
+    context: &'ctx Context,
+) -> IntType<'ctx> {
+    let target_data = target_machine.get_target_data();
+    target_data.ptr_sized_int_type_in_context(&context, None)
+}
+#[llvm_versions(4.0..=latest)]
+fn apply_target_to_module<'ctx>(target_machine: &TargetMachine, module: &Module) {
+    module.set_triple(&target_machine.get_triple());
+    module.set_data_layout(&target_machine.get_target_data().get_data_layout());
+}
+
+#[llvm_versions(3.6..4.0)]
+fn get_host_cpu_name() -> String {
+    ""
+}
+#[llvm_versions(3.6..4.0)]
+fn get_host_cpu_features() -> String {
+    ""
+}
+#[llvm_versions(3.6..4.0)]
+fn ptr_sized_int_type<'ctx>(
+    _target_machine: &TargetMachine,
+    context: &'ctx Context,
+) -> IntType<'ctx> {
+    context.i64_type()
+}
+#[llvm_versions(3.6..4.0)]
+fn apply_target_to_module(target_machine: &TargetMachine, module: &Module) {
+    module.set_triple(&target_machine.get_triple());
+}
 
 fn get_native_target_machine() -> TargetMachine {
     Target::initialize_native(&InitializationConfig::default())
@@ -15,11 +59,11 @@ fn get_native_target_machine() -> TargetMachine {
     target
         .create_target_machine(
             &target_triple,
-            &TargetMachine::get_host_cpu_name().to_string(),
-            &TargetMachine::get_host_cpu_features().to_string(),
+            &get_host_cpu_name(),
+            &get_host_cpu_features(),
             OptimizationLevel::None,
-            RelocMode::Static,
-            CodeModel::Small,
+            RelocMode::Default,
+            CodeModel::Default,
         )
         .unwrap()
 }
@@ -43,8 +87,7 @@ fn test_section_iterator() {
     gv_c.set_initializer(&context.i32_type().const_zero().as_basic_value_enum());
     gv_c.set_section("C");
 
-    module.set_triple(&target_machine.get_triple());
-    module.set_data_layout(&target_machine.get_target_data().get_data_layout());
+    apply_target_to_module(&target_machine, &module);
 
     let memory_buffer = target_machine
         .write_to_memory_buffer(&mut module, FileType::Object)
@@ -96,8 +139,7 @@ fn test_symbol_iterator() {
     module
         .add_global(context.i32_type(), None, "c")
         .set_initializer(&context.i32_type().const_zero().as_basic_value_enum());
-    module.set_triple(&target_machine.get_triple());
-    module.set_data_layout(&target_machine.get_target_data().get_data_layout());
+    apply_target_to_module(&target_machine, &module);
 
     let memory_buffer = target_machine
         .write_to_memory_buffer(&mut module, FileType::Object)
@@ -139,8 +181,7 @@ fn test_reloc_iterator() {
     let target_machine = get_native_target_machine();
 
     let context = Context::create();
-    let target_data = target_machine.get_target_data();
-    let intptr_t = target_data.ptr_sized_int_type_in_context(&context, None);
+    let intptr_t = ptr_sized_int_type(&target_machine, &context);
 
     let mut module = context.create_module("test_reloc_iterator");
     let x_ptr = module
@@ -153,8 +194,7 @@ fn test_reloc_iterator() {
         .add_global(intptr_t, None, "a")
         .set_initializer(&x_plus_4);
 
-    module.set_triple(&target_machine.get_triple());
-    module.set_data_layout(&target_machine.get_target_data().get_data_layout());
+    apply_target_to_module(&target_machine, &module);
 
     let memory_buffer = target_machine
         .write_to_memory_buffer(&mut module, FileType::Object)
