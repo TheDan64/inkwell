@@ -24,7 +24,7 @@ use crate::values::{AsValueRef, BasicMetadataValueEnum, BasicValueEnum, Function
 
 use std::ffi::CString;
 use std::marker::PhantomData;
-use std::mem::forget;
+use std::mem::{forget, ManuallyDrop};
 use std::ops::Deref;
 use std::ptr;
 use std::thread_local;
@@ -912,15 +912,29 @@ impl Drop for Context {
 /// A `ContextRef` is a smart pointer allowing borrowed access to a a type's `Context`.
 #[derive(Debug, PartialEq, Eq)]
 pub struct ContextRef<'ctx> {
-    context: Option<Context>,
+    context: ManuallyDrop<Context>,
     _marker: PhantomData<&'ctx ()>,
 }
 
-impl ContextRef<'_> {
+impl<'ctx> ContextRef<'ctx> {
     pub(crate) fn new(context: LLVMContextRef) -> Self {
         ContextRef {
-            context: Some(Context::new(context)),
+            context: ManuallyDrop::new(Context::new(context)),
             _marker: PhantomData,
+        }
+    }
+
+    /// TODO: Gets a usable context object with a correct lifetime.
+    #[cfg(feature = "experimental")]
+    pub fn get(&self) -> &'ctx Context {
+        // Safety: Although strictly untrue that a reference to the context field
+        // is guarenteed to live for the entirety of 'ctx:
+        // 1) ContextRef cannot outlive 'ctx
+        // 2) Any method called called with this context object will inherit 'ctx,
+        // which is its proper lifetime and does not point into this context object
+        // specifically but towards the actual context pointer in LLVM.
+        unsafe {
+            &*(&*self.context as *const Context)
         }
     }
 }
@@ -929,12 +943,6 @@ impl Deref for ContextRef<'_> {
     type Target = Context;
 
     fn deref(&self) -> &Self::Target {
-        self.context.as_ref().expect("ContextRef should never be deref'd after being dropped")
-    }
-}
-
-impl Drop for ContextRef<'_> {
-    fn drop(&mut self) {
-        forget(self.context.take());
+        &*self.context
     }
 }

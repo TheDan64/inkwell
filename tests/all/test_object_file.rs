@@ -23,7 +23,7 @@ fn ptr_sized_int_type<'ctx>(
     context: &'ctx Context,
 ) -> IntType<'ctx> {
     let target_data = target_machine.get_target_data();
-    target_data.ptr_sized_int_type_in_context(&context, None)
+    context.ptr_sized_int_type(&target_data, None)
 }
 #[llvm_versions(4.0..=latest)]
 fn apply_target_to_module<'ctx>(target_machine: &TargetMachine, module: &Module) {
