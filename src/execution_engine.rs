@@ -519,11 +519,65 @@ impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J, K, L, M);
 
 #[cfg(all(feature = "experimental", not(any(feature = "llvm3-6", feature = "llvm3-7"))))]
 pub mod experimental {
-    #[llvm_versions(3.8..=latest)]
-    use llvm_sys::orc::{LLVMOrcCreateInstance, LLVMOrcDisposeInstance, LLVMOrcJITStackRef, LLVMOrcAddEagerlyCompiledIR, LLVMOrcAddLazilyCompiledIR};
+    use llvm_sys::error::{LLVMErrorRef, LLVMGetErrorTypeId, LLVMConsumeError, LLVMGetErrorMessage, LLVMErrorTypeId};
+    use llvm_sys::orc::{LLVMOrcCreateInstance, LLVMOrcDisposeInstance, LLVMOrcJITStackRef, LLVMOrcAddEagerlyCompiledIR, LLVMOrcAddLazilyCompiledIR, LLVMOrcGetErrorMsg, LLVMOrcGetMangledSymbol, LLVMOrcDisposeMangledSymbol};
+
     use crate::module::Module;
     use crate::targets::TargetMachine;
+
     use std::mem::MaybeUninit;
+    use std::ffi::{CStr, CString};
+    use std::ops::Deref;
+
+    #[derive(Debug)]
+    pub struct MangledSymbol(*mut libc::c_char);
+
+    impl Deref for MangledSymbol {
+        type Target = CStr;
+
+        fn deref(&self) -> &CStr {
+            unsafe {
+                CStr::from_ptr(self.0)
+            }
+        }
+    }
+
+    impl Drop for MangledSymbol {
+        fn drop(&mut self) {
+            unsafe {
+                LLVMOrcDisposeMangledSymbol(self.0)
+            }
+        }
+    }
+
+    #[derive(Debug)]
+    pub struct LLVMError(LLVMErrorRef);
+
+    impl LLVMError {
+        pub fn get_type_id(&self) -> LLVMErrorTypeId { // FIXME: Don't expose LLVMErrorTypeId
+            unsafe {
+                LLVMGetErrorTypeId(self.0)
+            }
+        }
+    }
+
+    impl Deref for LLVMError {
+        type Target = CStr;
+
+        fn deref(&self) -> &CStr {
+            unsafe {
+                CStr::from_ptr(LLVMGetErrorMessage(self.0))
+            }
+        }
+    }
+
+    impl Drop for LLVMError {
+        fn drop(&mut self) {
+            unsafe {
+                LLVMConsumeError(self.0)
+            }
+        }
+    }
 
     // TODO
     #[derive(Debug)]
@@ -548,15 +602,66 @@ pub mod experimental {
 
             Ok(())
         }
+
+        /// Obtains an error message owned by the ORC JIT stack.
+        pub fn get_error(&self) -> &CStr {
+            let err_str = unsafe { LLVMOrcGetErrorMsg(self.0) };
+
+            if err_str.is_null() {
+                panic!("Needs to be optional")
+            }
+
+            unsafe {
+                CStr::from_ptr(err_str)
+            }
+        }
+
+        pub fn get_mangled_symbol(&self, symbol: &str) -> MangledSymbol {
+            let mut mangled_symbol = MaybeUninit::uninit();
+            let c_symbol = CString::new(symbol).expect("to find a valid CString");
+
+            unsafe { LLVMOrcGetMangledSymbol(self.0, mangled_symbol.as_mut_ptr(), c_symbol.as_ptr()) };
+
+            MangledSymbol(unsafe { mangled_symbol.assume_init() })
+        }
     }
 
     impl Drop for Orc {
         fn drop(&mut self) {
             // REVIEW: This returns an LLVMErrorRef, not sure what we can do with it...
             // print to stderr maybe?
-            unsafe {
-                LLVMOrcDisposeInstance(self.0);
-            }
+            LLVMError(unsafe {
+                LLVMOrcDisposeInstance(self.0)
+            });
         }
+    }
+
+    #[test]
+    fn test_mangled_str() {
+        use crate::OptimizationLevel;
+        use crate::targets::{CodeModel, InitializationConfig, RelocMode, Target};
+
+        Target::initialize_native(&InitializationConfig::default()).unwrap();
+
+        let target_triple = TargetMachine::get_default_triple();
+        let target = Target::from_triple(&target_triple).unwrap();
+        let target_machine = target.create_target_machine(
+            &target_triple,
+            &"",
+            &"",
+            OptimizationLevel::None,
+            RelocMode::Default,
+            CodeModel::Default,
+        ).unwrap();
+        let orc = Orc::create(target_machine);
+
+        assert_eq!(orc.get_error().to_str().unwrap(), "");
+
+        let mangled_symbol = orc.get_mangled_symbol("MyStructName");
+
+        assert_eq!(orc.get_error().to_str().unwrap(), "");
+
+        // REVIEW: This doesn't seem very mangled...
+        assert_eq!(mangled_symbol.to_str().unwrap(), "MyStructName");
     }
 }

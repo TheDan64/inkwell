@@ -901,14 +901,6 @@ impl Drop for Context {
     }
 }
 
-// Alternate strategy would be to just define ownership parameter
-// on Context, and only call destructor if true. Not sure of pros/cons
-// compared to this approach other than not needing Deref trait's ugly syntax
-// REVIEW: Now that Contexts are ref counted, it may not be necessary to
-// have this ContextRef type, however Global Contexts throw a wrench in that
-// a bit as it is a special case. get_context() methods as well since they do
-// not have access to the original Rc. I suppose Context could be Option<Rc<LLVMContextRef>>
-// where None is global context
 /// A `ContextRef` is a smart pointer allowing borrowed access to a a type's `Context`.
 #[derive(Debug, PartialEq, Eq)]
 pub struct ContextRef<'ctx> {

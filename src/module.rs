@@ -10,7 +10,7 @@ use llvm_sys::core::{LLVMGetModuleIdentifier, LLVMSetModuleIdentifier};
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::core::{LLVMGetModuleFlag, LLVMAddModuleFlag};
 use llvm_sys::execution_engine::{LLVMCreateInterpreterForModule, LLVMCreateJITCompilerForModule, LLVMCreateExecutionEngineForModule};
-use llvm_sys::prelude::{LLVMValueRef, LLVMModuleRef};
+use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
 use llvm_sys::LLVMLinkage;
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::LLVMModuleFlagBehavior;
