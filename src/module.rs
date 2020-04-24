@@ -132,20 +132,18 @@ enum_rename!{
 /// The underlying module will be disposed when dropping this object.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Module<'ctx> {
-    pub(crate) non_global_context: Option<&'ctx Context>, // REVIEW: Could we just set context to the global context?
     data_layout: RefCell<Option<DataLayout>>,
     pub(crate) module: Cell<LLVMModuleRef>,
     pub(crate) owned_by_ee: RefCell<Option<ExecutionEngine<'ctx>>>,
-    _marker: PhantomData<&'ctx ()>,
+    _marker: PhantomData<&'ctx Context>,
 }
 
 impl<'ctx> Module<'ctx> {
-    pub(crate) fn new(module: LLVMModuleRef, context: Option<&'ctx Context>) -> Self {
+    pub(crate) fn new(module: LLVMModuleRef) -> Self {
         debug_assert!(!module.is_null());
 
         Module {
             module: Cell::new(module),
-            non_global_context: context,
             owned_by_ee: RefCell::new(None),
             data_layout: RefCell::new(Some(Module::get_borrowed_data_layout(module))),
             _marker: PhantomData,
@@ -416,9 +414,8 @@ impl<'ctx> Module<'ctx> {
             return Err(LLVMString::new(err_string));
         }
 
-        let context = self.non_global_context;
         let execution_engine = unsafe { execution_engine.assume_init() };
-        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), context, false);
+        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), false);
 
         *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
 
@@ -468,9 +465,8 @@ impl<'ctx> Module<'ctx> {
             return Err(LLVMString::new(err_string));
         }
 
-        let context = self.non_global_context;
         let execution_engine = unsafe { execution_engine.assume_init() };
-        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), context, false);
+        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), false);
 
         *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
 
@@ -521,9 +517,8 @@ impl<'ctx> Module<'ctx> {
             return Err(LLVMString::new(err_string));
         }
 
-        let context = self.non_global_context;
         let execution_engine = unsafe { execution_engine.assume_init() };
-        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), context, true);
+        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), true);
 
         *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
 
@@ -1061,7 +1056,7 @@ impl<'ctx> Module<'ctx> {
 
         let module = unsafe { module.assume_init() };
 
-        Ok(Module::new(module, Some(&context)))
+        Ok(Module::new(module))
     }
 
     /// A convenience function for creating a `Module` from a file for a given context.
@@ -1293,23 +1288,11 @@ impl<'ctx> Module<'ctx> {
             return None;
         }
 
-        let flag_value = self.with_context(|ctx| unsafe {
-            LLVMMetadataAsValue(ctx.context, flag)
-        });
+        let flag_value = unsafe {
+            LLVMMetadataAsValue(LLVMGetModuleContext(self.module.get()), flag)
+        };
 
         Some(MetadataValue::new(flag_value))
-    }
-
-    fn with_context<F, T>(&self, f: F) -> T
-    where
-        F: FnOnce(&Context) -> T,
-    {
-        match self.non_global_context {
-            Some(ctx) => f(ctx),
-            None => unsafe {
-                Context::get_global(|ctx_lock| f(&*ctx_lock))
-            },
-        }
     }
 
     /// Append a `MetadataValue` as a module wide flag. Note that using the same key twice
@@ -1351,7 +1334,7 @@ impl Clone for Module<'_> {
             LLVMCloneModule(self.module.get())
         };
 
-        Module::new(module, self.non_global_context)
+        Module::new(module)
     }
 }
 

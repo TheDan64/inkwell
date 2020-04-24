@@ -359,7 +359,7 @@ impl<'ctx> StructType<'ctx> {
     // but would have to return StructType<Tys>. Maybe this is valid for non opaques, though
     // it might just override types?
     // REVIEW: What happens if called with &[] on an opaque? Should that still be opaque? Does the call break?
-    /// Determines whether or not a `StructType` is opaque.
+    /// Defines the body of an opaue `StructType`.
     ///
     /// # Example
     ///

@@ -7,11 +7,13 @@ use crate::support::LLVMString;
 use crate::targets::TargetData;
 use crate::values::{AnyValue, AsValueRef, FunctionValue, GenericValue};
 
+use std::any::type_name;
 use std::error::Error;
 use std::rc::Rc;
 use std::ops::Deref;
 use std::ffi::CString;
 use std::fmt::{self, Debug, Display, Formatter};
+use std::marker::PhantomData;
 use std::mem::{forget, transmute_copy, size_of, MaybeUninit};
 
 static EE_INNER_PANIC: &str = "ExecutionEngineInner should exist until Drop";
@@ -82,20 +84,17 @@ impl Display for RemoveModuleError {
 /// and incrementing one or two atomics, so this should be quite cheap to create
 /// copies. The underlying LLVM object will be automatically deallocated when
 /// there are no more references to it.
-// non_global_context is required to ensure last remaining Context ref will drop
-// after EE drop. execution_engine & target_data are an option for drop purposes
 #[derive(PartialEq, Eq, Debug)]
 pub struct ExecutionEngine<'ctx> {
-    non_global_context: Option<&'ctx Context>,
     execution_engine: Option<ExecEngineInner>,
     target_data: Option<TargetData>,
     jit_mode: bool,
+    _phantom: PhantomData<&'ctx Context>,
 }
 
 impl<'ctx> ExecutionEngine<'ctx> {
     pub(crate) fn new(
         execution_engine: Rc<LLVMExecutionEngineRef>,
-        non_global_context: Option<&'ctx Context>,
         jit_mode: bool,
     ) -> Self {
         assert!(!execution_engine.is_null());
@@ -106,10 +105,10 @@ impl<'ctx> ExecutionEngine<'ctx> {
         };
 
         ExecutionEngine {
-            non_global_context,
             execution_engine: Some(ExecEngineInner(execution_engine)),
             target_data: Some(TargetData::new(target_data)),
             jit_mode,
+            _phantom: PhantomData,
         }
     }
 
@@ -432,10 +431,9 @@ impl Drop for ExecutionEngine<'_> {
 
 impl Clone for ExecutionEngine<'_> {
     fn clone(&self) -> Self {
-        let context = self.non_global_context;
         let execution_engine_rc = self.execution_engine_rc().clone();
 
-        ExecutionEngine::new(execution_engine_rc, context, self.jit_mode)
+        ExecutionEngine::new(execution_engine_rc, self.jit_mode)
     }
 }
 
@@ -472,7 +470,7 @@ pub struct JitFunction<F> {
 impl<F> Debug for JitFunction<F> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         f.debug_tuple("JitFunction")
-            .field(&"<unnamed>")
+            .field(&type_name::<F>())
             .finish()
     }
 }
@@ -554,6 +552,7 @@ pub mod experimental {
     pub struct LLVMError(LLVMErrorRef);
 
     impl LLVMError {
+        // Null type id == success
         pub fn get_type_id(&self) -> LLVMErrorTypeId { // FIXME: Don't expose LLVMErrorTypeId
             unsafe {
                 LLVMGetErrorTypeId(self.0)
@@ -566,7 +565,7 @@ pub mod experimental {
 
         fn deref(&self) -> &CStr {
             unsafe {
-                CStr::from_ptr(LLVMGetErrorMessage(self.0))
+                CStr::from_ptr(LLVMGetErrorMessage(self.0)) // FIXME: LLVMGetErrorMessage consumes the error, needs LLVMDisposeErrorMessage after
             }
         }
     }

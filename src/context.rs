@@ -153,7 +153,7 @@ impl Context {
             LLVMModuleCreateWithNameInContext(c_string.as_ptr(), self.context)
         };
 
-        Module::new(module, Some(&self))
+        Module::new(module)
     }
 
     /// Creates a new `Module` for the current `Context` from a `MemoryBuffer`.
@@ -193,7 +193,7 @@ impl Context {
         forget(memory_buffer);
 
         if code == 0 {
-            return Ok(Module::new(module, Some(&self)));
+            return Ok(Module::new(module));
         }
 
         Err(LLVMString::new(err_str))
