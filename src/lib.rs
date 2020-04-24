@@ -27,6 +27,8 @@ pub mod builder;
 #[deny(missing_docs)]
 pub mod context;
 pub mod data_layout;
+#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0")))]
+pub mod debug_info;
 pub mod execution_engine;
 pub mod memory_buffer;
 #[deny(missing_docs)]

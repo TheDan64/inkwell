@@ -31,6 +31,9 @@ use crate::{AddressSpace, OptimizationLevel};
 use crate::comdat::Comdat;
 use crate::context::{Context, ContextRef};
 use crate::data_layout::DataLayout;
+#[llvm_versions(6.0..=latest)]
+#[cfg(feature = "experimental")]
+use crate::debug_info::DebugInfoBuilder;
 use crate::execution_engine::ExecutionEngine;
 use crate::memory_buffer::MemoryBuffer;
 use crate::support::LLVMString;
@@ -1320,6 +1323,43 @@ impl<'ctx> Module<'ctx> {
         unsafe {
             LLVMAddModuleFlag(self.module.get(), behavior.as_llvm_enum(), key.as_ptr() as *mut ::libc::c_char, key.len(), md)
         }
+    }
+
+    /// Strips and debug info from the module, if it exists.
+    #[llvm_versions(6.0..=latest)]
+    pub fn strip_debug_info(&self) -> bool {
+        use llvm_sys::debuginfo::LLVMStripModuleDebugInfo;
+
+        unsafe {
+            LLVMStripModuleDebugInfo(self.module.get()) == 1
+        }
+    }
+
+    /// Gets the version of debug metadata contained in this `Module`.
+    #[llvm_versions(6.0..=latest)]
+    pub fn get_debug_metadata_version(&self) -> libc::c_uint {
+        use llvm_sys::debuginfo::LLVMGetModuleDebugMetadataVersion;
+
+        unsafe {
+            LLVMGetModuleDebugMetadataVersion(self.module.get())
+        }
+    }
+
+    /// Creates a `DebugInfoBuilder` for this `Module`.
+    #[llvm_versions(6.0..=latest)]
+    #[cfg(feature = "experimental")]
+    pub fn create_debug_info_builder(&self, allow_unresolved: bool) -> DebugInfoBuilder {
+        use llvm_sys::debuginfo::{LLVMCreateDIBuilder, LLVMCreateDIBuilderDisallowUnresolved};
+
+        let dib = unsafe {
+            if allow_unresolved {
+                LLVMCreateDIBuilder(self.module.get())
+            } else {
+                LLVMCreateDIBuilderDisallowUnresolved(self.module.get())
+            }
+        };
+
+        DebugInfoBuilder::new(dib)
     }
 }
 
