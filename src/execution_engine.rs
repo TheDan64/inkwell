@@ -469,7 +469,7 @@ pub struct JitFunction<F> {
 impl<F> Debug for JitFunction<F> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         f.debug_tuple("JitFunction")
-            .field("<unnamed>")
+            .field(&"<unnamed>")
             .finish()
     }
 }
