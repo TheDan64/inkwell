@@ -515,7 +515,12 @@ pub fn llvm_enum(attribute_args: TokenStream, attributee: TokenStream) -> TokenS
     let mut from_arms = Vec::with_capacity(llvm_enum_type.variants.len());
     for variant in llvm_enum_type.variants.iter() {
         let src_variant = variant.llvm_variant.clone();
-        let src_attrs = variant.attrs.clone();
+        // Filter out doc comments or else rustc will warn about docs on match arms in newer versions.
+        let src_attrs: Vec<_> = variant
+            .attrs
+            .iter()
+            .filter(|&a| a.parse_meta().unwrap().name().to_string() != "doc")
+            .collect();
         let src_ty = llvm_ty.clone();
         let dst_variant = variant.rust_variant.clone();
         let dst_ty = llvm_enum_type.name.clone();
@@ -536,7 +541,12 @@ pub fn llvm_enum(attribute_args: TokenStream, attributee: TokenStream) -> TokenS
     let mut to_arms = Vec::with_capacity(llvm_enum_type.variants.len());
     for variant in llvm_enum_type.variants.iter() {
         let src_variant = variant.rust_variant.clone();
-        let src_attrs = variant.attrs.clone();
+        // Filter out doc comments or else rustc will warn about docs on match arms in newer versions.
+        let src_attrs: Vec<_> = variant
+            .attrs
+            .iter()
+            .filter(|&a| a.parse_meta().unwrap().name().to_string() != "doc")
+            .collect();
         let src_ty = llvm_enum_type.name.clone();
         let dst_variant = variant.llvm_variant.clone();
         let dst_ty = llvm_ty.clone();
