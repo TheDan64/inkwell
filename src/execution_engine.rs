@@ -7,7 +7,6 @@ use crate::support::LLVMString;
 use crate::targets::TargetData;
 use crate::values::{AnyValue, AsValueRef, FunctionValue, GenericValue};
 
-use std::any::type_name;
 use std::error::Error;
 use std::rc::Rc;
 use std::ops::Deref;
@@ -470,7 +469,7 @@ pub struct JitFunction<F> {
 impl<F> Debug for JitFunction<F> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         f.debug_tuple("JitFunction")
-            .field(&type_name::<F>())
+            .field("<unnamed>")
             .finish()
     }
 }
