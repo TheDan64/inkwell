@@ -1,7 +1,5 @@
-extern crate inkwell;
-
-use self::inkwell::AddressSpace;
-use self::inkwell::context::Context;
+use inkwell::AddressSpace;
+use inkwell::context::Context;
 
 #[test]
 fn test_no_context_double_free() {
@@ -12,21 +10,6 @@ fn test_no_context_double_free() {
         int.get_context();
     }
 }
-
-// FIXME: This isn't actually safe and stopped working as
-// of a recent rust version (late 2018)
-// #[test]
-// fn test_no_context_double_free2() {
-//     let context = Context::create();
-//     let int = context.i8_type();
-//     let context2 = int.get_context();
-
-//     fn move_(_: Context) {}
-
-//     move_(context);
-
-//     context2.i8_type().const_int(0, false);
-// }
 
 #[test]
 fn test_no_context_double_free3() {
@@ -58,14 +41,11 @@ fn test_basic_block_context() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
     let fn_value = module.add_function("my_fn", fn_type, None);
-    // REVIEW: Should get rid of this if it uses global ctx?
     let basic_block = context.append_basic_block(fn_value, "entry");
 
     assert_eq!(*basic_block.get_context(), context);
 }
 
-// REVIEW: Is it bad that StructType, which uses global ctx, uses types of
-// a local context?
 #[test]
 fn test_values_get_context() {
     let context = Context::create();

@@ -38,7 +38,7 @@ use crate::execution_engine::ExecutionEngine;
 use crate::memory_buffer::MemoryBuffer;
 use crate::support::LLVMString;
 use crate::targets::{InitializationConfig, Target, TargetTriple};
-use crate::types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
+use crate::types::{AsTypeRef, BasicType, FunctionType, StructType};
 use crate::values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
 #[llvm_versions(7.0..=latest)]
 use crate::values::BasicValue;
@@ -291,7 +291,7 @@ impl<'ctx> Module<'ctx> {
     }
 
 
-    /// Gets a `BasicTypeEnum` of a named type in a `Module`.
+    /// Gets a named `StructType` from this `Module`'s `Context`.
     ///
     /// # Example
     ///
@@ -301,24 +301,24 @@ impl<'ctx> Module<'ctx> {
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
     ///
-    /// assert!(module.get_type("foo").is_none());
+    /// assert!(module.get_struct_type("foo").is_none());
     ///
     /// let opaque = context.opaque_struct_type("foo");
     ///
-    /// assert_eq!(module.get_type("foo").unwrap(), opaque.into());
+    /// assert_eq!(module.get_struct_type("foo").unwrap(), opaque);
     /// ```
-    pub fn get_type(&self, name: &str) -> Option<BasicTypeEnum<'ctx>> {
+    pub fn get_struct_type(&self, name: &str) -> Option<StructType<'ctx>> {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
-        let type_ = unsafe {
+        let struct_type = unsafe {
             LLVMGetTypeByName(self.module.get(), c_string.as_ptr())
         };
 
-        if type_.is_null() {
+        if struct_type.is_null() {
             return None;
         }
 
-        Some(BasicTypeEnum::new(type_))
+        Some(StructType::new(struct_type))
     }
 
     /// Assigns a `TargetTriple` to this `Module`.

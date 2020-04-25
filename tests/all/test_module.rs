@@ -146,30 +146,30 @@ fn test_garbage_ir_fails_create_module_from_ir_copy() {
 }
 
 #[test]
-fn test_get_type() {
+fn test_get_struct_type() {
     let context = Context::create();
     let module = context.create_module("my_module");
 
     assert_eq!(*module.get_context(), context);
-    assert!(module.get_type("foo").is_none());
+    assert!(module.get_struct_type("foo").is_none());
 
     let opaque = context.opaque_struct_type("foo");
 
-    assert_eq!(module.get_type("foo").unwrap().into_struct_type(), opaque);
+    assert_eq!(module.get_struct_type("foo").unwrap(), opaque);
 }
 
 #[test]
-fn test_get_type_global_context() {
+fn test_get_struct_type_global_context() {
     unsafe {
         Context::get_global(|context| {
             let module = context.create_module("my_module");
 
             assert_eq!(*module.get_context(), *context);
-            assert!(module.get_type("foo").is_none());
+            assert!(module.get_struct_type("foo").is_none());
 
             let opaque = context.opaque_struct_type("foo");
 
-            assert_eq!(module.get_type("foo").unwrap().into_struct_type(), opaque);
+            assert_eq!(module.get_struct_type("foo").unwrap(), opaque);
         })
     }
 }
