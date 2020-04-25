@@ -6,6 +6,8 @@ use crate::types::{IntType, VoidType, FunctionType, PointerType, VectorType, Arr
 use crate::types::traits::AsTypeRef;
 use crate::values::IntValue;
 
+use std::convert::TryFrom;
+
 macro_rules! enum_type_set {
     ($(#[$enum_attrs:meta])* $enum_name:ident: { $($(#[$variant_attrs:meta])* $args:ident,)+ }) => (
         #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -31,6 +33,17 @@ macro_rules! enum_type_set {
             impl<'ctx> From<$args<'ctx>> for $enum_name<'ctx> {
                 fn from(value: $args) -> $enum_name {
                     $enum_name::$args(value)
+                }
+            }
+
+            impl<'ctx> TryFrom<$enum_name<'ctx>> for $args<'ctx> {
+                type Error = ();
+
+                fn try_from(value: $enum_name<'ctx>) -> Result<Self, Self::Error> {
+                    match value {
+                        $enum_name::$args(ty) => Ok(ty),
+                        _ => Err(()),
+                    }
                 }
             }
         )*
@@ -373,5 +386,21 @@ impl<'ctx> BasicTypeEnum<'ctx> {
         } else {
             false
         }
+    }
+}
+
+impl<'ctx> TryFrom<AnyTypeEnum<'ctx>> for BasicTypeEnum<'ctx> {
+    type Error = ();
+
+    fn try_from(value: AnyTypeEnum<'ctx>) -> Result<Self, Self::Error> {
+        Ok(match value {
+            AnyTypeEnum::ArrayType(at) => at.into(),
+            AnyTypeEnum::FloatType(ft) => ft.into(),
+            AnyTypeEnum::IntType(it) => it.into(),
+            AnyTypeEnum::PointerType(pt) => pt.into(),
+            AnyTypeEnum::StructType(st) => st.into(),
+            AnyTypeEnum::VectorType(vt) => vt.into(),
+            _ => return Err(()),
+        })
     }
 }

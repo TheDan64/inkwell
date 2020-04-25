@@ -1,6 +1,5 @@
 use llvm_sys::prelude::LLVMTypeRef;
 
-use std::convert::TryFrom;
 use std::fmt::Debug;
 
 use crate::AddressSpace;
@@ -187,25 +186,3 @@ impl<'ctx> PointerMathType<'ctx> for VectorType<'ctx> {
     type ValueType = VectorValue<'ctx>;
     type PtrConvType = VectorType<'ctx>;
 }
-
-macro_rules! impl_try_from_basic_type_enum {
-    ($type_name:ident) => (
-        impl<'ctx> TryFrom<BasicTypeEnum<'ctx>> for $type_name<'ctx> {
-            type Error = &'static str;
-
-            fn try_from(ty: BasicTypeEnum<'ctx>) -> Result<Self, Self::Error> {
-                match ty {
-                    BasicTypeEnum::$type_name(ty) => Ok(ty),
-                    _ => Err("bad try from"),
-                }
-            }
-        }
-    )
-}
-
-impl_try_from_basic_type_enum!(ArrayType);
-impl_try_from_basic_type_enum!(FloatType);
-impl_try_from_basic_type_enum!(IntType);
-impl_try_from_basic_type_enum!(PointerType);
-impl_try_from_basic_type_enum!(StructType);
-impl_try_from_basic_type_enum!(VectorType);

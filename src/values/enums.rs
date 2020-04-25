@@ -6,6 +6,8 @@ use crate::types::{AnyTypeEnum, BasicTypeEnum};
 use crate::values::traits::AsValueRef;
 use crate::values::{IntValue, FunctionValue, PointerValue, VectorValue, ArrayValue, StructValue, FloatValue, PhiValue, InstructionValue, MetadataValue};
 
+use std::convert::TryFrom;
+
 macro_rules! enum_value_set {
     ($enum_name:ident: $($args:ident),*) => (
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -41,6 +43,17 @@ macro_rules! enum_value_set {
             impl<'ctx> PartialEq<$enum_name<'ctx>> for $args<'ctx> {
                 fn eq(&self, other: &$enum_name<'ctx>) -> bool {
                     self.as_value_ref() == other.as_value_ref()
+                }
+            }
+
+            impl<'ctx> TryFrom<$enum_name<'ctx>> for $args<'ctx> {
+                type Error = ();
+
+                fn try_from(value: $enum_name<'ctx>) -> Result<Self, Self::Error> {
+                    match value {
+                        $enum_name::$args(ty) => Ok(ty),
+                        _ => Err(()),
+                    }
                 }
             }
         )*
@@ -545,7 +558,23 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
 }
 
 impl<'ctx> From<BasicValueEnum<'ctx>> for AnyValueEnum<'ctx> {
-    fn from(value: BasicValueEnum) -> AnyValueEnum {
+    fn from(value: BasicValueEnum<'ctx>) -> Self {
         AnyValueEnum::new(value.as_value_ref())
+    }
+}
+
+impl<'ctx> TryFrom<AnyValueEnum<'ctx>> for BasicValueEnum<'ctx> {
+    type Error = ();
+
+    fn try_from(value: AnyValueEnum<'ctx>) -> Result<Self, Self::Error> {
+        Ok(match value {
+            AnyValueEnum::ArrayValue(av) => av.into(),
+            AnyValueEnum::IntValue(iv) => iv.into(),
+            AnyValueEnum::FloatValue(fv) => fv.into(),
+            AnyValueEnum::PointerValue(pv) => pv.into(),
+            AnyValueEnum::StructValue(sv) => sv.into(),
+            AnyValueEnum::VectorValue(vv) => vv.into(),
+            _ => return Err(()),
+        })
     }
 }

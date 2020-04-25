@@ -1,7 +1,6 @@
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::core::{LLVMConstExtractValue, LLVMConstInsertValue};
 
-use std::convert::TryFrom;
 use std::fmt::Debug;
 
 use crate::values::{ArrayValue, AggregateValueEnum, BasicValueUse, CallSiteValue, GlobalValue, StructValue, BasicValueEnum, AnyValueEnum, IntValue, FloatValue, PointerValue, PhiValue, VectorValue, FunctionValue, InstructionValue, Value};
@@ -125,25 +124,3 @@ trait_value_set! {BasicValue: ArrayValue, BasicValueEnum, AggregateValueEnum, In
 math_trait_value_set! {IntMathValue: (IntValue => IntType), (VectorValue => VectorType)}
 math_trait_value_set! {FloatMathValue: (FloatValue => FloatType), (VectorValue => VectorType)}
 math_trait_value_set! {PointerMathValue: (PointerValue => PointerType), (VectorValue => VectorType)}
-
-macro_rules! impl_try_from_basic_value_enum {
-    ($value_name:ident) => (
-        impl<'ctx> TryFrom<BasicValueEnum<'ctx>> for $value_name<'ctx> {
-            type Error = &'static str;
-
-            fn try_from(value: BasicValueEnum<'ctx>) -> Result<Self, Self::Error> {
-                match value {
-                    BasicValueEnum::$value_name(value) => Ok(value),
-                    _ => Err("bad try from"),
-                }
-            }
-        }
-    )
-}
-
-impl_try_from_basic_value_enum!(ArrayValue);
-impl_try_from_basic_value_enum!(IntValue);
-impl_try_from_basic_value_enum!(FloatValue);
-impl_try_from_basic_value_enum!(PointerValue);
-impl_try_from_basic_value_enum!(StructValue);
-impl_try_from_basic_value_enum!(VectorValue);
