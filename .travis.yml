@@ -5,6 +5,22 @@ cache:
   directories:
     - /home/travis/.cargo
 
+# It's enough that we test master and PR branches. We don't also need to run
+# on the llvm-x branches
+branches:
+  except:
+  - llvm3-6
+  - llvm3-7
+  - llvm3-8
+  - llvm3-9
+  - llvm4-0
+  - llvm5-0
+  - llvm6-0
+  - llvm7-0
+  - llvm8-0
+  - llvm9-0
+  - llvm10-0
+
 before_cache:
   - RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin
   - rm -rf /home/travis/.cargo/registry
