@@ -12,6 +12,7 @@ pub fn debug_metadata_version() -> libc::c_uint {
 pub struct DebugInfoBuilder(LLVMDIBuilderRef);
 
 impl DebugInfoBuilder {
+    #[cfg(feature = "experimental")]
     pub(crate) fn new(dib: LLVMDIBuilderRef) -> Self {
         debug_assert!(!dib.is_null());
 

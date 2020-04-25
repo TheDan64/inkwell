@@ -9,9 +9,9 @@ readme = "README.md"
 license = "Apache-2.0"
 
 [dependencies]
-quote = "0.6"
-syn = { version = "0.15", features = ["full", "fold"] }
-proc-macro2 = "0.4"
+quote = "1.0"
+syn = { version = "1.0", features = ["full", "fold"] }
+proc-macro2 = "1.0"
 
 [lib]
 proc-macro = true

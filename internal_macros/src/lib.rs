@@ -115,7 +115,7 @@ impl Parse for VersionType {
         // All version specifiers begin with a float
         if lookahead.peek(LitFloat) {
             let from = input.parse::<LitFloat>().unwrap();
-            let from_val = from.value();
+            let from_val = from.base10_parse().unwrap();
             // If that's the end of the input, this was a specific version string
             if input.is_empty() {
                 return Ok(VersionType::Specific(from_val, from.span()));
@@ -135,7 +135,7 @@ impl Parse for VersionType {
                     }
                 } else if lookahead.peek(LitFloat) {
                     let to = input.parse::<LitFloat>().unwrap();
-                    let to_val = to.value();
+                    let to_val = to.base10_parse().unwrap();
                     Ok(VersionType::InclusiveRange((from_val, from.span()), (to_val, to.span())))
                 } else {
                     Err(lookahead.error())
@@ -152,7 +152,7 @@ impl Parse for VersionType {
                     }
                 } else if lookahead.peek(LitFloat) {
                     let to = input.parse::<LitFloat>().unwrap();
-                    let to_val = to.value();
+                    let to_val = to.base10_parse().unwrap();
                     Ok(VersionType::ExclusiveRange((from_val, from.span()), (to_val, to.span())))
                 } else {
                     Err(lookahead.error())
@@ -180,26 +180,25 @@ impl Parse for ParenthesizedFeatureSet {
 
 /// Handler for parsing of TokenStreams from macro input
 #[derive(Debug)]
-struct FeatureSet(Vec<&'static str>, Option<Error>);
+struct FeatureSet(std::vec::IntoIter<&'static str>, Option<Error>);
 impl Default for FeatureSet {
     fn default() -> Self {
         // Default to all versions
-        Self(FEATURE_VERSIONS.to_vec(), None)
+        Self(FEATURE_VERSIONS.to_vec().into_iter(), None)
     }
 }
 impl Parse for FeatureSet {
     fn parse(input: ParseStream) -> Result<Self> {
         let version_type = input.parse::<VersionType>()?;
         let features = get_features(version_type)?;
-        Ok(Self(features, None))
+        Ok(Self(features.into_iter(), None))
     }
 }
-impl IntoIterator for FeatureSet {
+impl Iterator for FeatureSet {
     type Item = &'static str;
-    type IntoIter = std::vec::IntoIter<&'static str>;
 
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next()
     }
 }
 impl FeatureSet {
@@ -233,7 +232,7 @@ impl FeatureSet {
         }
 
         // Expand from llvm_versions to raw cfg attribute
-        match syn::parse2::<ParenthesizedFeatureSet>(attr.tts.clone()) {
+        match syn::parse2::<ParenthesizedFeatureSet>(attr.tokens.clone()) {
             Ok(ParenthesizedFeatureSet(features)) => {
                 parse_quote! {
                     #[cfg(any(#(feature = #features),*))]
@@ -424,8 +423,8 @@ impl Fold for EnumVariants {
                 if meta.nested.len() == 1 {
                     let variant_meta = meta.nested.first().unwrap();
                     // The element should be an identifier
-                    if let NestedMeta::Meta(Meta::Word(name)) = (*variant_meta.value()).clone() {
-                        self.variants.push(EnumVariant::with_name(&variant, name));
+                    if let NestedMeta::Meta(Meta::Path(name)) = variant_meta {
+                        self.variants.push(EnumVariant::with_name(&variant, name.get_ident().unwrap().clone()));
                         // Strip the llvm_variant attribute from the final AST
                         variant.attrs.retain(|attr| !attr.path.is_ident("llvm_variant"));
                         return variant;
@@ -519,13 +518,14 @@ pub fn llvm_enum(attribute_args: TokenStream, attributee: TokenStream) -> TokenS
         let src_attrs: Vec<_> = variant
             .attrs
             .iter()
-            .filter(|&a| a.parse_meta().unwrap().name().to_string() != "doc")
+            .filter(|&attr| !attr.parse_meta().unwrap().path().is_ident("doc"))
             .collect();
         let src_ty = llvm_ty.clone();
         let dst_variant = variant.rust_variant.clone();
         let dst_ty = llvm_enum_type.name.clone();
 
         let pat = PatPath {
+            attrs: Vec::new(),
             qself: None,
             path: parse_quote!(#src_ty::#src_variant),
         };
@@ -545,13 +545,14 @@ pub fn llvm_enum(attribute_args: TokenStream, attributee: TokenStream) -> TokenS
         let src_attrs: Vec<_> = variant
             .attrs
             .iter()
-            .filter(|&a| a.parse_meta().unwrap().name().to_string() != "doc")
+            .filter(|&attr| !attr.parse_meta().unwrap().path().is_ident("doc"))
             .collect();
         let src_ty = llvm_enum_type.name.clone();
         let dst_variant = variant.llvm_variant.clone();
         let dst_ty = llvm_ty.clone();
 
         let pat = PatPath {
+            attrs: Vec::new(),
             qself: None,
             path: parse_quote!(#src_ty::#src_variant),
         };
