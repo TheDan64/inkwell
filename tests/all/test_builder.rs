@@ -1,8 +1,6 @@
-extern crate inkwell;
-
-use self::inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, OptimizationLevel};
-use self::inkwell::context::Context;
-use self::inkwell::values::BasicValue;
+use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, OptimizationLevel};
+use inkwell::context::Context;
+use inkwell::values::BasicValue;
 
 // use std::ffi::CString;
 use std::ptr::null;
@@ -567,7 +565,7 @@ fn test_vector_binary_ops() {
     let p1_vec = fn_value.get_first_param().unwrap().into_vector_value();
     let p2_vec = fn_value.get_nth_param(1).unwrap().into_vector_value();
     let p3_vec = fn_value.get_nth_param(2).unwrap().into_vector_value();
-    let compared_vec = builder.build_float_compare(self::inkwell::FloatPredicate::OLT, p1_vec, p2_vec, "compared_vec");
+    let compared_vec = builder.build_float_compare(inkwell::FloatPredicate::OLT, p1_vec, p2_vec, "compared_vec");
     let multiplied_vec = builder.build_int_mul(compared_vec, p3_vec, "multiplied_vec");
     builder.build_return(Some(&multiplied_vec));
     assert!(fn_value.verify(true));
@@ -686,7 +684,7 @@ fn test_alignment_bytes() {
 }
 
 #[llvm_versions(8.0..=latest)]
-fn run_memcpy_on<'ctx>(context: &'ctx Context, module: &self::inkwell::module::Module<'ctx>, alignment: u32) -> Result<(), &'static str> {
+fn run_memcpy_on<'ctx>(context: &'ctx Context, module: &inkwell::module::Module<'ctx>, alignment: u32) -> Result<(), &'static str> {
     let i32_type = context.i32_type();
     let i64_type = context.i64_type();
     let array_len = 4;
@@ -750,7 +748,7 @@ fn test_memcpy() {
 }
 
 #[llvm_versions(8.0..=latest)]
-fn run_memmove_on<'ctx>(context: &'ctx Context, module: &self::inkwell::module::Module<'ctx>, alignment: u32) -> Result<(), &'static str> {
+fn run_memmove_on<'ctx>(context: &'ctx Context, module: &inkwell::module::Module<'ctx>, alignment: u32) -> Result<(), &'static str> {
     let i32_type = context.i32_type();
     let i64_type = context.i64_type();
     let array_len = 4;
@@ -983,4 +981,31 @@ fn test_cmpxchg() {
     let neg_one_value = i32_ptr_type.const_zero();
     let result = builder.build_cmpxchg(ptr_value, zero_value, neg_one_value, AtomicOrdering::Monotonic, AtomicOrdering::Monotonic);
     assert!(result.is_err());
+}
+
+#[test]
+fn test_safe_struct_gep() {
+    let context = Context::create();
+    let builder = context.create_builder();
+    let module = context.create_module("struct_gep");
+    let void_type = context.void_type();
+    let i32_ty = context.i32_type();
+    let i32_ptr_ty = i32_ty.ptr_type(AddressSpace::Generic);
+    let field_types = &[i32_ty.into(), i32_ty.into()];
+    let struct_ty = context.struct_type(field_types, false);
+    let struct_ptr_ty = struct_ty.ptr_type(AddressSpace::Generic);
+    let fn_type = void_type.fn_type(&[i32_ptr_ty.into(), struct_ptr_ty.into()], false);
+    let fn_value = module.add_function("", fn_type, None);
+    let entry = context.append_basic_block(fn_value, "entry");
+
+    builder.position_at_end(entry);
+
+    let i32_ptr = fn_value.get_first_param().unwrap().into_pointer_value();
+    let struct_ptr = fn_value.get_last_param().unwrap().into_pointer_value();
+
+    assert!(builder.build_struct_gep(i32_ptr, 0, "struct_gep").is_err());
+    assert!(builder.build_struct_gep(i32_ptr, 10, "struct_gep").is_err());
+    assert!(builder.build_struct_gep(struct_ptr, 0, "struct_gep").is_ok());
+    assert!(builder.build_struct_gep(struct_ptr, 1, "struct_gep").is_ok());
+    assert!(builder.build_struct_gep(struct_ptr, 2, "struct_gep").is_err());
 }

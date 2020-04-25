@@ -197,16 +197,57 @@ impl<'ctx> Builder<'ctx> {
         PointerValue::new(value)
     }
 
-    // REVIEW: Shouldn't this take a StructValue? Or does it still need to be PointerValue<StructValue>?
-    // I think it's the latter. This might not be as unsafe as regular GEP. Should check to see if it lets us
-    // go OOB. Maybe we could use the PointerValue<StructValue>'s struct info to do bounds checking...
-    /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    pub unsafe fn build_struct_gep(&self, ptr: PointerValue<'ctx>, index: u32, name: &str) -> PointerValue<'ctx> {
+    /// Builds a GEP instruction on a struct pointer. Returns `Err(())` if input `PointerValue` doesn't
+    /// point to a struct or if index is out of bounds.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::AddressSpace;
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let builder = context.create_builder();
+    /// let module = context.create_module("struct_gep");
+    /// let void_type = context.void_type();
+    /// let i32_ty = context.i32_type();
+    /// let i32_ptr_ty = i32_ty.ptr_type(AddressSpace::Generic);
+    /// let field_types = &[i32_ty.into(), i32_ty.into()];
+    /// let struct_ty = context.struct_type(field_types, false);
+    /// let struct_ptr_ty = struct_ty.ptr_type(AddressSpace::Generic);
+    /// let fn_type = void_type.fn_type(&[i32_ptr_ty.into(), struct_ptr_ty.into()], false);
+    /// let fn_value = module.add_function("", fn_type, None);
+    /// let entry = context.append_basic_block(fn_value, "entry");
+    ///
+    /// builder.position_at_end(entry);
+    ///
+    /// let i32_ptr = fn_value.get_first_param().unwrap().into_pointer_value();
+    /// let struct_ptr = fn_value.get_last_param().unwrap().into_pointer_value();
+    ///
+    /// assert!(builder.build_struct_gep(i32_ptr, 0, "struct_gep").is_err());
+    /// assert!(builder.build_struct_gep(i32_ptr, 10, "struct_gep").is_err());
+    /// assert!(builder.build_struct_gep(struct_ptr, 0, "struct_gep").is_ok());
+    /// assert!(builder.build_struct_gep(struct_ptr, 1, "struct_gep").is_ok());
+    /// assert!(builder.build_struct_gep(struct_ptr, 2, "struct_gep").is_err());
+    /// ```
+    pub fn build_struct_gep(&self, ptr: PointerValue<'ctx>, index: u32, name: &str) -> Result<PointerValue<'ctx>, ()> {
+        let ptr_ty = ptr.get_type();
+        let pointee_ty = ptr_ty.get_element_type();
+
+        if !pointee_ty.is_struct_type() {
+            return Err(());
+        }
+
+        let struct_ty = pointee_ty.into_struct_type();
+
+        if index >= struct_ty.count_fields() {
+            return Err(());
+        }
+
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+        let value = unsafe { LLVMBuildStructGEP(self.builder, ptr.as_value_ref(), index, c_string.as_ptr()) };
 
-        let value = LLVMBuildStructGEP(self.builder, ptr.as_value_ref(), index, c_string.as_ptr());
-
-        PointerValue::new(value)
+        Ok(PointerValue::new(value))
     }
 
     /// Builds an instruction which calculates the difference of two pointers.
