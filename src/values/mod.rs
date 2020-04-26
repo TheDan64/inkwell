@@ -20,6 +20,7 @@ mod struct_value;
 mod traits;
 mod vec_value;
 
+use crate::support::LLVMString;
 pub use crate::values::array_value::ArrayValue;
 pub use crate::values::basic_value_use::BasicValueUse;
 pub use crate::values::call_site_value::CallSiteValue;
@@ -47,8 +48,6 @@ use std::ffi::CStr;
 use std::fmt;
 use std::marker::PhantomData;
 
-use crate::support::LLVMString;
-
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
 struct Value<'ctx> {
     value: LLVMValueRef,
@@ -65,13 +64,13 @@ impl<'ctx> Value<'ctx> {
         }
     }
 
-    fn is_instruction(&self) -> bool {
+    fn is_instruction(self) -> bool {
         unsafe {
             !LLVMIsAInstruction(self.value).is_null()
         }
     }
 
-    fn as_instruction(&self) -> Option<InstructionValue<'ctx>> {
+    fn as_instruction(self) -> Option<InstructionValue<'ctx>> {
         if !self.is_instruction() {
             return None;
         }
@@ -79,13 +78,13 @@ impl<'ctx> Value<'ctx> {
         Some(InstructionValue::new(self.value))
     }
 
-    fn is_null(&self) -> bool {
+    fn is_null(self) -> bool {
         unsafe {
             LLVMIsNull(self.value) == 1
         }
     }
 
-    fn is_const(&self) -> bool {
+    fn is_const(self) -> bool {
         unsafe {
             LLVMIsConstant(self.value) == 1
         }
@@ -97,7 +96,7 @@ impl<'ctx> Value<'ctx> {
     // REVIEW: It'd be great if we could encode this into the type system somehow. For example,
     // add a ParamValue wrapper type that always have it but conditional types (IntValue<Variable>)
     // that also have it. This isn't a huge deal though, since it hasn't proven to be UB so far
-    fn set_name(&self, name: &str) {
+    fn set_name(self, name: &str) {
         #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
                   feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
         {
@@ -122,6 +121,7 @@ impl<'ctx> Value<'ctx> {
     }
 
     // get_name should *not* return a LLVMString, because it is not an owned value AFAICT
+    // TODO: Should make this take ownership of self. But what is the lifetime of the string? 'ctx?
     fn get_name(&self) -> &CStr {
         #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
                   feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
@@ -144,19 +144,19 @@ impl<'ctx> Value<'ctx> {
         }
     }
 
-    fn is_undef(&self) -> bool {
+    fn is_undef(self) -> bool {
         unsafe {
             LLVMIsUndef(self.value) == 1
         }
     }
 
-    fn get_type(&self) -> LLVMTypeRef {
+    fn get_type(self) -> LLVMTypeRef {
         unsafe {
             LLVMTypeOf(self.value)
         }
     }
 
-    fn print_to_string(&self) -> LLVMString {
+    fn print_to_string(self) -> LLVMString {
         let c_string = unsafe {
             LLVMPrintValueToString(self.value)
         };
@@ -164,7 +164,7 @@ impl<'ctx> Value<'ctx> {
         LLVMString::new(c_string)
     }
 
-    fn print_to_stderr(&self) {
+    fn print_to_stderr(self) {
         unsafe {
             LLVMDumpValue(self.value)
         }
@@ -172,7 +172,7 @@ impl<'ctx> Value<'ctx> {
 
     // REVIEW: I think this is memory safe, though it may result in an IR error
     // if used incorrectly, which is OK.
-    fn replace_all_uses_with(&self, other: LLVMValueRef) {
+    fn replace_all_uses_with(self, other: LLVMValueRef) {
         // LLVM may infinite-loop when they aren't distinct, which is UB in C++.
         if self.value != other {
             unsafe {
@@ -181,7 +181,7 @@ impl<'ctx> Value<'ctx> {
         }
     }
 
-    pub fn get_first_use(&self) -> Option<BasicValueUse<'ctx>> {
+    pub fn get_first_use(self) -> Option<BasicValueUse<'ctx>> {
         let use_ = unsafe {
             LLVMGetFirstUse(self.value)
         };

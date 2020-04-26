@@ -61,7 +61,7 @@ impl<'ctx> BasicBlock<'ctx> {
     ///
     /// assert!(basic_block.get_parent().is_none());
     /// ```
-    pub fn get_parent(&self) -> Option<FunctionValue<'ctx>> {
+    pub fn get_parent(self) -> Option<FunctionValue<'ctx>> {
         let value = unsafe {
             LLVMGetBasicBlockParent(self.basic_block)
         };
@@ -95,7 +95,7 @@ impl<'ctx> BasicBlock<'ctx> {
     /// assert!(basic_block2.get_previous_basic_block().is_none());
     /// assert_eq!(basic_block3.get_previous_basic_block().unwrap(), basic_block2);
     /// ```
-    pub fn get_previous_basic_block(&self) -> Option<BasicBlock<'ctx>> {
+    pub fn get_previous_basic_block(self) -> Option<BasicBlock<'ctx>> {
         self.get_parent()?;
 
         let bb = unsafe {
@@ -132,7 +132,7 @@ impl<'ctx> BasicBlock<'ctx> {
     /// assert_eq!(basic_block2.get_next_basic_block().unwrap(), basic_block3);
     /// assert!(basic_block3.get_next_basic_block().is_none());
     /// ```
-    pub fn get_next_basic_block(&self) -> Option<BasicBlock<'ctx>> {
+    pub fn get_next_basic_block(self) -> Option<BasicBlock<'ctx>> {
         self.get_parent()?;
 
         let bb = unsafe {
@@ -166,7 +166,7 @@ impl<'ctx> BasicBlock<'ctx> {
     /// assert_eq!(basic_block2.get_next_basic_block().unwrap(), basic_block1);
     /// ```
     // REVIEW: What happens if blocks are from different scopes?
-    pub fn move_before(&self, basic_block: BasicBlock<'ctx>) -> Result<(), ()> {
+    pub fn move_before(self, basic_block: BasicBlock<'ctx>) -> Result<(), ()> {
         // This method is UB if the parent no longer exists, so we must check for parent (or encode into type system)
         if self.get_parent().is_none() || basic_block.get_parent().is_none() {
             return Err(());
@@ -203,7 +203,7 @@ impl<'ctx> BasicBlock<'ctx> {
     /// assert_eq!(basic_block2.get_next_basic_block().unwrap(), basic_block1);
     /// ```
     // REVIEW: What happens if blocks are from different scopes?
-    pub fn move_after(&self, basic_block: BasicBlock<'ctx>) -> Result<(), ()> {
+    pub fn move_after(self, basic_block: BasicBlock<'ctx>) -> Result<(), ()> {
         // This method is UB if the parent no longer exists, so we must check for parent (or encode into type system)
         if self.get_parent().is_none() || basic_block.get_parent().is_none() {
             return Err(());
@@ -238,7 +238,7 @@ impl<'ctx> BasicBlock<'ctx> {
     ///
     /// assert_eq!(basic_block.get_first_instruction().unwrap().get_opcode(), InstructionOpcode::Return);
     /// ```
-    pub fn get_first_instruction(&self) -> Option<InstructionValue<'ctx>> {
+    pub fn get_first_instruction(self) -> Option<InstructionValue<'ctx>> {
         let value = unsafe {
             LLVMGetFirstInstruction(self.basic_block)
         };
@@ -272,7 +272,7 @@ impl<'ctx> BasicBlock<'ctx> {
     ///
     /// assert_eq!(basic_block.get_last_instruction().unwrap().get_opcode(), InstructionOpcode::Return);
     /// ```
-    pub fn get_last_instruction(&self) -> Option<InstructionValue<'ctx>> {
+    pub fn get_last_instruction(self) -> Option<InstructionValue<'ctx>> {
         let value = unsafe {
             LLVMGetLastInstruction(self.basic_block)
         };
@@ -310,7 +310,7 @@ impl<'ctx> BasicBlock<'ctx> {
     // if getting a value over an instruction is preferable
     // TODOC: Every BB must have a terminating instruction or else it is invalid
     // REVIEW: Unclear how this differs from get_last_instruction
-    pub fn get_terminator(&self) -> Option<InstructionValue<'ctx>> {
+    pub fn get_terminator(self) -> Option<InstructionValue<'ctx>> {
         let value = unsafe {
             LLVMGetBasicBlockTerminator(self.basic_block)
         };
@@ -348,7 +348,7 @@ impl<'ctx> BasicBlock<'ctx> {
     // by taking ownership of self (though BasicBlock's are not uniquely obtained...)
     // might have to make some methods do something like -> Result<..., BasicBlock<Orphan>> for BasicBlock<HasParent>
     // and would move_before/after make it no longer orphaned? etc..
-    pub fn remove_from_function(&self) -> Result<(), ()> {
+    pub fn remove_from_function(self) -> Result<(), ()> {
         // This method is UB if the parent no longer exists, so we must check for parent (or encode into type system)
         if self.get_parent().is_none() {
             return Err(());
@@ -410,7 +410,7 @@ impl<'ctx> BasicBlock<'ctx> {
     ///
     /// assert_eq!(context, *basic_block.get_context());
     /// ```
-    pub fn get_context(&self) -> ContextRef<'ctx> {
+    pub fn get_context(self) -> ContextRef<'ctx> {
         let context = unsafe {
             LLVMGetTypeContext(LLVMTypeOf(LLVMBasicBlockAsValue(self.basic_block)))
         };
@@ -470,7 +470,7 @@ impl<'ctx> BasicBlock<'ctx> {
     ///
     /// assert_eq!(branch_inst.get_operand(0).unwrap().right().unwrap(), bb2);
     /// ```
-    pub fn replace_all_uses_with(&self, other: &BasicBlock<'ctx>) {
+    pub fn replace_all_uses_with(self, other: &BasicBlock<'ctx>) {
         let value = unsafe { LLVMBasicBlockAsValue(self.basic_block) };
         let other = unsafe { LLVMBasicBlockAsValue(other.basic_block) };
 
@@ -506,7 +506,7 @@ impl<'ctx> BasicBlock<'ctx> {
     /// assert!(bb2.get_first_use().is_none());
     /// assert!(bb1.get_first_use().is_some());
     /// ```
-    pub fn get_first_use(&self) -> Option<BasicValueUse> {
+    pub fn get_first_use(self) -> Option<BasicValueUse<'ctx>> {
         let use_ = unsafe {
             LLVMGetFirstUse(LLVMBasicBlockAsValue(self.basic_block))
         };

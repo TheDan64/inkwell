@@ -42,7 +42,7 @@ impl<'ctx> StructType<'ctx> {
     /// assert_eq!(struct_type.get_field_type_at_index(0).unwrap().into_float_type(), f32_type);
     /// ```
     #[llvm_versions(3.7..=latest)]
-    pub fn get_field_type_at_index(&self, index: u32) -> Option<BasicTypeEnum<'ctx>> {
+    pub fn get_field_type_at_index(self, index: u32) -> Option<BasicTypeEnum<'ctx>> {
         // LLVM doesn't seem to just return null if opaque.
         // TODO: One day, with SubTypes (& maybe specialization?) we could just
         // impl this method for non opaque structs only
@@ -76,7 +76,7 @@ impl<'ctx> StructType<'ctx> {
     /// let struct_type = context.struct_type(&[f32_type.into()], false);
     /// let struct_val = struct_type.const_named_struct(&[f32_zero.into()]);
     /// ```
-    pub fn const_named_struct(&self, values: &[BasicValueEnum<'ctx>]) -> StructValue<'ctx> {
+    pub fn const_named_struct(self, values: &[BasicValueEnum<'ctx>]) -> StructValue<'ctx> {
         let mut args: Vec<LLVMValueRef> = values.iter()
                                                 .map(|val| val.as_value_ref())
                                                 .collect();
@@ -99,7 +99,7 @@ impl<'ctx> StructType<'ctx> {
     /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
     /// let struct_zero = struct_type.const_zero();
     /// ```
-    pub fn const_zero(&self) -> StructValue<'ctx> {
+    pub fn const_zero(self) -> StructValue<'ctx> {
         StructValue::new(self.struct_type.const_zero())
     }
 
@@ -116,7 +116,7 @@ impl<'ctx> StructType<'ctx> {
     /// let f32_struct_type = context.struct_type(&[f32_type.into()], false);
     /// let f32_struct_type_size = f32_struct_type.size_of();
     /// ```
-    pub fn size_of(&self) -> Option<IntValue<'ctx>> {
+    pub fn size_of(self) -> Option<IntValue<'ctx>> {
         self.struct_type.size_of()
     }
 
@@ -132,7 +132,7 @@ impl<'ctx> StructType<'ctx> {
     /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
     /// let struct_type_alignment = struct_type.get_alignment();
     /// ```
-    pub fn get_alignment(&self) -> IntValue<'ctx> {
+    pub fn get_alignment(self) -> IntValue<'ctx> {
         self.struct_type.get_alignment()
     }
 
@@ -149,7 +149,7 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// assert_eq!(*struct_type.get_context(), context);
     /// ```
-    pub fn get_context(&self) -> ContextRef<'ctx> {
+    pub fn get_context(self) -> ContextRef<'ctx> {
         self.struct_type.get_context()
     }
 
@@ -197,7 +197,7 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// assert_eq!(struct_ptr_type.get_element_type().into_struct_type(), struct_type);
     /// ```
-    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
+    pub fn ptr_type(self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.struct_type.ptr_type(address_space)
     }
 
@@ -213,7 +213,7 @@ impl<'ctx> StructType<'ctx> {
     /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
     /// let fn_type = struct_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
+    pub fn fn_type(self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.struct_type.fn_type(param_types, is_var_args)
     }
 
@@ -232,7 +232,7 @@ impl<'ctx> StructType<'ctx> {
     /// assert_eq!(struct_array_type.len(), 3);
     /// assert_eq!(struct_array_type.get_element_type().into_struct_type(), struct_type);
     /// ```
-    pub fn array_type(&self, size: u32) -> ArrayType<'ctx> {
+    pub fn array_type(self, size: u32) -> ArrayType<'ctx> {
         self.struct_type.array_type(size)
     }
 
@@ -249,7 +249,7 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// assert!(struct_type.is_packed());
     /// ```
-    pub fn is_packed(&self) -> bool {
+    pub fn is_packed(self) -> bool {
         unsafe {
             LLVMIsPackedStruct(self.as_type_ref()) == 1
         }
@@ -268,7 +268,7 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// assert!(struct_type.is_opaque());
     /// ```
-    pub fn is_opaque(&self) -> bool {
+    pub fn is_opaque(self) -> bool {
         unsafe {
             LLVMIsOpaqueStruct(self.as_type_ref()) == 1
         }
@@ -288,7 +288,7 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// assert_eq!(struct_type.count_fields(), 2);
     /// ```
-    pub fn count_fields(&self) -> u32 {
+    pub fn count_fields(self) -> u32 {
         unsafe {
             LLVMCountStructElementTypes(self.as_type_ref())
         }
@@ -308,7 +308,7 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// assert_eq!(struct_type.get_field_types(), &[f32_type.into(), i8_type.into()]);
     /// ```
-    pub fn get_field_types(&self) -> Vec<BasicTypeEnum<'ctx>> {
+    pub fn get_field_types(self) -> Vec<BasicTypeEnum<'ctx>> {
         let count = self.count_fields();
         let mut raw_vec: Vec<LLVMTypeRef> = Vec::with_capacity(count as usize);
         let ptr = raw_vec.as_mut_ptr();
@@ -325,14 +325,14 @@ impl<'ctx> StructType<'ctx> {
     }
 
     /// Prints the definition of a `StructType` to a `LLVMString`.
-    pub fn print_to_string(&self) -> LLVMString {
+    pub fn print_to_string(self) -> LLVMString {
         self.struct_type.print_to_string()
     }
 
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of an `StructType` to stderr. Not available in newer LLVM versions.
     #[llvm_versions(3.7..=4.0)]
-    pub fn print_to_stderr(&self) {
+    pub fn print_to_stderr(self) {
         self.struct_type.print_to_stderr()
     }
 
@@ -351,7 +351,7 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// assert!(struct_type_undef.is_undef());
     /// ```
-    pub fn get_undef(&self) -> StructValue<'ctx> {
+    pub fn get_undef(self) -> StructValue<'ctx> {
         StructValue::new(self.struct_type.get_undef())
     }
 
@@ -374,7 +374,7 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// assert!(!opaque_struct_type.is_opaque());
     /// ```
-    pub fn set_body(&self, field_types: &[BasicTypeEnum<'ctx>], packed: bool) -> bool {
+    pub fn set_body(self, field_types: &[BasicTypeEnum<'ctx>], packed: bool) -> bool {
         let is_opaque = self.is_opaque();
         let mut field_types: Vec<LLVMTypeRef> = field_types.iter()
                                                            .map(|val| val.as_type_ref())
@@ -403,7 +403,7 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// assert!(struct_array.is_const());
     /// ```
-    pub fn const_array(&self, values: &[StructValue<'ctx>]) -> ArrayValue<'ctx> {
+    pub fn const_array(self, values: &[StructValue<'ctx>]) -> ArrayValue<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();

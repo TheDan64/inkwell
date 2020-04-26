@@ -82,7 +82,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i32_value = i32_type.const_int(42, false);
     /// ```
     // TODOC: Maybe better explain sign extension
-    pub fn const_int(&self, value: u64, sign_extend: bool) -> IntValue<'ctx> {
+    pub fn const_int(self, value: u64, sign_extend: bool) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstInt(self.as_type_ref(), value, sign_extend as i32)
         };
@@ -117,7 +117,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i8_val = i8_type.const_int_from_string("ABCD", StringRadix::Binary);
     /// assert!(i8_val.is_none());
     /// ```
-    pub fn const_int_from_string(&self, slice: &str, radix: StringRadix) -> Option<IntValue<'ctx>> {
+    pub fn const_int_from_string(self, slice: &str, radix: StringRadix) -> Option<IntValue<'ctx>> {
         if !radix.to_regex().is_match(slice) {
             return None
         }
@@ -138,7 +138,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i64_type = context.i64_type();
     /// let i64_val = i64_type.const_int_arbitrary_precision(&[1, 2]);
     /// ```
-    pub fn const_int_arbitrary_precision(&self, words: &[u64]) -> IntValue<'ctx> {
+    pub fn const_int_arbitrary_precision(self, words: &[u64]) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstIntOfArbitraryPrecision(self.as_type_ref(), words.len() as u32, words.as_ptr())
         };
@@ -157,7 +157,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i32_type = context.i32_type();
     /// let i32_ptr_value = i32_type.const_all_ones();
     /// ```
-    pub fn const_all_ones(&self) -> IntValue<'ctx> {
+    pub fn const_all_ones(self) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstAllOnes(self.as_type_ref())
         };
@@ -178,7 +178,7 @@ impl<'ctx> IntType<'ctx> {
     ///
     /// assert_eq!(i8_zero.print_to_string().to_string(), "i8 0");
     /// ```
-    pub fn const_zero(&self) -> IntValue<'ctx> {
+    pub fn const_zero(self) -> IntValue<'ctx> {
         IntValue::new(self.int_type.const_zero())
     }
 
@@ -193,7 +193,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i8_type = context.i8_type();
     /// let fn_type = i8_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
+    pub fn fn_type(self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.int_type.fn_type(param_types, is_var_args)
     }
 
@@ -211,7 +211,7 @@ impl<'ctx> IntType<'ctx> {
     /// assert_eq!(i8_array_type.len(), 3);
     /// assert_eq!(i8_array_type.get_element_type().into_int_type(), i8_type);
     /// ```
-    pub fn array_type(&self, size: u32) -> ArrayType<'ctx> {
+    pub fn array_type(self, size: u32) -> ArrayType<'ctx> {
         self.int_type.array_type(size)
     }
 
@@ -229,7 +229,7 @@ impl<'ctx> IntType<'ctx> {
     /// assert_eq!(i8_vector_type.get_size(), 3);
     /// assert_eq!(i8_vector_type.get_element_type().into_int_type(), i8_type);
     /// ```
-    pub fn vec_type(&self, size: u32) -> VectorType<'ctx> {
+    pub fn vec_type(self, size: u32) -> VectorType<'ctx> {
         self.int_type.vec_type(size)
     }
 
@@ -245,7 +245,7 @@ impl<'ctx> IntType<'ctx> {
     ///
     /// assert_eq!(*i8_type.get_context(), context);
     /// ```
-    pub fn get_context(&self) -> ContextRef<'ctx> {
+    pub fn get_context(self) -> ContextRef<'ctx> {
         self.int_type.get_context()
     }
 
@@ -260,7 +260,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i8_type = context.i8_type();
     /// let i8_type_size = i8_type.size_of();
     /// ```
-    pub fn size_of(&self) -> IntValue<'ctx> {
+    pub fn size_of(self) -> IntValue<'ctx> {
         self.int_type.size_of().unwrap()
     }
 
@@ -275,7 +275,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i8_type = context.i8_type();
     /// let i8_type_alignment = i8_type.get_alignment();
     /// ```
-    pub fn get_alignment(&self) -> IntValue<'ctx> {
+    pub fn get_alignment(self) -> IntValue<'ctx> {
         self.int_type.get_alignment()
     }
 
@@ -293,7 +293,7 @@ impl<'ctx> IntType<'ctx> {
     ///
     /// assert_eq!(i8_ptr_type.get_element_type().into_int_type(), i8_type);
     /// ```
-    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
+    pub fn ptr_type(self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.int_type.ptr_type(address_space)
     }
 
@@ -308,21 +308,21 @@ impl<'ctx> IntType<'ctx> {
     ///
     /// assert_eq!(bool_type.get_bit_width(), 1);
     /// ```
-    pub fn get_bit_width(&self) -> u32 {
+    pub fn get_bit_width(self) -> u32 {
         unsafe {
             LLVMGetIntTypeWidth(self.as_type_ref())
         }
     }
 
     /// Prints the definition of an `IntType` to a `LLVMString`.
-    pub fn print_to_string(&self) -> LLVMString {
+    pub fn print_to_string(self) -> LLVMString {
         self.int_type.print_to_string()
     }
 
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of an `IntType` to stderr. Not available in newer LLVM versions.
     #[llvm_versions(3.7..=4.0)]
-    pub fn print_to_stderr(&self) {
+    pub fn print_to_stderr(self) {
         self.int_type.print_to_stderr()
     }
 
@@ -339,12 +339,12 @@ impl<'ctx> IntType<'ctx> {
     ///
     /// assert!(i8_undef.is_undef());
     /// ```
-    pub fn get_undef(&self) -> IntValue<'ctx> {
+    pub fn get_undef(self) -> IntValue<'ctx> {
         IntValue::new(self.int_type.get_undef())
     }
 
     /// Creates a `GenericValue` for use with `ExecutionEngine`s.
-    pub fn create_generic_value(&self, value: u64, is_signed: bool) -> GenericValue {
+    pub fn create_generic_value(self, value: u64, is_signed: bool) -> GenericValue<'ctx> {
         let value = unsafe {
             LLVMCreateGenericValueOfInt(self.as_type_ref(), value, is_signed as i32)
         };
@@ -366,7 +366,7 @@ impl<'ctx> IntType<'ctx> {
     ///
     /// assert!(i8_array.is_const());
     /// ```
-    pub fn const_array(&self, values: &[IntValue<'ctx>]) -> ArrayValue<'ctx> {
+    pub fn const_array(self, values: &[IntValue<'ctx>]) -> ArrayValue<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();

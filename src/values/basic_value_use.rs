@@ -71,7 +71,7 @@ impl<'ctx> BasicValueUse<'ctx> {
     /// which makes the arg1 (%0) uses clear:
     /// 1) In the store instruction
     /// 2) In the pointer bitcast
-    pub fn get_next_use(&self) -> Option<Self> {
+    pub fn get_next_use(self) -> Option<Self> {
         let use_ = unsafe {
             LLVMGetNextUse(self.0)
         };
@@ -115,7 +115,7 @@ impl<'ctx> BasicValueUse<'ctx> {
     /// assert_eq!(store_operand_use0.get_user(), store_instruction);
     /// assert_eq!(store_operand_use1.get_user(), store_instruction);
     /// ```
-    pub fn get_user(&self) -> AnyValueEnum<'ctx> {
+    pub fn get_user(self) -> AnyValueEnum<'ctx> {
         let user = unsafe {
             LLVMGetUser(self.0)
         };
@@ -160,7 +160,7 @@ impl<'ctx> BasicValueUse<'ctx> {
     ///
     /// assert_eq!(bitcast_use_value, free_operand0);
     /// ```
-    pub fn get_used_value(&self) -> Either<BasicValueEnum<'ctx>, BasicBlock<'ctx>> {
+    pub fn get_used_value(self) -> Either<BasicValueEnum<'ctx>, BasicBlock<'ctx>> {
         let used_value = unsafe {
             LLVMGetUsedValue(self.0)
         };

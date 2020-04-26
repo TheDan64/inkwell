@@ -35,7 +35,7 @@ impl<'ctx> VoidType<'ctx> {
     ///
     /// assert!(void_type.is_sized());
     /// ```
-    pub fn is_sized(&self) -> bool {
+    pub fn is_sized(self) -> bool {
         self.void_type.is_sized()
     }
 
@@ -51,7 +51,7 @@ impl<'ctx> VoidType<'ctx> {
     ///
     /// assert_eq!(*void_type.get_context(), context);
     /// ```
-    pub fn get_context(&self) -> ContextRef<'ctx> {
+    pub fn get_context(self) -> ContextRef<'ctx> {
         self.void_type.get_context()
     }
 
@@ -67,19 +67,19 @@ impl<'ctx> VoidType<'ctx> {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
+    pub fn fn_type(self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.void_type.fn_type(param_types, is_var_args)
     }
 
     /// Prints the definition of a `VoidType` to a `LLVMString`.
-    pub fn print_to_string(&self) -> LLVMString {
+    pub fn print_to_string(self) -> LLVMString {
         self.void_type.print_to_string()
     }
 
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of a `VoidType` to stderr. Not available in newer LLVM versions.
     #[llvm_versions(3.7..=4.0)]
-    pub fn print_to_stderr(&self) {
+    pub fn print_to_stderr(self) {
         self.void_type.print_to_stderr()
     }
 }

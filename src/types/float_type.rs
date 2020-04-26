@@ -35,7 +35,7 @@ impl<'ctx> FloatType<'ctx> {
     /// let f32_type = context.f32_type();
     /// let fn_type = f32_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
+    pub fn fn_type(self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.float_type.fn_type(param_types, is_var_args)
     }
 
@@ -53,7 +53,7 @@ impl<'ctx> FloatType<'ctx> {
     /// assert_eq!(f32_array_type.len(), 3);
     /// assert_eq!(f32_array_type.get_element_type().into_float_type(), f32_type);
     /// ```
-    pub fn array_type(&self, size: u32) -> ArrayType<'ctx> {
+    pub fn array_type(self, size: u32) -> ArrayType<'ctx> {
         self.float_type.array_type(size)
     }
 
@@ -71,7 +71,7 @@ impl<'ctx> FloatType<'ctx> {
     /// assert_eq!(f32_vector_type.get_size(), 3);
     /// assert_eq!(f32_vector_type.get_element_type().into_float_type(), f32_type);
     /// ```
-    pub fn vec_type(&self, size: u32) -> VectorType<'ctx> {
+    pub fn vec_type(self, size: u32) -> VectorType<'ctx> {
         self.float_type.vec_type(size)
     }
 
@@ -87,7 +87,7 @@ impl<'ctx> FloatType<'ctx> {
     /// let f32_type = context.f32_type();
     /// let f32_value = f32_type.const_float(42.);
     /// ```
-    pub fn const_float(&self, value: f64) -> FloatValue<'ctx> {
+    pub fn const_float(self, value: f64) -> FloatValue<'ctx> {
         let value = unsafe {
             LLVMConstReal(self.float_type.ty, value)
         };
@@ -125,7 +125,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// assert_eq!(f64_val.print_to_string().to_string(), "double 0x7FF0000000000000");
     /// ```
-    pub fn const_float_from_string(&self, slice: &str) -> FloatValue<'ctx> {
+    pub fn const_float_from_string(self, slice: &str) -> FloatValue<'ctx> {
         let value = unsafe {
             LLVMConstRealOfStringAndSize(self.as_type_ref(), slice.as_ptr() as *const ::libc::c_char, slice.len() as u32)
         };
@@ -146,7 +146,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// assert_eq!(f32_zero.print_to_string().to_string(), "float 0.000000e+00");
     /// ```
-    pub fn const_zero(&self) -> FloatValue<'ctx> {
+    pub fn const_zero(self) -> FloatValue<'ctx> {
         FloatValue::new(self.float_type.const_zero())
     }
 
@@ -161,7 +161,7 @@ impl<'ctx> FloatType<'ctx> {
     /// let f32_type = context.f32_type();
     /// let f32_type_size = f32_type.size_of();
     /// ```
-    pub fn size_of(&self) -> IntValue<'ctx> {
+    pub fn size_of(self) -> IntValue<'ctx> {
         self.float_type.size_of().unwrap()
     }
 
@@ -176,7 +176,7 @@ impl<'ctx> FloatType<'ctx> {
     /// let f32_type = context.f32_type();
     /// let f32_type_alignment = f32_type.get_alignment();
     /// ```
-    pub fn get_alignment(&self) -> IntValue<'ctx> {
+    pub fn get_alignment(self) -> IntValue<'ctx> {
         self.float_type.get_alignment()
     }
 
@@ -192,7 +192,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// assert_eq!(*f32_type.get_context(), context);
     /// ```
-    pub fn get_context(&self) -> ContextRef<'ctx> {
+    pub fn get_context(self) -> ContextRef<'ctx> {
         self.float_type.get_context()
     }
 
@@ -210,19 +210,19 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// assert_eq!(f32_ptr_type.get_element_type().into_float_type(), f32_type);
     /// ```
-    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
+    pub fn ptr_type(self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.float_type.ptr_type(address_space)
     }
 
     /// Prints the definition of a `FloatType` to a `LLVMString`.
-    pub fn print_to_string(&self) -> LLVMString {
+    pub fn print_to_string(self) -> LLVMString {
         self.float_type.print_to_string()
     }
 
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of an `IntType` to stderr. Not available in newer LLVM versions.
     #[llvm_versions(3.7..=4.0)]
-    pub fn print_to_stderr(&self) {
+    pub fn print_to_stderr(self) {
         self.float_type.print_to_stderr()
     }
 
@@ -243,7 +243,7 @@ impl<'ctx> FloatType<'ctx> {
     }
 
     /// Creates a `GenericValue` for use with `ExecutionEngine`s.
-    pub fn create_generic_value(&self, value: f64) -> GenericValue {
+    pub fn create_generic_value(self, value: f64) -> GenericValue<'ctx> {
         let value = unsafe {
             LLVMCreateGenericValueOfFloat(self.as_type_ref(), value)
         };
@@ -265,7 +265,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// assert!(f32_array.is_const());
     /// ```
-    pub fn const_array(&self, values: &[FloatValue<'ctx>]) -> ArrayValue<'ctx> {
+    pub fn const_array(self, values: &[FloatValue<'ctx>]) -> ArrayValue<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();

@@ -70,19 +70,19 @@ impl<'ctx> Type<'ctx> {
     // for now. We should consider removing it altogether since print_to_string
     // could be used and manually written to stderr in rust...
     #[llvm_versions(3.7..=4.0)]
-    fn print_to_stderr(&self) {
+    fn print_to_stderr(self) {
         unsafe {
             LLVMDumpType(self.ty);
         }
     }
 
-    fn const_zero(&self) -> LLVMValueRef {
+    fn const_zero(self) -> LLVMValueRef {
         unsafe {
             LLVMConstNull(self.ty)
         }
     }
 
-    fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
+    fn ptr_type(self, address_space: AddressSpace) -> PointerType<'ctx> {
         let ptr_type = unsafe {
             LLVMPointerType(self.ty, address_space as u32)
         };
@@ -90,7 +90,7 @@ impl<'ctx> Type<'ctx> {
         PointerType::new(ptr_type)
     }
 
-    fn vec_type(&self, size: u32) -> VectorType<'ctx> {
+    fn vec_type(self, size: u32) -> VectorType<'ctx> {
         assert!(size != 0, "Vectors of size zero are not allowed.");
         // -- https://llvm.org/docs/LangRef.html#vector-type
 
@@ -102,7 +102,7 @@ impl<'ctx> Type<'ctx> {
     }
 
     #[cfg(not(feature = "experimental"))]
-    fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
+    fn fn_type(self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         let mut param_types: Vec<LLVMTypeRef> = param_types.iter()
                                                            .map(|val| val.as_type_ref())
                                                            .collect();
@@ -114,7 +114,7 @@ impl<'ctx> Type<'ctx> {
     }
 
     #[cfg(feature = "experimental")]
-    fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
+    fn fn_type(self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         let pool: Bump<[usize; 16]> = Bump::uninit();
         let mut pool_start = None;
 
@@ -133,7 +133,7 @@ impl<'ctx> Type<'ctx> {
         FunctionType::new(fn_type)
     }
 
-    fn array_type(&self, size: u32) -> ArrayType<'ctx> {
+    fn array_type(self, size: u32) -> ArrayType<'ctx> {
         let ty = unsafe {
             LLVMArrayType(self.ty, size)
         };
@@ -141,13 +141,13 @@ impl<'ctx> Type<'ctx> {
         ArrayType::new(ty)
     }
 
-    fn get_undef(&self) -> LLVMValueRef {
+    fn get_undef(self) -> LLVMValueRef {
         unsafe {
             LLVMGetUndef(self.ty)
         }
     }
 
-    fn get_alignment(&self) -> IntValue<'ctx> {
+    fn get_alignment(self) -> IntValue<'ctx> {
         let val = unsafe {
             LLVMAlignOf(self.ty)
         };
@@ -155,7 +155,7 @@ impl<'ctx> Type<'ctx> {
         IntValue::new(val)
     }
 
-    fn get_context(&self) -> ContextRef<'ctx> {
+    fn get_context(self) -> ContextRef<'ctx> {
         let context = unsafe {
             LLVMGetTypeContext(self.ty)
         };
@@ -166,13 +166,13 @@ impl<'ctx> Type<'ctx> {
     // REVIEW: This should be known at compile time, maybe as a const fn?
     // On an enum or trait, this would not be known at compile time (unless
     // enum has only sized types for example)
-    fn is_sized(&self) -> bool {
+    fn is_sized(self) -> bool {
         unsafe {
             LLVMTypeIsSized(self.ty) == 1
         }
     }
 
-    fn size_of(&self) -> Option<IntValue<'ctx>> {
+    fn size_of(self) -> Option<IntValue<'ctx>> {
         if !self.is_sized() {
             return None;
         }
@@ -184,7 +184,7 @@ impl<'ctx> Type<'ctx> {
         Some(IntValue::new(int_value))
     }
 
-    fn print_to_string(&self) -> LLVMString {
+    fn print_to_string(self) -> LLVMString {
         let c_string_ptr = unsafe {
             LLVMPrintTypeToString(self.ty)
         };
@@ -192,7 +192,7 @@ impl<'ctx> Type<'ctx> {
         LLVMString::new(c_string_ptr)
     }
 
-    pub fn get_element_type(&self) -> AnyTypeEnum<'ctx> {
+    pub fn get_element_type(self) -> AnyTypeEnum<'ctx> {
         let ptr = unsafe {
             LLVMGetElementType(self.ty)
         };

@@ -368,7 +368,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
 
     // TODOC: Marked as unsafe because input function could very well do something unsafe. It's up to the caller
     // to ensure that doesn't happen by defining their function correctly.
-    pub unsafe fn run_function(&self, function: FunctionValue<'ctx>, args: &[&GenericValue]) -> GenericValue {
+    pub unsafe fn run_function(&self, function: FunctionValue<'ctx>, args: &[&GenericValue<'ctx>]) -> GenericValue<'ctx> {
         let mut args: Vec<LLVMGenericValueRef> = args.iter()
                                                      .map(|val| val.generic_value)
                                                      .collect();

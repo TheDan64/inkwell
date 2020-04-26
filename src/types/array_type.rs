@@ -36,7 +36,7 @@ impl<'ctx> ArrayType<'ctx> {
     /// let i8_array_type = i8_type.array_type(3);
     /// let i8_array_type_size = i8_array_type.size_of();
     /// ```
-    pub fn size_of(&self) -> Option<IntValue<'ctx>> {
+    pub fn size_of(self) -> Option<IntValue<'ctx>> {
         self.array_type.size_of()
     }
 
@@ -52,7 +52,7 @@ impl<'ctx> ArrayType<'ctx> {
     /// let i8_array_type = i8_type.array_type(3);
     /// let i8_array_type_alignment = i8_array_type.get_alignment();
     /// ```
-    pub fn get_alignment(&self) -> IntValue<'ctx> {
+    pub fn get_alignment(self) -> IntValue<'ctx> {
         self.array_type.get_alignment()
     }
 
@@ -71,7 +71,7 @@ impl<'ctx> ArrayType<'ctx> {
     ///
     /// assert_eq!(i8_array_ptr_type.get_element_type().into_array_type(), i8_array_type);
     /// ```
-    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
+    pub fn ptr_type(self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.array_type.ptr_type(address_space)
     }
 
@@ -88,7 +88,7 @@ impl<'ctx> ArrayType<'ctx> {
     ///
     /// assert_eq!(*i8_array_type.get_context(), context);
     /// ```
-    pub fn get_context(&self) -> ContextRef<'ctx> {
+    pub fn get_context(self) -> ContextRef<'ctx> {
         self.array_type.get_context()
     }
 
@@ -104,7 +104,7 @@ impl<'ctx> ArrayType<'ctx> {
     /// let i8_array_type = i8_type.array_type(3);
     /// let fn_type = i8_array_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
+    pub fn fn_type(self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.array_type.fn_type(param_types, is_var_args)
     }
 
@@ -123,7 +123,7 @@ impl<'ctx> ArrayType<'ctx> {
     /// assert_eq!(i8_array_array_type.len(), 3);
     /// assert_eq!(i8_array_array_type.get_element_type().into_array_type(), i8_array_type);
     /// ```
-    pub fn array_type(&self, size: u32) -> ArrayType<'ctx> {
+    pub fn array_type(self, size: u32) -> ArrayType<'ctx> {
         self.array_type.array_type(size)
     }
 
@@ -141,7 +141,7 @@ impl<'ctx> ArrayType<'ctx> {
     ///
     /// assert!(f32_array_array.is_const());
     /// ```
-    pub fn const_array(&self, values: &[ArrayValue<'ctx>]) -> ArrayValue<'ctx> {
+    pub fn const_array(self, values: &[ArrayValue<'ctx>]) -> ArrayValue<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();
@@ -164,7 +164,7 @@ impl<'ctx> ArrayType<'ctx> {
     /// let i8_array_type = i8_type.array_type(3);
     /// let i8_array_zero = i8_array_type.const_zero();
     /// ```
-    pub fn const_zero(&self) -> ArrayValue<'ctx> {
+    pub fn const_zero(self) -> ArrayValue<'ctx> {
         ArrayValue::new(self.array_type.const_zero())
     }
 
@@ -181,21 +181,21 @@ impl<'ctx> ArrayType<'ctx> {
     ///
     /// assert_eq!(i8_array_type.len(), 3);
     /// ```
-    pub fn len(&self) -> u32 {
+    pub fn len(self) -> u32 {
         unsafe {
             LLVMGetArrayLength(self.as_type_ref())
         }
     }
 
     /// Prints the definition of a `ArrayType` to a `LLVMString`.
-    pub fn print_to_string(&self) -> LLVMString {
+    pub fn print_to_string(self) -> LLVMString {
         self.array_type.print_to_string()
     }
 
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of an `ArrayType` to stderr. Not available in newer LLVM versions.
     #[llvm_versions(3.7..=4.0)]
-    pub fn print_to_stderr(&self) {
+    pub fn print_to_stderr(self) {
         self.array_type.print_to_stderr()
     }
 
@@ -212,7 +212,7 @@ impl<'ctx> ArrayType<'ctx> {
     ///
     /// assert!(i8_array_undef.is_undef());
     /// ```
-    pub fn get_undef(&self) -> ArrayValue<'ctx> {
+    pub fn get_undef(self) -> ArrayValue<'ctx> {
         ArrayValue::new(self.array_type.get_undef())
     }
 
@@ -230,7 +230,7 @@ impl<'ctx> ArrayType<'ctx> {
     ///
     /// assert_eq!(i8_array_type.get_element_type().into_int_type(), i8_type);
     /// ```
-    pub fn get_element_type(&self) -> BasicTypeEnum<'ctx> {
+    pub fn get_element_type(self) -> BasicTypeEnum<'ctx> {
         self.array_type.get_element_type().to_basic_type_enum()
     }
 

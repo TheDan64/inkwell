@@ -41,7 +41,7 @@ impl Attribute {
     ///
     /// assert!(enum_attribute.is_enum());
     /// ```
-    pub fn is_enum(&self) -> bool {
+    pub fn is_enum(self) -> bool {
         unsafe {
             LLVMIsEnumAttribute(self.attribute) == 1
         }
@@ -61,7 +61,7 @@ impl Attribute {
     ///
     /// assert!(string_attribute.is_string());
     /// ```
-    pub fn is_string(&self) -> bool {
+    pub fn is_string(self) -> bool {
         unsafe {
             LLVMIsStringAttribute(self.attribute) == 1
         }
@@ -99,7 +99,7 @@ impl Attribute {
     ///
     /// assert_eq!(enum_attribute.get_enum_kind_id(), 0);
     /// ```
-    pub fn get_enum_kind_id(&self) -> u32 {
+    pub fn get_enum_kind_id(self) -> u32 {
         assert!(self.is_enum()); // FIXME: SubTypes
 
         unsafe {
@@ -134,7 +134,7 @@ impl Attribute {
     ///
     /// assert_eq!(enum_attribute.get_enum_value(), 10);
     /// ```
-    pub fn get_enum_value(&self) -> u64 {
+    pub fn get_enum_value(self) -> u64 {
         assert!(self.is_enum()); // FIXME: SubTypes
 
         unsafe {
@@ -207,11 +207,11 @@ pub enum AttributeLoc {
 }
 
 impl AttributeLoc {
-    pub(crate) fn get_index(&self) -> u32 {
+    pub(crate) fn get_index(self) -> u32 {
         match self {
             AttributeLoc::Return => 0,
             AttributeLoc::Param(index) => {
-                assert!(*index <= u32::max_value() - 2, "Param index must be <= u32::max_value() - 2");
+                assert!(index <= u32::max_value() - 2, "Param index must be <= u32::max_value() - 2");
 
                 index + 1
             },

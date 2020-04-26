@@ -27,35 +27,35 @@ impl<'ctx> FloatValue<'ctx> {
         self.float_value.get_name()
     }
 
-    pub fn set_name(&self, name: &str) {
+    pub fn set_name(self, name: &str) {
         self.float_value.set_name(name);
     }
 
-    pub fn get_type(&self) -> FloatType<'ctx> {
+    pub fn get_type(self) -> FloatType<'ctx> {
         FloatType::new(self.float_value.get_type())
     }
 
-    pub fn is_null(&self) -> bool {
+    pub fn is_null(self) -> bool {
         self.float_value.is_null()
     }
 
-    pub fn is_undef(&self) -> bool {
+    pub fn is_undef(self) -> bool {
         self.float_value.is_undef()
     }
 
-    pub fn print_to_string(&self) -> LLVMString {
+    pub fn print_to_string(self) -> LLVMString {
         self.float_value.print_to_string()
     }
 
-    pub fn print_to_stderr(&self) {
+    pub fn print_to_stderr(self) {
         self.float_value.print_to_stderr()
     }
 
-    pub fn as_instruction(&self) -> Option<InstructionValue<'ctx>> {
+    pub fn as_instruction(self) -> Option<InstructionValue<'ctx>> {
         self.float_value.as_instruction()
     }
 
-    pub fn const_neg(&self) -> Self {
+    pub fn const_neg(self) -> Self {
         let value = unsafe {
             LLVMConstFNeg(self.as_value_ref())
         };
@@ -63,7 +63,7 @@ impl<'ctx> FloatValue<'ctx> {
         FloatValue::new(value)
     }
 
-    pub fn const_add(&self, rhs: FloatValue<'ctx>) -> Self {
+    pub fn const_add(self, rhs: FloatValue<'ctx>) -> Self {
         let value = unsafe {
             LLVMConstFAdd(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -71,7 +71,7 @@ impl<'ctx> FloatValue<'ctx> {
         FloatValue::new(value)
     }
 
-    pub fn const_sub(&self, rhs: FloatValue<'ctx>) -> Self {
+    pub fn const_sub(self, rhs: FloatValue<'ctx>) -> Self {
         let value = unsafe {
             LLVMConstFSub(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -79,7 +79,7 @@ impl<'ctx> FloatValue<'ctx> {
         FloatValue::new(value)
     }
 
-    pub fn const_mul(&self, rhs: FloatValue<'ctx>) -> Self {
+    pub fn const_mul(self, rhs: FloatValue<'ctx>) -> Self {
         let value = unsafe {
             LLVMConstFMul(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -87,7 +87,7 @@ impl<'ctx> FloatValue<'ctx> {
         FloatValue::new(value)
     }
 
-    pub fn const_div(&self, rhs: FloatValue<'ctx>) -> Self {
+    pub fn const_div(self, rhs: FloatValue<'ctx>) -> Self {
         let value = unsafe {
             LLVMConstFDiv(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -95,7 +95,7 @@ impl<'ctx> FloatValue<'ctx> {
         FloatValue::new(value)
     }
 
-    pub fn const_remainder(&self, rhs: FloatValue<'ctx>) -> Self {
+    pub fn const_remainder(self, rhs: FloatValue<'ctx>) -> Self {
         let value = unsafe {
             LLVMConstFRem(self.as_value_ref(), rhs.as_value_ref())
         };
@@ -103,7 +103,7 @@ impl<'ctx> FloatValue<'ctx> {
         FloatValue::new(value)
     }
 
-    pub fn const_cast(&self, float_type: FloatType<'ctx>) -> Self {
+    pub fn const_cast(self, float_type: FloatType<'ctx>) -> Self {
         let value = unsafe {
             LLVMConstFPCast(self.as_value_ref(), float_type.as_type_ref())
         };
@@ -111,7 +111,7 @@ impl<'ctx> FloatValue<'ctx> {
         FloatValue::new(value)
     }
 
-    pub fn const_to_unsigned_int(&self, int_type: IntType<'ctx>) -> IntValue<'ctx> {
+    pub fn const_to_unsigned_int(self, int_type: IntType<'ctx>) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstFPToUI(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -119,7 +119,7 @@ impl<'ctx> FloatValue<'ctx> {
         IntValue::new(value)
     }
 
-    pub fn const_to_signed_int(&self, int_type: IntType<'ctx>) -> IntValue<'ctx> {
+    pub fn const_to_signed_int(self, int_type: IntType<'ctx>) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstFPToSI(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -127,7 +127,7 @@ impl<'ctx> FloatValue<'ctx> {
         IntValue::new(value)
     }
 
-    pub fn const_truncate(&self, float_type: FloatType<'ctx>) -> FloatValue<'ctx> {
+    pub fn const_truncate(self, float_type: FloatType<'ctx>) -> FloatValue<'ctx> {
         let value = unsafe {
             LLVMConstFPTrunc(self.as_value_ref(), float_type.as_type_ref())
         };
@@ -135,7 +135,7 @@ impl<'ctx> FloatValue<'ctx> {
         FloatValue::new(value)
     }
 
-    pub fn const_extend(&self, float_type: FloatType<'ctx>) -> FloatValue<'ctx> {
+    pub fn const_extend(self, float_type: FloatType<'ctx>) -> FloatValue<'ctx> {
         let value = unsafe {
             LLVMConstFPExt(self.as_value_ref(), float_type.as_type_ref())
         };
@@ -144,7 +144,7 @@ impl<'ctx> FloatValue<'ctx> {
     }
 
     // SubType: rhs same as lhs; return IntValue<bool>
-    pub fn const_compare(&self, op: FloatPredicate, rhs: FloatValue<'ctx>) -> IntValue<'ctx> {
+    pub fn const_compare(self, op: FloatPredicate, rhs: FloatValue<'ctx>) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstFCmp(op.into(), self.as_value_ref(), rhs.as_value_ref())
         };
@@ -165,7 +165,7 @@ impl<'ctx> FloatValue<'ctx> {
     ///
     /// assert!(f64_val.is_const());
     /// ```
-    pub fn is_const(&self) -> bool {
+    pub fn is_const(self) -> bool {
         self.float_value.is_const()
     }
 
@@ -182,7 +182,7 @@ impl<'ctx> FloatValue<'ctx> {
     ///
     /// assert_eq!(f64_1_2.get_constant(), Some((1.2, false)));
     /// ```
-    pub fn get_constant(&self) -> Option<(f64, bool)> {
+    pub fn get_constant(self) -> Option<(f64, bool)> {
         // Nothing bad happens as far as I can tell if we don't check if const
         // unlike the int versions, but just doing this just in case and for consistency
         if !self.is_const() {
@@ -197,7 +197,7 @@ impl<'ctx> FloatValue<'ctx> {
         Some((constant, lossy == 1))
     }
 
-    pub fn replace_all_uses_with(&self, other: FloatValue<'ctx>) {
+    pub fn replace_all_uses_with(self, other: FloatValue<'ctx>) {
         self.float_value.replace_all_uses_with(other.as_value_ref())
     }
 }

@@ -41,7 +41,7 @@ impl<'ctx> FunctionType<'ctx> {
     ///
     /// assert_eq!(fn_ptr_type.get_element_type().into_function_type(), fn_type);
     /// ```
-    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
+    pub fn ptr_type(self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.fn_type.ptr_type(address_space)
     }
 
@@ -58,7 +58,7 @@ impl<'ctx> FunctionType<'ctx> {
     ///
     /// assert!(fn_type.is_var_arg());
     /// ```
-    pub fn is_var_arg(&self) -> bool {
+    pub fn is_var_arg(self) -> bool {
         unsafe {
             LLVMIsFunctionVarArg(self.as_type_ref()) != 0
         }
@@ -79,7 +79,7 @@ impl<'ctx> FunctionType<'ctx> {
     /// assert_eq!(param_types.len(), 1);
     /// assert_eq!(param_types[0].into_float_type(), f32_type);
     /// ```
-    pub fn get_param_types(&self) -> Vec<BasicTypeEnum<'ctx>> {
+    pub fn get_param_types(self) -> Vec<BasicTypeEnum<'ctx>> {
         let count = self.count_param_types();
         let mut raw_vec: Vec<LLVMTypeRef> = Vec::with_capacity(count as usize);
         let ptr = raw_vec.as_mut_ptr();
@@ -108,7 +108,7 @@ impl<'ctx> FunctionType<'ctx> {
     ///
     /// assert_eq!(fn_type.count_param_types(), 1);
     /// ```
-    pub fn count_param_types(&self) -> u32 {
+    pub fn count_param_types(self) -> u32 {
         unsafe {
             LLVMCountParamTypes(self.as_type_ref())
         }
@@ -129,7 +129,7 @@ impl<'ctx> FunctionType<'ctx> {
     ///
     /// assert!(!fn_type.is_sized());
     /// ```
-    pub fn is_sized(&self) -> bool {
+    pub fn is_sized(self) -> bool {
         self.fn_type.is_sized()
     }
 
@@ -151,19 +151,19 @@ impl<'ctx> FunctionType<'ctx> {
     ///
     /// assert_eq!(*fn_type.get_context(), context);
     /// ```
-    pub fn get_context(&self) -> ContextRef<'ctx> {
+    pub fn get_context(self) -> ContextRef<'ctx> {
         self.fn_type.get_context()
     }
 
     /// Prints the definition of a `FunctionType` to a `LLVMString`.
-    pub fn print_to_string(&self) -> LLVMString {
+    pub fn print_to_string(self) -> LLVMString {
         self.fn_type.print_to_string()
     }
 
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of an `IntType` to stderr. Not available in newer LLVM versions.
     #[llvm_versions(3.7..=4.0)]
-    pub fn print_to_stderr(&self) {
+    pub fn print_to_stderr(self) {
         self.fn_type.print_to_stderr()
     }
 
@@ -180,7 +180,7 @@ impl<'ctx> FunctionType<'ctx> {
     ///
     /// assert_eq!(fn_type.get_return_type().unwrap().into_float_type(), f32_type);
     /// ```
-    pub fn get_return_type(&self) -> Option<BasicTypeEnum<'ctx>> {
+    pub fn get_return_type(self) -> Option<BasicTypeEnum<'ctx>> {
         let ty = unsafe {
             LLVMGetReturnType(self.as_type_ref())
         };

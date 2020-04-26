@@ -25,35 +25,35 @@ impl<'ctx> StructValue<'ctx> {
         self.struct_value.get_name()
     }
 
-    pub fn set_name(&self, name: &str) {
+    pub fn set_name(self, name: &str) {
         self.struct_value.set_name(name);
     }
 
-    pub fn get_type(&self) -> StructType<'ctx> {
+    pub fn get_type(self) -> StructType<'ctx> {
         StructType::new(self.struct_value.get_type())
     }
 
-    pub fn is_null(&self) -> bool {
+    pub fn is_null(self) -> bool {
         self.struct_value.is_null()
     }
 
-    pub fn is_undef(&self) -> bool {
+    pub fn is_undef(self) -> bool {
         self.struct_value.is_undef()
     }
 
-    pub fn print_to_string(&self) -> LLVMString {
+    pub fn print_to_string(self) -> LLVMString {
         self.struct_value.print_to_string()
     }
 
-    pub fn print_to_stderr(&self) {
+    pub fn print_to_stderr(self) {
         self.struct_value.print_to_stderr()
     }
 
-    pub fn as_instruction(&self) -> Option<InstructionValue<'ctx>> {
+    pub fn as_instruction(self) -> Option<InstructionValue<'ctx>> {
         self.struct_value.as_instruction()
     }
 
-    pub fn replace_all_uses_with(&self, other: StructValue<'ctx>) {
+    pub fn replace_all_uses_with(self, other: StructValue<'ctx>) {
         self.struct_value.replace_all_uses_with(other.as_value_ref())
     }
 }

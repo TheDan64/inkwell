@@ -25,7 +25,7 @@ impl<'ctx> PhiValue<'ctx> {
         }
     }
 
-    pub fn add_incoming(&self, incoming: &[(&dyn BasicValue<'ctx>, BasicBlock<'ctx>)]) {
+    pub fn add_incoming(self, incoming: &[(&dyn BasicValue<'ctx>, BasicBlock<'ctx>)]) {
         let (mut values, mut basic_blocks): (Vec<LLVMValueRef>, Vec<LLVMBasicBlockRef>) = {
             incoming.iter()
                     .map(|&(v, bb)| (v.as_value_ref(), bb.basic_block))
@@ -37,13 +37,13 @@ impl<'ctx> PhiValue<'ctx> {
         }
     }
 
-    pub fn count_incoming(&self) -> u32 {
+    pub fn count_incoming(self) -> u32 {
         unsafe {
             LLVMCountIncoming(self.as_value_ref())
         }
     }
 
-    pub fn get_incoming(&self, index: u32) -> Option<(BasicValueEnum<'ctx>, BasicBlock<'ctx>)> {
+    pub fn get_incoming(self, index: u32) -> Option<(BasicValueEnum<'ctx>, BasicBlock<'ctx>)> {
         if index >= self.count_incoming() {
             return None;
         }
@@ -63,36 +63,36 @@ impl<'ctx> PhiValue<'ctx> {
     }
 
     // I believe PhiValue is never a constant, so this should always work
-    pub fn set_name(&self, name: &str) {
+    pub fn set_name(self, name: &str) {
         self.phi_value.set_name(name);
     }
 
-    pub fn is_null(&self) -> bool {
+    pub fn is_null(self) -> bool {
         self.phi_value.is_null()
     }
 
-    pub fn is_undef(&self) -> bool {
+    pub fn is_undef(self) -> bool {
         self.phi_value.is_undef()
     }
 
-    pub fn print_to_string(&self) -> LLVMString {
+    pub fn print_to_string(self) -> LLVMString {
         self.phi_value.print_to_string()
     }
 
-    pub fn print_to_stderr(&self) {
+    pub fn print_to_stderr(self) {
         self.phi_value.print_to_stderr()
     }
 
     // SubType: -> InstructionValue<Phi>
-    pub fn as_instruction(&self) -> InstructionValue<'ctx> {
+    pub fn as_instruction(self) -> InstructionValue<'ctx> {
         self.phi_value.as_instruction().expect("PhiValue should always be a Phi InstructionValue")
     }
 
-    pub fn replace_all_uses_with(&self, other: &PhiValue<'ctx>) {
+    pub fn replace_all_uses_with(self, other: &PhiValue<'ctx>) {
         self.phi_value.replace_all_uses_with(other.as_value_ref())
     }
 
-    pub fn as_basic_value(&self) -> BasicValueEnum<'ctx> {
+    pub fn as_basic_value(self) -> BasicValueEnum<'ctx> {
         BasicValueEnum::new(self.as_value_ref())
     }
 }

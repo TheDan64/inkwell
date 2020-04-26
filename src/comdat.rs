@@ -33,7 +33,7 @@ impl Comdat {
     }
 
     /// Gets what kind of `Comdat` this is.
-    pub fn get_selection_kind(&self) -> ComdatSelectionKind {
+    pub fn get_selection_kind(self) -> ComdatSelectionKind {
         let kind_ptr = unsafe {
             LLVMGetComdatSelectionKind(self.0)
         };
@@ -42,7 +42,7 @@ impl Comdat {
     }
 
     /// Sets what kind of `Comdat` this should be.
-    pub fn set_selection_kind(&self, kind: ComdatSelectionKind) {
+    pub fn set_selection_kind(self, kind: ComdatSelectionKind) {
         unsafe {
             LLVMSetComdatSelectionKind(self.0, kind.as_llvm_enum())
         }

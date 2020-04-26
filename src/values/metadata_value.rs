@@ -58,21 +58,21 @@ impl<'ctx> MetadataValue<'ctx> {
     }
 
     #[llvm_versions(7.0..=latest)]
-    pub(crate) fn as_metadata_ref(&self) -> LLVMMetadataRef {
+    pub(crate) fn as_metadata_ref(self) -> LLVMMetadataRef {
         unsafe {
             LLVMValueAsMetadata(self.as_value_ref())
         }
     }
 
     // SubTypes: This can probably go away with subtypes
-    pub fn is_node(&self) -> bool {
+    pub fn is_node(self) -> bool {
         unsafe {
             LLVMIsAMDNode(self.as_value_ref()) == self.as_value_ref()
         }
     }
 
     // SubTypes: This can probably go away with subtypes
-    pub fn is_string(&self) -> bool {
+    pub fn is_string(self) -> bool {
         unsafe {
             LLVMIsAMDString(self.as_value_ref()) == self.as_value_ref()
         }
@@ -92,7 +92,7 @@ impl<'ctx> MetadataValue<'ctx> {
     }
 
     // SubTypes: Node only one day
-    pub fn get_node_size(&self) -> u32 {
+    pub fn get_node_size(self) -> u32 {
         if self.is_string() {
             return 0;
         }
@@ -104,7 +104,7 @@ impl<'ctx> MetadataValue<'ctx> {
 
     // SubTypes: Node only one day
     // REVIEW: BasicMetadataValueEnum only if you can put metadata in metadata...
-    pub fn get_node_values(&self) -> Vec<BasicMetadataValueEnum<'ctx>> {
+    pub fn get_node_values(self) -> Vec<BasicMetadataValueEnum<'ctx>> {
         if self.is_string() {
             return Vec::new();
         }
@@ -124,15 +124,15 @@ impl<'ctx> MetadataValue<'ctx> {
         slice.iter().map(|val| BasicMetadataValueEnum::new(*val)).collect()
     }
 
-    pub fn print_to_string(&self) -> LLVMString {
+    pub fn print_to_string(self) -> LLVMString {
         self.metadata_value.print_to_string()
     }
 
-    pub fn print_to_stderr(&self) {
+    pub fn print_to_stderr(self) {
         self.metadata_value.print_to_stderr()
     }
 
-    pub fn replace_all_uses_with(&self, other: &MetadataValue<'ctx>) {
+    pub fn replace_all_uses_with(self, other: &MetadataValue<'ctx>) {
         self.metadata_value.replace_all_uses_with(other.as_value_ref())
     }
 }

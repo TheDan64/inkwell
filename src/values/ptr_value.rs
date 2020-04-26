@@ -25,19 +25,19 @@ impl<'ctx> PointerValue<'ctx> {
         self.ptr_value.get_name()
     }
 
-    pub fn set_name(&self, name: &str) {
+    pub fn set_name(self, name: &str) {
         self.ptr_value.set_name(name);
     }
 
-    pub fn get_type(&self) -> PointerType<'ctx> {
+    pub fn get_type(self) -> PointerType<'ctx> {
         PointerType::new(self.ptr_value.get_type())
     }
 
-    pub fn is_null(&self) -> bool {
+    pub fn is_null(self) -> bool {
         self.ptr_value.is_null()
     }
 
-    pub fn is_undef(&self) -> bool {
+    pub fn is_undef(self) -> bool {
         self.ptr_value.is_undef()
     }
 
@@ -52,25 +52,25 @@ impl<'ctx> PointerValue<'ctx> {
     /// let context = Context::create();
     /// let void_type = context.void_type();
     /// ```
-    pub fn is_const(&self) -> bool {
+    pub fn is_const(self) -> bool {
         self.ptr_value.is_const()
     }
 
-    pub fn print_to_string(&self) -> LLVMString {
+    pub fn print_to_string(self) -> LLVMString {
         self.ptr_value.print_to_string()
     }
 
-    pub fn print_to_stderr(&self) {
+    pub fn print_to_stderr(self) {
         self.ptr_value.print_to_stderr()
     }
 
-    pub fn as_instruction(&self) -> Option<InstructionValue<'ctx>> {
+    pub fn as_instruction(self) -> Option<InstructionValue<'ctx>> {
         self.ptr_value.as_instruction()
     }
 
     // REVIEW: Should this be on array value too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    pub unsafe fn const_gep(&self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
+    pub unsafe fn const_gep(self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
                                                                  .map(|val| val.as_value_ref())
                                                                  .collect();
@@ -82,7 +82,7 @@ impl<'ctx> PointerValue<'ctx> {
     }
 
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    pub unsafe fn const_in_bounds_gep(&self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
+    pub unsafe fn const_in_bounds_gep(self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
                                                                  .map(|val| val.as_value_ref())
                                                                  .collect();
@@ -93,7 +93,7 @@ impl<'ctx> PointerValue<'ctx> {
         PointerValue::new(value)
     }
 
-    pub fn const_to_int(&self, int_type: IntType<'ctx>) -> IntValue<'ctx> {
+    pub fn const_to_int(self, int_type: IntType<'ctx>) -> IntValue<'ctx> {
         let value = unsafe {
             LLVMConstPtrToInt(self.as_value_ref(), int_type.as_type_ref())
         };
@@ -101,7 +101,7 @@ impl<'ctx> PointerValue<'ctx> {
         IntValue::new(value)
     }
 
-    pub fn const_cast(&self, ptr_type: PointerType<'ctx>) -> PointerValue<'ctx> {
+    pub fn const_cast(self, ptr_type: PointerType<'ctx>) -> PointerValue<'ctx> {
         let value = unsafe {
             LLVMConstPointerCast(self.as_value_ref(), ptr_type.as_type_ref())
         };
@@ -109,7 +109,7 @@ impl<'ctx> PointerValue<'ctx> {
         PointerValue::new(value)
     }
 
-    pub fn const_address_space_cast(&self, ptr_type: PointerType<'ctx>) -> PointerValue<'ctx> {
+    pub fn const_address_space_cast(self, ptr_type: PointerType<'ctx>) -> PointerValue<'ctx> {
         let value = unsafe {
             LLVMConstAddrSpaceCast(self.as_value_ref(), ptr_type.as_type_ref())
         };
@@ -117,7 +117,7 @@ impl<'ctx> PointerValue<'ctx> {
         PointerValue::new(value)
     }
 
-    pub fn replace_all_uses_with(&self, other: PointerValue<'ctx>) {
+    pub fn replace_all_uses_with(self, other: PointerValue<'ctx>) {
         self.ptr_value.replace_all_uses_with(other.as_value_ref())
     }
 }
