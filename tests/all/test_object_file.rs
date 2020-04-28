@@ -210,3 +210,37 @@ fn test_reloc_iterator() {
     }
     assert!(found_relocation);
 }
+
+#[test]
+fn test_section_contains_nul() {
+    let target_machine = get_native_target_machine();
+
+    let context = Context::create();
+    let mut module = context.create_module("test_section_iterator");
+
+    let gv = module.add_global(context.i32_type(), None, "gv");
+    gv.set_initializer(
+        &context
+            .i32_type()
+            .const_int(0xff0000ff, false)
+            .as_basic_value_enum(),
+    );
+    gv.set_section("test");
+
+    apply_target_to_module(&target_machine, &module);
+
+    let memory_buffer = target_machine
+        .write_to_memory_buffer(&mut module, FileType::Object)
+        .unwrap();
+    let object_file = memory_buffer.create_object_file().unwrap();
+
+    let mut has_section_test = false;
+    for section in object_file.get_sections() {
+        if section.get_name().and_then(|name| name.to_str().ok()) == Some("test") {
+            assert_eq!(section.get_contents(), 0xff0000ffu32.to_ne_bytes());
+            has_section_test = true;
+            break;
+        }
+    }
+    assert!(has_section_test);
+}
