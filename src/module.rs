@@ -30,8 +30,7 @@ use crate::{AddressSpace, OptimizationLevel};
 use crate::comdat::Comdat;
 use crate::context::{Context, ContextRef};
 use crate::data_layout::DataLayout;
-#[llvm_versions(6.0..=latest)]
-#[cfg(feature = "experimental")]
+#[llvm_versions(7.0..=latest)]
 use crate::debug_info::DebugInfoBuilder;
 use crate::execution_engine::ExecutionEngine;
 use crate::memory_buffer::MemoryBuffer;
@@ -1358,20 +1357,9 @@ impl<'ctx> Module<'ctx> {
     }
 
     /// Creates a `DebugInfoBuilder` for this `Module`.
-    #[llvm_versions(6.0..=latest)]
-    #[cfg(feature = "experimental")]
-    pub fn create_debug_info_builder(&self, allow_unresolved: bool) -> DebugInfoBuilder {
-        use llvm_sys::debuginfo::{LLVMCreateDIBuilder, LLVMCreateDIBuilderDisallowUnresolved};
-
-        let dib = unsafe {
-            if allow_unresolved {
-                LLVMCreateDIBuilder(self.module.get())
-            } else {
-                LLVMCreateDIBuilderDisallowUnresolved(self.module.get())
-            }
-        };
-
-        DebugInfoBuilder::new(dib)
+    #[llvm_versions(7.0..=latest)]
+    pub fn create_debug_info_builder(&self, allow_unresolved: bool) -> DebugInfoBuilder<'ctx> {
+         DebugInfoBuilder::new(self, allow_unresolved)
     }
 }
 
