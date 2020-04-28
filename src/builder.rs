@@ -13,6 +13,8 @@ use crate::{AtomicOrdering, AtomicRMWBinOp, IntPredicate, FloatPredicate};
 use crate::basic_block::BasicBlock;
 use crate::support::to_c_str;
 use crate::values::{AggregateValue, AggregateValueEnum, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode, CallSiteValue};
+#[llvm_versions(7.0..=latest)]
+use crate::debug_info::DILocation;
 #[llvm_versions(3.9..=latest)]
 use crate::values::StructValue;
 use crate::types::{AsTypeRef, BasicType, IntMathType, FloatMathType, PointerType, PointerMathType};
@@ -1762,6 +1764,60 @@ impl<'ctx> Builder<'ctx> {
         };
 
         Ok(StructValue::new(val))
+    }
+
+    /// Set the debug info source location of the instruction currently pointed at by the builder
+    #[llvm_versions(7.0..=latest)]
+    pub fn set_current_debug_location(
+        &self,
+        context: &'ctx crate::context::Context,
+        location: DILocation<'ctx>,
+    ) {
+        use llvm_sys::core::LLVMMetadataAsValue;
+        use llvm_sys::core::LLVMSetCurrentDebugLocation;
+        unsafe {
+            LLVMSetCurrentDebugLocation(
+                self.builder,
+                LLVMMetadataAsValue(context.context, location.metadata_ref),
+            );
+        }
+    }
+
+    /// Get the debug info source location of the instruction currently pointed at by the builder,
+    /// if available.
+    #[llvm_versions(7.0..=latest)]
+    pub fn get_current_debug_location(
+        &self,
+    ) -> Option<DILocation<'ctx>>
+     {
+        use llvm_sys::core::LLVMGetCurrentDebugLocation;
+        use llvm_sys::core::LLVMValueAsMetadata;
+        let metadata_ref = unsafe {
+            LLVMGetCurrentDebugLocation(
+                self.builder,
+            )
+        };
+        if metadata_ref.is_null() {
+            return None;
+        }
+        Some(DILocation {
+            metadata_ref: unsafe { LLVMValueAsMetadata(metadata_ref)},
+            _marker: PhantomData,
+        })
+    }
+
+    /// Unset the debug info source location of the instruction currently pointed at by the
+    /// builder. If there isn't any debug info, this is a no-op.
+    pub fn unset_current_debug_location(
+        &self,
+    ) {
+        use llvm_sys::core::LLVMSetCurrentDebugLocation;
+        unsafe {
+            LLVMSetCurrentDebugLocation(
+                self.builder,
+                std::ptr::null_mut(),
+            );
+        }
     }
 }
 
