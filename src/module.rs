@@ -32,7 +32,6 @@ use crate::comdat::Comdat;
 use crate::context::{Context, ContextRef};
 use crate::data_layout::DataLayout;
 #[llvm_versions(6.0..=latest)]
-#[cfg(feature = "experimental")]
 use crate::debug_info::DebugInfoBuilder;
 use crate::execution_engine::ExecutionEngine;
 use crate::memory_buffer::MemoryBuffer;
@@ -136,6 +135,7 @@ enum_rename!{
 #[derive(Debug, PartialEq, Eq)]
 pub struct Module<'ctx> {
     data_layout: RefCell<Option<DataLayout>>,
+    dibuilder: RefCell<Option<DebugInfoBuilder<'ctx>>>,
     pub(crate) module: Cell<LLVMModuleRef>,
     pub(crate) owned_by_ee: RefCell<Option<ExecutionEngine<'ctx>>>,
     _marker: PhantomData<&'ctx Context>,
@@ -147,6 +147,7 @@ impl<'ctx> Module<'ctx> {
 
         Module {
             module: Cell::new(module),
+            dibuilder: RefCell::new(None),
             owned_by_ee: RefCell::new(None),
             data_layout: RefCell::new(Some(Module::get_borrowed_data_layout(module))),
             _marker: PhantomData,
@@ -728,6 +729,9 @@ impl<'ctx> Module<'ctx> {
 
     /// Prints the content of the `Module` to stderr.
     pub fn print_to_stderr(&self) {
+        if let Some(dibuilder) = self.dibuilder.borrow_mut().take() {
+            dibuilder.finalize();
+        }
         unsafe {
             LLVMDumpModule(self.module.get());
         }
@@ -735,15 +739,19 @@ impl<'ctx> Module<'ctx> {
 
     /// Prints the content of the `Module` to a string.
     pub fn print_to_string(&self) -> LLVMString {
-        let module_string = unsafe {
-            LLVMPrintModuleToString(self.module.get())
-        };
+        if let Some(dibuilder) = self.dibuilder.borrow_mut().take() {
+            dibuilder.finalize();
+        }
+        let module_string = unsafe { LLVMPrintModuleToString(self.module.get()) };
 
         LLVMString::new(module_string)
     }
 
     /// Prints the content of the `Module` to a file.
     pub fn print_to_file<P: AsRef<Path>>(&self, path: P) -> Result<(), LLVMString> {
+        if let Some(dibuilder) = self.dibuilder.borrow_mut().take() {
+            dibuilder.finalize();
+        }
         let path_str = path.as_ref().to_str().expect("Did not find a valid Unicode path string");
         let path = CString::new(path_str).expect("Could not convert path to CString");
         let mut err_string = MaybeUninit::uninit();
@@ -1347,19 +1355,12 @@ impl<'ctx> Module<'ctx> {
 
     /// Creates a `DebugInfoBuilder` for this `Module`.
     #[llvm_versions(6.0..=latest)]
-    #[cfg(feature = "experimental")]
-    pub fn create_debug_info_builder(&self, allow_unresolved: bool) -> DebugInfoBuilder {
-        use llvm_sys::debuginfo::{LLVMCreateDIBuilder, LLVMCreateDIBuilderDisallowUnresolved};
-
-        let dib = unsafe {
-            if allow_unresolved {
-                LLVMCreateDIBuilder(self.module.get())
-            } else {
-                LLVMCreateDIBuilderDisallowUnresolved(self.module.get())
-            }
-        };
-
-        DebugInfoBuilder::new(dib)
+    pub fn create_debug_info_builder(&self, allow_unresolved: bool) -> DebugInfoBuilder<'ctx> {
+        let dibuilder = DebugInfoBuilder::new(self, allow_unresolved);
+        *self.dibuilder.borrow_mut() = Some(dibuilder);
+        /* Even if the returned value is dropped early, self.dibuilder will hold a reference
+         * and destruct it when Module is dropped */
+        dibuilder
     }
 }
 
@@ -1386,6 +1387,10 @@ impl Drop for Module<'_> {
             unsafe {
                 LLVMDisposeModule(self.module.get());
             }
+        }
+
+        if let Some(dibuilder) = self.dibuilder.borrow_mut().take() {
+            dibuilder.finalize();
         }
 
         // Context & EE will drop naturally if they are unique references at this point
