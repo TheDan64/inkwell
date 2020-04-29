@@ -130,9 +130,11 @@ impl Section {
         }
     }
 
-    pub fn get_contents(&self) -> &CStr {
+    pub fn get_contents(&self) -> &[u8] {
         unsafe {
-            CStr::from_ptr(LLVMGetSectionContents(self.section))
+            std::slice::from_raw_parts(
+                LLVMGetSectionContents(self.section) as *const u8,
+                self.size() as usize)
         }
     }
 
