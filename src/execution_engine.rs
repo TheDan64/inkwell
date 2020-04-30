@@ -297,7 +297,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
     /// method *may* invalidate the function pointer.
     ///
     /// [`UnsafeFunctionPointer`]: trait.UnsafeFunctionPointer.html
-    pub unsafe fn get_function<F>(&self, fn_name: &str) -> Result<JitFunction<F>, FunctionLookupError>
+    pub unsafe fn get_function<F>(&self, fn_name: &str) -> Result<JitFunction<'ctx, F>, FunctionLookupError>
     where
         F: UnsafeFunctionPointer,
     {
