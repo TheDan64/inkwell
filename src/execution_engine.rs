@@ -85,10 +85,9 @@ impl Display for RemoveModuleError {
 /// there are no more references to it.
 #[derive(PartialEq, Eq, Debug)]
 pub struct ExecutionEngine<'ctx> {
-    execution_engine: Option<ExecEngineInner>,
+    execution_engine: Option<ExecEngineInner<'ctx>>,
     target_data: Option<TargetData>,
     jit_mode: bool,
-    _phantom: PhantomData<&'ctx Context>,
 }
 
 impl<'ctx> ExecutionEngine<'ctx> {
@@ -104,10 +103,9 @@ impl<'ctx> ExecutionEngine<'ctx> {
         };
 
         ExecutionEngine {
-            execution_engine: Some(ExecEngineInner(execution_engine)),
+            execution_engine: Some(ExecEngineInner(execution_engine, PhantomData)),
             target_data: Some(TargetData::new(target_data)),
             jit_mode,
-            _phantom: PhantomData,
         }
     }
 
@@ -438,9 +436,9 @@ impl Clone for ExecutionEngine<'_> {
 
 /// A smart pointer which wraps the `Drop` logic for `LLVMExecutionEngineRef`.
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct ExecEngineInner(Rc<LLVMExecutionEngineRef>);
+struct ExecEngineInner<'ctx>(Rc<LLVMExecutionEngineRef>, PhantomData<&'ctx Context>);
 
-impl Drop for ExecEngineInner {
+impl Drop for ExecEngineInner<'_> {
     fn drop(&mut self) {
         if Rc::strong_count(&self.0) == 1 {
             unsafe {
@@ -450,7 +448,7 @@ impl Drop for ExecEngineInner {
     }
 }
 
-impl Deref for ExecEngineInner {
+impl Deref for ExecEngineInner<'_> {
     type Target = LLVMExecutionEngineRef;
 
     fn deref(&self) -> &Self::Target {
@@ -461,12 +459,12 @@ impl Deref for ExecEngineInner {
 /// A wrapper around a function pointer which ensures the function being pointed
 /// to doesn't accidentally outlive its execution engine.
 #[derive(Clone)]
-pub struct JitFunction<F> {
-    _execution_engine: ExecEngineInner,
+pub struct JitFunction<'ctx, F> {
+    _execution_engine: ExecEngineInner<'ctx>,
     inner: F,
 }
 
-impl<F> Debug for JitFunction<F> {
+impl<F> Debug for JitFunction<'_, F> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         f.debug_tuple("JitFunction")
             .field(&"<unnamed>")
@@ -497,7 +495,7 @@ macro_rules! impl_unsafe_fn {
     ($( $param:ident ),*) => {
         impl<Output, $( $param ),*> private::SealedUnsafeFunctionPointer for unsafe extern "C" fn($( $param ),*) -> Output {}
 
-        impl<Output, $( $param ),*> JitFunction<unsafe extern "C" fn($( $param ),*) -> Output> {
+        impl<Output, $( $param ),*> JitFunction<'_, unsafe extern "C" fn($( $param ),*) -> Output> {
             /// This method allows you to call the underlying function while making
             /// sure that the backing storage is not dropped too early and
             /// preserves the `unsafe` marker for any calls.
