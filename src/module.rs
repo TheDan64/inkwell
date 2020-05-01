@@ -17,7 +17,6 @@ use llvm_sys::LLVMModuleFlagBehavior;
 
 use std::cell::{Cell, RefCell, Ref};
 use std::ffi::CStr;
-use std::ffi::CString;
 use std::fs::File;
 use std::marker::PhantomData;
 use std::mem::{forget, MaybeUninit};
@@ -36,7 +35,7 @@ use crate::data_layout::DataLayout;
 use crate::debug_info::DebugInfoBuilder;
 use crate::execution_engine::ExecutionEngine;
 use crate::memory_buffer::MemoryBuffer;
-use crate::support::LLVMString;
+use crate::support::{to_c_str, LLVMString};
 use crate::targets::{InitializationConfig, Target, TargetTriple};
 use crate::types::{AsTypeRef, BasicType, FunctionType, StructType};
 use crate::values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
@@ -175,7 +174,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(fn_val.get_linkage(), Linkage::External);
     /// ```
     pub fn add_function(&self, name: &str, ty: FunctionType<'ctx>, linkage: Option<Linkage>) -> FunctionValue<'ctx> {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+        let c_string = to_c_str(name);
 
         let value = unsafe {
             LLVMAddFunction(self.module.get(), c_string.as_ptr(), ty.as_type_ref())
@@ -281,7 +280,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(fn_value, module.get_function("my_fn").unwrap());
     /// ```
     pub fn get_function(&self, name: &str) -> Option<FunctionValue<'ctx>> {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+        let c_string = to_c_str(name);
 
         let value = unsafe {
             LLVMGetNamedFunction(self.module.get(), c_string.as_ptr())
@@ -308,7 +307,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_struct_type("foo").unwrap(), opaque);
     /// ```
     pub fn get_struct_type(&self, name: &str) -> Option<StructType<'ctx>> {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+        let c_string = to_c_str(name);
 
         let struct_type = unsafe {
             LLVMGetTypeByName(self.module.get(), c_string.as_ptr())
@@ -545,7 +544,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_last_global().unwrap(), global);
     /// ```
     pub fn add_global<T: BasicType<'ctx>>(&self, type_: T, address_space: Option<AddressSpace>, name: &str) -> GlobalValue<'ctx> {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+        let c_string = to_c_str(name);
 
         let value = unsafe {
             match address_space {
@@ -578,7 +577,7 @@ impl<'ctx> Module<'ctx> {
     /// ```
     pub fn write_bitcode_to_path(&self, path: &Path) -> bool {
         let path_str = path.to_str().expect("Did not find a valid Unicode path string");
-        let c_string = CString::new(path_str).expect("Conversion to CString failed unexpectedly");
+        let c_string = to_c_str(path_str);
 
         unsafe {
             LLVMWriteBitcodeToFile(self.module.get(), c_string.as_ptr()) == 0
@@ -745,7 +744,7 @@ impl<'ctx> Module<'ctx> {
     /// Prints the content of the `Module` to a file.
     pub fn print_to_file<P: AsRef<Path>>(&self, path: P) -> Result<(), LLVMString> {
         let path_str = path.as_ref().to_str().expect("Did not find a valid Unicode path string");
-        let path = CString::new(path_str).expect("Could not convert path to CString");
+        let path = to_c_str(path_str);
         let mut err_string = MaybeUninit::uninit();
         let return_code = unsafe {
             LLVMPrintModuleToFile(self.module.get(), path.as_ptr() as *const ::libc::c_char, err_string.as_mut_ptr())
@@ -766,7 +765,7 @@ impl<'ctx> Module<'ctx> {
         {
             use llvm_sys::core::LLVMSetModuleInlineAsm;
 
-            let c_string = CString::new(asm).expect("Conversion to CString failed unexpectedly");
+            let c_string = to_c_str(asm);
 
             unsafe {
                 LLVMSetModuleInlineAsm(self.module.get(), c_string.as_ptr())
@@ -824,7 +823,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(md_1[1].into_float_value(), f32_val);
     /// ```
     pub fn add_global_metadata(&self, key: &str, metadata: &MetadataValue<'ctx>) {
-        let c_string = CString::new(key).expect("Conversion to CString failed unexpectedly");
+        let c_string = to_c_str(key);
 
         unsafe {
             LLVMAddNamedMetadataOperand(self.module.get(), c_string.as_ptr(), metadata.as_value_ref())
@@ -869,7 +868,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(md_1[1].into_float_value(), f32_val);
     /// ```
     pub fn get_global_metadata_size(&self, key: &str) -> u32 {
-        let c_string = CString::new(key).expect("Conversion to CString failed unexpectedly");
+        let c_string = to_c_str(key);
 
         unsafe {
             LLVMGetNamedMetadataNumOperands(self.module.get(), c_string.as_ptr())
@@ -914,7 +913,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(md_1[1].into_float_value(), f32_val);
     /// ```
     pub fn get_global_metadata(&self, key: &str) -> Vec<MetadataValue<'ctx>> {
-        let c_string = CString::new(key).expect("Conversion to CString failed unexpectedly");
+        let c_string = to_c_str(key);
         let count = self.get_global_metadata_size(key);
 
         let mut raw_vec: Vec<LLVMValueRef> = Vec::with_capacity(count as usize);
@@ -1010,7 +1009,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_global("my_global").unwrap(), global);
     /// ```
     pub fn get_global(&self, name: &str) -> Option<GlobalValue<'ctx>> {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+        let c_string = to_c_str(name);
         let value = unsafe {
             LLVMGetNamedGlobal(self.module.get(), c_string.as_ptr())
         };
@@ -1092,12 +1091,11 @@ impl<'ctx> Module<'ctx> {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
-    /// use std::ffi::CString;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
     ///
-    /// assert_eq!(*module.get_name(), *CString::new("my_mdoule").unwrap());
+    /// assert_eq!(module.get_name().to_str(), Ok("my_mdoule"));
     /// ```
     #[llvm_versions(3.9..=latest)]
     pub fn get_name(&self) -> &CStr {
@@ -1117,14 +1115,13 @@ impl<'ctx> Module<'ctx> {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
-    /// use std::ffi::CString;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
     ///
     /// module.set_name("my_module2");
     ///
-    /// assert_eq!(*module.get_name(), *CString::new("my_module2").unwrap());
+    /// assert_eq!(module.get_name().to_str(), Ok("my_module2"));
     /// ```
     #[llvm_versions(3.9..=latest)]
     pub fn set_name(&self, name: &str) {
@@ -1139,17 +1136,16 @@ impl<'ctx> Module<'ctx> {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
-    /// use std::ffi::CString;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_mod");
     ///
-    /// assert_eq!(*module.get_source_file_name(), *CString::new("my_mod").unwrap());
+    /// assert_eq!(module.get_source_file_name().to_str(), Ok("my_mod"));
     ///
     /// module.set_source_file_name("my_mod.rs");
     ///
-    /// assert_eq!(*module.get_name(), *CString::new("my_mod").unwrap());
-    /// assert_eq!(*module.get_source_file_name(), *CString::new("my_mod.rs").unwrap());
+    /// assert_eq!(module.get_name().to_str(), Ok("my_mod"));
+    /// assert_eq!(module.get_source_file_name().to_str(), Ok("my_mod.rs"));
     /// ```
     #[llvm_versions(7.0..=latest)]
     pub fn get_source_file_name(&self) -> &CStr {
@@ -1171,17 +1167,16 @@ impl<'ctx> Module<'ctx> {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
-    /// use std::ffi::CString;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_mod");
     ///
-    /// assert_eq!(*module.get_source_file_name(), *CString::new("my_mod").unwrap());
+    /// assert_eq!(module.get_source_file_name().to_str(), Ok("my_mod"));
     ///
     /// module.set_source_file_name("my_mod.rs");
     ///
-    /// assert_eq!(*module.get_name(), *CString::new("my_mod").unwrap());
-    /// assert_eq!(*module.get_source_file_name(), *CString::new("my_mod.rs").unwrap());
+    /// assert_eq!(module.get_name().to_str(), Ok("my_mod"));
+    /// assert_eq!(module.get_source_file_name().to_str(), Ok("my_mod.rs"));
     /// ```
     #[llvm_versions(7.0..=latest)]
     pub fn set_source_file_name(&self, file_name: &str) {
@@ -1267,7 +1262,7 @@ impl<'ctx> Module<'ctx> {
     pub fn get_or_insert_comdat(&self, name: &str) -> Comdat {
         use llvm_sys::comdat::LLVMGetOrInsertComdat;
 
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+        let c_string = to_c_str(name);
         let comdat_ptr = unsafe {
             LLVMGetOrInsertComdat(self.module.get(), c_string.as_ptr())
         };

@@ -3,9 +3,8 @@ use llvm_sys::prelude::LLVMMemoryBufferRef;
 use llvm_sys::object::LLVMCreateObjectFile;
 
 use crate::object_file::ObjectFile;
-use crate::support::LLVMString;
+use crate::support::{to_c_str, LLVMString};
 
-use std::ffi::CString;
 use std::mem::{forget, MaybeUninit};
 use std::path::Path;
 use std::ptr;
@@ -26,7 +25,7 @@ impl MemoryBuffer {
     }
 
     pub fn create_from_file(path: &Path) -> Result<Self, LLVMString> {
-        let path = CString::new(path.to_str().expect("Did not find a valid Unicode path string")).expect("Failed to convert to CString");
+        let path = to_c_str(path.to_str().expect("Did not find a valid Unicode path string"));
         let mut memory_buffer = ptr::null_mut();
         let mut err_string = MaybeUninit::uninit();
 
@@ -64,7 +63,7 @@ impl MemoryBuffer {
     /// leaks data to LLVM so that it doesn't have to reallocate. `create_from_memory_range_copy` may be removed
     /// in the future
     pub fn create_from_memory_range(input: &[u8], name: &str) -> Self {
-        let name_c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+        let name_c_string = to_c_str(name);
 
         let memory_buffer = unsafe {
             LLVMCreateMemoryBufferWithMemoryRange(input.as_ptr() as *const ::libc::c_char, input.len(), name_c_string.as_ptr(), false as i32)
@@ -79,7 +78,7 @@ impl MemoryBuffer {
     /// data to LLVM, forcing LLVM to make a copy. This function may be removed in the future in favor of
     /// `create_from_memory_range`
     pub fn create_from_memory_range_copy(input: &[u8], name: &str) -> Self {
-        let name_c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+        let name_c_string = to_c_str(name);
 
         let memory_buffer = unsafe {
             LLVMCreateMemoryBufferWithMemoryRangeCopy(input.as_ptr() as *const ::libc::c_char, input.len(), name_c_string.as_ptr())

@@ -3,8 +3,6 @@ extern crate inkwell;
 use self::inkwell::attributes::{Attribute, AttributeLoc};
 use self::inkwell::context::Context;
 
-use std::ffi::CString;
-
 #[test]
 fn test_enum_attribute_kinds() {
     // Does not exist:
@@ -52,8 +50,8 @@ fn test_string_attributes() {
     assert!(!string_attribute.is_enum());
     assert!(string_attribute.is_string());
 
-    assert_eq!(*string_attribute.get_string_kind_id(), *CString::new("my_key_123").unwrap());
-    assert_eq!(*string_attribute.get_string_value(), *CString::new("my_val").unwrap());
+    assert_eq!(string_attribute.get_string_kind_id().to_str(), Ok("my_key_123"));
+    assert_eq!(string_attribute.get_string_value().to_str(), Ok("my_val"));
 }
 
 #[test]

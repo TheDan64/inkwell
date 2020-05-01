@@ -1,8 +1,6 @@
-extern crate inkwell;
-
-use self::inkwell::{AddressSpace, AtomicOrdering, IntPredicate, FloatPredicate};
-use self::inkwell::context::Context;
-use self::inkwell::values::{BasicValue, InstructionOpcode::*};
+use inkwell::{AddressSpace, AtomicOrdering, IntPredicate, FloatPredicate};
+use inkwell::context::Context;
+use inkwell::values::{BasicValue, InstructionOpcode::*};
 
 #[test]
 fn test_operands() {

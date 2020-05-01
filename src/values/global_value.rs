@@ -11,11 +11,11 @@ use llvm_sys::core::{LLVMGetUnnamedAddress, LLVMSetUnnamedAddress};
 use llvm_sys::LLVMUnnamedAddr;
 use llvm_sys::prelude::LLVMValueRef;
 
-use std::ffi::{CString, CStr};
+use std::ffi::CStr;
 
 use crate::{GlobalVisibility, ThreadLocalMode, DLLStorageClass};
 use crate::module::Linkage;
-use crate::support::LLVMString;
+use crate::support::{to_c_str, LLVMString};
 #[llvm_versions(7.0..=latest)]
 use crate::comdat::Comdat;
 use crate::values::traits::AsValueRef;
@@ -233,7 +233,7 @@ impl<'ctx> GlobalValue<'ctx> {
     }
 
     pub fn set_section(self, section: &str) {
-        let c_string = CString::new(section).expect("Conversion to CString failed unexpectedly");
+        let c_string = to_c_str(section);
 
         unsafe {
             LLVMSetSection(self.as_value_ref(), c_string.as_ptr())

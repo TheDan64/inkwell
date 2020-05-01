@@ -101,9 +101,9 @@ impl<'ctx> Value<'ctx> {
                   feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
         {
             use llvm_sys::core::LLVMSetValueName;
-            use std::ffi::CString;
+            use crate::support::to_c_str;
 
-            let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+            let c_string = to_c_str(name);
 
             unsafe {
                 LLVMSetValueName(self.value, c_string.as_ptr());

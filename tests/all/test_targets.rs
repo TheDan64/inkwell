@@ -1,17 +1,13 @@
-extern crate inkwell;
-extern crate regex;
+use inkwell::{AddressSpace, OptimizationLevel};
+use inkwell::context::Context;
+use inkwell::targets::{ByteOrdering, CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetData, TargetMachine, TargetTriple};
 
-use self::inkwell::{AddressSpace, OptimizationLevel};
-use self::inkwell::context::Context;
-use self::inkwell::targets::{ByteOrdering, CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetData, TargetMachine, TargetTriple};
+use regex::Regex;
 
 use std::env::temp_dir;
-use std::ffi::CString;
 use std::fs::{File, remove_file};
 use std::io::Read;
 use std::str::from_utf8;
-
-use regex::Regex;
 
 // REVIEW: Inconsistently failing on different tries :(
 // #[test]
@@ -98,10 +94,10 @@ fn test_target_and_target_machine() {
     let good_target2 = good_target2.unwrap();
 
     assert_eq!(good_target, good_target2);
-    assert_eq!(*good_target.get_name(), *CString::new("x86-64").unwrap());
-    assert_eq!(*good_target2.get_name(), *CString::new("x86-64").unwrap());
-    assert_eq!(*good_target.get_description(), *CString::new("64-bit X86: EM64T and AMD64").unwrap());
-    assert_eq!(*good_target2.get_description(), *CString::new("64-bit X86: EM64T and AMD64").unwrap());
+    assert_eq!(good_target.get_name().to_str(), Ok("x86-64"));
+    assert_eq!(good_target2.get_name().to_str(), Ok("x86-64"));
+    assert_eq!(good_target.get_description().to_str(), Ok("64-bit X86: EM64T and AMD64"));
+    assert_eq!(good_target2.get_description().to_str(), Ok("64-bit X86: EM64T and AMD64"));
     assert!(good_target.has_jit());
     assert!(good_target2.has_jit());
     assert!(good_target.has_target_machine());
@@ -111,7 +107,7 @@ fn test_target_and_target_machine() {
 
     let next_target = good_target.get_next().unwrap();
 
-    assert_eq!(*next_target.get_name(), *CString::new("x86").unwrap());
+    assert_eq!(next_target.get_name().to_str(), Ok("x86"));
 
     let target_machine = good_target.create_target_machine(
         &TargetTriple::create("x86_64-pc-linux-gnu"),
@@ -130,17 +126,17 @@ fn test_target_and_target_machine() {
     let triple = target_machine.get_triple();
 
     assert_eq!(target_machine.get_target(), good_target);
-    assert_eq!(triple.as_str(), CString::new("x86_64-pc-linux-gnu").unwrap().as_c_str());
-    assert_eq!(*target_machine.get_cpu(), *CString::new("x86-64").unwrap());
-    assert_eq!(*target_machine.get_feature_string(), *CString::new("+avx2").unwrap());
+    assert_eq!(triple.as_str().to_str(), Ok("x86_64-pc-linux-gnu"));
+    assert_eq!(target_machine.get_cpu().to_str(), Ok("x86-64"));
+    assert_eq!(target_machine.get_feature_string().to_str(), Ok("+avx2"));
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
                   feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     {
         // TODO: Try and find a triple that actually gets normalized..
         assert_eq!(
-            TargetMachine::normalize_triple(&triple).as_str(),
-            CString::new("x86_64-pc-linux-gnu").unwrap().as_c_str(),
+            TargetMachine::normalize_triple(&triple).as_str().to_str(),
+            Ok("x86_64-pc-linux-gnu"),
         );
 
         let _host_name = TargetMachine::get_host_cpu_name();
@@ -184,7 +180,7 @@ fn test_target_data() {
     assert!(data_layout.as_str().to_str().unwrap().matches("-").count() > 2);
 
     #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
-    assert_eq!(*module.get_data_layout().as_str(), *CString::new("").unwrap());
+    assert_eq!(module.get_data_layout().as_str().to_str(), Ok(""));
     // REVIEW: Why is llvm 3.9+ a %? 4.0 on travis doesn't have it, but does for me locally...
     // #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     // assert_eq!(module.get_data_layout().as_str(), &*CString::new("%").unwrap());

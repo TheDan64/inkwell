@@ -148,12 +148,11 @@ impl Attribute {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
-    /// use std::ffi::CString;
     ///
     /// let context = Context::create();
     /// let string_attribute = context.create_string_attribute("my_key", "my_val");
     ///
-    /// assert_eq!(*string_attribute.get_string_kind_id(), *CString::new("my_key").unwrap());
+    /// assert_eq!(string_attribute.get_string_kind_id().to_str(), Ok("my_key"));
     /// ```
     pub fn get_string_kind_id(&self) -> &CStr {
         assert!(self.is_string()); // FIXME: SubTypes
@@ -174,12 +173,11 @@ impl Attribute {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
-    /// use std::ffi::CString;
     ///
     /// let context = Context::create();
     /// let string_attribute = context.create_string_attribute("my_key", "my_val");
     ///
-    /// assert_eq!(*string_attribute.get_string_value(), *CString::new("my_val").unwrap());
+    /// assert_eq!(string_attribute.get_string_value().to_str(), Ok("my_val"));
     /// ```
     pub fn get_string_value(&self) -> &CStr {
         assert!(self.is_string()); // FIXME: SubTypes

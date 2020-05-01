@@ -6,7 +6,7 @@ use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
 use llvm_sys::core::{LLVMAddAttributeAtIndex, LLVMGetAttributeCountAtIndex, LLVMGetEnumAttributeAtIndex, LLVMGetStringAttributeAtIndex, LLVMRemoveEnumAttributeAtIndex, LLVMRemoveStringAttributeAtIndex};
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
 
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 use std::marker::PhantomData;
 use std::mem::forget;
 use std::fmt;
@@ -15,7 +15,7 @@ use std::fmt;
 use crate::attributes::{Attribute, AttributeLoc};
 use crate::basic_block::BasicBlock;
 use crate::module::Linkage;
-use crate::support::LLVMString;
+use crate::support::{to_c_str, LLVMString};
 use crate::types::{FunctionType, PointerType};
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValueEnum, GlobalValue, Value};
@@ -310,7 +310,7 @@ impl<'ctx> FunctionValue<'ctx> {
     }
 
     pub fn set_gc(self, gc: &str) {
-        let c_string = CString::new(gc).expect("Conversion to CString failed unexpectedly");
+        let c_string = to_c_str(gc);
 
         unsafe {
             LLVMSetGC(self.as_value_ref(), c_string.as_ptr())

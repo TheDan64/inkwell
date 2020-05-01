@@ -3,8 +3,6 @@ extern crate inkwell;
 use self::inkwell::context::Context;
 use self::inkwell::values::InstructionOpcode;
 
-use std::ffi::CString;
-
 #[test]
 fn test_basic_block_ordering() {
     let context = Context::create();
@@ -75,10 +73,10 @@ fn test_basic_block_ordering() {
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     {
-        assert_eq!(*basic_block.get_name(), *CString::new("entry").unwrap());
-        assert_eq!(*basic_block2.get_name(), *CString::new("block2").unwrap());
-        assert_eq!(*basic_block3.get_name(), *CString::new("block3").unwrap());
-        assert_eq!(*basic_block5.get_name(), *CString::new("block5").unwrap());
+        assert_eq!(basic_block.get_name().to_str(), Ok("entry"));
+        assert_eq!(basic_block2.get_name().to_str(), Ok("block2"));
+        assert_eq!(basic_block3.get_name().to_str(), Ok("block3"));
+        assert_eq!(basic_block5.get_name().to_str(), Ok("block5"));
     }
 }
 
@@ -92,7 +90,7 @@ fn test_get_basic_blocks() {
 
     let function = module.add_function("testing", fn_type, None);
 
-    assert_eq!(function.get_name(), &*CString::new("testing").unwrap());
+    assert_eq!(function.get_name().to_str(), Ok("testing"));
     assert_eq!(fn_type.get_return_type().unwrap().into_int_type().get_bit_width(), 1);
 
     assert!(function.get_last_basic_block().is_none());

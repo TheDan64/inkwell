@@ -5,6 +5,7 @@ use libc::c_char;
 use llvm_sys::core::{LLVMCreateMessage, LLVMDisposeMessage};
 use llvm_sys::support::LLVMLoadLibraryPermanently;
 
+use std::borrow::Cow;
 use std::error::Error;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::ffi::{CString, CStr};
@@ -135,7 +136,7 @@ pub unsafe fn shutdown_llvm() {
 }
 
 pub fn load_library_permanently(filename: &str) -> bool {
-    let filename = CString::new(filename).expect("Conversion to CString failed unexpectedly");
+    let filename = to_c_str(filename);
 
     unsafe {
         LLVMLoadLibraryPermanently(filename.as_ptr()) == 1
@@ -163,7 +164,7 @@ pub fn enable_llvm_pretty_stack_trace() {
     }
 }
 
-// DEPRECATED: Use llvm_enum attr instead
+#[deprecated = "Use llvm_enum attr instead"]
 macro_rules! enum_rename {
     ($(#[$enum_attrs:meta])* $enum_name:ident <=> $llvm_enum_name:ident {
         $($(#[$variant_attrs:meta])* $args:ident <=> $llvm_args:ident,)+
@@ -196,4 +197,37 @@ macro_rules! enum_rename {
             }
         }
     );
+}
+
+/// This function takes in a Rust string and either:
+///
+/// A) Finds a terminating null byte in the Rust string and can reference it directly like a C string.
+///
+/// B) Finds no null byte and allocates a new C string based on the input Rust string.
+pub(crate) fn to_c_str<'s>(mut s: &'s str) -> Cow<'s, CStr> {
+    if s.is_empty() {
+        s = "\0";
+    }
+
+    // Start from the end of the string as it's the most likely place to find a null byte
+    if s.chars().rev().find(|&ch| ch == '\0').is_none() {
+        return Cow::from(CString::new(s).expect("unreachable since null bytes are checked"));
+    }
+
+    unsafe {
+        Cow::from(CStr::from_ptr(s.as_ptr() as *const _))
+    }
+}
+
+#[test]
+fn test_to_c_str() {
+    // TODO: If we raise our MSRV to >= 1.42 we can use matches!() here or
+    // is_owned()/is_borrowed() if it ever gets stabilized.
+    if let Cow::Borrowed(_) = to_c_str("my string") {
+        panic!();
+    }
+
+    if let Cow::Owned(_) = to_c_str("my string\0") {
+        panic!();
+    }
 }

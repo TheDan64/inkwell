@@ -10,7 +10,6 @@ use self::inkwell::values::{InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID}
 use self::inkwell::comdat::ComdatSelectionKind;
 
 use std::convert::TryFrom;
-use std::ffi::CString;
 
 // TODO: Test GlobalValues used as PointerValues
 
@@ -97,21 +96,21 @@ fn test_set_get_name() {
     let vec_val = VectorType::const_vector(&[i8_val]);
     let ppc_f128_val = ppc_f128_type.const_float(0.0);
 
-    assert_eq!(bool_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(i8_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(i16_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(i32_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(i64_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(i128_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(f16_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(f32_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(f64_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(f128_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(ptr_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(array_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(struct_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(vec_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(ppc_f128_val.get_name(), &*CString::new("").unwrap());
+    assert_eq!(bool_val.get_name().to_str(), Ok(""));
+    assert_eq!(i8_val.get_name().to_str(), Ok(""));
+    assert_eq!(i16_val.get_name().to_str(), Ok(""));
+    assert_eq!(i32_val.get_name().to_str(), Ok(""));
+    assert_eq!(i64_val.get_name().to_str(), Ok(""));
+    assert_eq!(i128_val.get_name().to_str(), Ok(""));
+    assert_eq!(f16_val.get_name().to_str(), Ok(""));
+    assert_eq!(f32_val.get_name().to_str(), Ok(""));
+    assert_eq!(f64_val.get_name().to_str(), Ok(""));
+    assert_eq!(f128_val.get_name().to_str(), Ok(""));
+    assert_eq!(ptr_val.get_name().to_str(), Ok(""));
+    assert_eq!(array_val.get_name().to_str(), Ok(""));
+    assert_eq!(struct_val.get_name().to_str(), Ok(""));
+    assert_eq!(vec_val.get_name().to_str(), Ok(""));
+    assert_eq!(ppc_f128_val.get_name().to_str(), Ok(""));
 
     // LLVM Gem: You can't set names on constant values, so this doesn't do anything:
     bool_val.set_name("my_val");
@@ -130,21 +129,21 @@ fn test_set_get_name() {
     vec_val.set_name("my_val14");
     ppc_f128_val.set_name("my_val14");
 
-    assert_eq!(bool_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(i8_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(i16_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(i32_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(i64_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(i128_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(f16_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(f32_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(f64_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(f128_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(ptr_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(array_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(struct_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(vec_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(ppc_f128_val.get_name(), &*CString::new("").unwrap());
+    assert_eq!(bool_val.get_name().to_str(), Ok(""));
+    assert_eq!(i8_val.get_name().to_str(), Ok(""));
+    assert_eq!(i16_val.get_name().to_str(), Ok(""));
+    assert_eq!(i32_val.get_name().to_str(), Ok(""));
+    assert_eq!(i64_val.get_name().to_str(), Ok(""));
+    assert_eq!(i128_val.get_name().to_str(), Ok(""));
+    assert_eq!(f16_val.get_name().to_str(), Ok(""));
+    assert_eq!(f32_val.get_name().to_str(), Ok(""));
+    assert_eq!(f64_val.get_name().to_str(), Ok(""));
+    assert_eq!(f128_val.get_name().to_str(), Ok(""));
+    assert_eq!(ptr_val.get_name().to_str(), Ok(""));
+    assert_eq!(array_val.get_name().to_str(), Ok(""));
+    assert_eq!(struct_val.get_name().to_str(), Ok(""));
+    assert_eq!(vec_val.get_name().to_str(), Ok(""));
+    assert_eq!(ppc_f128_val.get_name().to_str(), Ok(""));
 
     let void_type = context.void_type();
     let ptr_type = bool_type.ptr_type(AddressSpace::Generic);
@@ -178,13 +177,13 @@ fn test_set_get_name() {
     let vec_param = function.get_nth_param(5).unwrap().into_vector_value();
     let phi_val = builder.build_phi(bool_type, "phi_node");
 
-    assert_eq!(int_param.get_name(), &*CString::new("").unwrap());
-    assert_eq!(float_param.get_name(), &*CString::new("").unwrap());
-    assert_eq!(struct_param.get_name(), &*CString::new("").unwrap());
-    assert_eq!(array_param.get_name(), &*CString::new("").unwrap());
-    assert_eq!(ptr_param.get_name(), &*CString::new("").unwrap());
-    assert_eq!(vec_param.get_name(), &*CString::new("").unwrap());
-    assert_eq!(phi_val.get_name(), &*CString::new("phi_node").unwrap());
+    assert_eq!(int_param.get_name().to_str(), Ok(""));
+    assert_eq!(float_param.get_name().to_str(), Ok(""));
+    assert_eq!(struct_param.get_name().to_str(), Ok(""));
+    assert_eq!(array_param.get_name().to_str(), Ok(""));
+    assert_eq!(ptr_param.get_name().to_str(), Ok(""));
+    assert_eq!(vec_param.get_name().to_str(), Ok(""));
+    assert_eq!(phi_val.get_name().to_str(), Ok("phi_node"));
 
     int_param.set_name("my_val");
     float_param.set_name("my_val2");
@@ -194,13 +193,13 @@ fn test_set_get_name() {
     vec_param.set_name("my_val6");
     phi_val.set_name("phi");
 
-    assert_eq!(int_param.get_name(), &*CString::new("my_val").unwrap());
-    assert_eq!(float_param.get_name(), &*CString::new("my_val2").unwrap());
-    assert_eq!(ptr_param.get_name(), &*CString::new("my_val3").unwrap());
-    assert_eq!(array_param.get_name(), &*CString::new("my_val4").unwrap());
-    assert_eq!(struct_param.get_name(), &*CString::new("my_val5").unwrap());
-    assert_eq!(vec_param.get_name(), &*CString::new("my_val6").unwrap());
-    assert_eq!(phi_val.get_name(), &*CString::new("phi").unwrap());
+    assert_eq!(int_param.get_name().to_str(), Ok("my_val"));
+    assert_eq!(float_param.get_name().to_str(), Ok("my_val2"));
+    assert_eq!(ptr_param.get_name().to_str(), Ok("my_val3"));
+    assert_eq!(array_param.get_name().to_str(), Ok("my_val4"));
+    assert_eq!(struct_param.get_name().to_str(), Ok("my_val5"));
+    assert_eq!(vec_param.get_name().to_str(), Ok("my_val6"));
+    assert_eq!(phi_val.get_name().to_str(), Ok("phi"));
 
     // TODO: Test globals, supposedly constant globals work?
 }
@@ -413,7 +412,7 @@ fn test_metadata() {
 
     assert_eq!(md_string.get_node_size(), 0);
     assert_eq!(md_string.get_node_values().len(), 0);
-    assert_eq!(md_string.get_string_value().unwrap(), &*CString::new("lots of metadata here").unwrap());
+    assert_eq!(md_string.get_string_value().unwrap().to_str(), Ok("lots of metadata here"));
 
     let bool_type = context.bool_type();
     // let i8_type = context.i8_type();
@@ -563,27 +562,27 @@ fn test_floats() {
     let f64_two = f64_type.const_float(2.);
     let neg_two = f64_two.const_neg();
 
-    assert_eq!(*neg_two.print_to_string(), *CString::new("double -2.000000e+00").unwrap());
+    assert_eq!(neg_two.print_to_string().to_str(), Ok("double -2.000000e+00"));
 
     let neg_three = neg_two.const_sub(f64_one);
 
-    assert_eq!(*neg_three.print_to_string(), *CString::new("double -3.000000e+00").unwrap());
+    assert_eq!(neg_three.print_to_string().to_str(), Ok("double -3.000000e+00"));
 
     let pos_six = neg_three.const_mul(neg_two);
 
-    assert_eq!(*pos_six.print_to_string(), *CString::new("double 6.000000e+00").unwrap());
+    assert_eq!(pos_six.print_to_string().to_str(), Ok("double 6.000000e+00"));
 
     let pos_eight = pos_six.const_add(f64_two);
 
-    assert_eq!(*pos_eight.print_to_string(), *CString::new("double 8.000000e+00").unwrap());
+    assert_eq!(pos_eight.print_to_string().to_str(), Ok("double 8.000000e+00"));
 
     let pos_four = pos_eight.const_div(f64_two);
 
-    assert_eq!(*pos_four.print_to_string(), *CString::new("double 4.000000e+00").unwrap());
+    assert_eq!(pos_four.print_to_string().to_str(), Ok("double 4.000000e+00"));
 
     let rem = pos_six.const_remainder(pos_four);
 
-    assert_eq!(*rem.print_to_string(), *CString::new("double 2.000000e+00").unwrap());
+    assert_eq!(rem.print_to_string().to_str(), Ok("double 2.000000e+00"));
 
     assert!(f64_one.const_compare(FloatPredicate::PredicateFalse, f64_two).is_null());
     assert!(!f64_one.const_compare(FloatPredicate::PredicateTrue, f64_two).is_null());
@@ -634,7 +633,7 @@ fn test_value_from_string() {
     let i8_type = context.i8_type();
     let i8_val = i8_type.const_int_from_string("0121", StringRadix::Decimal).unwrap();
 
-    assert_eq!(*i8_val.print_to_string(), *CString::new("i8 121").unwrap());
+    assert_eq!(i8_val.print_to_string().to_str(), Ok("i8 121"));
 
     let i8_val = i8_type.const_int_from_string("0121", StringRadix::try_from(10).unwrap()).unwrap();
 
@@ -733,7 +732,7 @@ fn test_globals() {
     assert!(!global.is_externally_initialized());
     // REVIEW: Segfaults in 4.0 -> 7.0
     #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0", feature = "llvm9-0", feature = "llvm10-0")))]
-    assert_eq!(global.get_section(), &*CString::new("").unwrap());
+    assert_eq!(global.get_section().to_str(), Ok(""));
     assert_eq!(global.get_dll_storage_class(), DLLStorageClass::default());
     assert_eq!(global.get_visibility(), GlobalVisibility::default());
     assert_eq!(global.get_linkage(), External);
@@ -764,7 +763,7 @@ fn test_globals() {
     assert!(global.has_unnamed_addr());
     assert!(global.is_constant());
     assert!(!global.is_declaration());
-    assert_eq!(global.get_section(), &*CString::new("not sure what goes here").unwrap());
+    assert_eq!(global.get_section().to_str(), Ok("not sure what goes here"));
 
     // Either linkage is non-local or visibility is default.
     global.set_visibility(GlobalVisibility::Default);
@@ -877,7 +876,7 @@ fn test_phi_values() {
     assert!(phi.as_basic_value().is_int_value());
     assert_eq!(phi.as_instruction().get_opcode(), Phi);
     assert_eq!(phi.count_incoming(), 0);
-    assert_eq!(*phi.print_to_string(), *CString::new("  %if = phi i1 ").unwrap());
+    assert_eq!(phi.print_to_string().to_str(), Ok("  %if = phi i1 "));
 
     phi.add_incoming(&[
         (&false_val, then_block),
@@ -885,7 +884,7 @@ fn test_phi_values() {
     ]);
 
     assert_eq!(phi.count_incoming(), 2);
-    assert_eq!(*phi.print_to_string(), *CString::new("  %if = phi i1 [ false, %then ], [ true, %else ]").unwrap());
+    assert_eq!(phi.print_to_string().to_str(), Ok("  %if = phi i1 [ false, %then ], [ true, %else ]"));
 
     let (then_val, then_bb) = phi.get_incoming(0).unwrap();
     let (else_val, else_bb) = phi.get_incoming(1).unwrap();
@@ -921,21 +920,21 @@ fn test_allocations() {
 
     let stack_ptr = builder.build_alloca(i32_type, "stack_ptr");
 
-    assert_eq!(*stack_ptr.get_type().print_to_string(), *CString::new("i32*").unwrap());
+    assert_eq!(stack_ptr.get_type().print_to_string().to_str(), Ok("i32*"));
 
     let stack_array = builder.build_array_alloca(i32_type, i32_three, "stack_array");
 
-    assert_eq!(*stack_array.get_type().print_to_string(), *CString::new("i32*").unwrap());
+    assert_eq!(stack_array.get_type().print_to_string().to_str(), Ok("i32*"));
 
     let heap_ptr = builder.build_malloc(i32_type, "heap_ptr");
 
     assert!(heap_ptr.is_ok());
-    assert_eq!(*heap_ptr.unwrap().get_type().print_to_string(), *CString::new("i32*").unwrap());
+    assert_eq!(heap_ptr.unwrap().get_type().print_to_string().to_str(), Ok("i32*"));
 
     let heap_array = builder.build_array_malloc(i32_type, i32_three, "heap_array");
 
     assert!(heap_array.is_ok());
-    assert_eq!(*heap_array.unwrap().get_type().print_to_string(), *CString::new("i32*").unwrap());
+    assert_eq!(heap_array.unwrap().get_type().print_to_string().to_str(), Ok("i32*"));
 
     let bad_malloc_res = builder.build_malloc(unsized_type, "");
 
@@ -972,15 +971,15 @@ fn test_string_values() {
     assert!(string_null.is_const_string());
     assert_eq!(string.get_type().get_element_type().into_int_type(), i8_type);
     assert_eq!(string_null.get_type().get_element_type().into_int_type(), i8_type);
-    assert_eq!(*string.get_string_constant(), *CString::new("my_string").unwrap());
-    assert_eq!(*string_null.get_string_constant(), *CString::new("my_string").unwrap());
+    assert_eq!(string.get_string_constant().to_str(), Ok("my_string"));
+    assert_eq!(string_null.get_string_constant().to_str(), Ok("my_string"));
 
     let i8_val = i8_type.const_int(33, false);
     let i8_val2 = i8_type.const_int(43, false);
     let non_string_vec_i8 = VectorType::const_vector(&[i8_val, i8_val2]);
 
     // TODOC: Will still interpret vec as string even if not generated with const_string:
-    assert_eq!(*non_string_vec_i8.get_string_constant(), *CString::new("!+").unwrap());
+    assert_eq!(non_string_vec_i8.get_string_constant().to_str(), Ok("!+"));
 
     let i32_type = context.i32_type();
     let i32_val = i32_type.const_int(33, false);
@@ -989,7 +988,7 @@ fn test_string_values() {
 
     // TODOC: Will still interpret vec with non i8 but in unexpected ways:
     // We may want to restrict this to VectorValue<IntValue<i8>>...
-    assert_eq!(*non_string_vec_i32.get_string_constant(), *CString::new("!").unwrap());
+    assert_eq!(non_string_vec_i32.get_string_constant().to_str(), Ok("!"));
 
     // TODO: Test get_string_constant on non const...
 }
@@ -1038,7 +1037,7 @@ fn test_consts() {
     assert!(array_val.is_const());
     assert!(arbitrary_precision_int.is_const());
 
-    assert_eq!(*arbitrary_precision_int.print_to_string(), *CString::new("i64 1").unwrap());
+    assert_eq!(arbitrary_precision_int.print_to_string().to_str(), Ok("i64 1"));
 
     assert!(!vec_val.is_const_string());
     assert!(!vec_val.is_constant_vector());
@@ -1112,7 +1111,7 @@ fn test_function_value_to_global_to_pointer() {
     let _fn_ptr_type = fn_ptr_value.get_type();
 
     assert!(!fn_ptr_value.is_null());
-    assert_eq!(*fn_ptr_value.get_name(), *CString::new("my_func").unwrap());
+    assert_eq!(fn_ptr_value.get_name().to_str(), Ok("my_func"));
     assert!(module.verify().is_ok());
 }
 

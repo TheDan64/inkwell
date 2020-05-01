@@ -7,7 +7,6 @@ use self::inkwell::module::Module;
 use self::inkwell::targets::{Target, TargetTriple};
 
 use std::env::temp_dir;
-use std::ffi::CString;
 use std::fs::{File, remove_file};
 use std::io::Read;
 use std::path::Path;
@@ -305,7 +304,7 @@ fn test_print_to_file() {
 
     let bad_path = Path::new("/tmp/some/silly/path/that/sure/doesn't/exist");
 
-    assert_eq!(*module.print_to_file(bad_path).unwrap_err(), *CString::new("No such file or directory").unwrap());
+    assert_eq!(module.print_to_file(bad_path).unwrap_err().to_str(), Ok("No such file or directory"));
 
     let mut temp_path = temp_dir();
 
@@ -322,19 +321,19 @@ fn test_get_set_target() {
     let triple = TargetTriple::create("x86_64-pc-linux-gnu");
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
-    assert_eq!(*module.get_name(), *CString::new("mod").unwrap());
+    assert_eq!(module.get_name().to_str(), Ok("mod"));
     assert_eq!(module.get_triple(), TargetTriple::create(""));
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
                   feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
-    assert_eq!(*module.get_source_file_name(), *CString::new("mod").unwrap());
+    assert_eq!(module.get_source_file_name().to_str(), Ok("mod"));
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     module.set_name("mod2");
     module.set_triple(&triple);
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
-    assert_eq!(*module.get_name(), *CString::new("mod2").unwrap());
+    assert_eq!(module.get_name().to_str(), Ok("mod2"));
     assert_eq!(module.get_triple(), triple);
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
@@ -342,8 +341,8 @@ fn test_get_set_target() {
     {
         module.set_source_file_name("foo.rs");
 
-        assert_eq!(*module.get_source_file_name(), *CString::new("foo.rs").unwrap());
-        assert_eq!(*module.get_name(), *CString::new("mod2").unwrap());
+        assert_eq!(module.get_source_file_name().to_str(), Ok("foo.rs"));
+        assert_eq!(module.get_name().to_str(), Ok("mod2"));
     }
 }
 
@@ -397,9 +396,9 @@ fn test_linking_modules() {
     // EE owned module links in unowned module which has
     // another definition for the same funciton name, "f2"
     #[cfg(feature = "llvm3-6")] // Likely a LLVM bug that no error message is produced in 3-6
-    assert_eq!(*module.link_in_module(module5).unwrap_err(), *CString::new("").unwrap());
+    assert_eq!(module.link_in_module(module5).unwrap_err().to_str(), Ok(""));
     #[cfg(not(feature = "llvm3-6"))]
-    assert_eq!(*module.link_in_module(module5).unwrap_err(), *CString::new("Linking globals named \'f2\': symbol multiply defined!").unwrap());
+    assert_eq!(module.link_in_module(module5).unwrap_err().to_str(), Ok("Linking globals named \'f2\': symbol multiply defined!"));
 
     let module6 = context.create_module("mod5");
     let fn_val4 = module6.add_function("f4", fn_type, None);

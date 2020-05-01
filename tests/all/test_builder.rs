@@ -2,7 +2,6 @@ use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, OptimizationLevel};
 use inkwell::context::Context;
 use inkwell::values::BasicValue;
 
-// use std::ffi::CString;
 use std::ptr::null;
 
 #[test]

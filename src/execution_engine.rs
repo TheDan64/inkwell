@@ -3,14 +3,13 @@ use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecution
 
 use crate::context::Context;
 use crate::module::Module;
-use crate::support::LLVMString;
+use crate::support::{to_c_str, LLVMString};
 use crate::targets::TargetData;
 use crate::values::{AnyValue, AsValueRef, FunctionValue, GenericValue};
 
 use std::error::Error;
 use std::rc::Rc;
 use std::ops::Deref;
-use std::ffi::CString;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::marker::PhantomData;
 use std::mem::{forget, transmute_copy, size_of, MaybeUninit};
@@ -329,7 +328,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
         #[cfg(any(feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0"))]
         self.get_function_value(fn_name)?;
 
-        let c_string = CString::new(fn_name).expect("Conversion to CString failed unexpectedly");
+        let c_string = to_c_str(fn_name);
         let address = unsafe {
             LLVMGetFunctionAddress(self.execution_engine_inner(), c_string.as_ptr())
         };
@@ -360,7 +359,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
             return Err(FunctionLookupError::JITNotEnabled);
         }
 
-        let c_string = CString::new(fn_name).expect("Conversion to CString failed unexpectedly");
+        let c_string = to_c_str(fn_name);
         let mut function = MaybeUninit::uninit();
 
         let code = unsafe {
@@ -392,7 +391,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
     // to ensure that doesn't happen by defining their function correctly.
     // SubType: Only for JIT EEs?
     pub unsafe fn run_function_as_main(&self, function: FunctionValue<'ctx>, args: &[&str]) -> c_int {
-        let cstring_args: Vec<CString> = args.iter().map(|&arg| CString::new(arg).expect("Conversion to CString failed unexpectedly")).collect();
+        let cstring_args: Vec<_> = args.iter().map(|&arg| to_c_str(arg)).collect();
         let raw_args: Vec<*const _> = cstring_args.iter().map(|arg| arg.as_ptr()).collect();
 
         let environment_variables = vec![]; // TODO: Support envp. Likely needs to be null terminated
@@ -626,7 +625,7 @@ pub mod experimental {
 
         pub fn get_mangled_symbol(&self, symbol: &str) -> MangledSymbol {
             let mut mangled_symbol = MaybeUninit::uninit();
-            let c_symbol = CString::new(symbol).expect("to find a valid CString");
+            let c_symbol = to_c_str(symbol);
 
             unsafe { LLVMOrcGetMangledSymbol(self.0, mangled_symbol.as_mut_ptr(), c_symbol.as_ptr()) };
 

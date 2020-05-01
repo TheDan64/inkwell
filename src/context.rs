@@ -17,12 +17,11 @@ use crate::basic_block::BasicBlock;
 use crate::builder::Builder;
 use crate::memory_buffer::MemoryBuffer;
 use crate::module::Module;
-use crate::support::LLVMString;
+use crate::support::{to_c_str, LLVMString};
 use crate::targets::TargetData;
 use crate::types::{BasicTypeEnum, FloatType, IntType, StructType, VoidType, AsTypeRef};
 use crate::values::{AsValueRef, BasicMetadataValueEnum, BasicValueEnum, FunctionValue, StructValue, MetadataValue, VectorValue};
 
-use std::ffi::CString;
 use std::marker::PhantomData;
 use std::mem::{forget, ManuallyDrop};
 use std::ops::Deref;
@@ -140,7 +139,7 @@ impl Context {
     /// let module = context.create_module("my_module");
     /// ```
     pub fn create_module(&self, name: &str) -> Module {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+        let c_string = to_c_str(name);
 
         let module = unsafe {
             LLVMModuleCreateWithNameInContext(c_string.as_ptr(), self.context)
@@ -565,7 +564,7 @@ impl Context {
     /// assert_eq!(struct_type.get_field_types(), &[]);
     /// ```
     pub fn opaque_struct_type(&self, name: &str) -> StructType {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+        let c_string = to_c_str(name);
 
         let struct_type = unsafe {
             LLVMStructCreateNamed(self.context, c_string.as_ptr())
@@ -624,7 +623,7 @@ impl Context {
     /// assert_eq!(fn_value.get_last_basic_block().unwrap(), last_basic_block);
     /// ```
     pub fn append_basic_block(&self, function: FunctionValue, name: &str) -> BasicBlock {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+        let c_string = to_c_str(name);
 
         let bb = unsafe {
             LLVMAppendBasicBlockInContext(self.context, function.as_value_ref(), c_string.as_ptr())
@@ -692,7 +691,7 @@ impl Context {
     /// assert_eq!(fn_value.get_last_basic_block().unwrap(), entry_basic_block);
     /// ```
     pub fn prepend_basic_block(&self, basic_block: BasicBlock, name: &str) -> BasicBlock {
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+        let c_string = to_c_str(name);
 
         let bb = unsafe {
             LLVMInsertBasicBlockInContext(self.context, basic_block.basic_block, c_string.as_ptr())
@@ -773,7 +772,7 @@ impl Context {
     /// ```
     // REVIEW: Seems to be unassigned to anything
     pub fn metadata_string(&self, string: &str) -> MetadataValue {
-        let c_string = CString::new(string).expect("Conversion to CString failed unexpectedly");
+        let c_string = to_c_str(string);
 
         let metadata_value = unsafe {
             LLVMMDStringInContext(self.context, c_string.as_ptr(), string.len() as u32)

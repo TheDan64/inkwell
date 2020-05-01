@@ -424,7 +424,6 @@ impl<'ctx> BasicBlock<'ctx> {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
-    /// use std::ffi::CString;
     ///
     /// let context = Context::create();
     /// let builder = context.create_builder();
@@ -434,7 +433,7 @@ impl<'ctx> BasicBlock<'ctx> {
     /// let fn_val = module.add_function("my_fn", fn_type, None);
     /// let bb = context.append_basic_block(fn_val, "entry");
     ///
-    /// assert_eq!(*bb.get_name(), *CString::new("entry").unwrap());
+    /// assert_eq!(bb.get_name().to_str(), Ok("entry"));
     /// ```
     #[llvm_versions(3.9..=latest)]
     pub fn get_name(&self) -> &CStr {
