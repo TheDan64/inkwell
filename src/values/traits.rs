@@ -88,6 +88,11 @@ pub trait BasicValue<'ctx>: AnyValue<'ctx> {
         Value::new(self.as_value_ref()).get_first_use()
     }
 
+    /// Sets the name of a `BasicValue`. If the value is a constant, this is a noop.
+    fn set_name(&self, name: &str) {
+        Value::new(self.as_value_ref()).set_name(name)
+    }
+
     // REVIEW: Possible encompassing methods to implement:
     // get/set metadata
 }

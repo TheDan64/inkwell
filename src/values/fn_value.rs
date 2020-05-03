@@ -206,6 +206,7 @@ impl<'ctx> FunctionValue<'ctx> {
         BasicBlock::new(bb)
     }
 
+    /// Gets the name of a `FunctionValue`.
     pub fn get_name(&self) -> &CStr {
         self.fn_value.get_name()
     }

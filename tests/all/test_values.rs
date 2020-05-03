@@ -1,13 +1,11 @@
-extern crate inkwell;
-
-use self::inkwell::{DLLStorageClass, FloatPredicate, GlobalVisibility, ThreadLocalMode, AddressSpace};
-use self::inkwell::attributes::AttributeLoc;
-use self::inkwell::context::Context;
-use self::inkwell::module::Linkage::*;
-use self::inkwell::types::{StringRadix, VectorType};
-use self::inkwell::values::{InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
+use inkwell::{DLLStorageClass, FloatPredicate, GlobalVisibility, ThreadLocalMode, AddressSpace};
+use inkwell::attributes::AttributeLoc;
+use inkwell::context::Context;
+use inkwell::module::Linkage::*;
+use inkwell::types::{StringRadix, VectorType};
+use inkwell::values::{BasicValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
 #[llvm_versions(7.0..=latest)]
-use self::inkwell::comdat::ComdatSelectionKind;
+use inkwell::comdat::ComdatSelectionKind;
 
 use std::convert::TryFrom;
 
@@ -705,7 +703,7 @@ fn test_global_byte_array() {
 #[test]
 fn test_globals() {
     #[llvm_versions(7.0..=latest)]
-    use self::inkwell::values::UnnamedAddress;
+    use inkwell::values::UnnamedAddress;
 
     let context = Context::create();
     let module = context.create_module("my_mod");
@@ -730,6 +728,7 @@ fn test_globals() {
     assert!(global.is_declaration());
     assert!(!global.has_unnamed_addr());
     assert!(!global.is_externally_initialized());
+    assert_eq!(global.get_name().to_str(), Ok("my_global"));
     // REVIEW: Segfaults in 4.0 -> 7.0
     #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0", feature = "llvm9-0", feature = "llvm10-0")))]
     assert_eq!(global.get_section().to_str(), Ok(""));
@@ -739,6 +738,12 @@ fn test_globals() {
     assert_eq!(module.get_first_global().unwrap(), global);
     assert_eq!(module.get_last_global().unwrap(), global);
     assert_eq!(module.get_global("my_global").unwrap(), global);
+
+    global.set_name("glob");
+
+    assert_eq!(global.get_name().to_str(), Ok("glob"));
+    assert!(module.get_global("my_global").is_none());
+    assert_eq!(module.get_global("glob").unwrap(), global);
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
                   feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]

@@ -26,7 +26,7 @@ use self::inkwell::context::Context;
 use self::inkwell::module::Module;
 use self::inkwell::passes::PassManager;
 use self::inkwell::types::BasicTypeEnum;
-use self::inkwell::values::{BasicValueEnum, FloatValue, FunctionValue, PointerValue};
+use self::inkwell::values::{BasicValue, BasicValueEnum, FloatValue, FunctionValue, PointerValue};
 use self::inkwell::{OptimizationLevel, FloatPredicate};
 
 use crate::Token::*;

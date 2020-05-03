@@ -21,12 +21,10 @@ impl<'ctx> PointerValue<'ctx> {
         }
     }
 
+    /// Gets the name of a `StructValue`. If the value is a constant, this will
+    /// return an empty string.
     pub fn get_name(&self) -> &CStr {
         self.ptr_value.get_name()
-    }
-
-    pub fn set_name(self, name: &str) {
-        self.ptr_value.set_name(name);
     }
 
     pub fn get_type(self) -> PointerType<'ctx> {

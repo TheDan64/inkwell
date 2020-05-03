@@ -37,6 +37,11 @@ impl<'ctx> GlobalValue<'ctx> {
         }
     }
 
+    /// Gets the name of a `GlobalValue`.
+    pub fn get_name(&self) -> &CStr {
+        self.global_value.get_name()
+    }
+
     pub fn get_previous_global(self) -> Option<GlobalValue<'ctx>> {
         let value = unsafe {
             LLVMGetPreviousGlobal(self.as_value_ref())
