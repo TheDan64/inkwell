@@ -39,16 +39,14 @@ impl<'ctx> FunctionValue<'ctx> {
     }
 
     pub fn get_linkage(self) -> Linkage {
-        let linkage = unsafe {
-            LLVMGetLinkage(self.as_value_ref())
-        };
-
-        Linkage::new(linkage)
+        unsafe {
+            LLVMGetLinkage(self.as_value_ref()).into()
+        }
     }
 
     pub fn set_linkage(self, linkage: Linkage) {
         unsafe {
-            LLVMSetLinkage(self.as_value_ref(), linkage.as_llvm_enum())
+            LLVMSetLinkage(self.as_value_ref(), linkage.into())
         }
     }
 

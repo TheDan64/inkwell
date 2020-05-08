@@ -105,7 +105,7 @@ impl TryFrom<u32> for AddressSpace {
 // REVIEW: Maybe this belongs in some sort of prelude?
 /// This enum defines how to compare a `left` and `right` `IntValue`.
 #[llvm_enum(LLVMIntPredicate)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum IntPredicate {
     /// Equal
     #[llvm_variant(LLVMIntEQ)]
@@ -320,12 +320,15 @@ impl Default for OptimizationLevel {
     }
 }
 
-enum_rename!{
-    GlobalVisibility <=> LLVMVisibility {
-        Default <=> LLVMDefaultVisibility,
-        Hidden <=> LLVMHiddenVisibility,
-        Protected <=> LLVMProtectedVisibility,
-    }
+#[llvm_enum(LLVMVisibility)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum GlobalVisibility {
+    #[llvm_variant(LLVMDefaultVisibility)]
+    Default,
+    #[llvm_variant(LLVMHiddenVisibility)]
+    Hidden,
+    #[llvm_variant(LLVMProtectedVisibility)]
+    Protected,
 }
 
 impl Default for GlobalVisibility {
@@ -365,12 +368,15 @@ impl ThreadLocalMode {
     }
 }
 
-enum_rename! {
-    DLLStorageClass <=> LLVMDLLStorageClass {
-        Default <=> LLVMDefaultStorageClass,
-        Import <=> LLVMDLLImportStorageClass,
-        Export <=> LLVMDLLExportStorageClass,
-    }
+#[llvm_enum(LLVMDLLStorageClass)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum DLLStorageClass {
+    #[llvm_variant(LLVMDefaultStorageClass)]
+    Default,
+    #[llvm_variant(LLVMDLLImportStorageClass)]
+    Import,
+    #[llvm_variant(LLVMDLLExportStorageClass)]
+    Export,
 }
 
 impl Default for DLLStorageClass {

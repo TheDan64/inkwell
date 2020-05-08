@@ -164,41 +164,6 @@ pub fn enable_llvm_pretty_stack_trace() {
     }
 }
 
-#[deprecated = "Use llvm_enum attr instead"]
-macro_rules! enum_rename {
-    ($(#[$enum_attrs:meta])* $enum_name:ident <=> $llvm_enum_name:ident {
-        $($(#[$variant_attrs:meta])* $args:ident <=> $llvm_args:ident,)+
-    }) => (
-        #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
-        $(#[$enum_attrs])*
-        pub enum $enum_name {
-            $(
-                $(#[$variant_attrs])*
-                $args,
-            )*
-        }
-
-        impl $enum_name {
-            #[allow(dead_code)]
-            pub(crate) fn new(llvm_enum: $llvm_enum_name) -> Self {
-                match llvm_enum {
-                    $(
-                        $llvm_enum_name::$llvm_args => $enum_name::$args,
-                    )*
-                }
-            }
-
-            pub(crate) fn as_llvm_enum(&self) -> $llvm_enum_name {
-                match *self {
-                    $(
-                        $enum_name::$args => $llvm_enum_name::$llvm_args,
-                    )*
-                }
-            }
-        }
-    );
-}
-
 /// This function takes in a Rust string and either:
 ///
 /// A) Finds a terminating null byte in the Rust string and can reference it directly like a C string.

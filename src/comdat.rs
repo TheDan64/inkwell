@@ -5,20 +5,25 @@
 use llvm_sys::comdat::{LLVMComdatSelectionKind, LLVMSetComdatSelectionKind, LLVMGetComdatSelectionKind};
 use llvm_sys::prelude::LLVMComdatRef;
 
-enum_rename!{
-    /// Determines how linker conflicts are to be resolved.
-    ComdatSelectionKind <=> LLVMComdatSelectionKind {
-        /// The linker may choose any COMDAT.
-        Any <=> LLVMAnyComdatSelectionKind,
-        /// The data referenced by the COMDAT must be the same.
-        ExactMatch <=> LLVMExactMatchComdatSelectionKind,
-        /// The linker will choose the largest COMDAT.
-        Largest <=> LLVMLargestComdatSelectionKind,
-        /// No other Module may specify this COMDAT.
-        NoDuplicates <=> LLVMNoDuplicatesComdatSelectionKind,
-        /// The data referenced by the COMDAT must be the same size.
-        SameSize <=> LLVMSameSizeComdatSelectionKind,
-    }
+#[llvm_enum(LLVMComdatSelectionKind)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+/// Determines how linker conflicts are to be resolved.
+pub enum ComdatSelectionKind {
+    /// The linker may choose any COMDAT.
+    #[llvm_variant(LLVMAnyComdatSelectionKind)]
+    Any,
+    /// The data referenced by the COMDAT must be the same.
+    #[llvm_variant(LLVMExactMatchComdatSelectionKind)]
+    ExactMatch,
+    /// The linker will choose the largest COMDAT.
+    #[llvm_variant(LLVMLargestComdatSelectionKind)]
+    Largest,
+    /// No other Module may specify this COMDAT.
+    #[llvm_variant(LLVMNoDuplicatesComdatSelectionKind)]
+    NoDuplicates,
+    /// The data referenced by the COMDAT must be the same size.
+    #[llvm_variant(LLVMSameSizeComdatSelectionKind)]
+    SameSize,
 }
 
 /// A `Comdat` determines how to resolve duplicate sections when linking.
@@ -44,7 +49,7 @@ impl Comdat {
     /// Sets what kind of `Comdat` this should be.
     pub fn set_selection_kind(self, kind: ComdatSelectionKind) {
         unsafe {
-            LLVMSetComdatSelectionKind(self.0, kind.as_llvm_enum())
+            LLVMSetComdatSelectionKind(self.0, kind.into())
         }
     }
 }

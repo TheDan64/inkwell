@@ -42,92 +42,109 @@ use crate::values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
 #[llvm_versions(7.0..=latest)]
 use crate::values::BasicValue;
 
-enum_rename!{
-    /// This enum defines how to link a global variable or function in a module. The variant documenation is
-    /// mostly taken straight from LLVM's own documentation except for some minor clarification.
-    ///
-    /// It is illegal for a function declaration to have any linkage type other than external or extern_weak.
-    ///
-    /// All Global Variables, Functions and Aliases can have one of the following DLL storage class: `DLLImport`
-    /// & `DLLExport`.
-    // REVIEW: Maybe this should go into it's own module?
-    Linkage <=> LLVMLinkage {
-        /// `Appending` linkage may only be applied to global variables of pointer to array type. When two global
-        /// variables with appending linkage are linked together, the two global arrays are appended together.
-        /// This is the LLVM, typesafe, equivalent of having the system linker append together "sections" with
-        /// identical names when .o files are linked. Unfortunately this doesn't correspond to any feature in .o
-        /// files, so it can only be used for variables like llvm.global_ctors which llvm interprets specially.
-        Appending <=> LLVMAppendingLinkage,
-        /// Globals with `AvailableExternally` linkage are never emitted into the object file corresponding to
-        /// the LLVM module. From the linker's perspective, an `AvailableExternally` global is equivalent to an
-        /// external declaration. They exist to allow inlining and other optimizations to take place given
-        /// knowledge of the definition of the global, which is known to be somewhere outside the module. Globals
-        /// with `AvailableExternally` linkage are allowed to be discarded at will, and allow inlining and other
-        /// optimizations. This linkage type is only allowed on definitions, not declarations.
-        AvailableExternally <=> LLVMAvailableExternallyLinkage,
-        /// `Common` linkage is most similar to "weak" linkage, but they are used for tentative definitions
-        /// in C, such as "int X;" at global scope. Symbols with Common linkage are merged in the same way as
-        /// weak symbols, and they may not be deleted if unreferenced. `Common` symbols may not have an explicit
-        /// section, must have a zero initializer, and may not be marked 'constant'. Functions and aliases may
-        /// not have `Common` linkage.
-        Common <=> LLVMCommonLinkage,
-        /// `DLLExport` causes the compiler to provide a global pointer to a pointer in a DLL, so that it can be
-        /// referenced with the dllimport attribute. On Microsoft Windows targets, the pointer name is formed by
-        /// combining __imp_ and the function or variable name. Since this storage class exists for defining a dll
-        /// interface, the compiler, assembler and linker know it is externally referenced and must refrain from
-        /// deleting the symbol.
-        DLLExport <=> LLVMDLLExportLinkage,
-        /// `DLLImport` causes the compiler to reference a function or variable via a global pointer to a pointer
-        /// that is set up by the DLL exporting the symbol. On Microsoft Windows targets, the pointer name is
-        /// formed by combining __imp_ and the function or variable name.
-        DLLImport <=> LLVMDLLImportLinkage,
-        /// If none of the other identifiers are used, the global is externally visible, meaning that it
-        /// participates in linkage and can be used to resolve external symbol references.
-        External <=> LLVMExternalLinkage,
-        /// The semantics of this linkage follow the ELF object file model: the symbol is weak until linked,
-        /// if not linked, the symbol becomes null instead of being an undefined reference.
-        ExternalWeak <=> LLVMExternalWeakLinkage,
-        /// FIXME: Unknown linkage type
-        Ghost <=> LLVMGhostLinkage,
-        /// Similar to private, but the value shows as a local symbol (STB_LOCAL in the case of ELF) in the object
-        /// file. This corresponds to the notion of the 'static' keyword in C.
-        Internal <=> LLVMInternalLinkage,
-        /// FIXME: Unknown linkage type
-        LinkerPrivate <=> LLVMLinkerPrivateLinkage,
-        /// FIXME: Unknown linkage type
-        LinkerPrivateWeak <=> LLVMLinkerPrivateWeakLinkage,
-        /// Globals with `LinkOnceAny` linkage are merged with other globals of the same name when linkage occurs.
-        /// This can be used to implement some forms of inline functions, templates, or other code which must be
-        /// generated in each translation unit that uses it, but where the body may be overridden with a more
-        /// definitive definition later. Unreferenced `LinkOnceAny` globals are allowed to be discarded. Note that
-        /// `LinkOnceAny` linkage does not actually allow the optimizer to inline the body of this function into
-        /// callers because it doesn’t know if this definition of the function is the definitive definition within
-        /// the program or whether it will be overridden by a stronger definition. To enable inlining and other
-        /// optimizations, use `LinkOnceODR` linkage.
-        LinkOnceAny <=> LLVMLinkOnceAnyLinkage,
-        /// FIXME: Unknown linkage type
-        LinkOnceODRAutoHide <=> LLVMLinkOnceODRAutoHideLinkage,
-        /// Some languages allow differing globals to be merged, such as two functions with different semantics.
-        /// Other languages, such as C++, ensure that only equivalent globals are ever merged (the "one definition
-        /// rule" — "ODR"). Such languages can use the `LinkOnceODR` and `WeakODR` linkage types to indicate that
-        /// the global will only be merged with equivalent globals. These linkage types are otherwise the same
-        /// as their non-odr versions.
-        LinkOnceODR <=> LLVMLinkOnceODRLinkage,
-        /// Global values with `Private` linkage are only directly accessible by objects in the current module.
-        /// In particular, linking code into a module with a private global value may cause the private to be
-        /// renamed as necessary to avoid collisions. Because the symbol is private to the module, all references
-        /// can be updated. This doesn’t show up in any symbol table in the object file.
-        Private <=> LLVMPrivateLinkage,
-        /// `WeakAny` linkage has the same merging semantics as linkonce linkage, except that unreferenced globals
-        /// with weak linkage may not be discarded. This is used for globals that are declared WeakAny in C source code.
-        WeakAny <=> LLVMWeakAnyLinkage,
-        /// Some languages allow differing globals to be merged, such as two functions with different semantics.
-        /// Other languages, such as C++, ensure that only equivalent globals are ever merged (the "one definition
-        /// rule" — "ODR"). Such languages can use the `LinkOnceODR` and `WeakODR` linkage types to indicate that
-        /// the global will only be merged with equivalent globals. These linkage types are otherwise the same
-        /// as their non-odr versions.
-        WeakODR <=> LLVMWeakODRLinkage,
-    }
+#[llvm_enum(LLVMLinkage)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+/// This enum defines how to link a global variable or function in a module. The variant documenation is
+/// mostly taken straight from LLVM's own documentation except for some minor clarification.
+///
+/// It is illegal for a function declaration to have any linkage type other than external or extern_weak.
+///
+/// All Global Variables, Functions and Aliases can have one of the following DLL storage class: `DLLImport`
+/// & `DLLExport`.
+// REVIEW: Maybe this should go into it's own module?
+pub enum Linkage {
+    /// `Appending` linkage may only be applied to global variables of pointer to array type. When two global
+    /// variables with appending linkage are linked together, the two global arrays are appended together.
+    /// This is the LLVM, typesafe, equivalent of having the system linker append together "sections" with
+    /// identical names when .o files are linked. Unfortunately this doesn't correspond to any feature in .o
+    /// files, so it can only be used for variables like llvm.global_ctors which llvm interprets specially.
+    #[llvm_variant(LLVMAppendingLinkage)]
+    Appending,
+    /// Globals with `AvailableExternally` linkage are never emitted into the object file corresponding to
+    /// the LLVM module. From the linker's perspective, an `AvailableExternally` global is equivalent to an
+    /// external declaration. They exist to allow inlining and other optimizations to take place given
+    /// knowledge of the definition of the global, which is known to be somewhere outside the module. Globals
+    /// with `AvailableExternally` linkage are allowed to be discarded at will, and allow inlining and other
+    /// optimizations. This linkage type is only allowed on definitions, not declarations.
+    #[llvm_variant(LLVMAvailableExternallyLinkage)]
+    AvailableExternally,
+    /// `Common` linkage is most similar to "weak" linkage, but they are used for tentative definitions
+    /// in C, such as "int X;" at global scope. Symbols with Common linkage are merged in the same way as
+    /// weak symbols, and they may not be deleted if unreferenced. `Common` symbols may not have an explicit
+    /// section, must have a zero initializer, and may not be marked 'constant'. Functions and aliases may
+    /// not have `Common` linkage.
+    #[llvm_variant(LLVMCommonLinkage)]
+    Common,
+    /// `DLLExport` causes the compiler to provide a global pointer to a pointer in a DLL, so that it can be
+    /// referenced with the dllimport attribute. On Microsoft Windows targets, the pointer name is formed by
+    /// combining __imp_ and the function or variable name. Since this storage class exists for defining a dll
+    /// interface, the compiler, assembler and linker know it is externally referenced and must refrain from
+    /// deleting the symbol.
+    #[llvm_variant(LLVMDLLExportLinkage)]
+    DLLExport,
+    /// `DLLImport` causes the compiler to reference a function or variable via a global pointer to a pointer
+    /// that is set up by the DLL exporting the symbol. On Microsoft Windows targets, the pointer name is
+    /// formed by combining __imp_ and the function or variable name.
+    #[llvm_variant(LLVMDLLImportLinkage)]
+    DLLImport,
+    /// If none of the other identifiers are used, the global is externally visible, meaning that it
+    /// participates in linkage and can be used to resolve external symbol references.
+    #[llvm_variant(LLVMExternalLinkage)]
+    External,
+    /// The semantics of this linkage follow the ELF object file model: the symbol is weak until linked,
+    /// if not linked, the symbol becomes null instead of being an undefined reference.
+    #[llvm_variant(LLVMExternalWeakLinkage)]
+    ExternalWeak,
+    /// FIXME: Unknown linkage type
+    #[llvm_variant(LLVMGhostLinkage)]
+    Ghost,
+    /// Similar to private, but the value shows as a local symbol (STB_LOCAL in the case of ELF) in the object
+    /// file. This corresponds to the notion of the 'static' keyword in C.
+    #[llvm_variant(LLVMInternalLinkage)]
+    Internal,
+    /// FIXME: Unknown linkage type
+    #[llvm_variant(LLVMLinkerPrivateLinkage)]
+    LinkerPrivate,
+    /// FIXME: Unknown linkage type
+    #[llvm_variant(LLVMLinkerPrivateWeakLinkage)]
+    LinkerPrivateWeak,
+    /// Globals with `LinkOnceAny` linkage are merged with other globals of the same name when linkage occurs.
+    /// This can be used to implement some forms of inline functions, templates, or other code which must be
+    /// generated in each translation unit that uses it, but where the body may be overridden with a more
+    /// definitive definition later. Unreferenced `LinkOnceAny` globals are allowed to be discarded. Note that
+    /// `LinkOnceAny` linkage does not actually allow the optimizer to inline the body of this function into
+    /// callers because it doesn’t know if this definition of the function is the definitive definition within
+    /// the program or whether it will be overridden by a stronger definition. To enable inlining and other
+    /// optimizations, use `LinkOnceODR` linkage.
+    #[llvm_variant(LLVMLinkOnceAnyLinkage)]
+    LinkOnceAny,
+    /// FIXME: Unknown linkage type
+    #[llvm_variant(LLVMLinkOnceODRAutoHideLinkage)]
+    LinkOnceODRAutoHide,
+    /// Some languages allow differing globals to be merged, such as two functions with different semantics.
+    /// Other languages, such as C++, ensure that only equivalent globals are ever merged (the "one definition
+    /// rule" — "ODR"). Such languages can use the `LinkOnceODR` and `WeakODR` linkage types to indicate that
+    /// the global will only be merged with equivalent globals. These linkage types are otherwise the same
+    /// as their non-odr versions.
+    #[llvm_variant(LLVMLinkOnceODRLinkage)]
+    LinkOnceODR,
+    /// Global values with `Private` linkage are only directly accessible by objects in the current module.
+    /// In particular, linking code into a module with a private global value may cause the private to be
+    /// renamed as necessary to avoid collisions. Because the symbol is private to the module, all references
+    /// can be updated. This doesn’t show up in any symbol table in the object file.
+    #[llvm_variant(LLVMPrivateLinkage)]
+    Private,
+    /// `WeakAny` linkage has the same merging semantics as linkonce linkage, except that unreferenced globals
+    /// with weak linkage may not be discarded. This is used for globals that are declared WeakAny in C source code.
+    #[llvm_variant(LLVMWeakAnyLinkage)]
+    WeakAny,
+    /// Some languages allow differing globals to be merged, such as two functions with different semantics.
+    /// Other languages, such as C++, ensure that only equivalent globals are ever merged (the "one definition
+    /// rule" — "ODR"). Such languages can use the `LinkOnceODR` and `WeakODR` linkage types to indicate that
+    /// the global will only be merged with equivalent globals. These linkage types are otherwise the same
+    /// as their non-odr versions.
+    #[llvm_variant(LLVMWeakODRLinkage)]
+    WeakODR,
 }
 
 /// Represents a reference to an LLVM `Module`.
@@ -1300,7 +1317,7 @@ impl<'ctx> Module<'ctx> {
         let md = flag.as_metadata_ref();
 
         unsafe {
-            LLVMAddModuleFlag(self.module.get(), behavior.as_llvm_enum(), key.as_ptr() as *mut ::libc::c_char, key.len(), md)
+            LLVMAddModuleFlag(self.module.get(), behavior.into(), key.as_ptr() as *mut ::libc::c_char, key.len(), md)
         }
     }
 
@@ -1316,7 +1333,7 @@ impl<'ctx> Module<'ctx> {
         };
 
         unsafe {
-            LLVMAddModuleFlag(self.module.get(), behavior.as_llvm_enum(), key.as_ptr() as *mut ::libc::c_char, key.len(), md)
+            LLVMAddModuleFlag(self.module.get(), behavior.into(), key.as_ptr() as *mut ::libc::c_char, key.len(), md)
         }
     }
 
@@ -1388,29 +1405,35 @@ impl Drop for Module<'_> {
 }
 
 #[llvm_versions(7.0..=latest)]
-enum_rename!{
-    /// Defines the operational behavior for a module wide flag. This documenation comes directly
-    /// from the LLVM docs
-    FlagBehavior <=> LLVMModuleFlagBehavior {
-        /// Emits an error if two values disagree, otherwise the resulting value is that of the operands.
-        Error <=> LLVMModuleFlagBehaviorError,
-        /// Emits a warning if two values disagree. The result value will be the operand for the
-        /// flag from the first module being linked.
-        Warning <=> LLVMModuleFlagBehaviorWarning,
-        /// Adds a requirement that another module flag be present and have a specified value after
-        /// linking is performed. The value must be a metadata pair, where the first element of the
-        /// pair is the ID of the module flag to be restricted, and the second element of the pair
-        /// is the value the module flag should be restricted to. This behavior can be used to
-        /// restrict the allowable results (via triggering of an error) of linking IDs with the
-        /// **Override** behavior.
-        Require <=> LLVMModuleFlagBehaviorRequire,
-        /// Uses the specified value, regardless of the behavior or value of the other module. If
-        /// both modules specify **Override**, but the values differ, an error will be emitted.
-        Override <=> LLVMModuleFlagBehaviorOverride,
-        /// Appends the two values, which are required to be metadata nodes.
-        Append <=> LLVMModuleFlagBehaviorAppend,
-        /// Appends the two values, which are required to be metadata nodes. However, duplicate
-        /// entries in the second list are dropped during the append operation.
-        AppendUnique <=> LLVMModuleFlagBehaviorAppendUnique,
-    }
+#[llvm_enum(LLVMModuleFlagBehavior)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+/// Defines the operational behavior for a module wide flag. This documenation comes directly
+/// from the LLVM docs
+pub enum FlagBehavior {
+    /// Emits an error if two values disagree, otherwise the resulting value is that of the operands.
+    #[llvm_variant(LLVMModuleFlagBehaviorError)]
+    Error,
+    /// Emits a warning if two values disagree. The result value will be the operand for the
+    /// flag from the first module being linked.
+    #[llvm_variant(LLVMModuleFlagBehaviorWarning)]
+    Warning,
+    /// Adds a requirement that another module flag be present and have a specified value after
+    /// linking is performed. The value must be a metadata pair, where the first element of the
+    /// pair is the ID of the module flag to be restricted, and the second element of the pair
+    /// is the value the module flag should be restricted to. This behavior can be used to
+    /// restrict the allowable results (via triggering of an error) of linking IDs with the
+    /// **Override** behavior.
+    #[llvm_variant(LLVMModuleFlagBehaviorRequire)]
+    Require,
+    /// Uses the specified value, regardless of the behavior or value of the other module. If
+    /// both modules specify **Override**, but the values differ, an error will be emitted.
+    #[llvm_variant(LLVMModuleFlagBehaviorOverride)]
+    Override,
+    /// Appends the two values, which are required to be metadata nodes.
+    #[llvm_variant(LLVMModuleFlagBehaviorAppend)]
+    Append,
+    /// Appends the two values, which are required to be metadata nodes. However, duplicate
+    /// entries in the second list are dropped during the append operation.
+    #[llvm_variant(LLVMModuleFlagBehaviorAppendUnique)]
+    AppendUnique,
 }

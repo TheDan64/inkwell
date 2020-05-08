@@ -76,7 +76,7 @@ impl<'ctx> GlobalValue<'ctx> {
 
     pub fn set_dll_storage_class(self, dll_storage_class: DLLStorageClass) {
         unsafe {
-            LLVMSetDLLStorageClass(self.as_value_ref(), dll_storage_class.as_llvm_enum())
+            LLVMSetDLLStorageClass(self.as_value_ref(), dll_storage_class.into())
         }
     }
 
@@ -219,7 +219,7 @@ impl<'ctx> GlobalValue<'ctx> {
 
     pub fn set_visibility(self, visibility: GlobalVisibility) {
         unsafe {
-            LLVMSetVisibility(self.as_value_ref(), visibility.as_llvm_enum())
+            LLVMSetVisibility(self.as_value_ref(), visibility.into())
         }
     }
 
@@ -312,16 +312,14 @@ impl<'ctx> GlobalValue<'ctx> {
     }
 
     pub fn get_linkage(self) -> Linkage {
-        let linkage = unsafe {
-            LLVMGetLinkage(self.as_value_ref())
-        };
-
-        Linkage::new(linkage)
+        unsafe {
+            LLVMGetLinkage(self.as_value_ref()).into()
+        }
     }
 
     pub fn set_linkage(self, linkage: Linkage) {
         unsafe {
-            LLVMSetLinkage(self.as_value_ref(), linkage.as_llvm_enum())
+            LLVMSetLinkage(self.as_value_ref(), linkage.into())
         }
     }
 
