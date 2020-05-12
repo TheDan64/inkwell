@@ -1,5 +1,5 @@
 language: rust
-
+rust: 1.36.0
 sudo: required
 cache:
   directories:
@@ -22,7 +22,7 @@ branches:
   - llvm10-0
 
 before_cache:
-  - RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin
+  - cargo install cargo-tarpaulin
   - rm -rf /home/travis/.cargo/registry
 include_base: &BASE
   addons:
@@ -251,7 +251,7 @@ env:
     - RUSTFLAGS="-C link-dead-code -C target-cpu=native -l ffi"
 
 after_success: |
-  if [[ "$TRAVIS_RUST_VERSION" == nightly-2019-07-25 ]]; then
+  if [[ "$TRAVIS_RUST_VERSION" == 1.36.0 ]]; then
     cargo tarpaulin --features "llvm${LLVM_VERSION_DASH}" --out Xml
     bash <(curl -s https://codecov.io/bash)
   fi
