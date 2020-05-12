@@ -1,5 +1,4 @@
 language: rust
-rust: 1.36.0
 sudo: required
 cache:
   directories:
@@ -61,7 +60,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.6-dev
-      rust: nightly-2019-07-25
+      rust: 1.36.0
       dist: trusty
     - env:
         - LLVM_VERSION="3.7"
@@ -74,7 +73,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.7-dev
-      rust: nightly-2019-07-25
+      rust: 1.36.0
       dist: trusty
     - env:
         - LLVM_VERSION="3.8"
@@ -87,7 +86,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.8-dev
-      rust: nightly-2019-07-25
+      rust: 1.36.0
       dist: trusty
     # 3.9 seems to have a linking issue :/
     # - env:
@@ -101,7 +100,7 @@ matrix:
     #       packages:
     #         - *BASE_PACKAGES
     #         - llvm-3.9-dev
-    #       rust: nightly-2019-07-25
+    #       rust: 1.36.0
     #       dist: trusty
     - env:
         - LLVM_VERSION="4.0"
@@ -114,7 +113,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-4.0-dev
-      rust: nightly-2019-07-25
+      rust: 1.36.0
       dist: trusty
     - env:
         - LLVM_VERSION="5.0"
@@ -127,7 +126,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-5.0-dev
-      rust: nightly-2019-07-25
+      rust: 1.36.0
       dist: trusty
     - env:
         - LLVM_VERSION="6.0"
@@ -140,7 +139,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-6.0-dev
-      rust: nightly-2019-07-25
+      rust: 1.36.0
       dist: trusty
     - env:
         - LLVM_VERSION="7.0"
@@ -153,7 +152,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-7-dev
-      rust: nightly-2019-07-25
+      rust: 1.36.0
       dist: trusty
     - env:
         - LLVM_VERSION="8.0"
@@ -166,7 +165,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-8-dev
-      rust: nightly-2019-07-25
+      rust: 1.36.0
       dist: trusty
     - env:
         - LLVM_VERSION="9.0"
@@ -181,7 +180,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-9-dev
-      rust: nightly-2019-07-25
+      rust: 1.36.0
       dist: bionic
     - env:
         - LLVM_VERSION="10.0"
@@ -196,7 +195,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-10-dev
-      rust: nightly-2019-07-25
+      rust: 1.36.0
       dist: bionic
     - deploy: # Documentation build; Only latest supported LLVM version for now
         provider: pages
