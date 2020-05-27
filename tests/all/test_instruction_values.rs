@@ -1,6 +1,6 @@
-use inkwell::{AddressSpace, AtomicOrdering, IntPredicate, FloatPredicate};
 use inkwell::context::Context;
 use inkwell::values::{BasicValue, InstructionOpcode::*};
+use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate};
 
 #[test]
 fn test_operands() {
@@ -247,6 +247,60 @@ fn test_instructions() {
     let instruction_clone_copy = instruction_clone;
 
     assert_eq!(instruction_clone, instruction_clone_copy);
+}
+
+#[llvm_versions(10.0..=latest)]
+#[test]
+fn test_volatile_atomicrmw_cmpxchg() {
+    let context = Context::create();
+    let module = context.create_module("testing");
+    let builder = context.create_builder();
+
+    let void_type = context.void_type();
+    let i32_type = context.i32_type();
+    let i32_ptr_type = i32_type.ptr_type(AddressSpace::Generic);
+    let fn_type = void_type.fn_type(&[i32_ptr_type.into(), i32_type.into()], false);
+
+    let function = module.add_function("mem_inst", fn_type, None);
+    let basic_block = context.append_basic_block(function, "entry");
+
+    builder.position_at_end(basic_block);
+
+    let arg1 = function.get_first_param().unwrap().into_pointer_value();
+    let arg2 = function.get_nth_param(1).unwrap().into_int_value();
+
+    assert!(arg1.get_first_use().is_none());
+    assert!(arg2.get_first_use().is_none());
+
+    let i32_val = i32_type.const_int(7, false);
+
+    let atomicrmw = builder
+        .build_atomicrmw(AtomicRMWBinOp::Add, arg1, arg2, AtomicOrdering::Unordered)
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+    let cmpxchg = builder
+        .build_cmpxchg(
+            arg1,
+            arg2,
+            i32_val,
+            AtomicOrdering::Monotonic,
+            AtomicOrdering::Monotonic,
+        )
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    assert_eq!(atomicrmw.get_volatile().unwrap(), false);
+    assert_eq!(cmpxchg.get_volatile().unwrap(), false);
+    atomicrmw.set_volatile(true).unwrap();
+    cmpxchg.set_volatile(true).unwrap();
+    assert_eq!(atomicrmw.get_volatile().unwrap(), true);
+    assert_eq!(cmpxchg.get_volatile().unwrap(), true);
+    atomicrmw.set_volatile(false).unwrap();
+    cmpxchg.set_volatile(false).unwrap();
+    assert_eq!(atomicrmw.get_volatile().unwrap(), false);
+    assert_eq!(cmpxchg.get_volatile().unwrap(), false);
 }
 
 #[test]
