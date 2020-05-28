@@ -4,6 +4,8 @@ use llvm_sys::core::{LLVMGetAlignment, LLVMSetAlignment, LLVMGetInstructionOpcod
 use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::LLVMInstructionRemoveFromParent;
+#[llvm_versions(10.0..=latest)]
+use llvm_sys::core::{LLVMIsAAtomicRMWInst, LLVMIsAAtomicCmpXchgInst};
 use llvm_sys::LLVMOpcode;
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -113,6 +115,14 @@ impl<'ctx> InstructionValue<'ctx> {
     fn is_a_alloca_inst(self) -> bool {
         !unsafe { LLVMIsAAllocaInst(self.as_value_ref()) }.is_null()
     }
+    #[llvm_versions(10.0..=latest)]
+    fn is_a_atomicrmw_inst(self) -> bool {
+        !unsafe { LLVMIsAAtomicRMWInst(self.as_value_ref()) }.is_null()
+    }
+    #[llvm_versions(10.0..=latest)]
+    fn is_a_cmpxchg_inst(self) -> bool {
+        !unsafe { LLVMIsAAtomicCmpXchgInst(self.as_value_ref()) }.is_null()
+    }
 
     pub(crate) fn new(instruction_value: LLVMValueRef) -> Self {
         debug_assert!(!instruction_value.is_null());
@@ -203,9 +213,10 @@ impl<'ctx> InstructionValue<'ctx> {
 
     // SubTypes: Only apply to memory access instructions
     /// Returns whether or not a memory access instruction is volatile.
+    #[llvm_versions(3.6..=9.0)]
     pub fn get_volatile(self) -> Result<bool, &'static str> {
         // Although cmpxchg and atomicrmw can have volatile, LLVM's C API
-        // does not export that functionality.
+        // does not export that functionality until 10.0.
         if !self.is_a_load_inst() && !self.is_a_store_inst() {
             return Err("Value is not a load or store.");
         }
@@ -213,12 +224,35 @@ impl<'ctx> InstructionValue<'ctx> {
     }
 
     // SubTypes: Only apply to memory access instructions
+    /// Returns whether or not a memory access instruction is volatile.
+    #[llvm_versions(10.0..=latest)]
+    pub fn get_volatile(self) -> Result<bool, &'static str> {
+        if !self.is_a_load_inst() && !self.is_a_store_inst() &&
+           !self.is_a_atomicrmw_inst() && !self.is_a_cmpxchg_inst() {
+            return Err("Value is not a load, store, atomicrmw or cmpxchg.");
+        }
+        Ok(unsafe { LLVMGetVolatile(self.as_value_ref()) } == 1)
+    }
+
+    // SubTypes: Only apply to memory access instructions
     /// Sets whether or not a memory access instruction is volatile.
+    #[llvm_versions(3.6..=9.0)]
     pub fn set_volatile(self, volatile: bool) -> Result<(), &'static str> {
         // Although cmpxchg and atomicrmw can have volatile, LLVM's C API
-        // does not export that functionality.
+        // does not export that functionality until 10.0.
         if !self.is_a_load_inst() && !self.is_a_store_inst() {
             return Err("Value is not a load or store.");
+        }
+        Ok(unsafe { LLVMSetVolatile(self.as_value_ref(), volatile as i32) })
+    }
+    
+    // SubTypes: Only apply to memory access instructions
+    /// Sets whether or not a memory access instruction is volatile.
+    #[llvm_versions(10.0..=latest)]
+    pub fn set_volatile(self, volatile: bool) -> Result<(), &'static str> {
+        if !self.is_a_load_inst() && !self.is_a_store_inst() &&
+           !self.is_a_atomicrmw_inst() && !self.is_a_cmpxchg_inst() {
+            return Err("Value is not a load, store, atomicrmw or cmpxchg.");
         }
         Ok(unsafe { LLVMSetVolatile(self.as_value_ref(), volatile as i32) })
     }
