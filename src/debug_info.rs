@@ -492,16 +492,14 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     pub fn create_subroutine_type(
         &self,
         file: DIFile<'ctx>,
-        return_type: DIType<'ctx>,
-        parameter_types: Vec<DIType<'ctx>>,
+        return_type: Option<DIType<'ctx>>,
+        parameter_types: &[DIType<'ctx>],
         flags: DIFlags,
     ) -> DISubroutineType<'ctx> {
         use llvm_sys::debuginfo::LLVMDIBuilderCreateSubroutineType;
-        let mut p = [return_type]
-            .iter()
-            .map(|t| t.metadata_ref)
-            .chain(parameter_types.into_iter().map(|t| t.metadata_ref))
-            .collect::<Vec<LLVMMetadataRef>>();
+        let mut p = vec![return_type
+                         .map_or(std::ptr::null_mut(), |t| t.metadata_ref)];
+        p.append(&mut parameter_types.into_iter().map(|t| t.metadata_ref).collect::<Vec<LLVMMetadataRef>>());
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateSubroutineType(
                 self.builder,
