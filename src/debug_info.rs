@@ -488,6 +488,91 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         }
     }
 
+    /// Create debug info for a (non-static) member.
+    pub fn create_member_type(
+        &self,
+        scope: DIScope<'ctx>,
+        name: &str,
+        file: DIFile<'ctx>,
+        line_no: libc::c_uint,
+        size_in_bits: u64,
+        align_in_bits: u32,
+        offset_in_bits: u64,
+        flags: DIFlags,
+        ty: DIType<'ctx>
+    ) -> DIDerivedType<'ctx> {
+        use llvm_sys::debuginfo::LLVMDIBuilderCreateMemberType;
+        let name = to_c_str(name);
+        let metadata_ref = unsafe {
+            LLVMDIBuilderCreateMemberType(
+                self.builder,
+                scope.metadata_ref,
+                name.as_ptr(),
+                name.to_bytes().len(),
+                file.metadata_ref,
+                line_no,
+                size_in_bits,
+                align_in_bits,
+                offset_in_bits,
+                flags.into(),
+                ty.metadata_ref
+            )
+        };
+        DIDerivedType {
+            metadata_ref,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Create a struct type.
+    pub fn create_struct_type(
+        &self,
+        scope: DIScope<'ctx>,
+        name: &str,
+        file: DIFile<'ctx>,
+        line_no: libc::c_uint,
+        size_in_bits: u64,
+        align_in_bits: u32,
+        flags: DIFlags,
+        derived_from: Option<DIType<'ctx>>,
+        elements: &[DIType<'ctx>],
+        runtime_language: libc::c_uint,
+        vtable_holder: Option<DIType<'ctx>>,
+        unique_id: &str,
+    ) -> DICompositeType<'ctx> {
+        use llvm_sys::debuginfo::LLVMDIBuilderCreateStructType;
+        let mut elements: Vec<LLVMMetadataRef> =
+            elements.into_iter().map(|dt| dt.metadata_ref).collect();
+        let name = to_c_str(name);
+        let unique_id = to_c_str(unique_id);
+        let derived_from = derived_from.map_or(std::ptr::null_mut(), |dt| dt.metadata_ref);
+        let vtable_holder = vtable_holder.map_or(std::ptr::null_mut(), |dt| dt.metadata_ref);
+        let metadata_ref = unsafe {
+            LLVMDIBuilderCreateStructType(
+                self.builder,
+                scope.metadata_ref,
+                name.as_ptr(),
+                name.to_bytes().len(),
+                file.metadata_ref,
+                line_no,
+                size_in_bits,
+                align_in_bits,
+                flags.into(),
+                derived_from,
+                elements.as_mut_ptr(),
+                elements.len().try_into().unwrap(),
+                runtime_language,
+                vtable_holder,
+                unique_id.as_ptr(),
+                unique_id.to_bytes().len(),
+            )
+        };
+        DICompositeType {
+            metadata_ref,
+            _marker: PhantomData,
+        }
+    }
+
     /// Create a function type
     pub fn create_subroutine_type(
         &self,
