@@ -635,6 +635,41 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         }
     }
 
+    /// Create local automatic storage variable
+    pub fn create_auto_variable(
+        &self,
+        scope: DIScope<'ctx>,
+        name: &str,
+        file: DIFile<'ctx>,
+        line_no: u32,
+        ty: DIType<'ctx>,
+        always_preserve: bool,
+        flags: DIFlags,
+        align_in_bits: u32
+    ) -> DILocalVariable<'ctx> {
+        use llvm_sys::debuginfo::LLVMDIBuilderCreateAutoVariable;
+
+        let name = to_c_str(name);
+        let metadata_ref = unsafe {
+            LLVMDIBuilderCreateAutoVariable(
+                self.builder,
+                scope.metadata_ref,
+                name.as_ptr(),
+                name.to_bytes().len(),
+                file.metadata_ref,
+                line_no,
+                ty.metadata_ref,
+                always_preserve as _,
+                flags.into(),
+                align_in_bits,
+            )
+        };
+        DILocalVariable {
+            metadata_ref,
+            _marker: PhantomData,
+        }
+    }
+
     /// Insert a variable declaration (`llvm.dbg.declare`) before a specified instruction.
     pub fn insert_declare_before_instruction(
         &self,
