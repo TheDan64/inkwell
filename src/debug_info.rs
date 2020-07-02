@@ -110,6 +110,7 @@ pub fn debug_metadata_version() -> libc::c_uint {
 #[derive(Debug, PartialEq, Eq)]
 pub struct DebugInfoBuilder<'ctx> {
     pub(crate) builder: LLVMDIBuilderRef,
+    placeholders: Vec<LLVMMetadataRef>,
     _marker: PhantomData<&'ctx Context>,
 }
 
@@ -141,6 +142,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
 
         DebugInfoBuilder {
             builder,
+            placeholders: vec![],
             _marker: PhantomData,
         }
     }
@@ -499,7 +501,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         align_in_bits: u32,
         offset_in_bits: u64,
         flags: DIFlags,
-        ty: DIType<'ctx>
+        ty: DIType<'ctx>,
     ) -> DIDerivedType<'ctx> {
         use llvm_sys::debuginfo::LLVMDIBuilderCreateMemberType;
         let name = to_c_str(name);
@@ -515,7 +517,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 align_in_bits,
                 offset_in_bits,
                 flags.into(),
-                ty.metadata_ref
+                ty.metadata_ref,
             )
         };
         DIDerivedType {
@@ -582,9 +584,13 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         flags: DIFlags,
     ) -> DISubroutineType<'ctx> {
         use llvm_sys::debuginfo::LLVMDIBuilderCreateSubroutineType;
-        let mut p = vec![return_type
-                         .map_or(std::ptr::null_mut(), |t| t.metadata_ref)];
-        p.append(&mut parameter_types.into_iter().map(|t| t.metadata_ref).collect::<Vec<LLVMMetadataRef>>());
+        let mut p = vec![return_type.map_or(std::ptr::null_mut(), |t| t.metadata_ref)];
+        p.append(
+            &mut parameter_types
+                .into_iter()
+                .map(|t| t.metadata_ref)
+                .collect::<Vec<LLVMMetadataRef>>(),
+        );
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateSubroutineType(
                 self.builder,
@@ -645,7 +651,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         ty: DIType<'ctx>,
         always_preserve: bool,
         flags: DIFlags,
-        align_in_bits: u32
+        align_in_bits: u32,
     ) -> DILocalVariable<'ctx> {
         use llvm_sys::debuginfo::LLVMDIBuilderCreateAutoVariable;
 
@@ -763,6 +769,108 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         InstructionValue::new(value_ref)
     }
 
+    /// Construct placeholders to be used when building debug info with circular references.
+    ///
+    /// All placeholders must be replaced before calling finalize() otherwise we will panic!().
+    pub fn create_placeholder_derived_type(&mut self, context: &Context) -> DIDerivedType<'ctx> {
+        use llvm_sys::debuginfo::LLVMTemporaryMDNode;
+        let metadata_ref = unsafe { LLVMTemporaryMDNode(context.context, std::ptr::null_mut(), 0) };
+        self.placeholders.push(metadata_ref);
+        DIDerivedType {
+            metadata_ref,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Deletes a placeholder, replacing all uses of it with another derived type.
+    pub fn replace_placeholder_derived_type(
+        &mut self,
+        placeholder: DIDerivedType<'ctx>,
+        other: DIDerivedType<'ctx>,
+    ) {
+        use llvm_sys::debuginfo::LLVMDisposeTemporaryMDNode;
+        use llvm_sys::debuginfo::LLVMMetadataReplaceAllUsesWith;
+        // `placeholder` must be in the placeholder list.
+        // `other` may or may not be a placeholder.
+        let index = self
+            .placeholders
+            .iter()
+            .position(|ph| *ph == placeholder.metadata_ref)
+            .unwrap();
+        self.placeholders.remove(index);
+        unsafe { LLVMMetadataReplaceAllUsesWith(placeholder.metadata_ref, other.metadata_ref) };
+        unsafe { LLVMDisposeTemporaryMDNode(placeholder.metadata_ref) };
+    }
+
+    /// Construct placeholders to be used when building debug info with circular references.
+    ///
+    /// All placeholders must be replaced before calling finalize() otherwise we will panic!().
+    pub fn create_placeholder_basic_type(&mut self, context: &Context) -> DIBasicType<'ctx> {
+        use llvm_sys::debuginfo::LLVMTemporaryMDNode;
+        let metadata_ref = unsafe { LLVMTemporaryMDNode(context.context, std::ptr::null_mut(), 0) };
+        self.placeholders.push(metadata_ref);
+        DIBasicType {
+            metadata_ref,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Deletes a placeholder, replacing all uses of it with another basic type.
+    pub fn replace_placeholder_basic_type(
+        &mut self,
+        placeholder: DIBasicType<'ctx>,
+        other: DIBasicType<'ctx>,
+    ) {
+        use llvm_sys::debuginfo::LLVMDisposeTemporaryMDNode;
+        use llvm_sys::debuginfo::LLVMMetadataReplaceAllUsesWith;
+        // `placeholder` must be in the placeholder list.
+        // `other` may or may not be a placeholder.
+        let index = self
+            .placeholders
+            .iter()
+            .position(|ph| *ph == placeholder.metadata_ref)
+            .unwrap();
+        self.placeholders.remove(index);
+        unsafe { LLVMMetadataReplaceAllUsesWith(placeholder.metadata_ref, other.metadata_ref) };
+        unsafe { LLVMDisposeTemporaryMDNode(placeholder.metadata_ref) };
+    }
+
+    /// Construct placeholders to be used when building debug info with circular references.
+    ///
+    /// All placeholders must be replaced before calling finalize() otherwise we will panic!().
+    pub fn create_placeholder_composite_type(
+        &mut self,
+        context: &Context,
+    ) -> DICompositeType<'ctx> {
+        use llvm_sys::debuginfo::LLVMTemporaryMDNode;
+        let metadata_ref = unsafe { LLVMTemporaryMDNode(context.context, std::ptr::null_mut(), 0) };
+        self.placeholders.push(metadata_ref);
+        DICompositeType {
+            metadata_ref,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Deletes a placeholder, replacing all uses of it with another composite type.
+    pub fn replace_placeholder_composite_type(
+        &mut self,
+        placeholder: DICompositeType<'ctx>,
+        other: DICompositeType<'ctx>,
+    ) {
+        use llvm_sys::debuginfo::LLVMDisposeTemporaryMDNode;
+        use llvm_sys::debuginfo::LLVMMetadataReplaceAllUsesWith;
+        // `placeholder` must be in the placeholder list.
+        // `other` may or may not be a placeholder.
+        let index = self
+            .placeholders
+            .iter()
+            .position(|ph| *ph == placeholder.metadata_ref)
+            .unwrap();
+        self.placeholders.remove(index);
+        unsafe { LLVMMetadataReplaceAllUsesWith(placeholder.metadata_ref, other.metadata_ref) };
+        unsafe { LLVMDisposeTemporaryMDNode(placeholder.metadata_ref) };
+    }
+
     /// Construct any deferred debug info descriptors. May generate invalid metadata if debug info
     /// is incomplete.  Module/function verification can then fail.
     ///
@@ -770,6 +878,9 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     /// one time.
     pub fn finalize(&self) {
         use llvm_sys::debuginfo::LLVMDIBuilderFinalize;
+        if !self.placeholders.is_empty() {
+            panic!("Can't finalize debug info builder with outstanding placeholder types!");
+        }
         unsafe { LLVMDIBuilderFinalize(self.builder) };
     }
 }
@@ -862,6 +973,15 @@ impl<'ctx> DIType<'ctx> {
     }
 }
 
+impl<'ctx> AsDIScope<'ctx> for DIType<'ctx> {
+    fn as_debug_info_scope(self) -> DIScope<'ctx> {
+        DIScope {
+            metadata_ref: self.metadata_ref,
+            _marker: PhantomData,
+        }
+    }
+}
+
 /// A debug info typedef, created by `create_typedef` method of `DebugInfoBuilder`
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct DIDerivedType<'ctx> {
@@ -872,6 +992,15 @@ pub struct DIDerivedType<'ctx> {
 impl<'ctx> DIDerivedType<'ctx> {
     pub fn as_type(&self) -> DIType<'ctx> {
         DIType {
+            metadata_ref: self.metadata_ref,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<'ctx> AsDIScope<'ctx> for DIDerivedType<'ctx> {
+    fn as_debug_info_scope(self) -> DIScope<'ctx> {
+        DIScope {
             metadata_ref: self.metadata_ref,
             _marker: PhantomData,
         }
@@ -894,6 +1023,14 @@ impl<'ctx> DIBasicType<'ctx> {
     }
 }
 
+impl<'ctx> AsDIScope<'ctx> for DIBasicType<'ctx> {
+    fn as_debug_info_scope(self) -> DIScope<'ctx> {
+        DIScope {
+            metadata_ref: self.metadata_ref,
+            _marker: PhantomData,
+        }
+    }
+}
 /// A debug info union type, created by `create_union_type` method of `DebugInfoBuilder`
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct DICompositeType<'ctx> {
@@ -904,6 +1041,15 @@ pub struct DICompositeType<'ctx> {
 impl<'ctx> DICompositeType<'ctx> {
     pub fn as_type(&self) -> DIType<'ctx> {
         DIType {
+            metadata_ref: self.metadata_ref,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<'ctx> AsDIScope<'ctx> for DICompositeType<'ctx> {
+    fn as_debug_info_scope(self) -> DIScope<'ctx> {
+        DIScope {
             metadata_ref: self.metadata_ref,
             _marker: PhantomData,
         }
@@ -950,24 +1096,18 @@ pub struct DILocation<'ctx> {
 impl<'ctx> DILocation<'ctx> {
     pub fn get_line(&self) -> u32 {
         use llvm_sys::debuginfo::LLVMDILocationGetLine;
-        unsafe {
-            LLVMDILocationGetLine(self.metadata_ref)
-        }
+        unsafe { LLVMDILocationGetLine(self.metadata_ref) }
     }
 
     pub fn get_column(&self) -> u32 {
         use llvm_sys::debuginfo::LLVMDILocationGetColumn;
-        unsafe {
-            LLVMDILocationGetColumn(self.metadata_ref)
-        }
+        unsafe { LLVMDILocationGetColumn(self.metadata_ref) }
     }
 
     pub fn get_scope(&self) -> DIScope<'ctx> {
         use llvm_sys::debuginfo::LLVMDILocationGetScope;
         DIScope {
-            metadata_ref: unsafe {
-                LLVMDILocationGetScope(self.metadata_ref)
-            },
+            metadata_ref: unsafe { LLVMDILocationGetScope(self.metadata_ref) },
             _marker: PhantomData,
         }
     }
