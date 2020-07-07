@@ -89,9 +89,7 @@
 use crate::basic_block::BasicBlock;
 use crate::context::Context;
 use crate::module::Module;
-use crate::values::AsValueRef;
-use crate::values::BasicValueEnum;
-use crate::values::{InstructionValue, PointerValue};
+use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, PointerValue};
 pub use llvm_sys::debuginfo::LLVMDWARFTypeEncoding;
 use llvm_sys::debuginfo::LLVMDebugMetadataVersion;
 use llvm_sys::prelude::{LLVMDIBuilderRef, LLVMMetadataRef};
