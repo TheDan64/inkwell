@@ -89,7 +89,6 @@
 use crate::basic_block::BasicBlock;
 use crate::context::Context;
 use crate::module::Module;
-use crate::support::to_c_str;
 use crate::values::AsValueRef;
 use crate::values::BasicValueEnum;
 use crate::values::{InstructionValue, PointerValue};
@@ -175,22 +174,19 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         debug_info_for_profiling: bool,
     ) -> DICompileUnit<'ctx> {
         use llvm_sys::debuginfo::LLVMDIBuilderCreateCompileUnit;
-        let producer = to_c_str(producer);
-        let flags = to_c_str(flags);
-        let split_name = to_c_str(split_name);
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateCompileUnit(
                 self.builder,
                 language.into(),
                 file.metadata_ref,
-                producer.as_ptr(),
-                producer.to_bytes().len(),
+                producer.as_ptr() as _,
+                producer.len(),
                 is_optimized as _,
-                flags.as_ptr(),
-                flags.to_bytes().len(),
+                flags.as_ptr() as _,
+                flags.len(),
                 runtime_ver,
-                split_name.as_ptr(),
-                split_name.to_bytes().len(),
+                split_name.as_ptr() as _,
+                split_name.len(),
                 kind.into(),
                 dwo_id,
                 split_debug_inlining as _,
@@ -235,17 +231,16 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         is_optimized: bool,
     ) -> DISubprogram<'ctx> {
         use llvm_sys::debuginfo::LLVMDIBuilderCreateFunction;
-        let linkage_name = to_c_str(linkage_name.unwrap_or(name));
-        let name = to_c_str(name);
+        let linkage_name = linkage_name.unwrap_or(name);
 
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateFunction(
                 self.builder,
                 scope.metadata_ref,
-                name.as_ptr(),
-                name.to_bytes().len(),
-                linkage_name.as_ptr(),
-                linkage_name.to_bytes().len(),
+                name.as_ptr() as _,
+                name.len(),
+                linkage_name.as_ptr() as _,
+                linkage_name.len(),
                 file.metadata_ref,
                 line_no,
                 ditype.metadata_ref,
@@ -289,15 +284,13 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     /// Create a file scope.
     pub fn create_file(&self, filename: &str, directory: &str) -> DIFile<'ctx> {
         use llvm_sys::debuginfo::LLVMDIBuilderCreateFile;
-        let filename = to_c_str(filename);
-        let directory = to_c_str(directory);
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateFile(
                 self.builder,
-                filename.as_ptr(),
-                filename.to_bytes().len(),
-                directory.as_ptr(),
-                directory.to_bytes().len(),
+                filename.as_ptr() as _,
+                filename.len(),
+                directory.as_ptr() as _,
+                directory.len(),
             )
         };
         DIFile {
@@ -348,12 +341,11 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             // (name, size_in_bits, encoding).
             panic!("basic types must have names");
         }
-        let name = to_c_str(name);
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateBasicType(
                 self.builder,
-                name.as_ptr(),
-                name.to_bytes().len(),
+                name.as_ptr() as _,
+                name.len(),
                 size_in_bits,
                 encoding,
             )
@@ -375,12 +367,11 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         flags: DIFlags,
     ) -> DIBasicType<'ctx> {
         use llvm_sys::debuginfo::LLVMDIBuilderCreateBasicType;
-        let name = to_c_str(name);
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateBasicType(
                 self.builder,
-                name.as_ptr(),
-                name.to_bytes().len(),
+                name.as_ptr() as _,
+                name.len(),
                 size_in_bits,
                 encoding,
                 flags.into(),
@@ -403,13 +394,12 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         scope: DIScope<'ctx>,
     ) -> DIDerivedType<'ctx> {
         use llvm_sys::debuginfo::LLVMDIBuilderCreateTypedef;
-        let name = to_c_str(name);
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateTypedef(
                 self.builder,
                 ditype.metadata_ref,
-                name.as_ptr(),
-                name.to_bytes().len(),
+                name.as_ptr() as _,
+                name.len(),
                 file.metadata_ref,
                 line_no,
                 scope.metadata_ref,
@@ -433,13 +423,12 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         align_in_bits: u32,
     ) -> DIDerivedType<'ctx> {
         use llvm_sys::debuginfo::LLVMDIBuilderCreateTypedef;
-        let name = to_c_str(name);
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateTypedef(
                 self.builder,
                 ditype.metadata_ref,
-                name.as_ptr(),
-                name.to_bytes().len(),
+                name.as_ptr() as _,
+                name.len(),
                 file.metadata_ref,
                 line_no,
                 scope.metadata_ref,
@@ -469,14 +458,12 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         use llvm_sys::debuginfo::LLVMDIBuilderCreateUnionType;
         let mut elements: Vec<LLVMMetadataRef> =
             elements.into_iter().map(|dt| dt.metadata_ref).collect();
-        let name = to_c_str(name);
-        let unique_id = to_c_str(unique_id);
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateUnionType(
                 self.builder,
                 scope.metadata_ref,
-                name.as_ptr(),
-                name.to_bytes().len(),
+                name.as_ptr() as _,
+                name.len(),
                 file.metadata_ref,
                 line_no,
                 size_in_bits,
@@ -485,8 +472,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 elements.as_mut_ptr(),
                 elements.len().try_into().unwrap(),
                 runtime_language,
-                unique_id.as_ptr(),
-                unique_id.to_bytes().len(),
+                unique_id.as_ptr() as _,
+                unique_id.len(),
             )
         };
         DICompositeType {
@@ -509,13 +496,12 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         ty: DIType<'ctx>,
     ) -> DIDerivedType<'ctx> {
         use llvm_sys::debuginfo::LLVMDIBuilderCreateMemberType;
-        let name = to_c_str(name);
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateMemberType(
                 self.builder,
                 scope.metadata_ref,
-                name.as_ptr(),
-                name.to_bytes().len(),
+                name.as_ptr() as _,
+                name.len(),
                 file.metadata_ref,
                 line_no,
                 size_in_bits,
@@ -550,16 +536,14 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         use llvm_sys::debuginfo::LLVMDIBuilderCreateStructType;
         let mut elements: Vec<LLVMMetadataRef> =
             elements.into_iter().map(|dt| dt.metadata_ref).collect();
-        let name = to_c_str(name);
-        let unique_id = to_c_str(unique_id);
         let derived_from = derived_from.map_or(std::ptr::null_mut(), |dt| dt.metadata_ref);
         let vtable_holder = vtable_holder.map_or(std::ptr::null_mut(), |dt| dt.metadata_ref);
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateStructType(
                 self.builder,
                 scope.metadata_ref,
-                name.as_ptr(),
-                name.to_bytes().len(),
+                name.as_ptr() as _,
+                name.len(),
                 file.metadata_ref,
                 line_no,
                 size_in_bits,
@@ -570,8 +554,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 elements.len().try_into().unwrap(),
                 runtime_language,
                 vtable_holder,
-                unique_id.as_ptr(),
-                unique_id.to_bytes().len(),
+                unique_id.as_ptr() as _,
+                unique_id.len(),
             )
         };
         DICompositeType {
@@ -625,13 +609,12 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     ) -> DILocalVariable<'ctx> {
         use llvm_sys::debuginfo::LLVMDIBuilderCreateParameterVariable;
 
-        let name = to_c_str(name);
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateParameterVariable(
                 self.builder,
                 scope.metadata_ref,
-                name.as_ptr(),
-                name.to_bytes().len(),
+                name.as_ptr() as _,
+                name.len(),
                 arg_no,
                 file.metadata_ref,
                 line_no,
@@ -660,13 +643,12 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     ) -> DILocalVariable<'ctx> {
         use llvm_sys::debuginfo::LLVMDIBuilderCreateAutoVariable;
 
-        let name = to_c_str(name);
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateAutoVariable(
                 self.builder,
                 scope.metadata_ref,
-                name.as_ptr(),
-                name.to_bytes().len(),
+                name.as_ptr() as _,
+                name.len(),
                 file.metadata_ref,
                 line_no,
                 ty.metadata_ref,
