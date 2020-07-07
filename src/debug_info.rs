@@ -689,7 +689,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         InstructionValue::new(value_ref)
     }
 
-    /// Insert a variable declaration (`llvm.dbg.declare` intrinsic)  at the end of `block`
+    /// Insert a variable declaration (`llvm.dbg.declare` intrinsic) at the end of `block`
     pub fn insert_declare_at_end(
         &self,
         storage: PointerValue<'ctx>,
@@ -788,10 +788,10 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     }
 
     /// Construct any deferred debug info descriptors. May generate invalid metadata if debug info
-    /// is incomplete.  Module/function verification can then fail.
+    /// is incomplete. Module/function verification can then fail.
     ///
     /// Call before any kind of code generation (including verification). Can be called more than
-    /// one time.
+    /// once.
     pub fn finalize(&self) {
         use llvm_sys::debuginfo::LLVMDIBuilderFinalize;
         if !self.placeholders.is_empty() {
