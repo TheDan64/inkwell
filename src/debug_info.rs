@@ -44,7 +44,7 @@
 //!      /* parameter types */ vec![],
 //!      inkwell::debug_info::DIFlags::Public,
 //!  );
-//!  let func_scope: DISubProgram<'_> = dibuilder.create_function(
+//!  let func_scope: DISubprogram<'_> = dibuilder.create_function(
 //!      /* scope */ compile_unit.as_debug_info_scope(),
 //!      /* func name */ "main",
 //!      /* linkage_name */ None,
@@ -58,7 +58,7 @@
 //!      /* is_optimized */ false,
 //!  );
 //! ```
-//! The `DISubProgram` value must be attached to the generated `FunctionValue`:
+//! The `DISubprogram` value must be attached to the generated `FunctionValue`:
 //! ```ignore
 //! /* after creating function: */
 //!     let fn_val = module.add_function(fn_name_str, fn_type, None);
@@ -233,7 +233,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         scope_line: u32,
         flags: DIFlags,
         is_optimized: bool,
-    ) -> DISubProgram<'ctx> {
+    ) -> DISubprogram<'ctx> {
         use llvm_sys::debuginfo::LLVMDIBuilderCreateFunction;
         let linkage_name = to_c_str(linkage_name.unwrap_or(name));
         let name = to_c_str(name);
@@ -256,7 +256,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 is_optimized as _,
             )
         };
-        DISubProgram {
+        DISubprogram {
             metadata_ref,
             _marker: PhantomData,
         }
@@ -869,12 +869,12 @@ impl<'ctx> AsDIScope<'ctx> for DICompileUnit<'ctx> {
 
 /// Function body scope for debug info
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub struct DISubProgram<'ctx> {
+pub struct DISubprogram<'ctx> {
     pub(crate) metadata_ref: LLVMMetadataRef,
     pub(crate) _marker: PhantomData<&'ctx Context>,
 }
 
-impl<'ctx> AsDIScope<'ctx> for DISubProgram<'ctx> {
+impl<'ctx> AsDIScope<'ctx> for DISubprogram<'ctx> {
     fn as_debug_info_scope(self) -> DIScope<'ctx> {
         DIScope {
             metadata_ref: self.metadata_ref,

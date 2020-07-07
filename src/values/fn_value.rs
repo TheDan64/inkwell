@@ -17,7 +17,7 @@ use std::fmt;
 use crate::attributes::{Attribute, AttributeLoc};
 use crate::basic_block::BasicBlock;
 #[llvm_versions(7.0..=latest)]
-use crate::debug_info::DISubProgram;
+use crate::debug_info::DISubprogram;
 use crate::module::Linkage;
 use crate::support::{to_c_str, LLVMString};
 use crate::types::{FunctionType, PointerType};
@@ -511,19 +511,19 @@ impl<'ctx> FunctionValue<'ctx> {
 
     /// Set the debug info descriptor
     #[llvm_versions(7.0..=latest)]
-    pub fn set_subprogram(self, subprogram: DISubProgram<'ctx>) {
+    pub fn set_subprogram(self, subprogram: DISubprogram<'ctx>) {
         unsafe { LLVMSetSubprogram(self.as_value_ref(), subprogram.metadata_ref) }
     }
 
     /// Get the debug info descriptor
     #[llvm_versions(7.0..=latest)]
-    pub fn get_subprogram(self) -> Option<DISubProgram<'ctx>> {
+    pub fn get_subprogram(self) -> Option<DISubprogram<'ctx>> {
         let metadata_ref = unsafe { LLVMGetSubprogram(self.as_value_ref()) };
 
         if metadata_ref.is_null() {
             None
         } else {
-            Some(DISubProgram {
+            Some(DISubprogram {
                 metadata_ref,
                 _marker: PhantomData,
             })
