@@ -486,7 +486,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         }
     }
 
-    /// Create debug info for a (non-static) member.
+    /// Create a type for a non-static member.
     pub fn create_member_type(
         &self,
         scope: DIScope<'ctx>,
@@ -596,7 +596,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         }
     }
 
-    /// Create function parameter variable
+    /// Create function parameter variable.
     pub fn create_parameter_variable(
         &self,
         scope: DIScope<'ctx>,
@@ -628,7 +628,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         }
     }
 
-    /// Create local automatic storage variable
+    /// Create local automatic storage variable.
     pub fn create_auto_variable(
         &self,
         scope: DIScope<'ctx>,
@@ -745,7 +745,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         InstructionValue::new(value_ref)
     }
 
-    /// Construct placeholders to be used when building debug info with circular references.
+    /// Construct a placeholders derived type to be used when building debug info with circular references.
     ///
     /// All placeholders must be replaced before calling finalize() otherwise we will panic!().
     pub fn create_placeholder_derived_type(&mut self, context: &Context) -> DIDerivedType<'ctx> {
@@ -777,8 +777,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     /// Construct any deferred debug info descriptors. May generate invalid metadata if debug info
     /// is incomplete. Module/function verification can then fail.
     ///
-    /// Call before any kind of code generation (including verification). Can be called more than
-    /// once.
+    /// Call before any kind of code generation (including verification). Can be called more than once.
     pub fn finalize(&self) {
         if !self.placeholders.is_empty() {
             panic!("Can't finalize debug info builder with outstanding placeholder types!");
@@ -879,7 +878,7 @@ impl<'ctx> AsDIScope<'ctx> for DIType<'ctx> {
     }
 }
 
-/// A debug info typedef, created by `create_typedef` method of `DebugInfoBuilder`
+/// A wrapper around a single type, such as a typedef or member type.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct DIDerivedType<'ctx> {
     pub(crate) metadata_ref: LLVMMetadataRef,
@@ -928,7 +927,7 @@ impl<'ctx> AsDIScope<'ctx> for DIBasicType<'ctx> {
         }
     }
 }
-/// A debug info union type, created by `create_union_type` method of `DebugInfoBuilder`
+/// A wrapper around an array of types, such as a union or struct.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct DICompositeType<'ctx> {
     pub(crate) metadata_ref: LLVMMetadataRef,
