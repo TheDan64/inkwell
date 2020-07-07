@@ -451,7 +451,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         size_in_bits: u64,
         align_in_bits: u32,
         flags: DIFlags,
-        elements: Vec<DIType<'ctx>>,
+        elements: &[DIType<'ctx>],
         runtime_language: u32,
         unique_id: &str,
     ) -> DICompositeType<'ctx> {
