@@ -999,7 +999,7 @@ impl<'ctx> AsDIScope<'ctx> for DILexicalBlock<'ctx> {
 ///
 /// - line, column
 /// - scope
-/// - is inlined
+/// - inlined at
 ///
 /// Created by `create_debug_location` of `DebugInfoBuilder` and consumed by
 /// `set_current_debug_location` of `Builder`.
