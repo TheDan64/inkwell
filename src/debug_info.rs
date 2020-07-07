@@ -90,8 +90,25 @@ use crate::basic_block::BasicBlock;
 use crate::context::Context;
 use crate::module::Module;
 use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, PointerValue};
+#[llvm_versions(8.0..=latest)]
+use llvm_sys::debuginfo::LLVMDIBuilderCreateTypedef;
 pub use llvm_sys::debuginfo::LLVMDWARFTypeEncoding;
 use llvm_sys::debuginfo::LLVMDebugMetadataVersion;
+use llvm_sys::debuginfo::LLVMDisposeDIBuilder;
+use llvm_sys::debuginfo::LLVMMetadataReplaceAllUsesWith;
+use llvm_sys::debuginfo::LLVMTemporaryMDNode;
+use llvm_sys::debuginfo::{LLVMCreateDIBuilder, LLVMCreateDIBuilderDisallowUnresolved};
+use llvm_sys::debuginfo::{
+    LLVMDIBuilderCreateAutoVariable, LLVMDIBuilderCreateBasicType, LLVMDIBuilderCreateCompileUnit,
+    LLVMDIBuilderCreateDebugLocation, LLVMDIBuilderCreateExpression, LLVMDIBuilderCreateFile,
+    LLVMDIBuilderCreateFunction, LLVMDIBuilderCreateLexicalBlock, LLVMDIBuilderCreateMemberType,
+    LLVMDIBuilderCreateParameterVariable, LLVMDIBuilderCreateStructType,
+    LLVMDIBuilderCreateSubroutineType, LLVMDIBuilderCreateUnionType, LLVMDIBuilderFinalize,
+    LLVMDIBuilderInsertDbgValueBefore, LLVMDIBuilderInsertDeclareAtEnd,
+    LLVMDIBuilderInsertDeclareBefore, LLVMDILocationGetColumn, LLVMDILocationGetLine,
+    LLVMDILocationGetScope, LLVMDITypeGetAlignInBits, LLVMDITypeGetOffsetInBits,
+    LLVMDITypeGetSizeInBits,
+};
 use llvm_sys::prelude::{LLVMDIBuilderRef, LLVMMetadataRef};
 use std::convert::TryInto;
 use std::marker::PhantomData;
@@ -128,7 +145,6 @@ pub trait AsDIScope<'ctx> {
 
 impl<'ctx> DebugInfoBuilder<'ctx> {
     pub(crate) fn new(module: &Module, allow_unresolved: bool) -> Self {
-        use llvm_sys::debuginfo::{LLVMCreateDIBuilder, LLVMCreateDIBuilderDisallowUnresolved};
         let builder = unsafe {
             if allow_unresolved {
                 LLVMCreateDIBuilder(module.module.get())
@@ -171,7 +187,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         split_debug_inlining: bool,
         debug_info_for_profiling: bool,
     ) -> DICompileUnit<'ctx> {
-        use llvm_sys::debuginfo::LLVMDIBuilderCreateCompileUnit;
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateCompileUnit(
                 self.builder,
@@ -228,7 +243,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         flags: DIFlags,
         is_optimized: bool,
     ) -> DISubprogram<'ctx> {
-        use llvm_sys::debuginfo::LLVMDIBuilderCreateFunction;
         let linkage_name = linkage_name.unwrap_or(name);
 
         let metadata_ref = unsafe {
@@ -263,7 +277,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         line: u32,
         column: u32,
     ) -> DILexicalBlock<'ctx> {
-        use llvm_sys::debuginfo::LLVMDIBuilderCreateLexicalBlock;
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateLexicalBlock(
                 self.builder,
@@ -281,7 +294,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
 
     /// Create a file scope.
     pub fn create_file(&self, filename: &str, directory: &str) -> DIFile<'ctx> {
-        use llvm_sys::debuginfo::LLVMDIBuilderCreateFile;
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateFile(
                 self.builder,
@@ -306,7 +318,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         scope: DIScope<'ctx>,
         inlined_at: Option<DILocation<'ctx>>,
     ) -> DILocation<'ctx> {
-        use llvm_sys::debuginfo::LLVMDIBuilderCreateDebugLocation;
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateDebugLocation(
                 context.context,
@@ -333,7 +344,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         size_in_bits: u64,
         encoding: LLVMDWARFTypeEncoding,
     ) -> DIBasicType<'ctx> {
-        use llvm_sys::debuginfo::LLVMDIBuilderCreateBasicType;
         if name.empty() {
             // Also, LLVM returns the same type if you ask for the same
             // (name, size_in_bits, encoding).
@@ -364,7 +374,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         encoding: LLVMDWARFTypeEncoding,
         flags: DIFlags,
     ) -> DIBasicType<'ctx> {
-        use llvm_sys::debuginfo::LLVMDIBuilderCreateBasicType;
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateBasicType(
                 self.builder,
@@ -391,7 +400,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         line_no: u32,
         scope: DIScope<'ctx>,
     ) -> DIDerivedType<'ctx> {
-        use llvm_sys::debuginfo::LLVMDIBuilderCreateTypedef;
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateTypedef(
                 self.builder,
@@ -420,7 +428,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         scope: DIScope<'ctx>,
         align_in_bits: u32,
     ) -> DIDerivedType<'ctx> {
-        use llvm_sys::debuginfo::LLVMDIBuilderCreateTypedef;
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateTypedef(
                 self.builder,
@@ -453,7 +460,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         runtime_language: u32,
         unique_id: &str,
     ) -> DICompositeType<'ctx> {
-        use llvm_sys::debuginfo::LLVMDIBuilderCreateUnionType;
         let mut elements: Vec<LLVMMetadataRef> =
             elements.into_iter().map(|dt| dt.metadata_ref).collect();
         let metadata_ref = unsafe {
@@ -493,7 +499,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         flags: DIFlags,
         ty: DIType<'ctx>,
     ) -> DIDerivedType<'ctx> {
-        use llvm_sys::debuginfo::LLVMDIBuilderCreateMemberType;
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateMemberType(
                 self.builder,
@@ -531,7 +536,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         vtable_holder: Option<DIType<'ctx>>,
         unique_id: &str,
     ) -> DICompositeType<'ctx> {
-        use llvm_sys::debuginfo::LLVMDIBuilderCreateStructType;
         let mut elements: Vec<LLVMMetadataRef> =
             elements.into_iter().map(|dt| dt.metadata_ref).collect();
         let derived_from = derived_from.map_or(std::ptr::null_mut(), |dt| dt.metadata_ref);
@@ -570,7 +574,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         parameter_types: &[DIType<'ctx>],
         flags: DIFlags,
     ) -> DISubroutineType<'ctx> {
-        use llvm_sys::debuginfo::LLVMDIBuilderCreateSubroutineType;
         let mut p = vec![return_type.map_or(std::ptr::null_mut(), |t| t.metadata_ref)];
         p.append(
             &mut parameter_types
@@ -605,8 +608,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         always_preserve: bool,
         flags: DIFlags,
     ) -> DILocalVariable<'ctx> {
-        use llvm_sys::debuginfo::LLVMDIBuilderCreateParameterVariable;
-
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateParameterVariable(
                 self.builder,
@@ -639,8 +640,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         flags: DIFlags,
         align_in_bits: u32,
     ) -> DILocalVariable<'ctx> {
-        use llvm_sys::debuginfo::LLVMDIBuilderCreateAutoVariable;
-
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateAutoVariable(
                 self.builder,
@@ -670,8 +669,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         debug_loc: DILocation<'ctx>,
         instruction: InstructionValue<'ctx>,
     ) -> InstructionValue<'ctx> {
-        use llvm_sys::debuginfo::LLVMDIBuilderInsertDeclareBefore;
-
         let value_ref = unsafe {
             LLVMDIBuilderInsertDeclareBefore(
                 self.builder,
@@ -696,8 +693,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         debug_loc: DILocation<'ctx>,
         block: BasicBlock<'ctx>,
     ) -> InstructionValue<'ctx> {
-        use llvm_sys::debuginfo::LLVMDIBuilderInsertDeclareAtEnd;
-
         let value_ref = unsafe {
             LLVMDIBuilderInsertDeclareAtEnd(
                 self.builder,
@@ -715,8 +710,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
 
     /// Create an expression
     pub fn create_expression(&self, mut address_operations: Vec<i64>) -> DIExpression<'ctx> {
-        use llvm_sys::debuginfo::LLVMDIBuilderCreateExpression;
-
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateExpression(
                 self.builder,
@@ -739,8 +732,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         debug_loc: DILocation<'ctx>,
         instruction: InstructionValue<'ctx>,
     ) -> InstructionValue<'ctx> {
-        use llvm_sys::debuginfo::LLVMDIBuilderInsertDbgValueBefore;
-
         let value_ref = unsafe {
             LLVMDIBuilderInsertDbgValueBefore(
                 self.builder,
@@ -758,7 +749,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     ///
     /// All placeholders must be replaced before calling finalize() otherwise we will panic!().
     pub fn create_placeholder_derived_type(&mut self, context: &Context) -> DIDerivedType<'ctx> {
-        use llvm_sys::debuginfo::LLVMTemporaryMDNode;
         let metadata_ref = unsafe { LLVMTemporaryMDNode(context.context, std::ptr::null_mut(), 0) };
         self.placeholders.push(metadata_ref);
         DIDerivedType {
@@ -773,7 +763,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         placeholder: DIDerivedType<'ctx>,
         other: DIDerivedType<'ctx>,
     ) {
-        use llvm_sys::debuginfo::LLVMMetadataReplaceAllUsesWith;
         // `placeholder` must be in the placeholder list.
         // `other` may or may not be a placeholder.
         let index = self
@@ -791,7 +780,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     /// Call before any kind of code generation (including verification). Can be called more than
     /// once.
     pub fn finalize(&self) {
-        use llvm_sys::debuginfo::LLVMDIBuilderFinalize;
         if !self.placeholders.is_empty() {
             panic!("Can't finalize debug info builder with outstanding placeholder types!");
         }
@@ -801,8 +789,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
 
 impl<'ctx> Drop for DebugInfoBuilder<'ctx> {
     fn drop(&mut self) {
-        use llvm_sys::debuginfo::LLVMDisposeDIBuilder;
-
         self.finalize();
         unsafe { LLVMDisposeDIBuilder(self.builder) }
     }
@@ -872,17 +858,14 @@ pub struct DIType<'ctx> {
 
 impl<'ctx> DIType<'ctx> {
     pub fn get_size_in_bits(&self) -> u64 {
-        use llvm_sys::debuginfo::LLVMDITypeGetSizeInBits;
         unsafe { LLVMDITypeGetSizeInBits(self.metadata_ref) }
     }
 
     pub fn get_align_in_bits(&self) -> u32 {
-        use llvm_sys::debuginfo::LLVMDITypeGetAlignInBits;
         unsafe { LLVMDITypeGetAlignInBits(self.metadata_ref) }
     }
 
     pub fn get_offset_in_bits(&self) -> u64 {
-        use llvm_sys::debuginfo::LLVMDITypeGetOffsetInBits;
         unsafe { LLVMDITypeGetOffsetInBits(self.metadata_ref) }
     }
 }
@@ -1009,17 +992,14 @@ pub struct DILocation<'ctx> {
 
 impl<'ctx> DILocation<'ctx> {
     pub fn get_line(&self) -> u32 {
-        use llvm_sys::debuginfo::LLVMDILocationGetLine;
         unsafe { LLVMDILocationGetLine(self.metadata_ref) }
     }
 
     pub fn get_column(&self) -> u32 {
-        use llvm_sys::debuginfo::LLVMDILocationGetColumn;
         unsafe { LLVMDILocationGetColumn(self.metadata_ref) }
     }
 
     pub fn get_scope(&self) -> DIScope<'ctx> {
-        use llvm_sys::debuginfo::LLVMDILocationGetScope;
         DIScope {
             metadata_ref: unsafe { LLVMDILocationGetScope(self.metadata_ref) },
             _marker: PhantomData,
