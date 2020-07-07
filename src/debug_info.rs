@@ -343,6 +343,11 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         encoding: LLVMDWARFTypeEncoding,
     ) -> DIBasicType<'ctx> {
         use llvm_sys::debuginfo::LLVMDIBuilderCreateBasicType;
+        if name.empty() {
+            // Also, LLVM returns the same type if you ask for the same
+            // (name, size_in_bits, encoding).
+            panic!("basic types must have names");
+        }
         let name = to_c_str(name);
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateBasicType(
@@ -788,7 +793,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         placeholder: DIDerivedType<'ctx>,
         other: DIDerivedType<'ctx>,
     ) {
-        use llvm_sys::debuginfo::LLVMDisposeTemporaryMDNode;
         use llvm_sys::debuginfo::LLVMMetadataReplaceAllUsesWith;
         // `placeholder` must be in the placeholder list.
         // `other` may or may not be a placeholder.
@@ -799,76 +803,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             .unwrap();
         self.placeholders.remove(index);
         unsafe { LLVMMetadataReplaceAllUsesWith(placeholder.metadata_ref, other.metadata_ref) };
-        unsafe { LLVMDisposeTemporaryMDNode(placeholder.metadata_ref) };
-    }
-
-    /// Construct placeholders to be used when building debug info with circular references.
-    ///
-    /// All placeholders must be replaced before calling finalize() otherwise we will panic!().
-    pub fn create_placeholder_basic_type(&mut self, context: &Context) -> DIBasicType<'ctx> {
-        use llvm_sys::debuginfo::LLVMTemporaryMDNode;
-        let metadata_ref = unsafe { LLVMTemporaryMDNode(context.context, std::ptr::null_mut(), 0) };
-        self.placeholders.push(metadata_ref);
-        DIBasicType {
-            metadata_ref,
-            _marker: PhantomData,
-        }
-    }
-
-    /// Deletes a placeholder, replacing all uses of it with another basic type.
-    pub fn replace_placeholder_basic_type(
-        &mut self,
-        placeholder: DIBasicType<'ctx>,
-        other: DIBasicType<'ctx>,
-    ) {
-        use llvm_sys::debuginfo::LLVMDisposeTemporaryMDNode;
-        use llvm_sys::debuginfo::LLVMMetadataReplaceAllUsesWith;
-        // `placeholder` must be in the placeholder list.
-        // `other` may or may not be a placeholder.
-        let index = self
-            .placeholders
-            .iter()
-            .position(|ph| *ph == placeholder.metadata_ref)
-            .unwrap();
-        self.placeholders.remove(index);
-        unsafe { LLVMMetadataReplaceAllUsesWith(placeholder.metadata_ref, other.metadata_ref) };
-        unsafe { LLVMDisposeTemporaryMDNode(placeholder.metadata_ref) };
-    }
-
-    /// Construct placeholders to be used when building debug info with circular references.
-    ///
-    /// All placeholders must be replaced before calling finalize() otherwise we will panic!().
-    pub fn create_placeholder_composite_type(
-        &mut self,
-        context: &Context,
-    ) -> DICompositeType<'ctx> {
-        use llvm_sys::debuginfo::LLVMTemporaryMDNode;
-        let metadata_ref = unsafe { LLVMTemporaryMDNode(context.context, std::ptr::null_mut(), 0) };
-        self.placeholders.push(metadata_ref);
-        DICompositeType {
-            metadata_ref,
-            _marker: PhantomData,
-        }
-    }
-
-    /// Deletes a placeholder, replacing all uses of it with another composite type.
-    pub fn replace_placeholder_composite_type(
-        &mut self,
-        placeholder: DICompositeType<'ctx>,
-        other: DICompositeType<'ctx>,
-    ) {
-        use llvm_sys::debuginfo::LLVMDisposeTemporaryMDNode;
-        use llvm_sys::debuginfo::LLVMMetadataReplaceAllUsesWith;
-        // `placeholder` must be in the placeholder list.
-        // `other` may or may not be a placeholder.
-        let index = self
-            .placeholders
-            .iter()
-            .position(|ph| *ph == placeholder.metadata_ref)
-            .unwrap();
-        self.placeholders.remove(index);
-        unsafe { LLVMMetadataReplaceAllUsesWith(placeholder.metadata_ref, other.metadata_ref) };
-        unsafe { LLVMDisposeTemporaryMDNode(placeholder.metadata_ref) };
     }
 
     /// Construct any deferred debug info descriptors. May generate invalid metadata if debug info
