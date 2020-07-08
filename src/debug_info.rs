@@ -14,7 +14,7 @@
 //!     debug_metadata_version,
 //! );
 //! let builder = context.create_builder();
-//! let dibuilder = module.create_debug_info_builder(true);
+//! let mut dibuilder = module.create_debug_info_builder(true);
 //!
 //! let compile_unit = dibuilder.create_compile_unit(
 //!     /* language */ inkwell::debug_info::DWARFSourceLanguage::C,
@@ -125,6 +125,7 @@ pub fn debug_metadata_version() -> libc::c_uint {
 pub struct DebugInfoBuilder<'ctx> {
     pub(crate) builder: LLVMDIBuilderRef,
     placeholders: Vec<LLVMMetadataRef>,
+    has_cu: bool,
     _marker: PhantomData<&'ctx Context>,
 }
 
@@ -156,6 +157,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         DebugInfoBuilder {
             builder,
             placeholders: vec![],
+            has_cu: false,
             _marker: PhantomData,
         }
     }
@@ -174,7 +176,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     /// * `split_debug_inlining` - Whether to emit inline debug info.
     /// * `debug_info_for_profiling` - Whether to emit extra debug info for profile collection.
     pub fn create_compile_unit(
-        &self,
+        &mut self,
         language: DWARFSourceLanguage,
         file: DIFile<'ctx>,
         producer: &str,
@@ -187,6 +189,10 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         split_debug_inlining: bool,
         debug_info_for_profiling: bool,
     ) -> DICompileUnit<'ctx> {
+        if self.has_cu {
+            panic!("Only one compile unit per DebugInfoBuilder.");
+        }
+        self.has_cu = true;
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateCompileUnit(
                 self.builder,
@@ -788,6 +794,9 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
 
 impl<'ctx> Drop for DebugInfoBuilder<'ctx> {
     fn drop(&mut self) {
+        if !self.has_cu {
+            panic!("A DebugInfoBuilder must have a compile unit.");
+        }
         self.finalize();
         unsafe { LLVMDisposeDIBuilder(self.builder) }
     }
