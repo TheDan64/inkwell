@@ -21,7 +21,7 @@
 //!     dibuilder.create_file(/* filename */ "source_file", /* directory */ "."),
 //!     /* producer */ "my llvm compiler frontend",
 //!     /* is_optimized */ false,
-//!     /* compiler command line flags*/ "",
+//!     /* compiler command line flags */ "",
 //!     /* runtime_ver */ 0,
 //!     /* split_name */ "",
 //!     /* kind */ inkwell::debug_info::DWARFEmissionKind::Full,
@@ -40,8 +40,8 @@
 //!  );
 //!  let subroutine_type = dibuilder.create_subroutine_type(
 //!      compile_unit.get_file(),
-//!      /* return type */ ditype,
-//!      /* parameter types */ vec![],
+//!      /* return type */ Some(ditype.as_type()),
+//!      /* parameter types */ &[],
 //!      inkwell::debug_info::DIFlags::Public,
 //!  );
 //!  let func_scope: DISubprogram<'_> = dibuilder.create_function(
@@ -74,9 +74,10 @@
 //!         /* column_no */ 0);
 //!
 //! let loc = dibuilder
-//!     .create_debug_location(context, /*line*/ 0, /* column */ 0,
-//!     /* current_scope */ lexical_block.as_debug_info_scope());
-//! builder.set_current_debug_location(context, loc);
+//!     .create_debug_location(&context, /* line */ 0, /* column */ 0,
+//!     /* current_scope */ lexical_block.as_debug_info_scope(),
+//!     /* inlined_at */ None);
+//! builder.set_current_debug_location(&context, loc);
 //! ```
 //!
 //! ## Finalize debug info
