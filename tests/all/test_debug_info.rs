@@ -57,6 +57,10 @@ fn test_smoke() {
     let fn_val = module.add_function("fn_name_str", fn_type, None);
     fn_val.set_subprogram(func_scope);
 
+    let basic_block = context.append_basic_block(fn_val, "entry");
+    builder.position_at_end(basic_block);
+    builder.build_return(Some(&context.i64_type().const_zero()));
+
     let lexical_block = dibuilder.create_lexical_block(
         func_scope.as_debug_info_scope(),
         compile_unit.get_file(),
@@ -69,4 +73,86 @@ fn test_smoke() {
     builder.set_current_debug_location(&context, loc);
 
     dibuilder.finalize();
+
+    assert!(module.verify().is_ok());
+}
+
+#[test]
+fn test_struct_with_placeholders() {
+    let context = Context::create();
+    let module = context.create_module("");
+
+    let builder = context.create_builder();
+    let mut dibuilder = module.create_debug_info_builder(true);
+
+    let compile_unit = dibuilder.create_compile_unit(
+        DWARFSourceLanguage::C,
+        dibuilder.create_file("source_file", "."),
+        "my llvm compiler frontend",
+        false,
+        "",
+        0,
+        "",
+        DWARFEmissionKind::Full,
+        0,
+        false,
+        false,
+    );
+
+    // Some byte aligned integer types.
+    let i32ty = dibuilder.create_basic_type("i32", 32, 0x07, DIFlags::Public);
+    let i64ty = dibuilder.create_basic_type("i64", 64, 0x07, DIFlags::Public);
+    let f32ty = dibuilder.create_basic_type("f32", 32, 0x04, DIFlags::Public);
+    let f64ty = dibuilder.create_basic_type("f64", 64, 0x04, DIFlags::Public);
+
+    let member_sizes = vec![32, 64, 32, 64];
+    let member_types = vec![i32ty, i64ty, f32ty, f64ty];
+    let member_placeholders = member_types
+        .iter()
+        .map(|ty| dibuilder.create_placeholder_derived_type(&context))
+        .collect::<Vec<_>>();
+    let member_placeholders_as_ditype = member_types
+        .iter()
+        .map(|ty| ty.as_type())
+        .collect::<Vec<_>>();
+
+    let structty = dibuilder.create_struct_type(
+        compile_unit.get_file().as_debug_info_scope(),
+        "",
+        compile_unit.get_file(),
+        0,
+        192,
+        8,
+        DIFlags::Public,
+        None,
+        member_placeholders_as_ditype.as_slice(),
+        0,
+        None,
+        "",
+    );
+
+    let mut offset = 0;
+    for ((placeholder, ty), size) in member_placeholders
+        .iter()
+        .zip(member_types.iter())
+        .zip(member_sizes.iter())
+    {
+        let member = dibuilder.create_member_type(
+            structty.as_debug_info_scope(),
+            "",
+            compile_unit.get_file(),
+            0,
+            *size,
+            8,
+            offset,
+            DIFlags::Public,
+            ty.as_type(),
+        );
+        dibuilder.replace_placeholder_derived_type(*placeholder, member);
+        offset += size;
+    }
+
+    dibuilder.finalize();
+
+    assert!(module.verify().is_ok());
 }
