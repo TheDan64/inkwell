@@ -156,3 +156,74 @@ fn test_struct_with_placeholders() {
 
     assert!(module.verify().is_ok());
 }
+
+#[test]
+#[should_panic]
+fn test_zero_compile_units() {
+    let context = Context::create();
+    let module = context.create_module("");
+
+    let _dibuilder = module.create_debug_info_builder(true);
+}
+
+#[test]
+fn test_one_compile_unit() {
+    let context = Context::create();
+    let module = context.create_module("");
+
+    let mut dibuilder = module.create_debug_info_builder(true);
+
+    let _compile_unit = dibuilder.create_compile_unit(
+        DWARFSourceLanguage::C,
+        dibuilder.create_file("source_file", "."),
+        "my llvm compiler frontend",
+        false,
+        "",
+        0,
+        "",
+        DWARFEmissionKind::Full,
+        0,
+        false,
+        false,
+    );
+
+    // We don't call finalize here because we also don't module.verify().
+    // finalize() is called from Drop.
+}
+
+#[test]
+#[should_panic]
+fn test_two_compile_units() {
+    let context = Context::create();
+    let module = context.create_module("");
+
+    let mut dibuilder = module.create_debug_info_builder(true);
+
+    let _compile_unit1 = dibuilder.create_compile_unit(
+        DWARFSourceLanguage::C,
+        dibuilder.create_file("source_file", "."),
+        "my llvm compiler frontend",
+        false,
+        "",
+        0,
+        "",
+        DWARFEmissionKind::Full,
+        0,
+        false,
+        false,
+    );
+
+    let _compile_unit2 = dibuilder.create_compile_unit(
+        DWARFSourceLanguage::C,
+        dibuilder.create_file("second_source_file", "."),
+        "my llvm compiler frontend",
+        false,
+        "",
+        0,
+        "",
+        DWARFEmissionKind::Full,
+        0,
+        false,
+        false,
+    );
+}
