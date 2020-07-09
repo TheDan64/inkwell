@@ -84,7 +84,6 @@ fn test_struct_with_placeholders() {
     let context = Context::create();
     let module = context.create_module("");
 
-    let builder = context.create_builder();
     let (dibuilder, compile_unit) = module.create_debug_info_builder(
         true,
         DWARFSourceLanguage::C,
@@ -286,7 +285,6 @@ fn test_anonymous_basic_type() {
     let context = Context::create();
     let module = context.create_module("bin");
 
-    let builder = context.create_builder();
     let (dibuilder, _compile_unit) = module.create_debug_info_builder(
         true,
         DWARFSourceLanguage::C,
