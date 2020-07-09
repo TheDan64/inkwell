@@ -14,11 +14,11 @@
 //!     debug_metadata_version,
 //! );
 //! let builder = context.create_builder();
-//! let mut dibuilder = module.create_debug_info_builder(true);
-//!
-//! let compile_unit = dibuilder.create_compile_unit(
+//! let (dibuilder, compile_unit) = module.create_debug_info_builder(
+//!     true,
 //!     /* language */ inkwell::debug_info::DWARFSourceLanguage::C,
-//!     dibuilder.create_file(/* filename */ "source_file", /* directory */ "."),
+//!     /* filename */ "source_file",
+//!     /* directory */ ".",
 //!     /* producer */ "my llvm compiler frontend",
 //!     /* is_optimized */ false,
 //!     /* compiler command line flags */ "",
