@@ -37,7 +37,7 @@
 //!      0_u64,
 //!      0x00,
 //!      inkwell::debug_info::DIFlags::Public,
-//!  );
+//!  ).unwrap();
 //!  let subroutine_type = dibuilder.create_subroutine_type(
 //!      compile_unit.get_file(),
 //!      /* return type */ Some(ditype.as_type()),
@@ -375,11 +375,11 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         name: &str,
         size_in_bits: u64,
         encoding: LLVMDWARFTypeEncoding,
-    ) -> DIBasicType<'ctx> {
-        if name.empty() {
+    ) -> Result<DIBasicType<'ctx>, &'static str> {
+        if name.is_empty() {
             // Also, LLVM returns the same type if you ask for the same
             // (name, size_in_bits, encoding).
-            panic!("basic types must have names");
+            return Err("basic types must have names");
         }
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateBasicType(
@@ -390,10 +390,10 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 encoding,
             )
         };
-        DIBasicType {
+        Ok(DIBasicType {
             metadata_ref,
             _marker: PhantomData,
-        }
+        })
     }
 
     /// Create a primitive basic type. `encoding` is an unsigned int flag (`DW_ATE_*`
@@ -405,7 +405,12 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         size_in_bits: u64,
         encoding: LLVMDWARFTypeEncoding,
         flags: DIFlags,
-    ) -> DIBasicType<'ctx> {
+    ) -> Result<DIBasicType<'ctx>, &'static str> {
+        if name.is_empty() {
+            // Also, LLVM returns the same type if you ask for the same
+            // (name, size_in_bits, encoding).
+            return Err("basic types must have names");
+        }
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateBasicType(
                 self.builder,
@@ -416,10 +421,10 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 flags.into(),
             )
         };
-        DIBasicType {
+        Ok(DIBasicType {
             metadata_ref,
             _marker: PhantomData,
-        }
+        })
     }
 
     /// Create a typedef (alias) of `ditype`

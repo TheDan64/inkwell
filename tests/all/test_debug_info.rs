@@ -32,7 +32,9 @@ fn test_smoke() {
         false,
     );
 
-    let ditype = dibuilder.create_basic_type("type_name", 0_u64, 0x00, DIFlags::Public);
+    let ditype = dibuilder
+        .create_basic_type("type_name", 0_u64, 0x00, DIFlags::Public)
+        .unwrap();
     let subroutine_type = dibuilder.create_subroutine_type(
         compile_unit.get_file(),
         Some(ditype.as_type()),
@@ -100,10 +102,18 @@ fn test_struct_with_placeholders() {
     );
 
     // Some byte aligned integer types.
-    let i32ty = dibuilder.create_basic_type("i32", 32, 0x07, DIFlags::Public);
-    let i64ty = dibuilder.create_basic_type("i64", 64, 0x07, DIFlags::Public);
-    let f32ty = dibuilder.create_basic_type("f32", 32, 0x04, DIFlags::Public);
-    let f64ty = dibuilder.create_basic_type("f64", 64, 0x04, DIFlags::Public);
+    let i32ty = dibuilder
+        .create_basic_type("i32", 32, 0x07, DIFlags::Public)
+        .unwrap();
+    let i64ty = dibuilder
+        .create_basic_type("i64", 64, 0x07, DIFlags::Public)
+        .unwrap();
+    let f32ty = dibuilder
+        .create_basic_type("f32", 32, 0x04, DIFlags::Public)
+        .unwrap();
+    let f64ty = dibuilder
+        .create_basic_type("f64", 64, 0x04, DIFlags::Public)
+        .unwrap();
 
     let member_sizes = vec![32, 64, 32, 64];
     let member_types = vec![i32ty, i64ty, f32ty, f64ty];
@@ -207,7 +217,9 @@ fn test_replacing_placeholder_with_placeholder() {
         false,
     );
 
-    let i32ty = dibuilder.create_basic_type("i32", 32, 0x07, DIFlags::Public);
+    let i32ty = dibuilder
+        .create_basic_type("i32", 32, 0x07, DIFlags::Public)
+        .unwrap();
     let typedefty = dibuilder.create_typedef(
         i32ty.as_type(),
         "",
@@ -247,7 +259,9 @@ fn test_replacing_placeholder_with_placeholder() {
         false,
     );
 
-    let i32ty = dibuilder.create_basic_type("i32", 32, 0x07, DIFlags::Public);
+    let i32ty = dibuilder
+        .create_basic_type("i32", 32, 0x07, DIFlags::Public)
+        .unwrap();
     let typedefty = dibuilder.create_typedef(
         i32ty.as_type(),
         "",
@@ -264,4 +278,61 @@ fn test_replacing_placeholder_with_placeholder() {
         dibuilder.replace_placeholder_derived_type(ph2, ph1);
         dibuilder.replace_placeholder_derived_type(ph1, typedefty);
     }
+}
+
+#[test]
+#[llvm_versions(7.0)]
+fn test_anonymous_basic_type() {
+    let context = Context::create();
+    let module = context.create_module("bin");
+
+    let builder = context.create_builder();
+    let (dibuilder, _compile_unit) = module.create_debug_info_builder(
+        true,
+        DWARFSourceLanguage::C,
+        "source_file",
+        ".",
+        "my llvm compiler frontend",
+        false,
+        "",
+        0,
+        "",
+        DWARFEmissionKind::Full,
+        0,
+        false,
+        false,
+    );
+
+    assert_eq!(
+        dibuilder.create_basic_type("", 0_u64, 0x00),
+        Err("basic types must have names")
+    );
+}
+
+#[test]
+#[llvm_versions(8.0..=latest)]
+fn test_anonymous_basic_type() {
+    let context = Context::create();
+    let module = context.create_module("bin");
+
+    let (dibuilder, _compile_unit) = module.create_debug_info_builder(
+        true,
+        DWARFSourceLanguage::C,
+        "source_file",
+        ".",
+        "my llvm compiler frontend",
+        false,
+        "",
+        0,
+        "",
+        DWARFEmissionKind::Full,
+        0,
+        false,
+        false,
+    );
+
+    assert_eq!(
+        dibuilder.create_basic_type("", 0_u64, 0x00, DIFlags::Zero),
+        Err("basic types must have names")
+    );
 }
