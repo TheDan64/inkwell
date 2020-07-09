@@ -16,11 +16,11 @@ fn test_smoke() {
         debug_metadata_version,
     );
     let builder = context.create_builder();
-    let mut dibuilder = module.create_debug_info_builder(true);
-
-    let compile_unit = dibuilder.create_compile_unit(
+    let (dibuilder, compile_unit) = module.create_debug_info_builder(
+        true,
         DWARFSourceLanguage::C,
-        dibuilder.create_file("source_file", "."),
+        "source_file",
+        ".",
         "my llvm compiler frontend",
         false,
         "",
@@ -83,11 +83,11 @@ fn test_struct_with_placeholders() {
     let module = context.create_module("");
 
     let builder = context.create_builder();
-    let mut dibuilder = module.create_debug_info_builder(true);
-
-    let compile_unit = dibuilder.create_compile_unit(
+    let (dibuilder, compile_unit) = module.create_debug_info_builder(
+        true,
         DWARFSourceLanguage::C,
-        dibuilder.create_file("source_file", "."),
+        "source_file",
+        ".",
         "my llvm compiler frontend",
         false,
         "",
@@ -109,7 +109,7 @@ fn test_struct_with_placeholders() {
     let member_types = vec![i32ty, i64ty, f32ty, f64ty];
     let member_placeholders = member_types
         .iter()
-        .map(|ty| dibuilder.create_placeholder_derived_type(&context))
+        .map(|ty| unsafe { dibuilder.create_placeholder_derived_type(&context) })
         .collect::<Vec<_>>();
     let member_placeholders_as_ditype = member_types
         .iter()
@@ -148,7 +148,9 @@ fn test_struct_with_placeholders() {
             DIFlags::Public,
             ty.as_type(),
         );
-        dibuilder.replace_placeholder_derived_type(*placeholder, member);
+        unsafe {
+            dibuilder.replace_placeholder_derived_type(*placeholder, member);
+        }
         offset += size;
     }
 
@@ -158,24 +160,42 @@ fn test_struct_with_placeholders() {
 }
 
 #[test]
-#[should_panic]
-fn test_zero_compile_units() {
+fn test_no_explicit_finalize() {
     let context = Context::create();
     let module = context.create_module("");
 
-    let _dibuilder = module.create_debug_info_builder(true);
+    let (dibuilder, _compile_unit) = module.create_debug_info_builder(
+        true,
+        DWARFSourceLanguage::C,
+        "source_file",
+        ".",
+        "my llvm compiler frontend",
+        false,
+        "",
+        0,
+        "",
+        DWARFEmissionKind::Full,
+        0,
+        false,
+        false,
+    );
+
+    drop(dibuilder);
+
+    assert!(module.verify().is_ok());
 }
 
 #[test]
-fn test_one_compile_unit() {
+#[llvm_versions(8.0..=9.0)]
+fn test_replacing_placeholder_with_placeholder() {
     let context = Context::create();
     let module = context.create_module("");
 
-    let mut dibuilder = module.create_debug_info_builder(true);
-
-    let _compile_unit = dibuilder.create_compile_unit(
+    let (dibuilder, compile_unit) = module.create_debug_info_builder(
+        true,
         DWARFSourceLanguage::C,
-        dibuilder.create_file("source_file", "."),
+        "source_file",
+        ".",
         "my llvm compiler frontend",
         false,
         "",
@@ -187,21 +207,35 @@ fn test_one_compile_unit() {
         false,
     );
 
-    // We don't call finalize here because we also don't module.verify().
-    // finalize() is called from Drop.
+    let i32ty = dibuilder.create_basic_type("i32", 32, 0x07, DIFlags::Public);
+    let typedefty = dibuilder.create_typedef(
+        i32ty.as_type(),
+        "",
+        compile_unit.get_file(),
+        0,
+        compile_unit.get_file().as_debug_info_scope(),
+    );
+
+    unsafe {
+        let ph1 = dibuilder.create_placeholder_derived_type(&context);
+        let ph2 = dibuilder.create_placeholder_derived_type(&context);
+
+        dibuilder.replace_placeholder_derived_type(ph2, ph1);
+        dibuilder.replace_placeholder_derived_type(ph1, typedefty);
+    }
 }
 
 #[test]
-#[should_panic]
-fn test_two_compile_units() {
+#[llvm_versions(10.0..=latest)]
+fn test_replacing_placeholder_with_placeholder() {
     let context = Context::create();
     let module = context.create_module("");
 
-    let mut dibuilder = module.create_debug_info_builder(true);
-
-    let _compile_unit1 = dibuilder.create_compile_unit(
+    let (dibuilder, compile_unit) = module.create_debug_info_builder(
+        true,
         DWARFSourceLanguage::C,
-        dibuilder.create_file("source_file", "."),
+        "source_file",
+        ".",
         "my llvm compiler frontend",
         false,
         "",
@@ -213,17 +247,21 @@ fn test_two_compile_units() {
         false,
     );
 
-    let _compile_unit2 = dibuilder.create_compile_unit(
-        DWARFSourceLanguage::C,
-        dibuilder.create_file("second_source_file", "."),
-        "my llvm compiler frontend",
-        false,
+    let i32ty = dibuilder.create_basic_type("i32", 32, 0x07, DIFlags::Public);
+    let typedefty = dibuilder.create_typedef(
+        i32ty.as_type(),
         "",
+        compile_unit.get_file(),
         0,
-        "",
-        DWARFEmissionKind::Full,
-        0,
-        false,
-        false,
+        compile_unit.get_file().as_debug_info_scope(),
+        32,
     );
+
+    unsafe {
+        let ph1 = dibuilder.create_placeholder_derived_type(&context);
+        let ph2 = dibuilder.create_placeholder_derived_type(&context);
+
+        dibuilder.replace_placeholder_derived_type(ph2, ph1);
+        dibuilder.replace_placeholder_derived_type(ph1, typedefty);
+    }
 }

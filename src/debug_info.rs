@@ -125,8 +125,6 @@ pub fn debug_metadata_version() -> libc::c_uint {
 #[derive(Debug, PartialEq, Eq)]
 pub struct DebugInfoBuilder<'ctx> {
     pub(crate) builder: LLVMDIBuilderRef,
-    placeholders: Vec<LLVMMetadataRef>,
-    has_cu: bool,
     _marker: PhantomData<&'ctx Context>,
 }
 
@@ -146,7 +144,22 @@ pub trait AsDIScope<'ctx> {
 }
 
 impl<'ctx> DebugInfoBuilder<'ctx> {
-    pub(crate) fn new(module: &Module, allow_unresolved: bool) -> Self {
+    pub(crate) fn new(
+        module: &Module,
+        allow_unresolved: bool,
+        language: DWARFSourceLanguage,
+        filename: &str,
+        directory: &str,
+        producer: &str,
+        is_optimized: bool,
+        flags: &str,
+        runtime_ver: libc::c_uint,
+        split_name: &str,
+        kind: DWARFEmissionKind,
+        dwo_id: libc::c_uint,
+        split_debug_inlining: bool,
+        debug_info_for_profiling: bool,
+    ) -> (Self, DICompileUnit<'ctx>) {
         let builder = unsafe {
             if allow_unresolved {
                 LLVMCreateDIBuilder(module.module.get())
@@ -155,12 +168,28 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             }
         };
 
-        DebugInfoBuilder {
+        let builder = DebugInfoBuilder {
             builder,
-            placeholders: vec![],
-            has_cu: false,
             _marker: PhantomData,
-        }
+        };
+
+        let file = builder.create_file(filename, directory);
+
+        let cu = builder.create_compile_unit(
+            language,
+            file,
+            producer,
+            is_optimized,
+            flags,
+            runtime_ver,
+            split_name,
+            kind,
+            dwo_id,
+            split_debug_inlining,
+            debug_info_for_profiling,
+        );
+
+        (builder, cu)
     }
 
     /// A DICompileUnit provides an anchor for all debugging information generated during this instance of compilation.
@@ -176,8 +205,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     /// * `dwo_id` - The DWOId if this is a split skeleton compile unit.
     /// * `split_debug_inlining` - Whether to emit inline debug info.
     /// * `debug_info_for_profiling` - Whether to emit extra debug info for profile collection.
-    pub fn create_compile_unit(
-        &mut self,
+    fn create_compile_unit(
+        &self,
         language: DWARFSourceLanguage,
         file: DIFile<'ctx>,
         producer: &str,
@@ -190,10 +219,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         split_debug_inlining: bool,
         debug_info_for_profiling: bool,
     ) -> DICompileUnit<'ctx> {
-        if self.has_cu {
-            panic!("Only one compile unit per DebugInfoBuilder.");
-        }
-        self.has_cu = true;
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateCompileUnit(
                 self.builder,
@@ -754,10 +779,9 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
 
     /// Construct a placeholders derived type to be used when building debug info with circular references.
     ///
-    /// All placeholders must be replaced before calling finalize() otherwise we will panic!().
-    pub fn create_placeholder_derived_type(&mut self, context: &Context) -> DIDerivedType<'ctx> {
-        let metadata_ref = unsafe { LLVMTemporaryMDNode(context.context, std::ptr::null_mut(), 0) };
-        self.placeholders.push(metadata_ref);
+    /// All placeholders must be replaced before calling finalize().
+    pub unsafe fn create_placeholder_derived_type(&self, context: &Context) -> DIDerivedType<'ctx> {
+        let metadata_ref = LLVMTemporaryMDNode(context.context, std::ptr::null_mut(), 0);
         DIDerivedType {
             metadata_ref,
             _marker: PhantomData,
@@ -765,20 +789,16 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     }
 
     /// Deletes a placeholder, replacing all uses of it with another derived type.
-    pub fn replace_placeholder_derived_type(
-        &mut self,
+    ///
+    /// # Safety:
+    /// This and any other copies of this placeholder made by Copy or Clone
+    /// become dangling pointers after calling this method.
+    pub unsafe fn replace_placeholder_derived_type(
+        &self,
         placeholder: DIDerivedType<'ctx>,
         other: DIDerivedType<'ctx>,
     ) {
-        // `placeholder` must be in the placeholder list.
-        // `other` may or may not be a placeholder.
-        let index = self
-            .placeholders
-            .iter()
-            .position(|ph| *ph == placeholder.metadata_ref)
-            .unwrap();
-        self.placeholders.remove(index);
-        unsafe { LLVMMetadataReplaceAllUsesWith(placeholder.metadata_ref, other.metadata_ref) };
+        LLVMMetadataReplaceAllUsesWith(placeholder.metadata_ref, other.metadata_ref);
     }
 
     /// Construct any deferred debug info descriptors. May generate invalid metadata if debug info
@@ -786,18 +806,12 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     ///
     /// Call before any kind of code generation (including verification). Can be called more than once.
     pub fn finalize(&self) {
-        if !self.placeholders.is_empty() {
-            panic!("Can't finalize debug info builder with outstanding placeholder types!");
-        }
         unsafe { LLVMDIBuilderFinalize(self.builder) };
     }
 }
 
 impl<'ctx> Drop for DebugInfoBuilder<'ctx> {
     fn drop(&mut self) {
-        if !self.has_cu {
-            panic!("A DebugInfoBuilder must have a compile unit.");
-        }
         self.finalize();
         unsafe { LLVMDisposeDIBuilder(self.builder) }
     }

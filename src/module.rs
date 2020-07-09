@@ -31,7 +31,7 @@ use crate::comdat::Comdat;
 use crate::context::{Context, ContextRef};
 use crate::data_layout::DataLayout;
 #[llvm_versions(7.0..=latest)]
-use crate::debug_info::DebugInfoBuilder;
+use crate::debug_info::{DebugInfoBuilder, DICompileUnit, DWARFEmissionKind, DWARFSourceLanguage};
 use crate::execution_engine::ExecutionEngine;
 use crate::memory_buffer::MemoryBuffer;
 use crate::support::{to_c_str, LLVMString};
@@ -1358,8 +1358,24 @@ impl<'ctx> Module<'ctx> {
 
     /// Creates a `DebugInfoBuilder` for this `Module`.
     #[llvm_versions(7.0..=latest)]
-    pub fn create_debug_info_builder(&self, allow_unresolved: bool) -> DebugInfoBuilder<'ctx> {
-         DebugInfoBuilder::new(self, allow_unresolved)
+    pub fn create_debug_info_builder(&self,
+        allow_unresolved: bool,
+        language: DWARFSourceLanguage,
+        filename: &str,
+        directory: &str,
+        producer: &str,
+        is_optimized: bool,
+        flags: &str,
+        runtime_ver: libc::c_uint,
+        split_name: &str,
+        kind: DWARFEmissionKind,
+        dwo_id: libc::c_uint,
+        split_debug_inlining: bool,
+        debug_info_for_profiling: bool,
+    ) -> (DebugInfoBuilder<'ctx>, DICompileUnit<'ctx>) {
+        DebugInfoBuilder::new(self, allow_unresolved,
+                              language, filename, directory, producer, is_optimized, flags, runtime_ver, split_name, kind, dwo_id, split_debug_inlining, debug_info_for_profiling
+        )
     }
 }
 
