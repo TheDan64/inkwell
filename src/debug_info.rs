@@ -369,12 +369,13 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
 
     /// Create a primitive basic type. `encoding` is an unsigned int flag (`DW_ATE_*`
     /// enum) defined by the chosen DWARF standard.
-    #[llvm_versions(7.0)]
+    #[llvm_versions(7.0..=latest)]
     pub fn create_basic_type(
         &self,
         name: &str,
         size_in_bits: u64,
         encoding: LLVMDWARFTypeEncoding,
+        #[cfg(not(all(feature = "llvm7-0")))] flags: DIFlags,
     ) -> Result<DIBasicType<'ctx>, &'static str> {
         if name.is_empty() {
             // Also, LLVM returns the same type if you ask for the same
@@ -388,36 +389,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 name.len(),
                 size_in_bits,
                 encoding,
-            )
-        };
-        Ok(DIBasicType {
-            metadata_ref,
-            _marker: PhantomData,
-        })
-    }
-
-    /// Create a primitive basic type. `encoding` is an unsigned int flag (`DW_ATE_*`
-    /// enum) defined by the chosen DWARF standard.
-    #[llvm_versions(8.0..=latest)]
-    pub fn create_basic_type(
-        &self,
-        name: &str,
-        size_in_bits: u64,
-        encoding: LLVMDWARFTypeEncoding,
-        flags: DIFlags,
-    ) -> Result<DIBasicType<'ctx>, &'static str> {
-        if name.is_empty() {
-            // Also, LLVM returns the same type if you ask for the same
-            // (name, size_in_bits, encoding).
-            return Err("basic types must have names");
-        }
-        let metadata_ref = unsafe {
-            LLVMDIBuilderCreateBasicType(
-                self.builder,
-                name.as_ptr() as _,
-                name.len(),
-                size_in_bits,
-                encoding,
+                #[cfg(not(all(feature = "llvm8-0", feature = "llvm9-0")))]
                 flags.into(),
             )
         };
@@ -428,7 +400,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     }
 
     /// Create a typedef (alias) of `ditype`
-    #[llvm_versions(8.0..=9.0)]
+    #[llvm_versions(8.0..=latest)]
     pub fn create_typedef(
         &self,
         ditype: DIType<'ctx>,
@@ -436,6 +408,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         file: DIFile<'ctx>,
         line_no: u32,
         scope: DIScope<'ctx>,
+        #[cfg(not(all(feature = "llvm8-0", feature = "llvm9-0")))] align_in_bits: u32,
     ) -> DIDerivedType<'ctx> {
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateTypedef(
@@ -446,34 +419,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 file.metadata_ref,
                 line_no,
                 scope.metadata_ref,
-            )
-        };
-        DIDerivedType {
-            metadata_ref,
-            _marker: PhantomData,
-        }
-    }
-
-    /// Create a typedef (alias) of `ditype`
-    #[llvm_versions(10.0..=latest)]
-    pub fn create_typedef(
-        &self,
-        ditype: DIType<'ctx>,
-        name: &str,
-        file: DIFile<'ctx>,
-        line_no: u32,
-        scope: DIScope<'ctx>,
-        align_in_bits: u32,
-    ) -> DIDerivedType<'ctx> {
-        let metadata_ref = unsafe {
-            LLVMDIBuilderCreateTypedef(
-                self.builder,
-                ditype.metadata_ref,
-                name.as_ptr() as _,
-                name.len(),
-                file.metadata_ref,
-                line_no,
-                scope.metadata_ref,
+                #[cfg(not(all(feature = "llvm8-0", feature = "llvm9-0")))]
                 align_in_bits,
             )
         };

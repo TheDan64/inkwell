@@ -33,7 +33,13 @@ fn test_smoke() {
     );
 
     let ditype = dibuilder
-        .create_basic_type("type_name", 0_u64, 0x00, DIFlags::Public)
+        .create_basic_type(
+            "type_name",
+            0_u64,
+            0x00,
+            #[cfg(not(all(feature = "llvm7-0")))]
+            DIFlags::Public,
+        )
         .unwrap();
     let subroutine_type = dibuilder.create_subroutine_type(
         compile_unit.get_file(),
@@ -102,16 +108,40 @@ fn test_struct_with_placeholders() {
 
     // Some byte aligned integer types.
     let i32ty = dibuilder
-        .create_basic_type("i32", 32, 0x07, DIFlags::Public)
+        .create_basic_type(
+            "i32",
+            32,
+            0x07,
+            #[cfg(not(all(feature = "llvm7-0")))]
+            DIFlags::Public,
+        )
         .unwrap();
     let i64ty = dibuilder
-        .create_basic_type("i64", 64, 0x07, DIFlags::Public)
+        .create_basic_type(
+            "i64",
+            64,
+            0x07,
+            #[cfg(not(all(feature = "llvm7-0")))]
+            DIFlags::Public,
+        )
         .unwrap();
     let f32ty = dibuilder
-        .create_basic_type("f32", 32, 0x04, DIFlags::Public)
+        .create_basic_type(
+            "f32",
+            32,
+            0x04,
+            #[cfg(not(all(feature = "llvm7-0")))]
+            DIFlags::Public,
+        )
         .unwrap();
     let f64ty = dibuilder
-        .create_basic_type("f64", 64, 0x04, DIFlags::Public)
+        .create_basic_type(
+            "f64",
+            64,
+            0x04,
+            #[cfg(not(all(feature = "llvm7-0")))]
+            DIFlags::Public,
+        )
         .unwrap();
 
     let member_sizes = vec![32, 64, 32, 64];
@@ -195,7 +225,7 @@ fn test_no_explicit_finalize() {
 }
 
 #[test]
-#[llvm_versions(8.0..=9.0)]
+#[llvm_versions(8.0..=latest)]
 fn test_replacing_placeholder_with_placeholder() {
     let context = Context::create();
     let module = context.create_module("");
@@ -225,48 +255,7 @@ fn test_replacing_placeholder_with_placeholder() {
         compile_unit.get_file(),
         0,
         compile_unit.get_file().as_debug_info_scope(),
-    );
-
-    unsafe {
-        let ph1 = dibuilder.create_placeholder_derived_type(&context);
-        let ph2 = dibuilder.create_placeholder_derived_type(&context);
-
-        dibuilder.replace_placeholder_derived_type(ph2, ph1);
-        dibuilder.replace_placeholder_derived_type(ph1, typedefty);
-    }
-}
-
-#[test]
-#[llvm_versions(10.0..=latest)]
-fn test_replacing_placeholder_with_placeholder() {
-    let context = Context::create();
-    let module = context.create_module("");
-
-    let (dibuilder, compile_unit) = module.create_debug_info_builder(
-        true,
-        DWARFSourceLanguage::C,
-        "source_file",
-        ".",
-        "my llvm compiler frontend",
-        false,
-        "",
-        0,
-        "",
-        DWARFEmissionKind::Full,
-        0,
-        false,
-        false,
-    );
-
-    let i32ty = dibuilder
-        .create_basic_type("i32", 32, 0x07, DIFlags::Public)
-        .unwrap();
-    let typedefty = dibuilder.create_typedef(
-        i32ty.as_type(),
-        "",
-        compile_unit.get_file(),
-        0,
-        compile_unit.get_file().as_debug_info_scope(),
+        #[cfg(not(all(feature = "llvm8-0", feature = "llvm9-0")))]
         32,
     );
 
@@ -280,7 +269,7 @@ fn test_replacing_placeholder_with_placeholder() {
 }
 
 #[test]
-#[llvm_versions(7.0)]
+#[llvm_versions(7.0..=latest)]
 fn test_anonymous_basic_type() {
     let context = Context::create();
     let module = context.create_module("bin");
@@ -302,35 +291,13 @@ fn test_anonymous_basic_type() {
     );
 
     assert_eq!(
-        dibuilder.create_basic_type("", 0_u64, 0x00),
-        Err("basic types must have names")
-    );
-}
-
-#[test]
-#[llvm_versions(8.0..=latest)]
-fn test_anonymous_basic_type() {
-    let context = Context::create();
-    let module = context.create_module("bin");
-
-    let (dibuilder, _compile_unit) = module.create_debug_info_builder(
-        true,
-        DWARFSourceLanguage::C,
-        "source_file",
-        ".",
-        "my llvm compiler frontend",
-        false,
-        "",
-        0,
-        "",
-        DWARFEmissionKind::Full,
-        0,
-        false,
-        false,
-    );
-
-    assert_eq!(
-        dibuilder.create_basic_type("", 0_u64, 0x00, DIFlags::Zero),
+        dibuilder.create_basic_type(
+            "",
+            0_u64,
+            0x00,
+            #[cfg(not(all(feature = "llvm7-0")))]
+            DIFlags::Zero
+        ),
         Err("basic types must have names")
     );
 }
