@@ -375,7 +375,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         name: &str,
         size_in_bits: u64,
         encoding: LLVMDWARFTypeEncoding,
-        #[cfg(not(all(feature = "llvm7-0")))] flags: DIFlags,
+        #[cfg(not(feature = "llvm7-0"))] flags: DIFlags,
     ) -> Result<DIBasicType<'ctx>, &'static str> {
         if name.is_empty() {
             // Also, LLVM returns the same type if you ask for the same
@@ -389,7 +389,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 name.len(),
                 size_in_bits,
                 encoding,
-                #[cfg(not(all(feature = "llvm8-0", feature = "llvm9-0")))]
+                #[cfg(not(feature = "llvm7-0"))]
                 flags.into(),
             )
         };
