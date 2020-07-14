@@ -269,7 +269,6 @@ fn test_replacing_placeholder_with_placeholder() {
 }
 
 #[test]
-#[llvm_versions(7.0..=latest)]
 fn test_anonymous_basic_type() {
     let context = Context::create();
     let module = context.create_module("bin");
