@@ -310,7 +310,7 @@ pub enum OptimizationLevel {
     None       = 0,
     Less       = 1,
     Default    = 2,
-    Aggressive = 3
+    Aggressive = 3,
 }
 
 impl Default for OptimizationLevel {
