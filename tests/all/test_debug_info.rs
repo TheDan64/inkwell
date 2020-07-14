@@ -224,8 +224,8 @@ fn test_no_explicit_finalize() {
     assert!(module.verify().is_ok());
 }
 
-#[test]
 #[llvm_versions(8.0..=latest)]
+#[test]
 fn test_replacing_placeholder_with_placeholder() {
     let context = Context::create();
     let module = context.create_module("");
