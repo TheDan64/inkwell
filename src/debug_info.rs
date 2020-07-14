@@ -409,7 +409,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         file: DIFile<'ctx>,
         line_no: u32,
         scope: DIScope<'ctx>,
-        #[cfg(not(all(feature = "llvm8-0", feature = "llvm9-0")))]
+        #[cfg(not(any(feature = "llvm8-0", feature = "llvm9-0")))]
         align_in_bits: u32,
     ) -> DIDerivedType<'ctx> {
         let metadata_ref = unsafe {
@@ -421,7 +421,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 file.metadata_ref,
                 line_no,
                 scope.metadata_ref,
-                #[cfg(not(all(feature = "llvm8-0", feature = "llvm9-0")))]
+                #[cfg(not(any(feature = "llvm8-0", feature = "llvm9-0")))]
                 align_in_bits,
             )
         };

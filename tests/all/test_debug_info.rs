@@ -37,7 +37,7 @@ fn test_smoke() {
             "type_name",
             0_u64,
             0x00,
-            #[cfg(not(all(feature = "llvm7-0")))]
+            #[cfg(not(feature = "llvm7-0"))]
             DIFlags::Public,
         )
         .unwrap();
@@ -112,7 +112,7 @@ fn test_struct_with_placeholders() {
             "i32",
             32,
             0x07,
-            #[cfg(not(all(feature = "llvm7-0")))]
+            #[cfg(not(feature = "llvm7-0"))]
             DIFlags::Public,
         )
         .unwrap();
@@ -121,7 +121,7 @@ fn test_struct_with_placeholders() {
             "i64",
             64,
             0x07,
-            #[cfg(not(all(feature = "llvm7-0")))]
+            #[cfg(not(feature = "llvm7-0"))]
             DIFlags::Public,
         )
         .unwrap();
@@ -130,7 +130,7 @@ fn test_struct_with_placeholders() {
             "f32",
             32,
             0x04,
-            #[cfg(not(all(feature = "llvm7-0")))]
+            #[cfg(not(feature = "llvm7-0"))]
             DIFlags::Public,
         )
         .unwrap();
@@ -139,7 +139,7 @@ fn test_struct_with_placeholders() {
             "f64",
             64,
             0x04,
-            #[cfg(not(all(feature = "llvm7-0")))]
+            #[cfg(not(feature = "llvm7-0"))]
             DIFlags::Public,
         )
         .unwrap();
@@ -255,7 +255,7 @@ fn test_replacing_placeholder_with_placeholder() {
         compile_unit.get_file(),
         0,
         compile_unit.get_file().as_debug_info_scope(),
-        #[cfg(not(all(feature = "llvm8-0", feature = "llvm9-0")))]
+        #[cfg(not(any(feature = "llvm8-0", feature = "llvm9-0")))]
         32,
     );
 
@@ -294,7 +294,7 @@ fn test_anonymous_basic_type() {
             "",
             0_u64,
             0x00,
-            #[cfg(not(all(feature = "llvm7-0")))]
+            #[cfg(not(feature = "llvm7-0"))]
             DIFlags::Zero
         ),
         Err("basic types must have names")
