@@ -483,6 +483,16 @@ impl<F> Debug for JitFunction<'_, F> {
     }
 }
 
+impl<F: Copy> JitFunction<'_, F> {
+    /// Returns the raw function pointer.
+    ///
+    /// It is the caller's responsibility to ensure that the returned function
+    /// pointer does not outlive the `JitFunction` it came from.
+    pub unsafe fn raw_fn_ptr(&self) -> F {
+        self.inner
+    }
+}
+
 /// Marker trait representing an unsafe function pointer (`unsafe extern "C" fn(A, B, ...) -> Output`).
 pub trait UnsafeFunctionPointer: private::SealedUnsafeFunctionPointer {}
 
