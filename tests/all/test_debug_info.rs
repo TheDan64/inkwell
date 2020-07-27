@@ -1,6 +1,7 @@
 use inkwell::context::Context;
 use inkwell::debug_info::{
-    AsDIScope, DIFlags, DISubprogram, DWARFEmissionKind, DWARFSourceLanguage, DebugInfoBuilder,
+    AsDIScope, DIFlags, DIFlagsConstants, DISubprogram, DWARFEmissionKind, DWARFSourceLanguage,
+    DebugInfoBuilder,
 };
 use inkwell::module::FlagBehavior;
 
@@ -38,14 +39,14 @@ fn test_smoke() {
             0_u64,
             0x00,
             #[cfg(not(feature = "llvm7-0"))]
-            DIFlags::Public,
+            DIFlags::PUBLIC,
         )
         .unwrap();
     let subroutine_type = dibuilder.create_subroutine_type(
         compile_unit.get_file(),
         Some(ditype.as_type()),
         &[],
-        DIFlags::Public,
+        DIFlags::PUBLIC,
     );
     let func_scope: DISubprogram<'_> = dibuilder.create_function(
         compile_unit.as_debug_info_scope(),
@@ -57,7 +58,7 @@ fn test_smoke() {
         true,
         true,
         0,
-        DIFlags::Public,
+        DIFlags::PUBLIC,
         false,
     );
 
@@ -113,7 +114,7 @@ fn test_struct_with_placeholders() {
             32,
             0x07,
             #[cfg(not(feature = "llvm7-0"))]
-            DIFlags::Public,
+            DIFlags::PUBLIC,
         )
         .unwrap();
     let i64ty = dibuilder
@@ -122,7 +123,7 @@ fn test_struct_with_placeholders() {
             64,
             0x07,
             #[cfg(not(feature = "llvm7-0"))]
-            DIFlags::Public,
+            DIFlags::PUBLIC,
         )
         .unwrap();
     let f32ty = dibuilder
@@ -131,7 +132,7 @@ fn test_struct_with_placeholders() {
             32,
             0x04,
             #[cfg(not(feature = "llvm7-0"))]
-            DIFlags::Public,
+            DIFlags::PUBLIC,
         )
         .unwrap();
     let f64ty = dibuilder
@@ -140,7 +141,7 @@ fn test_struct_with_placeholders() {
             64,
             0x04,
             #[cfg(not(feature = "llvm7-0"))]
-            DIFlags::Public,
+            DIFlags::PUBLIC,
         )
         .unwrap();
 
@@ -162,7 +163,7 @@ fn test_struct_with_placeholders() {
         0,
         192,
         8,
-        DIFlags::Public,
+        DIFlags::PUBLIC,
         None,
         member_placeholders_as_ditype.as_slice(),
         0,
@@ -184,7 +185,7 @@ fn test_struct_with_placeholders() {
             *size,
             8,
             offset,
-            DIFlags::Public,
+            DIFlags::PUBLIC,
             ty.as_type(),
         );
         unsafe {
@@ -247,7 +248,7 @@ fn test_replacing_placeholder_with_placeholder() {
     );
 
     let i32ty = dibuilder
-        .create_basic_type("i32", 32, 0x07, DIFlags::Public)
+        .create_basic_type("i32", 32, 0x07, DIFlags::PUBLIC)
         .unwrap();
     let typedefty = dibuilder.create_typedef(
         i32ty.as_type(),
@@ -295,7 +296,7 @@ fn test_anonymous_basic_type() {
             0_u64,
             0x00,
             #[cfg(not(feature = "llvm7-0"))]
-            DIFlags::Zero
+            DIFlags::ZERO
         ),
         Err("basic types must have names")
     );
