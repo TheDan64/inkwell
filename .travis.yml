@@ -195,6 +195,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-10-dev
+            - libclang-common-10-dev
       rust: 1.39.0
       dist: bionic
     - deploy: # Documentation build; Only latest supported LLVM version for now
