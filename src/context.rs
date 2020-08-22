@@ -258,10 +258,8 @@ impl Context {
         let value = unsafe {
             LLVMConstInlineAsm(
                 ty.as_type_ref(),
-                assembly.as_mut_ptr() as *mut ::libc::c_char,
-                assembly.len(),
-                constraints.as_mut_ptr() as *mut ::libc::c_char,
-                constraints.len(),
+                assembly.as_ptr() as *const ::libc::c_char,
+                constraints.as_ptr() as *const ::libc::c_char,
                 sideeffects as i32,
                 alignstack as i32
             )
