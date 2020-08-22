@@ -39,7 +39,10 @@ pub mod targets;
 pub mod types;
 pub mod values;
 
-use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility, LLVMThreadLocalMode, LLVMDLLStorageClass, LLVMAtomicOrdering, LLVMAtomicRMWBinOp, LLVMInlineAsmDialect};
+use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility, LLVMThreadLocalMode, LLVMDLLStorageClass, LLVMAtomicOrdering, LLVMAtomicRMWBinOp};
+
+#[llvm_versions(7.0..=latest)]
+use llvm_sys::LLVMInlineAsmDialect;
 
 use std::convert::TryFrom;
 
@@ -386,6 +389,7 @@ impl Default for DLLStorageClass {
     }
 }
 
+#[llvm_versions(7.0..=latest)]
 #[llvm_enum(LLVMInlineAsmDialect)]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum InlineAsmDialect {
