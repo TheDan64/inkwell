@@ -2,7 +2,7 @@
 
 use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMGetMDKindIDInContext, LLVMX86FP80TypeInContext, LLVMConstStringInContext, LLVMContextSetDiagnosticHandler, LLVMGetInlineAsm};
 #[llvm_versions(4.0..=latest)]
-use llvm_sys::core::{LLVMCreateEnumAttribute, LLVMCreateStringAttribute, LLVMGetTypeKind, LLVMTypeOf, LLVMGetElementType};
+use llvm_sys::core::{LLVMCreateEnumAttribute, LLVMCreateStringAttribute};
 use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef, LLVMDiagnosticInfoRef};
 use llvm_sys::ir_reader::LLVMParseIRInContext;
 use llvm_sys::target::{LLVMIntPtrTypeForASInContext, LLVMIntPtrTypeInContext};
@@ -19,7 +19,7 @@ use crate::memory_buffer::MemoryBuffer;
 use crate::module::Module;
 use crate::support::{to_c_str, LLVMString};
 use crate::targets::TargetData;
-use crate::types::{BasicTypeEnum, FloatType, IntType, StructType, VoidType, AsTypeRef, AnyTypeEnum, FunctionType};
+use crate::types::{BasicTypeEnum, FloatType, IntType, StructType, VoidType, AsTypeRef, FunctionType};
 use crate::values::{AsValueRef, BasicMetadataValueEnum, BasicValueEnum, FunctionValue, StructValue, MetadataValue, VectorValue, PointerValue};
 
 use std::marker::PhantomData;
