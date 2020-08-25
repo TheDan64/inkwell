@@ -41,6 +41,9 @@ pub mod values;
 
 use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility, LLVMThreadLocalMode, LLVMDLLStorageClass, LLVMAtomicOrdering, LLVMAtomicRMWBinOp};
 
+#[llvm_versions(7.0..=latest)]
+use llvm_sys::LLVMInlineAsmDialect;
+
 use std::convert::TryFrom;
 
 // Thanks to kennytm for coming up with assert_unique_features!
@@ -384,4 +387,14 @@ impl Default for DLLStorageClass {
     fn default() -> Self {
         DLLStorageClass::Default
     }
+}
+
+#[llvm_versions(7.0..=latest)]
+#[llvm_enum(LLVMInlineAsmDialect)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum InlineAsmDialect {
+    #[llvm_variant(LLVMInlineAsmDialectATT)]
+    ATT,
+    #[llvm_variant(LLVMInlineAsmDialectIntel)]
+    Intel,
 }
