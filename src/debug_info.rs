@@ -292,7 +292,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 is_local_to_unit as _,
                 is_definition as _,
                 scope_line as libc::c_uint,
-                flags.into(),
+                flags,
                 is_optimized as _,
             )
         };
@@ -392,7 +392,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 size_in_bits,
                 encoding,
                 #[cfg(not(feature = "llvm7-0"))]
-                flags.into(),
+                flags,
             )
         };
         Ok(DIBasicType {
@@ -496,7 +496,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 size_in_bits,
                 align_in_bits,
                 offset_in_bits,
-                flags.into(),
+                flags,
                 ty.metadata_ref,
             )
         };
@@ -523,7 +523,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         unique_id: &str,
     ) -> DICompositeType<'ctx> {
         let mut elements: Vec<LLVMMetadataRef> =
-            elements.into_iter().map(|dt| dt.metadata_ref).collect();
+            elements.iter().map(|dt| dt.metadata_ref).collect();
         let derived_from = derived_from.map_or(std::ptr::null_mut(), |dt| dt.metadata_ref);
         let vtable_holder = vtable_holder.map_or(std::ptr::null_mut(), |dt| dt.metadata_ref);
         let metadata_ref = unsafe {
@@ -536,7 +536,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 line_no,
                 size_in_bits,
                 align_in_bits,
-                flags.into(),
+                flags,
                 derived_from,
                 elements.as_mut_ptr(),
                 elements.len().try_into().unwrap(),
@@ -563,7 +563,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         let mut p = vec![return_type.map_or(std::ptr::null_mut(), |t| t.metadata_ref)];
         p.append(
             &mut parameter_types
-                .into_iter()
+                .iter()
                 .map(|t| t.metadata_ref)
                 .collect::<Vec<LLVMMetadataRef>>(),
         );
@@ -573,7 +573,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 file.metadata_ref,
                 p.as_mut_ptr(),
                 p.len().try_into().unwrap(),
-                flags.into(),
+                flags,
             )
         };
         DISubroutineType {
@@ -605,7 +605,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 line_no,
                 ty.metadata_ref,
                 always_preserve as _,
-                flags.into(),
+                flags,
             )
         };
         DILocalVariable {
@@ -636,7 +636,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 line_no,
                 ty.metadata_ref,
                 always_preserve as _,
-                flags.into(),
+                flags,
                 align_in_bits,
             )
         };
@@ -683,7 +683,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 var_info
                     .map(|v| v.metadata_ref)
                     .unwrap_or(std::ptr::null_mut()),
-                expr.unwrap_or(self.create_expression(vec![])).metadata_ref,
+                expr.unwrap_or_else(|| self.create_expression(vec![])).metadata_ref,
                 debug_loc.metadata_ref,
                 instruction.as_value_ref(),
             )
@@ -707,7 +707,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 var_info
                     .map(|v| v.metadata_ref)
                     .unwrap_or(std::ptr::null_mut()),
-                expr.unwrap_or(self.create_expression(vec![])).metadata_ref,
+                expr.unwrap_or_else(|| self.create_expression(vec![])).metadata_ref,
                 debug_loc.metadata_ref,
                 block.basic_block,
             )
@@ -744,7 +744,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 self.builder,
                 value.as_value_ref(),
                 var_info.metadata_ref,
-                expr.unwrap_or(self.create_expression(vec![])).metadata_ref,
+                expr.unwrap_or_else(|| self.create_expression(vec![])).metadata_ref,
                 debug_loc.metadata_ref,
                 instruction.as_value_ref(),
             )
@@ -1134,7 +1134,7 @@ mod flags {
         //const LITTLE_ENDIAN: DIFlags = llvm_sys::debuginfo::LLVMDIFlagLittleEndian;
         const INDIRECT_VIRTUAL_BASE: DIFlags = llvm_sys::debuginfo::LLVMDIFlagIndirectVirtualBase;
     }
-    
+
     /// The amount of debug information to emit. Corresponds to `LLVMDWARFEmissionKind` enum from LLVM.
     #[llvm_enum(LLVMDWARFEmissionKind)]
     #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]

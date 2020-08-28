@@ -128,7 +128,7 @@ impl Parse for VersionType {
                 let lookahead = input.lookahead1();
                 if lookahead.peek(Ident) {
                     let to = input.parse::<Ident>().unwrap();
-                    if to.to_string() == "latest" {
+                    if to == "latest" {
                         Ok(VersionType::InclusiveRangeToLatest(from_val, from.span()))
                     } else {
                         Err(Error::new(to.span(), "expected `latest` or `X.Y`"))
@@ -145,7 +145,7 @@ impl Parse for VersionType {
                 let lookahead = input.lookahead1();
                 if lookahead.peek(Ident) {
                     let to = input.parse::<Ident>().unwrap();
-                    if to.to_string() == "latest" {
+                    if to == "latest" {
                         Ok(VersionType::ExclusiveRangeToLatest(from_val, from.span()))
                     } else {
                         Err(Error::new(to.span(), "expected `latest` or `X.Y`"))
@@ -565,7 +565,7 @@ pub fn llvm_enum(attribute_args: TokenStream, attributee: TokenStream) -> TokenS
     }
 
     let enum_ty = llvm_enum_type.name.clone();
-    let enum_decl = llvm_enum_type.decl.clone();
+    let enum_decl = llvm_enum_type.decl;
 
     let q = quote! {
         #enum_decl

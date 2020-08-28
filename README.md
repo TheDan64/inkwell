@@ -43,6 +43,9 @@ Supported versions:
 | 9.0.x        | llvm9-0       |
 | 10.0.x       | llvm10-0      |
 
+Please be aware that we may make breaking changes on master from time to time since we are
+pre-v1.0.0, in compliance with semver. Please prefer a crates.io release whenever possible!
+
 ## Documentation
 
 Documentation is automatically [deployed here](https://thedan64.github.io/inkwell/) based on master. These docs are not yet 100% complete and only show the latest supported LLVM version due to a rustdoc issue. See [#2](https://github.com/TheDan64/inkwell/issues/2) for more info.

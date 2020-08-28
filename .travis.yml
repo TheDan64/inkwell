@@ -22,7 +22,6 @@ include_base: &BASE
         - libssl-dev
   before_install:
     - export LLVM_VERSION_DASH=${LLVM_VERSION/./-}
-    - export LLVM_VERSION_SHORT=${LLVM_VERSION/./}
     - export PATH=/usr/lib/llvm-${LLVM_VERSION}/bin/:$HOME/.local/bin:$PATH
     - export LLVM_PATH=/usr/share/llvm-${LLVM_VERSION}/cmake/
   script:

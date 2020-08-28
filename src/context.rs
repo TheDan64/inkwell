@@ -254,7 +254,7 @@ impl Context {
     /// builder.build_call(asm, params, "exit");
     /// builder.build_return(None);
     #[llvm_versions(3.6..7.0)]
-    pub fn create_inline_asm(&self, ty: FunctionType, mut assembly: String, mut constraints: String, sideeffects: bool, alignstack: bool) -> PointerValue {
+    pub fn create_inline_asm(&self, ty: FunctionType, assembly: String, constraints: String, sideeffects: bool, alignstack: bool) -> PointerValue {
         let value = unsafe {
             LLVMConstInlineAsm(
                 ty.as_type_ref(),

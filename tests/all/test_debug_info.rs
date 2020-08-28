@@ -149,7 +149,7 @@ fn test_struct_with_placeholders() {
     let member_types = vec![i32ty, i64ty, f32ty, f64ty];
     let member_placeholders = member_types
         .iter()
-        .map(|ty| unsafe { dibuilder.create_placeholder_derived_type(&context) })
+        .map(|_ty| unsafe { dibuilder.create_placeholder_derived_type(&context) })
         .collect::<Vec<_>>();
     let member_placeholders_as_ditype = member_types
         .iter()
