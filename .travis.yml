@@ -25,7 +25,6 @@ include_base: &BASE
     - export LLVM_VERSION_SHORT=${LLVM_VERSION/./}
     - export PATH=/usr/lib/llvm-${LLVM_VERSION}/bin/:$HOME/.local/bin:$PATH
     - export LLVM_PATH=/usr/share/llvm-${LLVM_VERSION}/cmake/
-    - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "'${LLVM_VERSION_SHORT}'"/' Cargo.toml
   script:
     - cargo build --features "target-all,llvm${LLVM_VERSION_DASH}" --color=always
     - cargo test --features "target-all,llvm${LLVM_VERSION_DASH}" --verbose --color=always

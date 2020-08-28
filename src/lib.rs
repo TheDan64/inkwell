@@ -54,8 +54,6 @@ extern crate llvm_sys_40 as llvm_sys;
 extern crate llvm_sys_50 as llvm_sys;
 #[cfg(feature="llvm6-0")]
 extern crate llvm_sys_60 as llvm_sys;
-#[cfg(feature="llvm8-0")]
-extern crate llvm_sys_80 as llvm_sys;
 #[cfg(feature="llvm7-0")]
 extern crate llvm_sys_70 as llvm_sys;
 #[cfg(feature="llvm8-0")]
