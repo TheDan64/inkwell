@@ -4,22 +4,6 @@ cache:
   directories:
     - /home/travis/.cargo
 
-# It's enough that we test master and PR branches. We don't also need to run
-# on the llvm-x branches
-branches:
-  except:
-  - llvm3-6
-  - llvm3-7
-  - llvm3-8
-  - llvm3-9
-  - llvm4-0
-  - llvm5-0
-  - llvm6-0
-  - llvm7-0
-  - llvm8-0
-  - llvm9-0
-  - llvm10-0
-
 before_cache:
   - cargo install cargo-tarpaulin
   - rm -rf /home/travis/.cargo/registry
@@ -43,8 +27,8 @@ include_base: &BASE
     - export LLVM_PATH=/usr/share/llvm-${LLVM_VERSION}/cmake/
     - sed -i -e 's/llvm-sys = ".*"/llvm-sys = "'${LLVM_VERSION_SHORT}'"/' Cargo.toml
   script:
-    - cargo build --no-default-features --features "target-all,llvm${LLVM_VERSION_DASH}" --color=always
-    - cargo test --no-default-features --features "target-all,llvm${LLVM_VERSION_DASH}" --verbose --color=always
+    - cargo build --features "target-all,llvm${LLVM_VERSION_DASH}" --color=always
+    - cargo test --features "target-all,llvm${LLVM_VERSION_DASH}" --verbose --color=always
 
 matrix:
   fast_finish: true

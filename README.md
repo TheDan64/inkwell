@@ -19,16 +19,17 @@ Inkwell aims to help you pen your own programming languages by safely wrapping l
 
 ## Usage
 
-You'll need to point your Cargo.toml to a branch corresponding to a supported LLVM version:
+You'll need to point your Cargo.toml to an existing preview crate on crates.io or the master
+branch with a corresponding LLVM feature flag:
 
 ```toml
 [dependencies]
-inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "llvm3-7" }
+inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "master", features = ["llvm10-0"] }
 ```
 
 Supported versions:
 
-| LLVM Version | GitHub Branch |
+| LLVM Version | Cargo Feature Flag |
 | :----------: | :-----------: |
 | 3.6.x        | llvm3-6       |
 | 3.7.x        | llvm3-7       |
