@@ -4,7 +4,7 @@ extern crate either;
 #[macro_use]
 extern crate inkwell_internals;
 
-#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
 mod test_attributes;
 mod test_basic_block;
 mod test_builder;
