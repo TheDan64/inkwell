@@ -71,19 +71,19 @@ matrix:
       rust: 1.39.0
       dist: trusty
     # 3.9 seems to have a linking issue :/
-    # - env:
-    #     - LLVM_VERSION="3.9"
-    #   <<: *BASE
-    #   addons:
-    #     apt:
-    #       sources:
-    #         - *BASE_SOURCES
-    #         - llvm-toolchain-trusty-3.9
-    #       packages:
-    #         - *BASE_PACKAGES
-    #         - llvm-3.9-dev
-    #       rust: 1.39.0
-    #       dist: trusty
+    - env:
+        - LLVM_VERSION="3.9"
+      <<: *BASE
+      addons:
+        apt:
+          sources:
+            - *BASE_SOURCES
+            - llvm-toolchain-trusty-3.9
+          packages:
+            - *BASE_PACKAGES
+            - llvm-3.9-dev
+          rust: 1.39.0
+          dist: trusty
     - env:
         - LLVM_VERSION="4.0"
       <<: *BASE
