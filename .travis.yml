@@ -80,7 +80,6 @@ matrix:
             - *BASE_SOURCES
             - sourceline: 'deb https://apt.llvm.org/xenial/ llvm-toolchain-xenial-3.9 main'
               key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
-            - llvm-toolchain-xenial-3.9
           packages:
             - *BASE_PACKAGES
             - llvm-3.9-dev
