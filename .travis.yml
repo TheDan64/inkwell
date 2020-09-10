@@ -82,8 +82,8 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.9-dev
-          rust: 1.39.0
-          dist: trusty
+      rust: 1.39.0
+      dist: trusty
     - env:
         - LLVM_VERSION="4.0"
       <<: *BASE
