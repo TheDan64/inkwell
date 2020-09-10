@@ -78,12 +78,12 @@ matrix:
         apt:
           sources:
             - *BASE_SOURCES
-            - llvm-toolchain-precise-3.9
+            - llvm-toolchain-xenial-3.9
           packages:
             - *BASE_PACKAGES
             - llvm-3.9-dev
       rust: 1.39.0
-      dist: trusty
+      dist: xenial
     - env:
         - LLVM_VERSION="4.0"
       <<: *BASE
