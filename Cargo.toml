@@ -40,6 +40,9 @@ llvm7-0-no-llvm-linking = ["llvm7-0", "llvm-sys-70/no-llvm-linking"]
 llvm8-0-no-llvm-linking = ["llvm8-0", "llvm-sys-80/no-llvm-linking"]
 llvm9-0-no-llvm-linking = ["llvm9-0", "llvm-sys-90/no-llvm-linking"]
 llvm10-0-no-llvm-linking = ["llvm10-0", "llvm-sys-100/no-llvm-linking"]
+# Don't force linking to libffi on non-windows platforms. Without this feature
+# inkwell always links to libffi on non-windows platforms.
+no-libffi-linking = []
 target-x86 = []
 target-arm = []
 target-mips = []
