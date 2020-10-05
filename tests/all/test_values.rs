@@ -1203,3 +1203,30 @@ fn test_constant_expression() {
     assert!(expr.is_const());
     assert!(!expr.is_constant_int());
 }
+
+#[test]
+#[should_panic]
+fn test_const_gep_i64() {
+    let context = Context::create();
+
+    let i64_type = context.i64_type();
+    let i64_ptr_type = i64_type.ptr_type(AddressSpace::Generic);
+    let i64_ptr_null = i64_ptr_type.const_zero();
+    unsafe {
+        // i64 indexes are not permitted - should panic.
+        i64_ptr_null.const_gep(&[i64_type.const_zero()]);
+    }
+}
+
+#[test]
+fn test_const_gep_i32() {
+    let context = Context::create();
+
+    let i32_type = context.i32_type();
+    let i32_ptr_type = i32_type.ptr_type(AddressSpace::Generic);
+    let i32_ptr_null = i32_ptr_type.const_zero();
+    unsafe {
+        // i32 indexes are permitted.
+        i32_ptr_null.const_gep(&[i32_type.const_zero()]);
+    }
+}

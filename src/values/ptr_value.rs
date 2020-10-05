@@ -68,7 +68,17 @@ impl<'ctx> PointerValue<'ctx> {
 
     // REVIEW: Should this be on array value too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
+    /// GEP indexes must be 32 bit integer values. Constant folding may result in other sizes working.
     pub unsafe fn const_gep(self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
+        if cfg!(debug_assertions) {
+            for (index, value) in ordered_indexes.iter().enumerate() {
+                let bit_width = value.get_type().get_bit_width();
+                if bit_width != 32 {
+                    panic!("Index #{} in ordered_indexes argument to const_gep call was a {} bit integer instead of 32 bit integer - gep indexes must be i32 values", index, bit_width);
+                }
+            }
+        }
+
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
                                                                  .map(|val| val.as_value_ref())
                                                                  .collect();
@@ -80,7 +90,17 @@ impl<'ctx> PointerValue<'ctx> {
     }
 
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
+    /// GEP indexes must be 32 bit integer values. Constant folding may result in other sizes working.
     pub unsafe fn const_in_bounds_gep(self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
+        if cfg!(debug_assertions) {
+            for (index, value) in ordered_indexes.iter().enumerate() {
+                let bit_width = value.get_type().get_bit_width();
+                if bit_width != 32 {
+                    panic!("Index #{} in ordered_indexes argument to const_in_bounds_gep call was a {} bit integer instead of 32 bit integer - gep indexes must be i32 values", index, bit_width);
+                }
+            }
+        }
+
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
                                                                  .map(|val| val.as_value_ref())
                                                                  .collect();
