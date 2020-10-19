@@ -92,7 +92,7 @@ pub struct Lexer<'a> {
 impl<'a> Lexer<'a> {
     /// Creates a new `Lexer`, given its source `input`.
     pub fn new(input: &'a str) -> Lexer<'a> {
-        Lexer { input: input, chars: Box::new(input.chars().peekable()), pos: 0 }
+        Lexer { input, chars: Box::new(input.chars().peekable()), pos: 0 }
     }
 
     /// Lexes and returns the next `Token` from the source code.
