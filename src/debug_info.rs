@@ -91,7 +91,8 @@ use crate::basic_block::BasicBlock;
 use crate::context::Context;
 pub use crate::debug_info::flags::{DIFlags, DIFlagsConstants};
 use crate::module::Module;
-use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, PointerValue};
+use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, PointerValue, MetadataValue};
+
 #[llvm_versions(8.0..=latest)]
 use llvm_sys::debuginfo::LLVMDIBuilderCreateTypedef;
 pub use llvm_sys::debuginfo::LLVMDWARFTypeEncoding;
@@ -104,7 +105,8 @@ use llvm_sys::debuginfo::{
     LLVMDIBuilderCreateAutoVariable, LLVMDIBuilderCreateBasicType, LLVMDIBuilderCreateCompileUnit,
     LLVMDIBuilderCreateDebugLocation, LLVMDIBuilderCreateExpression, LLVMDIBuilderCreateFile,
     LLVMDIBuilderCreateFunction, LLVMDIBuilderCreateLexicalBlock, LLVMDIBuilderCreateMemberType,
-    LLVMDIBuilderCreateNameSpace, LLVMDIBuilderCreateParameterVariable,
+    LLVMDIBuilderCreateNameSpace, LLVMDIBuilderCreateParameterVariable, 
+    LLVMDIBuilderCreateGlobalVariableExpression,LLVMDIBuilderCreateConstantValueExpression,
     LLVMDIBuilderCreateStructType, LLVMDIBuilderCreateSubroutineType, LLVMDIBuilderCreateUnionType,
     LLVMDIBuilderFinalize, LLVMDIBuilderInsertDbgValueBefore, LLVMDIBuilderInsertDeclareAtEnd,
     LLVMDIBuilderInsertDeclareBefore, LLVMDILocationGetColumn, LLVMDILocationGetLine,
@@ -112,6 +114,7 @@ use llvm_sys::debuginfo::{
     LLVMDITypeGetSizeInBits,
 };
 use llvm_sys::prelude::{LLVMDIBuilderRef, LLVMMetadataRef};
+use llvm_sys::core::LLVMMetadataAsValue;
 use std::convert::TryInto;
 use std::marker::PhantomData;
 
@@ -582,6 +585,60 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         }
     }
 
+    pub fn create_global_variable_expression(
+        &self,
+        scope: DIScope<'ctx>,
+        name: &str,
+        linkage: &str,
+        file: DIFile<'ctx>,
+        line_no: u32,
+        ty: DIType<'ctx>,
+        local_to_unit: bool,
+        expression: Option<DIExpression>,
+        declaration: Option<DIScope>,
+        align_in_bits: u32,
+    ) -> DIGlobalVariableExpression<'ctx> {
+        let expression_ptr = expression.map_or(std::ptr::null_mut(), |dt| dt.metadata_ref);
+        let decl_ptr = declaration.map_or(std::ptr::null_mut(), |dt| dt.metadata_ref);
+        let metadata_ref = unsafe {
+            LLVMDIBuilderCreateGlobalVariableExpression(
+                self.builder,
+                scope.metadata_ref,
+                name.as_ptr() as _,
+                name.len(),
+                linkage.as_ptr() as _,
+                linkage.len(),
+                file.metadata_ref,
+                line_no,
+                ty.metadata_ref,
+                local_to_unit as _,
+                expression_ptr,
+                decl_ptr,
+                align_in_bits,
+            )
+        };
+        DIGlobalVariableExpression {
+            metadata_ref,
+            _marker: PhantomData,
+        }
+    }
+
+    pub fn create_constant_expression(&self,
+        value : i64,
+    ) -> DIExpression<'ctx> {
+        let metadata_ref = unsafe {
+            LLVMDIBuilderCreateConstantValueExpression(
+                self.builder,
+                value,
+            )
+        };
+
+        DIExpression {
+            metadata_ref,
+            _marker: PhantomData,
+        }
+    }
+
     /// Create function parameter variable.
     pub fn create_parameter_variable(
         &self,
@@ -1026,6 +1083,21 @@ impl<'ctx> DILocation<'ctx> {
 pub struct DILocalVariable<'ctx> {
     pub(crate) metadata_ref: LLVMMetadataRef,
     _marker: PhantomData<&'ctx Context>,
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct DIGlobalVariableExpression<'ctx> {
+    pub(crate) metadata_ref: LLVMMetadataRef,
+    _marker: PhantomData<&'ctx Context>,
+}
+
+impl <'ctx> DIGlobalVariableExpression<'ctx>  {
+    pub fn as_metadata_value(&self, context : &Context) -> MetadataValue<'ctx> {
+        let value = unsafe {
+            LLVMMetadataAsValue(context.context, self.metadata_ref)
+        };
+        MetadataValue::new(value)
+    }
 }
 
 /// https://llvm.org/docs/LangRef.html#diexpression
