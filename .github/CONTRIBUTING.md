@@ -20,11 +20,11 @@ Hello there! Thank you for taking interest in Inkwell!
 * I have updated documentation and doc tests to any modified functions or types as applicable
 * I have added tests to cover my changes
 * All new and existing tests passed
-* I am basing my changes off master, instead of one of the llvm version branches
+* I am basing my changes off master, instead of one of the llvm version branches (they're deprecated and no longer necessary)
 
 ### Desired
 
-* I have ran clippy and updated portions of code pertaining to my changes
+* I have ran `cargo clippy` and updated portions of code pertaining to my changes
 * I will keep my code reasonably up to date via rebasing over merging whenever possible (This helps avoid unnecessary merge commits)
 
 ## Got Questions?
