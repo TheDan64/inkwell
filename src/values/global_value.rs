@@ -12,6 +12,7 @@ use llvm_sys::LLVMUnnamedAddr;
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
+use std::ptr;
 
 use crate::{GlobalVisibility, ThreadLocalMode, DLLStorageClass};
 use crate::module::Linkage;
@@ -231,17 +232,31 @@ impl<'ctx> GlobalValue<'ctx> {
         GlobalVisibility::new(visibility)
     }
 
-    pub fn get_section(&self) -> &CStr {
+    pub fn get_section(&self) -> Option<&CStr> {
+        let ptr = unsafe {
+            LLVMGetSection(self.as_value_ref())
+        };
+
+        if ptr.is_null() {
+            return None;
+        }
+
         unsafe {
-            CStr::from_ptr(LLVMGetSection(self.as_value_ref()))
+            Some(CStr::from_ptr(ptr))
         }
     }
 
-    pub fn set_section(self, section: &str) {
-        let c_string = to_c_str(section);
+    pub fn set_section(self, maybe_section: Option<&str>) {
+        if let Some(section) = maybe_section {
+            let c_string = to_c_str(section);
 
-        unsafe {
-            LLVMSetSection(self.as_value_ref(), c_string.as_ptr())
+            unsafe {
+                LLVMSetSection(self.as_value_ref(), c_string.as_ptr())
+            }
+        } else {
+            unsafe {
+                LLVMSetSection(self.as_value_ref(), ptr::null_mut())
+            }
         }
     }
 

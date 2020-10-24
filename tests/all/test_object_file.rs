@@ -77,15 +77,15 @@ fn test_section_iterator() {
 
     let gv_a = module.add_global(context.i8_type(), None, "a");
     gv_a.set_initializer(&context.i8_type().const_zero().as_basic_value_enum());
-    gv_a.set_section("A");
+    gv_a.set_section(Some("A"));
 
     let gv_b = module.add_global(context.i16_type(), None, "b");
     gv_b.set_initializer(&context.i16_type().const_zero().as_basic_value_enum());
-    gv_b.set_section("B");
+    gv_b.set_section(Some("B"));
 
     let gv_c = module.add_global(context.i32_type(), None, "c");
     gv_c.set_initializer(&context.i32_type().const_zero().as_basic_value_enum());
-    gv_c.set_section("C");
+    gv_c.set_section(Some("C"));
 
     apply_target_to_module(&target_machine, &module);
 
@@ -225,7 +225,7 @@ fn test_section_contains_nul() {
             .const_int(0xff0000ff, false)
             .as_basic_value_enum(),
     );
-    gv.set_section("test");
+    gv.set_section(Some("test"));
 
     apply_target_to_module(&target_machine, &module);
 
