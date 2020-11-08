@@ -301,3 +301,49 @@ fn test_anonymous_basic_type() {
         Err("basic types must have names")
     );
 }
+
+#[test]
+fn test_global_expressions() {
+
+    let context = Context::create();
+    let module = context.create_module("bin");
+
+    let (dibuilder, compile_unit) = module.create_debug_info_builder(
+        true,
+        DWARFSourceLanguage::C,
+        "source_file",
+        ".",
+        "my llvm compiler frontend",
+        false,
+        "",
+        0,
+        "",
+        DWARFEmissionKind::Full,
+        0,
+        false,
+        false,
+    );
+
+    let di_type = dibuilder.create_basic_type("type_name",0_u64, 0x00, DIFlags::ZERO);
+    let gv = module.add_global(context.i64_type(), Some(inkwell::AddressSpace::Global), "gv");
+
+    let const_v = dibuilder.create_constant_expression(10);
+
+    let gv_debug = dibuilder.create_global_variable_expression(
+        compile_unit.as_debug_info_scope(), 
+        "gv", 
+        "", 
+        compile_unit.get_file(), 
+        1, 
+        di_type.unwrap().as_type()  , 
+        true,
+        Some(const_v), None, 8);
+    
+    let metadata = context.metadata_node(&[gv_debug.as_metadata_value(&context).into()]);
+
+    gv.set_metadata(metadata, 0);
+
+    //TODO : Metadata set on the global values cannot be retrieved using the C api, 
+    // therefore, it's currently not possible to test that the data was set without generating the IR
+    assert!(gv.print_to_string().to_string().contains("!dbg"), format!("expected !dbg but generated gv was {}",gv.print_to_string()));
+}
