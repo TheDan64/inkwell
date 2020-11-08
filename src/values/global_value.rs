@@ -9,6 +9,7 @@ use llvm_sys::core::{LLVMHasUnnamedAddr, LLVMSetUnnamedAddr};
 use llvm_sys::core::{LLVMGetUnnamedAddress, LLVMSetUnnamedAddress};
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::LLVMUnnamedAddr;
+#[llvm_versions(8.0..=latest)]
 use llvm_sys::core::LLVMGlobalSetMetadata;
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -20,7 +21,9 @@ use crate::support::{to_c_str, LLVMString};
 #[llvm_versions(7.0..=latest)]
 use crate::comdat::Comdat;
 use crate::values::traits::AsValueRef;
-use crate::values::{BasicValueEnum, BasicValue, PointerValue, Value, MetadataValue};
+use crate::values::{BasicValueEnum, BasicValue, PointerValue, Value};
+#[llvm_versions(8.0..=latest)]
+use crate::values::MetadataValue;
 
 // REVIEW: GlobalValues are always PointerValues. With SubTypes, we should
 // compress this into a PointerValue<Global> type
@@ -267,6 +270,7 @@ impl<'ctx> GlobalValue<'ctx> {
     }
 
     /// Sets a metadata of the given type on the GlobalValue
+    #[llvm_versions(8.0..=latest)]
     pub fn set_metadata(self, metadata: MetadataValue<'ctx>, kind_id: u32) {
         unsafe {
             LLVMGlobalSetMetadata(self.as_value_ref(), kind_id, metadata.as_metadata_ref())

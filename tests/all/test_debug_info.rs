@@ -1,8 +1,9 @@
 use inkwell::context::Context;
 use inkwell::debug_info::{
     AsDIScope, DIFlags, DIFlagsConstants, DISubprogram, DWARFEmissionKind, DWARFSourceLanguage,
-    DebugInfoBuilder,
 };
+#[llvm_versions(8.0..=latest)]
+use inkwell::debug_info::DebugInfoBuilder;
 use inkwell::module::FlagBehavior;
 
 #[test]
@@ -302,6 +303,7 @@ fn test_anonymous_basic_type() {
     );
 }
 
+#[llvm_versions(8.0..=latest)]
 #[test]
 fn test_global_expressions() {
 

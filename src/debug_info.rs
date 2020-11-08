@@ -79,7 +79,7 @@
 //!     /* inlined_at */ None);
 //! builder.set_current_debug_location(&context, loc);
 //! 
-//! //Create global variable
+//! // Create global variable
 //! let gv = module.add_global(context.i64_type(), Some(inkwell::AddressSpace::Global), "gv");
 //!    
 //!
@@ -119,13 +119,14 @@ use llvm_sys::debuginfo::{
     LLVMDIBuilderCreateDebugLocation, LLVMDIBuilderCreateExpression, LLVMDIBuilderCreateFile,
     LLVMDIBuilderCreateFunction, LLVMDIBuilderCreateLexicalBlock, LLVMDIBuilderCreateMemberType,
     LLVMDIBuilderCreateNameSpace, LLVMDIBuilderCreateParameterVariable, 
-    LLVMDIBuilderCreateGlobalVariableExpression,LLVMDIBuilderCreateConstantValueExpression,
     LLVMDIBuilderCreateStructType, LLVMDIBuilderCreateSubroutineType, LLVMDIBuilderCreateUnionType,
     LLVMDIBuilderFinalize, LLVMDIBuilderInsertDbgValueBefore, LLVMDIBuilderInsertDeclareAtEnd,
     LLVMDIBuilderInsertDeclareBefore, LLVMDILocationGetColumn, LLVMDILocationGetLine,
     LLVMDILocationGetScope, LLVMDITypeGetAlignInBits, LLVMDITypeGetOffsetInBits,
     LLVMDITypeGetSizeInBits,
 };
+#[llvm_versions(8.0..=latest)]
+use llvm_sys::debuginfo::{LLVMDIBuilderCreateGlobalVariableExpression,LLVMDIBuilderCreateConstantValueExpression};
 use llvm_sys::prelude::{LLVMDIBuilderRef, LLVMMetadataRef};
 use llvm_sys::core::LLVMMetadataAsValue;
 use std::convert::TryInto;
@@ -598,6 +599,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         }
     }
 
+    #[llvm_versions(8.0..=latest)]
     pub fn create_global_variable_expression(
         &self,
         scope: DIScope<'ctx>,
@@ -636,6 +638,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         }
     }
 
+    #[llvm_versions(8.0..=latest)]
     pub fn create_constant_expression(&self,
         value : i64,
     ) -> DIExpression<'ctx> {
