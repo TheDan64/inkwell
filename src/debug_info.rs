@@ -87,7 +87,7 @@
 //!
 //! let gv_debug = di.create_global_variable_expression(cu.get_file().as_debug_info_scope(), "gv", "", cu.get_file(), 1, ditype.as_type(), true, Some(const_v), None, 8);
 //!
-//! let meta_value : inkwell::values::BasicMetadataValueEnum = gv_debug.as_metadata_value(&context).into();
+//! let meta_value: inkwell::values::BasicMetadataValueEnum = gv_debug.as_metadata_value(&context).into();
 //! let metadata = context.metadata_node(&[meta_value]);
 //! gv.set_metadata(metadata, 0);//dbg
 //! 
@@ -639,7 +639,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     }
 
     #[llvm_versions(8.0..=latest)]
-    pub fn create_constant_expression(&self,
+    pub fn create_constant_expression(
+        &self,
         value : i64,
     ) -> DIExpression<'ctx> {
         let metadata_ref = unsafe {
@@ -1108,7 +1109,7 @@ pub struct DIGlobalVariableExpression<'ctx> {
 }
 
 impl <'ctx> DIGlobalVariableExpression<'ctx>  {
-    pub fn as_metadata_value(&self, context : &Context) -> MetadataValue<'ctx> {
+    pub fn as_metadata_value(&self, context: &Context) -> MetadataValue<'ctx> {
         let value = unsafe {
             LLVMMetadataAsValue(context.context, self.metadata_ref)
         };
