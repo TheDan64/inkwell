@@ -985,17 +985,16 @@ impl<'ctx> ContextRef<'ctx> {
     }
 
     /// Gets a usable context object with a correct lifetime.
+    // FIXME: Not safe :(
     #[cfg(feature = "experimental")]
-    pub fn get(&self) -> &'ctx Context {
+    pub unsafe fn get(&self) -> &'ctx Context {
         // Safety: Although strictly untrue that a local reference to the context field
         // is guaranteed to live for the entirety of 'ctx:
         // 1) ContextRef cannot outlive 'ctx
         // 2) Any method called called with this context object will inherit 'ctx,
         // which is its proper lifetime and does not point into this context object
         // specifically but towards the actual context pointer in LLVM.
-        unsafe {
-            &*(&*self.context as *const Context)
-        }
+        &*(&*self.context as *const Context)
     }
 }
 
