@@ -78,10 +78,10 @@
 //!     /* current_scope */ lexical_block.as_debug_info_scope(),
 //!     /* inlined_at */ None);
 //! builder.set_current_debug_location(&context, loc);
-//! 
+//!
 //! // Create global variable
 //! let gv = module.add_global(context.i64_type(), Some(inkwell::AddressSpace::Global), "gv");
-//!    
+//!
 //!
 //! let const_v = di.create_constant_expression(10);
 //!
@@ -90,7 +90,7 @@
 //! let meta_value: inkwell::values::BasicMetadataValueEnum = gv_debug.as_metadata_value(&context).into();
 //! let metadata = context.metadata_node(&[meta_value]);
 //! gv.set_metadata(metadata, 0);//dbg
-//! 
+//!
 //! ```
 //!
 //! ## Finalize debug info
@@ -118,7 +118,7 @@ use llvm_sys::debuginfo::{
     LLVMDIBuilderCreateAutoVariable, LLVMDIBuilderCreateBasicType, LLVMDIBuilderCreateCompileUnit,
     LLVMDIBuilderCreateDebugLocation, LLVMDIBuilderCreateExpression, LLVMDIBuilderCreateFile,
     LLVMDIBuilderCreateFunction, LLVMDIBuilderCreateLexicalBlock, LLVMDIBuilderCreateMemberType,
-    LLVMDIBuilderCreateNameSpace, LLVMDIBuilderCreateParameterVariable, 
+    LLVMDIBuilderCreateNameSpace, LLVMDIBuilderCreateParameterVariable,
     LLVMDIBuilderCreateStructType, LLVMDIBuilderCreateSubroutineType, LLVMDIBuilderCreateUnionType,
     LLVMDIBuilderFinalize, LLVMDIBuilderInsertDbgValueBefore, LLVMDIBuilderInsertDeclareAtEnd,
     LLVMDIBuilderInsertDeclareBefore, LLVMDILocationGetColumn, LLVMDILocationGetLine,
