@@ -79,6 +79,7 @@ target-all = [
     "target-riscv"
 ]
 experimental = ["static-alloc"]
+nightly = ["inkwell_internals/nightly"]
 
 [dependencies]
 either = "1.5"

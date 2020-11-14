@@ -9,6 +9,7 @@
 //! * Most functions which take a string slice as input may possibly panic in the unlikely event that a c style string cannot be created based on it. (IE if your slice already has a null byte in it)
 
 #![deny(missing_debug_implementations)]
+#![cfg_attr(feature = "nightly", feature(doc_cfg))]
 
 #[macro_use]
 extern crate inkwell_internals;
