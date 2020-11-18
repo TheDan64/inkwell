@@ -2,7 +2,6 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
 
-use crate::support::LLVMString;
 use crate::types::StructType;
 use crate::values::traits::AsValueRef;
 use crate::values::{InstructionValue, Value};
@@ -37,10 +36,6 @@ impl<'ctx> StructValue<'ctx> {
 
     pub fn is_undef(self) -> bool {
         self.struct_value.is_undef()
-    }
-
-    pub fn print_to_string(self) -> LLVMString {
-        self.struct_value.print_to_string()
     }
 
     pub fn print_to_stderr(self) {

@@ -1,7 +1,6 @@
 use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::context::ContextRef;
-use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
 use crate::types::{Type, BasicTypeEnum, FunctionType};
 
@@ -69,11 +68,6 @@ impl<'ctx> VoidType<'ctx> {
     /// ```
     pub fn fn_type(self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.void_type.fn_type(param_types, is_var_args)
-    }
-
-    /// Prints the definition of a `VoidType` to a `LLVMString`.
-    pub fn print_to_string(self) -> LLVMString {
-        self.void_type.print_to_string()
     }
 
     // See Type::print_to_stderr note on 5.0+ status

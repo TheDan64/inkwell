@@ -4,7 +4,6 @@ use llvm_sys::prelude::LLVMValueRef;
 use std::ffi::CStr;
 
 use crate::FloatPredicate;
-use crate::support::LLVMString;
 use crate::types::{AsTypeRef, FloatType, IntType};
 use crate::values::traits::AsValueRef;
 use crate::values::{InstructionValue, IntValue, Value};
@@ -39,10 +38,6 @@ impl<'ctx> FloatValue<'ctx> {
 
     pub fn is_undef(self) -> bool {
         self.float_value.is_undef()
-    }
-
-    pub fn print_to_string(self) -> LLVMString {
-        self.float_value.print_to_string()
     }
 
     pub fn print_to_stderr(self) {
