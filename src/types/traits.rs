@@ -103,6 +103,7 @@ pub trait BasicType<'ctx>: AnyType<'ctx> {
     /// let int_basic_type = int.as_basic_type_enum();
     /// assert_eq!(int_basic_type.array_type(32), int.array_type(32));
     /// ```
+    // FIXME: This likely doesn't belong on the trait, since not all basic types can be turned into arrays?
     fn array_type(&self, size: u32) -> ArrayType<'ctx> {
         Type::new(self.as_type_ref()).array_type(size)
     }
