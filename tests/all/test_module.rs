@@ -5,6 +5,7 @@ use self::inkwell::context::Context;
 use self::inkwell::memory_buffer::MemoryBuffer;
 use self::inkwell::module::Module;
 use self::inkwell::targets::{Target, TargetTriple};
+use self::inkwell::values::AnyValue;
 
 use std::env::temp_dir;
 use std::fs::{File, remove_file};

@@ -5,6 +5,7 @@ use std::fmt::Debug;
 
 use crate::values::{ArrayValue, AggregateValueEnum, BasicValueUse, CallSiteValue, GlobalValue, StructValue, BasicValueEnum, AnyValueEnum, IntValue, FloatValue, PointerValue, PhiValue, VectorValue, FunctionValue, InstructionValue, Value};
 use crate::types::{IntMathType, FloatMathType, PointerMathType, IntType, FloatType, PointerType, VectorType};
+use crate::support::LLVMString;
 
 // This is an ugly privacy hack so that Type can stay private to this module
 // and so that super traits using this trait will be not be implementable
@@ -120,6 +121,11 @@ pub trait AnyValue<'ctx>: AsValueRef + Debug {
     /// Returns an enum containing a typed version of `AnyValue`.
     fn as_any_value_enum(&self) -> AnyValueEnum<'ctx> {
         AnyValueEnum::new(self.as_value_ref())
+    }
+
+    /// Prints a value to a `LLVMString`
+    fn print_to_string(&self) -> LLVMString {
+        Value::new(self.as_value_ref()).print_to_string()
     }
 }
 

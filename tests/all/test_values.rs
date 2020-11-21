@@ -2,8 +2,8 @@ use inkwell::{DLLStorageClass, FloatPredicate, GlobalVisibility, ThreadLocalMode
 use inkwell::attributes::AttributeLoc;
 use inkwell::context::Context;
 use inkwell::module::Linkage::*;
-use inkwell::types::{StringRadix, VectorType};
-use inkwell::values::{BasicValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
+use inkwell::types::{AnyType, StringRadix, VectorType};
+use inkwell::values::{AnyValue, BasicValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
 #[llvm_versions(7.0..=latest)]
 use inkwell::comdat::ComdatSelectionKind;
 

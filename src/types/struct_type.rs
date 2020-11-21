@@ -8,7 +8,6 @@ use std::mem::forget;
 
 use crate::AddressSpace;
 use crate::context::ContextRef;
-use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
 use crate::types::{ArrayType, BasicTypeEnum, PointerType, FunctionType, Type};
 use crate::values::{ArrayValue, BasicValueEnum, StructValue, IntValue, AsValueRef};
@@ -322,11 +321,6 @@ impl<'ctx> StructType<'ctx> {
         };
 
         raw_vec.iter().map(|val| BasicTypeEnum::new(*val)).collect()
-    }
-
-    /// Prints the definition of a `StructType` to a `LLVMString`.
-    pub fn print_to_string(self) -> LLVMString {
-        self.struct_type.print_to_string()
     }
 
     // See Type::print_to_stderr note on 5.0+ status

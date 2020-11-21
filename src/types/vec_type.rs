@@ -3,7 +3,6 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use crate::AddressSpace;
 use crate::context::ContextRef;
-use crate::support::LLVMString;
 use crate::types::{ArrayType, BasicTypeEnum, Type, traits::AsTypeRef, FunctionType, PointerType};
 use crate::values::{AsValueRef, ArrayValue, BasicValue, VectorValue, IntValue};
 
@@ -125,11 +124,6 @@ impl<'ctx> VectorType<'ctx> {
     /// ```
     pub fn const_zero(self) -> VectorValue<'ctx> {
         VectorValue::new(self.vec_type.const_zero())
-    }
-
-    /// Prints the definition of a `VectorType` to a `LLVMString`.
-    pub fn print_to_string(self) -> LLVMString {
-        self.vec_type.print_to_string()
     }
 
     // See Type::print_to_stderr note on 5.0+ status

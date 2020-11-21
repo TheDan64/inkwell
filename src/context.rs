@@ -939,6 +939,7 @@ impl Context {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
+    /// use inkwell::values::AnyValue;
     ///
     /// let context = Context::create();
     /// let string = context.const_string(b"my_string", false);

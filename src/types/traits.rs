@@ -6,6 +6,7 @@ use crate::AddressSpace;
 use crate::types::{IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VectorType, VoidType, Type};
 use crate::types::enums::{AnyTypeEnum, BasicTypeEnum};
 use crate::values::{IntMathValue, FloatMathValue, PointerMathValue, IntValue, FloatValue, PointerValue, VectorValue};
+use crate::support::LLVMString;
 
 // This is an ugly privacy hack so that Type can stay private to this module
 // and so that super traits using this trait will be not be implementable
@@ -22,12 +23,16 @@ macro_rules! trait_type_set {
     );
 }
 
-// REVIEW: print_to_string might be a good candidate to live here?
 /// Represents any LLVM type.
 pub trait AnyType<'ctx>: AsTypeRef + Debug {
     /// Returns an `AnyTypeEnum` that represents the current type.
     fn as_any_type_enum(&self) -> AnyTypeEnum<'ctx> {
         AnyTypeEnum::new(self.as_type_ref())
+    }
+
+    /// Prints the definition of a Type to a `LLVMString`.
+    fn print_to_string(&self) -> LLVMString {
+        Type::new(self.as_type_ref()).print_to_string()
     }
 }
 
