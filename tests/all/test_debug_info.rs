@@ -32,6 +32,10 @@ fn test_smoke() {
         0,
         false,
         false,
+        #[cfg(feature = "llvm11-0")]
+        "",
+        #[cfg(feature = "llvm11-0")]
+        "",
     );
 
     let ditype = dibuilder
@@ -106,6 +110,10 @@ fn test_struct_with_placeholders() {
         0,
         false,
         false,
+        #[cfg(feature = "llvm11-0")]
+        "",
+        #[cfg(feature = "llvm11-0")]
+        "",
     );
 
     // Some byte aligned integer types.
@@ -219,6 +227,10 @@ fn test_no_explicit_finalize() {
         0,
         false,
         false,
+        #[cfg(feature = "llvm11-0")]
+        "",
+        #[cfg(feature = "llvm11-0")]
+        "",
     );
 
     drop(dibuilder);
@@ -246,6 +258,10 @@ fn test_replacing_placeholder_with_placeholder() {
         0,
         false,
         false,
+        #[cfg(feature = "llvm11-0")]
+        "",
+        #[cfg(feature = "llvm11-0")]
+        "",
     );
 
     let i32ty = dibuilder
@@ -289,6 +305,10 @@ fn test_anonymous_basic_type() {
         0,
         false,
         false,
+        #[cfg(feature = "llvm11-0")]
+        "",
+        #[cfg(feature = "llvm11-0")]
+        "",
     );
 
     assert_eq!(
@@ -323,6 +343,10 @@ fn test_global_expressions() {
         0,
         false,
         false,
+        #[cfg(feature = "llvm11-0")]
+        "",
+        #[cfg(feature = "llvm11-0")]
+        "",
     );
 
     let di_type = dibuilder.create_basic_type("type_name", 0_u64, 0x00, DIFlags::ZERO);
