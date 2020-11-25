@@ -42,7 +42,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.6-dev
-      rust: 1.39.0
+      rust: 1.42.0
       dist: trusty
     - env:
         - LLVM_VERSION="3.7"
@@ -55,7 +55,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.7-dev
-      rust: 1.39.0
+      rust: 1.42.0
       dist: trusty
     - env:
         - LLVM_VERSION="3.8"
@@ -68,7 +68,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.8-dev
-      rust: 1.39.0
+      rust: 1.42.0
       dist: trusty
     # 3.9 seems to have a linking issue :/
     # - env:
@@ -83,7 +83,7 @@ matrix:
     #       packages:
     #         - *BASE_PACKAGES
     #         - llvm-3.9-dev
-    #   rust: 1.39.0
+    #   rust: 1.42.0
     #   dist: xenial
     - env:
         - LLVM_VERSION="4.0"
@@ -96,7 +96,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-4.0-dev
-      rust: 1.39.0
+      rust: 1.42.0
       dist: trusty
     - env:
         - LLVM_VERSION="5.0"
@@ -109,7 +109,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-5.0-dev
-      rust: 1.39.0
+      rust: 1.42.0
       dist: trusty
     - env:
         - LLVM_VERSION="6.0"
@@ -122,7 +122,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-6.0-dev
-      rust: 1.39.0
+      rust: 1.42.0
       dist: trusty
     - env:
         - LLVM_VERSION="7.0"
@@ -135,7 +135,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-7-dev
-      rust: 1.39.0
+      rust: 1.42.0
       dist: trusty
     - env:
         - LLVM_VERSION="8.0"
@@ -148,7 +148,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-8-dev
-      rust: 1.39.0
+      rust: 1.42.0
       dist: trusty
     - env:
         - LLVM_VERSION="9.0"
@@ -163,7 +163,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-9-dev
-      rust: 1.39.0
+      rust: 1.42.0
       dist: bionic
     - env:
         - LLVM_VERSION="10.0"
@@ -179,7 +179,7 @@ matrix:
             - *BASE_PACKAGES
             - llvm-10-dev
             - libclang-common-10-dev
-      rust: 1.39.0
+      rust: 1.42.0
       dist: bionic
     - deploy: # Documentation build; Only latest supported LLVM version for now
         provider: pages
@@ -234,7 +234,7 @@ env:
     - RUSTFLAGS="-C link-dead-code -C target-cpu=native -l ffi"
 
 after_success: |
-  if [[ "$TRAVIS_RUST_VERSION" == 1.39.0 ]]; then
+  if [[ "$TRAVIS_RUST_VERSION" == 1.42.0 ]]; then
     cargo tarpaulin --features "llvm${LLVM_VERSION_DASH}" --out Xml
     bash <(curl -s https://codecov.io/bash)
   fi
