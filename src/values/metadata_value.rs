@@ -109,19 +109,21 @@ impl<'ctx> MetadataValue<'ctx> {
             return Vec::new();
         }
 
-        let count = self.get_node_size();
-        let mut raw_vec: Vec<LLVMValueRef> = Vec::with_capacity(count as usize);
+        let count = self.get_node_size() as usize;
+        let mut raw_vec: Vec<LLVMValueRef> = Vec::with_capacity(count);
         let ptr = raw_vec.as_mut_ptr();
 
         forget(raw_vec);
 
-        let slice = unsafe {
+        let vec = unsafe {
             LLVMGetMDNodeOperands(self.as_value_ref(), ptr);
 
-            from_raw_parts(ptr, count as usize)
+            Vec::from_raw_parts(ptr, count, count)
         };
 
-        slice.iter().map(|val| BasicMetadataValueEnum::new(*val)).collect()
+        vec.iter()
+            .map(|val| BasicMetadataValueEnum::new(*val))
+            .collect()
     }
 
     pub fn print_to_string(self) -> LLVMString {
