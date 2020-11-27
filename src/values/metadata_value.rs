@@ -110,15 +110,13 @@ impl<'ctx> MetadataValue<'ctx> {
         }
 
         let count = self.get_node_size() as usize;
-        let mut raw_vec: Vec<LLVMValueRef> = Vec::with_capacity(count);
-        let ptr = raw_vec.as_mut_ptr();
+        let mut vec: Vec<LLVMValueRef> = Vec::with_capacity(count);
+        let ptr = vec.as_mut_ptr();
 
-        forget(raw_vec);
-
-        let vec = unsafe {
+        unsafe {
             LLVMGetMDNodeOperands(self.as_value_ref(), ptr);
 
-            Vec::from_raw_parts(ptr, count, count)
+            vec.set_len(count)
         };
 
         vec.iter()

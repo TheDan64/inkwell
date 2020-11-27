@@ -932,15 +932,13 @@ impl<'ctx> Module<'ctx> {
         let c_string = to_c_str(key);
         let count = self.get_global_metadata_size(key) as usize;
 
-        let mut raw_vec: Vec<LLVMValueRef> = Vec::with_capacity(count);
-        let ptr = raw_vec.as_mut_ptr();
+        let mut vec: Vec<LLVMValueRef> = Vec::with_capacity(count);
+        let ptr = vec.as_mut_ptr();
 
-        forget(raw_vec);
-
-        let vec = unsafe {
+        unsafe {
             LLVMGetNamedMetadataOperands(self.module.get(), c_string.as_ptr(), ptr);
 
-            Vec::from_raw_parts(ptr, count, count)
+            vec.set_len(count);
         };
 
         vec.iter().map(|val| MetadataValue::new(*val)).collect()
