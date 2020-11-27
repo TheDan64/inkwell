@@ -930,20 +930,20 @@ impl<'ctx> Module<'ctx> {
     /// ```
     pub fn get_global_metadata(&self, key: &str) -> Vec<MetadataValue<'ctx>> {
         let c_string = to_c_str(key);
-        let count = self.get_global_metadata_size(key);
+        let count = self.get_global_metadata_size(key) as usize;
 
-        let mut raw_vec: Vec<LLVMValueRef> = Vec::with_capacity(count as usize);
+        let mut raw_vec: Vec<LLVMValueRef> = Vec::with_capacity(count);
         let ptr = raw_vec.as_mut_ptr();
 
         forget(raw_vec);
 
-        let slice = unsafe {
+        let vec = unsafe {
             LLVMGetNamedMetadataOperands(self.module.get(), c_string.as_ptr(), ptr);
 
-            from_raw_parts(ptr, count as usize)
+            Vec::from_raw_parts(ptr, count, count)
         };
 
-        slice.iter().map(|val| MetadataValue::new(*val)).collect()
+        vec.iter().map(|val| MetadataValue::new(*val)).collect()
     }
 
     /// Gets the first `GlobalValue` in a module.
