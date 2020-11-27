@@ -12,8 +12,6 @@ use crate::values::{BasicMetadataValueEnum, Value};
 
 use std::ffi::CStr;
 use std::fmt;
-use std::mem::forget;
-use std::slice::from_raw_parts;
 
 // TODOC: Varies by version
 #[cfg(feature = "llvm3-6")]

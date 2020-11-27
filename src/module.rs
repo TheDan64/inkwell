@@ -23,7 +23,6 @@ use std::mem::{forget, MaybeUninit};
 use std::path::Path;
 use std::ptr;
 use std::rc::Rc;
-use std::slice::from_raw_parts;
 
 use crate::{AddressSpace, OptimizationLevel};
 #[llvm_versions(7.0..=latest)]
