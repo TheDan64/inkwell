@@ -23,7 +23,6 @@ use std::mem::{forget, MaybeUninit};
 use std::path::Path;
 use std::ptr;
 use std::rc::Rc;
-use std::slice::from_raw_parts;
 
 use crate::{AddressSpace, OptimizationLevel};
 #[llvm_versions(7.0..=latest)]
@@ -930,20 +929,18 @@ impl<'ctx> Module<'ctx> {
     /// ```
     pub fn get_global_metadata(&self, key: &str) -> Vec<MetadataValue<'ctx>> {
         let c_string = to_c_str(key);
-        let count = self.get_global_metadata_size(key);
+        let count = self.get_global_metadata_size(key) as usize;
 
-        let mut raw_vec: Vec<LLVMValueRef> = Vec::with_capacity(count as usize);
-        let ptr = raw_vec.as_mut_ptr();
+        let mut vec: Vec<LLVMValueRef> = Vec::with_capacity(count);
+        let ptr = vec.as_mut_ptr();
 
-        forget(raw_vec);
-
-        let slice = unsafe {
+        unsafe {
             LLVMGetNamedMetadataOperands(self.module.get(), c_string.as_ptr(), ptr);
 
-            from_raw_parts(ptr, count as usize)
+            vec.set_len(count);
         };
 
-        slice.iter().map(|val| MetadataValue::new(*val)).collect()
+        vec.iter().map(|val| MetadataValue::new(*val)).collect()
     }
 
     /// Gets the first `GlobalValue` in a module.
