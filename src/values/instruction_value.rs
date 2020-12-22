@@ -268,8 +268,25 @@ impl<'ctx> InstructionValue<'ctx> {
 
     // SubTypes: Only apply to memory access and alloca instructions
     /// Sets alignment on a memory access instruction or alloca.
+    #[llvm_versions(3.6..=10.0)]
     pub fn set_alignment(self, alignment: u32) -> Result<(), &'static str> {
         if !alignment.is_power_of_two() && alignment != 0 {
+            return Err("Alignment is not a power of 2!");
+        }
+        if !self.is_a_alloca_inst() && !self.is_a_load_inst() && !self.is_a_store_inst() {
+            return Err("Value is not an alloca, load or store.");
+        }
+        Ok(unsafe { LLVMSetAlignment(self.as_value_ref(), alignment) })
+    }
+    
+    // SubTypes: Only apply to memory access and alloca instructions
+    /// Sets alignment on a memory access instruction or alloca.
+    #[llvm_versions(11.0..=latest)]
+    pub fn set_alignment(self, alignment: u32) -> Result<(), &'static str> {
+        if alignment == 0 {
+            return Err("Alignment cannot be 0");
+        }
+        if !alignment.is_power_of_two(){
             return Err("Alignment is not a power of 2!");
         }
         if !self.is_a_alloca_inst() && !self.is_a_load_inst() && !self.is_a_store_inst() {

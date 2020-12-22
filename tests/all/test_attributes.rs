@@ -15,14 +15,6 @@ fn test_enum_attribute_kinds() {
     // play around with it and determine which ones they are interested in
     // for their particular LLVM version
 
-    // Function Attributes:
-    assert_eq!(Attribute::get_named_enum_kind_id("allocsize"), 2);
-    assert_eq!(Attribute::get_named_enum_kind_id("alwaysinline"), 3);
-    assert_eq!(Attribute::get_named_enum_kind_id("argmemonly"), 4);
-    assert_eq!(Attribute::get_named_enum_kind_id("builtin"), 5);
-    assert_eq!(Attribute::get_named_enum_kind_id("cold"), 7);
-    assert_eq!(Attribute::get_named_enum_kind_id("convergent"), 8);
-
     // REVIEW: The LLVM docs suggest these fn attrs exist, but don't turn up:
     // assert_eq!(Attribute::get_named_enum_kind_id("no-jump-tables"), 19);
     // assert_eq!(Attribute::get_named_enum_kind_id("null-pointer-is-valid"), 31);
@@ -34,12 +26,6 @@ fn test_enum_attribute_kinds() {
     // assert_eq!(Attribute::get_named_enum_kind_id("thunk"), 45);
     // assert_eq!(Attribute::get_named_enum_kind_id("nocf_check"), 45);
     // assert_eq!(Attribute::get_named_enum_kind_id("shadowcallstack"), 45);
-
-    // Parameter Attributes:
-    assert_eq!(Attribute::get_named_enum_kind_id("align"), 1);
-    assert_eq!(Attribute::get_named_enum_kind_id("byval"), 6);
-    assert_eq!(Attribute::get_named_enum_kind_id("dereferenceable"), 9);
-    assert_eq!(Attribute::get_named_enum_kind_id("dereferenceable_or_null"), 10);
 }
 
 #[test]
