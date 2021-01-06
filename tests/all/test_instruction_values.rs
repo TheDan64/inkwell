@@ -349,7 +349,6 @@ fn test_mem_instructions() {
     assert!(load_instruction.set_alignment(16).is_ok());
     assert_eq!(store_instruction.get_alignment().unwrap(), 16);
     assert_eq!(load_instruction.get_alignment().unwrap(), 16);
-    println!("--------Here------------");
     assert!(store_instruction.set_alignment(0).is_ok());
     assert!(load_instruction.set_alignment(0).is_ok());
     assert_eq!(store_instruction.get_alignment().unwrap(), 0);
