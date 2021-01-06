@@ -1354,6 +1354,7 @@ impl<'ctx> Module<'ctx> {
     }
 
     /// Creates a `DebugInfoBuilder` for this `Module`.
+    #[llvm_versions(7.0..=latest)]
     pub fn create_debug_info_builder(&self,
         allow_unresolved: bool,
         language: DWARFSourceLanguage,
