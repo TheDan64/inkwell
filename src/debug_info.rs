@@ -162,7 +162,6 @@ pub trait AsDIScope<'ctx> {
 }
 
 impl<'ctx> DebugInfoBuilder<'ctx> {
-    #[llvm_versions(3.6..=10.0)]
     pub(crate) fn new(
         module: &Module,
         allow_unresolved: bool,
@@ -178,56 +177,9 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         dwo_id: libc::c_uint,
         split_debug_inlining: bool,
         debug_info_for_profiling: bool,
-    ) -> (Self, DICompileUnit<'ctx>) {
-        let builder = unsafe {
-            if allow_unresolved {
-                LLVMCreateDIBuilder(module.module.get())
-            } else {
-                LLVMCreateDIBuilderDisallowUnresolved(module.module.get())
-            }
-        };
-
-        let builder = DebugInfoBuilder {
-            builder,
-            _marker: PhantomData,
-        };
-
-        let file = builder.create_file(filename, directory);
-
-        let cu = builder.create_compile_unit(
-            language,
-            file,
-            producer,
-            is_optimized,
-            flags,
-            runtime_ver,
-            split_name,
-            kind,
-            dwo_id,
-            split_debug_inlining,
-            debug_info_for_profiling,
-        );
-
-        (builder, cu)
-    }
-
-    #[llvm_versions(11.0)]
-    pub(crate) fn new(
-        module: &Module,
-        allow_unresolved: bool,
-        language: DWARFSourceLanguage,
-        filename: &str,
-        directory: &str,
-        producer: &str,
-        is_optimized: bool,
-        flags: &str,
-        runtime_ver: libc::c_uint,
-        split_name: &str,
-        kind: DWARFEmissionKind,
-        dwo_id: libc::c_uint,
-        split_debug_inlining: bool,
-        debug_info_for_profiling: bool,
+        #[cfg(feature = "llvm11-0")]
         sysroot: &str,
+        #[cfg(feature = "llvm11-0")]
         sdk: &str,
     ) -> (Self, DICompileUnit<'ctx>) {
         let builder = unsafe {
@@ -257,7 +209,9 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             dwo_id,
             split_debug_inlining,
             debug_info_for_profiling,
+            #[cfg(feature = "llvm11-0")]
             sysroot,
+            #[cfg(feature = "llvm11-0")]
             sdk
         );
 
@@ -277,7 +231,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     /// * `dwo_id` - The DWOId if this is a split skeleton compile unit.
     /// * `split_debug_inlining` - Whether to emit inline debug info.
     /// * `debug_info_for_profiling` - Whether to emit extra debug info for profile collection.
-    #[llvm_versions(3.6..=10.0)]
     fn create_compile_unit(
         &self,
         language: DWARFSourceLanguage,
@@ -291,9 +244,16 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         dwo_id: libc::c_uint,
         split_debug_inlining: bool,
         debug_info_for_profiling: bool,
+        #[cfg(feature = "llvm11-0")]
+        sysroot: &str,
+        #[cfg(feature = "llvm11-0")]
+        sdk: &str,
     ) -> DICompileUnit<'ctx> {
+
         let metadata_ref = unsafe {
-            LLVMDIBuilderCreateCompileUnit(
+            #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0", feature= "llvm9-0", feature= "llvm10-0"))]
+            { LLVMDIBuilderCreateCompileUnit(
                 self.builder,
                 language.into(),
                 file.metadata_ref,
@@ -309,51 +269,10 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 dwo_id,
                 split_debug_inlining as _,
                 debug_info_for_profiling as _,
-            )
-        };
+            ) }
 
-        DICompileUnit {
-            file,
-            metadata_ref,
-            _marker: PhantomData,
-        }
-    }
-
-    /// A DICompileUnit provides an anchor for all debugging information generated during this instance of compilation.
-    ///
-    /// * `language` - Source programming language
-    /// * `file` - File info
-    /// * `producer` - Identify the producer of debugging information and code. Usually this is a compiler version string.
-    /// * `is_optimized` - A boolean flag which indicates whether optimization is enabled or not.
-    /// * `flags` - This string lists command line options. This string is directly embedded in debug info output which may be used by a tool analyzing generated debugging information.
-    /// * `runtime_ver` - This indicates runtime version for languages like Objective-C.
-    /// * `split_name` - The name of the file that we'll split debug info out into.
-    /// * `kind` - The kind of debug information to generate.
-    /// * `dwo_id` - The DWOId if this is a split skeleton compile unit.
-    /// * `split_debug_inlining` - Whether to emit inline debug info.
-    /// * `debug_info_for_profiling` - Whether to emit extra debug info for profile collection.
-    /// * `sysroot` The clang system root (value of -isysroot).
-    /// * `sdk` The SDK name. On Darwin, this is the last component of the sysroot.
-    #[llvm_versions(11.0)]
-    fn create_compile_unit(
-        &self,
-        language: DWARFSourceLanguage,
-        file: DIFile<'ctx>,
-        producer: &str,
-        is_optimized: bool,
-        flags: &str,
-        runtime_ver: libc::c_uint,
-        split_name: &str,
-        kind: DWARFEmissionKind,
-        dwo_id: libc::c_uint,
-        split_debug_inlining: bool,
-        debug_info_for_profiling: bool,
-        sysroot: &str,
-        sdk: &str,
-    ) -> DICompileUnit<'ctx> {
-
-        let metadata_ref = unsafe {
-            LLVMDIBuilderCreateCompileUnit(
+            #[cfg(feature = "llvm11-0")]
+             { LLVMDIBuilderCreateCompileUnit(
                 self.builder,
                 language.into(),
                 file.metadata_ref,
@@ -373,7 +292,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 sysroot.len(),
                 sdk.as_ptr() as _,
                 sdk.len(),
-            )
+            )}
         };
 
         DICompileUnit {
