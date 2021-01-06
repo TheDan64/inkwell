@@ -1354,7 +1354,6 @@ impl<'ctx> Module<'ctx> {
     }
 
     /// Creates a `DebugInfoBuilder` for this `Module`.
-    #[llvm_versions(7.0..=10.0)]
     pub fn create_debug_info_builder(&self,
         allow_unresolved: bool,
         language: DWARFSourceLanguage,
@@ -1369,35 +1368,19 @@ impl<'ctx> Module<'ctx> {
         dwo_id: libc::c_uint,
         split_debug_inlining: bool,
         debug_info_for_profiling: bool,
-    ) -> (DebugInfoBuilder<'ctx>, DICompileUnit<'ctx>) {
-        DebugInfoBuilder::new(self, allow_unresolved,
-                              language, filename, directory, producer, is_optimized, flags, runtime_ver, split_name, kind, dwo_id, split_debug_inlining, debug_info_for_profiling
-        )
-    }
-
-    /// Creates a `DebugInfoBuilder` for this `Module`.
-    #[llvm_versions(11.0)]
-    pub fn create_debug_info_builder(&self,
-        allow_unresolved: bool,
-        language: DWARFSourceLanguage,
-        filename: &str,
-        directory: &str,
-        producer: &str,
-        is_optimized: bool,
-        flags: &str,
-        runtime_ver: libc::c_uint,
-        split_name: &str,
-        kind: DWARFEmissionKind,
-        dwo_id: libc::c_uint,
-        split_debug_inlining: bool,
-        debug_info_for_profiling: bool,
+        #[cfg(feature="llvm11-0")]
         sysroot: &str,
+        #[cfg(feature="llvm11-0")]
         sdk: &str,
     ) -> (DebugInfoBuilder<'ctx>, DICompileUnit<'ctx>) {
         DebugInfoBuilder::new(self, allow_unresolved,
                               language, filename, directory, producer, is_optimized, flags, 
                               runtime_ver, split_name, kind, dwo_id, split_debug_inlining, 
-                              debug_info_for_profiling, sysroot, sdk
+                              debug_info_for_profiling, 
+                              #[cfg(feature="llvm11-0")]
+                              sysroot,
+                              #[cfg(feature="llvm11-0")]
+                              sdk
         )
     }
 }
