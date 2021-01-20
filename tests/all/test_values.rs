@@ -2,8 +2,8 @@ use inkwell::{DLLStorageClass, FloatPredicate, GlobalVisibility, ThreadLocalMode
 use inkwell::attributes::AttributeLoc;
 use inkwell::context::Context;
 use inkwell::module::Linkage::*;
-use inkwell::types::{StringRadix, VectorType};
-use inkwell::values::{BasicValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
+use inkwell::types::{AnyType, StringRadix, VectorType};
+use inkwell::values::{AnyValue, BasicValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
 #[llvm_versions(7.0..=latest)]
 use inkwell::comdat::ComdatSelectionKind;
 
@@ -320,10 +320,10 @@ fn test_verify_fn() {
 
     let function = module.add_function("fn", fn_type, None);
 
-    #[cfg(not(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0", feature = "llvm9-0", feature = "llvm10-0")))]
+    #[cfg(not(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0", feature = "llvm9-0", feature = "llvm10-0", feature = "llvm11-0")))]
     assert!(!function.verify(false));
     // REVIEW: Why does 3.9 -> 8.0 return true here? LLVM bug? Bugfix?
-    #[cfg(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0", feature = "llvm9-0", feature = "llvm10-0"))]
+    #[cfg(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0", feature = "llvm9-0", feature = "llvm10-0", feature = "llvm11-0"))]
     assert!(function.verify(false));
 
     let basic_block = context.append_basic_block(function, "entry");
@@ -729,8 +729,8 @@ fn test_globals() {
     assert!(!global.has_unnamed_addr());
     assert!(!global.is_externally_initialized());
     assert_eq!(global.get_name().to_str(), Ok("my_global"));
-    // REVIEW: Segfaults in 4.0 -> 7.0
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0", feature = "llvm9-0", feature = "llvm10-0")))]
+    // REVIEW: Segfaults in 4.0 -> 11.0
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0", feature = "llvm9-0", feature = "llvm10-0", feature = "llvm11-0")))]
     assert_eq!(global.get_section().map(|cs| cs.to_str()), Some(Ok("")));
     assert_eq!(global.get_dll_storage_class(), DLLStorageClass::default());
     assert_eq!(global.get_visibility(), GlobalVisibility::default());

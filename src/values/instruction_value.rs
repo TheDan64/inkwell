@@ -269,6 +269,13 @@ impl<'ctx> InstructionValue<'ctx> {
     // SubTypes: Only apply to memory access and alloca instructions
     /// Sets alignment on a memory access instruction or alloca.
     pub fn set_alignment(self, alignment: u32) -> Result<(), &'static str> {
+        #[cfg(feature = "llvm11-0")]
+        {
+            if alignment == 0 {
+                return Err("Alignment cannot be 0");
+            }
+        }
+        //The alignment = 0 check above covers LLVM >= 11, the != 0 check here keeps older versions compatible
         if !alignment.is_power_of_two() && alignment != 0 {
             return Err("Alignment is not a power of 2!");
         }

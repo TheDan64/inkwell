@@ -3,7 +3,6 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
 
-use crate::support::LLVMString;
 use crate::types::{AsTypeRef, IntType, PointerType};
 use crate::values::{AsValueRef, InstructionValue, IntValue, Value};
 
@@ -52,10 +51,6 @@ impl<'ctx> PointerValue<'ctx> {
     /// ```
     pub fn is_const(self) -> bool {
         self.ptr_value.is_const()
-    }
-
-    pub fn print_to_string(self) -> LLVMString {
-        self.ptr_value.print_to_string()
     }
 
     pub fn print_to_stderr(self) {

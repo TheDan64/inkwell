@@ -19,8 +19,8 @@ use syn::spanned::Spanned;
 use syn::{Token, LitFloat, Ident, Item, Field, Variant, Attribute};
 
 // This array should match the LLVM features in the top level Cargo manifest
-const FEATURE_VERSIONS: [&str; 11] =
-    ["llvm3-6", "llvm3-7", "llvm3-8", "llvm3-9", "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0", "llvm10-0"];
+const FEATURE_VERSIONS: [&str; 12] =
+    ["llvm3-6", "llvm3-7", "llvm3-8", "llvm3-9", "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0", "llvm10-0", "llvm11-0"];
 
 /// Gets the index of the feature version that represents `latest`
 fn get_latest_feature_index(features: &[&str]) -> usize {
@@ -179,7 +179,7 @@ impl Parse for ParenthesizedFeatureSet {
 }
 
 /// Handler for parsing of TokenStreams from macro input
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct FeatureSet(std::vec::IntoIter<&'static str>, Option<Error>);
 impl Default for FeatureSet {
     fn default() -> Self {
@@ -307,8 +307,20 @@ pub fn llvm_versions(attribute_args: TokenStream, attributee: TokenStream) -> To
         return features.into_compile_error();
     }
 
+    // Add nightly only doc cfgs to improve documentation on nightly builds
+    // such as our own hosted docs.
+    let doc = if cfg!(feature = "nightly") {
+        let features2 = features.clone();
+        quote! {
+            #[doc(cfg(any(#(feature = #features2),*)))]
+        }
+    } else {
+        quote! {}
+    };
+
     let q = quote! {
         #[cfg(any(#(feature = #features),*))]
+        #doc
         #folded
     };
 

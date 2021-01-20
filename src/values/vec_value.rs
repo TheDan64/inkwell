@@ -3,7 +3,6 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
 
-use crate::support::LLVMString;
 use crate::types::{VectorType};
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValueEnum, BasicValue, InstructionValue, Value, IntValue};
@@ -50,10 +49,6 @@ impl<'ctx> VectorValue<'ctx> {
         unsafe {
             !LLVMIsAConstantDataVector(self.as_value_ref()).is_null()
         }
-    }
-
-    pub fn print_to_string(self) -> LLVMString {
-        self.vec_value.print_to_string()
     }
 
     pub fn print_to_stderr(self) {

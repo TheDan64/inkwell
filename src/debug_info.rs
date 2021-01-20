@@ -78,6 +78,19 @@
 //!     /* current_scope */ lexical_block.as_debug_info_scope(),
 //!     /* inlined_at */ None);
 //! builder.set_current_debug_location(&context, loc);
+//!
+//! // Create global variable
+//! let gv = module.add_global(context.i64_type(), Some(inkwell::AddressSpace::Global), "gv");
+//!
+//!
+//! let const_v = di.create_constant_expression(10);
+//!
+//! let gv_debug = di.create_global_variable_expression(cu.get_file().as_debug_info_scope(), "gv", "", cu.get_file(), 1, ditype.as_type(), true, Some(const_v), None, 8);
+//!
+//! let meta_value: inkwell::values::BasicMetadataValueEnum = gv_debug.as_metadata_value(&context).into();
+//! let metadata = context.metadata_node(&[meta_value]);
+//! gv.set_metadata(metadata, 0);//dbg
+//!
 //! ```
 //!
 //! ## Finalize debug info
@@ -91,7 +104,8 @@ use crate::basic_block::BasicBlock;
 use crate::context::Context;
 pub use crate::debug_info::flags::{DIFlags, DIFlagsConstants};
 use crate::module::Module;
-use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, PointerValue};
+use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, PointerValue, MetadataValue};
+
 #[llvm_versions(8.0..=latest)]
 use llvm_sys::debuginfo::LLVMDIBuilderCreateTypedef;
 pub use llvm_sys::debuginfo::LLVMDWARFTypeEncoding;
@@ -111,7 +125,10 @@ use llvm_sys::debuginfo::{
     LLVMDILocationGetScope, LLVMDITypeGetAlignInBits, LLVMDITypeGetOffsetInBits,
     LLVMDITypeGetSizeInBits,
 };
+#[llvm_versions(8.0..=latest)]
+use llvm_sys::debuginfo::{LLVMDIBuilderCreateGlobalVariableExpression,LLVMDIBuilderCreateConstantValueExpression};
 use llvm_sys::prelude::{LLVMDIBuilderRef, LLVMMetadataRef};
+use llvm_sys::core::LLVMMetadataAsValue;
 use std::convert::TryInto;
 use std::marker::PhantomData;
 
@@ -160,6 +177,10 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         dwo_id: libc::c_uint,
         split_debug_inlining: bool,
         debug_info_for_profiling: bool,
+        #[cfg(feature = "llvm11-0")]
+        sysroot: &str,
+        #[cfg(feature = "llvm11-0")]
+        sdk: &str,
     ) -> (Self, DICompileUnit<'ctx>) {
         let builder = unsafe {
             if allow_unresolved {
@@ -188,6 +209,10 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             dwo_id,
             split_debug_inlining,
             debug_info_for_profiling,
+            #[cfg(feature = "llvm11-0")]
+            sysroot,
+            #[cfg(feature = "llvm11-0")]
+            sdk
         );
 
         (builder, cu)
@@ -219,9 +244,16 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         dwo_id: libc::c_uint,
         split_debug_inlining: bool,
         debug_info_for_profiling: bool,
+        #[cfg(feature = "llvm11-0")]
+        sysroot: &str,
+        #[cfg(feature = "llvm11-0")]
+        sdk: &str,
     ) -> DICompileUnit<'ctx> {
+
         let metadata_ref = unsafe {
-            LLVMDIBuilderCreateCompileUnit(
+            #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
+                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0", feature= "llvm9-0", feature= "llvm10-0"))]
+            { LLVMDIBuilderCreateCompileUnit(
                 self.builder,
                 language.into(),
                 file.metadata_ref,
@@ -237,7 +269,30 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 dwo_id,
                 split_debug_inlining as _,
                 debug_info_for_profiling as _,
-            )
+            ) }
+
+            #[cfg(feature = "llvm11-0")]
+             { LLVMDIBuilderCreateCompileUnit(
+                self.builder,
+                language.into(),
+                file.metadata_ref,
+                producer.as_ptr() as _,
+                producer.len(),
+                is_optimized as _,
+                flags.as_ptr() as _,
+                flags.len(),
+                runtime_ver,
+                split_name.as_ptr() as _,
+                split_name.len(),
+                kind.into(),
+                dwo_id,
+                split_debug_inlining as _,
+                debug_info_for_profiling as _,
+                sysroot.as_ptr() as _,
+                sysroot.len(),
+                sdk.as_ptr() as _,
+                sdk.len(),
+            )}
         };
 
         DICompileUnit {
@@ -577,6 +632,63 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             )
         };
         DISubroutineType {
+            metadata_ref,
+            _marker: PhantomData,
+        }
+    }
+
+    #[llvm_versions(8.0..=latest)]
+    pub fn create_global_variable_expression(
+        &self,
+        scope: DIScope<'ctx>,
+        name: &str,
+        linkage: &str,
+        file: DIFile<'ctx>,
+        line_no: u32,
+        ty: DIType<'ctx>,
+        local_to_unit: bool,
+        expression: Option<DIExpression>,
+        declaration: Option<DIScope>,
+        align_in_bits: u32,
+    ) -> DIGlobalVariableExpression<'ctx> {
+        let expression_ptr = expression.map_or(std::ptr::null_mut(), |dt| dt.metadata_ref);
+        let decl_ptr = declaration.map_or(std::ptr::null_mut(), |dt| dt.metadata_ref);
+        let metadata_ref = unsafe {
+            LLVMDIBuilderCreateGlobalVariableExpression(
+                self.builder,
+                scope.metadata_ref,
+                name.as_ptr() as _,
+                name.len(),
+                linkage.as_ptr() as _,
+                linkage.len(),
+                file.metadata_ref,
+                line_no,
+                ty.metadata_ref,
+                local_to_unit as _,
+                expression_ptr,
+                decl_ptr,
+                align_in_bits,
+            )
+        };
+        DIGlobalVariableExpression {
+            metadata_ref,
+            _marker: PhantomData,
+        }
+    }
+
+    #[llvm_versions(8.0..=latest)]
+    pub fn create_constant_expression(
+        &self,
+        value : i64,
+    ) -> DIExpression<'ctx> {
+        let metadata_ref = unsafe {
+            LLVMDIBuilderCreateConstantValueExpression(
+                self.builder,
+                value,
+            )
+        };
+
+        DIExpression {
             metadata_ref,
             _marker: PhantomData,
         }
@@ -1026,6 +1138,21 @@ impl<'ctx> DILocation<'ctx> {
 pub struct DILocalVariable<'ctx> {
     pub(crate) metadata_ref: LLVMMetadataRef,
     _marker: PhantomData<&'ctx Context>,
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct DIGlobalVariableExpression<'ctx> {
+    pub(crate) metadata_ref: LLVMMetadataRef,
+    _marker: PhantomData<&'ctx Context>,
+}
+
+impl <'ctx> DIGlobalVariableExpression<'ctx>  {
+    pub fn as_metadata_value(&self, context: &Context) -> MetadataValue<'ctx> {
+        let value = unsafe {
+            LLVMMetadataAsValue(context.context, self.metadata_ref)
+        };
+        MetadataValue::new(value)
+    }
 }
 
 /// https://llvm.org/docs/LangRef.html#diexpression

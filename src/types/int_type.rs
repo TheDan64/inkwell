@@ -5,7 +5,6 @@ use regex::Regex;
 
 use crate::AddressSpace;
 use crate::context::ContextRef;
-use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
 use crate::types::{Type, ArrayType, BasicTypeEnum, VectorType, PointerType, FunctionType};
 use crate::values::{AsValueRef, ArrayValue, GenericValue, IntValue};
@@ -100,6 +99,7 @@ impl<'ctx> IntType<'ctx> {
     ///
     /// use inkwell::context::Context;
     /// use inkwell::types::StringRadix;
+    /// use inkwell::values::AnyValue;
     ///
     /// let context = Context::create();
     /// let i8_type = context.i8_type();
@@ -171,6 +171,7 @@ impl<'ctx> IntType<'ctx> {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
+    /// use inkwell::values::AnyValue;
     ///
     /// let context = Context::create();
     /// let i8_type = context.i8_type();
@@ -312,11 +313,6 @@ impl<'ctx> IntType<'ctx> {
         unsafe {
             LLVMGetIntTypeWidth(self.as_type_ref())
         }
-    }
-
-    /// Prints the definition of an `IntType` to a `LLVMString`.
-    pub fn print_to_string(self) -> LLVMString {
-        self.int_type.print_to_string()
     }
 
     // See Type::print_to_stderr note on 5.0+ status

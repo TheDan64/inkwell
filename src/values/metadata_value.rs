@@ -12,8 +12,6 @@ use crate::values::{BasicMetadataValueEnum, Value};
 
 use std::ffi::CStr;
 use std::fmt;
-use std::mem::forget;
-use std::slice::from_raw_parts;
 
 // TODOC: Varies by version
 #[cfg(feature = "llvm3-6")]
@@ -36,7 +34,7 @@ pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 25;
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 26;
 #[cfg(feature = "llvm9-0")]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 28;
-#[cfg(feature = "llvm10-0")]
+#[cfg(any(feature = "llvm10-0", feature = "llvm11-0"))]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 30;
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
@@ -109,19 +107,19 @@ impl<'ctx> MetadataValue<'ctx> {
             return Vec::new();
         }
 
-        let count = self.get_node_size();
-        let mut raw_vec: Vec<LLVMValueRef> = Vec::with_capacity(count as usize);
-        let ptr = raw_vec.as_mut_ptr();
+        let count = self.get_node_size() as usize;
+        let mut vec: Vec<LLVMValueRef> = Vec::with_capacity(count);
+        let ptr = vec.as_mut_ptr();
 
-        forget(raw_vec);
-
-        let slice = unsafe {
+        unsafe {
             LLVMGetMDNodeOperands(self.as_value_ref(), ptr);
 
-            from_raw_parts(ptr, count as usize)
+            vec.set_len(count)
         };
 
-        slice.iter().map(|val| BasicMetadataValueEnum::new(*val)).collect()
+        vec.iter()
+            .map(|val| BasicMetadataValueEnum::new(*val))
+            .collect()
     }
 
     pub fn print_to_string(self) -> LLVMString {

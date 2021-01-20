@@ -7,9 +7,8 @@ use std::mem::forget;
 
 use crate::AddressSpace;
 use crate::context::ContextRef;
-use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
-use crate::types::{PointerType, Type, BasicTypeEnum};
+use crate::types::{AnyType, PointerType, Type, BasicTypeEnum};
 
 /// A `FunctionType` is the type of a function variable.
 #[derive(PartialEq, Eq, Clone, Copy)]
@@ -153,11 +152,6 @@ impl<'ctx> FunctionType<'ctx> {
     /// ```
     pub fn get_context(self) -> ContextRef<'ctx> {
         self.fn_type.get_context()
-    }
-
-    /// Prints the definition of a `FunctionType` to a `LLVMString`.
-    pub fn print_to_string(self) -> LLVMString {
-        self.fn_type.print_to_string()
     }
 
     // See Type::print_to_stderr note on 5.0+ status

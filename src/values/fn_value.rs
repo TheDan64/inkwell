@@ -19,9 +19,9 @@ use crate::basic_block::BasicBlock;
 #[llvm_versions(7.0..=latest)]
 use crate::debug_info::DISubprogram;
 use crate::module::Linkage;
-use crate::support::{to_c_str, LLVMString};
-use crate::types::{FunctionType, PointerType};
-use crate::values::traits::AsValueRef;
+use crate::support::to_c_str;
+use crate::types::{AnyType, FunctionType, PointerType};
+use crate::values::traits::{AnyValue, AsValueRef};
 use crate::values::{BasicValueEnum, GlobalValue, Value};
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
@@ -60,10 +60,6 @@ impl<'ctx> FunctionValue<'ctx> {
 
     pub fn is_undef(self) -> bool {
         self.fn_value.is_undef()
-    }
-
-    pub fn print_to_string(self) -> LLVMString {
-        self.fn_value.print_to_string()
     }
 
     pub fn print_to_stderr(self) {

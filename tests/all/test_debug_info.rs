@@ -1,8 +1,9 @@
 use inkwell::context::Context;
 use inkwell::debug_info::{
     AsDIScope, DIFlags, DIFlagsConstants, DISubprogram, DWARFEmissionKind, DWARFSourceLanguage,
-    DebugInfoBuilder,
 };
+#[llvm_versions(8.0..=latest)]
+use inkwell::debug_info::DebugInfoBuilder;
 use inkwell::module::FlagBehavior;
 
 #[test]
@@ -31,6 +32,10 @@ fn test_smoke() {
         0,
         false,
         false,
+        #[cfg(feature = "llvm11-0")]
+        "",
+        #[cfg(feature = "llvm11-0")]
+        "",
     );
 
     let ditype = dibuilder
@@ -105,6 +110,10 @@ fn test_struct_with_placeholders() {
         0,
         false,
         false,
+        #[cfg(feature = "llvm11-0")]
+        "",
+        #[cfg(feature = "llvm11-0")]
+        "",
     );
 
     // Some byte aligned integer types.
@@ -218,6 +227,10 @@ fn test_no_explicit_finalize() {
         0,
         false,
         false,
+        #[cfg(feature = "llvm11-0")]
+        "",
+        #[cfg(feature = "llvm11-0")]
+        "",
     );
 
     drop(dibuilder);
@@ -245,6 +258,10 @@ fn test_replacing_placeholder_with_placeholder() {
         0,
         false,
         false,
+        #[cfg(feature = "llvm11-0")]
+        "",
+        #[cfg(feature = "llvm11-0")]
+        "",
     );
 
     let i32ty = dibuilder
@@ -288,6 +305,10 @@ fn test_anonymous_basic_type() {
         0,
         false,
         false,
+        #[cfg(feature = "llvm11-0")]
+        "",
+        #[cfg(feature = "llvm11-0")]
+        "",
     );
 
     assert_eq!(
@@ -300,4 +321,57 @@ fn test_anonymous_basic_type() {
         ),
         Err("basic types must have names")
     );
+}
+
+#[llvm_versions(8.0..=latest)]
+#[test]
+fn test_global_expressions() {
+    let context = Context::create();
+    let module = context.create_module("bin");
+
+    let (dibuilder, compile_unit) = module.create_debug_info_builder(
+        true,
+        DWARFSourceLanguage::C,
+        "source_file",
+        ".",
+        "my llvm compiler frontend",
+        false,
+        "",
+        0,
+        "",
+        DWARFEmissionKind::Full,
+        0,
+        false,
+        false,
+        #[cfg(feature = "llvm11-0")]
+        "",
+        #[cfg(feature = "llvm11-0")]
+        "",
+    );
+
+    let di_type = dibuilder.create_basic_type("type_name", 0_u64, 0x00, DIFlags::ZERO);
+    let gv = module.add_global(context.i64_type(), Some(inkwell::AddressSpace::Global), "gv");
+
+    let const_v = dibuilder.create_constant_expression(10);
+
+    let gv_debug = dibuilder.create_global_variable_expression(
+        compile_unit.as_debug_info_scope(), 
+        "gv", 
+        "", 
+        compile_unit.get_file(), 
+        1, 
+        di_type.unwrap().as_type(),
+        true,
+        Some(const_v),
+        None,
+        8,
+    );
+    
+    let metadata = context.metadata_node(&[gv_debug.as_metadata_value(&context).into()]);
+
+    gv.set_metadata(metadata, 0);
+
+    // TODO: Metadata set on the global values cannot be retrieved using the C api, 
+    // therefore, it's currently not possible to test that the data was set without generating the IR
+    assert!(gv.print_to_string().to_string().contains("!dbg"), format!("expected !dbg but generated gv was {}",gv.print_to_string()));
 }

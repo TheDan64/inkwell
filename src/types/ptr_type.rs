@@ -3,7 +3,6 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use crate::AddressSpace;
 use crate::context::ContextRef;
-use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
 use crate::types::{AnyTypeEnum, BasicTypeEnum, ArrayType, FunctionType, Type, VectorType};
 use crate::values::{AsValueRef, ArrayValue, PointerValue, IntValue};
@@ -154,11 +153,6 @@ impl<'ctx> PointerType<'ctx> {
         };
 
         AddressSpace::try_from(addr_space).expect("Unexpectedly found invalid AddressSpace value")
-    }
-
-    /// Prints the definition of a `PointerType` to a `LLVMString`.
-    pub fn print_to_string(self) -> LLVMString {
-        self.ptr_type.print_to_string()
     }
 
     // See Type::print_to_stderr note on 5.0+ status

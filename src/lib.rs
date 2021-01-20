@@ -9,6 +9,7 @@
 //! * Most functions which take a string slice as input may possibly panic in the unlikely event that a c style string cannot be created based on it. (IE if your slice already has a null byte in it)
 
 #![deny(missing_debug_implementations)]
+#![cfg_attr(feature = "nightly", feature(doc_cfg))]
 
 #[macro_use]
 extern crate inkwell_internals;
@@ -62,6 +63,8 @@ extern crate llvm_sys_80 as llvm_sys;
 extern crate llvm_sys_90 as llvm_sys;
 #[cfg(feature="llvm10-0")]
 extern crate llvm_sys_100 as llvm_sys;
+#[cfg(feature="llvm11-0")]
+extern crate llvm_sys_110 as llvm_sys;
 
 use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility, LLVMThreadLocalMode, LLVMDLLStorageClass, LLVMAtomicOrdering, LLVMAtomicRMWBinOp};
 
@@ -99,7 +102,7 @@ macro_rules! assert_unique_used_features {
     }
 }
 
-assert_unique_used_features!{"llvm3-6", "llvm3-7", "llvm3-8", "llvm3-9", "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0", "llvm10-0"}
+assert_unique_used_features!{"llvm3-6", "llvm3-7", "llvm3-8", "llvm3-9", "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0", "llvm10-0", "llvm11-0"}
 
 /// Defines the address space in which a global will be inserted.
 ///

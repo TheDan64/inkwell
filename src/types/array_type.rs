@@ -3,7 +3,6 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use crate::AddressSpace;
 use crate::context::ContextRef;
-use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
 use crate::types::{Type, BasicTypeEnum, PointerType, FunctionType};
 use crate::values::{AsValueRef, ArrayValue, IntValue};
@@ -185,11 +184,6 @@ impl<'ctx> ArrayType<'ctx> {
         unsafe {
             LLVMGetArrayLength(self.as_type_ref())
         }
-    }
-
-    /// Prints the definition of a `ArrayType` to a `LLVMString`.
-    pub fn print_to_string(self) -> LLVMString {
-        self.array_type.print_to_string()
     }
 
     // See Type::print_to_stderr note on 5.0+ status

@@ -4,7 +4,6 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use crate::AddressSpace;
 use crate::context::ContextRef;
-use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
 use crate::types::{Type, PointerType, FunctionType, BasicTypeEnum, ArrayType, VectorType};
 use crate::values::{AsValueRef, ArrayValue, FloatValue, GenericValue, IntValue};
@@ -102,6 +101,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
+    /// use inkwell::values::AnyValue;
     ///
     /// let context = Context::create();
     /// let f64_type = context.f64_type();
@@ -139,6 +139,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
+    /// use inkwell::values::AnyValue;
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
@@ -212,11 +213,6 @@ impl<'ctx> FloatType<'ctx> {
     /// ```
     pub fn ptr_type(self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.float_type.ptr_type(address_space)
-    }
-
-    /// Prints the definition of a `FloatType` to a `LLVMString`.
-    pub fn print_to_string(self) -> LLVMString {
-        self.float_type.print_to_string()
     }
 
     // See Type::print_to_stderr note on 5.0+ status

@@ -4,7 +4,6 @@ use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 use std::ffi::CStr;
 
 use crate::basic_block::BasicBlock;
-use crate::support::LLVMString;
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, InstructionValue, Value};
 
@@ -75,14 +74,6 @@ impl<'ctx> PhiValue<'ctx> {
 
     pub fn is_undef(self) -> bool {
         self.phi_value.is_undef()
-    }
-
-    pub fn print_to_string(self) -> LLVMString {
-        self.phi_value.print_to_string()
-    }
-
-    pub fn print_to_stderr(self) {
-        self.phi_value.print_to_stderr()
     }
 
     // SubType: -> InstructionValue<Phi>
