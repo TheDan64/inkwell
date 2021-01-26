@@ -4,7 +4,7 @@ use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::types::{IntType, VoidType, FunctionType, PointerType, VectorType, ArrayType, StructType, FloatType};
 use crate::types::traits::AsTypeRef;
-use crate::values::IntValue;
+use crate::values::{BasicValue, BasicValueEnum, IntValue};
 
 use std::convert::TryFrom;
 
@@ -393,6 +393,28 @@ impl<'ctx> BasicTypeEnum<'ctx> {
             true
         } else {
             false
+        }
+    }
+
+    /// Creates a constant `BasicValueZero`.
+    ///
+    /// # Example
+    /// ```
+    /// use inkwell::context::Context;
+    /// use crate::inkwell::types::BasicType;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type().as_basic_type_enum();
+    /// let f32_zero = f32_type.const_zero();
+    /// ```
+    pub fn const_zero(self) -> BasicValueEnum<'ctx> {
+        match self {
+            BasicTypeEnum::ArrayType(ty) => ty.const_zero().as_basic_value_enum(),
+            BasicTypeEnum::FloatType(ty) => ty.const_zero().as_basic_value_enum(),
+            BasicTypeEnum::IntType(ty) => ty.const_zero().as_basic_value_enum(),
+            BasicTypeEnum::PointerType(ty) => ty.const_zero().as_basic_value_enum(),
+            BasicTypeEnum::StructType(ty) => ty.const_zero().as_basic_value_enum(),
+            BasicTypeEnum::VectorType(ty) => ty.const_zero().as_basic_value_enum(),
         }
     }
 }
