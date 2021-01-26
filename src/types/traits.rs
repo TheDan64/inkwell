@@ -5,7 +5,7 @@ use std::fmt::Debug;
 use crate::AddressSpace;
 use crate::types::{IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VectorType, VoidType, Type};
 use crate::types::enums::{AnyTypeEnum, BasicTypeEnum};
-use crate::values::{IntMathValue, FloatMathValue, PointerMathValue, IntValue, FloatValue, PointerValue, VectorValue};
+use crate::values::{BasicValue, BasicValueEnum, IntMathValue, FloatMathValue, PointerMathValue, IntValue, FloatValue, PointerValue, VectorValue, StructValue, ArrayValue};
 use crate::support::LLVMString;
 
 // This is an ugly privacy hack so that Type can stay private to this module
@@ -19,6 +19,16 @@ macro_rules! trait_type_set {
     ($trait_name:ident: $($args:ident),*) => (
         $(
             impl<'ctx> $trait_name<'ctx> for $args<'ctx> {}
+        )*
+    );
+}
+
+macro_rules! trait_type_set_with_value {
+    ($trait_name:ident: $($args:ident, $values:ident),*) => (
+        $(
+            impl<'ctx> $trait_name<'ctx> for $args<'ctx> {
+                type ValueType = $values<'ctx>;
+            }
         )*
     );
 }
@@ -130,6 +140,24 @@ pub trait BasicType<'ctx>: AnyType<'ctx> {
     fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         Type::new(self.as_type_ref()).ptr_type(address_space)
     }
+
+    /// Creates a constant zero value of this type.
+    ///
+    /// # Example
+    /// ```
+    /// use inkwell::context::Context;
+    /// use crate::inkwell::types::BasicType;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type().as_basic_type_enum();
+    /// let f32_zero = f32_type.const_zero();
+    /// ```
+    fn const_zero(&self) -> Self::ValueType {
+        <Self::ValueType as BasicType>::new(Type::new(self.as_type_ref()).const_zero())
+    }
+
+    /// The inkwell type for values that have this llvm type.
+    type ValueType;
 }
 
 /// Represents an LLVM type that can have integer math operations applied to it.
@@ -159,7 +187,7 @@ pub trait PointerMathType<'ctx>: BasicType<'ctx> {
 }
 
 trait_type_set! {AnyType: AnyTypeEnum, BasicTypeEnum, IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VoidType, VectorType}
-trait_type_set! {BasicType: BasicTypeEnum, IntType, FloatType, PointerType, StructType, ArrayType, VectorType}
+trait_type_set_with_value! {BasicType: BasicTypeEnum, BasicValueEnum, IntType, IntValue, FloatType, FloatValue, PointerType, PointerValue, StructType, StructValue, ArrayType, ArrayValue, VectorType, VectorValue}
 
 impl<'ctx> IntMathType<'ctx> for IntType<'ctx> {
     type ValueType = IntValue<'ctx>;

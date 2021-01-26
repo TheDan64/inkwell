@@ -395,28 +395,6 @@ impl<'ctx> BasicTypeEnum<'ctx> {
             false
         }
     }
-
-    /// Creates a constant `BasicValueZero`.
-    ///
-    /// # Example
-    /// ```
-    /// use inkwell::context::Context;
-    /// use crate::inkwell::types::BasicType;
-    ///
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type().as_basic_type_enum();
-    /// let f32_zero = f32_type.const_zero();
-    /// ```
-    pub fn const_zero(self) -> BasicValueEnum<'ctx> {
-        match self {
-            BasicTypeEnum::ArrayType(ty) => ty.const_zero().as_basic_value_enum(),
-            BasicTypeEnum::FloatType(ty) => ty.const_zero().as_basic_value_enum(),
-            BasicTypeEnum::IntType(ty) => ty.const_zero().as_basic_value_enum(),
-            BasicTypeEnum::PointerType(ty) => ty.const_zero().as_basic_value_enum(),
-            BasicTypeEnum::StructType(ty) => ty.const_zero().as_basic_value_enum(),
-            BasicTypeEnum::VectorType(ty) => ty.const_zero().as_basic_value_enum(),
-        }
-    }
 }
 
 impl<'ctx> TryFrom<AnyTypeEnum<'ctx>> for BasicTypeEnum<'ctx> {
