@@ -1,6 +1,6 @@
 [package]
 name = "inkwell_internals"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Daniel Kolsoi <thadan64@gmail.com>"]
 description = "Internal macro crate for inkwell"
 edition = "2018"
