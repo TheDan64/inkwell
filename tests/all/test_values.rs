@@ -443,31 +443,34 @@ fn test_metadata() {
     // let vec_val = VectorType::const_vector(&[i8_val]);
     // let fn_val = module.add_function("my_fn", fn_type, None);
 
-    let md_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
+    let md_node_child = context.metadata_node(&[f32_val.into()]);
+    let md_node = context.metadata_node(&[bool_val.into(), f32_val.into(), md_string.into(), md_node_child.into()]);
 
     let node_values = md_node.get_node_values();
 
     assert_eq!(md_node.get_string_value(), None);
-    assert_eq!(node_values.len(), 2);
+    assert_eq!(node_values.len(), 4);
     assert_eq!(node_values[0].into_int_value(), bool_val);
     assert_eq!(node_values[1].into_float_value(), f32_val);
+    assert_eq!(node_values[2].into_metadata_value().get_string_value(), md_string.get_string_value());
+    assert!(node_values[3].into_metadata_value().is_node());
 
-    module.add_global_metadata("my_md", &md_string);
+    //module.add_global_metadata("my_md", &md_string);
     module.add_global_metadata("my_md", &md_node);
 
-    assert_eq!(module.get_global_metadata_size("my_md"), 2);
+    assert_eq!(module.get_global_metadata_size("my_md"), 1);
 
     let global_md = module.get_global_metadata("my_md");
 
-    assert_eq!(global_md.len(), 2);
+    assert_eq!(global_md.len(), 1);
 
-    let (md_0, md_1) = (global_md[0].get_node_values(), global_md[1].get_node_values());
+    let md = global_md[0].get_node_values();
 
-    assert_eq!(md_0.len(), 1);
-    assert_eq!(md_1.len(), 2);
-    assert_eq!(md_0[0].into_metadata_value().get_string_value(), md_string.get_string_value());
-    assert_eq!(md_1[0].into_int_value(), bool_val);
-    assert_eq!(md_1[1].into_float_value(), f32_val);
+    assert_eq!(md.len(), 4);
+    assert_eq!(md[0].into_int_value(), bool_val);
+    assert_eq!(md[1].into_float_value(), f32_val);
+    assert_eq!(md[2].into_metadata_value().get_string_value(), md_string.get_string_value());
+    assert!(md[3].into_metadata_value().is_node());
 
     assert_eq!(module.get_global_metadata_size("other_md"), 0);
 
@@ -506,8 +509,9 @@ fn test_metadata() {
     builder.position_at_end(entry_block);
 
     let ret_instr = builder.build_return(None);
+    let ret_instr_md = context.metadata_node(&[md_string.into()]);
 
-    ret_instr.set_metadata(md_string, 2);
+    ret_instr.set_metadata(ret_instr_md, 2);
 
     assert!(ret_instr.has_metadata());
     assert!(ret_instr.get_metadata(1).is_none());

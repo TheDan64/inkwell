@@ -836,6 +836,8 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(md_1[1].into_float_value(), f32_val);
     /// ```
     pub fn add_global_metadata(&self, key: &str, metadata: &MetadataValue<'ctx>) {
+        assert!(metadata.is_node());
+
         let c_string = to_c_str(key);
 
         unsafe {

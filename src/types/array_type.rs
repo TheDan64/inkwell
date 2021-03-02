@@ -6,6 +6,7 @@ use crate::context::ContextRef;
 use crate::types::traits::AsTypeRef;
 use crate::types::{Type, BasicTypeEnum, PointerType, FunctionType};
 use crate::values::{AsValueRef, ArrayValue, IntValue};
+use crate::types::enums::BasicMetadataTypeEnum;
 
 /// An `ArrayType` is the type of contiguous constants or variables.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -103,7 +104,7 @@ impl<'ctx> ArrayType<'ctx> {
     /// let i8_array_type = i8_type.array_type(3);
     /// let fn_type = i8_array_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
+    pub fn fn_type(self, param_types: &[BasicMetadataTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.array_type.fn_type(param_types, is_var_args)
     }
 

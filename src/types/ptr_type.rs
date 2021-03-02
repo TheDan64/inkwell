@@ -8,6 +8,7 @@ use crate::types::{AnyTypeEnum, BasicTypeEnum, ArrayType, FunctionType, Type, Ve
 use crate::values::{AsValueRef, ArrayValue, PointerValue, IntValue};
 
 use std::convert::TryFrom;
+use crate::types::enums::BasicMetadataTypeEnum;
 
 /// A `PointerType` is the type of a pointer constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -109,7 +110,7 @@ impl<'ctx> PointerType<'ctx> {
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
     /// let fn_type = f32_ptr_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
+    pub fn fn_type(self, param_types: &[BasicMetadataTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.ptr_type.fn_type(param_types, is_var_args)
     }
 

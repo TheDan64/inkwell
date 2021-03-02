@@ -3,6 +3,8 @@ use llvm_sys::LLVMTypeKind;
 use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::types::{IntType, VoidType, FunctionType, PointerType, VectorType, ArrayType, StructType, FloatType};
+#[llvm_versions(6.0..=latest)]
+use crate::types::MetadataType;
 use crate::types::traits::AsTypeRef;
 use crate::values::{BasicValue, BasicValueEnum, IntValue};
 
@@ -88,6 +90,103 @@ enum_type_set! {
         VectorType,
     }
 }
+enum_type_set! {
+    BasicMetadataTypeEnum: {
+        ArrayType,
+        FloatType,
+        IntType,
+        PointerType,
+        StructType,
+        VectorType,
+        MetadataType,
+    }
+}
+
+impl<'ctx> BasicMetadataTypeEnum<'ctx> {
+    pub fn into_array_type(self) -> ArrayType<'ctx> {
+        if let BasicMetadataTypeEnum::ArrayType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn into_float_type(self) -> FloatType<'ctx> {
+        if let BasicMetadataTypeEnum::FloatType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn into_int_type(self) -> IntType<'ctx> {
+        if let BasicMetadataTypeEnum::IntType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn into_pointer_type(self) -> PointerType<'ctx> {
+        if let BasicMetadataTypeEnum::PointerType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn into_struct_type(self) -> StructType<'ctx> {
+        if let BasicMetadataTypeEnum::StructType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn into_vector_type(self) -> VectorType<'ctx> {
+        if let BasicMetadataTypeEnum::VectorType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn into_metadata_type(self) -> MetadataType<'ctx> {
+        if let BasicMetadataTypeEnum::MetadataType(t) = self {
+            t
+        } else {
+            panic!("Found {:?} but expected another variant", self);
+        }
+    }
+
+    pub fn is_array_type(self) -> bool {
+        matches!(self, BasicMetadataTypeEnum::ArrayType(_))
+    }
+
+    pub fn is_float_type(self) -> bool {
+        matches!(self, BasicMetadataTypeEnum::FloatType(_))
+    }
+
+    pub fn is_int_type(self) -> bool {
+        matches!(self, BasicMetadataTypeEnum::IntType(_))
+    }
+
+    pub fn is_metadata_type(self) -> bool {
+        matches!(self, BasicMetadataTypeEnum::MetadataType(_))
+    }
+
+    pub fn is_pointer_type(self) -> bool {
+        matches!(self, BasicMetadataTypeEnum::PointerType(_))
+    }
+
+    pub fn is_struct_type(self) -> bool {
+        matches!(self, BasicMetadataTypeEnum::StructType(_))
+    }
+
+    pub fn is_vector_type(self) -> bool {
+        matches!(self, BasicMetadataTypeEnum::VectorType(_))
+    }
+}
 
 impl<'ctx> AnyTypeEnum<'ctx> {
     pub(crate) unsafe fn new(type_: LLVMTypeRef) -> Self {
@@ -110,7 +209,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
             LLVMTypeKind::LLVMVectorTypeKind => AnyTypeEnum::VectorType(VectorType::new(type_)),
             #[cfg(feature = "llvm11-0")]
             LLVMTypeKind::LLVMScalableVectorTypeKind => AnyTypeEnum::VectorType(VectorType::new(type_)),
-            LLVMTypeKind::LLVMMetadataTypeKind => panic!("FIXME: Unsupported type: Metadata"),
+            LLVMTypeKind::LLVMMetadataTypeKind => unreachable!("Metadata type is not supported as AnyType."),
             LLVMTypeKind::LLVMX86_MMXTypeKind => panic!("FIXME: Unsupported type: MMX"),
             #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
             LLVMTypeKind::LLVMTokenTypeKind => panic!("FIXME: Unsupported type: Token"),

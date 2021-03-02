@@ -11,6 +11,7 @@ use crate::context::ContextRef;
 use crate::types::traits::AsTypeRef;
 use crate::types::{ArrayType, BasicTypeEnum, PointerType, FunctionType, Type};
 use crate::values::{ArrayValue, BasicValueEnum, StructValue, IntValue, AsValueRef};
+use crate::types::enums::BasicMetadataTypeEnum;
 
 /// A `StructType` is the type of a heterogeneous container of types.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -210,7 +211,7 @@ impl<'ctx> StructType<'ctx> {
     /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
     /// let fn_type = struct_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
+    pub fn fn_type(self, param_types: &[BasicMetadataTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.struct_type.fn_type(param_types, is_var_args)
     }
 
