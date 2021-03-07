@@ -191,67 +191,35 @@ impl<'ctx> AnyTypeEnum<'ctx> {
     }
 
     pub fn is_array_type(self) -> bool {
-        if let AnyTypeEnum::ArrayType(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, AnyTypeEnum::ArrayType(_))
     }
 
     pub fn is_float_type(self) -> bool {
-        if let AnyTypeEnum::FloatType(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, AnyTypeEnum::FloatType(_))
     }
 
     pub fn is_function_type(self) -> bool {
-        if let AnyTypeEnum::FunctionType(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, AnyTypeEnum::FunctionType(_))
     }
 
     pub fn is_int_type(self) -> bool {
-        if let AnyTypeEnum::IntType(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, AnyTypeEnum::IntType(_))
     }
 
     pub fn is_pointer_type(self) -> bool {
-        if let AnyTypeEnum::PointerType(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, AnyTypeEnum::PointerType(_))
     }
 
     pub fn is_struct_type(self) -> bool {
-        if let AnyTypeEnum::StructType(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, AnyTypeEnum::StructType(_))
     }
 
     pub fn is_vector_type(self) -> bool {
-        if let AnyTypeEnum::VectorType(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, AnyTypeEnum::VectorType(_))
     }
 
     pub fn is_void_type(self) -> bool {
-        if let AnyTypeEnum::VoidType(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, AnyTypeEnum::VoidType(_))
     }
 
     pub fn size_of(&self) -> Option<IntValue<'ctx>> {
