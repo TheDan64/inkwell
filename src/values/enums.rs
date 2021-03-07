@@ -243,51 +243,27 @@ impl<'ctx> BasicValueEnum<'ctx> {
     }
 
     pub fn is_array_value(self) -> bool {
-        if let BasicValueEnum::ArrayValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, BasicValueEnum::ArrayValue(_))
     }
 
     pub fn is_int_value(self) -> bool {
-        if let BasicValueEnum::IntValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, BasicValueEnum::IntValue(_))
     }
 
     pub fn is_float_value(self) -> bool {
-        if let BasicValueEnum::FloatValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, BasicValueEnum::FloatValue(_))
     }
 
     pub fn is_pointer_value(self) -> bool {
-        if let BasicValueEnum::PointerValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, BasicValueEnum::PointerValue(_))
     }
 
     pub fn is_struct_value(self) -> bool {
-        if let BasicValueEnum::StructValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, BasicValueEnum::StructValue(_))
     }
 
     pub fn is_vector_value(self) -> bool {
-        if let BasicValueEnum::VectorValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, BasicValueEnum::VectorValue(_))
     }
 
     pub fn into_array_value(self) -> ArrayValue<'ctx> {
