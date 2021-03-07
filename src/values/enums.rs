@@ -104,75 +104,39 @@ impl<'ctx> AnyValueEnum<'ctx> {
     }
 
     pub fn is_array_value(self) -> bool {
-        if let AnyValueEnum::ArrayValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, AnyValueEnum::ArrayValue(_))
     }
 
     pub fn is_int_value(self) -> bool {
-        if let AnyValueEnum::IntValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, AnyValueEnum::IntValue(_))
     }
 
     pub fn is_float_value(self) -> bool {
-        if let AnyValueEnum::FloatValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, AnyValueEnum::FloatValue(_))
     }
 
     pub fn is_phi_value(self) -> bool {
-        if let AnyValueEnum::PhiValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, AnyValueEnum::PhiValue(_))
     }
 
     pub fn is_function_value(self) -> bool {
-        if let AnyValueEnum::FunctionValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, AnyValueEnum::FunctionValue(_))
     }
 
     pub fn is_pointer_value(self) -> bool {
-        if let AnyValueEnum::PointerValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, AnyValueEnum::PointerValue(_))
     }
 
     pub fn is_struct_value(self) -> bool {
-        if let AnyValueEnum::StructValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, AnyValueEnum::StructValue(_))
     }
 
     pub fn is_vector_value(self) -> bool {
-        if let AnyValueEnum::VectorValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, AnyValueEnum::VectorValue(_))
     }
 
     pub fn is_instruction_value(self) -> bool {
-        if let AnyValueEnum::InstructionValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, AnyValueEnum::InstructionValue(_))
     }
 
     pub fn into_array_value(self) -> ArrayValue<'ctx> {
