@@ -317,51 +317,27 @@ impl<'ctx> BasicTypeEnum<'ctx> {
     }
 
     pub fn is_array_type(self) -> bool {
-        if let BasicTypeEnum::ArrayType(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, BasicTypeEnum::ArrayType(_))
     }
 
     pub fn is_float_type(self) -> bool {
-        if let BasicTypeEnum::FloatType(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, BasicTypeEnum::FloatType(_))
     }
 
     pub fn is_int_type(self) -> bool {
-        if let BasicTypeEnum::IntType(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, BasicTypeEnum::IntType(_))
     }
 
     pub fn is_pointer_type(self) -> bool {
-        if let BasicTypeEnum::PointerType(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, BasicTypeEnum::PointerType(_))
     }
 
     pub fn is_struct_type(self) -> bool {
-        if let BasicTypeEnum::StructType(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, BasicTypeEnum::StructType(_))
     }
 
     pub fn is_vector_type(self) -> bool {
-        if let BasicTypeEnum::VectorType(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, BasicTypeEnum::VectorType(_))
     }
 
     /// Creates a constant `BasicValueZero`.
