@@ -385,59 +385,31 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
     }
 
     pub fn is_array_value(self) -> bool {
-        if let BasicMetadataValueEnum::ArrayValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, BasicMetadataValueEnum::ArrayValue(_))
     }
 
     pub fn is_int_value(self) -> bool {
-        if let BasicMetadataValueEnum::IntValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, BasicMetadataValueEnum::IntValue(_))
     }
 
     pub fn is_float_value(self) -> bool {
-        if let BasicMetadataValueEnum::FloatValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, BasicMetadataValueEnum::FloatValue(_))
     }
 
     pub fn is_pointer_value(self) -> bool {
-        if let BasicMetadataValueEnum::PointerValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, BasicMetadataValueEnum::PointerValue(_))
     }
 
     pub fn is_struct_value(self) -> bool {
-        if let BasicMetadataValueEnum::StructValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, BasicMetadataValueEnum::StructValue(_))
     }
 
     pub fn is_vector_value(self) -> bool {
-        if let BasicMetadataValueEnum::VectorValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, BasicMetadataValueEnum::VectorValue(_))
     }
 
     pub fn is_metadata_value(self) -> bool {
-        if let BasicMetadataValueEnum::MetadataValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, BasicMetadataValueEnum::MetadataValue(_))
     }
 
     pub fn into_array_value(self) -> ArrayValue<'ctx> {
