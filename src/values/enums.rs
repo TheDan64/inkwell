@@ -329,19 +329,11 @@ impl<'ctx> AggregateValueEnum<'ctx> {
     }
 
     pub fn is_array_value(self) -> bool {
-        if let AggregateValueEnum::ArrayValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, AggregateValueEnum::ArrayValue(_))
     }
 
     pub fn is_struct_value(self) -> bool {
-        if let AggregateValueEnum::StructValue(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, AggregateValueEnum::StructValue(_))
     }
 
     pub fn into_array_value(self) -> ArrayValue<'ctx> {
