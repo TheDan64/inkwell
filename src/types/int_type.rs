@@ -61,7 +61,7 @@ pub struct IntType<'ctx> {
 }
 
 impl<'ctx> IntType<'ctx> {
-    pub(crate) fn new(int_type: LLVMTypeRef) -> Self {
+    pub(crate) unsafe fn new(int_type: LLVMTypeRef) -> Self {
         assert!(!int_type.is_null());
 
         IntType {
@@ -82,11 +82,9 @@ impl<'ctx> IntType<'ctx> {
     /// ```
     // TODOC: Maybe better explain sign extension
     pub fn const_int(self, value: u64, sign_extend: bool) -> IntValue<'ctx> {
-        let value = unsafe {
-            LLVMConstInt(self.as_type_ref(), value, sign_extend as i32)
-        };
-
-        IntValue::new(value)
+        unsafe {
+            IntValue::new(LLVMConstInt(self.as_type_ref(), value, sign_extend as i32))
+        }
     }
 
     /// Create an `IntValue` from a string and radix. LLVM provides no error handling here,
@@ -121,10 +119,15 @@ impl<'ctx> IntType<'ctx> {
         if !radix.to_regex().is_match(slice) {
             return None
         }
-        let value = unsafe {
-            LLVMConstIntOfStringAndSize(self.as_type_ref(), slice.as_ptr() as *const ::libc::c_char, slice.len() as u32, radix as u8)
-        };
-        Some(IntValue::new(value))
+
+        unsafe {
+            Some(IntValue::new(LLVMConstIntOfStringAndSize(
+                self.as_type_ref(),
+                slice.as_ptr() as *const ::libc::c_char,
+                slice.len() as u32,
+                radix as u8,
+            )))
+        }
     }
 
     /// Create a constant `IntValue` of arbitrary precision.
@@ -139,11 +142,9 @@ impl<'ctx> IntType<'ctx> {
     /// let i64_val = i64_type.const_int_arbitrary_precision(&[1, 2]);
     /// ```
     pub fn const_int_arbitrary_precision(self, words: &[u64]) -> IntValue<'ctx> {
-        let value = unsafe {
-            LLVMConstIntOfArbitraryPrecision(self.as_type_ref(), words.len() as u32, words.as_ptr())
-        };
-
-        IntValue::new(value)
+        unsafe {
+            IntValue::new(LLVMConstIntOfArbitraryPrecision(self.as_type_ref(), words.len() as u32, words.as_ptr()))
+        }
     }
 
     /// Creates an `IntValue` representing a constant value of all one bits of this `IntType`. It will be automatically assigned this `IntType`'s `Context`.
@@ -158,11 +159,9 @@ impl<'ctx> IntType<'ctx> {
     /// let i32_ptr_value = i32_type.const_all_ones();
     /// ```
     pub fn const_all_ones(self) -> IntValue<'ctx> {
-        let value = unsafe {
-            LLVMConstAllOnes(self.as_type_ref())
-        };
-
-        IntValue::new(value)
+        unsafe {
+            IntValue::new(LLVMConstAllOnes(self.as_type_ref()))
+        }
     }
 
     /// Creates a constant zero value of this `IntType`.
@@ -180,7 +179,9 @@ impl<'ctx> IntType<'ctx> {
     /// assert_eq!(i8_zero.print_to_string().to_string(), "i8 0");
     /// ```
     pub fn const_zero(self) -> IntValue<'ctx> {
-        IntValue::new(self.int_type.const_zero())
+        unsafe {
+            IntValue::new(self.int_type.const_zero())
+        }
     }
 
     /// Creates a `FunctionType` with this `IntType` for its return type.
@@ -336,16 +337,16 @@ impl<'ctx> IntType<'ctx> {
     /// assert!(i8_undef.is_undef());
     /// ```
     pub fn get_undef(self) -> IntValue<'ctx> {
-        IntValue::new(self.int_type.get_undef())
+        unsafe {
+            IntValue::new(self.int_type.get_undef())
+        }
     }
 
     /// Creates a `GenericValue` for use with `ExecutionEngine`s.
     pub fn create_generic_value(self, value: u64, is_signed: bool) -> GenericValue<'ctx> {
-        let value = unsafe {
-            LLVMCreateGenericValueOfInt(self.as_type_ref(), value, is_signed as i32)
-        };
-
-        GenericValue::new(value)
+        unsafe {
+            GenericValue::new(LLVMCreateGenericValueOfInt(self.as_type_ref(), value, is_signed as i32))
+        }
     }
 
     /// Creates a constant `ArrayValue`.
@@ -366,11 +367,9 @@ impl<'ctx> IntType<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();
-        let value = unsafe {
-            LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32)
-        };
-
-        ArrayValue::new(value)
+        unsafe {
+            ArrayValue::new(LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32))
+        }
     }
 }
 

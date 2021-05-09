@@ -18,7 +18,7 @@ use crate::values::FunctionValue;
 pub struct CallSiteValue<'ctx>(Value<'ctx>);
 
 impl<'ctx> CallSiteValue<'ctx> {
-    pub(crate) fn new(value: LLVMValueRef) -> Self {
+    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
         CallSiteValue(Value::new(value))
     }
 
@@ -169,11 +169,9 @@ impl<'ctx> CallSiteValue<'ctx> {
     pub fn get_called_fn_value(self) -> FunctionValue<'ctx> {
         use llvm_sys::core::LLVMGetCalledValue;
 
-        let ptr = unsafe {
-            LLVMGetCalledValue(self.as_value_ref())
-        };
-
-        FunctionValue::new(ptr).expect("This should never be null?")
+        unsafe {
+            FunctionValue::new(LLVMGetCalledValue(self.as_value_ref())).expect("This should never be null?")
+        }
     }
 
     /// Counts the number of `Attribute`s on this `CallSiteValue` at an index.
@@ -252,7 +250,9 @@ impl<'ctx> CallSiteValue<'ctx> {
             return None;
         }
 
-        Some(Attribute::new(ptr))
+        unsafe {
+            Some(Attribute::new(ptr))
+        }
     }
 
     /// Gets a string `Attribute` on this `CallSiteValue` at an index and key.
@@ -295,7 +295,9 @@ impl<'ctx> CallSiteValue<'ctx> {
             return None;
         }
 
-        Some(Attribute::new(ptr))
+        unsafe {
+            Some(Attribute::new(ptr))
+        }
     }
 
     /// Removes an enum `Attribute` on this `CallSiteValue` at an index and kind id.

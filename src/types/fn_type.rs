@@ -17,7 +17,7 @@ pub struct FunctionType<'ctx> {
 }
 
 impl<'ctx> FunctionType<'ctx> {
-    pub(crate) fn new(fn_type: LLVMTypeRef) -> Self {
+    pub(crate) unsafe fn new(fn_type: LLVMTypeRef) -> Self {
         assert!(!fn_type.is_null());
 
         FunctionType {
@@ -91,7 +91,7 @@ impl<'ctx> FunctionType<'ctx> {
             Vec::from_raw_parts(ptr, count as usize, count as usize)
         };
 
-        raw_vec.iter().map(|val| BasicTypeEnum::new(*val)).collect()
+        raw_vec.iter().map(|val| unsafe { BasicTypeEnum::new(*val) }).collect()
     }
 
     /// Counts the number of param types this `FunctionType` has.
@@ -187,7 +187,9 @@ impl<'ctx> FunctionType<'ctx> {
             return None;
         }
 
-        Some(BasicTypeEnum::new(ty))
+        unsafe {
+            Some(BasicTypeEnum::new(ty))
+        }
     }
 
     // REVIEW: Can you do undef for functions?

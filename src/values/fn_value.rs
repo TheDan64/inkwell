@@ -30,14 +30,12 @@ pub struct FunctionValue<'ctx> {
 }
 
 impl<'ctx> FunctionValue<'ctx> {
-    pub(crate) fn new(value: LLVMValueRef) -> Option<Self> {
+    pub(crate) unsafe fn new(value: LLVMValueRef) -> Option<Self> {
         if value.is_null() {
             return None;
         }
 
-        unsafe {
-            assert!(!LLVMIsAFunction(value).is_null())
-        }
+        assert!(!LLVMIsAFunction(value).is_null());
 
         Some(FunctionValue { fn_value: Value::new(value) })
     }
@@ -83,19 +81,15 @@ impl<'ctx> FunctionValue<'ctx> {
 
     // REVIEW: If there's a demand, could easily create a module.get_functions() -> Iterator
     pub fn get_next_function(self) -> Option<Self> {
-        let function = unsafe {
-            LLVMGetNextFunction(self.as_value_ref())
-        };
-
-        FunctionValue::new(function)
+        unsafe {
+            FunctionValue::new(LLVMGetNextFunction(self.as_value_ref()))
+        }
     }
 
     pub fn get_previous_function(self) -> Option<Self> {
-        let function = unsafe {
-            LLVMGetPreviousFunction(self.as_value_ref())
-        };
-
-        FunctionValue::new(function)
+        unsafe {
+            FunctionValue::new(LLVMGetPreviousFunction(self.as_value_ref()))
+        }
     }
 
     pub fn get_first_param(self) -> Option<BasicValueEnum<'ctx>> {
@@ -107,7 +101,9 @@ impl<'ctx> FunctionValue<'ctx> {
             return None;
         }
 
-        Some(BasicValueEnum::new(param))
+        unsafe {
+            Some(BasicValueEnum::new(param))
+        }
     }
 
     pub fn get_last_param(self) -> Option<BasicValueEnum<'ctx>> {
@@ -119,15 +115,15 @@ impl<'ctx> FunctionValue<'ctx> {
             return None;
         }
 
-        Some(BasicValueEnum::new(param))
+        unsafe {
+            Some(BasicValueEnum::new(param))
+        }
     }
 
     pub fn get_first_basic_block(self) -> Option<BasicBlock<'ctx>> {
-        let bb = unsafe {
-            LLVMGetFirstBasicBlock(self.as_value_ref())
-        };
-
-        BasicBlock::new(bb)
+        unsafe {
+            BasicBlock::new(LLVMGetFirstBasicBlock(self.as_value_ref()))
+        }
     }
 
     pub fn get_nth_param(self, nth: u32) -> Option<BasicValueEnum<'ctx>> {
@@ -137,11 +133,9 @@ impl<'ctx> FunctionValue<'ctx> {
             return None;
         }
 
-        let param = unsafe {
-            LLVMGetParam(self.as_value_ref(), nth)
-        };
-
-        Some(BasicValueEnum::new(param))
+        unsafe {
+            Some(BasicValueEnum::new(LLVMGetParam(self.as_value_ref(), nth)))
+        }
     }
 
     pub fn count_params(self) -> u32 {
@@ -169,7 +163,7 @@ impl<'ctx> FunctionValue<'ctx> {
             Vec::from_raw_parts(ptr, count as usize, count as usize)
         };
 
-        raw_vec.iter().map(|val| BasicBlock::new(*val).unwrap()).collect()
+        raw_vec.iter().map(|val| unsafe { BasicBlock::new(*val).unwrap() }).collect()
     }
 
     pub fn get_param_iter(self) -> ParamValueIter<'ctx> {
@@ -193,15 +187,13 @@ impl<'ctx> FunctionValue<'ctx> {
             Vec::from_raw_parts(ptr, count as usize, count as usize)
         };
 
-        raw_vec.iter().map(|val| BasicValueEnum::new(*val)).collect()
+        raw_vec.iter().map(|val| unsafe { BasicValueEnum::new(*val) }).collect()
     }
 
     pub fn get_last_basic_block(self) -> Option<BasicBlock<'ctx>> {
-        let bb = unsafe {
-            LLVMGetLastBasicBlock(self.fn_value.value)
-        };
-
-        BasicBlock::new(bb)
+        unsafe {
+            BasicBlock::new(LLVMGetLastBasicBlock(self.fn_value.value))
+        }
     }
 
     /// Gets the name of a `FunctionValue`.
@@ -229,12 +221,9 @@ impl<'ctx> FunctionValue<'ctx> {
     }
 
     pub fn get_type(self) -> FunctionType<'ctx> {
-        let ptr_type = PointerType::new(self.fn_value.get_type());
+        let ptr_type = unsafe { PointerType::new(self.fn_value.get_type()) };
 
-        // FIXME: Placeholder until lifetime is bound to obj not fn
-        unsafe {
-            std::mem::transmute(ptr_type.get_element_type().into_function_type())
-        }
+        ptr_type.get_element_type().into_function_type()
     }
 
     // TODOC: How this works as an exception handler
@@ -259,11 +248,9 @@ impl<'ctx> FunctionValue<'ctx> {
             }
         }
 
-        let value = unsafe {
-            LLVMGetPersonalityFn(self.as_value_ref())
-        };
-
-        FunctionValue::new(value)
+        unsafe {
+            FunctionValue::new(LLVMGetPersonalityFn(self.as_value_ref()))
+        }
     }
 
     // TODOC: This function will segfault in 3.8 due to a LLVM bug when
@@ -454,7 +441,9 @@ impl<'ctx> FunctionValue<'ctx> {
             return None;
         }
 
-        Some(Attribute::new(ptr))
+        unsafe {
+            Some(Attribute::new(ptr))
+        }
     }
 
     /// Gets a string `Attribute` belonging to the specified location in this `FunctionValue`.
@@ -487,7 +476,9 @@ impl<'ctx> FunctionValue<'ctx> {
             return None;
         }
 
-        Some(Attribute::new(ptr))
+        unsafe {
+            Some(Attribute::new(ptr))
+        }
     }
 
     pub fn set_param_alignment(self, param_index: u32, alignment: u32) {
@@ -502,7 +493,9 @@ impl<'ctx> FunctionValue<'ctx> {
     /// you to further inspect its global properties or even convert it to
     /// a `PointerValue`.
     pub fn as_global_value(self) -> GlobalValue<'ctx> {
-        GlobalValue::new(self.as_value_ref())
+        unsafe {
+            GlobalValue::new(self.as_value_ref())
+        }
     }
 
     /// Set the debug info descriptor
@@ -578,7 +571,7 @@ impl<'ctx> Iterator for ParamValueIter<'ctx> {
 
             self.param_iter_value = first_value;
 
-            return Some(Self::Item::new(first_value));
+            return unsafe { Some(Self::Item::new(first_value)) };
         }
 
         let next_value = unsafe {
@@ -591,6 +584,8 @@ impl<'ctx> Iterator for ParamValueIter<'ctx> {
 
         self.param_iter_value = next_value;
 
-        Some(Self::Item::new(next_value))
+        unsafe {
+            Some(Self::Item::new(next_value))
+        }
     }
 }

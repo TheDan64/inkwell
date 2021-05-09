@@ -19,7 +19,7 @@ pub struct StructType<'ctx> {
 }
 
 impl<'ctx> StructType<'ctx> {
-    pub(crate) fn new(struct_type: LLVMTypeRef) -> Self {
+    pub(crate) unsafe fn new(struct_type: LLVMTypeRef) -> Self {
         assert!(!struct_type.is_null());
 
         StructType {
@@ -54,11 +54,9 @@ impl<'ctx> StructType<'ctx> {
             return None;
         }
 
-        let type_ = unsafe {
-            LLVMStructGetTypeAtIndex(self.as_type_ref(), index)
-        };
-
-        Some(BasicTypeEnum::new(type_))
+        unsafe {
+            Some(BasicTypeEnum::new(LLVMStructGetTypeAtIndex(self.as_type_ref(), index)))
+        }
     }
 
 
@@ -79,11 +77,9 @@ impl<'ctx> StructType<'ctx> {
         let mut args: Vec<LLVMValueRef> = values.iter()
                                                 .map(|val| val.as_value_ref())
                                                 .collect();
-        let value = unsafe {
-            LLVMConstNamedStruct(self.as_type_ref(), args.as_mut_ptr(), args.len() as u32)
-        };
-
-        StructValue::new(value)
+        unsafe {
+            StructValue::new(LLVMConstNamedStruct(self.as_type_ref(), args.as_mut_ptr(), args.len() as u32))
+        }
     }
 
     /// Creates a constant zero value of this `StructType`.
@@ -99,7 +95,9 @@ impl<'ctx> StructType<'ctx> {
     /// let struct_zero = struct_type.const_zero();
     /// ```
     pub fn const_zero(self) -> StructValue<'ctx> {
-        StructValue::new(self.struct_type.const_zero())
+        unsafe {
+            StructValue::new(self.struct_type.const_zero())
+        }
     }
 
     // TODO: impl it only for StructType<T*>?
@@ -320,7 +318,7 @@ impl<'ctx> StructType<'ctx> {
             Vec::from_raw_parts(ptr, count as usize, count as usize)
         };
 
-        raw_vec.iter().map(|val| BasicTypeEnum::new(*val)).collect()
+        raw_vec.iter().map(|val| unsafe { BasicTypeEnum::new(*val) }).collect()
     }
 
     // See Type::print_to_stderr note on 5.0+ status
@@ -346,7 +344,9 @@ impl<'ctx> StructType<'ctx> {
     /// assert!(struct_type_undef.is_undef());
     /// ```
     pub fn get_undef(self) -> StructValue<'ctx> {
-        StructValue::new(self.struct_type.get_undef())
+        unsafe {
+            StructValue::new(self.struct_type.get_undef())
+        }
     }
 
     // REVIEW: SubTypes should allow this to only be implemented for StructType<Opaque> one day
@@ -401,11 +401,9 @@ impl<'ctx> StructType<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();
-        let value = unsafe {
-            LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32)
-        };
-
-        ArrayValue::new(value)
+        unsafe {
+            ArrayValue::new(LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32))
+        }
     }
 }
 

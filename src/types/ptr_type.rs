@@ -16,7 +16,7 @@ pub struct PointerType<'ctx> {
 }
 
 impl<'ctx> PointerType<'ctx> {
-    pub(crate) fn new(ptr_type: LLVMTypeRef) -> Self {
+    pub(crate) unsafe fn new(ptr_type: LLVMTypeRef) -> Self {
         assert!(!ptr_type.is_null());
 
         PointerType {
@@ -179,7 +179,9 @@ impl<'ctx> PointerType<'ctx> {
     /// assert!(f32_ptr_null.is_null());
     /// ```
     pub fn const_null(self) -> PointerValue<'ctx> {
-        PointerValue::new(self.ptr_type.const_zero())
+        unsafe {
+            PointerValue::new(self.ptr_type.const_zero())
+        }
     }
 
     // REVIEW: Unlike the other const_zero functions, this one becomes null instead of a 0 value. Maybe remove?
@@ -199,7 +201,9 @@ impl<'ctx> PointerType<'ctx> {
     /// let f32_ptr_zero = f32_ptr_type.const_zero();
     /// ```
     pub fn const_zero(self) -> PointerValue<'ctx> {
-        PointerValue::new(self.ptr_type.const_zero())
+        unsafe {
+            PointerValue::new(self.ptr_type.const_zero())
+        }
     }
 
     /// Creates an undefined instance of a `PointerType`.
@@ -217,7 +221,9 @@ impl<'ctx> PointerType<'ctx> {
     /// assert!(f32_ptr_undef.is_undef());
     /// ```
     pub fn get_undef(self) -> PointerValue<'ctx> {
-        PointerValue::new(self.ptr_type.get_undef())
+        unsafe {
+            PointerValue::new(self.ptr_type.get_undef())
+        }
     }
 
     /// Creates a `VectorType` with this `PointerType` for its element type.
@@ -278,11 +284,9 @@ impl<'ctx> PointerType<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();
-        let value = unsafe {
-            LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32)
-        };
-
-        ArrayValue::new(value)
+        unsafe {
+            ArrayValue::new(LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32))
+        }
     }
 }
 

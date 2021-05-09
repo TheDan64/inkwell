@@ -26,15 +26,13 @@ pub struct BasicBlock<'ctx> {
 }
 
 impl<'ctx> BasicBlock<'ctx> {
-    pub(crate) fn new(basic_block: LLVMBasicBlockRef) -> Option<Self> {
+    pub(crate) unsafe fn new(basic_block: LLVMBasicBlockRef) -> Option<Self> {
         if basic_block.is_null() {
             return None;
         }
 
-        unsafe {
-            // NOTE: There is a LLVMBasicBlockAsValue but it might be the same as casting
-            assert!(!LLVMIsABasicBlock(basic_block as LLVMValueRef).is_null())
-        }
+        // NOTE: There is a LLVMBasicBlockAsValue but it might be the same as casting
+        assert!(!LLVMIsABasicBlock(basic_block as LLVMValueRef).is_null());
 
         Some(BasicBlock { basic_block, _marker: PhantomData })
     }
@@ -62,11 +60,9 @@ impl<'ctx> BasicBlock<'ctx> {
     /// assert!(basic_block.get_parent().is_none());
     /// ```
     pub fn get_parent(self) -> Option<FunctionValue<'ctx>> {
-        let value = unsafe {
-            LLVMGetBasicBlockParent(self.basic_block)
-        };
-
-        FunctionValue::new(value)
+        unsafe {
+            FunctionValue::new(LLVMGetBasicBlockParent(self.basic_block))
+        }
     }
 
     /// Gets the `BasicBlock` preceeding the current one, in its own scope, if any.
@@ -98,11 +94,9 @@ impl<'ctx> BasicBlock<'ctx> {
     pub fn get_previous_basic_block(self) -> Option<BasicBlock<'ctx>> {
         self.get_parent()?;
 
-        let bb = unsafe {
-            LLVMGetPreviousBasicBlock(self.basic_block)
-        };
-
-        BasicBlock::new(bb)
+        unsafe {
+            BasicBlock::new(LLVMGetPreviousBasicBlock(self.basic_block))
+        }
     }
 
     /// Gets the `BasicBlock` succeeding the current one, in its own scope, if any.
@@ -135,11 +129,9 @@ impl<'ctx> BasicBlock<'ctx> {
     pub fn get_next_basic_block(self) -> Option<BasicBlock<'ctx>> {
         self.get_parent()?;
 
-        let bb = unsafe {
-            LLVMGetNextBasicBlock(self.basic_block)
-        };
-
-        BasicBlock::new(bb)
+        unsafe {
+            BasicBlock::new(LLVMGetNextBasicBlock(self.basic_block))
+        }
     }
 
     /// Prepends one `BasicBlock` before another.
@@ -247,7 +239,9 @@ impl<'ctx> BasicBlock<'ctx> {
             return None;
         }
 
-        Some(InstructionValue::new(value))
+        unsafe {
+            Some(InstructionValue::new(value))
+        }
     }
 
     /// Obtains the last `InstructionValue` in this `BasicBlock`, if any. A `BasicBlock` must have a last instruction to be valid.
@@ -281,7 +275,9 @@ impl<'ctx> BasicBlock<'ctx> {
             return None;
         }
 
-        Some(InstructionValue::new(value))
+        unsafe {
+            Some(InstructionValue::new(value))
+        }
     }
 
     /// Obtains the terminating `InstructionValue` in this `BasicBlock`, if any. A `BasicBlock` must have a terminating instruction to be valid.
@@ -319,7 +315,9 @@ impl<'ctx> BasicBlock<'ctx> {
             return None;
         }
 
-        Some(InstructionValue::new(value))
+        unsafe {
+            Some(InstructionValue::new(value))
+        }
     }
 
     /// Removes this `BasicBlock` from its parent `FunctionValue`.
@@ -411,11 +409,9 @@ impl<'ctx> BasicBlock<'ctx> {
     /// assert_eq!(context, *basic_block.get_context());
     /// ```
     pub fn get_context(self) -> ContextRef<'ctx> {
-        let context = unsafe {
-            LLVMGetTypeContext(LLVMTypeOf(LLVMBasicBlockAsValue(self.basic_block)))
-        };
-
-        ContextRef::new(context)
+        unsafe {
+            ContextRef::new(LLVMGetTypeContext(LLVMTypeOf(LLVMBasicBlockAsValue(self.basic_block))))
+        }
     }
 
     /// Gets the name of a `BasicBlock`.
@@ -514,7 +510,9 @@ impl<'ctx> BasicBlock<'ctx> {
             return None;
         }
 
-        Some(BasicValueUse::new(use_))
+        unsafe {
+            Some(BasicValueUse::new(use_))
+        }
     }
 }
 

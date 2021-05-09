@@ -27,12 +27,16 @@ macro_rules! trait_type_set {
 pub trait AnyType<'ctx>: AsTypeRef + Debug {
     /// Returns an `AnyTypeEnum` that represents the current type.
     fn as_any_type_enum(&self) -> AnyTypeEnum<'ctx> {
-        AnyTypeEnum::new(self.as_type_ref())
+        unsafe {
+            AnyTypeEnum::new(self.as_type_ref())
+        }
     }
 
     /// Prints the definition of a Type to a `LLVMString`.
     fn print_to_string(&self) -> LLVMString {
-        Type::new(self.as_type_ref()).print_to_string()
+        unsafe {
+            Type::new(self.as_type_ref()).print_to_string()
+        }
     }
 }
 
@@ -40,7 +44,9 @@ pub trait AnyType<'ctx>: AsTypeRef + Debug {
 pub trait BasicType<'ctx>: AnyType<'ctx> {
     /// Returns a `BasicTypeEnum` that represents the current type.
     fn as_basic_type_enum(&self) -> BasicTypeEnum<'ctx> {
-        BasicTypeEnum::new(self.as_type_ref())
+        unsafe {
+            BasicTypeEnum::new(self.as_type_ref())
+        }
     }
 
     /// Create a `FunctionType` with this `BasicType` as its return type.
@@ -57,7 +63,9 @@ pub trait BasicType<'ctx>: AnyType<'ctx> {
     /// assert_eq!(int_basic_type.fn_type(&[], false), int.fn_type(&[], false));
     /// ```
     fn fn_type(&self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
-        Type::new(self.as_type_ref()).fn_type(param_types, is_var_args)
+        unsafe {
+            Type::new(self.as_type_ref()).fn_type(param_types, is_var_args)
+        }
     }
 
     /// Determines whether or not this `BasicType` is sized or not.
@@ -76,7 +84,9 @@ pub trait BasicType<'ctx>: AnyType<'ctx> {
     /// assert!(f32_vec_type.is_sized());
     /// ```
     fn is_sized(&self) -> bool {
-        Type::new(self.as_type_ref()).is_sized()
+        unsafe {
+            Type::new(self.as_type_ref()).is_sized()
+        }
     }
 
     /// Gets the size of this `BasicType`. Value may vary depending on the target architecture.
@@ -93,7 +103,9 @@ pub trait BasicType<'ctx>: AnyType<'ctx> {
     /// let f32_type_size = f32_basic_type.size_of();
     /// ```
     fn size_of(&self) -> Option<IntValue<'ctx>> {
-        Type::new(self.as_type_ref()).size_of()
+        unsafe {
+            Type::new(self.as_type_ref()).size_of()
+        }
     }
 
     /// Create an `ArrayType` with this `BasicType` as its elements.
@@ -110,7 +122,9 @@ pub trait BasicType<'ctx>: AnyType<'ctx> {
     /// ```
     // FIXME: This likely doesn't belong on the trait, since not all basic types can be turned into arrays?
     fn array_type(&self, size: u32) -> ArrayType<'ctx> {
-        Type::new(self.as_type_ref()).array_type(size)
+        unsafe {
+            Type::new(self.as_type_ref()).array_type(size)
+        }
     }
 
     /// Create a `PointerType` that points to this `BasicType`.
@@ -128,7 +142,9 @@ pub trait BasicType<'ctx>: AnyType<'ctx> {
     /// assert_eq!(int_basic_type.ptr_type(addr_space), int.ptr_type(addr_space));
     /// ```
     fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
-        Type::new(self.as_type_ref()).ptr_type(address_space)
+        unsafe {
+            Type::new(self.as_type_ref()).ptr_type(address_space)
+        }
     }
 }
 

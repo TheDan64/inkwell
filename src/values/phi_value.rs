@@ -16,7 +16,7 @@ pub struct PhiValue<'ctx> {
 }
 
 impl<'ctx> PhiValue<'ctx> {
-    pub(crate) fn new(value: LLVMValueRef) -> Self {
+    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
         PhiValue {
@@ -48,13 +48,13 @@ impl<'ctx> PhiValue<'ctx> {
         }
 
         let basic_block = unsafe {
-            LLVMGetIncomingBlock(self.as_value_ref(), index)
+            BasicBlock::new(LLVMGetIncomingBlock(self.as_value_ref(), index)).expect("Invalid BasicBlock")
         };
         let value = unsafe {
-            LLVMGetIncomingValue(self.as_value_ref(), index)
+            BasicValueEnum::new(LLVMGetIncomingValue(self.as_value_ref(), index))
         };
 
-        Some((BasicValueEnum::new(value), BasicBlock::new(basic_block).expect("Invalid BasicBlock")))
+        Some((value, basic_block))
     }
 
     /// Gets the name of a `ArrayValue`. If the value is a constant, this will
@@ -86,7 +86,9 @@ impl<'ctx> PhiValue<'ctx> {
     }
 
     pub fn as_basic_value(self) -> BasicValueEnum<'ctx> {
-        BasicValueEnum::new(self.as_value_ref())
+        unsafe {
+            BasicValueEnum::new(self.as_value_ref())
+        }
     }
 }
 

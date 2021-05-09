@@ -13,7 +13,7 @@ pub struct VectorType<'ctx> {
 }
 
 impl<'ctx> VectorType<'ctx> {
-    pub(crate) fn new(vector_type: LLVMTypeRef) -> Self {
+    pub(crate) unsafe fn new(vector_type: LLVMTypeRef) -> Self {
         assert!(!vector_type.is_null());
 
         VectorType {
@@ -103,11 +103,9 @@ impl<'ctx> VectorType<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();
-        let vec_value = unsafe {
-            LLVMConstVector(values.as_mut_ptr(), values.len() as u32)
-        };
-
-        VectorValue::new(vec_value)
+        unsafe {
+            VectorValue::new(LLVMConstVector(values.as_mut_ptr(), values.len() as u32))
+        }
     }
 
     /// Creates a constant zero value of this `VectorType`.
@@ -123,7 +121,9 @@ impl<'ctx> VectorType<'ctx> {
     /// let f32_vec_zero = f32_vec_type.const_zero();
     /// ```
     pub fn const_zero(self) -> VectorValue<'ctx> {
-        VectorValue::new(self.vec_type.const_zero())
+        unsafe {
+            VectorValue::new(self.vec_type.const_zero())
+        }
     }
 
     // See Type::print_to_stderr note on 5.0+ status
@@ -148,7 +148,9 @@ impl<'ctx> VectorType<'ctx> {
     /// assert!(f32_vec_undef.is_undef());
     /// ```
     pub fn get_undef(self) -> VectorValue<'ctx> {
-        VectorValue::new(self.vec_type.get_undef())
+        unsafe {
+            VectorValue::new(self.vec_type.get_undef())
+        }
     }
 
     // SubType: VectorType<BT> -> BT?
@@ -246,11 +248,10 @@ impl<'ctx> VectorType<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();
-        let value = unsafe {
-            LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32)
-        };
 
-        ArrayValue::new(value)
+        unsafe {
+            ArrayValue::new(LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32))
+        }
     }
 
     /// Gets a reference to the `Context` this `VectorType` was created in.

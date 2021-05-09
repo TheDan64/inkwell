@@ -15,7 +15,7 @@ pub struct ArrayValue<'ctx> {
 }
 
 impl<'ctx> ArrayValue<'ctx> {
-    pub(crate) fn new(value: LLVMValueRef) -> Self {
+    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
         ArrayValue {
@@ -31,7 +31,9 @@ impl<'ctx> ArrayValue<'ctx> {
 
     /// Gets the type of this `ArrayValue`.
     pub fn get_type(self) -> ArrayType<'ctx> {
-        ArrayType::new(self.array_value.get_type())
+        unsafe {
+            ArrayType::new(self.array_value.get_type())
+        }
     }
 
     /// Determines whether or not this value is null.

@@ -151,7 +151,7 @@ pub struct Target {
 }
 
 impl Target {
-    fn new(target: LLVMTargetRef) -> Self {
+    unsafe fn new(target: LLVMTargetRef) -> Self {
         assert!(!target.is_null());
 
         Target { target }
@@ -948,7 +948,9 @@ impl Target {
             return None;
         }
 
-        Some(TargetMachine::new(target_machine))
+        unsafe {
+            Some(TargetMachine::new(target_machine))
+        }
     }
 
     pub fn get_first() -> Option<Self> {
@@ -961,7 +963,9 @@ impl Target {
             return None;
         }
 
-        Some(Target::new(target))
+        unsafe {
+            Some(Target::new(target))
+        }
     }
 
     pub fn get_next(&self) -> Option<Self> {
@@ -971,7 +975,9 @@ impl Target {
             return None;
         }
 
-        Some(Target::new(target))
+        unsafe {
+            Some(Target::new(target))
+        }
     }
 
     pub fn get_name(&self) -> &CStr {
@@ -998,7 +1004,9 @@ impl Target {
             return None;
         }
 
-        Some(Target::new(target))
+        unsafe {
+            Some(Target::new(target))
+        }
     }
 
     pub fn from_triple(triple: &TargetTriple) -> Result<Self, LLVMString> {
@@ -1011,11 +1019,14 @@ impl Target {
         };
 
         if code == 1 {
-            let err_string = unsafe { err_string.assume_init() };
-            return Err(LLVMString::new(err_string));
+            unsafe {
+                return Err(LLVMString::new(err_string.assume_init()));
+            }
         }
 
-        Ok(Target::new(target))
+        unsafe {
+            Ok(Target::new(target))
+        }
     }
 
     pub fn has_jit(&self) -> bool {
@@ -1037,22 +1048,22 @@ pub struct TargetMachine {
 }
 
 impl TargetMachine {
-    fn new(target_machine: LLVMTargetMachineRef) -> Self {
+    unsafe fn new(target_machine: LLVMTargetMachineRef) -> Self {
         assert!(!target_machine.is_null());
 
         TargetMachine { target_machine }
     }
 
     pub fn get_target(&self) -> Target {
-        let target = unsafe { LLVMGetTargetMachineTarget(self.target_machine) };
-
-        Target::new(target)
+        unsafe {
+            Target::new(LLVMGetTargetMachineTarget(self.target_machine))
+        }
     }
 
     pub fn get_triple(&self) -> TargetTriple {
-        let ptr = unsafe { LLVMGetTargetMachineTriple(self.target_machine) };
+        let str = unsafe { LLVMString::new(LLVMGetTargetMachineTriple(self.target_machine)) };
 
-        TargetTriple::new(LLVMString::new(ptr))
+        TargetTriple::new(str)
     }
 
     /// Gets the default triple for the current system.
@@ -1067,18 +1078,18 @@ impl TargetMachine {
     /// assert_eq!(default_triple.as_str().to_str(), Ok("x86_64-pc-linux-gnu"));
     /// ```
     pub fn get_default_triple() -> TargetTriple {
-        let llvm_string = unsafe { LLVMGetDefaultTargetTriple() };
+        let llvm_string = unsafe { LLVMString::new(LLVMGetDefaultTargetTriple()) };
 
-        TargetTriple::new(LLVMString::new(llvm_string))
+        TargetTriple::new(llvm_string)
     }
 
     #[llvm_versions(7.0..=latest)]
     pub fn normalize_triple(triple: &TargetTriple) -> TargetTriple {
         use llvm_sys::target_machine::LLVMNormalizeTargetTriple;
 
-        let normalized = unsafe { LLVMNormalizeTargetTriple(triple.as_ptr()) };
+        let normalized = unsafe { LLVMString::new(LLVMNormalizeTargetTriple(triple.as_ptr())) };
 
-        TargetTriple::new(LLVMString::new(normalized))
+        TargetTriple::new(normalized)
     }
 
     /// Gets a string containing the host CPU's name (triple).
@@ -1090,9 +1101,9 @@ impl TargetMachine {
     pub fn get_host_cpu_name() -> LLVMString {
         use llvm_sys::target_machine::LLVMGetHostCPUName;
 
-        let ptr = unsafe { LLVMGetHostCPUName() };
-
-        LLVMString::new(ptr)
+        unsafe {
+            LLVMString::new(LLVMGetHostCPUName())
+        }
     }
 
     /// Gets a comma separated list of supported features by the host CPU.
@@ -1104,15 +1115,15 @@ impl TargetMachine {
     pub fn get_host_cpu_features() -> LLVMString {
         use llvm_sys::target_machine::LLVMGetHostCPUFeatures;
 
-        let ptr = unsafe { LLVMGetHostCPUFeatures() };
-
-        LLVMString::new(ptr)
+        unsafe {
+            LLVMString::new(LLVMGetHostCPUFeatures())
+        }
     }
 
     pub fn get_cpu(&self) -> LLVMString {
-        let ptr = unsafe { LLVMGetTargetMachineCPU(self.target_machine) };
-
-        LLVMString::new(ptr)
+        unsafe {
+            LLVMString::new(LLVMGetTargetMachineCPU(self.target_machine))
+        }
     }
 
     pub fn get_feature_string(&self) -> &CStr {
@@ -1122,9 +1133,9 @@ impl TargetMachine {
     /// Create TargetData from this target machine
     #[llvm_versions(4.0..=latest)]
     pub fn get_target_data(&self) -> TargetData {
-        let data_layout = unsafe { LLVMCreateTargetDataLayout(self.target_machine) };
-
-        TargetData::new(data_layout)
+        unsafe {
+            TargetData::new(LLVMCreateTargetDataLayout(self.target_machine))
+        }
     }
 
     pub fn set_asm_verbosity(&self, verbosity: bool) {
@@ -1191,8 +1202,9 @@ impl TargetMachine {
         };
 
         if return_code == 1 {
-            let err_string = unsafe { err_string.assume_init() };
-            return Err(LLVMString::new(err_string));
+            unsafe {
+                return Err(LLVMString::new(err_string.assume_init()));
+            }
         }
 
         Ok(MemoryBuffer::new(memory_buffer))
@@ -1262,8 +1274,9 @@ impl TargetMachine {
         };
 
         if return_code == 1 {
-            let err_string = unsafe { err_string.assume_init() };
-            return Err(LLVMString::new(err_string));
+            unsafe {
+                return Err(LLVMString::new(err_string.assume_init()));
+            }
         }
 
         Ok(())
@@ -1288,7 +1301,7 @@ pub struct TargetData {
 }
 
 impl TargetData {
-    pub(crate) fn new(target_data: LLVMTargetDataRef) -> TargetData {
+    pub(crate) unsafe fn new(target_data: LLVMTargetDataRef) -> TargetData {
         assert!(!target_data.is_null());
 
         TargetData {
@@ -1330,13 +1343,15 @@ impl TargetData {
             None => unsafe { LLVMIntPtrTypeInContext(context.context, self.target_data) },
         };
 
-        IntType::new(int_type_ptr)
+        unsafe {
+            IntType::new(int_type_ptr)
+        }
     }
 
     pub fn get_data_layout(&self) -> DataLayout {
-        let data_layout = unsafe { LLVMCopyStringRepOfTargetData(self.target_data) };
-
-        DataLayout::new_owned(data_layout)
+        unsafe {
+            DataLayout::new_owned(LLVMCopyStringRepOfTargetData(self.target_data))
+        }
     }
 
     // REVIEW: Does this only work if Sized?
@@ -1348,9 +1363,9 @@ impl TargetData {
     pub fn create(str_repr: &str) -> TargetData {
         let c_string = to_c_str(str_repr);
 
-        let target_data = unsafe { LLVMCreateTargetData(c_string.as_ptr()) };
-
-        TargetData::new(target_data)
+        unsafe {
+            TargetData::new(LLVMCreateTargetData(c_string.as_ptr()))
+        }
     }
 
     pub fn get_byte_ordering(&self) -> ByteOrdering {

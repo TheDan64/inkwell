@@ -12,7 +12,7 @@ pub struct StructValue<'ctx> {
 }
 
 impl<'ctx> StructValue<'ctx> {
-    pub(crate) fn new(value: LLVMValueRef) -> Self {
+    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
         StructValue {
@@ -27,7 +27,9 @@ impl<'ctx> StructValue<'ctx> {
     }
 
     pub fn get_type(self) -> StructType<'ctx> {
-        StructType::new(self.struct_value.get_type())
+        unsafe {
+            StructType::new(self.struct_value.get_type())
+        }
     }
 
     pub fn is_null(self) -> bool {

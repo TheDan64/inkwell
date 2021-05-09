@@ -43,12 +43,9 @@ pub struct MetadataValue<'ctx> {
 }
 
 impl<'ctx> MetadataValue<'ctx> {
-    pub(crate) fn new(value: LLVMValueRef) -> Self {
+    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
-
-        unsafe {
-            assert!(!LLVMIsAMDNode(value).is_null() || !LLVMIsAMDString(value).is_null());
-        }
+        assert!(!LLVMIsAMDNode(value).is_null() || !LLVMIsAMDString(value).is_null());
 
         MetadataValue {
             metadata_value: Value::new(value),
@@ -118,7 +115,7 @@ impl<'ctx> MetadataValue<'ctx> {
         };
 
         vec.iter()
-            .map(|val| BasicMetadataValueEnum::new(*val))
+            .map(|val| unsafe { BasicMetadataValueEnum::new(*val) })
             .collect()
     }
 

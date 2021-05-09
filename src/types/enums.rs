@@ -90,12 +90,8 @@ enum_type_set! {
 }
 
 impl<'ctx> AnyTypeEnum<'ctx> {
-    pub(crate) fn new(type_: LLVMTypeRef) -> Self {
-        let type_kind = unsafe {
-            LLVMGetTypeKind(type_)
-        };
-
-        match type_kind {
+    pub(crate) unsafe fn new(type_: LLVMTypeRef) -> Self {
+        match LLVMGetTypeKind(type_) {
             LLVMTypeKind::LLVMVoidTypeKind => AnyTypeEnum::VoidType(VoidType::new(type_)),
             LLVMTypeKind::LLVMHalfTypeKind |
             LLVMTypeKind::LLVMFloatTypeKind |
@@ -123,7 +119,9 @@ impl<'ctx> AnyTypeEnum<'ctx> {
 
     /// This will panic if type is a void or function type.
     pub(crate) fn to_basic_type_enum(&self) -> BasicTypeEnum<'ctx> {
-        BasicTypeEnum::new(self.as_type_ref())
+        unsafe {
+            BasicTypeEnum::new(self.as_type_ref())
+        }
     }
 
     pub fn into_array_type(self) -> ArrayType<'ctx> {
@@ -237,12 +235,8 @@ impl<'ctx> AnyTypeEnum<'ctx> {
 }
 
 impl<'ctx> BasicTypeEnum<'ctx> {
-    pub(crate) fn new(type_: LLVMTypeRef) -> Self {
-        let type_kind = unsafe {
-            LLVMGetTypeKind(type_)
-        };
-
-        match type_kind {
+    pub(crate) unsafe fn new(type_: LLVMTypeRef) -> Self {
+        match LLVMGetTypeKind(type_) {
             LLVMTypeKind::LLVMHalfTypeKind |
             LLVMTypeKind::LLVMFloatTypeKind |
             LLVMTypeKind::LLVMDoubleTypeKind |
