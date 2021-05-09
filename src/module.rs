@@ -156,7 +156,7 @@ pub struct Module<'ctx> {
 }
 
 impl<'ctx> Module<'ctx> {
-    pub(crate) fn new(module: LLVMModuleRef) -> Self {
+    pub(crate) unsafe fn new(module: LLVMModuleRef) -> Self {
         debug_assert!(!module.is_null());
 
         Module {
@@ -190,12 +190,10 @@ impl<'ctx> Module<'ctx> {
     /// ```
     pub fn add_function(&self, name: &str, ty: FunctionType<'ctx>, linkage: Option<Linkage>) -> FunctionValue<'ctx> {
         let c_string = to_c_str(name);
-
-        let value = unsafe {
-            LLVMAddFunction(self.module.get(), c_string.as_ptr(), ty.as_type_ref())
+        let fn_value = unsafe {
+            FunctionValue::new(LLVMAddFunction(self.module.get(), c_string.as_ptr(), ty.as_type_ref()))
+                .expect("add_function should always succeed in adding a new function")
         };
-
-        let fn_value = FunctionValue::new(value).expect("add_function should always succeed in adding a new function");
 
         if let Some(linkage) = linkage {
             fn_value.set_linkage(linkage)
@@ -217,11 +215,9 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(*local_module.get_context(), local_context);
     /// ```
     pub fn get_context(&self) -> ContextRef<'ctx> {
-        let context = unsafe {
-            LLVMGetModuleContext(self.module.get())
-        };
-
-        ContextRef::new(context)
+        unsafe {
+            ContextRef::new(LLVMGetModuleContext(self.module.get()))
+        }
     }
 
     /// Gets the first `FunctionValue` defined in this `Module`.
@@ -243,11 +239,9 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(fn_value, module.get_first_function().unwrap());
     /// ```
     pub fn get_first_function(&self) -> Option<FunctionValue<'ctx>> {
-        let function = unsafe {
-            LLVMGetFirstFunction(self.module.get())
-        };
-
-        FunctionValue::new(function)
+        unsafe {
+            FunctionValue::new(LLVMGetFirstFunction(self.module.get()))
+        }
     }
 
     /// Gets the last `FunctionValue` defined in this `Module`.
@@ -269,11 +263,9 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(fn_value, module.get_last_function().unwrap());
     /// ```
     pub fn get_last_function(&self) -> Option<FunctionValue<'ctx>> {
-        let function = unsafe {
-            LLVMGetLastFunction(self.module.get())
-        };
-
-        FunctionValue::new(function)
+        unsafe {
+            FunctionValue::new(LLVMGetLastFunction(self.module.get()))
+        }
     }
 
     /// Gets a `FunctionValue` defined in this `Module` by its name.
@@ -297,11 +289,9 @@ impl<'ctx> Module<'ctx> {
     pub fn get_function(&self, name: &str) -> Option<FunctionValue<'ctx>> {
         let c_string = to_c_str(name);
 
-        let value = unsafe {
-            LLVMGetNamedFunction(self.module.get(), c_string.as_ptr())
-        };
-
-        FunctionValue::new(value)
+        unsafe {
+            FunctionValue::new(LLVMGetNamedFunction(self.module.get(), c_string.as_ptr()))
+        }
     }
 
 
@@ -332,7 +322,9 @@ impl<'ctx> Module<'ctx> {
             return None;
         }
 
-        Some(StructType::new(struct_type))
+        unsafe {
+            Some(StructType::new(struct_type))
+        }
     }
 
     /// Assigns a `TargetTriple` to this `Module`.
@@ -427,12 +419,13 @@ impl<'ctx> Module<'ctx> {
         };
 
         if code == 1 {
-            let err_string = unsafe { err_string.assume_init() };
-            return Err(LLVMString::new(err_string));
+            unsafe {
+                return Err(LLVMString::new(err_string.assume_init()));
+            }
         }
 
         let execution_engine = unsafe { execution_engine.assume_init() };
-        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), false);
+        let execution_engine = unsafe { ExecutionEngine::new(Rc::new(execution_engine), false) };
 
         *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
 
@@ -478,12 +471,13 @@ impl<'ctx> Module<'ctx> {
         };
 
         if code == 1 {
-            let err_string = unsafe { err_string.assume_init() };
-            return Err(LLVMString::new(err_string));
+            unsafe {
+                return Err(LLVMString::new(err_string.assume_init()));
+            }
         }
 
         let execution_engine = unsafe { execution_engine.assume_init() };
-        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), false);
+        let execution_engine = unsafe { ExecutionEngine::new(Rc::new(execution_engine), false) };
 
         *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
 
@@ -530,12 +524,13 @@ impl<'ctx> Module<'ctx> {
         };
 
         if code == 1 {
-            let err_string = unsafe { err_string.assume_init() };
-            return Err(LLVMString::new(err_string));
+            unsafe {
+                return Err(LLVMString::new(err_string.assume_init()));
+            }
         }
 
         let execution_engine = unsafe { execution_engine.assume_init() };
-        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), true);
+        let execution_engine = unsafe { ExecutionEngine::new(Rc::new(execution_engine), true) };
 
         *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
 
@@ -568,7 +563,9 @@ impl<'ctx> Module<'ctx> {
             }
         };
 
-        GlobalValue::new(value)
+        unsafe {
+            GlobalValue::new(value)
+        }
     }
 
     /// Writes a `Module` to a `Path`.
@@ -661,7 +658,7 @@ impl<'ctx> Module<'ctx> {
 
         let err_str = unsafe { err_str.assume_init() };
         if code == 1 && !err_str.is_null() {
-            return Err(LLVMString::new(err_str));
+            return unsafe { Err(LLVMString::new(err_str)) };
         }
 
         Ok(())
@@ -681,7 +678,9 @@ impl<'ctx> Module<'ctx> {
             LLVMGetDataLayoutStr(module)
         };
 
-        DataLayout::new_borrowed(data_layout)
+        unsafe {
+            DataLayout::new_borrowed(data_layout)
+        }
     }
 
     /// Gets a smart pointer to the `DataLayout` belonging to a particular `Module`.
@@ -749,11 +748,9 @@ impl<'ctx> Module<'ctx> {
 
     /// Prints the content of the `Module` to a string.
     pub fn print_to_string(&self) -> LLVMString {
-        let module_string = unsafe {
-            LLVMPrintModuleToString(self.module.get())
-        };
-
-        LLVMString::new(module_string)
+        unsafe {
+            LLVMString::new(LLVMPrintModuleToString(self.module.get()))
+        }
     }
 
     /// Prints the content of the `Module` to a file.
@@ -766,8 +763,9 @@ impl<'ctx> Module<'ctx> {
         };
 
         if return_code == 1 {
-            let err_string = unsafe { err_string.assume_init() };
-            return Err(LLVMString::new(err_string));
+            unsafe {
+                return Err(LLVMString::new(err_string.assume_init()));
+            }
         }
 
         Ok(())
@@ -940,7 +938,7 @@ impl<'ctx> Module<'ctx> {
             vec.set_len(count);
         };
 
-        vec.iter().map(|val| MetadataValue::new(*val)).collect()
+        vec.iter().map(|val| unsafe { MetadataValue::new(*val) }).collect()
     }
 
     /// Gets the first `GlobalValue` in a module.
@@ -970,7 +968,9 @@ impl<'ctx> Module<'ctx> {
             return None;
         }
 
-        Some(GlobalValue::new(value))
+        unsafe {
+            Some(GlobalValue::new(value))
+        }
     }
 
     /// Gets the last `GlobalValue` in a module.
@@ -1000,7 +1000,9 @@ impl<'ctx> Module<'ctx> {
             return None;
         }
 
-        Some(GlobalValue::new(value))
+        unsafe {
+            Some(GlobalValue::new(value))
+        }
     }
 
     /// Gets a named `GlobalValue` in a module.
@@ -1031,7 +1033,9 @@ impl<'ctx> Module<'ctx> {
             return None;
         }
 
-        Some(GlobalValue::new(value))
+        unsafe {
+            Some(GlobalValue::new(value))
+        }
     }
 
     /// Creates a new `Module` from a `MemoryBuffer`.
@@ -1065,13 +1069,14 @@ impl<'ctx> Module<'ctx> {
         };
 
         if success != 0 {
-            let err_string = unsafe { err_string.assume_init() };
-            return Err(LLVMString::new(err_string));
+            unsafe {
+                return Err(LLVMString::new(err_string.assume_init()));
+            }
         }
 
-        let module = unsafe { module.assume_init() };
-
-        Ok(Module::new(module))
+        unsafe {
+            Ok(Module::new(module.assume_init()))
+        }
     }
 
     /// A convenience function for creating a `Module` from a file for a given context.
@@ -1233,7 +1238,9 @@ impl<'ctx> Module<'ctx> {
             forget(other);
 
             if code == 1 {
-                Err(LLVMString::new(err_string))
+                unsafe {
+                    Err(LLVMString::new(err_string))
+                }
             } else {
                 Ok(())
             }
@@ -1262,7 +1269,9 @@ impl<'ctx> Module<'ctx> {
             if code == 1 {
                 debug_assert!(!char_ptr.is_null());
 
-                Err(LLVMString::new(char_ptr))
+                unsafe {
+                    Err(LLVMString::new(char_ptr))
+                }
             } else {
                 Ok(())
             }
@@ -1303,7 +1312,9 @@ impl<'ctx> Module<'ctx> {
             LLVMMetadataAsValue(LLVMGetModuleContext(self.module.get()), flag)
         };
 
-        Some(MetadataValue::new(flag_value))
+        unsafe {
+            Some(MetadataValue::new(flag_value))
+        }
     }
 
     /// Append a `MetadataValue` as a module wide flag. Note that using the same key twice
@@ -1375,9 +1386,9 @@ impl<'ctx> Module<'ctx> {
         sdk: &str,
     ) -> (DebugInfoBuilder<'ctx>, DICompileUnit<'ctx>) {
         DebugInfoBuilder::new(self, allow_unresolved,
-                              language, filename, directory, producer, is_optimized, flags, 
-                              runtime_ver, split_name, kind, dwo_id, split_debug_inlining, 
-                              debug_info_for_profiling, 
+                              language, filename, directory, producer, is_optimized, flags,
+                              runtime_ver, split_name, kind, dwo_id, split_debug_inlining,
+                              debug_info_for_profiling,
                               #[cfg(feature="llvm11-0")]
                               sysroot,
                               #[cfg(feature="llvm11-0")]
@@ -1393,11 +1404,9 @@ impl Clone for Module<'_> {
 
         assert!(verify.is_ok(), "Cloning a Module seems to segfault when module is not valid. We are preventing that here. Error: {}", verify.unwrap_err());
 
-        let module = unsafe {
-            LLVMCloneModule(self.module.get())
-        };
-
-        Module::new(module)
+        unsafe {
+            Module::new(LLVMCloneModule(self.module.get()))
+        }
     }
 }
 

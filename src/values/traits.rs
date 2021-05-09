@@ -31,7 +31,9 @@ macro_rules! math_trait_value_set {
             impl<'ctx> $trait_name<'ctx> for $value_type<'ctx> {
                 type BaseType = $base_type<'ctx>;
                 fn new(value: LLVMValueRef) -> Self {
-                    $value_type::new(value)
+                    unsafe {
+                        $value_type::new(value)
+                    }
                 }
             }
         )*
@@ -42,27 +44,25 @@ macro_rules! math_trait_value_set {
 pub trait AggregateValue<'ctx>: BasicValue<'ctx> {
     /// Returns an enum containing a typed version of the `AggregateValue`.
     fn as_aggregate_value_enum(&self) -> AggregateValueEnum<'ctx> {
-        AggregateValueEnum::new(self.as_value_ref())
+        unsafe {
+            AggregateValueEnum::new(self.as_value_ref())
+        }
     }
 
     // REVIEW: How does LLVM treat out of bound index? Maybe we should return an Option?
     // or is that only in bounds GEP
     // REVIEW: Should this be AggregatePointerValue?
     fn const_extract_value(&self, indexes: &mut [u32]) -> BasicValueEnum<'ctx> {
-        let value = unsafe {
-            LLVMConstExtractValue(self.as_value_ref(), indexes.as_mut_ptr(), indexes.len() as u32)
-        };
-
-        BasicValueEnum::new(value)
+        unsafe {
+            BasicValueEnum::new(LLVMConstExtractValue(self.as_value_ref(), indexes.as_mut_ptr(), indexes.len() as u32))
+        }
     }
 
     // SubTypes: value should really be T in self: VectorValue<T> I think
     fn const_insert_value<BV: BasicValue<'ctx>>(&self, value: BV, indexes: &mut [u32]) -> BasicValueEnum<'ctx> {
-        let value = unsafe {
-            LLVMConstInsertValue(self.as_value_ref(), value.as_value_ref(), indexes.as_mut_ptr(), indexes.len() as u32)
-        };
-
-        BasicValueEnum::new(value)
+        unsafe {
+            BasicValueEnum::new(LLVMConstInsertValue(self.as_value_ref(), value.as_value_ref(), indexes.as_mut_ptr(), indexes.len() as u32))
+        }
     }
 }
 
@@ -70,28 +70,36 @@ pub trait AggregateValue<'ctx>: BasicValue<'ctx> {
 pub trait BasicValue<'ctx>: AnyValue<'ctx> {
     /// Returns an enum containing a typed version of the `BasicValue`.
     fn as_basic_value_enum(&self) -> BasicValueEnum<'ctx> {
-        BasicValueEnum::new(self.as_value_ref())
+        unsafe {
+            BasicValueEnum::new(self.as_value_ref())
+        }
     }
 
     /// Most `BasicValue`s are the byproduct of an instruction
     /// and so are convertable into an `InstructionValue`
     fn as_instruction_value(&self) -> Option<InstructionValue<'ctx>> {
-        let value = Value::new(self.as_value_ref());
+        let value = unsafe { Value::new(self.as_value_ref()) };
 
         if !value.is_instruction() {
             return None;
         }
 
-        Some(InstructionValue::new(self.as_value_ref()))
+        unsafe {
+            Some(InstructionValue::new(self.as_value_ref()))
+        }
     }
 
     fn get_first_use(&self) -> Option<BasicValueUse> {
-        Value::new(self.as_value_ref()).get_first_use()
+        unsafe {
+            Value::new(self.as_value_ref()).get_first_use()
+        }
     }
 
     /// Sets the name of a `BasicValue`. If the value is a constant, this is a noop.
     fn set_name(&self, name: &str) {
-        Value::new(self.as_value_ref()).set_name(name)
+        unsafe {
+            Value::new(self.as_value_ref()).set_name(name)
+        }
     }
 
     // REVIEW: Possible encompassing methods to implement:
@@ -120,12 +128,16 @@ pub trait PointerMathValue<'ctx>: BasicValue<'ctx> {
 pub trait AnyValue<'ctx>: AsValueRef + Debug {
     /// Returns an enum containing a typed version of `AnyValue`.
     fn as_any_value_enum(&self) -> AnyValueEnum<'ctx> {
-        AnyValueEnum::new(self.as_value_ref())
+        unsafe {
+            AnyValueEnum::new(self.as_value_ref())
+        }
     }
 
     /// Prints a value to a `LLVMString`
     fn print_to_string(&self) -> LLVMString {
-        Value::new(self.as_value_ref()).print_to_string()
+        unsafe {
+            Value::new(self.as_value_ref()).print_to_string()
+        }
     }
 }
 

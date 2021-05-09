@@ -41,12 +41,8 @@ use std::thread_local;
 // This is still technically unsafe because another program in the same process
 // could also be accessing the global context via the C API. `get_global` has been
 // marked unsafe for this reason. Iff this isn't the case then this should be fully safe.
-static GLOBAL_CTX: Lazy<Mutex<Context>> = Lazy::new(|| {
-    let ctx = unsafe {
-        LLVMGetGlobalContext()
-    };
-
-    Mutex::new(Context::new(ctx))
+static GLOBAL_CTX: Lazy<Mutex<Context>> = Lazy::new(|| unsafe {
+    Mutex::new(Context::new(LLVMGetGlobalContext()))
 });
 
 thread_local! {
@@ -67,7 +63,7 @@ pub struct Context {
 unsafe impl Send for Context {}
 
 impl Context {
-    pub(crate) fn new(context: LLVMContextRef) -> Self {
+    pub(crate) unsafe fn new(context: LLVMContextRef) -> Self {
         assert!(!context.is_null());
 
         Context {
@@ -85,11 +81,9 @@ impl Context {
     /// let context = Context::create();
     /// ```
     pub fn create() -> Self {
-        let context = unsafe {
-            LLVMContextCreate()
-        };
-
-        Context::new(context)
+        unsafe {
+            Context::new(LLVMContextCreate())
+        }
     }
 
     /// Gets a `Mutex<Context>` which points to the global context singleton.
@@ -127,11 +121,9 @@ impl Context {
     /// let builder = context.create_builder();
     /// ```
     pub fn create_builder(&self) -> Builder {
-        let builder = unsafe {
-            LLVMCreateBuilderInContext(self.context)
-        };
-
-        Builder::new(builder)
+        unsafe {
+            Builder::new(LLVMCreateBuilderInContext(self.context))
+        }
     }
 
     /// Creates a new `Module` for a `Context`.
@@ -147,11 +139,9 @@ impl Context {
     pub fn create_module(&self, name: &str) -> Module {
         let c_string = to_c_str(name);
 
-        let module = unsafe {
-            LLVMModuleCreateWithNameInContext(c_string.as_ptr(), self.context)
-        };
-
-        Module::new(module)
+        unsafe {
+            Module::new(LLVMModuleCreateWithNameInContext(c_string.as_ptr(), self.context))
+        }
     }
 
     /// Creates a new `Module` for the current `Context` from a `MemoryBuffer`.
@@ -191,10 +181,14 @@ impl Context {
         forget(memory_buffer);
 
         if code == 0 {
-            return Ok(Module::new(module));
+            unsafe {
+                return Ok(Module::new(module));
+            }
         }
 
-        Err(LLVMString::new(err_str))
+        unsafe {
+            Err(LLVMString::new(err_str))
+        }
     }
 
     /// Creates a inline asm function pointer.
@@ -231,7 +225,10 @@ impl Context {
                 dialect.unwrap_or(InlineAsmDialect::ATT).into()
             )
         };
-        PointerValue::new(value)
+
+        unsafe {
+            PointerValue::new(value)
+        }
     }
     /// Creates a inline asm function pointer.
     ///
@@ -264,7 +261,10 @@ impl Context {
                 alignstack as i32
             )
         };
-        PointerValue::new(value)
+
+        unsafe {
+            PointerValue::new(value)
+        }
     }
 
     /// Gets the `VoidType`. It will be assigned the current context.
@@ -280,11 +280,9 @@ impl Context {
     /// assert_eq!(*void_type.get_context(), context);
     /// ```
     pub fn void_type(&self) -> VoidType {
-        let void_type = unsafe {
-            LLVMVoidTypeInContext(self.context)
-        };
-
-        VoidType::new(void_type)
+        unsafe {
+            VoidType::new(LLVMVoidTypeInContext(self.context))
+        }
     }
 
     /// Gets the `IntType` representing 1 bit width. It will be assigned the current context.
@@ -301,11 +299,9 @@ impl Context {
     /// assert_eq!(*bool_type.get_context(), context);
     /// ```
     pub fn bool_type(&self) -> IntType {
-        let bool_type = unsafe {
-            LLVMInt1TypeInContext(self.context)
-        };
-
-        IntType::new(bool_type)
+        unsafe {
+            IntType::new(LLVMInt1TypeInContext(self.context))
+        }
     }
 
     /// Gets the `IntType` representing 8 bit width. It will be assigned the current context.
@@ -322,11 +318,9 @@ impl Context {
     /// assert_eq!(*i8_type.get_context(), context);
     /// ```
     pub fn i8_type(&self) -> IntType {
-        let i8_type = unsafe {
-            LLVMInt8TypeInContext(self.context)
-        };
-
-        IntType::new(i8_type)
+        unsafe {
+            IntType::new(LLVMInt8TypeInContext(self.context))
+        }
     }
 
     /// Gets the `IntType` representing 16 bit width. It will be assigned the current context.
@@ -343,11 +337,9 @@ impl Context {
     /// assert_eq!(*i16_type.get_context(), context);
     /// ```
     pub fn i16_type(&self) -> IntType {
-        let i16_type = unsafe {
-            LLVMInt16TypeInContext(self.context)
-        };
-
-        IntType::new(i16_type)
+        unsafe {
+            IntType::new(LLVMInt16TypeInContext(self.context))
+        }
     }
 
     /// Gets the `IntType` representing 32 bit width. It will be assigned the current context.
@@ -364,11 +356,9 @@ impl Context {
     /// assert_eq!(*i32_type.get_context(), context);
     /// ```
     pub fn i32_type(&self) -> IntType {
-        let i32_type = unsafe {
-            LLVMInt32TypeInContext(self.context)
-        };
-
-        IntType::new(i32_type)
+        unsafe {
+            IntType::new(LLVMInt32TypeInContext(self.context))
+        }
     }
 
     /// Gets the `IntType` representing 64 bit width. It will be assigned the current context.
@@ -385,11 +375,9 @@ impl Context {
     /// assert_eq!(*i64_type.get_context(), context);
     /// ```
     pub fn i64_type(&self) -> IntType {
-        let i64_type = unsafe {
-            LLVMInt64TypeInContext(self.context)
-        };
-
-        IntType::new(i64_type)
+        unsafe {
+            IntType::new(LLVMInt64TypeInContext(self.context))
+        }
     }
 
     /// Gets the `IntType` representing 128 bit width. It will be assigned the current context.
@@ -426,11 +414,9 @@ impl Context {
     /// assert_eq!(*i42_type.get_context(), context);
     /// ```
     pub fn custom_width_int_type(&self, bits: u32) -> IntType {
-        let int_type = unsafe {
-            LLVMIntTypeInContext(self.context, bits)
-        };
-
-        IntType::new(int_type)
+        unsafe {
+            IntType::new(LLVMIntTypeInContext(self.context, bits))
+        }
     }
 
     /// Gets the `IntType` representing a bit width of a pointer. It will be assigned the referenced context.
@@ -466,7 +452,9 @@ impl Context {
             None => unsafe { LLVMIntPtrTypeInContext(self.context, target_data.target_data) },
         };
 
-        IntType::new(int_type_ptr)
+        unsafe {
+            IntType::new(int_type_ptr)
+        }
     }
 
     /// Gets the `FloatType` representing a 16 bit width. It will be assigned the current context.
@@ -483,11 +471,9 @@ impl Context {
     /// assert_eq!(*f16_type.get_context(), context);
     /// ```
     pub fn f16_type(&self) -> FloatType {
-        let f16_type = unsafe {
-            LLVMHalfTypeInContext(self.context)
-        };
-
-        FloatType::new(f16_type)
+        unsafe {
+            FloatType::new(LLVMHalfTypeInContext(self.context))
+        }
     }
 
     /// Gets the `FloatType` representing a 32 bit width. It will be assigned the current context.
@@ -504,11 +490,9 @@ impl Context {
     /// assert_eq!(*f32_type.get_context(), context);
     /// ```
     pub fn f32_type<'ctx>(&'ctx self) -> FloatType<'ctx> {
-        let f32_type = unsafe {
-            LLVMFloatTypeInContext(self.context)
-        };
-
-        FloatType::new(f32_type)
+        unsafe {
+            FloatType::new(LLVMFloatTypeInContext(self.context))
+        }
     }
 
     /// Gets the `FloatType` representing a 64 bit width. It will be assigned the current context.
@@ -525,11 +509,9 @@ impl Context {
     /// assert_eq!(*f64_type.get_context(), context);
     /// ```
     pub fn f64_type(&self) -> FloatType {
-        let f64_type = unsafe {
-            LLVMDoubleTypeInContext(self.context)
-        };
-
-        FloatType::new(f64_type)
+        unsafe {
+            FloatType::new(LLVMDoubleTypeInContext(self.context))
+        }
     }
 
     /// Gets the `FloatType` representing a 80 bit width. It will be assigned the current context.
@@ -546,11 +528,9 @@ impl Context {
     /// assert_eq!(*x86_f80_type.get_context(), context);
     /// ```
     pub fn x86_f80_type(&self) -> FloatType {
-        let f128_type = unsafe {
-            LLVMX86FP80TypeInContext(self.context)
-        };
-
-        FloatType::new(f128_type)
+        unsafe {
+            FloatType::new(LLVMX86FP80TypeInContext(self.context))
+        }
     }
 
     /// Gets the `FloatType` representing a 128 bit width. It will be assigned the current context.
@@ -568,11 +548,9 @@ impl Context {
     /// ```
     // IEEE 754-2008’s binary128 floats according to https://internals.rust-lang.org/t/pre-rfc-introduction-of-half-and-quadruple-precision-floats-f16-and-f128/7521
     pub fn f128_type(&self) -> FloatType {
-        let f128_type = unsafe {
-            LLVMFP128TypeInContext(self.context)
-        };
-
-        FloatType::new(f128_type)
+        unsafe {
+            FloatType::new(LLVMFP128TypeInContext(self.context))
+        }
     }
 
     /// Gets the `FloatType` representing a 128 bit width. It will be assigned the current context.
@@ -592,11 +570,9 @@ impl Context {
     /// ```
     // Two 64 bits according to https://internals.rust-lang.org/t/pre-rfc-introduction-of-half-and-quadruple-precision-floats-f16-and-f128/7521
     pub fn ppc_f128_type(&self) -> FloatType {
-        let f128_type = unsafe {
-            LLVMPPCFP128TypeInContext(self.context)
-        };
-
-        FloatType::new(f128_type)
+        unsafe {
+            FloatType::new(LLVMPPCFP128TypeInContext(self.context))
+        }
     }
 
     /// Creates a `StructType` definiton from heterogeneous types in the current `Context`.
@@ -618,11 +594,9 @@ impl Context {
         let mut field_types: Vec<LLVMTypeRef> = field_types.iter()
                                                            .map(|val| val.as_type_ref())
                                                            .collect();
-        let struct_type = unsafe {
-            LLVMStructTypeInContext(self.context, field_types.as_mut_ptr(), field_types.len() as u32, packed as i32)
-        };
-
-        StructType::new(struct_type)
+        unsafe {
+            StructType::new(LLVMStructTypeInContext(self.context, field_types.as_mut_ptr(), field_types.len() as u32, packed as i32))
+        }
     }
 
     /// Creates an opaque `StructType` with no type definition yet defined.
@@ -642,11 +616,9 @@ impl Context {
     pub fn opaque_struct_type(&self, name: &str) -> StructType {
         let c_string = to_c_str(name);
 
-        let struct_type = unsafe {
-            LLVMStructCreateNamed(self.context, c_string.as_ptr())
-        };
-
-        StructType::new(struct_type)
+        unsafe {
+            StructType::new(LLVMStructCreateNamed(self.context, c_string.as_ptr()))
+        }
     }
 
     /// Creates a constant `StructValue` from constant values.
@@ -669,11 +641,9 @@ impl Context {
         let mut args: Vec<LLVMValueRef> = values.iter()
                                                 .map(|val| val.as_value_ref())
                                                 .collect();
-        let value = unsafe {
-            LLVMConstStructInContext(self.context, args.as_mut_ptr(), args.len() as u32, packed as i32)
-        };
-
-        StructValue::new(value)
+        unsafe {
+            StructValue::new(LLVMConstStructInContext(self.context, args.as_mut_ptr(), args.len() as u32, packed as i32))
+        }
     }
 
     /// Append a named `BasicBlock` at the end of the referenced `FunctionValue`.
@@ -701,11 +671,10 @@ impl Context {
     pub fn append_basic_block(&self, function: FunctionValue, name: &str) -> BasicBlock {
         let c_string = to_c_str(name);
 
-        let bb = unsafe {
-            LLVMAppendBasicBlockInContext(self.context, function.as_value_ref(), c_string.as_ptr())
-        };
-
-        BasicBlock::new(bb).expect("Appending basic block should never fail")
+        unsafe {
+            BasicBlock::new(LLVMAppendBasicBlockInContext(self.context, function.as_value_ref(), c_string.as_ptr()))
+                .expect("Appending basic block should never fail")
+        }
     }
 
     /// Append a named `BasicBlock` after the referenced `BasicBlock`.
@@ -769,11 +738,10 @@ impl Context {
     pub fn prepend_basic_block(&self, basic_block: BasicBlock, name: &str) -> BasicBlock {
         let c_string = to_c_str(name);
 
-        let bb = unsafe {
-            LLVMInsertBasicBlockInContext(self.context, basic_block.basic_block, c_string.as_ptr())
-        };
-
-        BasicBlock::new(bb).expect("Prepending basic block should never fail")
+        unsafe {
+            BasicBlock::new(LLVMInsertBasicBlockInContext(self.context, basic_block.basic_block, c_string.as_ptr()))
+                .expect("Prepending basic block should never fail")
+        }
     }
 
     /// Creates a `MetadataValue` tuple of heterogeneous types (a "Node") for the current context. It can be assigned to a value.
@@ -812,11 +780,9 @@ impl Context {
         let mut tuple_values: Vec<LLVMValueRef> = values.iter()
                                                         .map(|val| val.as_value_ref())
                                                         .collect();
-        let metadata_value = unsafe {
-            LLVMMDNodeInContext(self.context, tuple_values.as_mut_ptr(), tuple_values.len() as u32)
-        };
-
-        MetadataValue::new(metadata_value)
+        unsafe {
+            MetadataValue::new(LLVMMDNodeInContext(self.context, tuple_values.as_mut_ptr(), tuple_values.len() as u32))
+        }
     }
 
     /// Creates a `MetadataValue` string for the current context. It can be assigned to a value.
@@ -850,11 +816,9 @@ impl Context {
     pub fn metadata_string(&self, string: &str) -> MetadataValue {
         let c_string = to_c_str(string);
 
-        let metadata_value = unsafe {
-            LLVMMDStringInContext(self.context, c_string.as_ptr(), string.len() as u32)
-        };
-
-        MetadataValue::new(metadata_value)
+        unsafe {
+            MetadataValue::new(LLVMMDStringInContext(self.context, c_string.as_ptr(), string.len() as u32))
+        }
     }
 
     /// Obtains the index of a metadata kind id. If the string doesn't exist, LLVM will add it at index `FIRST_CUSTOM_METADATA_KIND_ID` onward.
@@ -905,11 +869,9 @@ impl Context {
     /// ```
     #[llvm_versions(3.9..=latest)]
     pub fn create_enum_attribute(&self, kind_id: u32, val: u64) -> Attribute {
-        let attribute = unsafe {
-            LLVMCreateEnumAttribute(self.context, kind_id, val)
-        };
-
-        Attribute::new(attribute)
+        unsafe {
+            Attribute::new(LLVMCreateEnumAttribute(self.context, kind_id, val))
+        }
     }
 
     /// Creates a string `Attribute` in this `Context`.
@@ -926,11 +888,15 @@ impl Context {
     /// ```
     #[llvm_versions(3.9..=latest)]
     pub fn create_string_attribute(&self, key: &str, val: &str) -> Attribute {
-        let attribute = unsafe {
-            LLVMCreateStringAttribute(self.context, key.as_ptr() as *const _, key.len() as u32, val.as_ptr() as *const _, val.len() as u32)
-        };
-
-        Attribute::new(attribute)
+        unsafe {
+            Attribute::new(LLVMCreateStringAttribute(
+                self.context,
+                key.as_ptr() as *const _,
+                key.len() as u32,
+                val.as_ptr() as *const _,
+                val.len() as u32,
+            ))
+        }
     }
 
     /// Creates a const string which may be null terminated.
@@ -948,11 +914,14 @@ impl Context {
     /// ```
     // SubTypes: Should return VectorValue<IntValue<i8>>
     pub fn const_string(&self, string: &[u8], null_terminated: bool) -> VectorValue {
-        let ptr = unsafe {
-            LLVMConstStringInContext(self.context, string.as_ptr() as *const ::libc::c_char, string.len() as u32, !null_terminated as i32)
-        };
-
-        VectorValue::new(ptr)
+        unsafe {
+            VectorValue::new(LLVMConstStringInContext(
+                self.context,
+                string.as_ptr() as *const ::libc::c_char,
+                string.len() as u32,
+                !null_terminated as i32,
+            ))
+        }
     }
 
     pub(crate) fn set_diagnostic_handler(&self, handler: extern "C" fn (LLVMDiagnosticInfoRef, *mut c_void), void_ptr: *mut c_void) {
@@ -978,7 +947,7 @@ pub struct ContextRef<'ctx> {
 }
 
 impl<'ctx> ContextRef<'ctx> {
-    pub(crate) fn new(context: LLVMContextRef) -> Self {
+    pub(crate) unsafe fn new(context: LLVMContextRef) -> Self {
         ContextRef {
             context: ManuallyDrop::new(Context::new(context)),
             _marker: PhantomData,

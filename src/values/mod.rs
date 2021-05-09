@@ -55,7 +55,7 @@ struct Value<'ctx> {
 }
 
 impl<'ctx> Value<'ctx> {
-    pub(crate) fn new(value: LLVMValueRef) -> Self {
+    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
         debug_assert!(!value.is_null(), "This should never happen since containing struct should check null ptrs");
 
         Value {
@@ -75,7 +75,9 @@ impl<'ctx> Value<'ctx> {
             return None;
         }
 
-        Some(InstructionValue::new(self.value))
+        unsafe {
+            Some(InstructionValue::new(self.value))
+        }
     }
 
     fn is_null(self) -> bool {
@@ -157,11 +159,9 @@ impl<'ctx> Value<'ctx> {
     }
 
     fn print_to_string(self) -> LLVMString {
-        let c_string = unsafe {
-            LLVMPrintValueToString(self.value)
-        };
-
-        LLVMString::new(c_string)
+        unsafe {
+            LLVMString::new(LLVMPrintValueToString(self.value))
+        }
     }
 
     fn print_to_stderr(self) {
@@ -190,7 +190,9 @@ impl<'ctx> Value<'ctx> {
             return None;
         }
 
-        Some(BasicValueUse::new(use_))
+        unsafe {
+            Some(BasicValueUse::new(use_))
+        }
     }
 }
 

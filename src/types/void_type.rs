@@ -12,7 +12,7 @@ pub struct VoidType<'ctx> {
 }
 
 impl<'ctx> VoidType<'ctx> {
-    pub(crate) fn new(void_type: LLVMTypeRef) -> Self {
+    pub(crate) unsafe fn new(void_type: LLVMTypeRef) -> Self {
         assert!(!void_type.is_null());
 
         VoidType {

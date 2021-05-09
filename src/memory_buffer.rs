@@ -35,8 +35,9 @@ impl MemoryBuffer {
 
         // TODO: Verify 1 is error code (LLVM can be inconsistent)
         if return_code == 1 {
-            let err_str = unsafe { err_string.assume_init() };
-            return Err(LLVMString::new(err_str));
+            unsafe {
+                return Err(LLVMString::new(err_string.assume_init()));
+            }
         }
 
         Ok(MemoryBuffer::new(memory_buffer))
@@ -52,8 +53,9 @@ impl MemoryBuffer {
 
         // TODO: Verify 1 is error code (LLVM can be inconsistent)
         if return_code == 1 {
-            let err_str = unsafe { err_string.assume_init() };
-            return Err(LLVMString::new(err_str));
+            unsafe {
+                return Err(LLVMString::new(err_string.assume_init()));
+            }
         }
 
         Ok(MemoryBuffer::new(memory_buffer))

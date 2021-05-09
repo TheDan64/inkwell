@@ -33,7 +33,7 @@ pub struct GlobalValue<'ctx> {
 }
 
 impl<'ctx> GlobalValue<'ctx> {
-    pub(crate) fn new(value: LLVMValueRef) -> Self {
+    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
         GlobalValue {
@@ -55,7 +55,9 @@ impl<'ctx> GlobalValue<'ctx> {
             return None;
         }
 
-        Some(GlobalValue::new(value))
+        unsafe {
+            Some(GlobalValue::new(value))
+        }
     }
 
     pub fn get_next_global(self) -> Option<GlobalValue<'ctx>> {
@@ -67,7 +69,9 @@ impl<'ctx> GlobalValue<'ctx> {
             return None;
         }
 
-        Some(GlobalValue::new(value))
+        unsafe {
+            Some(GlobalValue::new(value))
+        }
     }
 
     pub fn get_dll_storage_class(self) -> DLLStorageClass {
@@ -93,7 +97,9 @@ impl<'ctx> GlobalValue<'ctx> {
             return None;
         }
 
-        Some(BasicValueEnum::new(value))
+        unsafe {
+            Some(BasicValueEnum::new(value))
+        }
     }
 
     // SubType: This input type should be tied to the BasicType
@@ -254,7 +260,9 @@ impl<'ctx> GlobalValue<'ctx> {
     }
 
     pub fn as_pointer_value(self) -> PointerValue<'ctx> {
-        PointerValue::new(self.as_value_ref())
+        unsafe {
+            PointerValue::new(self.as_value_ref())
+        }
     }
 
     pub fn get_alignment(self) -> u32 {

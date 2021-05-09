@@ -800,7 +800,10 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 instruction.as_value_ref(),
             )
         };
-        InstructionValue::new(value_ref)
+
+        unsafe {
+            InstructionValue::new(value_ref)
+        }
     }
 
     /// Insert a variable declaration (`llvm.dbg.declare` intrinsic) at the end of `block`
@@ -824,7 +827,10 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 block.basic_block,
             )
         };
-        InstructionValue::new(value_ref)
+
+        unsafe {
+            InstructionValue::new(value_ref)
+        }
     }
 
     /// Create an expression
@@ -861,7 +867,10 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 instruction.as_value_ref(),
             )
         };
-        InstructionValue::new(value_ref)
+
+        unsafe {
+            InstructionValue::new(value_ref)
+        }
     }
 
     /// Construct a placeholders derived type to be used when building debug info with circular references.
@@ -1148,10 +1157,9 @@ pub struct DIGlobalVariableExpression<'ctx> {
 
 impl <'ctx> DIGlobalVariableExpression<'ctx>  {
     pub fn as_metadata_value(&self, context: &Context) -> MetadataValue<'ctx> {
-        let value = unsafe {
-            LLVMMetadataAsValue(context.context, self.metadata_ref)
-        };
-        MetadataValue::new(value)
+        unsafe {
+            MetadataValue::new(LLVMMetadataAsValue(context.context, self.metadata_ref))
+        }
     }
 }
 

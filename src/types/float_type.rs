@@ -15,7 +15,7 @@ pub struct FloatType<'ctx> {
 }
 
 impl<'ctx> FloatType<'ctx> {
-    pub(crate) fn new(float_type: LLVMTypeRef) -> Self {
+    pub(crate) unsafe fn new(float_type: LLVMTypeRef) -> Self {
         assert!(!float_type.is_null());
 
         FloatType {
@@ -87,11 +87,9 @@ impl<'ctx> FloatType<'ctx> {
     /// let f32_value = f32_type.const_float(42.);
     /// ```
     pub fn const_float(self, value: f64) -> FloatValue<'ctx> {
-        let value = unsafe {
-            LLVMConstReal(self.float_type.ty, value)
-        };
-
-        FloatValue::new(value)
+        unsafe {
+            FloatValue::new(LLVMConstReal(self.float_type.ty, value))
+        }
     }
 
     /// Create a `FloatValue` from a string. LLVM provides no error handling here,
@@ -126,11 +124,9 @@ impl<'ctx> FloatType<'ctx> {
     /// assert_eq!(f64_val.print_to_string().to_string(), "double 0x7FF0000000000000");
     /// ```
     pub fn const_float_from_string(self, slice: &str) -> FloatValue<'ctx> {
-        let value = unsafe {
-            LLVMConstRealOfStringAndSize(self.as_type_ref(), slice.as_ptr() as *const ::libc::c_char, slice.len() as u32)
-        };
-
-        FloatValue::new(value)
+        unsafe {
+            FloatValue::new(LLVMConstRealOfStringAndSize(self.as_type_ref(), slice.as_ptr() as *const ::libc::c_char, slice.len() as u32))
+        }
     }
 
     /// Creates a constant zero value of this `FloatType`.
@@ -148,7 +144,9 @@ impl<'ctx> FloatType<'ctx> {
     /// assert_eq!(f32_zero.print_to_string().to_string(), "float 0.000000e+00");
     /// ```
     pub fn const_zero(self) -> FloatValue<'ctx> {
-        FloatValue::new(self.float_type.const_zero())
+        unsafe {
+            FloatValue::new(self.float_type.const_zero())
+        }
     }
 
     /// Gets the size of this `FloatType`. Value may vary depending on the target architecture.
@@ -235,16 +233,16 @@ impl<'ctx> FloatType<'ctx> {
     /// assert!(f32_undef.is_undef());
     /// ```
     pub fn get_undef(&self) -> FloatValue<'ctx> {
-        FloatValue::new(self.float_type.get_undef())
+        unsafe {
+            FloatValue::new(self.float_type.get_undef())
+        }
     }
 
     /// Creates a `GenericValue` for use with `ExecutionEngine`s.
     pub fn create_generic_value(self, value: f64) -> GenericValue<'ctx> {
-        let value = unsafe {
-            LLVMCreateGenericValueOfFloat(self.as_type_ref(), value)
-        };
-
-        GenericValue::new(value)
+        unsafe {
+            GenericValue::new(LLVMCreateGenericValueOfFloat(self.as_type_ref(), value))
+        }
     }
 
     /// Creates a constant `ArrayValue`.
@@ -265,11 +263,9 @@ impl<'ctx> FloatType<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();
-        let value = unsafe {
-            LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32)
-        };
-
-        ArrayValue::new(value)
+        unsafe {
+            ArrayValue::new(LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32))
+        }
     }
 }
 

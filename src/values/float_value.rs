@@ -14,7 +14,7 @@ pub struct FloatValue<'ctx> {
 }
 
 impl<'ctx> FloatValue<'ctx> {
-    pub(crate) fn new(value: LLVMValueRef) -> Self {
+    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
         FloatValue {
@@ -29,7 +29,9 @@ impl<'ctx> FloatValue<'ctx> {
     }
 
     pub fn get_type(self) -> FloatType<'ctx> {
-        FloatType::new(self.float_value.get_type())
+        unsafe {
+            FloatType::new(self.float_value.get_type())
+        }
     }
 
     pub fn is_null(self) -> bool {
@@ -49,100 +51,76 @@ impl<'ctx> FloatValue<'ctx> {
     }
 
     pub fn const_neg(self) -> Self {
-        let value = unsafe {
-            LLVMConstFNeg(self.as_value_ref())
-        };
-
-        FloatValue::new(value)
+        unsafe {
+            FloatValue::new(LLVMConstFNeg(self.as_value_ref()))
+        }
     }
 
     pub fn const_add(self, rhs: FloatValue<'ctx>) -> Self {
-        let value = unsafe {
-            LLVMConstFAdd(self.as_value_ref(), rhs.as_value_ref())
-        };
-
-        FloatValue::new(value)
+        unsafe {
+            FloatValue::new(LLVMConstFAdd(self.as_value_ref(), rhs.as_value_ref()))
+        }
     }
 
     pub fn const_sub(self, rhs: FloatValue<'ctx>) -> Self {
-        let value = unsafe {
-            LLVMConstFSub(self.as_value_ref(), rhs.as_value_ref())
-        };
-
-        FloatValue::new(value)
+        unsafe {
+            FloatValue::new(LLVMConstFSub(self.as_value_ref(), rhs.as_value_ref()))
+        }
     }
 
     pub fn const_mul(self, rhs: FloatValue<'ctx>) -> Self {
-        let value = unsafe {
-            LLVMConstFMul(self.as_value_ref(), rhs.as_value_ref())
-        };
-
-        FloatValue::new(value)
+        unsafe {
+            FloatValue::new(LLVMConstFMul(self.as_value_ref(), rhs.as_value_ref()))
+        }
     }
 
     pub fn const_div(self, rhs: FloatValue<'ctx>) -> Self {
-        let value = unsafe {
-            LLVMConstFDiv(self.as_value_ref(), rhs.as_value_ref())
-        };
-
-        FloatValue::new(value)
+        unsafe {
+            FloatValue::new(LLVMConstFDiv(self.as_value_ref(), rhs.as_value_ref()))
+        }
     }
 
     pub fn const_remainder(self, rhs: FloatValue<'ctx>) -> Self {
-        let value = unsafe {
-            LLVMConstFRem(self.as_value_ref(), rhs.as_value_ref())
-        };
-
-        FloatValue::new(value)
+        unsafe {
+            FloatValue::new(LLVMConstFRem(self.as_value_ref(), rhs.as_value_ref()))
+        }
     }
 
     pub fn const_cast(self, float_type: FloatType<'ctx>) -> Self {
-        let value = unsafe {
-            LLVMConstFPCast(self.as_value_ref(), float_type.as_type_ref())
-        };
-
-        FloatValue::new(value)
+        unsafe {
+            FloatValue::new(LLVMConstFPCast(self.as_value_ref(), float_type.as_type_ref()))
+        }
     }
 
     pub fn const_to_unsigned_int(self, int_type: IntType<'ctx>) -> IntValue<'ctx> {
-        let value = unsafe {
-            LLVMConstFPToUI(self.as_value_ref(), int_type.as_type_ref())
-        };
-
-        IntValue::new(value)
+        unsafe {
+            IntValue::new(LLVMConstFPToUI(self.as_value_ref(), int_type.as_type_ref()))
+        }
     }
 
     pub fn const_to_signed_int(self, int_type: IntType<'ctx>) -> IntValue<'ctx> {
-        let value = unsafe {
-            LLVMConstFPToSI(self.as_value_ref(), int_type.as_type_ref())
-        };
-
-        IntValue::new(value)
+        unsafe {
+            IntValue::new(LLVMConstFPToSI(self.as_value_ref(), int_type.as_type_ref()))
+        }
     }
 
     pub fn const_truncate(self, float_type: FloatType<'ctx>) -> FloatValue<'ctx> {
-        let value = unsafe {
-            LLVMConstFPTrunc(self.as_value_ref(), float_type.as_type_ref())
-        };
-
-        FloatValue::new(value)
+        unsafe {
+            FloatValue::new(LLVMConstFPTrunc(self.as_value_ref(), float_type.as_type_ref()))
+        }
     }
 
     pub fn const_extend(self, float_type: FloatType<'ctx>) -> FloatValue<'ctx> {
-        let value = unsafe {
-            LLVMConstFPExt(self.as_value_ref(), float_type.as_type_ref())
-        };
-
-        FloatValue::new(value)
+        unsafe {
+            FloatValue::new(LLVMConstFPExt(self.as_value_ref(), float_type.as_type_ref()))
+        }
     }
 
     // SubType: rhs same as lhs; return IntValue<bool>
     pub fn const_compare(self, op: FloatPredicate, rhs: FloatValue<'ctx>) -> IntValue<'ctx> {
-        let value = unsafe {
-            LLVMConstFCmp(op.into(), self.as_value_ref(), rhs.as_value_ref())
-        };
-
-        IntValue::new(value)
+        unsafe {
+            IntValue::new(LLVMConstFCmp(op.into(), self.as_value_ref(), rhs.as_value_ref()))
+        }
     }
 
     /// Determines whether or not a `FloatValue` is a constant.

@@ -124,7 +124,7 @@ impl<'ctx> InstructionValue<'ctx> {
         !unsafe { LLVMIsAAtomicCmpXchgInst(self.as_value_ref()) }.is_null()
     }
 
-    pub(crate) fn new(instruction_value: LLVMValueRef) -> Self {
+    pub(crate) unsafe fn new(instruction_value: LLVMValueRef) -> Self {
         debug_assert!(!instruction_value.is_null());
 
         let value = Value::new(instruction_value);
@@ -153,7 +153,9 @@ impl<'ctx> InstructionValue<'ctx> {
             return None;
         }
 
-        Some(InstructionValue::new(value))
+        unsafe {
+            Some(InstructionValue::new(value))
+        }
     }
 
     pub fn get_next_instruction(self) -> Option<Self> {
@@ -165,7 +167,9 @@ impl<'ctx> InstructionValue<'ctx> {
             return None;
         }
 
-        Some(InstructionValue::new(value))
+        unsafe {
+            Some(InstructionValue::new(value))
+        }
     }
 
     // REVIEW: Potentially unsafe if parent BB or grandparent fn were removed?
@@ -189,11 +193,9 @@ impl<'ctx> InstructionValue<'ctx> {
     // was deleted... Invalid memory is more likely. Cloned IV will have no
     // parent?
     pub fn get_parent(self) -> Option<BasicBlock<'ctx>> {
-        let value = unsafe {
-            LLVMGetInstructionParent(self.as_value_ref())
-        };
-
-        BasicBlock::new(value)
+        unsafe {
+            BasicBlock::new(LLVMGetInstructionParent(self.as_value_ref()))
+        }
     }
 
     pub fn is_tail_call(self) -> bool {
@@ -245,7 +247,7 @@ impl<'ctx> InstructionValue<'ctx> {
         }
         Ok(unsafe { LLVMSetVolatile(self.as_value_ref(), volatile as i32) })
     }
-    
+
     // SubTypes: Only apply to memory access instructions
     /// Sets whether or not a memory access instruction is volatile.
     #[llvm_versions(10.0..=latest)]
@@ -460,13 +462,13 @@ impl<'ctx> InstructionValue<'ctx> {
         };
 
         if is_basic_block {
-            let operand = unsafe {
-                LLVMValueAsBasicBlock(operand)
+            let bb = unsafe {
+                BasicBlock::new(LLVMValueAsBasicBlock(operand))
             };
 
-            Some(Right(BasicBlock::new(operand).expect("BasicBlock should be valid")))
+            Some(Right(bb.expect("BasicBlock should always be valid")))
         } else {
-            Some(Left(BasicValueEnum::new(operand)))
+            Some(Left(unsafe { BasicValueEnum::new(operand) }))
         }
     }
 
@@ -558,7 +560,9 @@ impl<'ctx> InstructionValue<'ctx> {
             return None;
         }
 
-        Some(BasicValueUse::new(use_))
+        unsafe {
+            Some(BasicValueUse::new(use_))
+        }
     }
 
     /// Gets the first use of an `InstructionValue` if any.
@@ -653,7 +657,9 @@ impl<'ctx> InstructionValue<'ctx> {
             return None;
         }
 
-        Some(MetadataValue::new(metadata_value))
+        unsafe {
+            Some(MetadataValue::new(metadata_value))
+        }
     }
 
     /// Determines whether or not this `Instruction` has any associated metadata
@@ -669,11 +675,9 @@ impl Clone for InstructionValue<'_> {
     /// Creates a clone of this `InstructionValue`, and returns it.
     /// The clone will have no parent, and no name.
     fn clone(&self) -> Self {
-        let value = unsafe {
-            LLVMInstructionClone(self.as_value_ref())
-        };
-
-        InstructionValue::new(value)
+        unsafe {
+            InstructionValue::new(LLVMInstructionClone(self.as_value_ref()))
+        }
     }
 }
 

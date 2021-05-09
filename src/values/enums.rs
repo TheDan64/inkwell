@@ -66,12 +66,8 @@ enum_value_set! {BasicValueEnum: ArrayValue, IntValue, FloatValue, PointerValue,
 enum_value_set! {BasicMetadataValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue, VectorValue, MetadataValue}
 
 impl<'ctx> AnyValueEnum<'ctx> {
-    pub(crate) fn new(value: LLVMValueRef) -> Self {
-        let type_kind = unsafe {
-            LLVMGetTypeKind(LLVMTypeOf(value))
-        };
-
-        match type_kind {
+    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
+        match LLVMGetTypeKind(LLVMTypeOf(value)) {
             LLVMTypeKind::LLVMFloatTypeKind |
             LLVMTypeKind::LLVMFP128TypeKind |
             LLVMTypeKind::LLVMDoubleTypeKind |
@@ -85,7 +81,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
             LLVMTypeKind::LLVMVectorTypeKind => AnyValueEnum::VectorValue(VectorValue::new(value)),
             LLVMTypeKind::LLVMFunctionTypeKind => AnyValueEnum::FunctionValue(FunctionValue::new(value).unwrap()),
             LLVMTypeKind::LLVMVoidTypeKind => {
-                if unsafe { LLVMIsAInstruction(value) }.is_null() {
+                if LLVMIsAInstruction(value).is_null() {
                     panic!("Void value isn't an instruction.");
                 }
                 AnyValueEnum::InstructionValue(InstructionValue::new(value))
@@ -96,11 +92,9 @@ impl<'ctx> AnyValueEnum<'ctx> {
     }
 
     pub fn get_type(&self) -> AnyTypeEnum<'ctx> {
-        let type_ = unsafe {
-            LLVMTypeOf(self.as_value_ref())
-        };
-
-        AnyTypeEnum::new(type_)
+        unsafe {
+            AnyTypeEnum::new(LLVMTypeOf(self.as_value_ref()))
+        }
     }
 
     pub fn is_array_value(self) -> bool {
@@ -213,12 +207,8 @@ impl<'ctx> AnyValueEnum<'ctx> {
 }
 
 impl<'ctx> BasicValueEnum<'ctx> {
-    pub(crate) fn new(value: LLVMValueRef) -> Self {
-        let type_kind = unsafe {
-            LLVMGetTypeKind(LLVMTypeOf(value))
-        };
-
-        match type_kind {
+    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
+        match LLVMGetTypeKind(LLVMTypeOf(value)) {
             LLVMTypeKind::LLVMFloatTypeKind |
             LLVMTypeKind::LLVMFP128TypeKind |
             LLVMTypeKind::LLVMDoubleTypeKind |
@@ -235,11 +225,9 @@ impl<'ctx> BasicValueEnum<'ctx> {
     }
 
     pub fn get_type(&self) -> BasicTypeEnum<'ctx> {
-        let type_ = unsafe {
-            LLVMTypeOf(self.as_value_ref())
-        };
-
-        BasicTypeEnum::new(type_)
+        unsafe {
+            BasicTypeEnum::new(LLVMTypeOf(self.as_value_ref()))
+        }
     }
 
     pub fn is_array_value(self) -> bool {
@@ -316,12 +304,8 @@ impl<'ctx> BasicValueEnum<'ctx> {
 }
 
 impl<'ctx> AggregateValueEnum<'ctx> {
-    pub(crate) fn new(value: LLVMValueRef) -> Self {
-        let type_kind = unsafe {
-            LLVMGetTypeKind(LLVMTypeOf(value))
-        };
-
-        match type_kind {
+    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
+        match LLVMGetTypeKind(LLVMTypeOf(value)) {
             LLVMTypeKind::LLVMArrayTypeKind => AggregateValueEnum::ArrayValue(ArrayValue::new(value)),
             LLVMTypeKind::LLVMStructTypeKind => AggregateValueEnum::StructValue(StructValue::new(value)),
             _ => unreachable!("The given type is not an aggregate type."),
@@ -354,12 +338,8 @@ impl<'ctx> AggregateValueEnum<'ctx> {
 }
 
 impl<'ctx> BasicMetadataValueEnum<'ctx> {
-    pub(crate) fn new(value: LLVMValueRef) -> Self {
-        let type_kind = unsafe {
-            LLVMGetTypeKind(LLVMTypeOf(value))
-        };
-
-        match type_kind {
+    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
+        match LLVMGetTypeKind(LLVMTypeOf(value)) {
             LLVMTypeKind::LLVMFloatTypeKind |
             LLVMTypeKind::LLVMFP128TypeKind |
             LLVMTypeKind::LLVMDoubleTypeKind |
@@ -463,7 +443,9 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
 
 impl<'ctx> From<BasicValueEnum<'ctx>> for AnyValueEnum<'ctx> {
     fn from(value: BasicValueEnum<'ctx>) -> Self {
-        AnyValueEnum::new(value.as_value_ref())
+        unsafe {
+            AnyValueEnum::new(value.as_value_ref())
+        }
     }
 }
 

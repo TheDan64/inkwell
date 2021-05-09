@@ -90,16 +90,14 @@ pub struct ExecutionEngine<'ctx> {
 }
 
 impl<'ctx> ExecutionEngine<'ctx> {
-    pub(crate) fn new(
+    pub(crate) unsafe fn new(
         execution_engine: Rc<LLVMExecutionEngineRef>,
         jit_mode: bool,
     ) -> Self {
         assert!(!execution_engine.is_null());
 
         // REVIEW: Will we have to do this for LLVMGetExecutionEngineTargetMachine too?
-        let target_data = unsafe {
-            LLVMGetExecutionEngineTargetData(*execution_engine)
-        };
+        let target_data = LLVMGetExecutionEngineTargetData(*execution_engine);
 
         ExecutionEngine {
             execution_engine: Some(ExecEngineInner(execution_engine, PhantomData)),
@@ -227,8 +225,9 @@ impl<'ctx> ExecutionEngine<'ctx> {
         };
 
         if code == 1 {
-            let err_str = unsafe { err_string.assume_init() };
-            return Err(RemoveModuleError::LLVMError(LLVMString::new(err_str)));
+            unsafe {
+                return Err(RemoveModuleError::LLVMError(LLVMString::new(err_string.assume_init())));
+            }
         }
 
         let new_module = unsafe { new_module.assume_init() };
@@ -367,9 +366,9 @@ impl<'ctx> ExecutionEngine<'ctx> {
         };
 
         if code == 0 {
-            let fn_val = unsafe { function.assume_init() };
-
-            return FunctionValue::new(fn_val).ok_or(FunctionLookupError::FunctionNotFound)
+            return unsafe {
+                FunctionValue::new(function.assume_init()).ok_or(FunctionLookupError::FunctionNotFound)
+            }
         };
 
         Err(FunctionLookupError::FunctionNotFound)
@@ -441,7 +440,9 @@ impl Clone for ExecutionEngine<'_> {
     fn clone(&self) -> Self {
         let execution_engine_rc = self.execution_engine_rc().clone();
 
-        ExecutionEngine::new(execution_engine_rc, self.jit_mode)
+        unsafe {
+            ExecutionEngine::new(execution_engine_rc, self.jit_mode)
+        }
     }
 }
 

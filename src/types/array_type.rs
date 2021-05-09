@@ -14,7 +14,7 @@ pub struct ArrayType<'ctx> {
 }
 
 impl<'ctx> ArrayType<'ctx> {
-    pub(crate) fn new(array_type: LLVMTypeRef) -> Self {
+    pub(crate) unsafe fn new(array_type: LLVMTypeRef) -> Self {
         assert!(!array_type.is_null());
 
         ArrayType {
@@ -144,11 +144,9 @@ impl<'ctx> ArrayType<'ctx> {
         let mut values: Vec<LLVMValueRef> = values.iter()
                                                   .map(|val| val.as_value_ref())
                                                   .collect();
-        let value = unsafe {
-            LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32)
-        };
-
-        ArrayValue::new(value)
+        unsafe {
+            ArrayValue::new(LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32))
+        }
     }
 
     /// Creates a constant zero value of this `ArrayType`.
@@ -164,7 +162,9 @@ impl<'ctx> ArrayType<'ctx> {
     /// let i8_array_zero = i8_array_type.const_zero();
     /// ```
     pub fn const_zero(self) -> ArrayValue<'ctx> {
-        ArrayValue::new(self.array_type.const_zero())
+        unsafe {
+            ArrayValue::new(self.array_type.const_zero())
+        }
     }
 
     /// Gets the length of this `ArrayType`.
@@ -207,7 +207,9 @@ impl<'ctx> ArrayType<'ctx> {
     /// assert!(i8_array_undef.is_undef());
     /// ```
     pub fn get_undef(self) -> ArrayValue<'ctx> {
-        ArrayValue::new(self.array_type.get_undef())
+        unsafe {
+            ArrayValue::new(self.array_type.get_undef())
+        }
     }
 
     // SubType: ArrayType<BT> -> BT?

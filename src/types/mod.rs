@@ -56,7 +56,7 @@ struct Type<'ctx> {
 }
 
 impl<'ctx> Type<'ctx> {
-    fn new(ty: LLVMTypeRef) -> Self {
+    unsafe fn new(ty: LLVMTypeRef) -> Self {
         assert!(!ty.is_null());
 
         Type {
@@ -83,22 +83,18 @@ impl<'ctx> Type<'ctx> {
     }
 
     fn ptr_type(self, address_space: AddressSpace) -> PointerType<'ctx> {
-        let ptr_type = unsafe {
-            LLVMPointerType(self.ty, address_space as u32)
-        };
-
-        PointerType::new(ptr_type)
+        unsafe {
+            PointerType::new(LLVMPointerType(self.ty, address_space as u32))
+        }
     }
 
     fn vec_type(self, size: u32) -> VectorType<'ctx> {
         assert!(size != 0, "Vectors of size zero are not allowed.");
         // -- https://llvm.org/docs/LangRef.html#vector-type
 
-        let vec_type = unsafe {
-            LLVMVectorType(self.ty, size)
-        };
-
-        VectorType::new(vec_type)
+        unsafe {
+            VectorType::new(LLVMVectorType(self.ty, size))
+        }
     }
 
     #[cfg(not(feature = "experimental"))]
@@ -106,11 +102,9 @@ impl<'ctx> Type<'ctx> {
         let mut param_types: Vec<LLVMTypeRef> = param_types.iter()
                                                            .map(|val| val.as_type_ref())
                                                            .collect();
-        let fn_type = unsafe {
-            LLVMFunctionType(self.ty, param_types.as_mut_ptr(), param_types.len() as u32, is_var_args as i32)
-        };
-
-        FunctionType::new(fn_type)
+        unsafe {
+            FunctionType::new(LLVMFunctionType(self.ty, param_types.as_mut_ptr(), param_types.len() as u32, is_var_args as i32))
+        }
     }
 
     #[cfg(feature = "experimental")]
@@ -126,19 +120,15 @@ impl<'ctx> Type<'ctx> {
             }
         }
 
-        let fn_type = unsafe {
-            LLVMFunctionType(self.ty, pool_start.unwrap_or(std::ptr::null_mut()), param_types.len() as u32, is_var_args as i32)
-        };
-
-        FunctionType::new(fn_type)
+        unsafe {
+            FunctionType::new(LLVMFunctionType(self.ty, pool_start.unwrap_or(std::ptr::null_mut()), param_types.len() as u32, is_var_args as i32))
+        }
     }
 
     fn array_type(self, size: u32) -> ArrayType<'ctx> {
-        let ty = unsafe {
-            LLVMArrayType(self.ty, size)
-        };
-
-        ArrayType::new(ty)
+        unsafe {
+            ArrayType::new(LLVMArrayType(self.ty, size))
+        }
     }
 
     fn get_undef(self) -> LLVMValueRef {
@@ -148,19 +138,15 @@ impl<'ctx> Type<'ctx> {
     }
 
     fn get_alignment(self) -> IntValue<'ctx> {
-        let val = unsafe {
-            LLVMAlignOf(self.ty)
-        };
-
-        IntValue::new(val)
+        unsafe {
+            IntValue::new(LLVMAlignOf(self.ty))
+        }
     }
 
     fn get_context(self) -> ContextRef<'ctx> {
-        let context = unsafe {
-            LLVMGetTypeContext(self.ty)
-        };
-
-        ContextRef::new(context)
+        unsafe {
+            ContextRef::new(LLVMGetTypeContext(self.ty))
+        }
     }
 
     // REVIEW: This should be known at compile time, maybe as a const fn?
@@ -177,27 +163,21 @@ impl<'ctx> Type<'ctx> {
             return None;
         }
 
-        let int_value = unsafe {
-            LLVMSizeOf(self.ty)
-        };
-
-        Some(IntValue::new(int_value))
+        unsafe {
+            Some(IntValue::new(LLVMSizeOf(self.ty)))
+        }
     }
 
     fn print_to_string(self) -> LLVMString {
-        let c_string_ptr = unsafe {
-            LLVMPrintTypeToString(self.ty)
-        };
-
-        LLVMString::new(c_string_ptr)
+        unsafe {
+            LLVMString::new(LLVMPrintTypeToString(self.ty))
+        }
     }
 
     pub fn get_element_type(self) -> AnyTypeEnum<'ctx> {
-        let ptr = unsafe {
-            LLVMGetElementType(self.ty)
-        };
-
-        AnyTypeEnum::new(ptr)
+        unsafe {
+            AnyTypeEnum::new(LLVMGetElementType(self.ty))
+        }
     }
 
 }

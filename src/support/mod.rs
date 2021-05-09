@@ -18,7 +18,7 @@ pub struct LLVMString {
 }
 
 impl LLVMString {
-    pub(crate) fn new(ptr: *const c_char) -> Self {
+    pub(crate) unsafe fn new(ptr: *const c_char) -> Self {
         LLVMString {
             ptr,
         }
@@ -35,22 +35,18 @@ impl LLVMString {
 
     /// This method will allocate a c string through LLVM
     pub(crate) fn create_from_c_str(string: &CStr) -> LLVMString {
-        let ptr = unsafe {
-            LLVMCreateMessage(string.as_ptr() as *const _)
-        };
-
-        LLVMString::new(ptr)
+        unsafe {
+            LLVMString::new(LLVMCreateMessage(string.as_ptr() as *const _))
+        }
     }
 
     /// This method will allocate a c string through LLVM
     pub(crate) fn create_from_str(string: &str) -> LLVMString {
         debug_assert_eq!(string.as_bytes()[string.as_bytes().len() - 1], 0);
 
-        let ptr = unsafe {
-            LLVMCreateMessage(string.as_ptr() as *const _)
-        };
-
-        LLVMString::new(ptr)
+        unsafe {
+            LLVMString::new(LLVMCreateMessage(string.as_ptr() as *const _))
+        }
     }
 }
 

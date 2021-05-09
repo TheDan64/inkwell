@@ -12,7 +12,7 @@ pub struct PointerValue<'ctx> {
 }
 
 impl<'ctx> PointerValue<'ctx> {
-    pub(crate) fn new(value: LLVMValueRef) -> Self {
+    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
         PointerValue {
@@ -27,7 +27,9 @@ impl<'ctx> PointerValue<'ctx> {
     }
 
     pub fn get_type(self) -> PointerType<'ctx> {
-        PointerType::new(self.ptr_value.get_type())
+        unsafe {
+            PointerType::new(self.ptr_value.get_type())
+        }
     }
 
     pub fn is_null(self) -> bool {
@@ -87,27 +89,21 @@ impl<'ctx> PointerValue<'ctx> {
     }
 
     pub fn const_to_int(self, int_type: IntType<'ctx>) -> IntValue<'ctx> {
-        let value = unsafe {
-            LLVMConstPtrToInt(self.as_value_ref(), int_type.as_type_ref())
-        };
-
-        IntValue::new(value)
+        unsafe {
+            IntValue::new(LLVMConstPtrToInt(self.as_value_ref(), int_type.as_type_ref()))
+        }
     }
 
     pub fn const_cast(self, ptr_type: PointerType<'ctx>) -> PointerValue<'ctx> {
-        let value = unsafe {
-            LLVMConstPointerCast(self.as_value_ref(), ptr_type.as_type_ref())
-        };
-
-        PointerValue::new(value)
+        unsafe {
+            PointerValue::new(LLVMConstPointerCast(self.as_value_ref(), ptr_type.as_type_ref()))
+        }
     }
 
     pub fn const_address_space_cast(self, ptr_type: PointerType<'ctx>) -> PointerValue<'ctx> {
-        let value = unsafe {
-            LLVMConstAddrSpaceCast(self.as_value_ref(), ptr_type.as_type_ref())
-        };
-
-        PointerValue::new(value)
+        unsafe {
+            PointerValue::new(LLVMConstAddrSpaceCast(self.as_value_ref(), ptr_type.as_type_ref()))
+        }
     }
 
     pub fn replace_all_uses_with(self, other: PointerValue<'ctx>) {

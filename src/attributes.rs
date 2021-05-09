@@ -19,7 +19,7 @@ pub struct Attribute {
 
 #[llvm_versions(3.9..=latest)]
 impl Attribute {
-    pub(crate) fn new(attribute: LLVMAttributeRef) -> Self {
+    pub(crate) unsafe fn new(attribute: LLVMAttributeRef) -> Self {
         debug_assert!(!attribute.is_null());
 
         Attribute {

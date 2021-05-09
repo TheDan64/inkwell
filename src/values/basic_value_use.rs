@@ -12,7 +12,7 @@ use crate::values::{AnyValueEnum, BasicValueEnum};
 pub struct BasicValueUse<'ctx>(LLVMUseRef, PhantomData<&'ctx ()>);
 
 impl<'ctx> BasicValueUse<'ctx> {
-    pub(crate) fn new(use_: LLVMUseRef) -> Self {
+    pub(crate) unsafe fn new(use_: LLVMUseRef) -> Self {
         debug_assert!(!use_.is_null());
 
         BasicValueUse(use_, PhantomData)
@@ -80,7 +80,9 @@ impl<'ctx> BasicValueUse<'ctx> {
             return None;
         }
 
-        Some(Self::new(use_))
+        unsafe {
+            Some(Self::new(use_))
+        }
     }
 
     /// Gets the user (an `AnyValueEnum`) of this use.
@@ -116,11 +118,9 @@ impl<'ctx> BasicValueUse<'ctx> {
     /// assert_eq!(store_operand_use1.get_user(), store_instruction);
     /// ```
     pub fn get_user(self) -> AnyValueEnum<'ctx> {
-        let user = unsafe {
-            LLVMGetUser(self.0)
-        };
-
-        AnyValueEnum::new(user)
+        unsafe {
+            AnyValueEnum::new(LLVMGetUser(self.0))
+        }
     }
 
     /// Gets the used value (a `BasicValueEnum` or `BasicBlock`) of this use.
@@ -170,13 +170,15 @@ impl<'ctx> BasicValueUse<'ctx> {
         };
 
         if is_basic_block {
-            let used_value = unsafe {
-                LLVMValueAsBasicBlock(used_value)
+            let bb = unsafe {
+                BasicBlock::new(LLVMValueAsBasicBlock(used_value))
             };
 
-            Right(BasicBlock::new(used_value).expect("BasicBlock should be valid"))
+            Right(bb.expect("BasicBlock should always be valid"))
         } else {
-            Left(BasicValueEnum::new(used_value))
+            unsafe {
+                Left(BasicValueEnum::new(used_value))
+            }
         }
     }
 }
