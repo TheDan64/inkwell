@@ -9,6 +9,7 @@ use crate::types::traits::AsTypeRef;
 use crate::values::{BasicValue, BasicValueEnum, IntValue};
 
 use std::convert::TryFrom;
+use std::iter::FromIterator;
 
 macro_rules! enum_type_set {
     ($(#[$enum_attrs:meta])* $enum_name:ident: { $($(#[$variant_attrs:meta])* $args:ident,)+ }) => (
@@ -469,5 +470,18 @@ impl<'ctx> TryFrom<AnyTypeEnum<'ctx>> for BasicTypeEnum<'ctx> {
             AnyTypeEnum::VectorType(vt) => vt.into(),
             _ => return Err(()),
         })
+    }
+}
+
+impl<'ctx> From<BasicTypeEnum<'ctx>> for BasicMetadataTypeEnum<'ctx> {
+    fn from(value: BasicTypeEnum<'ctx>) -> Self {
+        match value {
+            BasicTypeEnum::ArrayType(at) => at.into(),
+            BasicTypeEnum::FloatType(ft) => ft.into(),
+            BasicTypeEnum::IntType(it) => it.into(),
+            BasicTypeEnum::PointerType(pt) => pt.into(),
+            BasicTypeEnum::StructType(st) => st.into(),
+            BasicTypeEnum::VectorType(vt) => vt.into(),
+        }
     }
 }
