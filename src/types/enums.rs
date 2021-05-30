@@ -128,7 +128,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         if let AnyTypeEnum::ArrayType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {:?} but expected the ArrayType variant", self);
         }
     }
 
@@ -136,7 +136,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         if let AnyTypeEnum::FloatType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {:?} but expected the FloatType variant", self);
         }
     }
 
@@ -144,7 +144,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         if let AnyTypeEnum::FunctionType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {:?} but expected the FunctionType variant", self);
         }
     }
 
@@ -152,7 +152,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         if let AnyTypeEnum::IntType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {:?} but expected the IntType variant", self);
         }
     }
 
@@ -160,7 +160,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         if let AnyTypeEnum::PointerType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {:?} but expected the PointerType variant", self);
         }
     }
 
@@ -168,7 +168,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         if let AnyTypeEnum::StructType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {:?} but expected the StructType variant", self);
         }
     }
 
@@ -176,7 +176,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         if let AnyTypeEnum::VectorType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {:?} but expected the VectorType variant", self);
         }
     }
 
@@ -184,7 +184,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         if let AnyTypeEnum::VoidType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {:?} but expected the VoidType variant", self);
         }
     }
 
@@ -266,7 +266,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
         if let BasicTypeEnum::ArrayType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {:?} but expected the ArrayType variant", self);
         }
     }
 
@@ -274,7 +274,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
         if let BasicTypeEnum::FloatType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {:?} but expected the FloatType variant", self);
         }
     }
 
@@ -282,7 +282,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
         if let BasicTypeEnum::IntType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {:?} but expected the IntType variant", self);
         }
     }
 
@@ -290,7 +290,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
         if let BasicTypeEnum::PointerType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {:?} but expected the PointerType variant", self);
         }
     }
 
@@ -298,7 +298,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
         if let BasicTypeEnum::StructType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {:?} but expected the StructType variant", self);
         }
     }
 
@@ -306,7 +306,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
         if let BasicTypeEnum::VectorType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {:?} but expected the VectorType variant", self);
         }
     }
 
