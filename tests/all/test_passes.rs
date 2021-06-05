@@ -18,7 +18,6 @@ fn test_init_all_passes_for_module() {
     pass_manager.add_always_inliner_pass();
     pass_manager.add_global_dce_pass();
     pass_manager.add_global_optimizer_pass();
-    pass_manager.add_ip_constant_propagation_pass();
     pass_manager.add_prune_eh_pass();
     pass_manager.add_ipsccp_pass();
     pass_manager.add_internalize_pass(true);
@@ -58,7 +57,6 @@ fn test_init_all_passes_for_module() {
     pass_manager.add_scalar_repl_aggregates_pass_with_threshold(1);
     pass_manager.add_simplify_lib_calls_pass();
     pass_manager.add_tail_call_elimination_pass();
-    pass_manager.add_constant_propagation_pass();
     pass_manager.add_demote_memory_to_register_pass();
     pass_manager.add_verifier_pass();
     pass_manager.add_correlated_value_propagation_pass();
@@ -88,6 +86,12 @@ fn test_init_all_passes_for_module() {
         pass_manager.add_coroutine_split_pass();
         pass_manager.add_coroutine_elide_pass();
         pass_manager.add_coroutine_cleanup_pass();
+    }
+
+    #[cfg(not(any(feature = "llvm12-0")))]
+    {
+        pass_manager.add_constant_propagation_pass();
+        pass_manager.add_ip_constant_propagation_pass();
     }
 
     pass_manager.run_on(&module);
