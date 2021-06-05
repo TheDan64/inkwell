@@ -444,7 +444,8 @@ impl<'ctx> Builder<'ctx> {
         //     catch i8* null, !dbg !933
         // ```
         //
-        let i8_type = personality_function.get_type().get_context().i8_type();
+        let context = personality_function.get_type().get_context();
+        let i8_type = context.i8_type();
         let i8_ptr_type = i8_type.ptr_type(crate::AddressSpace::Generic);
         let null = i8_ptr_type.const_zero();
 
