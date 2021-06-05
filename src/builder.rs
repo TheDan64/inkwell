@@ -252,19 +252,63 @@ impl<'ctx> Builder<'ctx> {
     /// This example shows how to use the C++ personality function:
     ///
     /// ```no_run
-    /// use inkwell::context::Context;
-    /// use inkwell::module::Linkage;
-    ///
     /// let context = Context::create();
     /// let module = context.create_module("sum");
     /// let builder = context.create_builder();
     ///
-    /// // the personality function used by c++
-    /// let personality_function = {
-    ///     let name = "__gxx_personality_v0";
+    /// let f32_type = context.f32_type();
+    /// let fn_type = f32_type.fn_type(&[], false);
     ///
-    ///     module.add_function(name, context.i64_type().fn_type(&[], false), Some(Linkage::External))
-    /// };
+    /// // we will pretend this function can throw an exception
+    /// let function = module.add_function("bomb", fn_type, None);
+    /// let basic_block = context.append_basic_block(function, "entry");
+    ///
+    /// builder.position_at_end(basic_block);
+    ///
+    /// let pi = f32_type.const_float(::std::f64::consts::PI);
+    ///
+    /// builder.build_return(Some(&pi));
+    ///
+    /// let function2 = module.add_function("wrapper", fn_type, None);
+    /// let basic_block2 = context.append_basic_block(function2, "entry");
+    ///
+    /// builder.position_at_end(basic_block2);
+    ///
+    /// let then_block = context.append_basic_block(function2, "then_block");
+    /// let catch_block = context.append_basic_block(function2, "catch_block");
+    ///
+    /// let call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi");
+    ///
+    /// {
+    ///     builder.position_at_end(then_block);
+    ///
+    ///     // in the then_block, the `call_site` value is defined and can be used
+    ///     let result = call_site.try_as_basic_value().left().unwrap();
+    ///
+    ///     builder.build_return(Some(&result));
+    /// }
+    ///
+    /// {
+    ///     builder.position_at_end(catch_block);
+    ///
+    ///     // the personality function used by C++
+    ///     let personality_function = {
+    ///         let name = "__gxx_personality_v0";
+    ///
+    ///         module.add_function(name, context.i64_type().fn_type(&[], false), None)
+    ///     };
+    ///
+    ///     // type of an exception in C++
+    ///     let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::Generic);
+    ///     let i32_type = context.i32_type();
+    ///     let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
+    ///
+    ///     let res = builder.build_cleanup_landing_pad( exception_type, personality_function, "res");
+    ///
+    ///     // do cleanup ...
+    ///
+    ///     builder.build_resume(res);
+    /// }
     /// ```
     pub fn build_cleanup_landing_pad<T>(
         &self,
@@ -303,19 +347,63 @@ impl<'ctx> Builder<'ctx> {
     /// This example shows how to use the C++ personality function:
     ///
     /// ```no_run
-    /// use inkwell::context::Context;
-    /// use inkwell::module::Linkage;
-    ///
     /// let context = Context::create();
     /// let module = context.create_module("sum");
     /// let builder = context.create_builder();
     ///
-    /// // the personality function used by c++
-    /// let personality_function = {
-    ///     let name = "__gxx_personality_v0";
+    /// let f32_type = context.f32_type();
+    /// let fn_type = f32_type.fn_type(&[], false);
     ///
-    ///     module.add_function(name, context.i64_type().fn_type(&[], false), Some(Linkage::External))
-    /// };
+    /// // we will pretend this function can throw an exception
+    /// let function = module.add_function("bomb", fn_type, None);
+    /// let basic_block = context.append_basic_block(function, "entry");
+    ///
+    /// builder.position_at_end(basic_block);
+    ///
+    /// let pi = f32_type.const_float(::std::f64::consts::PI);
+    ///
+    /// builder.build_return(Some(&pi));
+    ///
+    /// let function2 = module.add_function("wrapper", fn_type, None);
+    /// let basic_block2 = context.append_basic_block(function2, "entry");
+    ///
+    /// builder.position_at_end(basic_block2);
+    ///
+    /// let then_block = context.append_basic_block(function2, "then_block");
+    /// let catch_block = context.append_basic_block(function2, "catch_block");
+    ///
+    /// let call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi");
+    ///
+    /// {
+    ///     builder.position_at_end(then_block);
+    ///
+    ///     // in the then_block, the `call_site` value is defined and can be used
+    ///     let result = call_site.try_as_basic_value().left().unwrap();
+    ///
+    ///     builder.build_return(Some(&result));
+    /// }
+    ///
+    /// {
+    ///     builder.position_at_end(catch_block);
+    ///
+    ///     // the personality function used by C++
+    ///     let personality_function = {
+    ///         let name = "__gxx_personality_v0";
+    ///
+    ///         module.add_function(name, context.i64_type().fn_type(&[], false), None)
+    ///     };
+    ///
+    ///     // type of an exception in C++
+    ///     let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::Generic);
+    ///     let i32_type = context.i32_type();
+    ///     let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
+    ///
+    ///     let res = builder.build_catch_all_landing_pad(exception_type, personality_function, "res");
+    ///
+    ///     // we handle the exception by returning a default value
+    ///
+    ///     builder.build_return(Some(f32_type.const_zero));
+    /// }
     /// ```
     pub fn build_catch_all_landing_pad<T>(
         &self,
@@ -355,6 +443,8 @@ impl<'ctx> Builder<'ctx> {
     }
 
     /// Resume propagation of an existing (in-flight) exception whose unwinding was interrupted with a landingpad instruction.
+    ///
+    /// See [`Builder::build_cleanup_landing_pad`] for example usage.
     pub fn build_resume<V : BasicValue<'ctx>>(&self, value: V) -> InstructionValue<'ctx> {
         let val = unsafe { LLVMBuildResume(self.builder, value.as_value_ref()) };
 

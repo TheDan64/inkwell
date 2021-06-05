@@ -128,7 +128,6 @@ fn test_build_invoke_cleanup_resume() {
         builder.build_resume(res);
     }
 
-    dbg!(module.verify());
     assert!(module.verify().is_ok());
 }
 
