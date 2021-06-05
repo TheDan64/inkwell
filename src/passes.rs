@@ -1,12 +1,19 @@
 use llvm_sys::core::{LLVMDisposePassManager, LLVMInitializeFunctionPassManager, LLVMFinalizeFunctionPassManager, LLVMRunFunctionPassManager, LLVMRunPassManager, LLVMCreatePassManager, LLVMCreateFunctionPassManagerForModule, LLVMGetGlobalPassRegistry};
 use llvm_sys::initialization::{LLVMInitializeCore, LLVMInitializeTransformUtils, LLVMInitializeScalarOpts, LLVMInitializeObjCARCOpts, LLVMInitializeVectorization, LLVMInitializeInstCombine, LLVMInitializeIPO, LLVMInitializeInstrumentation, LLVMInitializeAnalysis, LLVMInitializeIPA, LLVMInitializeCodeGen, LLVMInitializeTarget};
 use llvm_sys::prelude::{LLVMPassManagerRef, LLVMPassRegistryRef};
-use llvm_sys::transforms::ipo::{LLVMAddArgumentPromotionPass, LLVMAddConstantMergePass, LLVMAddDeadArgEliminationPass, LLVMAddFunctionAttrsPass, LLVMAddFunctionInliningPass, LLVMAddAlwaysInlinerPass, LLVMAddGlobalDCEPass, LLVMAddGlobalOptimizerPass, LLVMAddIPConstantPropagationPass, LLVMAddIPSCCPPass, LLVMAddInternalizePass, LLVMAddStripDeadPrototypesPass, LLVMAddPruneEHPass, LLVMAddStripSymbolsPass};
+use llvm_sys::transforms::ipo::{LLVMAddArgumentPromotionPass, LLVMAddConstantMergePass, LLVMAddDeadArgEliminationPass, LLVMAddFunctionAttrsPass, LLVMAddFunctionInliningPass, LLVMAddAlwaysInlinerPass, LLVMAddGlobalDCEPass, LLVMAddGlobalOptimizerPass, LLVMAddIPSCCPPass, LLVMAddInternalizePass, LLVMAddStripDeadPrototypesPass, LLVMAddPruneEHPass, LLVMAddStripSymbolsPass};
 use llvm_sys::transforms::pass_manager_builder::{LLVMPassManagerBuilderRef, LLVMPassManagerBuilderCreate, LLVMPassManagerBuilderDispose, LLVMPassManagerBuilderSetOptLevel, LLVMPassManagerBuilderSetSizeLevel, LLVMPassManagerBuilderSetDisableUnitAtATime, LLVMPassManagerBuilderSetDisableUnrollLoops, LLVMPassManagerBuilderSetDisableSimplifyLibCalls, LLVMPassManagerBuilderUseInlinerWithThreshold, LLVMPassManagerBuilderPopulateFunctionPassManager, LLVMPassManagerBuilderPopulateModulePassManager, LLVMPassManagerBuilderPopulateLTOPassManager};
-use llvm_sys::transforms::scalar::{LLVMAddAggressiveDCEPass, LLVMAddMemCpyOptPass, LLVMAddAlignmentFromAssumptionsPass, LLVMAddCFGSimplificationPass, LLVMAddDeadStoreEliminationPass, LLVMAddScalarizerPass, LLVMAddMergedLoadStoreMotionPass, LLVMAddGVNPass, LLVMAddIndVarSimplifyPass, LLVMAddInstructionCombiningPass, LLVMAddJumpThreadingPass, LLVMAddLICMPass, LLVMAddLoopDeletionPass, LLVMAddLoopIdiomPass, LLVMAddLoopRotatePass, LLVMAddLoopRerollPass, LLVMAddLoopUnrollPass, LLVMAddLoopUnswitchPass, LLVMAddPartiallyInlineLibCallsPass, LLVMAddSCCPPass, LLVMAddScalarReplAggregatesPass, LLVMAddScalarReplAggregatesPassSSA, LLVMAddScalarReplAggregatesPassWithThreshold, LLVMAddSimplifyLibCallsPass, LLVMAddTailCallEliminationPass, LLVMAddConstantPropagationPass, LLVMAddDemoteMemoryToRegisterPass, LLVMAddVerifierPass, LLVMAddCorrelatedValuePropagationPass, LLVMAddEarlyCSEPass, LLVMAddLowerExpectIntrinsicPass, LLVMAddTypeBasedAliasAnalysisPass, LLVMAddScopedNoAliasAAPass, LLVMAddBasicAliasAnalysisPass, LLVMAddReassociatePass};
+use llvm_sys::transforms::scalar::{LLVMAddAggressiveDCEPass, LLVMAddMemCpyOptPass, LLVMAddAlignmentFromAssumptionsPass, LLVMAddCFGSimplificationPass, LLVMAddDeadStoreEliminationPass, LLVMAddScalarizerPass, LLVMAddMergedLoadStoreMotionPass, LLVMAddGVNPass, LLVMAddIndVarSimplifyPass, LLVMAddInstructionCombiningPass, LLVMAddJumpThreadingPass, LLVMAddLICMPass, LLVMAddLoopDeletionPass, LLVMAddLoopIdiomPass, LLVMAddLoopRotatePass, LLVMAddLoopRerollPass, LLVMAddLoopUnrollPass, LLVMAddLoopUnswitchPass, LLVMAddPartiallyInlineLibCallsPass, LLVMAddSCCPPass, LLVMAddScalarReplAggregatesPass, LLVMAddScalarReplAggregatesPassSSA, LLVMAddScalarReplAggregatesPassWithThreshold, LLVMAddSimplifyLibCallsPass, LLVMAddTailCallEliminationPass, LLVMAddDemoteMemoryToRegisterPass, LLVMAddVerifierPass, LLVMAddCorrelatedValuePropagationPass, LLVMAddEarlyCSEPass, LLVMAddLowerExpectIntrinsicPass, LLVMAddTypeBasedAliasAnalysisPass, LLVMAddScopedNoAliasAAPass, LLVMAddBasicAliasAnalysisPass, LLVMAddReassociatePass};
 #[llvm_versions(3.7..=latest)]
 use llvm_sys::transforms::scalar::LLVMAddBitTrackingDCEPass;
 use llvm_sys::transforms::vectorize::{LLVMAddLoopVectorizePass, LLVMAddSLPVectorizePass};
+
+// LLVM12 removes the ConstantPropagation pass
+// Users should use the InstSimplify pass instead.
+#[llvm_versions(3.6..=11.0)]
+use llvm_sys::transforms::ipo::LLVMAddIPConstantPropagationPass;
+#[llvm_versions(3.6..=11.0)]
+use llvm_sys::transforms::scalar::LLVMAddConstantPropagationPass;
 
 use crate::OptimizationLevel;
 use crate::module::Module;
@@ -362,6 +369,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// makes arguments dead, but does not remove them. The existing
     /// dead argument elimination pass should be run after this to
     /// clean up the mess.
+    #[llvm_versions(3.6..=11.0)]
     pub fn add_ip_constant_propagation_pass(&self) {
         unsafe {
             LLVMAddIPConstantPropagationPass(self.pass_manager)
@@ -920,6 +928,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     ///
     /// NOTE: this pass has a habit of making definitions be dead. It is a good idea to
     /// run a Dead Instruction Elimination pass sometime after running this pass.
+    #[llvm_versions(3.6..=11.0)]
     pub fn add_constant_propagation_pass(&self) {
         unsafe {
             LLVMAddConstantPropagationPass(self.pass_manager)
