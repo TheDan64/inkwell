@@ -427,9 +427,18 @@ impl<'ctx> Builder<'ctx> {
             )
         };
 
-        // we will add one clause, a null pointer of the i8 type
-        // this is how c++ encodes the `catch(...)` case.
-        let i8_type = unsafe { crate::types::IntType::new(llvm_sys::core::LLVMInt8Type()) };
+        // in landingpad clauses, a null pointer functions as a wildcard pattern:
+        // it matches any exception.
+        //
+        // We follow how c++ encodes the `catch(...)` case, which is by
+        // using an i8 pointer. This will generate roughly this LLVM IR
+        //
+        // ```ll
+        // %7 = landingpad { i8*, i32 }
+        //     catch i8* null, !dbg !933
+        // ```
+        //
+        let i8_type = personality_function.get_type().get_context().i8_type();
         let i8_ptr_type = i8_type.ptr_type(crate::AddressSpace::Generic);
         let null = i8_ptr_type.const_zero();
 
