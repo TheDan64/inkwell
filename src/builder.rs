@@ -243,22 +243,46 @@ impl<'ctx> Builder<'ctx> {
         }
     }
 
-    pub fn build_cleanup_landing_pad<T>(&self, exception_type: T, name: &str) -> BasicValueEnum<'ctx>
+    /// Build a cleanup landing pad. This landing pad is always visited when unwinding the stack.
+    /// A cleanup is extra code that needs to be run when unwinding a scope. C++ destructors are a
+    /// typical example. In a language with reference counting, the cleanup block can decrement the
+    /// refcount of values in scope.
+    ///
+    /// The personality function determines how an exception is handled.
+    /// This example shows how to use the C++ personality function:
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::module::Linkage;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("sum");
+    /// let builder = context.create_builder();
+    ///
+    /// // the personality function used by c++
+    /// let personality_function = {
+    ///     let name = "__gxx_personality_v0";
+    ///
+    ///     module.add_function(name, context.i64_type().fn_type(&[], false), Some(Linkage::External))
+    /// };
+    /// ```
+    pub fn build_cleanup_landing_pad<T>(
+        &self,
+        exception_type: T,
+        personality_function: FunctionValue<'ctx>,
+        name: &str
+    ) -> BasicValueEnum<'ctx>
     where
         T: BasicType<'ctx>,
     {
         let c_string = to_c_str(name);
         let num_clauses = 0u32;
 
-        // SAFETY: the personality function will not be used
-        // because there are no clauses to match
-        let personality_function : LLVMValueRef = unsafe { 0 as *mut _ };
-
         let value = unsafe {
             LLVMBuildLandingPad(
                 self.builder,
                 exception_type.as_type_ref(),
-                personality_function,
+                personality_function.as_value_ref(),
                 num_clauses,
                 c_string.as_ptr(),
             )
@@ -273,9 +297,30 @@ impl<'ctx> Builder<'ctx> {
         }
     }
 
+    /// Build a landing pad that matches all exceptions. This corresponds to a `catch(...)` in C++.
+    ///
+    /// The personality function determines how an exception is handled.
+    /// This example shows how to use the C++ personality function:
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::module::Linkage;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("sum");
+    /// let builder = context.create_builder();
+    ///
+    /// // the personality function used by c++
+    /// let personality_function = {
+    ///     let name = "__gxx_personality_v0";
+    ///
+    ///     module.add_function(name, context.i64_type().fn_type(&[], false), Some(Linkage::External))
+    /// };
+    /// ```
     pub fn build_catch_all_landing_pad<T>(
         &self,
         exception_type: T,
+        personality_function: FunctionValue<'ctx>,
         name: &str,
     ) -> BasicValueEnum<'ctx>
     where
@@ -284,15 +329,11 @@ impl<'ctx> Builder<'ctx> {
         let c_string = to_c_str(name);
         let num_clauses = 1u32;
 
-        // SAFETY: the personality function will not be used
-        // because there are no clauses to match
-        let personality_function : LLVMValueRef = unsafe { 0 as *mut _ };
-
         let value = unsafe {
             LLVMBuildLandingPad(
                 self.builder,
                 exception_type.as_type_ref(),
-                personality_function,
+                personality_function.as_value_ref(),
                 num_clauses,
                 c_string.as_ptr(),
             )

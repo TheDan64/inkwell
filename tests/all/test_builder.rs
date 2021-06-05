@@ -69,21 +69,11 @@ fn test_build_invoke_cleanup_resume() {
     let module = context.create_module("sum");
     let builder = context.create_builder();
 
-    let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::Generic);
-    let i32_type = context.i32_type();
-    let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
-
-    // the personality function used by c++
-    let personality_function = {
-        let name = "__gxx_personality_v0";
-
-        module.add_function(name, context.i64_type().fn_type(&[], false), None)
-    };
-
     let f32_type = context.f32_type();
     let fn_type = f32_type.fn_type(&[], false);
 
-    let function = module.add_function("get_pi", fn_type, None);
+    // we will pretend this function can throw an exception
+    let function = module.add_function("bomb", fn_type, None);
     let basic_block = context.append_basic_block(function, "entry");
 
     builder.position_at_end(basic_block);
@@ -93,8 +83,6 @@ fn test_build_invoke_cleanup_resume() {
     builder.build_return(Some(&pi));
 
     let function2 = module.add_function("wrapper", fn_type, None);
-    // function2.set_personality_function(personality_function);
-
     let basic_block2 = context.append_basic_block(function2, "entry");
 
     builder.position_at_end(basic_block2);
@@ -102,26 +90,41 @@ fn test_build_invoke_cleanup_resume() {
     let then_block = context.append_basic_block(function2, "then_block");
     let catch_block = context.append_basic_block(function2, "catch_block");
 
-    let pi2_call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi");
+    let call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi");
 
-    assert!(!pi2_call_site.is_tail_call());
+    assert!(!call_site.is_tail_call());
 
-    pi2_call_site.set_tail_call(true);
+    call_site.set_tail_call(true);
 
-    assert!(pi2_call_site.is_tail_call());
+    assert!(call_site.is_tail_call());
 
     {
         builder.position_at_end(then_block);
 
-        let pi2 = pi2_call_site.try_as_basic_value().left().unwrap();
+        let result = call_site.try_as_basic_value().left().unwrap();
 
-        builder.build_return(Some(&pi2));
+        builder.build_return(Some(&result));
     }
 
     {
         builder.position_at_end(catch_block);
 
-        let res = builder.build_cleanup_landing_pad(exception_type, "res");
+        // the personality function used by C++
+        let personality_function = {
+            let name = "__gxx_personality_v0";
+
+            module.add_function(name, context.i64_type().fn_type(&[], false), None)
+        };
+
+        // type of an exception in C++
+        let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::Generic);
+        let i32_type = context.i32_type();
+        let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
+
+        let res = builder.build_cleanup_landing_pad( exception_type, personality_function, "res");
+
+        // do cleanup ...
+
         builder.build_resume(res);
     }
 
@@ -135,17 +138,6 @@ fn test_build_invoke_catch_all() {
     let module = context.create_module("sum");
     let builder = context.create_builder();
 
-    let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::Generic);
-    let i32_type = context.i32_type();
-    let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
-
-    // the personality function used by c++
-    let personality_function = {
-        let name = "__gxx_personality_v0";
-
-        module.add_function(name, context.i64_type().fn_type(&[], false), None)
-    };
-
     let f32_type = context.f32_type();
     let fn_type = f32_type.fn_type(&[], false);
 
@@ -159,8 +151,6 @@ fn test_build_invoke_catch_all() {
     builder.build_return(Some(&pi));
 
     let function2 = module.add_function("wrapper", fn_type, None);
-    function2.set_personality_function(personality_function);
-
     let basic_block2 = context.append_basic_block(function2, "entry");
 
     builder.position_at_end(basic_block2);
@@ -187,8 +177,22 @@ fn test_build_invoke_catch_all() {
     {
         builder.position_at_end(catch_block);
 
-        let res = builder.build_catch_all_landing_pad(exception_type, "res");
+        // the personality function used by C++
+        let personality_function = {
+            let name = "__gxx_personality_v0";
+
+            module.add_function(name, context.i64_type().fn_type(&[], false), None)
+        };
+
+        // type of an exception in C++
+        let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::Generic);
+        let i32_type = context.i32_type();
+        let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
+
+        let res = builder.build_catch_all_landing_pad(exception_type, personality_function, "res");
+
         let fakepi = f32_type.const_zero();
+
         builder.build_return(Some(&fakepi));
     }
 
