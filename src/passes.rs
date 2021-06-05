@@ -15,6 +15,9 @@ use llvm_sys::transforms::ipo::LLVMAddIPConstantPropagationPass;
 #[llvm_versions(3.6..=11.0)]
 use llvm_sys::transforms::scalar::LLVMAddConstantPropagationPass;
 
+#[llvm_versions(12.0..=latest)]
+use llvm_sys::transforms::scalar::LLVMAddInstructionSimplifyPass;
+
 use crate::OptimizationLevel;
 use crate::module::Module;
 #[llvm_versions(3.6..=3.8)]
@@ -369,7 +372,11 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// makes arguments dead, but does not remove them. The existing
     /// dead argument elimination pass should be run after this to
     /// clean up the mess.
+    ///
+    /// In LLVM 12 and later, this instruction is replaced by the
+    /// [`add_instruction_simplify_pass`].
     #[llvm_versions(3.6..=11.0)]
+    #[doc(alias = "add_instruction_simplify_pass")]
     pub fn add_ip_constant_propagation_pass(&self) {
         unsafe {
             LLVMAddIPConstantPropagationPass(self.pass_manager)
@@ -928,10 +935,38 @@ impl<T: PassManagerSubType> PassManager<T> {
     ///
     /// NOTE: this pass has a habit of making definitions be dead. It is a good idea to
     /// run a Dead Instruction Elimination pass sometime after running this pass.
+    ///
+    /// In LLVM 12 and later, this instruction is replaced by the
+    /// [`add_instruction_simplify_pass`].
     #[llvm_versions(3.6..=11.0)]
+    #[doc(alias = "add_instruction_simplify_pass")]
     pub fn add_constant_propagation_pass(&self) {
         unsafe {
             LLVMAddConstantPropagationPass(self.pass_manager)
+        }
+    }
+
+    /// This pass implements constant propagation and merging. It looks for instructions
+    /// involving only constant operands and replaces them with a constant value instead
+    /// of an instruction. For example:
+    ///
+    /// ```ir
+    /// add i32 1, 2
+    /// ```
+    ///
+    /// becomes
+    ///
+    /// ```ir
+    /// i32 3
+    /// ```
+    ///
+    /// NOTE: this pass has a habit of making definitions be dead. It is a good idea to
+    /// run a Dead Instruction Elimination pass sometime after running this pass.
+    #[llvm_versions(12.0..=latest)]
+    #[doc(alias = "add_constant_propagation_pass")]
+    pub fn add_instruction_simplify_pass(&self) {
+        unsafe {
+            LLVMAddInstructionSimplifyPass(self.pass_manager)
         }
     }
 

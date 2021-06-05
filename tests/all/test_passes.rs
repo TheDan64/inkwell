@@ -61,6 +61,8 @@ fn test_init_all_passes_for_module() {
     pass_manager.add_tail_call_elimination_pass();
     #[cfg(not(feature = "llvm12-0"))]
     pass_manager.add_constant_propagation_pass();
+    #[cfg(feature = "llvm12-0")]
+    pass_manager.add_instruction_simplify_pass();
     pass_manager.add_demote_memory_to_register_pass();
     pass_manager.add_verifier_pass();
     pass_manager.add_correlated_value_propagation_pass();
