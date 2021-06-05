@@ -255,7 +255,9 @@ impl<'ctx> BasicTypeEnum<'ctx> {
             #[cfg(any(feature = "llvm11-0", feature = "llvm12-0"))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => BasicTypeEnum::VectorType(VectorType::new(type_)),
             LLVMTypeKind::LLVMMetadataTypeKind => unreachable!("Unsupported basic type: Metadata"),
+            // see https://llvm.org/docs/LangRef.html#x86-mmx-type
             LLVMTypeKind::LLVMX86_MMXTypeKind => unreachable!("Unsupported basic type: MMX"),
+            // see https://llvm.org/docs/LangRef.html#x86-amx-type
             #[cfg(feature = "llvm12-0")]
             LLVMTypeKind::LLVMX86_AMXTypeKind => unreachable!("Unsupported basic type: AMX"),
             LLVMTypeKind::LLVMLabelTypeKind => unreachable!("Unsupported basic type: Label"),
