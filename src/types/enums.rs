@@ -112,6 +112,8 @@ impl<'ctx> AnyTypeEnum<'ctx> {
             LLVMTypeKind::LLVMScalableVectorTypeKind => AnyTypeEnum::VectorType(VectorType::new(type_)),
             LLVMTypeKind::LLVMMetadataTypeKind => panic!("FIXME: Unsupported type: Metadata"),
             LLVMTypeKind::LLVMX86_MMXTypeKind => panic!("FIXME: Unsupported type: MMX"),
+            #[cfg(feature = "llvm12-0")]
+            LLVMTypeKind::LLVMX86_AMXTypeKind => panic!("FIXME: Unsupported type: AMX"),
             #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
             LLVMTypeKind::LLVMTokenTypeKind => panic!("FIXME: Unsupported type: Token"),
         }
@@ -254,6 +256,8 @@ impl<'ctx> BasicTypeEnum<'ctx> {
             LLVMTypeKind::LLVMScalableVectorTypeKind => BasicTypeEnum::VectorType(VectorType::new(type_)),
             LLVMTypeKind::LLVMMetadataTypeKind => unreachable!("Unsupported basic type: Metadata"),
             LLVMTypeKind::LLVMX86_MMXTypeKind => unreachable!("Unsupported basic type: MMX"),
+            #[cfg(feature = "llvm12-0")]
+            LLVMTypeKind::LLVMX86_AMXTypeKind => unreachable!("Unsupported basic type: AMX"),
             LLVMTypeKind::LLVMLabelTypeKind => unreachable!("Unsupported basic type: Label"),
             LLVMTypeKind::LLVMVoidTypeKind => unreachable!("Unsupported basic type: VoidType"),
             LLVMTypeKind::LLVMFunctionTypeKind => unreachable!("Unsupported basic type: FunctionType"),
