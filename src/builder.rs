@@ -243,20 +243,22 @@ impl<'ctx> Builder<'ctx> {
         }
     }
 
-    pub fn build_cleanup_landing_pad(
-        &self,
-        ty: &dyn BasicType<'ctx>,
-        value: &dyn BasicValue<'ctx>,
-        name: &str,
-    ) -> BasicValueEnum<'ctx> {
+    pub fn build_cleanup_landing_pad<T>(&self, exception_type: T, name: &str) -> BasicValueEnum<'ctx>
+    where
+        T: BasicType<'ctx>,
+    {
         let c_string = to_c_str(name);
         let num_clauses = 0u32;
+
+        // SAFETY: the personality function will not be used
+        // because there are no clauses to match
+        let personality_function : LLVMValueRef = unsafe { 0 as *mut _ };
 
         let value = unsafe {
             LLVMBuildLandingPad(
                 self.builder,
-                ty.as_type_ref(),
-                value.as_value_ref(),
+                exception_type.as_type_ref(),
+                personality_function,
                 num_clauses,
                 c_string.as_ptr(),
             )
@@ -271,30 +273,36 @@ impl<'ctx> Builder<'ctx> {
         }
     }
 
-    pub fn build_catch_all_landing_pad(
+    pub fn build_catch_all_landing_pad<T>(
         &self,
-        ty: &dyn BasicType<'ctx>,
-        value: &dyn BasicValue<'ctx>,
-        ptr_ty: PointerType<'ctx>,
+        exception_type: T,
         name: &str,
-    ) -> BasicValueEnum<'ctx> {
+    ) -> BasicValueEnum<'ctx>
+    where
+        T: BasicType<'ctx>,
+    {
         let c_string = to_c_str(name);
         let num_clauses = 1u32;
+
+        // SAFETY: the personality function will not be used
+        // because there are no clauses to match
+        let personality_function : LLVMValueRef = unsafe { 0 as *mut _ };
 
         let value = unsafe {
             LLVMBuildLandingPad(
                 self.builder,
-                ty.as_type_ref(),
-                value.as_value_ref(),
+                exception_type.as_type_ref(),
+                personality_function,
                 num_clauses,
                 c_string.as_ptr(),
             )
         };
 
-        // we will add one clause, a null pointer of the specified type
-        // NOTE: the ptr type does not actually matter, but we do need a
-        // pointer type to generate the null pointer
-        let null = ptr_ty.const_zero();
+        // we will add one clause, a null pointer of the i8 type
+        // this is how c++ encodes the `catch(...)` case.
+        let i8_type = unsafe { crate::types::IntType::new(llvm_sys::core::LLVMInt8Type()) };
+        let i8_ptr_type = i8_type.ptr_type(crate::AddressSpace::Generic);
+        let null = i8_ptr_type.const_zero();
 
         unsafe {
             LLVMAddClause(value, null.as_value_ref());
@@ -306,7 +314,7 @@ impl<'ctx> Builder<'ctx> {
     }
 
     /// Resume propagation of an existing (in-flight) exception whose unwinding was interrupted with a landingpad instruction.
-    pub fn build_resume(&self, value: &dyn BasicValue<'ctx>) -> InstructionValue<'ctx> {
+    pub fn build_resume<V : BasicValue<'ctx>>(&self, value: V) -> InstructionValue<'ctx> {
         let val = unsafe { LLVMBuildResume(self.builder, value.as_value_ref()) };
 
         unsafe {
