@@ -34,7 +34,7 @@ pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 25;
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 26;
 #[cfg(feature = "llvm9-0")]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 28;
-#[cfg(any(feature = "llvm10-0", feature = "llvm11-0"))]
+#[cfg(any(feature = "llvm10-0", feature = "llvm11-0", feature = "llvm12-0"))]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 30;
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]

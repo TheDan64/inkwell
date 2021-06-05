@@ -271,7 +271,7 @@ impl<'ctx> InstructionValue<'ctx> {
     // SubTypes: Only apply to memory access and alloca instructions
     /// Sets alignment on a memory access instruction or alloca.
     pub fn set_alignment(self, alignment: u32) -> Result<(), &'static str> {
-        #[cfg(feature = "llvm11-0")]
+        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0"))]
         {
             if alignment == 0 {
                 return Err("Alignment cannot be 0");
