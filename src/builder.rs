@@ -252,6 +252,9 @@ impl<'ctx> Builder<'ctx> {
     /// This example shows how to use the C++ personality function:
     ///
     /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::AddressSpace;
+    ///
     /// let context = Context::create();
     /// let module = context.create_module("sum");
     /// let builder = context.create_builder();
@@ -347,6 +350,9 @@ impl<'ctx> Builder<'ctx> {
     /// This example shows how to use the C++ personality function:
     ///
     /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::AddressSpace;
+    ///
     /// let context = Context::create();
     /// let module = context.create_module("sum");
     /// let builder = context.create_builder();
@@ -402,7 +408,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     ///     // we handle the exception by returning a default value
     ///
-    ///     builder.build_return(Some(f32_type.const_zero));
+    ///     builder.build_return(Some(&f32_type.const_zero()));
     /// }
     /// ```
     pub fn build_catch_all_landing_pad<T>(
