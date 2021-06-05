@@ -376,7 +376,6 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// In LLVM 12 and later, this instruction is replaced by the
     /// [`add_instruction_simplify_pass`].
     #[llvm_versions(3.6..=11.0)]
-    #[doc(alias = "add_instruction_simplify_pass")]
     pub fn add_ip_constant_propagation_pass(&self) {
         unsafe {
             LLVMAddIPConstantPropagationPass(self.pass_manager)
@@ -939,7 +938,6 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// In LLVM 12 and later, this instruction is replaced by the
     /// [`add_instruction_simplify_pass`].
     #[llvm_versions(3.6..=11.0)]
-    #[doc(alias = "add_instruction_simplify_pass")]
     pub fn add_constant_propagation_pass(&self) {
         unsafe {
             LLVMAddConstantPropagationPass(self.pass_manager)
@@ -963,7 +961,6 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// NOTE: this pass has a habit of making definitions be dead. It is a good idea to
     /// run a Dead Instruction Elimination pass sometime after running this pass.
     #[llvm_versions(12.0..=latest)]
-    #[doc(alias = "add_constant_propagation_pass")]
     pub fn add_instruction_simplify_pass(&self) {
         unsafe {
             LLVMAddInstructionSimplifyPass(self.pass_manager)
