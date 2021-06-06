@@ -3,7 +3,7 @@ use inkwell::attributes::AttributeLoc;
 use inkwell::context::Context;
 use inkwell::module::Linkage::*;
 use inkwell::types::{AnyType, StringRadix, VectorType};
-use inkwell::values::{AnyValue, BasicValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
+use inkwell::values::{AnyValue, BasicValue, CallableValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
 #[llvm_versions(7.0..=latest)]
 use inkwell::comdat::ComdatSelectionKind;
 
@@ -1134,7 +1134,8 @@ fn test_non_fn_ptr_called() {
     let i8_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
 
     builder.position_at_end(bb);
-    builder.build_call(i8_ptr_param, &[], "call");
+    let callable_value = CallableValue::try_from(i8_ptr_param).unwrap();
+    builder.build_call(callable_value, &[], "call");
     builder.build_return(None);
 
     assert!(module.verify().is_ok());

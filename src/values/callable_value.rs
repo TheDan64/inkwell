@@ -1,4 +1,4 @@
-use std::convert::{TryFrom, TryInto};
+use std::convert::{TryFrom};
 use either::Either;
 
 use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, Value};
@@ -45,7 +45,7 @@ use crate::builder::Builder;
 /// failure case explicitly.
 ///
 /// ```no_run
-/// use std::convert::TryInto;
+/// use std::convert::TryFrom;
 /// use inkwell::context::Context;
 /// use inkwell::values::CallableValue;
 ///
@@ -66,7 +66,7 @@ use crate::builder::Builder;
 ///
 /// // convert that pointer value into a callable value
 /// // explicitly handling the failure case (here with `unwrap`)
-/// let callable_value = fn_pointer_value.try_into().unwrap();
+/// let callable_value = CallableValue::try_from(fn_pointer_value).unwrap();
 ///
 /// let ret_val = builder.build_call(callable_value, &[i32_arg], "call")
 ///     .try_as_basic_value()
