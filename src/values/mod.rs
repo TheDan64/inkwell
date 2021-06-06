@@ -19,6 +19,7 @@ mod ptr_value;
 mod struct_value;
 mod traits;
 mod vec_value;
+mod callable_value;
 
 use crate::support::LLVMString;
 pub use crate::values::array_value::ArrayValue;
