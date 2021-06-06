@@ -17,6 +17,7 @@ use crate::values::{AggregateValue, AggregateValueEnum, AsValueRef, BasicValue, 
 use crate::debug_info::DILocation;
 #[llvm_versions(3.9..=latest)]
 use crate::values::StructValue;
+use crate::values::CallableValue;
 use crate::types::{AsTypeRef, BasicType, IntMathType, FloatMathType, PointerType, PointerMathType};
 
 use std::marker::PhantomData;
@@ -107,9 +108,9 @@ impl<'ctx> Builder<'ctx> {
         }
     }
 
-    /// Builds a function call instruction. It can take either a `FunctionValue` or a `PointerValue`
-    /// which is a function pointer. It will panic if the `PointerValue` is not a function pointer.
-    /// This may be turned into a Result in the future, however.
+    /// Builds a function call instruction. 
+    /// [`FunctionValue`]s can be implicitly converted into a [`CallableValue`]. 
+    /// See [`CallableValue`] for details on calling a [`PointerValue`] that points to a function.
     ///
     /// # Example
     ///
@@ -137,32 +138,16 @@ impl<'ctx> Builder<'ctx> {
     /// ```
     pub fn build_call<F>(&self, function: F, args: &[BasicValueEnum<'ctx>], name: &str) -> CallSiteValue<'ctx>
     where
-        F: Into<FunctionOrPointerValue<'ctx>>,
+        F: Into<CallableValue<'ctx>>,
     {
-        let fn_val_ref = match function.into() {
-            Left(val) => val.as_value_ref(),
-            Right(val) => {
-                // If using a pointer value, we must validate it's a valid function ptr
-                let value_ref = val.as_value_ref();
-                let ty_kind = unsafe { LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(value_ref))) };
-                let is_a_fn_ptr = match ty_kind {
-                    LLVMTypeKind::LLVMFunctionTypeKind => true,
-                    _ => false,
-                };
-
-                // REVIEW: We should probably turn this into a Result?
-                assert!(is_a_fn_ptr, "build_call called with a pointer which is not a function pointer");
-
-                value_ref
-            },
-        };
+        let callable_value = function.into();
+        let fn_val_ref = callable_value.as_value_ref();
 
         // LLVM gets upset when void return calls are named because they don't return anything
-        let name = unsafe {
-            match LLVMGetTypeKind(LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(fn_val_ref)))) {
-                LLVMTypeKind::LLVMVoidTypeKind => "",
-                _ => name,
-            }
+        let name = if callable_value.returns_void() {
+            ""
+        } else {
+            name
         };
 
         let c_string = to_c_str(name);

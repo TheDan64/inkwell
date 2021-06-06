@@ -1,4 +1,4 @@
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use either::Either;
 
 use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, Value};
@@ -6,27 +6,75 @@ use crate::values::FunctionValue;
 use crate::values::PointerValue;
 
 use llvm_sys::prelude::LLVMValueRef;
-use llvm_sys::core::{LLVMGetTypeKind, LLVMGetElementType, LLVMTypeOf};
+use llvm_sys::core::{LLVMGetTypeKind, LLVMGetElementType, LLVMTypeOf, LLVMGetReturnType};
 use llvm_sys::LLVMTypeKind;
 
-/// A value that can be called with the [`Builder::build_call`] or [`Builder::build_invoke`] instruction.
+use crate::builder::Builder;
+
+/// A value that can be called with the [`Builder::build_call`] instruction.
 ///
-/// To convert a [`FunctionValue`] to a [`CallableValue`], use the [`std::convert::From`] trait:
+/// In practice, the `F : Into<CallableValue<'ctx>>` bound of [`Builder::build_call`] means it is
+/// possible to pass a [`FunctionValue`] to `build_call` directly. It will be implicitly converted
+/// into a `CallableValue`.
 ///
-/// ```rust
-/// CallableValue::from(my_function_value);
+/// ```no_run
+/// use inkwell::context::Context;
+///
+/// // A simple function which calls itself:
+/// let context = Context::create();
+/// let module = context.create_module("ret");
+/// let builder = context.create_builder();
+/// let i32_type = context.i32_type();
+/// let fn_type = i32_type.fn_type(&[i32_type.into()], false);
+/// let fn_value = module.add_function("ret", fn_type, None);
+/// let entry = context.append_basic_block(fn_value, "entry");
+/// let i32_arg = fn_value.get_first_param().unwrap();
+///
+/// builder.position_at_end(entry);
+///
+/// let ret_val = builder.build_call(fn_value, &[i32_arg], "call")
+///     .try_as_basic_value()
+///     .left()
+///     .unwrap();
+///
+/// builder.build_return(Some(&ret_val));
 /// ```
 ///
-/// To convert a [`FunctionValue`] to a [`CallableValue`], use the [`std::convert::TryFrom`] trait:
+/// A [`PointerValue`] cannot be implicitly converted to a `CallableValue` because the pointer may
+/// point to a non-function value. Instead we can use [`TryFrom`] and [`TryInto`] to handle this
+/// failure case explicitly.
 ///
-/// ```rust
-/// use std::convert::TryFrom;
+/// ```no_run
+/// use std::convert::TryInto;
+/// use inkwell::context::Context;
+/// use inkwell::values::CallableValue;
 ///
-/// CallableValue::try_from(my_pointer_value);
+/// // A simple function which calls itself:
+/// let context = Context::create();
+/// let module = context.create_module("ret");
+/// let builder = context.create_builder();
+/// let i32_type = context.i32_type();
+/// let fn_type = i32_type.fn_type(&[i32_type.into()], false);
+/// let fn_value = module.add_function("ret", fn_type, None);
+/// let entry = context.append_basic_block(fn_value, "entry");
+/// let i32_arg = fn_value.get_first_param().unwrap();
+///
+/// builder.position_at_end(entry);
+///
+/// // take a pointer to the function value
+/// let fn_pointer_value = fn_value.as_global_value().as_pointer_value();
+///
+/// // convert that pointer value into a callable value
+/// // explicitly handling the failure case (here with `unwrap`)
+/// let callable_value = fn_pointer_value.try_into().unwrap();
+///
+/// let ret_val = builder.build_call(callable_value, &[i32_arg], "call")
+///     .try_as_basic_value()
+///     .left()
+///     .unwrap();
+///
+/// builder.build_return(Some(&ret_val));
 /// ```
-///
-/// The [`std::convert::TryFrom::try_from`] method returns a [`std::result::Result`] because to be callable,
-/// the pointer must point to a function.
 #[derive(Debug)]
 pub struct CallableValue<'ctx>(FunctionOrPointerValue<'ctx>);
 
@@ -44,6 +92,16 @@ impl<'ctx> crate::values::traits::AsValueRef for CallableValue<'ctx> {
 }
 
 impl<'ctx> crate::values::AnyValue<'ctx> for CallableValue<'ctx> {}
+
+impl<'ctx> CallableValue<'ctx> {
+    pub(crate) fn returns_void(&self) -> bool {
+        let return_type = unsafe {
+            LLVMGetTypeKind(LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(self.as_value_ref()))))
+        };
+
+        matches!(LLVMTypeKind::LLVMVoidTypeKind, return_type)
+    }
+}
 
 impl<'ctx> From<FunctionValue<'ctx>> for CallableValue<'ctx> {
     fn from(value: FunctionValue<'ctx>) -> Self {
