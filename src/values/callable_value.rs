@@ -76,9 +76,7 @@ use crate::builder::Builder;
 /// builder.build_return(Some(&ret_val));
 /// ```
 #[derive(Debug)]
-pub struct CallableValue<'ctx>(FunctionOrPointerValue<'ctx>);
-
-type FunctionOrPointerValue<'ctx> = Either<FunctionValue<'ctx>, PointerValue<'ctx>>;
+pub struct CallableValue<'ctx>(Either<FunctionValue<'ctx>, PointerValue<'ctx>>);
 
 impl<'ctx> crate::values::traits::AsValueRef for CallableValue<'ctx> {
     fn as_value_ref(&self) -> LLVMValueRef {

@@ -1877,17 +1877,3 @@ impl Drop for Builder<'_> {
         }
     }
 }
-
-type FunctionOrPointerValue<'ctx> = Either<FunctionValue<'ctx>, PointerValue<'ctx>>;
-
-impl<'ctx> Into<FunctionOrPointerValue<'ctx>> for FunctionValue<'ctx> {
-    fn into(self) -> FunctionOrPointerValue<'ctx> {
-        Left(self)
-    }
-}
-
-impl<'ctx> Into<FunctionOrPointerValue<'ctx>> for PointerValue<'ctx> {
-    fn into(self) -> FunctionOrPointerValue<'ctx> {
-        Right(self)
-    }
-}
