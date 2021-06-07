@@ -2,8 +2,9 @@ use std::convert::{TryFrom};
 use either::Either;
 
 use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, Value};
-use crate::values::FunctionValue;
-use crate::values::PointerValue;
+use crate::values::{FunctionValue, PointerValue, AnyValue};
+
+use crate::traits::AsValue
 
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::core::{LLVMGetTypeKind, LLVMGetElementType, LLVMTypeOf, LLVMGetReturnType};
@@ -78,7 +79,7 @@ use crate::builder::Builder;
 #[derive(Debug)]
 pub struct CallableValue<'ctx>(Either<FunctionValue<'ctx>, PointerValue<'ctx>>);
 
-impl<'ctx> crate::values::traits::AsValueRef for CallableValue<'ctx> {
+impl<'ctx> AsValueRef for CallableValue<'ctx> {
     fn as_value_ref(&self) -> LLVMValueRef {
         use either::Either::*;
 
@@ -89,7 +90,7 @@ impl<'ctx> crate::values::traits::AsValueRef for CallableValue<'ctx> {
     }
 }
 
-impl<'ctx> crate::values::AnyValue<'ctx> for CallableValue<'ctx> {}
+impl<'ctx> AnyValue<'ctx> for CallableValue<'ctx> {}
 
 impl<'ctx> CallableValue<'ctx> {
     pub(crate) fn returns_void(&self) -> bool {
