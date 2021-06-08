@@ -1,16 +1,12 @@
 use std::convert::{TryFrom};
 use either::Either;
 
-use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, Value};
+use crate::values::AsValueRef;
 use crate::values::{FunctionValue, PointerValue, AnyValue};
-
-use crate::traits::AsValue
 
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::core::{LLVMGetTypeKind, LLVMGetElementType, LLVMTypeOf, LLVMGetReturnType};
 use llvm_sys::LLVMTypeKind;
-
-use crate::builder::Builder;
 
 /// A value that can be called with the [`Builder::build_call`] instruction.
 ///
@@ -98,7 +94,7 @@ impl<'ctx> CallableValue<'ctx> {
             LLVMGetTypeKind(LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(self.as_value_ref()))))
         };
 
-        matches!(LLVMTypeKind::LLVMVoidTypeKind, return_type)
+        matches!(return_type, LLVMTypeKind::LLVMVoidTypeKind)
     }
 }
 
