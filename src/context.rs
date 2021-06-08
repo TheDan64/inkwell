@@ -237,7 +237,9 @@ impl Context {
     ///
     /// # Example
     /// ```no_run
+    /// use std::convert::TryFrom;
     /// use inkwell::context::Context;
+    /// use inkwell::values::CallableValue;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
@@ -251,6 +253,7 @@ impl Context {
     /// let asm_fn = context.i64_type().fn_type(&[context.i64_type().into(), context.i64_type().into()], false);
     /// let asm = context.create_inline_asm(asm_fn, "syscall".to_string(), "=r,{rax},{rdi}".to_string(), true, false);
     /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
+    /// let callable_value = CallableValue.try_from(asm).unwrap();
     /// builder.build_call(asm, params, "exit");
     /// builder.build_return(None);
     #[llvm_versions(3.6..7.0)]
