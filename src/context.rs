@@ -253,8 +253,8 @@ impl Context {
     /// let asm_fn = context.i64_type().fn_type(&[context.i64_type().into(), context.i64_type().into()], false);
     /// let asm = context.create_inline_asm(asm_fn, "syscall".to_string(), "=r,{rax},{rdi}".to_string(), true, false);
     /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
-    /// let callable_value = CallableValue.try_from(asm).unwrap();
-    /// builder.build_call(asm, params, "exit");
+    /// let callable_value = CallableValue::try_from(asm).unwrap();
+    /// builder.build_call(callable_value, params, "exit");
     /// builder.build_return(None);
     #[llvm_versions(3.6..7.0)]
     pub fn create_inline_asm(&self, ty: FunctionType, assembly: String, constraints: String, sideeffects: bool, alignstack: bool) -> PointerValue {
