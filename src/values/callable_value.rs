@@ -1,4 +1,4 @@
-use std::convert::{TryFrom};
+use std::convert::TryFrom;
 use either::Either;
 
 use crate::values::AsValueRef;
@@ -7,6 +7,12 @@ use crate::values::{FunctionValue, PointerValue, AnyValue};
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::core::{LLVMGetTypeKind, LLVMGetElementType, LLVMTypeOf, LLVMGetReturnType};
 use llvm_sys::LLVMTypeKind;
+
+// imports used in documentation
+#[allow(unused_imports)]
+use crate::builder::Builder;
+#[allow(unused_imports)]
+use std::convert::TryInto;
 
 /// A value that can be called with the [`Builder::build_call`] instruction.
 ///
