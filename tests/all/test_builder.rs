@@ -124,7 +124,8 @@ fn test_build_invoke_cleanup_resume() {
         let i32_type = context.i32_type();
         let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
 
-        let res = builder.build_cleanup_landing_pad( exception_type, personality_function, "res");
+        let clauses: &[inkwell::values::PointerValue] = &[];
+        let res = builder.build_landing_pad( exception_type, personality_function, clauses, true, "res");
 
         // do cleanup ...
 
@@ -191,13 +192,91 @@ fn test_build_invoke_catch_all() {
         let i32_type = context.i32_type();
         let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
 
-        let res = builder.build_catch_all_landing_pad(exception_type, personality_function, "res");
+        let null = i8_ptr_type.const_zero();
+        let res = builder.build_landing_pad(exception_type, personality_function, &[null], false, "res");
 
         let fakepi = f32_type.const_zero();
 
         builder.build_return(Some(&fakepi));
     }
 
+    assert!(module.verify().is_ok());
+}
+
+#[test]
+fn landing_pad_filter() { 
+    use inkwell::module::Linkage;
+    use inkwell::values::AnyValue;
+
+    let context = Context::create();
+    let module = context.create_module("sum");
+    let builder = context.create_builder();
+
+    let f32_type = context.f32_type();
+    let fn_type = f32_type.fn_type(&[], false);
+
+    let function = module.add_function("get_pi", fn_type, None);
+    let basic_block = context.append_basic_block(function, "entry");
+
+    builder.position_at_end(basic_block);
+
+    let pi = f32_type.const_float(::std::f64::consts::PI);
+
+    builder.build_return(Some(&pi));
+
+    let function2 = module.add_function("wrapper", fn_type, None);
+    let basic_block2 = context.append_basic_block(function2, "entry");
+
+    builder.position_at_end(basic_block2);
+
+    let then_block = context.append_basic_block(function2, "then_block");
+    let catch_block = context.append_basic_block(function2, "catch_block");
+
+    let pi2_call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi");
+
+    assert!(!pi2_call_site.is_tail_call());
+
+    pi2_call_site.set_tail_call(true);
+
+    assert!(pi2_call_site.is_tail_call());
+
+    {
+        builder.position_at_end(then_block);
+
+        let pi2 = pi2_call_site.try_as_basic_value().left().unwrap();
+
+        builder.build_return(Some(&pi2));
+    }
+
+    {
+        builder.position_at_end(catch_block);
+
+        // the personality function used by C++
+        let personality_function = {
+            let name = "__gxx_personality_v0";
+
+            module.add_function(name, context.i64_type().fn_type(&[], false), None)
+        };
+
+        // type of an exception in C++
+        let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::Generic);
+        let i32_type = context.i32_type();
+        let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
+
+        // link in the C++ type info for the i32 type
+        let type_info_int = module.add_global(i8_ptr_type, Some(AddressSpace::Generic), "_ZTIi");
+        type_info_int.set_linkage(Linkage::External);
+
+        // make the filter landing pad
+        let filter_pattern = i8_ptr_type.const_array(&[type_info_int.as_any_value_enum().into_pointer_value()]);
+        let res = builder.build_landing_pad(exception_type, personality_function, &[filter_pattern], false, "res");
+
+        let fakepi = f32_type.const_zero();
+
+        builder.build_return(Some(&fakepi));
+    }
+
+    module.print_to_stderr();
     assert!(module.verify().is_ok());
 }
 
