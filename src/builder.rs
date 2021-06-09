@@ -20,10 +20,6 @@ use crate::types::{AsTypeRef, BasicType, IntMathType, FloatMathType, PointerType
 
 use std::marker::PhantomData;
 
-// imports used in documentation
-#[allow(unused_imports)]
-use crate::values::FunctionValue;
-
 #[derive(Debug)]
 pub struct Builder<'ctx> {
     builder: LLVMBuilderRef,
@@ -113,6 +109,8 @@ impl<'ctx> Builder<'ctx> {
     /// Builds a function call instruction. 
     /// [`FunctionValue`]s can be implicitly converted into a [`CallableValue`]. 
     /// See [`CallableValue`] for details on calling a [`PointerValue`] that points to a function.
+    ///
+    /// [`FunctionValue`]: crate::values::FunctionValue
     ///
     /// # Example
     ///
