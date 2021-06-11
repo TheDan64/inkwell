@@ -195,7 +195,9 @@ impl Context {
     ///
     /// # Example
     /// ```no_run
+    /// use std::convert::TryFrom;
     /// use inkwell::context::Context;
+    /// use inkwell::values::CallableValue;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
@@ -209,7 +211,8 @@ impl Context {
     /// let asm_fn = context.i64_type().fn_type(&[context.i64_type().into(), context.i64_type().into()], false);
     /// let asm = context.create_inline_asm(asm_fn, "syscall".to_string(), "=r,{rax},{rdi}".to_string(), true, false, None);
     /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
-    /// builder.build_call(asm, params, "exit");
+    /// let callable_value = CallableValue::try_from(asm).unwrap();
+    /// builder.build_call(callable_value, params, "exit");
     /// builder.build_return(None);
     #[llvm_versions(7.0..=latest)]
     pub fn create_inline_asm(&self, ty: FunctionType, mut assembly: String, mut constraints: String, sideeffects: bool, alignstack: bool, dialect: Option<InlineAsmDialect>) -> PointerValue {
@@ -234,7 +237,9 @@ impl Context {
     ///
     /// # Example
     /// ```no_run
+    /// use std::convert::TryFrom;
     /// use inkwell::context::Context;
+    /// use inkwell::values::CallableValue;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
@@ -248,7 +253,8 @@ impl Context {
     /// let asm_fn = context.i64_type().fn_type(&[context.i64_type().into(), context.i64_type().into()], false);
     /// let asm = context.create_inline_asm(asm_fn, "syscall".to_string(), "=r,{rax},{rdi}".to_string(), true, false);
     /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
-    /// builder.build_call(asm, params, "exit");
+    /// let callable_value = CallableValue::try_from(asm).unwrap();
+    /// builder.build_call(callable_value, params, "exit");
     /// builder.build_return(None);
     #[llvm_versions(3.6..7.0)]
     pub fn create_inline_asm(&self, ty: FunctionType, assembly: String, constraints: String, sideeffects: bool, alignstack: bool) -> PointerValue {

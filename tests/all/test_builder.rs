@@ -1,8 +1,10 @@
 use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, OptimizationLevel};
 use inkwell::context::Context;
 use inkwell::values::BasicValue;
+use inkwell::values::CallableValue;
 
 use std::ptr::null;
+use std::convert::TryFrom;
 
 #[test]
 fn test_build_call() {
@@ -57,7 +59,8 @@ fn test_build_call() {
 
     let load = builder.build_load(alloca, "load").into_pointer_value();
 
-    builder.build_call(load, &[], "call");
+    let callable_value = CallableValue::try_from(load).unwrap();
+    builder.build_call(callable_value, &[], "call");
     builder.build_return(None);
 
     assert!(module.verify().is_ok());
