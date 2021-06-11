@@ -8,17 +8,13 @@ use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::core::{LLVMGetTypeKind, LLVMGetElementType, LLVMTypeOf, LLVMGetReturnType};
 use llvm_sys::LLVMTypeKind;
 
-// imports used in documentation
-#[allow(unused_imports)]
-use crate::builder::Builder;
-#[allow(unused_imports)]
-use std::convert::TryInto;
-
-/// A value that can be called with the [`Builder::build_call`] instruction.
+/// A value that can be called with the [`build_call`] instruction.
 ///
-/// In practice, the `F : Into<CallableValue<'ctx>>` bound of [`Builder::build_call`] means it is
-/// possible to pass a [`FunctionValue`] to `build_call` directly. It will be implicitly converted
+/// In practice, the `F : Into<CallableValue<'ctx>>` bound of [`build_call`] means it is
+/// possible to pass a [`FunctionValue`] to [`build_call`] directly. It will be implicitly converted
 /// into a `CallableValue`.
+///
+/// [`build_call`]: crate::builder::Builder::build_call
 ///
 /// ```no_run
 /// use inkwell::context::Context;
@@ -44,8 +40,7 @@ use std::convert::TryInto;
 /// ```
 ///
 /// A [`PointerValue`] cannot be implicitly converted to a `CallableValue` because the pointer may
-/// point to a non-function value. Instead we can use [`TryFrom`] and [`TryInto`] to handle this
-/// failure case explicitly.
+/// point to a non-function value. Instead we can use [`TryFrom`] to handle this failure case explicitly.
 ///
 /// ```no_run
 /// use std::convert::TryFrom;

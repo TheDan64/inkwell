@@ -110,6 +110,8 @@ impl<'ctx> Builder<'ctx> {
     /// [`FunctionValue`]s can be implicitly converted into a [`CallableValue`]. 
     /// See [`CallableValue`] for details on calling a [`PointerValue`] that points to a function.
     ///
+    /// [`FunctionValue`]: crate::values::FunctionValue
+    ///
     /// # Example
     ///
     /// ```no_run
