@@ -181,6 +181,7 @@ impl<'ctx> Builder<'ctx> {
     /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::AddressSpace;
+    /// use inkwell::module::Linkage;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("sum");
@@ -235,7 +236,7 @@ impl<'ctx> Builder<'ctx> {
     ///     let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
     ///
     ///     let null = i8_ptr_type.const_zero();
-    ///     let res = builder.build_landing_pad(exception_type, personality_function, &[null], false, "res");
+    ///     let res = builder.build_landing_pad(exception_type, personality_function, &[null.into()], false, "res");
     ///
     ///     // we handle the exception by returning a default value
     ///     builder.build_return(Some(&f32_type.const_zero()));
@@ -297,6 +298,7 @@ impl<'ctx> Builder<'ctx> {
     /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::AddressSpace;
+    /// use inkwell::module::Linkage;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("sum");
@@ -325,6 +327,7 @@ impl<'ctx> Builder<'ctx> {
     /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::AddressSpace;
+    /// use inkwell::module::Linkage;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("sum");
@@ -347,7 +350,7 @@ impl<'ctx> Builder<'ctx> {
     /// let null = i8_ptr_type.const_zero();
     /// 
     /// // make the catch all landing pad
-    /// let res = builder.build_landing_pad(exception_type, personality_function, &[null], false, "res");
+    /// let res = builder.build_landing_pad(exception_type, personality_function, &[null.into()], false, "res");
     /// ```
     /// 
     /// * **catch a type of exception**: Catch a specific type of exception. The example uses C++'s type info.
@@ -356,6 +359,7 @@ impl<'ctx> Builder<'ctx> {
     /// use inkwell::context::Context;
     /// use inkwell::module::Linkage;
     /// use inkwell::AddressSpace;
+    /// use inkwell::values::BasicValue;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("sum");
@@ -379,7 +383,8 @@ impl<'ctx> Builder<'ctx> {
     /// type_info_int.set_linkage(Linkage::External);
     /// 
     /// // make the catch landing pad
-    /// let res = builder.build_landing_pad(exception_type, personality_function, &[type_info_int], false, "res");
+    /// let clause = type_info_int.as_basic_value_enum();
+    /// let res = builder.build_landing_pad(exception_type, personality_function, &[clause], false, "res");
     /// ```
     /// 
     /// * **filter**: A filter clause encodes that only some types of exceptions are valid at this
@@ -414,7 +419,7 @@ impl<'ctx> Builder<'ctx> {
     /// 
     /// // make the filter landing pad
     /// let filter_pattern = i8_ptr_type.const_array(&[type_info_int.as_any_value_enum().into_pointer_value()]);
-    /// let res = builder.build_landing_pad(exception_type, personality_function, &[filter_pattern], false, "res");
+    /// let res = builder.build_landing_pad(exception_type, personality_function, &[filter_pattern.into()], false, "res");
     /// ```
     pub fn build_landing_pad<T>(
         &self,
@@ -465,6 +470,7 @@ impl<'ctx> Builder<'ctx> {
     /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::AddressSpace;
+    /// use inkwell::module::Linkage;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("sum");
