@@ -1,11 +1,17 @@
-use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::core::{LLVMConstExtractValue, LLVMConstInsertValue};
+use llvm_sys::prelude::LLVMValueRef;
 
 use std::fmt::Debug;
 
-use crate::values::{ArrayValue, AggregateValueEnum, BasicValueUse, CallSiteValue, GlobalValue, StructValue, BasicValueEnum, AnyValueEnum, IntValue, FloatValue, PointerValue, PhiValue, VectorValue, FunctionValue, InstructionValue, Value};
-use crate::types::{IntMathType, FloatMathType, PointerMathType, IntType, FloatType, PointerType, VectorType};
 use crate::support::LLVMString;
+use crate::types::{
+    FloatMathType, FloatType, IntMathType, IntType, PointerMathType, PointerType, VectorType,
+};
+use crate::values::{
+    AggregateValueEnum, AnyValueEnum, ArrayValue, BasicValueEnum, BasicValueUse, CallSiteValue,
+    FloatValue, FunctionValue, GlobalValue, InstructionValue, IntValue, PhiValue, PointerValue,
+    StructValue, Value, VectorValue,
+};
 
 // This is an ugly privacy hack so that Type can stay private to this module
 // and so that super traits using this trait will be not be implementable
@@ -44,9 +50,7 @@ macro_rules! math_trait_value_set {
 pub trait AggregateValue<'ctx>: BasicValue<'ctx> {
     /// Returns an enum containing a typed version of the `AggregateValue`.
     fn as_aggregate_value_enum(&self) -> AggregateValueEnum<'ctx> {
-        unsafe {
-            AggregateValueEnum::new(self.as_value_ref())
-        }
+        unsafe { AggregateValueEnum::new(self.as_value_ref()) }
     }
 
     // REVIEW: How does LLVM treat out of bound index? Maybe we should return an Option?
@@ -54,14 +58,27 @@ pub trait AggregateValue<'ctx>: BasicValue<'ctx> {
     // REVIEW: Should this be AggregatePointerValue?
     fn const_extract_value(&self, indexes: &mut [u32]) -> BasicValueEnum<'ctx> {
         unsafe {
-            BasicValueEnum::new(LLVMConstExtractValue(self.as_value_ref(), indexes.as_mut_ptr(), indexes.len() as u32))
+            BasicValueEnum::new(LLVMConstExtractValue(
+                self.as_value_ref(),
+                indexes.as_mut_ptr(),
+                indexes.len() as u32,
+            ))
         }
     }
 
     // SubTypes: value should really be T in self: VectorValue<T> I think
-    fn const_insert_value<BV: BasicValue<'ctx>>(&self, value: BV, indexes: &mut [u32]) -> BasicValueEnum<'ctx> {
+    fn const_insert_value<BV: BasicValue<'ctx>>(
+        &self,
+        value: BV,
+        indexes: &mut [u32],
+    ) -> BasicValueEnum<'ctx> {
         unsafe {
-            BasicValueEnum::new(LLVMConstInsertValue(self.as_value_ref(), value.as_value_ref(), indexes.as_mut_ptr(), indexes.len() as u32))
+            BasicValueEnum::new(LLVMConstInsertValue(
+                self.as_value_ref(),
+                value.as_value_ref(),
+                indexes.as_mut_ptr(),
+                indexes.len() as u32,
+            ))
         }
     }
 }
@@ -70,9 +87,7 @@ pub trait AggregateValue<'ctx>: BasicValue<'ctx> {
 pub trait BasicValue<'ctx>: AnyValue<'ctx> {
     /// Returns an enum containing a typed version of the `BasicValue`.
     fn as_basic_value_enum(&self) -> BasicValueEnum<'ctx> {
-        unsafe {
-            BasicValueEnum::new(self.as_value_ref())
-        }
+        unsafe { BasicValueEnum::new(self.as_value_ref()) }
     }
 
     /// Most `BasicValue`s are the byproduct of an instruction
@@ -84,22 +99,16 @@ pub trait BasicValue<'ctx>: AnyValue<'ctx> {
             return None;
         }
 
-        unsafe {
-            Some(InstructionValue::new(self.as_value_ref()))
-        }
+        unsafe { Some(InstructionValue::new(self.as_value_ref())) }
     }
 
     fn get_first_use(&self) -> Option<BasicValueUse> {
-        unsafe {
-            Value::new(self.as_value_ref()).get_first_use()
-        }
+        unsafe { Value::new(self.as_value_ref()).get_first_use() }
     }
 
     /// Sets the name of a `BasicValue`. If the value is a constant, this is a noop.
     fn set_name(&self, name: &str) {
-        unsafe {
-            Value::new(self.as_value_ref()).set_name(name)
-        }
+        unsafe { Value::new(self.as_value_ref()).set_name(name) }
     }
 
     // REVIEW: Possible encompassing methods to implement:
@@ -128,16 +137,12 @@ pub trait PointerMathValue<'ctx>: BasicValue<'ctx> {
 pub trait AnyValue<'ctx>: AsValueRef + Debug {
     /// Returns an enum containing a typed version of `AnyValue`.
     fn as_any_value_enum(&self) -> AnyValueEnum<'ctx> {
-        unsafe {
-            AnyValueEnum::new(self.as_value_ref())
-        }
+        unsafe { AnyValueEnum::new(self.as_value_ref()) }
     }
 
     /// Prints a value to a `LLVMString`
     fn print_to_string(&self) -> LLVMString {
-        unsafe {
-            Value::new(self.as_value_ref()).print_to_string()
-        }
+        unsafe { Value::new(self.as_value_ref()).print_to_string() }
     }
 }
 

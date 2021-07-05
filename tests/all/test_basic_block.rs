@@ -91,15 +91,23 @@ fn test_get_basic_blocks() {
     let function = module.add_function("testing", fn_type, None);
 
     assert_eq!(function.get_name().to_str(), Ok("testing"));
-    assert_eq!(fn_type.get_return_type().unwrap().into_int_type().get_bit_width(), 1);
+    assert_eq!(
+        fn_type
+            .get_return_type()
+            .unwrap()
+            .into_int_type()
+            .get_bit_width(),
+        1
+    );
 
     assert!(function.get_last_basic_block().is_none());
     assert_eq!(function.get_basic_blocks().len(), 0);
 
     let basic_block = context.append_basic_block(function, "entry");
 
-    let last_basic_block = function.get_last_basic_block()
-                                   .expect("Did not find expected basic block");
+    let last_basic_block = function
+        .get_last_basic_block()
+        .expect("Did not find expected basic block");
 
     assert_eq!(last_basic_block, basic_block);
 
@@ -130,10 +138,22 @@ fn test_get_terminator() {
 
     builder.build_return(None);
 
-    assert_eq!(basic_block.get_terminator().unwrap().get_opcode(), InstructionOpcode::Return);
-    assert_eq!(basic_block.get_first_instruction().unwrap().get_opcode(), InstructionOpcode::Return);
-    assert_eq!(basic_block.get_last_instruction().unwrap().get_opcode(), InstructionOpcode::Return);
-    assert_eq!(basic_block.get_last_instruction(), basic_block.get_terminator());
+    assert_eq!(
+        basic_block.get_terminator().unwrap().get_opcode(),
+        InstructionOpcode::Return
+    );
+    assert_eq!(
+        basic_block.get_first_instruction().unwrap().get_opcode(),
+        InstructionOpcode::Return
+    );
+    assert_eq!(
+        basic_block.get_last_instruction().unwrap().get_opcode(),
+        InstructionOpcode::Return
+    );
+    assert_eq!(
+        basic_block.get_last_instruction(),
+        basic_block.get_terminator()
+    );
 }
 
 #[test]
@@ -176,7 +196,7 @@ fn test_rauw() {
     builder.position_at_end(entry);
     let branch_inst = builder.build_unconditional_branch(bb1);
 
-    bb1.replace_all_uses_with(&bb1);  // no-op
+    bb1.replace_all_uses_with(&bb1); // no-op
     bb1.replace_all_uses_with(&bb2);
 
     assert_eq!(branch_inst.get_operand(0).unwrap().right().unwrap(), bb2);

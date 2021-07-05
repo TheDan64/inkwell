@@ -1,10 +1,10 @@
 use llvm_sys::target::{
     LLVMABIAlignmentOfType, LLVMABISizeOfType, LLVMByteOrder, LLVMByteOrdering,
     LLVMCallFrameAlignmentOfType, LLVMCopyStringRepOfTargetData, LLVMCreateTargetData,
-    LLVMDisposeTargetData, LLVMElementAtOffset,
-    LLVMIntPtrTypeForASInContext, LLVMIntPtrTypeInContext, LLVMOffsetOfElement, LLVMPointerSize,
-    LLVMPointerSizeForAS, LLVMPreferredAlignmentOfGlobal, LLVMPreferredAlignmentOfType,
-    LLVMSizeOfTypeInBits, LLVMStoreSizeOfType, LLVMTargetDataRef,
+    LLVMDisposeTargetData, LLVMElementAtOffset, LLVMIntPtrTypeForASInContext,
+    LLVMIntPtrTypeInContext, LLVMOffsetOfElement, LLVMPointerSize, LLVMPointerSizeForAS,
+    LLVMPreferredAlignmentOfGlobal, LLVMPreferredAlignmentOfType, LLVMSizeOfTypeInBits,
+    LLVMStoreSizeOfType, LLVMTargetDataRef,
 };
 #[llvm_versions(4.0..=latest)]
 use llvm_sys::target_machine::LLVMCreateTargetDataLayout;
@@ -102,16 +102,14 @@ pub struct TargetTriple {
 
 impl TargetTriple {
     pub(crate) fn new(triple: LLVMString) -> TargetTriple {
-        TargetTriple {
-            triple,
-        }
+        TargetTriple { triple }
     }
 
     pub fn create(triple: &str) -> TargetTriple {
         let c_string = to_c_str(triple);
 
         TargetTriple {
-            triple: LLVMString::create_from_c_str(&c_string)
+            triple: LLVMString::create_from_c_str(&c_string),
         }
     }
 
@@ -948,9 +946,7 @@ impl Target {
             return None;
         }
 
-        unsafe {
-            Some(TargetMachine::new(target_machine))
-        }
+        unsafe { Some(TargetMachine::new(target_machine)) }
     }
 
     pub fn get_first() -> Option<Self> {
@@ -963,9 +959,7 @@ impl Target {
             return None;
         }
 
-        unsafe {
-            Some(Target::new(target))
-        }
+        unsafe { Some(Target::new(target)) }
     }
 
     pub fn get_next(&self) -> Option<Self> {
@@ -975,9 +969,7 @@ impl Target {
             return None;
         }
 
-        unsafe {
-            Some(Target::new(target))
-        }
+        unsafe { Some(Target::new(target)) }
     }
 
     pub fn get_name(&self) -> &CStr {
@@ -1004,9 +996,7 @@ impl Target {
             return None;
         }
 
-        unsafe {
-            Some(Target::new(target))
-        }
+        unsafe { Some(Target::new(target)) }
     }
 
     pub fn from_triple(triple: &TargetTriple) -> Result<Self, LLVMString> {
@@ -1015,7 +1005,9 @@ impl Target {
 
         let code = {
             let _guard = TARGET_LOCK.read();
-            unsafe { LLVMGetTargetFromTriple(triple.as_ptr(), &mut target, err_string.as_mut_ptr()) }
+            unsafe {
+                LLVMGetTargetFromTriple(triple.as_ptr(), &mut target, err_string.as_mut_ptr())
+            }
         };
 
         if code == 1 {
@@ -1024,9 +1016,7 @@ impl Target {
             }
         }
 
-        unsafe {
-            Ok(Target::new(target))
-        }
+        unsafe { Ok(Target::new(target)) }
     }
 
     pub fn has_jit(&self) -> bool {
@@ -1055,9 +1045,7 @@ impl TargetMachine {
     }
 
     pub fn get_target(&self) -> Target {
-        unsafe {
-            Target::new(LLVMGetTargetMachineTarget(self.target_machine))
-        }
+        unsafe { Target::new(LLVMGetTargetMachineTarget(self.target_machine)) }
     }
 
     pub fn get_triple(&self) -> TargetTriple {
@@ -1101,9 +1089,7 @@ impl TargetMachine {
     pub fn get_host_cpu_name() -> LLVMString {
         use llvm_sys::target_machine::LLVMGetHostCPUName;
 
-        unsafe {
-            LLVMString::new(LLVMGetHostCPUName())
-        }
+        unsafe { LLVMString::new(LLVMGetHostCPUName()) }
     }
 
     /// Gets a comma separated list of supported features by the host CPU.
@@ -1115,15 +1101,11 @@ impl TargetMachine {
     pub fn get_host_cpu_features() -> LLVMString {
         use llvm_sys::target_machine::LLVMGetHostCPUFeatures;
 
-        unsafe {
-            LLVMString::new(LLVMGetHostCPUFeatures())
-        }
+        unsafe { LLVMString::new(LLVMGetHostCPUFeatures()) }
     }
 
     pub fn get_cpu(&self) -> LLVMString {
-        unsafe {
-            LLVMString::new(LLVMGetTargetMachineCPU(self.target_machine))
-        }
+        unsafe { LLVMString::new(LLVMGetTargetMachineCPU(self.target_machine)) }
     }
 
     pub fn get_feature_string(&self) -> &CStr {
@@ -1133,9 +1115,7 @@ impl TargetMachine {
     /// Create TargetData from this target machine
     #[llvm_versions(4.0..=latest)]
     pub fn get_target_data(&self) -> TargetData {
-        unsafe {
-            TargetData::new(LLVMCreateTargetDataLayout(self.target_machine))
-        }
+        unsafe { TargetData::new(LLVMCreateTargetDataLayout(self.target_machine)) }
     }
 
     pub fn set_asm_verbosity(&self, verbosity: bool) {
@@ -1304,9 +1284,7 @@ impl TargetData {
     pub(crate) unsafe fn new(target_data: LLVMTargetDataRef) -> TargetData {
         assert!(!target_data.is_null());
 
-        TargetData {
-            target_data,
-        }
+        TargetData { target_data }
     }
 
     /// Gets the `IntType` representing a bit width of a pointer. It will be assigned the referenced context.
@@ -1326,7 +1304,9 @@ impl TargetData {
     /// let target_data = execution_engine.get_target_data();
     /// let int_type = target_data.ptr_sized_int_type_in_context(&context, None);
     /// ```
-    #[deprecated(note = "This method will be removed in the future. Please use Context::ptr_sized_int_type instead.")]
+    #[deprecated(
+        note = "This method will be removed in the future. Please use Context::ptr_sized_int_type instead."
+    )]
     pub fn ptr_sized_int_type_in_context<'ctx>(
         &self,
         context: &'ctx Context,
@@ -1343,15 +1323,11 @@ impl TargetData {
             None => unsafe { LLVMIntPtrTypeInContext(context.context, self.target_data) },
         };
 
-        unsafe {
-            IntType::new(int_type_ptr)
-        }
+        unsafe { IntType::new(int_type_ptr) }
     }
 
     pub fn get_data_layout(&self) -> DataLayout {
-        unsafe {
-            DataLayout::new_owned(LLVMCopyStringRepOfTargetData(self.target_data))
-        }
+        unsafe { DataLayout::new_owned(LLVMCopyStringRepOfTargetData(self.target_data)) }
     }
 
     // REVIEW: Does this only work if Sized?
@@ -1363,9 +1339,7 @@ impl TargetData {
     pub fn create(str_repr: &str) -> TargetData {
         let c_string = to_c_str(str_repr);
 
-        unsafe {
-            TargetData::new(LLVMCreateTargetData(c_string.as_ptr()))
-        }
+        unsafe { TargetData::new(LLVMCreateTargetData(c_string.as_ptr())) }
     }
 
     pub fn get_byte_ordering(&self) -> ByteOrdering {

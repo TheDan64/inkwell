@@ -6,7 +6,7 @@ use std::fmt;
 
 use crate::types::ArrayType;
 use crate::values::traits::{AnyValue, AsValueRef};
-use crate::values::{Value, InstructionValue};
+use crate::values::{InstructionValue, Value};
 
 /// An `ArrayValue` is a block of contiguous constants or variables.
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
@@ -31,9 +31,7 @@ impl<'ctx> ArrayValue<'ctx> {
 
     /// Gets the type of this `ArrayValue`.
     pub fn get_type(self) -> ArrayType<'ctx> {
-        unsafe {
-            ArrayType::new(self.array_value.get_type())
-        }
+        unsafe { ArrayType::new(self.array_value.get_type()) }
     }
 
     /// Determines whether or not this value is null.
@@ -94,12 +92,9 @@ impl fmt::Debug for ArrayValue<'_> {
         let name = self.get_name();
         let is_const = self.is_const();
         let is_null = self.is_null();
-        let is_const_array = unsafe {
-            !LLVMIsAConstantArray(self.as_value_ref()).is_null()
-        };
-        let is_const_data_array = unsafe {
-            !LLVMIsAConstantDataArray(self.as_value_ref()).is_null()
-        };
+        let is_const_array = unsafe { !LLVMIsAConstantArray(self.as_value_ref()).is_null() };
+        let is_const_data_array =
+            unsafe { !LLVMIsAConstantDataArray(self.as_value_ref()).is_null() };
 
         f.debug_struct("ArrayValue")
             .field("name", &name)
@@ -109,7 +104,7 @@ impl fmt::Debug for ArrayValue<'_> {
             .field("is_const_data_array", &is_const_data_array)
             .field("is_null", &is_null)
             .field("llvm_value", &llvm_value)
-            .field("llvm_type",  &llvm_type)
+            .field("llvm_type", &llvm_type)
             .finish()
     }
 }

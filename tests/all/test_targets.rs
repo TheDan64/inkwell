@@ -1,11 +1,14 @@
-use inkwell::{AddressSpace, OptimizationLevel};
 use inkwell::context::Context;
-use inkwell::targets::{ByteOrdering, CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetData, TargetMachine, TargetTriple};
+use inkwell::targets::{
+    ByteOrdering, CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetData,
+    TargetMachine, TargetTriple,
+};
+use inkwell::{AddressSpace, OptimizationLevel};
 
 use regex::Regex;
 
 use std::env::temp_dir;
-use std::fs::{File, remove_file};
+use std::fs::{remove_file, File};
 use std::io::Read;
 use std::str::from_utf8;
 
@@ -65,7 +68,8 @@ use std::str::from_utf8;
 
 #[test]
 fn test_target_and_target_machine() {
-    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+    Target::initialize_native(&InitializationConfig::default())
+        .expect("Failed to initialize native target");
 
     let bad_target = Target::from_name("asd");
 
@@ -75,10 +79,31 @@ fn test_target_and_target_machine() {
 
     #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
     assert_eq!(bad_target2.unwrap_err().to_string(), "No available targets are compatible with this triple, see -version for the available targets.");
-    #[cfg(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0"))]
-    assert_eq!(bad_target2.unwrap_err().to_string(), "No available targets are compatible with this triple.");
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0")))]
-    assert_eq!(bad_target2.unwrap_err().to_string(), "No available targets are compatible with triple \"sadas\"");
+    #[cfg(any(
+        feature = "llvm3-9",
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0",
+        feature = "llvm7-0"
+    ))]
+    assert_eq!(
+        bad_target2.unwrap_err().to_string(),
+        "No available targets are compatible with this triple."
+    );
+    #[cfg(not(any(
+        feature = "llvm3-6",
+        feature = "llvm3-7",
+        feature = "llvm3-8",
+        feature = "llvm3-9",
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0",
+        feature = "llvm7-0"
+    )))]
+    assert_eq!(
+        bad_target2.unwrap_err().to_string(),
+        "No available targets are compatible with triple \"sadas\""
+    );
 
     Target::initialize_x86(&InitializationConfig::default());
 
@@ -96,8 +121,14 @@ fn test_target_and_target_machine() {
     assert_eq!(good_target, good_target2);
     assert_eq!(good_target.get_name().to_str(), Ok("x86-64"));
     assert_eq!(good_target2.get_name().to_str(), Ok("x86-64"));
-    assert_eq!(good_target.get_description().to_str(), Ok("64-bit X86: EM64T and AMD64"));
-    assert_eq!(good_target2.get_description().to_str(), Ok("64-bit X86: EM64T and AMD64"));
+    assert_eq!(
+        good_target.get_description().to_str(),
+        Ok("64-bit X86: EM64T and AMD64")
+    );
+    assert_eq!(
+        good_target2.get_description().to_str(),
+        Ok("64-bit X86: EM64T and AMD64")
+    );
     assert!(good_target.has_jit());
     assert!(good_target2.has_jit());
     assert!(good_target.has_target_machine());
@@ -109,15 +140,16 @@ fn test_target_and_target_machine() {
 
     assert_eq!(next_target.get_name().to_str(), Ok("x86"));
 
-    let target_machine = good_target.create_target_machine(
-        &TargetTriple::create("x86_64-pc-linux-gnu"),
-        "x86-64",
-        "+avx2",
-        OptimizationLevel::Default,
-        RelocMode::Default,
-        CodeModel::Default
-    )
-    .unwrap();
+    let target_machine = good_target
+        .create_target_machine(
+            &TargetTriple::create("x86_64-pc-linux-gnu"),
+            "x86-64",
+            "+avx2",
+            OptimizationLevel::Default,
+            RelocMode::Default,
+            CodeModel::Default,
+        )
+        .unwrap();
 
     // TODO: Test target_machine failure
 
@@ -130,8 +162,15 @@ fn test_target_and_target_machine() {
     assert_eq!(target_machine.get_cpu().to_str(), Ok("x86-64"));
     assert_eq!(target_machine.get_feature_string().to_str(), Ok("+avx2"));
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
-                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[cfg(not(any(
+        feature = "llvm3-6",
+        feature = "llvm3-7",
+        feature = "llvm3-8",
+        feature = "llvm3-9",
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0"
+    )))]
     {
         // TODO: Try and find a triple that actually gets normalized..
         assert_eq!(
@@ -150,8 +189,8 @@ fn test_default_triple() {
     let default_triple = default_triple.as_str().to_string_lossy();
 
     #[cfg(target_os = "linux")]
-    let cond = default_triple == "x86_64-pc-linux-gnu" ||
-               default_triple == "x86_64-unknown-linux-gnu";
+    let cond =
+        default_triple == "x86_64-pc-linux-gnu" || default_triple == "x86_64-unknown-linux-gnu";
 
     #[cfg(target_os = "macos")]
     let cond = default_triple.starts_with("x86_64-apple-darwin");
@@ -163,11 +202,14 @@ fn test_default_triple() {
 
 #[test]
 fn test_target_data() {
-    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+    Target::initialize_native(&InitializationConfig::default())
+        .expect("Failed to initialize native target");
 
     let context = Context::create();
     let module = context.create_module("sum");
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    let execution_engine = module
+        .create_jit_execution_engine(OptimizationLevel::None)
+        .unwrap();
     let target_data = execution_engine.get_target_data();
 
     let data_layout = target_data.get_data_layout();
@@ -193,8 +235,24 @@ fn test_target_data() {
     let i64_type = context.i64_type();
     let f32_type = context.f32_type();
     let f64_type = context.f64_type();
-    let struct_type = context.struct_type(&[i32_type.into(), i64_type.into(), f64_type.into(), f32_type.into()], false);
-    let struct_type2 = context.struct_type(&[f32_type.into(), i32_type.into(), i64_type.into(), f64_type.into()], false);
+    let struct_type = context.struct_type(
+        &[
+            i32_type.into(),
+            i64_type.into(),
+            f64_type.into(),
+            f32_type.into(),
+        ],
+        false,
+    );
+    let struct_type2 = context.struct_type(
+        &[
+            f32_type.into(),
+            i32_type.into(),
+            i64_type.into(),
+            f64_type.into(),
+        ],
+        false,
+    );
 
     assert_eq!(target_data.get_bit_size(&i32_type), 32);
     assert_eq!(target_data.get_bit_size(&i64_type), 64);
@@ -258,7 +316,10 @@ fn test_target_data() {
     assert_eq!(target_data.element_at_offset(&struct_type, 16), 2);
     assert_eq!(target_data.element_at_offset(&struct_type, 24), 3);
     assert_eq!(target_data.element_at_offset(&struct_type, 32), 3); // OoB
-    assert_eq!(target_data.element_at_offset(&struct_type, ::std::u64::MAX), 3); // OoB; Odd as it seems to cap at max element number
+    assert_eq!(
+        target_data.element_at_offset(&struct_type, ::std::u64::MAX),
+        3
+    ); // OoB; Odd as it seems to cap at max element number
 
     assert_eq!(target_data.offset_of_element(&struct_type2, 0), Some(0));
     assert_eq!(target_data.offset_of_element(&struct_type2, 1), Some(4));
@@ -273,37 +334,55 @@ fn test_target_data() {
     assert_eq!(target_data.element_at_offset(&struct_type2, 8), 2);
     assert_eq!(target_data.element_at_offset(&struct_type2, 16), 3);
     assert_eq!(target_data.element_at_offset(&struct_type2, 32), 3); // OoB
-    assert_eq!(target_data.element_at_offset(&struct_type2, ::std::u64::MAX), 3); // OoB; TODOC: Odd but seems to cap at max element number
+    assert_eq!(
+        target_data.element_at_offset(&struct_type2, ::std::u64::MAX),
+        3
+    ); // OoB; TODOC: Odd but seems to cap at max element number
 
     TargetData::create("e-m:e-i64:64-f80:128-n8:16:32:64-S128");
 }
 
 #[test]
 fn test_ptr_sized_int() {
-    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+    Target::initialize_native(&InitializationConfig::default())
+        .expect("Failed to initialize native target");
 
     let context = Context::create();
     let module = context.create_module("sum");
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    let execution_engine = module
+        .create_jit_execution_engine(OptimizationLevel::None)
+        .unwrap();
     let target_data = execution_engine.get_target_data();
     let address_space = AddressSpace::Global;
     let int_type = context.ptr_sized_int_type(&target_data, None);
 
-    assert_eq!(int_type.get_bit_width(), target_data.get_pointer_byte_size(None) * 8);
+    assert_eq!(
+        int_type.get_bit_width(),
+        target_data.get_pointer_byte_size(None) * 8
+    );
 
     let int_type2 = context.ptr_sized_int_type(&target_data, Some(address_space));
 
-    assert_eq!(int_type2.get_bit_width(), target_data.get_pointer_byte_size(Some(address_space)) * 8);
+    assert_eq!(
+        int_type2.get_bit_width(),
+        target_data.get_pointer_byte_size(Some(address_space)) * 8
+    );
 
     let int_type3 = context.ptr_sized_int_type(&target_data, None);
 
     assert_eq!(*int_type3.get_context(), context);
-    assert_eq!(int_type3.get_bit_width(), target_data.get_pointer_byte_size(None) * 8);
+    assert_eq!(
+        int_type3.get_bit_width(),
+        target_data.get_pointer_byte_size(None) * 8
+    );
 
     let int_type4 = context.ptr_sized_int_type(&target_data, Some(address_space));
 
     assert_eq!(*int_type4.get_context(), context);
-    assert_eq!(int_type4.get_bit_width(), target_data.get_pointer_byte_size(Some(address_space)) * 8);
+    assert_eq!(
+        int_type4.get_bit_width(),
+        target_data.get_pointer_byte_size(Some(address_space)) * 8
+    );
 }
 
 #[test]
@@ -311,15 +390,16 @@ fn test_write_target_machine_to_file() {
     Target::initialize_x86(&InitializationConfig::default());
 
     let target = Target::from_name("x86-64").unwrap();
-    let target_machine = target.create_target_machine(
-        &TargetTriple::create("x86_64-pc-linux-gnu"),
-        "x86-64",
-        "+avx2",
-        OptimizationLevel::Less,
-        RelocMode::Static,
-        CodeModel::Small
-    )
-    .unwrap();
+    let target_machine = target
+        .create_target_machine(
+            &TargetTriple::create("x86_64-pc-linux-gnu"),
+            "x86-64",
+            "+avx2",
+            OptimizationLevel::Less,
+            RelocMode::Static,
+            CodeModel::Small,
+        )
+        .unwrap();
     let mut path = temp_dir();
 
     path.push("temp.asm");
@@ -331,12 +411,15 @@ fn test_write_target_machine_to_file() {
 
     module.add_function("my_fn", fn_type, None);
 
-    assert!(target_machine.write_to_file(&module, FileType::Assembly, &path).is_ok());
+    assert!(target_machine
+        .write_to_file(&module, FileType::Assembly, &path)
+        .is_ok());
 
     let mut contents = Vec::new();
     let mut file = File::open(&path).expect("Could not open temp file");
 
-    file.read_to_end(&mut contents).expect("Unable to verify written file");
+    file.read_to_end(&mut contents)
+        .expect("Unable to verify written file");
 
     assert!(!contents.is_empty());
 
@@ -355,15 +438,16 @@ fn test_write_target_machine_to_memory_buffer() {
     Target::initialize_x86(&InitializationConfig::default());
 
     let target = Target::from_name("x86-64").unwrap();
-    let target_machine = target.create_target_machine(
-        &TargetTriple::create("x86_64-pc-linux-gnu"),
-        "x86-64",
-        "+avx2",
-        OptimizationLevel::Aggressive,
-        RelocMode::PIC,
-        CodeModel::Medium
-    )
-    .unwrap();
+    let target_machine = target
+        .create_target_machine(
+            &TargetTriple::create("x86_64-pc-linux-gnu"),
+            "x86-64",
+            "+avx2",
+            OptimizationLevel::Aggressive,
+            RelocMode::PIC,
+            CodeModel::Medium,
+        )
+        .unwrap();
 
     let context = Context::create();
     let module = context.create_module("my_module");
@@ -372,7 +456,9 @@ fn test_write_target_machine_to_memory_buffer() {
 
     module.add_function("my_fn", fn_type, None);
 
-    let buffer = target_machine.write_to_memory_buffer(&module, FileType::Assembly).unwrap();
+    let buffer = target_machine
+        .write_to_memory_buffer(&module, FileType::Assembly)
+        .unwrap();
 
     assert!(!buffer.get_size() > 0);
 

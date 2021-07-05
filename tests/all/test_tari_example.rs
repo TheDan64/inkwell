@@ -1,18 +1,21 @@
 extern crate inkwell;
 
-use self::inkwell::OptimizationLevel;
 use self::inkwell::context::Context;
-use self::inkwell::targets::{InitializationConfig, Target};
 use self::inkwell::execution_engine::JitFunction;
+use self::inkwell::targets::{InitializationConfig, Target};
+use self::inkwell::OptimizationLevel;
 
 #[test]
 fn test_tari_example() {
-    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+    Target::initialize_native(&InitializationConfig::default())
+        .expect("Failed to initialize native target");
 
     let context = Context::create();
     let module = context.create_module("sum");
     let builder = context.create_builder();
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    let execution_engine = module
+        .create_jit_execution_engine(OptimizationLevel::None)
+        .unwrap();
 
     let i64_type = context.i64_type();
     let fn_type = i64_type.fn_type(&[i64_type.into(), i64_type.into(), i64_type.into()], false);

@@ -1,12 +1,12 @@
-use llvm_sys::core::{LLVMConstReal, LLVMConstRealOfStringAndSize, LLVMConstArray};
+use llvm_sys::core::{LLVMConstArray, LLVMConstReal, LLVMConstRealOfStringAndSize};
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfFloat;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
-use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::types::traits::AsTypeRef;
-use crate::types::{Type, PointerType, FunctionType, BasicTypeEnum, ArrayType, VectorType};
-use crate::values::{AsValueRef, ArrayValue, FloatValue, GenericValue, IntValue};
+use crate::types::{ArrayType, BasicTypeEnum, FunctionType, PointerType, Type, VectorType};
+use crate::values::{ArrayValue, AsValueRef, FloatValue, GenericValue, IntValue};
+use crate::AddressSpace;
 
 /// A `FloatType` is the type of a floating point constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -34,7 +34,11 @@ impl<'ctx> FloatType<'ctx> {
     /// let f32_type = context.f32_type();
     /// let fn_type = f32_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
+    pub fn fn_type(
+        self,
+        param_types: &[BasicTypeEnum<'ctx>],
+        is_var_args: bool,
+    ) -> FunctionType<'ctx> {
         self.float_type.fn_type(param_types, is_var_args)
     }
 
@@ -87,9 +91,7 @@ impl<'ctx> FloatType<'ctx> {
     /// let f32_value = f32_type.const_float(42.);
     /// ```
     pub fn const_float(self, value: f64) -> FloatValue<'ctx> {
-        unsafe {
-            FloatValue::new(LLVMConstReal(self.float_type.ty, value))
-        }
+        unsafe { FloatValue::new(LLVMConstReal(self.float_type.ty, value)) }
     }
 
     /// Create a `FloatValue` from a string. LLVM provides no error handling here,
@@ -125,7 +127,11 @@ impl<'ctx> FloatType<'ctx> {
     /// ```
     pub fn const_float_from_string(self, slice: &str) -> FloatValue<'ctx> {
         unsafe {
-            FloatValue::new(LLVMConstRealOfStringAndSize(self.as_type_ref(), slice.as_ptr() as *const ::libc::c_char, slice.len() as u32))
+            FloatValue::new(LLVMConstRealOfStringAndSize(
+                self.as_type_ref(),
+                slice.as_ptr() as *const ::libc::c_char,
+                slice.len() as u32,
+            ))
         }
     }
 
@@ -144,9 +150,7 @@ impl<'ctx> FloatType<'ctx> {
     /// assert_eq!(f32_zero.print_to_string().to_string(), "float 0.000000e+00");
     /// ```
     pub fn const_zero(self) -> FloatValue<'ctx> {
-        unsafe {
-            FloatValue::new(self.float_type.const_zero())
-        }
+        unsafe { FloatValue::new(self.float_type.const_zero()) }
     }
 
     /// Gets the size of this `FloatType`. Value may vary depending on the target architecture.
@@ -233,16 +237,12 @@ impl<'ctx> FloatType<'ctx> {
     /// assert!(f32_undef.is_undef());
     /// ```
     pub fn get_undef(&self) -> FloatValue<'ctx> {
-        unsafe {
-            FloatValue::new(self.float_type.get_undef())
-        }
+        unsafe { FloatValue::new(self.float_type.get_undef()) }
     }
 
     /// Creates a `GenericValue` for use with `ExecutionEngine`s.
     pub fn create_generic_value(self, value: f64) -> GenericValue<'ctx> {
-        unsafe {
-            GenericValue::new(LLVMCreateGenericValueOfFloat(self.as_type_ref(), value))
-        }
+        unsafe { GenericValue::new(LLVMCreateGenericValueOfFloat(self.as_type_ref(), value)) }
     }
 
     /// Creates a constant `ArrayValue`.
@@ -260,11 +260,13 @@ impl<'ctx> FloatType<'ctx> {
     /// assert!(f32_array.is_const());
     /// ```
     pub fn const_array(self, values: &[FloatValue<'ctx>]) -> ArrayValue<'ctx> {
-        let mut values: Vec<LLVMValueRef> = values.iter()
-                                                  .map(|val| val.as_value_ref())
-                                                  .collect();
+        let mut values: Vec<LLVMValueRef> = values.iter().map(|val| val.as_value_ref()).collect();
         unsafe {
-            ArrayValue::new(LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32))
+            ArrayValue::new(LLVMConstArray(
+                self.as_type_ref(),
+                values.as_mut_ptr(),
+                values.len() as u32,
+            ))
         }
     }
 }

@@ -1,10 +1,10 @@
-use llvm_sys::core::{LLVMConstVector, LLVMGetVectorSize, LLVMConstArray};
+use llvm_sys::core::{LLVMConstArray, LLVMConstVector, LLVMGetVectorSize};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
-use crate::AddressSpace;
 use crate::context::ContextRef;
-use crate::types::{ArrayType, BasicTypeEnum, Type, traits::AsTypeRef, FunctionType, PointerType};
-use crate::values::{AsValueRef, ArrayValue, BasicValue, VectorValue, IntValue};
+use crate::types::{traits::AsTypeRef, ArrayType, BasicTypeEnum, FunctionType, PointerType, Type};
+use crate::values::{ArrayValue, AsValueRef, BasicValue, IntValue, VectorValue};
+use crate::AddressSpace;
 
 /// A `VectorType` is the type of a multiple value SIMD constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -71,9 +71,7 @@ impl<'ctx> VectorType<'ctx> {
     /// assert_eq!(f32_vector_type.get_element_type().into_float_type(), f32_type);
     /// ```
     pub fn get_size(self) -> u32 {
-        unsafe {
-            LLVMGetVectorSize(self.as_type_ref())
-        }
+        unsafe { LLVMGetVectorSize(self.as_type_ref()) }
     }
 
     // REVIEW:
@@ -100,12 +98,8 @@ impl<'ctx> VectorType<'ctx> {
     /// assert!(f32_vec_val.is_constant_vector());
     /// ```
     pub fn const_vector<V: BasicValue<'ctx>>(values: &[V]) -> VectorValue<'ctx> {
-        let mut values: Vec<LLVMValueRef> = values.iter()
-                                                  .map(|val| val.as_value_ref())
-                                                  .collect();
-        unsafe {
-            VectorValue::new(LLVMConstVector(values.as_mut_ptr(), values.len() as u32))
-        }
+        let mut values: Vec<LLVMValueRef> = values.iter().map(|val| val.as_value_ref()).collect();
+        unsafe { VectorValue::new(LLVMConstVector(values.as_mut_ptr(), values.len() as u32)) }
     }
 
     /// Creates a constant zero value of this `VectorType`.
@@ -121,9 +115,7 @@ impl<'ctx> VectorType<'ctx> {
     /// let f32_vec_zero = f32_vec_type.const_zero();
     /// ```
     pub fn const_zero(self) -> VectorValue<'ctx> {
-        unsafe {
-            VectorValue::new(self.vec_type.const_zero())
-        }
+        unsafe { VectorValue::new(self.vec_type.const_zero()) }
     }
 
     // See Type::print_to_stderr note on 5.0+ status
@@ -148,9 +140,7 @@ impl<'ctx> VectorType<'ctx> {
     /// assert!(f32_vec_undef.is_undef());
     /// ```
     pub fn get_undef(self) -> VectorValue<'ctx> {
-        unsafe {
-            VectorValue::new(self.vec_type.get_undef())
-        }
+        unsafe { VectorValue::new(self.vec_type.get_undef()) }
     }
 
     // SubType: VectorType<BT> -> BT?
@@ -170,7 +160,6 @@ impl<'ctx> VectorType<'ctx> {
     /// ```
     pub fn get_element_type(self) -> BasicTypeEnum<'ctx> {
         self.vec_type.get_element_type().to_basic_type_enum()
-
     }
 
     /// Creates a `PointerType` with this `VectorType` for its element type.
@@ -204,7 +193,11 @@ impl<'ctx> VectorType<'ctx> {
     /// let f32_vec_type = f32_type.vec_type(3);
     /// let fn_type = f32_vec_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
+    pub fn fn_type(
+        self,
+        param_types: &[BasicTypeEnum<'ctx>],
+        is_var_args: bool,
+    ) -> FunctionType<'ctx> {
         self.vec_type.fn_type(param_types, is_var_args)
     }
 
@@ -245,12 +238,14 @@ impl<'ctx> VectorType<'ctx> {
     /// assert!(f32_array.is_const());
     /// ```
     pub fn const_array(self, values: &[VectorValue<'ctx>]) -> ArrayValue<'ctx> {
-        let mut values: Vec<LLVMValueRef> = values.iter()
-                                                  .map(|val| val.as_value_ref())
-                                                  .collect();
+        let mut values: Vec<LLVMValueRef> = values.iter().map(|val| val.as_value_ref()).collect();
 
         unsafe {
-            ArrayValue::new(LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32))
+            ArrayValue::new(LLVMConstArray(
+                self.as_type_ref(),
+                values.as_mut_ptr(),
+                values.len() as u32,
+            ))
         }
     }
 

@@ -27,9 +27,7 @@ impl<'ctx> StructValue<'ctx> {
     }
 
     pub fn get_type(self) -> StructType<'ctx> {
-        unsafe {
-            StructType::new(self.struct_value.get_type())
-        }
+        unsafe { StructType::new(self.struct_value.get_type()) }
     }
 
     pub fn is_null(self) -> bool {
@@ -49,7 +47,8 @@ impl<'ctx> StructValue<'ctx> {
     }
 
     pub fn replace_all_uses_with(self, other: StructValue<'ctx>) {
-        self.struct_value.replace_all_uses_with(other.as_value_ref())
+        self.struct_value
+            .replace_all_uses_with(other.as_value_ref())
     }
 }
 

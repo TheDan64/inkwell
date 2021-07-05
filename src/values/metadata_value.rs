@@ -1,10 +1,13 @@
-use llvm_sys::core::{LLVMIsAMDNode, LLVMIsAMDString, LLVMGetMDString, LLVMGetMDNodeNumOperands, LLVMGetMDNodeOperands};
+use llvm_sys::core::{
+    LLVMGetMDNodeNumOperands, LLVMGetMDNodeOperands, LLVMGetMDString, LLVMIsAMDNode,
+    LLVMIsAMDString,
+};
 use llvm_sys::prelude::LLVMValueRef;
 
 #[llvm_versions(7.0..=latest)]
-use llvm_sys::prelude::LLVMMetadataRef;
-#[llvm_versions(7.0..=latest)]
 use llvm_sys::core::LLVMValueAsMetadata;
+#[llvm_versions(7.0..=latest)]
+use llvm_sys::prelude::LLVMMetadataRef;
 
 use crate::support::LLVMString;
 use crate::values::traits::AsValueRef;
@@ -56,23 +59,17 @@ impl<'ctx> MetadataValue<'ctx> {
 
     #[llvm_versions(7.0..=latest)]
     pub(crate) fn as_metadata_ref(self) -> LLVMMetadataRef {
-        unsafe {
-            LLVMValueAsMetadata(self.as_value_ref())
-        }
+        unsafe { LLVMValueAsMetadata(self.as_value_ref()) }
     }
 
     // SubTypes: This can probably go away with subtypes
     pub fn is_node(self) -> bool {
-        unsafe {
-            LLVMIsAMDNode(self.as_value_ref()) == self.as_value_ref()
-        }
+        unsafe { LLVMIsAMDNode(self.as_value_ref()) == self.as_value_ref() }
     }
 
     // SubTypes: This can probably go away with subtypes
     pub fn is_string(self) -> bool {
-        unsafe {
-            LLVMIsAMDString(self.as_value_ref()) == self.as_value_ref()
-        }
+        unsafe { LLVMIsAMDString(self.as_value_ref()) == self.as_value_ref() }
     }
 
     pub fn get_string_value(&self) -> Option<&CStr> {
@@ -81,9 +78,7 @@ impl<'ctx> MetadataValue<'ctx> {
         }
 
         let mut len = 0;
-        let c_str = unsafe {
-            CStr::from_ptr(LLVMGetMDString(self.as_value_ref(), &mut len))
-        };
+        let c_str = unsafe { CStr::from_ptr(LLVMGetMDString(self.as_value_ref(), &mut len)) };
 
         Some(c_str)
     }
@@ -94,9 +89,7 @@ impl<'ctx> MetadataValue<'ctx> {
             return 0;
         }
 
-        unsafe {
-            LLVMGetMDNodeNumOperands(self.as_value_ref())
-        }
+        unsafe { LLVMGetMDNodeNumOperands(self.as_value_ref()) }
     }
 
     // SubTypes: Node only one day
@@ -130,7 +123,8 @@ impl<'ctx> MetadataValue<'ctx> {
     }
 
     pub fn replace_all_uses_with(self, other: &MetadataValue<'ctx>) {
-        self.metadata_value.replace_all_uses_with(other.as_value_ref())
+        self.metadata_value
+            .replace_all_uses_with(other.as_value_ref())
     }
 }
 

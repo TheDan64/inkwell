@@ -1,4 +1,6 @@
-use llvm_sys::core::{LLVMAddIncoming, LLVMCountIncoming, LLVMGetIncomingBlock, LLVMGetIncomingValue};
+use llvm_sys::core::{
+    LLVMAddIncoming, LLVMCountIncoming, LLVMGetIncomingBlock, LLVMGetIncomingValue,
+};
 use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 
 use std::ffi::CStr;
@@ -26,20 +28,24 @@ impl<'ctx> PhiValue<'ctx> {
 
     pub fn add_incoming(self, incoming: &[(&dyn BasicValue<'ctx>, BasicBlock<'ctx>)]) {
         let (mut values, mut basic_blocks): (Vec<LLVMValueRef>, Vec<LLVMBasicBlockRef>) = {
-            incoming.iter()
-                    .map(|&(v, bb)| (v.as_value_ref(), bb.basic_block))
-                    .unzip()
+            incoming
+                .iter()
+                .map(|&(v, bb)| (v.as_value_ref(), bb.basic_block))
+                .unzip()
         };
 
         unsafe {
-            LLVMAddIncoming(self.as_value_ref(), values.as_mut_ptr(), basic_blocks.as_mut_ptr(), incoming.len() as u32);
+            LLVMAddIncoming(
+                self.as_value_ref(),
+                values.as_mut_ptr(),
+                basic_blocks.as_mut_ptr(),
+                incoming.len() as u32,
+            );
         }
     }
 
     pub fn count_incoming(self) -> u32 {
-        unsafe {
-            LLVMCountIncoming(self.as_value_ref())
-        }
+        unsafe { LLVMCountIncoming(self.as_value_ref()) }
     }
 
     pub fn get_incoming(self, index: u32) -> Option<(BasicValueEnum<'ctx>, BasicBlock<'ctx>)> {
@@ -48,11 +54,11 @@ impl<'ctx> PhiValue<'ctx> {
         }
 
         let basic_block = unsafe {
-            BasicBlock::new(LLVMGetIncomingBlock(self.as_value_ref(), index)).expect("Invalid BasicBlock")
+            BasicBlock::new(LLVMGetIncomingBlock(self.as_value_ref(), index))
+                .expect("Invalid BasicBlock")
         };
-        let value = unsafe {
-            BasicValueEnum::new(LLVMGetIncomingValue(self.as_value_ref(), index))
-        };
+        let value =
+            unsafe { BasicValueEnum::new(LLVMGetIncomingValue(self.as_value_ref(), index)) };
 
         Some((value, basic_block))
     }
@@ -78,7 +84,9 @@ impl<'ctx> PhiValue<'ctx> {
 
     // SubType: -> InstructionValue<Phi>
     pub fn as_instruction(self) -> InstructionValue<'ctx> {
-        self.phi_value.as_instruction().expect("PhiValue should always be a Phi InstructionValue")
+        self.phi_value
+            .as_instruction()
+            .expect("PhiValue should always be a Phi InstructionValue")
     }
 
     pub fn replace_all_uses_with(self, other: &PhiValue<'ctx>) {
@@ -86,9 +94,7 @@ impl<'ctx> PhiValue<'ctx> {
     }
 
     pub fn as_basic_value(self) -> BasicValueEnum<'ctx> {
-        unsafe {
-            BasicValueEnum::new(self.as_value_ref())
-        }
+        unsafe { BasicValueEnum::new(self.as_value_ref()) }
     }
 }
 

@@ -36,7 +36,10 @@ fn test_string_attributes() {
     assert!(!string_attribute.is_enum());
     assert!(string_attribute.is_string());
 
-    assert_eq!(string_attribute.get_string_kind_id().to_str(), Ok("my_key_123"));
+    assert_eq!(
+        string_attribute.get_string_kind_id().to_str(),
+        Ok("my_key_123")
+    );
     assert_eq!(string_attribute.get_string_value().to_str(), Ok("my_val"));
 }
 
@@ -69,8 +72,14 @@ fn test_attributes_on_function_values() {
     fn_value.add_attribute(AttributeLoc::Return, enum_attribute);
 
     assert_eq!(fn_value.count_attributes(AttributeLoc::Return), 2);
-    assert_eq!(fn_value.get_enum_attribute(AttributeLoc::Return, alignstack_attribute), Some(enum_attribute));
-    assert_eq!(fn_value.get_string_attribute(AttributeLoc::Return, "my_key"), Some(string_attribute));
+    assert_eq!(
+        fn_value.get_enum_attribute(AttributeLoc::Return, alignstack_attribute),
+        Some(enum_attribute)
+    );
+    assert_eq!(
+        fn_value.get_string_attribute(AttributeLoc::Return, "my_key"),
+        Some(string_attribute)
+    );
 
     fn_value.remove_string_attribute(AttributeLoc::Return, "my_key");
 
@@ -80,8 +89,12 @@ fn test_attributes_on_function_values() {
 
     assert_eq!(fn_value.count_attributes(AttributeLoc::Function), 0);
     assert_eq!(fn_value.count_attributes(AttributeLoc::Return), 0);
-    assert!(fn_value.get_enum_attribute(AttributeLoc::Return, alignstack_attribute).is_none());
-    assert!(fn_value.get_string_attribute(AttributeLoc::Return, "my_key").is_none());
+    assert!(fn_value
+        .get_enum_attribute(AttributeLoc::Return, alignstack_attribute)
+        .is_none());
+    assert!(fn_value
+        .get_string_attribute(AttributeLoc::Return, "my_key")
+        .is_none());
 }
 
 #[test]
@@ -101,7 +114,8 @@ fn test_attributes_on_call_site_values() {
 
     builder.position_at_end(entry_bb);
 
-    let call_site_value = builder.build_call(fn_value, &[i32_type.const_int(1, false).into()], "my_fn");
+    let call_site_value =
+        builder.build_call(fn_value, &[i32_type.const_int(1, false).into()], "my_fn");
 
     builder.build_return(None);
 
@@ -118,8 +132,14 @@ fn test_attributes_on_call_site_values() {
     call_site_value.add_attribute(AttributeLoc::Return, enum_attribute);
 
     assert_eq!(call_site_value.count_attributes(AttributeLoc::Return), 2);
-    assert_eq!(call_site_value.get_enum_attribute(AttributeLoc::Return, alignstack_attribute), Some(enum_attribute));
-    assert_eq!(call_site_value.get_string_attribute(AttributeLoc::Return, "my_key"), Some(string_attribute));
+    assert_eq!(
+        call_site_value.get_enum_attribute(AttributeLoc::Return, alignstack_attribute),
+        Some(enum_attribute)
+    );
+    assert_eq!(
+        call_site_value.get_string_attribute(AttributeLoc::Return, "my_key"),
+        Some(string_attribute)
+    );
 
     call_site_value.remove_string_attribute(AttributeLoc::Return, "my_key");
 
@@ -128,12 +148,18 @@ fn test_attributes_on_call_site_values() {
     call_site_value.remove_enum_attribute(AttributeLoc::Return, alignstack_attribute);
 
     assert_eq!(call_site_value.count_attributes(AttributeLoc::Return), 0);
-    assert!(call_site_value.get_enum_attribute(AttributeLoc::Return, alignstack_attribute).is_none());
-    assert!(call_site_value.get_string_attribute(AttributeLoc::Return, "my_key").is_none());
+    assert!(call_site_value
+        .get_enum_attribute(AttributeLoc::Return, alignstack_attribute)
+        .is_none());
+    assert!(call_site_value
+        .get_string_attribute(AttributeLoc::Return, "my_key")
+        .is_none());
     assert_eq!(call_site_value.get_called_fn_value(), fn_value);
 
     call_site_value.set_alignment_attribute(AttributeLoc::Return, 16);
 
     assert_eq!(call_site_value.count_attributes(AttributeLoc::Return), 1);
-    assert!(call_site_value.get_enum_attribute(AttributeLoc::Return, align_attribute).is_some());
+    assert!(call_site_value
+        .get_enum_attribute(AttributeLoc::Return, align_attribute)
+        .is_some());
 }

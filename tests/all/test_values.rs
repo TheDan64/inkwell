@@ -1,11 +1,13 @@
-use inkwell::{DLLStorageClass, FloatPredicate, GlobalVisibility, ThreadLocalMode, AddressSpace};
 use inkwell::attributes::AttributeLoc;
+#[llvm_versions(7.0..=latest)]
+use inkwell::comdat::ComdatSelectionKind;
 use inkwell::context::Context;
 use inkwell::module::Linkage::*;
 use inkwell::types::{AnyType, StringRadix, VectorType};
-use inkwell::values::{AnyValue, BasicValue, CallableValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
-#[llvm_versions(7.0..=latest)]
-use inkwell::comdat::ComdatSelectionKind;
+use inkwell::values::{
+    AnyValue, BasicValue, CallableValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID,
+};
+use inkwell::{AddressSpace, DLLStorageClass, FloatPredicate, GlobalVisibility, ThreadLocalMode};
 
 use std::convert::TryFrom;
 
@@ -320,10 +322,32 @@ fn test_verify_fn() {
 
     let function = module.add_function("fn", fn_type, None);
 
-    #[cfg(not(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0", feature = "llvm9-0", feature = "llvm10-0", feature = "llvm11-0", feature = "llvm12-0")))]
+    #[cfg(not(any(
+        feature = "llvm3-9",
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0",
+        feature = "llvm7-0",
+        feature = "llvm8-0",
+        feature = "llvm9-0",
+        feature = "llvm10-0",
+        feature = "llvm11-0",
+        feature = "llvm12-0"
+    )))]
     assert!(!function.verify(false));
     // REVIEW: Why does 3.9 -> 8.0 return true here? LLVM bug? Bugfix?
-    #[cfg(any(feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0", feature = "llvm9-0", feature = "llvm10-0", feature = "llvm11-0", feature = "llvm12-0"))]
+    #[cfg(any(
+        feature = "llvm3-9",
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0",
+        feature = "llvm7-0",
+        feature = "llvm8-0",
+        feature = "llvm9-0",
+        feature = "llvm10-0",
+        feature = "llvm11-0",
+        feature = "llvm12-0"
+    ))]
     assert!(function.verify(false));
 
     let basic_block = context.append_basic_block(function, "entry");
@@ -348,7 +372,10 @@ fn test_metadata() {
     // or a new lookup
 
     assert_eq!(context.get_kind_id("foo"), FIRST_CUSTOM_METADATA_KIND_ID);
-    assert_eq!(context.get_kind_id("bar"), FIRST_CUSTOM_METADATA_KIND_ID + 1);
+    assert_eq!(
+        context.get_kind_id("bar"),
+        FIRST_CUSTOM_METADATA_KIND_ID + 1
+    );
 
     // Predefined
     assert_eq!(context.get_kind_id("dbg"), 0);
@@ -384,18 +411,36 @@ fn test_metadata() {
         assert_eq!(context.get_kind_id("type"), 19);
     }
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
+    #[cfg(not(any(
+        feature = "llvm3-6",
+        feature = "llvm3-7",
+        feature = "llvm3-8",
+        feature = "llvm3-9"
+    )))]
     {
         assert_eq!(context.get_kind_id("section_prefix"), 20);
         assert_eq!(context.get_kind_id("absolute_symbol"), 21);
     }
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0")))]
+    #[cfg(not(any(
+        feature = "llvm3-6",
+        feature = "llvm3-7",
+        feature = "llvm3-8",
+        feature = "llvm3-9",
+        feature = "llvm4-0"
+    )))]
     {
         assert_eq!(context.get_kind_id("associated"), 22);
     }
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0")))]
+    #[cfg(not(any(
+        feature = "llvm3-6",
+        feature = "llvm3-7",
+        feature = "llvm3-8",
+        feature = "llvm3-9",
+        feature = "llvm4-0",
+        feature = "llvm5-0"
+    )))]
     {
         assert_eq!(context.get_kind_id("callees"), 23);
         assert_eq!(context.get_kind_id("irr_loop"), 24);
@@ -410,7 +455,10 @@ fn test_metadata() {
 
     assert_eq!(md_string.get_node_size(), 0);
     assert_eq!(md_string.get_node_values().len(), 0);
-    assert_eq!(md_string.get_string_value().unwrap().to_str(), Ok("lots of metadata here"));
+    assert_eq!(
+        md_string.get_string_value().unwrap().to_str(),
+        Ok("lots of metadata here")
+    );
 
     let bool_type = context.bool_type();
     // let i8_type = context.i8_type();
@@ -461,11 +509,17 @@ fn test_metadata() {
 
     assert_eq!(global_md.len(), 2);
 
-    let (md_0, md_1) = (global_md[0].get_node_values(), global_md[1].get_node_values());
+    let (md_0, md_1) = (
+        global_md[0].get_node_values(),
+        global_md[1].get_node_values(),
+    );
 
     assert_eq!(md_0.len(), 1);
     assert_eq!(md_1.len(), 2);
-    assert_eq!(md_0[0].into_metadata_value().get_string_value(), md_string.get_string_value());
+    assert_eq!(
+        md_0[0].into_metadata_value().get_string_value(),
+        md_string.get_string_value()
+    );
     assert_eq!(md_1[0].into_int_value(), bool_val);
     assert_eq!(md_1[1].into_float_value(), f32_val);
 
@@ -515,7 +569,10 @@ fn test_metadata() {
     let md_node_values = ret_instr.get_metadata(2).unwrap().get_node_values();
 
     assert_eq!(md_node_values.len(), 1);
-    assert_eq!(md_node_values[0].into_metadata_value().get_string_value(), md_string.get_string_value());
+    assert_eq!(
+        md_node_values[0].into_metadata_value().get_string_value(),
+        md_string.get_string_value()
+    );
 
     // New Context Metadata
     let context_metadata_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
@@ -560,44 +617,91 @@ fn test_floats() {
     let f64_two = f64_type.const_float(2.);
     let neg_two = f64_two.const_neg();
 
-    assert_eq!(neg_two.print_to_string().to_str(), Ok("double -2.000000e+00"));
+    assert_eq!(
+        neg_two.print_to_string().to_str(),
+        Ok("double -2.000000e+00")
+    );
 
     let neg_three = neg_two.const_sub(f64_one);
 
-    assert_eq!(neg_three.print_to_string().to_str(), Ok("double -3.000000e+00"));
+    assert_eq!(
+        neg_three.print_to_string().to_str(),
+        Ok("double -3.000000e+00")
+    );
 
     let pos_six = neg_three.const_mul(neg_two);
 
-    assert_eq!(pos_six.print_to_string().to_str(), Ok("double 6.000000e+00"));
+    assert_eq!(
+        pos_six.print_to_string().to_str(),
+        Ok("double 6.000000e+00")
+    );
 
     let pos_eight = pos_six.const_add(f64_two);
 
-    assert_eq!(pos_eight.print_to_string().to_str(), Ok("double 8.000000e+00"));
+    assert_eq!(
+        pos_eight.print_to_string().to_str(),
+        Ok("double 8.000000e+00")
+    );
 
     let pos_four = pos_eight.const_div(f64_two);
 
-    assert_eq!(pos_four.print_to_string().to_str(), Ok("double 4.000000e+00"));
+    assert_eq!(
+        pos_four.print_to_string().to_str(),
+        Ok("double 4.000000e+00")
+    );
 
     let rem = pos_six.const_remainder(pos_four);
 
     assert_eq!(rem.print_to_string().to_str(), Ok("double 2.000000e+00"));
 
-    assert!(f64_one.const_compare(FloatPredicate::PredicateFalse, f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::PredicateTrue, f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::OEQ, f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::OGT, f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::OGE, f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::OLT, f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::OLE, f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::ONE, f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::UEQ, f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::UGT, f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::UGE, f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::ULT, f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::ULE, f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::UNE, f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::ORD, f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::UNO, f64_two).is_null());
+    assert!(f64_one
+        .const_compare(FloatPredicate::PredicateFalse, f64_two)
+        .is_null());
+    assert!(!f64_one
+        .const_compare(FloatPredicate::PredicateTrue, f64_two)
+        .is_null());
+    assert!(f64_one
+        .const_compare(FloatPredicate::OEQ, f64_two)
+        .is_null());
+    assert!(f64_one
+        .const_compare(FloatPredicate::OGT, f64_two)
+        .is_null());
+    assert!(f64_one
+        .const_compare(FloatPredicate::OGE, f64_two)
+        .is_null());
+    assert!(!f64_one
+        .const_compare(FloatPredicate::OLT, f64_two)
+        .is_null());
+    assert!(!f64_one
+        .const_compare(FloatPredicate::OLE, f64_two)
+        .is_null());
+    assert!(!f64_one
+        .const_compare(FloatPredicate::ONE, f64_two)
+        .is_null());
+    assert!(f64_one
+        .const_compare(FloatPredicate::UEQ, f64_two)
+        .is_null());
+    assert!(f64_one
+        .const_compare(FloatPredicate::UGT, f64_two)
+        .is_null());
+    assert!(f64_one
+        .const_compare(FloatPredicate::UGE, f64_two)
+        .is_null());
+    assert!(!f64_one
+        .const_compare(FloatPredicate::ULT, f64_two)
+        .is_null());
+    assert!(!f64_one
+        .const_compare(FloatPredicate::ULE, f64_two)
+        .is_null());
+    assert!(!f64_one
+        .const_compare(FloatPredicate::UNE, f64_two)
+        .is_null());
+    assert!(!f64_one
+        .const_compare(FloatPredicate::ORD, f64_two)
+        .is_null());
+    assert!(f64_one
+        .const_compare(FloatPredicate::UNO, f64_two)
+        .is_null());
 }
 
 #[test]
@@ -629,19 +733,35 @@ fn test_function_value_no_params() {
 fn test_value_from_string() {
     let context = Context::create();
     let i8_type = context.i8_type();
-    let i8_val = i8_type.const_int_from_string("0121", StringRadix::Decimal).unwrap();
+    let i8_val = i8_type
+        .const_int_from_string("0121", StringRadix::Decimal)
+        .unwrap();
 
     assert_eq!(i8_val.print_to_string().to_str(), Ok("i8 121"));
 
-    let i8_val = i8_type.const_int_from_string("0121", StringRadix::try_from(10).unwrap()).unwrap();
+    let i8_val = i8_type
+        .const_int_from_string("0121", StringRadix::try_from(10).unwrap())
+        .unwrap();
 
     assert_eq!(i8_val.print_to_string().to_string(), "i8 121");
 
     assert_eq!(i8_type.const_int_from_string("", StringRadix::Binary), None);
-    assert_eq!(i8_type.const_int_from_string("-", StringRadix::Binary), None);
-    assert_eq!(i8_type.const_int_from_string("--1", StringRadix::Binary), None);
-    assert_eq!(i8_type.const_int_from_string("2", StringRadix::Binary), None);
-    assert_eq!(i8_type.const_int_from_string("2", StringRadix::Binary), None);
+    assert_eq!(
+        i8_type.const_int_from_string("-", StringRadix::Binary),
+        None
+    );
+    assert_eq!(
+        i8_type.const_int_from_string("--1", StringRadix::Binary),
+        None
+    );
+    assert_eq!(
+        i8_type.const_int_from_string("2", StringRadix::Binary),
+        None
+    );
+    assert_eq!(
+        i8_type.const_int_from_string("2", StringRadix::Binary),
+        None
+    );
 
     // Floats
     let f64_type = context.f64_type();
@@ -716,8 +836,15 @@ fn test_globals() {
 
     let global = module.add_global(i8_type, None, "my_global");
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
-                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[cfg(not(any(
+        feature = "llvm3-6",
+        feature = "llvm3-7",
+        feature = "llvm3-8",
+        feature = "llvm3-9",
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0"
+    )))]
     assert_eq!(global.get_unnamed_address(), UnnamedAddress::None);
     assert!(global.get_previous_global().is_none());
     assert!(global.get_next_global().is_none());
@@ -730,7 +857,17 @@ fn test_globals() {
     assert!(!global.is_externally_initialized());
     assert_eq!(global.get_name().to_str(), Ok("my_global"));
     // REVIEW: Segfaults in 4.0 -> 11.0
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0", feature = "llvm9-0", feature = "llvm10-0", feature = "llvm11-0", feature = "llvm12-0")))]
+    #[cfg(not(any(
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0",
+        feature = "llvm7-0",
+        feature = "llvm8-0",
+        feature = "llvm9-0",
+        feature = "llvm10-0",
+        feature = "llvm11-0",
+        feature = "llvm12-0"
+    )))]
     assert_eq!(global.get_section().to_str(), Ok(""));
     assert_eq!(global.get_dll_storage_class(), DLLStorageClass::default());
     assert_eq!(global.get_visibility(), GlobalVisibility::default());
@@ -745,8 +882,15 @@ fn test_globals() {
     assert!(module.get_global("my_global").is_none());
     assert_eq!(module.get_global("glob").unwrap(), global);
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
-                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[cfg(not(any(
+        feature = "llvm3-6",
+        feature = "llvm3-7",
+        feature = "llvm3-8",
+        feature = "llvm3-9",
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0"
+    )))]
     global.set_unnamed_address(UnnamedAddress::Local);
     global.set_dll_storage_class(DLLStorageClass::Import);
     global.set_initializer(&i8_zero);
@@ -757,13 +901,23 @@ fn test_globals() {
     global.set_section("not sure what goes here");
 
     // REVIEW: Not sure why this is Global when we set it to Local
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
-                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[cfg(not(any(
+        feature = "llvm3-6",
+        feature = "llvm3-7",
+        feature = "llvm3-8",
+        feature = "llvm3-9",
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0"
+    )))]
     assert_eq!(global.get_unnamed_address(), UnnamedAddress::Global);
     assert_eq!(global.get_dll_storage_class(), DLLStorageClass::Import);
     assert_eq!(global.get_initializer().unwrap().into_int_value(), i8_zero);
     assert_eq!(global.get_visibility(), GlobalVisibility::Hidden);
-    assert_eq!(global.get_thread_local_mode().unwrap(), ThreadLocalMode::InitialExecTLSModel);
+    assert_eq!(
+        global.get_thread_local_mode().unwrap(),
+        ThreadLocalMode::InitialExecTLSModel
+    );
     assert!(global.is_thread_local());
     assert!(global.has_unnamed_addr());
     assert!(global.is_constant());
@@ -776,16 +930,30 @@ fn test_globals() {
 
     assert_eq!(global.get_linkage(), Private);
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
-                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[cfg(not(any(
+        feature = "llvm3-6",
+        feature = "llvm3-7",
+        feature = "llvm3-8",
+        feature = "llvm3-9",
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0"
+    )))]
     global.set_unnamed_address(UnnamedAddress::Global);
     global.set_dll_storage_class(DLLStorageClass::Export);
     global.set_thread_local(false);
     global.set_linkage(External);
     global.set_visibility(GlobalVisibility::Protected);
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
-                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[cfg(not(any(
+        feature = "llvm3-6",
+        feature = "llvm3-7",
+        feature = "llvm3-8",
+        feature = "llvm3-9",
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0"
+    )))]
     assert_eq!(global.get_unnamed_address(), UnnamedAddress::Global);
     assert!(!global.is_thread_local());
     assert_eq!(global.get_visibility(), GlobalVisibility::Protected);
@@ -794,15 +962,24 @@ fn test_globals() {
 
     assert_eq!(global.get_dll_storage_class(), DLLStorageClass::Export);
     assert!(global.is_thread_local());
-    assert_eq!(global.get_thread_local_mode().unwrap(), ThreadLocalMode::GeneralDynamicTLSModel);
+    assert_eq!(
+        global.get_thread_local_mode().unwrap(),
+        ThreadLocalMode::GeneralDynamicTLSModel
+    );
 
     global.set_thread_local_mode(Some(ThreadLocalMode::LocalExecTLSModel));
 
-    assert_eq!(global.get_thread_local_mode().unwrap(), ThreadLocalMode::LocalExecTLSModel);
+    assert_eq!(
+        global.get_thread_local_mode().unwrap(),
+        ThreadLocalMode::LocalExecTLSModel
+    );
 
     global.set_thread_local_mode(Some(ThreadLocalMode::LocalDynamicTLSModel));
 
-    assert_eq!(global.get_thread_local_mode().unwrap(), ThreadLocalMode::LocalDynamicTLSModel);
+    assert_eq!(
+        global.get_thread_local_mode().unwrap(),
+        ThreadLocalMode::LocalDynamicTLSModel
+    );
 
     global.set_thread_local_mode(None);
 
@@ -828,8 +1005,15 @@ fn test_globals() {
     // REVIEW: This doesn't seem to work. LLVM bug?
     assert!(global2.is_externally_initialized());
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
-                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[cfg(not(any(
+        feature = "llvm3-6",
+        feature = "llvm3-7",
+        feature = "llvm3-8",
+        feature = "llvm3-9",
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0"
+    )))]
     {
         assert!(global.get_comdat().is_none());
 
@@ -883,13 +1067,13 @@ fn test_phi_values() {
     assert_eq!(phi.count_incoming(), 0);
     assert_eq!(phi.print_to_string().to_str(), Ok("  %if = phi i1 "));
 
-    phi.add_incoming(&[
-        (&false_val, then_block),
-        (&true_val, else_block),
-    ]);
+    phi.add_incoming(&[(&false_val, then_block), (&true_val, else_block)]);
 
     assert_eq!(phi.count_incoming(), 2);
-    assert_eq!(phi.print_to_string().to_str(), Ok("  %if = phi i1 [ false, %then ], [ true, %else ]"));
+    assert_eq!(
+        phi.print_to_string().to_str(),
+        Ok("  %if = phi i1 [ false, %then ], [ true, %else ]")
+    );
 
     let (then_val, then_bb) = phi.get_incoming(0).unwrap();
     let (else_val, else_bb) = phi.get_incoming(1).unwrap();
@@ -929,17 +1113,26 @@ fn test_allocations() {
 
     let stack_array = builder.build_array_alloca(i32_type, i32_three, "stack_array");
 
-    assert_eq!(stack_array.get_type().print_to_string().to_str(), Ok("i32*"));
+    assert_eq!(
+        stack_array.get_type().print_to_string().to_str(),
+        Ok("i32*")
+    );
 
     let heap_ptr = builder.build_malloc(i32_type, "heap_ptr");
 
     assert!(heap_ptr.is_ok());
-    assert_eq!(heap_ptr.unwrap().get_type().print_to_string().to_str(), Ok("i32*"));
+    assert_eq!(
+        heap_ptr.unwrap().get_type().print_to_string().to_str(),
+        Ok("i32*")
+    );
 
     let heap_array = builder.build_array_malloc(i32_type, i32_three, "heap_array");
 
     assert!(heap_array.is_ok());
-    assert_eq!(heap_array.unwrap().get_type().print_to_string().to_str(), Ok("i32*"));
+    assert_eq!(
+        heap_array.unwrap().get_type().print_to_string().to_str(),
+        Ok("i32*")
+    );
 
     let bad_malloc_res = builder.build_malloc(unsized_type, "");
 
@@ -956,8 +1149,14 @@ fn test_string_values() {
     let string = context.const_string(b"my_string", false);
     let string_null = context.const_string(b"my_string", true);
 
-    assert_eq!(string.print_to_string().to_string(), "[9 x i8] c\"my_string\"");
-    assert_eq!(string_null.print_to_string().to_string(), "[10 x i8] c\"my_string\\00\"");
+    assert_eq!(
+        string.print_to_string().to_string(),
+        "[9 x i8] c\"my_string\""
+    );
+    assert_eq!(
+        string_null.print_to_string().to_string(),
+        "[10 x i8] c\"my_string\\00\""
+    );
     assert!(string.is_const_string());
     assert!(string_null.is_const_string());
 
@@ -970,12 +1169,24 @@ fn test_string_values() {
     assert!(!string.is_constant_data_vector());
     assert!(!string_null.is_constant_data_vector());
 
-    assert_eq!(string.print_to_string().to_string(), "[9 x i8] c\"my_string\"");
-    assert_eq!(string_null.print_to_string().to_string(), "[10 x i8] c\"my_string\\00\"");
+    assert_eq!(
+        string.print_to_string().to_string(),
+        "[9 x i8] c\"my_string\""
+    );
+    assert_eq!(
+        string_null.print_to_string().to_string(),
+        "[10 x i8] c\"my_string\\00\""
+    );
     assert!(string.is_const_string());
     assert!(string_null.is_const_string());
-    assert_eq!(string.get_type().get_element_type().into_int_type(), i8_type);
-    assert_eq!(string_null.get_type().get_element_type().into_int_type(), i8_type);
+    assert_eq!(
+        string.get_type().get_element_type().into_int_type(),
+        i8_type
+    );
+    assert_eq!(
+        string_null.get_type().get_element_type().into_int_type(),
+        i8_type
+    );
     assert_eq!(string.get_string_constant().to_str(), Ok("my_string"));
     assert_eq!(string_null.get_string_constant().to_str(), Ok("my_string"));
 
@@ -1042,17 +1253,32 @@ fn test_consts() {
     assert!(array_val.is_const());
     assert!(arbitrary_precision_int.is_const());
 
-    assert_eq!(arbitrary_precision_int.print_to_string().to_str(), Ok("i64 1"));
+    assert_eq!(
+        arbitrary_precision_int.print_to_string().to_str(),
+        Ok("i64 1")
+    );
 
     assert!(!vec_val.is_const_string());
     assert!(!vec_val.is_constant_vector());
     assert!(vec_val.is_constant_data_vector());
 
     assert_eq!(bool_val.get_zero_extended_constant(), Some(1));
-    assert_eq!(i8_val.get_zero_extended_constant(), Some(u8::max_value() as u64));
-    assert_eq!(i16_val.get_zero_extended_constant(), Some(u16::max_value() as u64));
-    assert_eq!(i32_val.get_zero_extended_constant(), Some(u32::max_value() as u64));
-    assert_eq!(i64_val.get_zero_extended_constant(), Some(u64::max_value() as u64));
+    assert_eq!(
+        i8_val.get_zero_extended_constant(),
+        Some(u8::max_value() as u64)
+    );
+    assert_eq!(
+        i16_val.get_zero_extended_constant(),
+        Some(u16::max_value() as u64)
+    );
+    assert_eq!(
+        i32_val.get_zero_extended_constant(),
+        Some(u32::max_value() as u64)
+    );
+    assert_eq!(
+        i64_val.get_zero_extended_constant(),
+        Some(u64::max_value() as u64)
+    );
     assert_eq!(i128_val.get_zero_extended_constant(), None);
 
     assert_eq!(bool_val.get_sign_extended_constant(), Some(-1));
@@ -1104,11 +1330,17 @@ fn test_function_value_to_global_to_pointer() {
     builder.build_return(None);
 
     assert!(!fn_global_value.is_declaration());
-    assert_eq!(fn_global_value.get_dll_storage_class(), DLLStorageClass::Default);
+    assert_eq!(
+        fn_global_value.get_dll_storage_class(),
+        DLLStorageClass::Default
+    );
 
     fn_global_value.set_dll_storage_class(DLLStorageClass::Export);
 
-    assert_eq!(fn_global_value.get_dll_storage_class(), DLLStorageClass::Export);
+    assert_eq!(
+        fn_global_value.get_dll_storage_class(),
+        DLLStorageClass::Export
+    );
     assert!(fn_global_value.get_thread_local_mode().is_none());
     assert_eq!(fn_global_value.get_visibility(), GlobalVisibility::Default);
 
@@ -1199,7 +1431,8 @@ fn test_constant_expression() {
     let fn_type = void_type.fn_type(&[], false);
 
     let function = module.add_function("", fn_type, None);
-    let expr = builder.build_ptr_to_int(function.as_global_value().as_pointer_value(), i32_type, "");
+    let expr =
+        builder.build_ptr_to_int(function.as_global_value().as_pointer_value(), i32_type, "");
 
     assert!(expr.is_const());
     assert!(!expr.is_constant_int());
