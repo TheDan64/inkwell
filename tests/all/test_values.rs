@@ -455,8 +455,8 @@ fn test_metadata() {
     assert_eq!(node_values[2].into_metadata_value().get_string_value(), md_string.get_string_value());
     assert!(node_values[3].into_metadata_value().is_node());
 
-    //module.add_global_metadata("my_md", &md_string);
-    module.add_global_metadata("my_md", &md_node);
+    assert!(module.add_global_metadata("my_md", &md_string).is_err());
+    module.add_global_metadata("my_md", &md_node).unwrap();
 
     assert_eq!(module.get_global_metadata_size("my_md"), 1);
 
