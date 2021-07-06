@@ -197,6 +197,22 @@ matrix:
             - libclang-common-11-dev
       rust: 1.45.2
       dist: bionic
+    - env:
+        - LLVM_VERSION="12.0"
+      <<: *BASE
+      addons:
+        apt:
+          sources:
+            - *BASE_SOURCES
+            - llvm-toolchain-bionic-12
+            - sourceline: 'deb https://apt.llvm.org/bionic/ llvm-toolchain-bionic-12 main'
+              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+          packages:
+            - *BASE_PACKAGES
+            - llvm-12-dev
+            - libclang-common-12-dev
+      rust: 1.45.2
+      dist: bionic
     - deploy: # Documentation build; Only latest supported LLVM version for now
         provider: pages
         skip-cleanup: true
@@ -206,10 +222,10 @@ matrix:
         on:
           branch: master
       before_install:
-        - export PATH=/usr/lib/llvm-11/bin/:$HOME/.local/bin:$PATH
-        - export LLVM_PATH=/usr/share/llvm-11/cmake/
+        - export PATH=/usr/lib/llvm-12/bin/:$HOME/.local/bin:$PATH
+        - export LLVM_PATH=/usr/share/llvm-12/cmake/
       script:
-        - cargo doc --no-default-features --features "target-all,llvm11-0,nightly" --color=always
+        - cargo doc --no-default-features --features "target-all,llvm12-0,nightly" --color=always
         - echo '<meta http-equiv="refresh" content="1; url=inkwell/index.html">' > target/doc/index.html
       rust: nightly
       name: "GitHub IO Documentation Deployment"
@@ -228,8 +244,9 @@ matrix:
             # - llvm-toolchain-trusty-8
             # - llvm-toolchain-bionic-9
             # llvm-toolchain-bionic-10
-            - llvm-toolchain-bionic-11
-            - sourceline: 'deb https://apt.llvm.org/bionic/ llvm-toolchain-bionic-11 main'
+            # llvm-toolchain-bionic-11
+            - llvm-toolchain-bionic-12
+            - sourceline: 'deb https://apt.llvm.org/bionic/ llvm-toolchain-bionic-12 main'
               key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
           packages:
             - *BASE_PACKAGES
@@ -243,8 +260,10 @@ matrix:
             # - llvm-7-dev
             # - llvm-8-dev
             # - llvm-9-dev
-            # llvm-10-dev
-            - llvm-11-dev
+            # - llvm-10-dev
+            # - llvm-11-dev
+            - llvm-12-dev
+            - libclang-common-12-dev
       dist: bionic
 
 env:

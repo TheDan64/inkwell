@@ -19,6 +19,7 @@ mod ptr_value;
 mod struct_value;
 mod traits;
 mod vec_value;
+mod callable_value;
 
 use crate::support::LLVMString;
 pub use crate::values::array_value::ArrayValue;
@@ -37,6 +38,7 @@ pub use crate::values::metadata_value::{MetadataValue, FIRST_CUSTOM_METADATA_KIN
 pub use crate::values::phi_value::PhiValue;
 pub use crate::values::ptr_value::PointerValue;
 pub use crate::values::struct_value::StructValue;
+pub use crate::values::callable_value::CallableValue;
 pub use crate::values::traits::{AnyValue, AggregateValue, BasicValue, IntMathValue, FloatMathValue, PointerMathValue};
 pub use crate::values::vec_value::VectorValue;
 pub(crate) use crate::values::traits::AsValueRef;
