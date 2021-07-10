@@ -3,7 +3,6 @@ use llvm_sys::LLVMTypeKind;
 use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::types::{IntType, VoidType, FunctionType, PointerType, VectorType, ArrayType, StructType, FloatType};
-#[llvm_versions(6.0..=latest)]
 use crate::types::MetadataType;
 use crate::types::traits::AsTypeRef;
 use crate::values::{BasicValue, BasicValueEnum, IntValue};
