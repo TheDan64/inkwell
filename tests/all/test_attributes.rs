@@ -40,6 +40,44 @@ fn test_string_attributes() {
     assert_eq!(string_attribute.get_string_value().to_str(), Ok("my_val"));
 }
 
+#[llvm_versions(12.0..=latest)]
+#[test]
+fn test_type_attribute() {
+    use inkwell::types::{AnyType, BasicType};
+    use inkwell::AddressSpace;
+
+    let context = Context::create();
+    let kind_id = Attribute::get_named_enum_kind_id("sret");
+
+    let any_types = [
+        context.i32_type().as_any_type_enum(),
+        context.f32_type().as_any_type_enum(),
+        context.void_type().as_any_type_enum(),
+        context.i32_type().vec_type(1).as_any_type_enum(),
+        context.i32_type().array_type(1).as_any_type_enum(),
+        context.i32_type().fn_type(&[], false).as_any_type_enum(),
+        context
+            .i32_type()
+            .ptr_type(AddressSpace::Local)
+            .as_any_type_enum(),
+        context
+            .struct_type(&[context.i32_type().as_basic_type_enum()], false)
+            .as_any_type_enum(),
+    ];
+
+    let different_type = context.i128_type().as_any_type_enum();
+    assert!(!any_types.contains(&different_type));
+
+    for any_type in &any_types {
+        let type_attribute = context.create_type_attribute(kind_id, *any_type);
+        assert!(type_attribute.is_type());
+        assert!(!type_attribute.is_enum());
+        assert!(!type_attribute.is_string());
+        assert_eq!(type_attribute.get_type_value(), *any_type);
+        assert_ne!(type_attribute.get_type_value(), different_type);
+    }
+}
+
 #[test]
 fn test_attributes_on_function_values() {
     let context = Context::create();
