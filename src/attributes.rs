@@ -4,9 +4,13 @@
 use llvm_sys::prelude::LLVMAttributeRef;
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::{LLVMGetEnumAttributeKindForName, LLVMGetLastEnumAttributeKind, LLVMGetEnumAttributeKind, LLVMGetEnumAttributeValue, LLVMGetStringAttributeKind, LLVMGetStringAttributeValue, LLVMIsEnumAttribute, LLVMIsStringAttribute};
+#[llvm_versions(12.0..=latest)]
+use llvm_sys::core::{LLVMGetTypeAttributeValue, LLVMIsTypeAttribute};
 
 #[llvm_versions(3.9..=latest)]
 use std::ffi::CStr;
+
+use crate::types::AnyTypeEnum;
 
 // SubTypes: Attribute<Enum>, Attribute<String>
 /// Functions, function parameters, and return types can have `Attribute`s to indicate
@@ -65,6 +69,30 @@ impl Attribute {
         unsafe {
             LLVMIsStringAttribute(self.attribute) == 1
         }
+    }
+
+    /// Determines whether or not an `Attribute` is a type attribute. This method will
+    /// likely be removed in the future in favor of `Attribute`s being generically
+    /// defined.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::attributes::Attribute;
+    ///
+    /// let context = Context::create();
+    /// let kind_id = Attribute::get_named_enum_kind_id("sret");
+    /// let type_attribute = context.create_type_attribute(
+    ///     kind_id,
+    ///     context.i32_type().into(),
+    /// );
+    ///
+    /// assert!(type_attribute.is_type());
+    /// ```
+    #[llvm_versions(12.0..=latest)]
+    pub fn is_type(self) -> bool {
+        unsafe { LLVMIsTypeAttribute(self.attribute) == 1 }
     }
 
     /// Gets the enum kind id associated with a builtin name.
@@ -190,6 +218,34 @@ impl Attribute {
         unsafe {
             CStr::from_ptr(cstr_ptr)
         }
+    }
+
+    /// Gets the type associated with a type attribute.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::attributes::Attribute;
+    /// use inkwell::types::AnyType;
+    ///
+    /// let context = Context::create();
+    /// let kind_id = Attribute::get_named_enum_kind_id("sret");
+    /// let any_type = context.i32_type().as_any_type_enum();
+    /// let type_attribute = context.create_type_attribute(
+    ///     kind_id,
+    ///     any_type,
+    /// );
+    ///
+    /// assert!(type_attribute.is_type());
+    /// assert_eq!(type_attribute.get_type_value(), any_type);
+    /// assert_ne!(type_attribute.get_type_value(), context.i64_type().as_any_type_enum());
+    /// ```
+    #[llvm_versions(12.0..=latest)]
+    pub fn get_type_value(&self) -> AnyTypeEnum {
+        assert!(self.is_type()); // FIXME: SubTypes
+
+        unsafe { AnyTypeEnum::new(LLVMGetTypeAttributeValue(self.attribute)) }
     }
 }
 
