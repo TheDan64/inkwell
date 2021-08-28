@@ -201,3 +201,15 @@ fn test_get_first_use() {
     assert_eq!(bb1.get_first_use().unwrap().get_user(), branch_inst);
     assert!(bb1.get_first_use().unwrap().get_next_use().is_none());
 }
+
+#[test]
+fn test_get_address() {
+    let context = Context::create();
+    let module = context.create_module("my_mod");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_val = module.add_function("my_fn", fn_type, None);
+    let bb = context.append_basic_block(fn_val, "entry");
+    
+    assert!(bb.get_address().is_some());
+}
