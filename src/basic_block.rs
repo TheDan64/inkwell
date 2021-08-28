@@ -1,12 +1,12 @@
 //! A `BasicBlock` is a container of instructions.
 
-use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDeleteBasicBlock, LLVMGetPreviousBasicBlock, LLVMRemoveBasicBlockFromParent, LLVMGetFirstInstruction, LLVMGetLastInstruction, LLVMGetTypeContext, LLVMBasicBlockAsValue, LLVMReplaceAllUsesWith, LLVMGetFirstUse};
+use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDeleteBasicBlock, LLVMGetPreviousBasicBlock, LLVMRemoveBasicBlockFromParent, LLVMGetFirstInstruction, LLVMGetLastInstruction, LLVMGetTypeContext, LLVMBasicBlockAsValue, LLVMReplaceAllUsesWith, LLVMGetFirstUse, LLVMBlockAddress};
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::LLVMGetBasicBlockName;
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
 
 use crate::context::ContextRef;
-use crate::values::{BasicValueUse, FunctionValue, InstructionValue};
+use crate::values::{AsValueRef, BasicValueUse, FunctionValue, InstructionValue, PointerValue};
 
 use std::fmt;
 use std::ffi::CStr;
@@ -513,6 +513,35 @@ impl<'ctx> BasicBlock<'ctx> {
         unsafe {
             Some(BasicValueUse::new(use_))
         }
+    }
+
+    /// Gets the address of this `BasicBlock` if possible.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// let context = Context::create();
+    /// let module = context.create_module("my_mod");
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let fn_val = module.add_function("my_fn", fn_type, None);
+    /// let bb = context.append_basic_block(fn_val, "entry");
+    /// 
+    /// assert!(bb.get_address().is_some());
+    /// ```
+    pub fn get_address(self) -> Option<PointerValue<'ctx>> {
+        let parent = self.get_parent()?;
+
+        let value = unsafe {
+            PointerValue::new(LLVMBlockAddress(parent.as_value_ref(), self.basic_block))
+        };
+
+        if value.is_null() {
+            return None;
+        }
+
+        Some(value)
     }
 }
 
