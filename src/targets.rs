@@ -38,7 +38,7 @@ use std::mem::MaybeUninit;
 use std::path::Path;
 use std::ptr;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum CodeModel {
     Default,
     JITDefault,
@@ -48,7 +48,7 @@ pub enum CodeModel {
     Large,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum RelocMode {
     Default,
     Static,
@@ -56,7 +56,7 @@ pub enum RelocMode {
     DynamicNoPic,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum FileType {
     Assembly,
     Object,
@@ -1289,7 +1289,7 @@ impl Drop for TargetMachine {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum ByteOrdering {
     BigEndian,
     LittleEndian,
