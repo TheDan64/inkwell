@@ -12,6 +12,8 @@ fn test_init_all_passes_for_module() {
 
     pass_manager.add_argument_promotion_pass();
     pass_manager.add_constant_merge_pass();
+    #[cfg(any(feature = "llvm10-0", feature = "llvm11-0", feature = "llvm12-0"))]
+    pass_manager.add_merge_functions_pass();
     pass_manager.add_dead_arg_elimination_pass();
     pass_manager.add_function_attrs_pass();
     pass_manager.add_function_inlining_pass();
