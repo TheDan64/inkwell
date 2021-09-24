@@ -610,7 +610,7 @@ impl<'ctx> Module<'ctx> {
                 LLVMWriteBitcodeToFD(self.module.get(), file.as_raw_fd(), should_close as i32, unbuffered as i32) == 0
             }
         }
-        #[cfg(windows)]
+        #[cfg(not(unix))]
         return false;
     }
 
