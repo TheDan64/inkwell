@@ -6,7 +6,9 @@ use std::ffi::CStr;
 
 use crate::basic_block::BasicBlock;
 use crate::values::traits::AsValueRef;
-use crate::values::{BasicValue, BasicValueEnum, InstructionOpcode, InstructionValue, Value};
+use crate::values::{
+    AnyValue, BasicValue, BasicValueEnum, InstructionOpcode, InstructionValue, Value,
+};
 
 // REVIEW: Metadata for phi values?
 /// A Phi Instruction returns a value based on which basic block branched into
@@ -82,7 +84,7 @@ impl<'ctx> PhiValue<'ctx> {
         self.phi_value.as_instruction().expect("PhiValue should always be a Phi InstructionValue")
     }
 
-    pub fn replace_all_uses_with(self, other: &PhiValue<'ctx>) {
+    pub fn replace_all_uses_with<T: AnyValue<'ctx>>(self, other: T) {
         self.phi_value.replace_all_uses_with(other.as_value_ref())
     }
 

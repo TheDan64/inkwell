@@ -26,6 +26,7 @@ mod test_module;
 mod test_object_file;
 mod test_passes;
 mod test_phi_conversion;
+mod test_phi_replacement;
 mod test_targets;
 mod test_tari_example;
 mod test_types;
