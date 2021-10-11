@@ -209,7 +209,9 @@ fn test_get_address() {
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
     let fn_val = module.add_function("my_fn", fn_type, None);
-    let bb = context.append_basic_block(fn_val, "entry");
+    let entry_bb = context.append_basic_block(fn_val, "entry");
+    let next_bb = context.append_basic_block(fn_val, "next");
     
-    assert!(bb.get_address().is_some());
+    assert!(unsafe { entry_bb.get_address() }.is_none());
+    assert!(unsafe { next_bb.get_address() }.is_some());
 }

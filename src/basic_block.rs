@@ -515,7 +515,11 @@ impl<'ctx> BasicBlock<'ctx> {
         }
     }
 
-    /// Gets the address of this `BasicBlock` if possible.
+    /// Gets the address of this `BasicBlock` if possible. Returns `None` if `self` is the entry block to a function. 
+    /// 
+    /// # Safety
+    /// 
+    /// The returned PointerValue may only be used for `call` and `indirect_branch` instructions
     ///
     /// # Example
     ///
@@ -526,16 +530,19 @@ impl<'ctx> BasicBlock<'ctx> {
     /// let void_type = context.void_type();
     /// let fn_type = void_type.fn_type(&[], false);
     /// let fn_val = module.add_function("my_fn", fn_type, None);
-    /// let bb = context.append_basic_block(fn_val, "entry");
+    /// let entry_bb = context.append_basic_block(fn_val, "entry");
+    /// let next_bb = context.append_basic_block(fn_val, "next");
     /// 
-    /// assert!(bb.get_address().is_some());
+    /// assert!(unsafe { entry_bb.get_address() }.is_none());
+    /// assert!(unsafe { next_bb.get_address() }.is_some());
     /// ```
-    pub fn get_address(self) -> Option<PointerValue<'ctx>> {
+    pub unsafe fn get_address(self) -> Option<PointerValue<'ctx>> {
         let parent = self.get_parent()?;
 
-        let value = unsafe {
-            PointerValue::new(LLVMBlockAddress(parent.as_value_ref(), self.basic_block))
-        };
+        // Taking the address of the entry block is illegal.
+        self.get_previous_basic_block()?;
+
+        let value = PointerValue::new(LLVMBlockAddress(parent.as_value_ref(), self.basic_block));
 
         if value.is_null() {
             return None;
