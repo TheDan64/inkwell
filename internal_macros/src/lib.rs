@@ -19,8 +19,8 @@ use syn::spanned::Spanned;
 use syn::{Token, LitFloat, Ident, Item, Field, Variant, Attribute};
 
 // This array should match the LLVM features in the top level Cargo manifest
-const FEATURE_VERSIONS: [&str; 13] =
-    ["llvm3-6", "llvm3-7", "llvm3-8", "llvm3-9", "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0", "llvm10-0", "llvm11-0", "llvm12-0"];
+const FEATURE_VERSIONS: [&str; 14] =
+    ["llvm3-6", "llvm3-7", "llvm3-8", "llvm3-9", "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0", "llvm10-0", "llvm11-0", "llvm12-0", "llvm13-0"];
 
 /// Gets the index of the feature version that represents `latest`
 fn get_latest_feature_index(features: &[&str]) -> usize {

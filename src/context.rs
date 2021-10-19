@@ -217,7 +217,13 @@ impl Context {
     /// builder.build_call(callable_value, params, "exit");
     /// builder.build_return(None);
     #[llvm_versions(7.0..=latest)]
-    pub fn create_inline_asm(&self, ty: FunctionType, mut assembly: String, mut constraints: String, sideeffects: bool, alignstack: bool, dialect: Option<InlineAsmDialect>) -> PointerValue {
+    pub fn create_inline_asm(&self, ty: FunctionType, mut assembly: String, mut constraints: String, sideeffects: bool, alignstack: bool, dialect: Option<InlineAsmDialect>,
+        #[cfg(feature = "llvm13-0")]
+        can_throw: bool,
+    ) -> PointerValue {
+        #[cfg(any(feature = "llvm13-0"))]
+        let can_throw_llvmbool = can_throw as i32;
+
         let value = unsafe {
             LLVMGetInlineAsm(
                 ty.as_type_ref(),
@@ -227,7 +233,9 @@ impl Context {
                 constraints.len(),
                 sideeffects as i32,
                 alignstack as i32,
-                dialect.unwrap_or(InlineAsmDialect::ATT).into()
+                dialect.unwrap_or(InlineAsmDialect::ATT).into(),
+                #[cfg(any(feature = "llvm13-0"))]
+                can_throw_llvmbool,
             )
         };
 

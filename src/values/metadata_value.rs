@@ -38,6 +38,8 @@ pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 28;
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 30;
 #[cfg(feature = "llvm12-0")]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 31;
+#[cfg(feature = "llvm13-0")]
+pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 31;
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct MetadataValue<'ctx> {
