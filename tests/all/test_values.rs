@@ -445,7 +445,7 @@ fn test_metadata() {
         // let vec_val = VectorType::const_vector(&[i8_val]);
         // let fn_val = module.add_function("my_fn", fn_type, None);
 
-        let md_node_child = context.metadata_node(&[f32_val.into()]);
+        let md_node_child = context.metadata_node(&[bool_val.into(), f32_val.into()]);
         let md_node = context.metadata_node(&[bool_val.into(), f32_val.into(), md_string.into(), md_node_child.into()]);
 
         let node_values = md_node.get_node_values();
