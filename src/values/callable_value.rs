@@ -31,7 +31,7 @@ use llvm_sys::LLVMTypeKind;
 ///
 /// builder.position_at_end(entry);
 ///
-/// let ret_val = builder.build_call(fn_value, &[i32_arg], "call")
+/// let ret_val = builder.build_call(fn_value, &[i32_arg.into()], "call")
 ///     .try_as_basic_value()
 ///     .left()
 ///     .unwrap();
@@ -66,7 +66,7 @@ use llvm_sys::LLVMTypeKind;
 /// // explicitly handling the failure case (here with `unwrap`)
 /// let callable_value = CallableValue::try_from(fn_pointer_value).unwrap();
 ///
-/// let ret_val = builder.build_call(callable_value, &[i32_arg], "call")
+/// let ret_val = builder.build_call(callable_value, &[i32_arg.into()], "call")
 ///     .try_as_basic_value()
 ///     .left()
 ///     .unwrap();
