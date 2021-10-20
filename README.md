@@ -138,6 +138,10 @@ you need `unsafe` when calling into C).
 
 Can be found in the examples directory.
 
+## Alternative Crate(s)
+
+* [llvm-ir](https://github.com/cdisselkoen/llvm-ir)
+
 ## Contributing
 
 Check out our [Contributing Guide](.github/CONTRIBUTING.md)

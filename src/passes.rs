@@ -2,6 +2,8 @@ use llvm_sys::core::{LLVMDisposePassManager, LLVMInitializeFunctionPassManager, 
 use llvm_sys::initialization::{LLVMInitializeCore, LLVMInitializeTransformUtils, LLVMInitializeScalarOpts, LLVMInitializeObjCARCOpts, LLVMInitializeVectorization, LLVMInitializeInstCombine, LLVMInitializeIPO, LLVMInitializeInstrumentation, LLVMInitializeAnalysis, LLVMInitializeIPA, LLVMInitializeCodeGen, LLVMInitializeTarget};
 use llvm_sys::prelude::{LLVMPassManagerRef, LLVMPassRegistryRef};
 use llvm_sys::transforms::ipo::{LLVMAddArgumentPromotionPass, LLVMAddConstantMergePass, LLVMAddDeadArgEliminationPass, LLVMAddFunctionAttrsPass, LLVMAddFunctionInliningPass, LLVMAddAlwaysInlinerPass, LLVMAddGlobalDCEPass, LLVMAddGlobalOptimizerPass, LLVMAddIPSCCPPass, LLVMAddInternalizePass, LLVMAddStripDeadPrototypesPass, LLVMAddPruneEHPass, LLVMAddStripSymbolsPass};
+#[llvm_versions(10.0..=latest)]
+use llvm_sys::transforms::ipo::LLVMAddMergeFunctionsPass;
 use llvm_sys::transforms::pass_manager_builder::{LLVMPassManagerBuilderRef, LLVMPassManagerBuilderCreate, LLVMPassManagerBuilderDispose, LLVMPassManagerBuilderSetOptLevel, LLVMPassManagerBuilderSetSizeLevel, LLVMPassManagerBuilderSetDisableUnitAtATime, LLVMPassManagerBuilderSetDisableUnrollLoops, LLVMPassManagerBuilderSetDisableSimplifyLibCalls, LLVMPassManagerBuilderUseInlinerWithThreshold, LLVMPassManagerBuilderPopulateFunctionPassManager, LLVMPassManagerBuilderPopulateModulePassManager, LLVMPassManagerBuilderPopulateLTOPassManager};
 use llvm_sys::transforms::scalar::{LLVMAddAggressiveDCEPass, LLVMAddMemCpyOptPass, LLVMAddAlignmentFromAssumptionsPass, LLVMAddCFGSimplificationPass, LLVMAddDeadStoreEliminationPass, LLVMAddScalarizerPass, LLVMAddMergedLoadStoreMotionPass, LLVMAddGVNPass, LLVMAddIndVarSimplifyPass, LLVMAddInstructionCombiningPass, LLVMAddJumpThreadingPass, LLVMAddLICMPass, LLVMAddLoopDeletionPass, LLVMAddLoopIdiomPass, LLVMAddLoopRotatePass, LLVMAddLoopRerollPass, LLVMAddLoopUnrollPass, LLVMAddLoopUnswitchPass, LLVMAddPartiallyInlineLibCallsPass, LLVMAddSCCPPass, LLVMAddScalarReplAggregatesPass, LLVMAddScalarReplAggregatesPassSSA, LLVMAddScalarReplAggregatesPassWithThreshold, LLVMAddSimplifyLibCallsPass, LLVMAddTailCallEliminationPass, LLVMAddDemoteMemoryToRegisterPass, LLVMAddVerifierPass, LLVMAddCorrelatedValuePropagationPass, LLVMAddEarlyCSEPass, LLVMAddLowerExpectIntrinsicPass, LLVMAddTypeBasedAliasAnalysisPass, LLVMAddScopedNoAliasAAPass, LLVMAddBasicAliasAnalysisPass, LLVMAddReassociatePass};
 #[llvm_versions(3.7..=latest)]
@@ -301,6 +303,14 @@ impl<T: PassManagerSubType> PassManager<T> {
     pub fn add_constant_merge_pass(&self) {
         unsafe {
             LLVMAddConstantMergePass(self.pass_manager)
+        }
+    }
+
+    /// Discovers identical functions and collapses them.
+    #[llvm_versions(10.0..=latest)]
+    pub fn add_merge_functions_pass(&self) {
+        unsafe {
+            LLVMAddMergeFunctionsPass(self.pass_manager)
         }
     }
 

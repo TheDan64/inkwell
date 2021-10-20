@@ -9,6 +9,8 @@ use llvm_sys::core::{LLVMCreateEnumAttribute, LLVMCreateStringAttribute};
 use llvm_sys::core::{LLVMConstInlineAsm};
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::core::{LLVMGetInlineAsm};
+#[llvm_versions(12.0..=latest)]
+use llvm_sys::core::{LLVMCreateTypeAttribute};
 #[llvm_versions(7.0..=latest)]
 use crate::InlineAsmDialect;
 use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef, LLVMDiagnosticInfoRef};
@@ -27,7 +29,7 @@ use crate::memory_buffer::MemoryBuffer;
 use crate::module::Module;
 use crate::support::{to_c_str, LLVMString};
 use crate::targets::TargetData;
-use crate::types::{BasicTypeEnum, FloatType, IntType, StructType, VoidType, AsTypeRef, FunctionType};
+use crate::types::{AnyTypeEnum, BasicTypeEnum, FloatType, IntType, StructType, VoidType, AsTypeRef, FunctionType};
 #[llvm_versions(6.0..=latest)]
 use crate::types::MetadataType;
 use crate::values::{AsValueRef, BasicMetadataValueEnum, BasicValueEnum, FunctionValue, StructValue, MetadataValue, VectorValue, PointerValue};
@@ -925,6 +927,37 @@ impl Context {
                 key.len() as u32,
                 val.as_ptr() as *const _,
                 val.len() as u32,
+            ))
+        }
+    }
+
+    /// Create an enum `Attribute` with an `AnyTypeEnum` attached to it.
+    ///
+    /// # Example
+    /// ```rust
+    /// use inkwell::context::Context;
+    /// use inkwell::attributes::Attribute;
+    /// use inkwell::types::AnyType;
+    ///
+    /// let context = Context::create();
+    /// let kind_id = Attribute::get_named_enum_kind_id("sret");
+    /// let any_type = context.i32_type().as_any_type_enum();
+    /// let type_attribute = context.create_type_attribute(
+    ///     kind_id,
+    ///     any_type,
+    /// );
+    ///
+    /// assert!(type_attribute.is_type());
+    /// assert_eq!(type_attribute.get_type_value(), any_type);
+    /// assert_ne!(type_attribute.get_type_value(), context.i64_type().as_any_type_enum());
+    /// ```
+    #[llvm_versions(12.0..=latest)]
+    pub fn create_type_attribute(&self, kind_id: u32, type_ref: AnyTypeEnum) -> Attribute {
+        unsafe {
+            Attribute::new(LLVMCreateTypeAttribute(
+                self.context,
+                kind_id,
+                type_ref.as_type_ref(),
             ))
         }
     }
