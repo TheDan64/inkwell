@@ -664,10 +664,16 @@ impl<'ctx> InstructionValue<'ctx> {
 
     /// Determines whether or not this `Instruction` has any associated metadata
     /// `kind_id`.
-    pub fn set_metadata(self, metadata: MetadataValue<'ctx>, kind_id: u32) {
-        unsafe {
-            LLVMSetMetadata(self.instruction_value.value, kind_id, metadata.as_value_ref())
+    pub fn set_metadata(self, metadata: MetadataValue<'ctx>, kind_id: u32) -> Result<(), &'static str> {
+        if !metadata.is_node() {
+            return Err("metadata is expected to be a node.")
         }
+
+        unsafe {
+            LLVMSetMetadata(self.instruction_value.value, kind_id, metadata.as_value_ref());
+        }
+
+        Ok(())
     }
 }
 

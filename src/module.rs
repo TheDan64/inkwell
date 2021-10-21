@@ -818,8 +818,8 @@ impl<'ctx> Module<'ctx> {
     /// let md_string = context.metadata_string("lots of metadata here");
     /// let md_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
     ///
-    /// module.add_global_metadata("my_md", &md_string);
-    /// module.add_global_metadata("my_md", &md_node);
+    /// module.add_global_metadata("my_md", &md_string).unwrap();
+    /// module.add_global_metadata("my_md", &md_node).unwrap();
     ///
     /// assert_eq!(module.get_global_metadata_size("my_md"), 2);
     ///
@@ -835,12 +835,17 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(md_1[0].into_int_value(), bool_val);
     /// assert_eq!(md_1[1].into_float_value(), f32_val);
     /// ```
-    pub fn add_global_metadata(&self, key: &str, metadata: &MetadataValue<'ctx>) {
-        let c_string = to_c_str(key);
-
-        unsafe {
-            LLVMAddNamedMetadataOperand(self.module.get(), c_string.as_ptr(), metadata.as_value_ref())
+    pub fn add_global_metadata(&self, key: &str, metadata: &MetadataValue<'ctx>) -> Result<(), &'static str> {
+        if !metadata.is_node() {
+            return Err("metadata is expected to be a node.")
         }
+
+        let c_string = to_c_str(key);
+        unsafe {
+            LLVMAddNamedMetadataOperand(self.module.get(), c_string.as_ptr(), metadata.as_value_ref());
+        }
+
+        Ok(())
     }
 
     // REVIEW: Better name? get_global_metadata_len or _count?
@@ -863,8 +868,8 @@ impl<'ctx> Module<'ctx> {
     /// let md_string = context.metadata_string("lots of metadata here");
     /// let md_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
     ///
-    /// module.add_global_metadata("my_md", &md_string);
-    /// module.add_global_metadata("my_md", &md_node);
+    /// module.add_global_metadata("my_md", &md_string).unwrap();
+    /// module.add_global_metadata("my_md", &md_node).unwrap();
     ///
     /// assert_eq!(module.get_global_metadata_size("my_md"), 2);
     ///
@@ -908,8 +913,8 @@ impl<'ctx> Module<'ctx> {
     /// let md_string = context.metadata_string("lots of metadata here");
     /// let md_node = context.metadata_node(&[bool_val.into(), f32_val.into()]);
     ///
-    /// module.add_global_metadata("my_md", &md_string);
-    /// module.add_global_metadata("my_md", &md_node);
+    /// module.add_global_metadata("my_md", &md_string).unwrap();
+    /// module.add_global_metadata("my_md", &md_node).unwrap();
     ///
     /// assert_eq!(module.get_global_metadata_size("my_md"), 2);
     ///

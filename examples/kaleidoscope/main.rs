@@ -25,8 +25,8 @@ use self::inkwell::builder::Builder;
 use self::inkwell::context::Context;
 use self::inkwell::module::Module;
 use self::inkwell::passes::PassManager;
-use self::inkwell::types::BasicTypeEnum;
-use self::inkwell::values::{BasicValue, BasicValueEnum, FloatValue, FunctionValue, PointerValue};
+use self::inkwell::types::BasicMetadataTypeEnum;
+use self::inkwell::values::{BasicValue, BasicMetadataValueEnum, FloatValue, FunctionValue, PointerValue};
 use self::inkwell::{OptimizationLevel, FloatPredicate};
 
 use crate::Token::*;
@@ -982,7 +982,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                             compiled_args.push(self.compile_expr(arg)?);
                         }
 
-                        let argsv: Vec<BasicValueEnum> = compiled_args.iter().by_ref().map(|&val| val.into()).collect();
+                        let argsv: Vec<BasicMetadataValueEnum> = compiled_args.iter().by_ref().map(|&val| val.into()).collect();
 
                         match self.builder.build_call(fun, argsv.as_slice(), "tmp").try_as_basic_value().left() {
                             Some(value) => Ok(value.into_float_value()),
@@ -1093,7 +1093,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
         let args_types = std::iter::repeat(ret_type)
             .take(proto.args.len())
             .map(|f| f.into())
-            .collect::<Vec<BasicTypeEnum>>();
+            .collect::<Vec<BasicMetadataTypeEnum>>();
         let args_types = args_types.as_slice();
 
         let fn_type = self.context.f64_type().fn_type(args_types, false);

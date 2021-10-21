@@ -1,6 +1,8 @@
 //! A `Context` is an opaque owner and manager of core global data.
 
 use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMGetMDKindIDInContext, LLVMX86FP80TypeInContext, LLVMConstStringInContext, LLVMContextSetDiagnosticHandler};
+#[llvm_versions(6.0..=latest)]
+use llvm_sys::core::LLVMMetadataTypeInContext;
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::{LLVMCreateEnumAttribute, LLVMCreateStringAttribute};
 #[llvm_versions(3.6..7.0)]
@@ -28,6 +30,8 @@ use crate::module::Module;
 use crate::support::{to_c_str, LLVMString};
 use crate::targets::TargetData;
 use crate::types::{AnyTypeEnum, BasicTypeEnum, FloatType, IntType, StructType, VoidType, AsTypeRef, FunctionType};
+#[llvm_versions(6.0..=latest)]
+use crate::types::MetadataType;
 use crate::values::{AsValueRef, BasicMetadataValueEnum, BasicValueEnum, FunctionValue, StructValue, MetadataValue, VectorValue, PointerValue};
 
 use std::marker::PhantomData;
@@ -424,6 +428,26 @@ impl Context {
     pub fn custom_width_int_type(&self, bits: u32) -> IntType {
         unsafe {
             IntType::new(LLVMIntTypeInContext(self.context, bits))
+        }
+    }
+
+    /// Gets the `MetadataType` representing 128 bit width. It will be assigned the current context.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::values::IntValue;
+    ///
+    /// let context = Context::create();
+    /// let md_type = context.metadata_type();
+    ///
+    /// assert_eq!(*md_type.get_context(), context);
+    /// ```
+    #[llvm_versions(6.0..=latest)]
+    pub fn metadata_type(&self) -> MetadataType {
+        unsafe {
+            MetadataType::new(LLVMMetadataTypeInContext(self.context))
         }
     }
 

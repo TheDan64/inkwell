@@ -449,6 +449,14 @@ impl<'ctx> From<BasicValueEnum<'ctx>> for AnyValueEnum<'ctx> {
     }
 }
 
+impl<'ctx> From<BasicValueEnum<'ctx>> for BasicMetadataValueEnum<'ctx> {
+    fn from(value: BasicValueEnum<'ctx>) -> Self {
+        unsafe {
+            BasicMetadataValueEnum::new(value.as_value_ref())
+        }
+    }
+}
+
 impl<'ctx> TryFrom<AnyValueEnum<'ctx>> for BasicValueEnum<'ctx> {
     type Error = ();
 

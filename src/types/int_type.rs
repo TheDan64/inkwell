@@ -10,6 +10,7 @@ use crate::types::{Type, ArrayType, BasicTypeEnum, VectorType, PointerType, Func
 use crate::values::{AsValueRef, ArrayValue, GenericValue, IntValue};
 
 use std::convert::TryFrom;
+use crate::types::enums::BasicMetadataTypeEnum;
 
 /// How to interpret a string or digits used to construct an integer constant.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -195,7 +196,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i8_type = context.i8_type();
     /// let fn_type = i8_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
+    pub fn fn_type(self, param_types: &[BasicMetadataTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.int_type.fn_type(param_types, is_var_args)
     }
 

@@ -42,7 +42,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.6-dev
-      rust: 1.45.2
+      rust: 1.52
       dist: trusty
     - env:
         - LLVM_VERSION="3.7"
@@ -55,7 +55,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.7-dev
-      rust: 1.45.2
+      rust: 1.52
       dist: trusty
     - env:
         - LLVM_VERSION="3.8"
@@ -68,7 +68,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-3.8-dev
-      rust: 1.45.2
+      rust: 1.52
       dist: trusty
     # 3.9 seems to have a linking issue :/
     # - env:
@@ -96,7 +96,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-4.0-dev
-      rust: 1.45.2
+      rust: 1.52
       dist: trusty
     - env:
         - LLVM_VERSION="5.0"
@@ -109,7 +109,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-5.0-dev
-      rust: 1.45.2
+      rust: 1.52
       dist: trusty
     - env:
         - LLVM_VERSION="6.0"
@@ -122,7 +122,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-6.0-dev
-      rust: 1.45.2
+      rust: 1.52
       dist: trusty
     - env:
         - LLVM_VERSION="7.0"
@@ -135,7 +135,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-7-dev
-      rust: 1.45.2
+      rust: 1.52
       dist: trusty
     - env:
         - LLVM_VERSION="8.0"
@@ -163,7 +163,7 @@ matrix:
           packages:
             - *BASE_PACKAGES
             - llvm-9-dev
-      rust: 1.45.2
+      rust: 1.52
       dist: bionic
     - env:
         - LLVM_VERSION="10.0"
@@ -179,7 +179,7 @@ matrix:
             - *BASE_PACKAGES
             - llvm-10-dev
             - libclang-common-10-dev
-      rust: 1.45.2
+      rust: 1.52
       dist: bionic
     - env:
         - LLVM_VERSION="11.0"
@@ -195,7 +195,7 @@ matrix:
             - *BASE_PACKAGES
             - llvm-11-dev
             - libclang-common-11-dev
-      rust: 1.45.2
+      rust: 1.52
       dist: bionic
     - env:
         - LLVM_VERSION="12.0"
@@ -211,7 +211,7 @@ matrix:
             - *BASE_PACKAGES
             - llvm-12-dev
             - libclang-common-12-dev
-      rust: 1.45.2
+      rust: 1.52
       dist: bionic
     - deploy: # Documentation build; Only latest supported LLVM version for now
         provider: pages

@@ -5,6 +5,7 @@ use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::types::{ArrayType, BasicTypeEnum, Type, traits::AsTypeRef, FunctionType, PointerType};
 use crate::values::{AsValueRef, ArrayValue, BasicValue, VectorValue, IntValue};
+use crate::types::enums::BasicMetadataTypeEnum;
 
 /// A `VectorType` is the type of a multiple value SIMD constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -204,7 +205,7 @@ impl<'ctx> VectorType<'ctx> {
     /// let f32_vec_type = f32_type.vec_type(3);
     /// let fn_type = f32_vec_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
+    pub fn fn_type(self, param_types: &[BasicMetadataTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.vec_type.fn_type(param_types, is_var_args)
     }
 

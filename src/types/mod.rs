@@ -10,6 +10,8 @@ mod fn_type;
 #[deny(missing_docs)]
 mod int_type;
 #[deny(missing_docs)]
+mod metadata_type;
+#[deny(missing_docs)]
 mod ptr_type;
 #[deny(missing_docs)]
 mod struct_type;
@@ -21,10 +23,11 @@ mod vec_type;
 mod void_type;
 
 pub use crate::types::array_type::ArrayType;
-pub use crate::types::enums::{AnyTypeEnum, BasicTypeEnum};
+pub use crate::types::enums::{AnyTypeEnum, BasicTypeEnum, BasicMetadataTypeEnum};
 pub use crate::types::float_type::FloatType;
 pub use crate::types::fn_type::FunctionType;
 pub use crate::types::int_type::{IntType, StringRadix};
+pub use crate::types::metadata_type::MetadataType;
 pub use crate::types::ptr_type::PointerType;
 pub use crate::types::struct_type::StructType;
 pub use crate::types::traits::{AnyType, BasicType, IntMathType, FloatMathType, PointerMathType};
@@ -32,9 +35,10 @@ pub use crate::types::vec_type::VectorType;
 pub use crate::types::void_type::VoidType;
 pub(crate) use crate::types::traits::AsTypeRef;
 
+use llvm_sys::LLVMTypeKind;
 #[llvm_versions(3.7..=4.0)]
 use llvm_sys::core::LLVMDumpType;
-use llvm_sys::core::{LLVMAlignOf, LLVMGetTypeContext, LLVMFunctionType, LLVMArrayType, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMTypeIsSized, LLVMSizeOf, LLVMVectorType, LLVMGetElementType, LLVMConstNull};
+use llvm_sys::core::{LLVMAlignOf, LLVMGetTypeContext, LLVMFunctionType, LLVMArrayType, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMTypeIsSized, LLVMSizeOf, LLVMVectorType, LLVMGetElementType, LLVMConstNull, LLVMGetTypeKind, LLVMConstPointerNull};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 #[cfg(feature = "experimental")]
 use static_alloc::Bump;
@@ -78,7 +82,10 @@ impl<'ctx> Type<'ctx> {
 
     fn const_zero(self) -> LLVMValueRef {
         unsafe {
-            LLVMConstNull(self.ty)
+            match LLVMGetTypeKind(self.ty) {
+                LLVMTypeKind::LLVMMetadataTypeKind => LLVMConstPointerNull(self.ty),
+                _ => LLVMConstNull(self.ty)
+            }
         }
     }
 
@@ -98,7 +105,7 @@ impl<'ctx> Type<'ctx> {
     }
 
     #[cfg(not(feature = "experimental"))]
-    fn fn_type(self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
+    fn fn_type(self, param_types: &[BasicMetadataTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         let mut param_types: Vec<LLVMTypeRef> = param_types.iter()
                                                            .map(|val| val.as_type_ref())
                                                            .collect();
@@ -108,7 +115,7 @@ impl<'ctx> Type<'ctx> {
     }
 
     #[cfg(feature = "experimental")]
-    fn fn_type(self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
+    fn fn_type(self, param_types: &[BasicMetadataTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         let pool: Bump<[usize; 16]> = Bump::uninit();
         let mut pool_start = None;
 
