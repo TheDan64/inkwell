@@ -7,6 +7,7 @@ use crate::context::ContextRef;
 use crate::types::traits::AsTypeRef;
 use crate::types::{Type, PointerType, FunctionType, BasicTypeEnum, ArrayType, VectorType};
 use crate::values::{AsValueRef, ArrayValue, FloatValue, GenericValue, IntValue};
+use crate::types::enums::BasicMetadataTypeEnum;
 
 /// A `FloatType` is the type of a floating point constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -34,7 +35,7 @@ impl<'ctx> FloatType<'ctx> {
     /// let f32_type = context.f32_type();
     /// let fn_type = f32_type.fn_type(&[], false);
     /// ```
-    pub fn fn_type(self, param_types: &[BasicTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
+    pub fn fn_type(self, param_types: &[BasicMetadataTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         self.float_type.fn_type(param_types, is_var_args)
     }
 

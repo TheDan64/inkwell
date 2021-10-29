@@ -10,7 +10,7 @@ use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use crate::{AtomicOrdering, AtomicRMWBinOp, IntPredicate, FloatPredicate};
 use crate::basic_block::BasicBlock;
 use crate::support::to_c_str;
-use crate::values::{AggregateValue, AggregateValueEnum, AsValueRef, FunctionValue, BasicValue, BasicValueEnum, PhiValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode, CallSiteValue};
+use crate::values::{AggregateValue, AggregateValueEnum, AsValueRef, FunctionValue, BasicValue, BasicValueEnum, PhiValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode, CallSiteValue, BasicMetadataValueEnum};
 #[llvm_versions(7.0..=latest)]
 use crate::debug_info::DILocation;
 #[llvm_versions(3.9..=latest)]
@@ -126,17 +126,18 @@ impl<'ctx> Builder<'ctx> {
     /// let fn_value = module.add_function("ret", fn_type, None);
     /// let entry = context.append_basic_block(fn_value, "entry");
     /// let i32_arg = fn_value.get_first_param().unwrap();
+    /// let md_string = context.metadata_string("a metadata");
     ///
     /// builder.position_at_end(entry);
     ///
-    /// let ret_val = builder.build_call(fn_value, &[i32_arg], "call")
+    /// let ret_val = builder.build_call(fn_value, &[i32_arg.into(), md_string.into()], "call")
     ///     .try_as_basic_value()
     ///     .left()
     ///     .unwrap();
     ///
     /// builder.build_return(Some(&ret_val));
     /// ```
-    pub fn build_call<F>(&self, function: F, args: &[BasicValueEnum<'ctx>], name: &str) -> CallSiteValue<'ctx>
+    pub fn build_call<F>(&self, function: F, args: &[BasicMetadataValueEnum<'ctx>], name: &str) -> CallSiteValue<'ctx>
     where
         F: Into<CallableValue<'ctx>>,
     {

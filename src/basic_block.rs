@@ -1,12 +1,12 @@
 //! A `BasicBlock` is a container of instructions.
 
-use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDeleteBasicBlock, LLVMGetPreviousBasicBlock, LLVMRemoveBasicBlockFromParent, LLVMGetFirstInstruction, LLVMGetLastInstruction, LLVMGetTypeContext, LLVMBasicBlockAsValue, LLVMReplaceAllUsesWith, LLVMGetFirstUse};
+use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMGetNextBasicBlock, LLVMIsABasicBlock, LLVMIsConstant, LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDeleteBasicBlock, LLVMGetPreviousBasicBlock, LLVMRemoveBasicBlockFromParent, LLVMGetFirstInstruction, LLVMGetLastInstruction, LLVMGetTypeContext, LLVMBasicBlockAsValue, LLVMReplaceAllUsesWith, LLVMGetFirstUse, LLVMBlockAddress};
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::LLVMGetBasicBlockName;
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
 
 use crate::context::ContextRef;
-use crate::values::{BasicValueUse, FunctionValue, InstructionValue};
+use crate::values::{AsValueRef, BasicValueUse, FunctionValue, InstructionValue, PointerValue};
 
 use std::fmt;
 use std::ffi::CStr;
@@ -513,6 +513,42 @@ impl<'ctx> BasicBlock<'ctx> {
         unsafe {
             Some(BasicValueUse::new(use_))
         }
+    }
+
+    /// Gets the address of this `BasicBlock` if possible. Returns `None` if `self` is the entry block to a function. 
+    /// 
+    /// # Safety
+    /// 
+    /// The returned PointerValue may only be used for `call` and `indirect_branch` instructions
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// let context = Context::create();
+    /// let module = context.create_module("my_mod");
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let fn_val = module.add_function("my_fn", fn_type, None);
+    /// let entry_bb = context.append_basic_block(fn_val, "entry");
+    /// let next_bb = context.append_basic_block(fn_val, "next");
+    /// 
+    /// assert!(unsafe { entry_bb.get_address() }.is_none());
+    /// assert!(unsafe { next_bb.get_address() }.is_some());
+    /// ```
+    pub unsafe fn get_address(self) -> Option<PointerValue<'ctx>> {
+        let parent = self.get_parent()?;
+
+        // Taking the address of the entry block is illegal.
+        self.get_previous_basic_block()?;
+
+        let value = PointerValue::new(LLVMBlockAddress(parent.as_value_ref(), self.basic_block));
+
+        if value.is_null() {
+            return None;
+        }
+
+        Some(value)
     }
 }
 
