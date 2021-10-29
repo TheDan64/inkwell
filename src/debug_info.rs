@@ -271,7 +271,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 debug_info_for_profiling as _,
             ) }
 
-            #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0", feature = "llvm13-0"))]
+            #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
              { LLVMDIBuilderCreateCompileUnit(
                 self.builder,
                 language.into(),

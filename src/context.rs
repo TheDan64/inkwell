@@ -220,6 +220,7 @@ impl Context {
     /// let callable_value = CallableValue::try_from(asm).unwrap();
     /// builder.build_call(callable_value, params, "exit");
     /// builder.build_return(None);
+    /// ```
     #[llvm_versions(13.0..=latest)]
     pub fn create_inline_asm(&self, ty: FunctionType, mut assembly: String, mut constraints: String, sideeffects: bool, alignstack: bool, dialect: Option<InlineAsmDialect>,
         can_throw: bool,
@@ -268,6 +269,7 @@ impl Context {
     /// let callable_value = CallableValue::try_from(asm).unwrap();
     /// builder.build_call(callable_value, params, "exit");
     /// builder.build_return(None);
+    /// ```
     #[llvm_versions(7.0..=12.0)]
     pub fn create_inline_asm(&self, ty: FunctionType, mut assembly: String, mut constraints: String, sideeffects: bool, alignstack: bool, dialect: Option<InlineAsmDialect>) -> PointerValue {
         let value = unsafe {
@@ -310,6 +312,7 @@ impl Context {
     /// let callable_value = CallableValue::try_from(asm).unwrap();
     /// builder.build_call(callable_value, params, "exit");
     /// builder.build_return(None);
+    /// ```
     #[llvm_versions(3.6..7.0)]
     pub fn create_inline_asm(&self, ty: FunctionType, assembly: String, constraints: String, sideeffects: bool, alignstack: bool) -> PointerValue {
         let value = unsafe {
