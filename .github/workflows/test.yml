@@ -6,213 +6,34 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  llvm36:
-    name: LLVM 3.6 Ubuntu
-    runs-on: ubuntu-latest
-
+  tests:
+    name: "LLVM ${{ matrix.llvm-version[0] }}: ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        llvm-version:
+          - ["3.6", "3-6"]
+          - ["3.7", "3-7"]
+          - ["3.8", "3-8"]
+          # - ["3.9", "3-9"]
+          - ["4.0", "4-0"]
+          - ["5.0", "5-0"]
+          - ["6.0", "6-0"]
+          - ["7.0", "7-0"]
+          - ["8.0", "8-0"]
+          - ["9.0", "9-0"]
+          - ["10.0", "10-0"]
+          - ["11.0", "11-0"]
+          - ["12.0", "12-0"]
     steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
-      with:
-        version: "3.6"
-    - name: Build
-      run: cargo build --release --features llvm3-6 --verbose
-    - name: Run tests
-      run: cargo test --release --features llvm3-6 --verbose
-
-  llvm37:
-    name: LLVM 3.7 Ubuntu
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
-      with:
-        version: "3.7"
-    - name: Build
-      run: cargo build --release --features llvm3-7 --verbose
-    - name: Run tests
-      run: cargo test --release --features llvm3-7 --verbose
-
-  llvm38:
-    name: LLVM 3.8 Ubuntu
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
-      with:
-        version: "3.8"
-    - name: Build
-      run: cargo build --release --features llvm3-8 --verbose
-    - name: Run tests
-      run: cargo test --release --features llvm3-8 --verbose
-
-  # llvm39:
-  #   name: LLVM 3.9 Ubuntu
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #   - name: Checkout
-  #     uses: actions/checkout@v2
-  #   - name: Install LLVM and Clang
-  #     uses: KyleMayes/install-llvm-action@v1.4.1
-  #     with:
-  #       version: "3.9"
-  #   - name: Build
-  #     run: cargo build --release --features llvm3-9 --verbose
-  #   - name: Run tests
-  #     run: cargo test --release --features llvm3-9 --verbose
-
-  llvm4:
-    name: LLVM 4 Ubuntu
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
-      with:
-        version: "4.0"
-    - name: Build
-      run: cargo build --release --features llvm4-0 --verbose
-    - name: Run tests
-      run: cargo test --release --features llvm4-0 --verbose
-
-  llvm5:
-    name: LLVM 5 Ubuntu
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
-      with:
-        version: "5.0"
-    - name: Build
-      run: cargo build --release --features llvm5-0 --verbose
-    - name: Run tests
-      run: cargo test --release --features llvm5-0 --verbose
-
-  llvm6:
-    name: LLVM 6 Ubuntu
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
-      with:
-        version: "6.0"
-    - name: Build
-      run: cargo build --release --features llvm6-0 --verbose
-    - name: Run tests
-      run: cargo test --release --features llvm6-0 --verbose
-
-  llvm7:
-    name: LLVM 7 Ubuntu
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
-      with:
-        version: "7.0"
-    - name: Build
-      run: cargo build --release --features llvm7-0 --verbose
-    - name: Run tests
-      run: cargo test --release --features llvm7-0 --verbose
-
-  llvm8:
-    name: LLVM 8 Ubuntu
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
-      with:
-        version: "8.0"
-    - name: Build
-      run: cargo build --release --features llvm8-0 --verbose
-    - name: Run tests
-      run: cargo test --release --features llvm8-0 --verbose
-
-  llvm9:
-    name: LLVM 9 Ubuntu
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
-      with:
-        version: "9.0"
-    - name: Build
-      run: cargo build --release --features llvm9-0 --verbose
-    - name: Run tests
-      run: cargo test --release --features llvm9-0 --verbose
-
-  llvm10:
-    name: LLVM 10 Ubuntu
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
-      with:
-        version: "10.0"
-        cached: true
-    - name: Build
-      run: cargo build --release --features llvm10-0 --verbose
-    - name: Run tests
-      run: cargo test --release --features llvm10-0 --verbose
-
-  llvm11:
-    name: LLVM 11 Ubuntu
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
-      with:
-        version: "11.0"
-        cached: true
-    - name: Build
-      run: cargo build --release --features llvm11-0 --verbose
-    - name: Run tests
-      run: cargo test --release --features llvm11-0 --verbose
-
-  llvm12:
-    name: LLVM 12 Ubuntu
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
-      with:
-        version: "12.0"
-        cached: true
-    - name: Build
-      run: cargo build --release --features llvm12-0 --verbose
-    - name: Run tests
-      run: cargo test --release --features llvm12-0 --verbose
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+      - name: Install LLVM and Clang
+        uses: KyleMayes/install-llvm-action@v1.4.1
+        with:
+          version: ${{ matrix.llvm-version[0] }}
+      - name: Build
+        run: cargo build --release --features llvm${{ matrix.llvm-version[1] }} --verbose
+      - name: Run tests
+        run: cargo test --release --features llvm${{ matrix.llvm-version[1] }} --verbose
