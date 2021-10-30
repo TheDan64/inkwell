@@ -30,9 +30,9 @@ fn test_smoke() {
         0,
         false,
         false,
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0"))]
+        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
         "",
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0"))]
+        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
         "",
     );
 
@@ -108,9 +108,9 @@ fn test_struct_with_placeholders() {
         0,
         false,
         false,
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0"))]
+        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
         "",
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0"))]
+        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
         "",
     );
 
@@ -225,9 +225,9 @@ fn test_no_explicit_finalize() {
         0,
         false,
         false,
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0"))]
+        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
         "",
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0"))]
+        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
         "",
     );
 
@@ -256,9 +256,9 @@ fn test_replacing_placeholder_with_placeholder() {
         0,
         false,
         false,
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0"))]
+        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
         "",
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0"))]
+        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
         "",
     );
 
@@ -303,9 +303,9 @@ fn test_anonymous_basic_type() {
         0,
         false,
         false,
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0"))]
+        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
         "",
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0"))]
+        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
         "",
     );
 
@@ -341,9 +341,9 @@ fn test_global_expressions() {
         0,
         false,
         false,
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0"))]
+        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
         "",
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0"))]
+        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
         "",
     );
 

@@ -192,7 +192,7 @@ fn test_build_invoke_catch_all() {
         let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
 
         let null = i8_ptr_type.const_zero();
-        let res = builder.build_landing_pad(exception_type, personality_function, &[null.into()], false, "res");
+        builder.build_landing_pad(exception_type, personality_function, &[null.into()], false, "res");
 
         let fakepi = f32_type.const_zero();
 
@@ -268,7 +268,7 @@ fn landing_pad_filter() {
 
         // make the filter landing pad
         let filter_pattern = i8_ptr_type.const_array(&[type_info_int.as_any_value_enum().into_pointer_value()]);
-        let res = builder.build_landing_pad(exception_type, personality_function, &[filter_pattern.into()], false, "res");
+        builder.build_landing_pad(exception_type, personality_function, &[filter_pattern.into()], false, "res");
 
         let fakepi = f32_type.const_zero();
 

@@ -215,12 +215,62 @@ impl Context {
     ///
     /// builder.position_at_end(basic_block);
     /// let asm_fn = context.i64_type().fn_type(&[context.i64_type().into(), context.i64_type().into()], false);
+    /// let asm = context.create_inline_asm(asm_fn, "syscall".to_string(), "=r,{rax},{rdi}".to_string(), true, false, None, false);
+    /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
+    /// let callable_value = CallableValue::try_from(asm).unwrap();
+    /// builder.build_call(callable_value, params, "exit");
+    /// builder.build_return(None);
+    /// ```
+    #[llvm_versions(13.0..=latest)]
+    pub fn create_inline_asm(&self, ty: FunctionType, mut assembly: String, mut constraints: String, sideeffects: bool, alignstack: bool, dialect: Option<InlineAsmDialect>,
+        can_throw: bool,
+    ) -> PointerValue {
+        #[cfg(any(feature = "llvm13-0"))]
+        let can_throw_llvmbool = can_throw as i32;
+
+        let value = unsafe {
+            LLVMGetInlineAsm(
+                ty.as_type_ref(),
+                assembly.as_mut_ptr() as *mut ::libc::c_char,
+                assembly.len(),
+                constraints.as_mut_ptr() as *mut ::libc::c_char,
+                constraints.len(),
+                sideeffects as i32,
+                alignstack as i32,
+                dialect.unwrap_or(InlineAsmDialect::ATT).into(),
+                can_throw_llvmbool,
+            )
+        };
+
+        unsafe {
+            PointerValue::new(value)
+        }
+    }
+    /// Creates a inline asm function pointer.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use std::convert::TryFrom;
+    /// use inkwell::context::Context;
+    /// use inkwell::values::CallableValue;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    /// let builder = context.create_builder();
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let fn_val = module.add_function("my_fn", fn_type, None);
+    /// let basic_block = context.append_basic_block(fn_val, "entry");
+    ///
+    /// builder.position_at_end(basic_block);
+    /// let asm_fn = context.i64_type().fn_type(&[context.i64_type().into(), context.i64_type().into()], false);
     /// let asm = context.create_inline_asm(asm_fn, "syscall".to_string(), "=r,{rax},{rdi}".to_string(), true, false, None);
     /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
     /// let callable_value = CallableValue::try_from(asm).unwrap();
     /// builder.build_call(callable_value, params, "exit");
     /// builder.build_return(None);
-    #[llvm_versions(7.0..=latest)]
+    /// ```
+    #[llvm_versions(7.0..=12.0)]
     pub fn create_inline_asm(&self, ty: FunctionType, mut assembly: String, mut constraints: String, sideeffects: bool, alignstack: bool, dialect: Option<InlineAsmDialect>) -> PointerValue {
         let value = unsafe {
             LLVMGetInlineAsm(
@@ -231,7 +281,7 @@ impl Context {
                 constraints.len(),
                 sideeffects as i32,
                 alignstack as i32,
-                dialect.unwrap_or(InlineAsmDialect::ATT).into()
+                dialect.unwrap_or(InlineAsmDialect::ATT).into(),
             )
         };
 
@@ -262,6 +312,7 @@ impl Context {
     /// let callable_value = CallableValue::try_from(asm).unwrap();
     /// builder.build_call(callable_value, params, "exit");
     /// builder.build_return(None);
+    /// ```
     #[llvm_versions(3.6..7.0)]
     pub fn create_inline_asm(&self, ty: FunctionType, assembly: String, constraints: String, sideeffects: bool, alignstack: bool) -> PointerValue {
         let value = unsafe {
