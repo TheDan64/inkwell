@@ -45,7 +45,7 @@ impl StringRadix {
     /// Is the string valid for the given radix?
     pub fn matches_str(&self, slice: &str) -> bool {
         // drop 1 optional + or -
-        let slice = slice.strip_prefix(|c| c == '+' || c == '-'));
+        let slice = slice.strip_prefix(|c| c == '+' || c == '-').unwrap_or(slice);
 
         // there must be at least 1 actual digit
         if slice.is_empty() {
