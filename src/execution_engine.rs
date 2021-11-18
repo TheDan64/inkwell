@@ -539,6 +539,7 @@ pub mod experimental {
     use llvm_sys::orc::{LLVMOrcCreateInstance, LLVMOrcDisposeInstance, LLVMOrcJITStackRef, LLVMOrcAddEagerlyCompiledIR, LLVMOrcAddLazilyCompiledIR, LLVMOrcGetErrorMsg, LLVMOrcGetMangledSymbol, LLVMOrcDisposeMangledSymbol};
 
     use crate::module::Module;
+    use crate::support::to_c_str;
     use crate::targets::TargetMachine;
 
     use std::mem::MaybeUninit;

@@ -5,6 +5,8 @@ use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::{LLVMAddAttributeAtIndex, LLVMGetAttributeCountAtIndex, LLVMGetEnumAttributeAtIndex, LLVMGetStringAttributeAtIndex, LLVMRemoveEnumAttributeAtIndex, LLVMRemoveStringAttributeAtIndex};
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
+#[llvm_versions(7.0..=latest)]
+use llvm_sys::debuginfo::{LLVMGetSubprogram, LLVMSetSubprogram};
 
 use std::ffi::CStr;
 use std::marker::PhantomData;
@@ -14,6 +16,8 @@ use std::fmt;
 #[llvm_versions(3.9..=latest)]
 use crate::attributes::{Attribute, AttributeLoc};
 use crate::basic_block::BasicBlock;
+#[llvm_versions(7.0..=latest)]
+use crate::debug_info::DISubprogram;
 use crate::module::Linkage;
 use crate::support::{to_c_str, LLVMString};
 use crate::types::{FunctionType, PointerType};
@@ -503,6 +507,27 @@ impl<'ctx> FunctionValue<'ctx> {
     /// a `PointerValue`.
     pub fn as_global_value(self) -> GlobalValue<'ctx> {
         GlobalValue::new(self.as_value_ref())
+    }
+
+    /// Set the debug info descriptor
+    #[llvm_versions(7.0..=latest)]
+    pub fn set_subprogram(self, subprogram: DISubprogram<'ctx>) {
+        unsafe { LLVMSetSubprogram(self.as_value_ref(), subprogram.metadata_ref) }
+    }
+
+    /// Get the debug info descriptor
+    #[llvm_versions(7.0..=latest)]
+    pub fn get_subprogram(self) -> Option<DISubprogram<'ctx>> {
+        let metadata_ref = unsafe { LLVMGetSubprogram(self.as_value_ref()) };
+
+        if metadata_ref.is_null() {
+            None
+        } else {
+            Some(DISubprogram {
+                metadata_ref,
+                _marker: PhantomData,
+            })
+        }
     }
 }
 

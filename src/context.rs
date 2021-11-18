@@ -893,7 +893,7 @@ impl Drop for Context {
     }
 }
 
-/// A `ContextRef` is a smart pointer allowing borrowed access to a a type's `Context`.
+/// A `ContextRef` is a smart pointer allowing borrowed access to a type's `Context`.
 #[derive(Debug, PartialEq, Eq)]
 pub struct ContextRef<'ctx> {
     context: ManuallyDrop<Context>,
@@ -912,7 +912,7 @@ impl<'ctx> ContextRef<'ctx> {
     #[cfg(feature = "experimental")]
     pub fn get(&self) -> &'ctx Context {
         // Safety: Although strictly untrue that a local reference to the context field
-        // is guarenteed to live for the entirety of 'ctx:
+        // is guaranteed to live for the entirety of 'ctx:
         // 1) ContextRef cannot outlive 'ctx
         // 2) Any method called called with this context object will inherit 'ctx,
         // which is its proper lifetime and does not point into this context object
