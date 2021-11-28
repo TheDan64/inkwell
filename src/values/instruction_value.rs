@@ -11,7 +11,7 @@ use llvm_sys::prelude::LLVMValueRef;
 
 use crate::basic_block::BasicBlock;
 use crate::values::traits::AsValueRef;
-use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, Value, MetadataValue};
+use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, Value, MetadataValue, PhiValue};
 use crate::{AtomicOrdering, IntPredicate, FloatPredicate};
 
 // REVIEW: Split up into structs for SubTypes on InstructionValues?
@@ -674,6 +674,18 @@ impl<'ctx> InstructionValue<'ctx> {
         }
 
         Ok(())
+    }
+
+    /// Return this `InstructionValue` as a `PhiValue`.
+    /// Panics if the instruction is not a Phi instruction.
+    pub fn as_phi_value(&self) -> PhiValue<'ctx> {
+        if self.get_opcode() == InstructionOpcode::Phi {
+            unsafe {
+                PhiValue::new(self.as_value_ref())
+            }
+        } else {
+            panic!("Found {:?} but expected the PhiValue variant", self)
+        }
     }
 }
 
