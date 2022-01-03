@@ -4,7 +4,7 @@ use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArray
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::LLVMBuildAtomicCmpXchg;
 #[llvm_versions(8.0..=latest)]
-use llvm_sys::core::{LLVMBuildMemCpy, LLVMBuildMemMove};
+use llvm_sys::core::{LLVMBuildMemCpy, LLVMBuildMemMove, LLVMBuildMemSet};
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 
 use crate::{AtomicOrdering, AtomicRMWBinOp, IntPredicate, FloatPredicate};
@@ -844,6 +844,41 @@ impl<'ctx> Builder<'ctx> {
                 src.as_value_ref(),
                 src_align_bytes,
                 size.as_value_ref(),
+            )
+        };
+
+        unsafe {
+            Ok(PointerValue::new(value))
+        }
+    }
+
+    /// Build a [memset](http://llvm.org/docs/LangRef.html#llvm-memset-intrinsic) instruction.
+    ///
+    /// Alignment arguments are specified in bytes, and should always be
+    /// both a power of 2 and under 2^64.
+    ///
+    /// The final argument should be a pointer-sized integer.
+    ///
+    /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
+    #[llvm_versions(8.0..=latest)]
+    pub fn build_memset(
+        &self,
+        dest: PointerValue<'ctx>,
+        dest_align_bytes: u32,
+        val : IntValue<'ctx>,
+        size: IntValue<'ctx>,
+    ) -> Result<PointerValue<'ctx>, &'static str> {
+        if !is_alignment_ok(dest_align_bytes) {
+            return Err("The src_align_bytes argument to build_memmove was not a power of 2 under 2^64.");
+        }
+
+        let value = unsafe {
+            LLVMBuildMemSet(
+                self.builder,
+                dest.as_value_ref(),
+                val.as_value_ref(),
+                size.as_value_ref(),
+                dest_align_bytes,
             )
         };
 
