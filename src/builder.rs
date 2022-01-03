@@ -852,7 +852,7 @@ impl<'ctx> Builder<'ctx> {
         }
     }
 
-    /// Build a [memset](http://llvm.org/docs/LangRef.html#llvm-memset-intrinsic) instruction.
+    /// Build a [memset](http://llvm.org/docs/LangRef.html#llvm-memset-intrinsics) instruction.
     ///
     /// Alignment arguments are specified in bytes, and should always be
     /// both a power of 2 and under 2^64.
