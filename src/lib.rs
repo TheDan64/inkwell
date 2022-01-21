@@ -35,6 +35,11 @@ pub mod memory_buffer;
 #[deny(missing_docs)]
 pub mod module;
 pub mod object_file;
+#[cfg(all(
+    feature = "orc2",
+    any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0")
+))]
+pub mod orc2;
 pub mod passes;
 pub mod targets;
 pub mod types;
