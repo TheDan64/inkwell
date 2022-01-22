@@ -1,4 +1,4 @@
-use inkwell::orc2::{Function, LLVMError, ThreadSafeContext, ThreadSafeModule, LLJIT};
+use inkwell::orc2::{LLJITBuilder, LLVMError, ThreadSafeContext, ThreadSafeModule};
 
 fn main() {
     if let Err(error) = run() {
@@ -11,17 +11,13 @@ fn main() {
 fn run() -> Result<(), LLVMError> {
     let thread_safe_context = ThreadSafeContext::create();
     let foo_module = constant_function_module(&thread_safe_context, 42, "foo");
-    let jit = LLJIT::create(None)?;
+    let jit_builder = LLJITBuilder::create();
+    let jit = jit_builder.build()?;
     let main_dylib = jit.get_main_jit_dylib();
     let foo_module_rt = main_dylib.create_resource_tracker();
-    jit.add_module_with_rt(&foo_module_rt, &foo_module)?;
-    let foo_function: Function<'_, unsafe extern "C" fn() -> u64> = jit.get_function("foo")?;
-    drop(jit);
-    drop(foo_module_rt);
-    drop(main_dylib);
-    drop(foo_module);
-    drop(thread_safe_context);
+    jit.add_module_with_rt(&foo_module_rt, foo_module)?;
     unsafe {
+        let foo_function = jit.get_function::<unsafe extern "C" fn() -> u64>("foo")?;
         println!("foo(): {}", foo_function.call());
     }
     Ok(())
