@@ -25,9 +25,9 @@ llvm7-0 = ["llvm-sys-70"]
 llvm8-0 = ["llvm-sys-80"]
 llvm9-0 = ["llvm-sys-90"]
 llvm10-0 = ["llvm-sys-100"]
-llvm11-0 = ["llvm-sys-110"]
-llvm12-0 = ["llvm-sys-120"]
-llvm13-0 = ["llvm-sys-130"]
+llvm11-0 = ["llvm-sys-110", "orc2"]
+llvm12-0 = ["llvm-sys-120", "orc2"]
+llvm13-0 = ["llvm-sys-130", "orc2"]
 # Don't link aganist LLVM libraries. This is useful if another dependency is
 # installing LLVM. See llvm-sys for more details. We can't enable a single
 # `no-llvm-linking` feature across the board of llvm versions, as it'll cause
@@ -116,3 +116,7 @@ regex = "1"
 [badges]
 travis-ci = { repository = "TheDan64/inkwell" }
 codecov = { repository = "TheDan64/inkwell" }
+
+[[example]]
+name = "lljit"
+required-features = ["orc2"]
