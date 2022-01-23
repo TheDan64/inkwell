@@ -3,13 +3,13 @@ use std::{
     error::Error,
     ffi::CStr,
     fmt::{self, Debug, Display, Formatter},
-    mem::transmute_copy,
+    mem::{transmute, transmute_copy},
     ops::Deref,
     ptr::null_mut,
     rc::Rc,
 };
 
-use libc::c_char;
+use libc::{c_char, c_void};
 use llvm_sys::{
     error::{
         LLVMConsumeError, LLVMCreateStringError, LLVMDisposeErrorMessage, LLVMErrorRef,
@@ -19,22 +19,41 @@ use llvm_sys::{
         lljit::{
             LLVMOrcCreateLLJIT, LLVMOrcCreateLLJITBuilder, LLVMOrcDisposeLLJIT,
             LLVMOrcDisposeLLJITBuilder, LLVMOrcLLJITAddLLVMIRModule,
-            LLVMOrcLLJITAddLLVMIRModuleWithRT, LLVMOrcLLJITBuilderRef, LLVMOrcLLJITGetMainJITDylib,
-            LLVMOrcLLJITLookup, LLVMOrcLLJITRef,
+            LLVMOrcLLJITAddLLVMIRModuleWithRT, LLVMOrcLLJITAddObjectFile,
+            LLVMOrcLLJITAddObjectFileWithRT, LLVMOrcLLJITBuilderRef,
+            LLVMOrcLLJITBuilderSetJITTargetMachineBuilder,
+            LLVMOrcLLJITBuilderSetObjectLinkingLayerCreator, LLVMOrcLLJITGetDataLayoutStr,
+            LLVMOrcLLJITGetExecutionSession, LLVMOrcLLJITGetGlobalPrefix,
+            LLVMOrcLLJITGetIRTransformLayer, LLVMOrcLLJITGetMainJITDylib,
+            LLVMOrcLLJITGetObjLinkingLayer, LLVMOrcLLJITGetObjTransformLayer,
+            LLVMOrcLLJITGetTripleString, LLVMOrcLLJITLookup, LLVMOrcLLJITMangleAndIntern,
+            LLVMOrcLLJITRef,
         },
         LLVMOrcCreateNewThreadSafeContext, LLVMOrcCreateNewThreadSafeModule,
+        LLVMOrcDisposeJITTargetMachineBuilder, LLVMOrcDisposeObjectLayer,
         LLVMOrcDisposeThreadSafeContext, LLVMOrcDisposeThreadSafeModule,
+        LLVMOrcExecutionSessionCreateBareJITDylib, LLVMOrcExecutionSessionCreateJITDylib,
+        LLVMOrcExecutionSessionGetJITDylibByName, LLVMOrcExecutionSessionIntern,
+        LLVMOrcExecutionSessionRef, LLVMOrcIRTransformLayerRef, LLVMOrcJITDylibClear,
         LLVMOrcJITDylibCreateResourceTracker, LLVMOrcJITDylibGetDefaultResourceTracker,
-        LLVMOrcJITDylibRef, LLVMOrcReleaseResourceTracker, LLVMOrcResourceTrackerRef,
-        LLVMOrcThreadSafeContextGetContext, LLVMOrcThreadSafeContextRef,
-        LLVMOrcThreadSafeModuleRef,
+        LLVMOrcJITDylibRef, LLVMOrcJITTargetMachineBuilderDetectHost,
+        LLVMOrcJITTargetMachineBuilderGetTargetTriple, LLVMOrcJITTargetMachineBuilderRef,
+        LLVMOrcJITTargetMachineBuilderSetTargetTriple, LLVMOrcObjectLayerAddObjectFile,
+        LLVMOrcObjectLayerAddObjectFileWithRT, LLVMOrcObjectLayerRef,
+        LLVMOrcObjectTransformLayerRef, LLVMOrcReleaseResourceTracker,
+        LLVMOrcReleaseSymbolStringPoolEntry, LLVMOrcResourceTrackerRef,
+        LLVMOrcResourceTrackerRemove, LLVMOrcResourceTrackerTransferTo,
+        LLVMOrcRetainSymbolStringPoolEntry, LLVMOrcSymbolStringPoolEntryRef,
+        LLVMOrcSymbolStringPoolEntryStr, LLVMOrcThreadSafeContextGetContext,
+        LLVMOrcThreadSafeContextRef, LLVMOrcThreadSafeModuleRef,
     },
 };
 
 use crate::{
     context::Context,
+    memory_buffer::MemoryBuffer,
     module::Module,
-    support::to_c_str,
+    support::{to_c_str, LLVMString},
     targets::{InitializationConfig, Target},
 };
 
@@ -50,21 +69,17 @@ impl LLVMError {
         if error.is_null() {
             return Ok(());
         }
-        let error_type = unsafe { LLVMGetErrorTypeId(error) };
-        if error_type.is_null() {
-            Ok(())
-        } else {
-            Err(LLVMError {
-                error,
-                handled: false,
-            })
-        }
+        Err(LLVMError {
+            error,
+            handled: false,
+        })
     }
     // Null type id == success
     pub fn get_type_id(&self) -> LLVMErrorTypeId {
         // FIXME: Don't expose LLVMErrorTypeId
         unsafe { LLVMGetErrorTypeId(self.error) }
     }
+
     /// Returns the error message of the error. This consumes the error
     /// and makes the error unusable afterwards.
     /// ```
@@ -182,12 +197,9 @@ pub struct ThreadSafeContext {
 }
 
 impl ThreadSafeContext {
-    fn new(thread_safe_context: LLVMOrcThreadSafeContextRef) -> Self {
+    unsafe fn new(thread_safe_context: LLVMOrcThreadSafeContextRef) -> Self {
         assert!(!thread_safe_context.is_null());
-        let context;
-        unsafe {
-            context = Context::new(LLVMOrcThreadSafeContextGetContext(thread_safe_context));
-        }
+        let context = Context::new(LLVMOrcThreadSafeContextGetContext(thread_safe_context));
         ThreadSafeContext {
             thread_safe_context,
             context,
@@ -255,7 +267,7 @@ pub struct ThreadSafeModule<'ctx> {
 }
 
 impl<'ctx> ThreadSafeModule<'ctx> {
-    fn new(thread_safe_module: LLVMOrcThreadSafeModuleRef, module: Module<'ctx>) -> Self {
+    unsafe fn new(thread_safe_module: LLVMOrcThreadSafeModuleRef, module: Module<'ctx>) -> Self {
         assert!(!thread_safe_module.is_null());
         ThreadSafeModule {
             thread_safe_module,
@@ -282,7 +294,7 @@ pub struct LLJIT {
 }
 
 impl LLJIT {
-    fn new(lljit: LLVMOrcLLJITRef) -> Self {
+    unsafe fn new(lljit: LLVMOrcLLJITRef) -> Self {
         assert!(!lljit.is_null());
         LLJIT {
             lljit: Rc::new(lljit),
@@ -318,7 +330,12 @@ impl LLJIT {
     /// let main_jd = jit.get_main_jit_dylib();
     /// ```
     pub fn get_main_jit_dylib(&self) -> JITDylib {
-        unsafe { JITDylib::new(LLVMOrcLLJITGetMainJITDylib(*self.lljit), Some(self.clone())) }
+        unsafe {
+            JITDylib::new(
+                LLVMOrcLLJITGetMainJITDylib(*self.lljit),
+                self.get_execution_session(),
+            )
+        }
     }
 
     /// Adds `module` to `jit_dylib` in the execution engine.
@@ -384,9 +401,42 @@ impl LLJIT {
         LLVMError::new(error)
     }
 
+    pub fn add_object_file(
+        &self,
+        jit_dylib: &JITDylib,
+        object_buffer: MemoryBuffer,
+    ) -> Result<(), LLVMError> {
+        unsafe {
+            LLVMError::new(LLVMOrcLLJITAddObjectFile(
+                *self.lljit,
+                jit_dylib.jit_dylib,
+                object_buffer.memory_buffer,
+            ))?;
+            object_buffer.transfer_ownership_to_llvm();
+        }
+        Ok(())
+    }
+
+    pub fn add_object_file_with_rt(
+        &self,
+        rt: &ResourceTracker,
+        object_buffer: MemoryBuffer,
+    ) -> Result<(), LLVMError> {
+        unsafe {
+            LLVMError::new(LLVMOrcLLJITAddObjectFileWithRT(
+                *self.lljit,
+                rt.rt,
+                object_buffer.memory_buffer,
+            ))?;
+            object_buffer.transfer_ownership_to_llvm();
+        }
+        Ok(())
+    }
+
     /// Attempts to lookup a function by `name` in the execution engine.
     ///
-    /// It is recommended to use [`get_function()`](LLJIT::get_function()) instead of this method when intending to call the function
+    /// It is recommended to use [`get_function()`](LLJIT::get_function())
+    /// instead of this method when intending to call the function
     /// pointer so that you don't have to do error-prone transmutes yourself.
     pub fn get_function_address(&self, name: &str) -> Result<u64, LLVMError> {
         let mut function_address = 0;
@@ -460,6 +510,50 @@ impl LLJIT {
             _owned_by_lljit: self.clone(),
         })
     }
+
+    pub fn get_execution_session(&self) -> ExecutionSession {
+        unsafe {
+            ExecutionSession::new_non_owning(
+                LLVMOrcLLJITGetExecutionSession(*self.lljit),
+                Some(self.clone()),
+            )
+        }
+    }
+
+    pub fn get_triple_string(&self) -> &CStr {
+        unsafe { CStr::from_ptr(LLVMOrcLLJITGetTripleString(*self.lljit)) }
+    }
+
+    pub fn get_global_prefix(&self) -> i8 {
+        unsafe { LLVMOrcLLJITGetGlobalPrefix(*self.lljit) }
+    }
+
+    pub fn mangle_and_intern(&self, unmangled_name: &str) -> SymbolStringPoolEntry {
+        unsafe {
+            SymbolStringPoolEntry::new(LLVMOrcLLJITMangleAndIntern(
+                *self.lljit,
+                to_c_str(unmangled_name).as_ptr(),
+            ))
+        }
+    }
+
+    pub fn get_object_linking_layer(&self) -> ObjectLayer {
+        unsafe { ObjectLayer::new_non_owning(LLVMOrcLLJITGetObjLinkingLayer(*self.lljit)) }
+    }
+
+    pub fn get_object_transform_layer(&self) -> ObjectTransformLayer {
+        unsafe {
+            ObjectTransformLayer::new_non_owning(LLVMOrcLLJITGetObjTransformLayer(*self.lljit))
+        }
+    }
+
+    pub fn get_ir_transform_layer(&self) -> IRTransformLayer {
+        unsafe { IRTransformLayer::new_non_owning(LLVMOrcLLJITGetIRTransformLayer(*self.lljit)) }
+    }
+
+    pub fn get_data_layout_string(&self) -> &CStr {
+        unsafe { CStr::from_ptr(LLVMOrcLLJITGetDataLayoutStr(*self.lljit)) }
+    }
 }
 
 impl Drop for LLJIT {
@@ -473,15 +567,18 @@ impl Drop for LLJIT {
 }
 
 /// An `LLJITBuilder` is used to create custom [`LLJIT`] instances.
-#[derive(Debug)]
 pub struct LLJITBuilder {
     builder: LLVMOrcLLJITBuilderRef,
+    object_linking_layer_creator: Option<Box<dyn ObjectLinkingLayerCreator>>,
 }
 
 impl LLJITBuilder {
-    fn new(builder: LLVMOrcLLJITBuilderRef) -> Self {
+    unsafe fn new(builder: LLVMOrcLLJITBuilderRef) -> Self {
         assert!(!builder.is_null());
-        LLJITBuilder { builder }
+        LLJITBuilder {
+            builder,
+            object_linking_layer_creator: None,
+        }
     }
 
     /// Creates an `LLJITBuilder`.
@@ -491,7 +588,7 @@ impl LLJITBuilder {
     /// let jit_builder = LLJITBuilder::create();
     /// ```
     pub fn create() -> Self {
-        LLJITBuilder::new(unsafe { LLVMOrcCreateLLJITBuilder() })
+        unsafe { LLJITBuilder::new(LLVMOrcCreateLLJITBuilder()) }
     }
 
     /// Builds the [`LLJIT`] instance. Consumes the `LLJITBuilder`.
@@ -500,12 +597,75 @@ impl LLJITBuilder {
     ///
     /// let jit_builder = LLJITBuilder::create();
     /// let jit = jit_builder.build().expect("LLJITBuilder::build failed");
-    pub fn build(mut self) -> Result<LLJIT, LLVMError> {
-        let lljit = unsafe { LLJIT::create_with_builder(self.builder) }?;
+    pub fn build(self) -> Result<LLJIT, LLVMError> {
+        unsafe {
+            let lljit = LLJIT::create_with_builder(self.builder)?;
+            self.transfer_ownership_to_llvm();
+            Ok(lljit)
+        }
+    }
+
+    unsafe fn transfer_ownership_to_llvm(mut self) {
         self.builder = null_mut();
-        Ok(lljit)
+    }
+
+    pub fn set_jit_target_machine_builder(
+        &self,
+        jit_target_machine_builder: JITTargetMachineBuilder,
+    ) {
+        unsafe {
+            LLVMOrcLLJITBuilderSetJITTargetMachineBuilder(
+                self.builder,
+                jit_target_machine_builder.builder,
+            );
+            jit_target_machine_builder.transfer_ownership_to_llvm();
+        }
+    }
+
+    pub fn set_object_linking_layer_creator<'ctx>(
+        &'ctx self,
+        object_linking_layer_creator: &'ctx mut Box<dyn ObjectLinkingLayerCreator>,
+    ) {
+        unsafe {
+            LLVMOrcLLJITBuilderSetObjectLinkingLayerCreator(
+                self.builder,
+                object_linking_layer_creator_function,
+                transmute(object_linking_layer_creator),
+            );
+        }
+    }
+
+    pub fn set_object_linking_layer_creator_raw<'ctx, Ctx>(
+        &'ctx self,
+        object_linking_layer_creator_function: extern "C" fn(
+            &Ctx,
+            LLVMOrcExecutionSessionRef,
+            *const c_char,
+        ) -> LLVMOrcObjectLayerRef,
+        ctx: &'ctx mut Ctx,
+    ) {
+        unsafe {
+            LLVMOrcLLJITBuilderSetObjectLinkingLayerCreator(
+                self.builder,
+                transmute(object_linking_layer_creator_function),
+                transmute(ctx as *mut Ctx),
+            );
+        }
     }
 }
+
+impl Debug for LLJITBuilder {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("LLJITBuilder")
+            .field("builder", &self.builder)
+            .field(
+                "object_linking_layer_creator",
+                &self.object_linking_layer_creator.as_ref().map(|_| ()),
+            )
+            .finish()
+    }
+}
+
 impl Drop for LLJITBuilder {
     fn drop(&mut self) {
         unsafe {
@@ -514,19 +674,93 @@ impl Drop for LLJITBuilder {
     }
 }
 
+#[no_mangle]
+extern "C" fn object_linking_layer_creator_function(
+    ctx: *mut c_void,
+    execution_session: LLVMOrcExecutionSessionRef,
+    triple: *const c_char,
+) -> LLVMOrcObjectLayerRef {
+    unsafe {
+        let object_linking_layer_creator: &mut Box<dyn ObjectLinkingLayerCreator> = transmute(ctx);
+        let object_layer = object_linking_layer_creator.create_object_linking_layer(
+            ExecutionSession::new_non_owning(execution_session, None),
+            CStr::from_ptr(triple),
+        );
+        let object_layer_ref = object_layer.object_layer;
+        object_layer.transfer_ownership_to_llvm();
+        object_layer_ref
+    }
+}
+
+pub trait ObjectLinkingLayerCreator {
+    fn create_object_linking_layer(
+        &self,
+        execution_session: ExecutionSession,
+        triple: &CStr,
+    ) -> ObjectLayer;
+}
+#[derive(Debug)]
+pub struct JITTargetMachineBuilder {
+    builder: LLVMOrcJITTargetMachineBuilderRef,
+}
+
+impl JITTargetMachineBuilder {
+    unsafe fn new(builder: LLVMOrcJITTargetMachineBuilderRef) -> Self {
+        assert!(!builder.is_null());
+        JITTargetMachineBuilder { builder }
+    }
+
+    unsafe fn transfer_ownership_to_llvm(mut self) {
+        self.builder = null_mut();
+    }
+
+    pub fn detect_host() -> Result<Self, LLVMError> {
+        let mut builder = null_mut();
+        unsafe {
+            LLVMError::new(LLVMOrcJITTargetMachineBuilderDetectHost(&mut builder))?;
+            Ok(JITTargetMachineBuilder::new(builder))
+        }
+    }
+
+    pub fn create_from_target_machine() {
+        todo!();
+    }
+
+    pub fn get_target_triple(&self) -> LLVMString {
+        unsafe { LLVMString::new(LLVMOrcJITTargetMachineBuilderGetTargetTriple(self.builder)) }
+    }
+
+    pub fn set_target_triple(&self, target_triple: &str) {
+        unsafe {
+            LLVMOrcJITTargetMachineBuilderSetTargetTriple(
+                self.builder,
+                to_c_str(target_triple).as_ptr(),
+            )
+        }
+    }
+}
+
+impl Drop for JITTargetMachineBuilder {
+    fn drop(&mut self) {
+        unsafe {
+            LLVMOrcDisposeJITTargetMachineBuilder(self.builder);
+        }
+    }
+}
+
 /// Represents a dynamic library in the execution engine.
 #[derive(Debug)]
 pub struct JITDylib {
     jit_dylib: LLVMOrcJITDylibRef,
-    owned_by_lljit: Option<LLJIT>,
+    owned_by_es: ExecutionSession,
 }
 
 impl JITDylib {
-    fn new(jit_dylib: LLVMOrcJITDylibRef, owned_by_lljit: Option<LLJIT>) -> Self {
+    unsafe fn new(jit_dylib: LLVMOrcJITDylibRef, owned_by_es: ExecutionSession) -> Self {
         assert!(!jit_dylib.is_null());
         JITDylib {
             jit_dylib,
-            owned_by_lljit,
+            owned_by_es,
         }
     }
 
@@ -539,11 +773,13 @@ impl JITDylib {
     /// let rt = main_jd.get_default_resource_tracker();
     /// ```
     pub fn get_default_resource_tracker(&self) -> ResourceTracker {
-        ResourceTracker::new(
-            unsafe { LLVMOrcJITDylibGetDefaultResourceTracker(self.jit_dylib) },
-            self.owned_by_lljit.clone(),
-            true,
-        )
+        unsafe {
+            ResourceTracker::new(
+                LLVMOrcJITDylibGetDefaultResourceTracker(self.jit_dylib),
+                self.owned_by_es.clone(),
+                true,
+            )
+        }
     }
 
     /// Creates a new [`ResourceTracker`].
@@ -555,11 +791,25 @@ impl JITDylib {
     /// let rt = main_jd.create_resource_tracker();
     /// ```
     pub fn create_resource_tracker(&self) -> ResourceTracker {
-        ResourceTracker::new(
-            unsafe { LLVMOrcJITDylibCreateResourceTracker(self.jit_dylib) },
-            self.owned_by_lljit.clone(),
-            false,
-        )
+        unsafe {
+            ResourceTracker::new(
+                LLVMOrcJITDylibCreateResourceTracker(self.jit_dylib),
+                self.owned_by_es.clone(),
+                false,
+            )
+        }
+    }
+
+    pub fn define() {
+        todo!();
+    }
+
+    pub fn clear(&self) -> Result<(), LLVMError> {
+        LLVMError::new(unsafe { LLVMOrcJITDylibClear(self.jit_dylib) })
+    }
+
+    pub fn add_generator() {
+        todo!();
     }
 }
 
@@ -568,18 +818,32 @@ impl JITDylib {
 #[derive(Debug)]
 pub struct ResourceTracker {
     rt: LLVMOrcResourceTrackerRef,
-    _owned_by_lljit: Option<LLJIT>,
+    _owned_by_es: ExecutionSession,
     default: bool,
 }
 
 impl ResourceTracker {
-    fn new(rt: LLVMOrcResourceTrackerRef, owned_by_lljit: Option<LLJIT>, default: bool) -> Self {
+    unsafe fn new(
+        rt: LLVMOrcResourceTrackerRef,
+        owned_by_es: ExecutionSession,
+        default: bool,
+    ) -> Self {
         assert!(!rt.is_null());
         ResourceTracker {
             rt,
-            _owned_by_lljit: owned_by_lljit,
+            _owned_by_es: owned_by_es,
             default,
         }
+    }
+
+    pub fn transfer_to(&self, destination: &ResourceTracker) {
+        unsafe {
+            LLVMOrcResourceTrackerTransferTo(self.rt, destination.rt);
+        }
+    }
+
+    pub fn remove(&self) -> Result<(), LLVMError> {
+        LLVMError::new(unsafe { LLVMOrcResourceTrackerRemove(self.rt) })
     }
 }
 
@@ -589,6 +853,208 @@ impl Drop for ResourceTracker {
             unsafe {
                 LLVMOrcReleaseResourceTracker(self.rt);
             }
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ExecutionSession {
+    execution_session: LLVMOrcExecutionSessionRef,
+    _owned_by_lljit: Option<LLJIT>,
+}
+
+impl ExecutionSession {
+    unsafe fn new_non_owning(
+        execution_session: LLVMOrcExecutionSessionRef,
+        owned_by_lljit: Option<LLJIT>,
+    ) -> Self {
+        assert!(!execution_session.is_null());
+        ExecutionSession {
+            execution_session,
+            _owned_by_lljit: owned_by_lljit,
+        }
+    }
+
+    pub fn set_error_reporter() {
+        todo!();
+    }
+
+    pub fn get_symbol_string_pool() {
+        todo!();
+    }
+
+    pub fn intern(&self, name: &str) -> SymbolStringPoolEntry {
+        unsafe {
+            SymbolStringPoolEntry::new(LLVMOrcExecutionSessionIntern(
+                self.execution_session,
+                to_c_str(name).as_ptr(),
+            ))
+        }
+    }
+
+    pub fn create_bare_jit_dylib(&self, name: &str) -> JITDylib {
+        unsafe {
+            JITDylib::new(
+                LLVMOrcExecutionSessionCreateBareJITDylib(
+                    self.execution_session,
+                    to_c_str(name).as_ptr(),
+                ),
+                self.clone(),
+            )
+        }
+    }
+
+    pub fn create_jit_dylib(&self, name: &str) -> Result<JITDylib, LLVMError> {
+        let mut jit_dylib = null_mut();
+        unsafe {
+            LLVMError::new(LLVMOrcExecutionSessionCreateJITDylib(
+                self.execution_session,
+                &mut jit_dylib,
+                to_c_str(name).as_ptr(),
+            ))?;
+            Ok(JITDylib::new(jit_dylib, self.clone()))
+        }
+    }
+
+    pub fn get_jit_dylib_by_name(&self, name: &str) -> Option<JITDylib> {
+        let jit_dylib = unsafe {
+            LLVMOrcExecutionSessionGetJITDylibByName(
+                self.execution_session,
+                to_c_str(name).as_ptr(),
+            )
+        };
+        if jit_dylib.is_null() {
+            None
+        } else {
+            Some(unsafe { JITDylib::new(jit_dylib, self.clone()) })
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct ObjectLayer {
+    object_layer: LLVMOrcObjectLayerRef,
+}
+
+impl ObjectLayer {
+    unsafe fn new_non_owning(object_layer: LLVMOrcObjectLayerRef) -> Self {
+        assert!(!object_layer.is_null());
+        ObjectLayer { object_layer }
+    }
+
+    unsafe fn transfer_ownership_to_llvm(mut self) {
+        self.object_layer = null_mut();
+    }
+
+    pub fn add_object_file(
+        &self,
+        jit_dylib: &JITDylib,
+        object_buffer: MemoryBuffer,
+    ) -> Result<(), LLVMError> {
+        unsafe {
+            LLVMError::new(LLVMOrcObjectLayerAddObjectFile(
+                self.object_layer,
+                jit_dylib.jit_dylib,
+                object_buffer.memory_buffer,
+            ))?;
+            object_buffer.transfer_ownership_to_llvm()
+        }
+        Ok(())
+    }
+    pub fn add_object_file_with_rt(
+        &self,
+        rt: &ResourceTracker,
+        object_buffer: MemoryBuffer,
+    ) -> Result<(), LLVMError> {
+        unsafe {
+            LLVMError::new(LLVMOrcObjectLayerAddObjectFileWithRT(
+                self.object_layer,
+                rt.rt,
+                object_buffer.memory_buffer,
+            ))?;
+            object_buffer.transfer_ownership_to_llvm()
+        }
+        Ok(())
+    }
+
+    pub fn emit() {
+        todo!();
+    }
+}
+
+impl Drop for ObjectLayer {
+    fn drop(&mut self) {
+        unsafe {
+            LLVMOrcDisposeObjectLayer(self.object_layer);
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct ObjectTransformLayer {
+    object_transform_layer: LLVMOrcObjectTransformLayerRef,
+}
+
+impl ObjectTransformLayer {
+    unsafe fn new_non_owning(object_transform_layer: LLVMOrcObjectTransformLayerRef) -> Self {
+        assert!(!object_transform_layer.is_null());
+        ObjectTransformLayer {
+            object_transform_layer,
+        }
+    }
+    pub fn set_transform() {
+        todo!();
+    }
+}
+
+#[derive(Debug)]
+pub struct IRTransformLayer {
+    ir_transform_layer: LLVMOrcIRTransformLayerRef,
+}
+
+impl IRTransformLayer {
+    unsafe fn new_non_owning(ir_transform_layer: LLVMOrcIRTransformLayerRef) -> Self {
+        assert!(!ir_transform_layer.is_null());
+        IRTransformLayer { ir_transform_layer }
+    }
+
+    pub fn emit() {
+        todo!();
+    }
+
+    pub fn set_transform() {
+        todo!();
+    }
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub struct SymbolStringPoolEntry {
+    entry: LLVMOrcSymbolStringPoolEntryRef,
+}
+
+impl SymbolStringPoolEntry {
+    unsafe fn new(entry: LLVMOrcSymbolStringPoolEntryRef) -> Self {
+        assert!(!entry.is_null());
+        SymbolStringPoolEntry { entry }
+    }
+    pub fn get_string(&self) -> &CStr {
+        unsafe { CStr::from_ptr(LLVMOrcSymbolStringPoolEntryStr(self.entry)) }
+    }
+}
+
+impl Clone for SymbolStringPoolEntry {
+    fn clone(&self) -> Self {
+        unsafe {
+            LLVMOrcRetainSymbolStringPoolEntry(self.entry);
+        }
+        Self { entry: self.entry }
+    }
+}
+
+impl Drop for SymbolStringPoolEntry {
+    fn drop(&mut self) {
+        unsafe {
+            LLVMOrcReleaseSymbolStringPoolEntry(self.entry);
         }
     }
 }

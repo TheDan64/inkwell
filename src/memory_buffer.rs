@@ -24,6 +24,10 @@ impl MemoryBuffer {
         }
     }
 
+    pub(crate) unsafe fn transfer_ownership_to_llvm(mut self) {
+        self.memory_buffer = ptr::null_mut();
+    }
+
     pub fn create_from_file(path: &Path) -> Result<Self, LLVMString> {
         let path = to_c_str(path.to_str().expect("Did not find a valid Unicode path string"));
         let mut memory_buffer = ptr::null_mut();
