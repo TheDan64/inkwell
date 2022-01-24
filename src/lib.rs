@@ -30,6 +30,11 @@ pub mod context;
 pub mod data_layout;
 #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
 pub mod debug_info;
+#[cfg(all(
+    feature = "orc2",
+    any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0")
+))]
+pub mod error;
 pub mod execution_engine;
 pub mod memory_buffer;
 #[deny(missing_docs)]

@@ -1,4 +1,7 @@
-use inkwell::orc2::{LLJITBuilder, LLVMError, ThreadSafeContext, ThreadSafeModule};
+use inkwell::{
+    error::LLVMError,
+    orc2::{lljit::LLJITBuilder, ThreadSafeContext, ThreadSafeModule},
+};
 
 fn main() {
     if let Err(error) = run() {
