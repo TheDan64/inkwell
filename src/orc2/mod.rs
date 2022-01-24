@@ -12,21 +12,27 @@ use std::{
 use libc::{c_char, c_void};
 use llvm_sys::orc2::{
     LLVMOrcCreateNewThreadSafeContext, LLVMOrcCreateNewThreadSafeModule,
-    LLVMOrcDisposeJITTargetMachineBuilder, LLVMOrcDisposeObjectLayer,
-    LLVMOrcDisposeThreadSafeContext, LLVMOrcDisposeThreadSafeModule,
-    LLVMOrcExecutionSessionCreateBareJITDylib, LLVMOrcExecutionSessionCreateJITDylib,
-    LLVMOrcExecutionSessionGetJITDylibByName, LLVMOrcExecutionSessionIntern,
-    LLVMOrcExecutionSessionRef, LLVMOrcIRTransformLayerRef, LLVMOrcJITDylibClear,
-    LLVMOrcJITDylibCreateResourceTracker, LLVMOrcJITDylibGetDefaultResourceTracker,
+    LLVMOrcDisposeJITTargetMachineBuilder, LLVMOrcDisposeThreadSafeContext,
+    LLVMOrcDisposeThreadSafeModule, LLVMOrcExecutionSessionIntern, LLVMOrcExecutionSessionRef,
     LLVMOrcJITDylibRef, LLVMOrcJITTargetMachineBuilderDetectHost,
-    LLVMOrcJITTargetMachineBuilderGetTargetTriple, LLVMOrcJITTargetMachineBuilderRef,
-    LLVMOrcJITTargetMachineBuilderSetTargetTriple, LLVMOrcObjectLayerAddObjectFile,
-    LLVMOrcObjectLayerAddObjectFileWithRT, LLVMOrcObjectLayerRef, LLVMOrcObjectTransformLayerRef,
-    LLVMOrcReleaseResourceTracker, LLVMOrcReleaseSymbolStringPoolEntry, LLVMOrcResourceTrackerRef,
-    LLVMOrcResourceTrackerRemove, LLVMOrcResourceTrackerTransferTo,
-    LLVMOrcRetainSymbolStringPoolEntry, LLVMOrcSymbolStringPoolEntryRef,
-    LLVMOrcSymbolStringPoolEntryStr, LLVMOrcThreadSafeContextGetContext,
+    LLVMOrcJITTargetMachineBuilderRef, LLVMOrcReleaseSymbolStringPoolEntry,
+    LLVMOrcSymbolStringPoolEntryRef, LLVMOrcThreadSafeContextGetContext,
     LLVMOrcThreadSafeContextRef, LLVMOrcThreadSafeModuleRef,
+};
+#[llvm_versions(12.0..=latest)]
+use llvm_sys::orc2::{
+    LLVMOrcDisposeObjectLayer, LLVMOrcExecutionSessionCreateBareJITDylib,
+    LLVMOrcExecutionSessionCreateJITDylib, LLVMOrcExecutionSessionGetJITDylibByName,
+    LLVMOrcJITDylibClear, LLVMOrcJITDylibCreateResourceTracker,
+    LLVMOrcJITDylibGetDefaultResourceTracker, LLVMOrcObjectLayerRef, LLVMOrcReleaseResourceTracker,
+    LLVMOrcResourceTrackerRef, LLVMOrcResourceTrackerRemove, LLVMOrcResourceTrackerTransferTo,
+    LLVMOrcRetainSymbolStringPoolEntry, LLVMOrcSymbolStringPoolEntryStr,
+};
+#[llvm_versions(13.0..=latest)]
+use llvm_sys::orc2::{
+    LLVMOrcIRTransformLayerRef, LLVMOrcJITTargetMachineBuilderGetTargetTriple,
+    LLVMOrcJITTargetMachineBuilderSetTargetTriple, LLVMOrcObjectLayerAddObjectFile,
+    LLVMOrcObjectLayerAddObjectFileWithRT, LLVMOrcObjectTransformLayerRef,
 };
 
 use crate::{
@@ -165,10 +171,12 @@ impl JITTargetMachineBuilder {
         todo!();
     }
 
+    #[llvm_versions(13.0..=latest)]
     pub fn get_target_triple(&self) -> LLVMString {
         unsafe { LLVMString::new(LLVMOrcJITTargetMachineBuilderGetTargetTriple(self.builder)) }
     }
 
+    #[llvm_versions(13.0..=latest)]
     pub fn set_target_triple(&self, target_triple: &str) {
         unsafe {
             LLVMOrcJITTargetMachineBuilderSetTargetTriple(
@@ -211,6 +219,7 @@ impl JITDylib {
     /// let main_jd = jit.get_main_jit_dylib();
     /// let rt = main_jd.get_default_resource_tracker();
     /// ```
+    #[llvm_versions(12.0..=latest)]
     pub fn get_default_resource_tracker(&self) -> ResourceTracker {
         unsafe {
             ResourceTracker::new(
@@ -229,6 +238,7 @@ impl JITDylib {
     /// let main_jd = jit.get_main_jit_dylib();
     /// let rt = main_jd.create_resource_tracker();
     /// ```
+    #[llvm_versions(12.0..=latest)]
     pub fn create_resource_tracker(&self) -> ResourceTracker {
         unsafe {
             ResourceTracker::new(
@@ -243,6 +253,7 @@ impl JITDylib {
         todo!();
     }
 
+    #[llvm_versions(12.0..=latest)]
     pub fn clear(&self) -> Result<(), LLVMError> {
         LLVMError::new(unsafe { LLVMOrcJITDylibClear(self.jit_dylib) })
     }
@@ -254,6 +265,7 @@ impl JITDylib {
 
 /// A `ResourceTracker` is used to add/remove JIT resources.
 /// Look at [`JITDylib`] for further information.
+#[llvm_versions(12.0..=latest)]
 #[derive(Debug)]
 pub struct ResourceTracker {
     rt: LLVMOrcResourceTrackerRef,
@@ -261,6 +273,7 @@ pub struct ResourceTracker {
     default: bool,
 }
 
+#[llvm_versions(12.0..=latest)]
 impl ResourceTracker {
     unsafe fn new(
         rt: LLVMOrcResourceTrackerRef,
@@ -286,6 +299,7 @@ impl ResourceTracker {
     }
 }
 
+#[llvm_versions(12.0..=latest)]
 impl Drop for ResourceTracker {
     fn drop(&mut self) {
         if !self.default {
@@ -331,6 +345,7 @@ impl ExecutionSession {
         }
     }
 
+    #[llvm_versions(12.0..=latest)]
     pub fn create_bare_jit_dylib(&self, name: &str) -> JITDylib {
         unsafe {
             JITDylib::new(
@@ -343,6 +358,7 @@ impl ExecutionSession {
         }
     }
 
+    #[llvm_versions(12.0..=latest)]
     pub fn create_jit_dylib(&self, name: &str) -> Result<JITDylib, LLVMError> {
         let mut jit_dylib = null_mut();
         unsafe {
@@ -355,6 +371,7 @@ impl ExecutionSession {
         }
     }
 
+    #[llvm_versions(12.0..=latest)]
     pub fn get_jit_dylib_by_name(&self, name: &str) -> Option<JITDylib> {
         let jit_dylib = unsafe {
             LLVMOrcExecutionSessionGetJITDylibByName(
@@ -370,11 +387,13 @@ impl ExecutionSession {
     }
 }
 
+#[llvm_versions(12.0..=latest)]
 #[derive(Debug)]
 pub struct ObjectLayer {
     object_layer: LLVMOrcObjectLayerRef,
 }
 
+#[llvm_versions(12.0..=latest)]
 impl ObjectLayer {
     unsafe fn new_non_owning(object_layer: LLVMOrcObjectLayerRef) -> Self {
         assert!(!object_layer.is_null());
@@ -385,6 +404,7 @@ impl ObjectLayer {
         self.object_layer = null_mut();
     }
 
+    #[llvm_versions(13.0..=latest)]
     pub fn add_object_file(
         &self,
         jit_dylib: &JITDylib,
@@ -400,6 +420,8 @@ impl ObjectLayer {
         }
         Ok(())
     }
+
+    #[llvm_versions(13.0..=latest)]
     pub fn add_object_file_with_rt(
         &self,
         rt: &ResourceTracker,
@@ -421,6 +443,7 @@ impl ObjectLayer {
     }
 }
 
+#[llvm_versions(12.0..=latest)]
 impl Drop for ObjectLayer {
     fn drop(&mut self) {
         unsafe {
@@ -429,11 +452,13 @@ impl Drop for ObjectLayer {
     }
 }
 
+#[llvm_versions(13.0..=latest)]
 #[derive(Debug)]
 pub struct ObjectTransformLayer {
     object_transform_layer: LLVMOrcObjectTransformLayerRef,
 }
 
+#[llvm_versions(13.0..=latest)]
 impl ObjectTransformLayer {
     unsafe fn new_non_owning(object_transform_layer: LLVMOrcObjectTransformLayerRef) -> Self {
         assert!(!object_transform_layer.is_null());
@@ -446,11 +471,13 @@ impl ObjectTransformLayer {
     }
 }
 
+#[llvm_versions(13.0..=latest)]
 #[derive(Debug)]
 pub struct IRTransformLayer {
     ir_transform_layer: LLVMOrcIRTransformLayerRef,
 }
 
+#[llvm_versions(13.0..=latest)]
 impl IRTransformLayer {
     unsafe fn new_non_owning(ir_transform_layer: LLVMOrcIRTransformLayerRef) -> Self {
         assert!(!ir_transform_layer.is_null());
@@ -476,11 +503,14 @@ impl SymbolStringPoolEntry {
         assert!(!entry.is_null());
         SymbolStringPoolEntry { entry }
     }
+
+    #[llvm_versions(12.0..=latest)]
     pub fn get_string(&self) -> &CStr {
         unsafe { CStr::from_ptr(LLVMOrcSymbolStringPoolEntryStr(self.entry)) }
     }
 }
 
+#[llvm_versions(12.0..=latest)]
 impl Clone for SymbolStringPoolEntry {
     fn clone(&self) -> Self {
         unsafe {

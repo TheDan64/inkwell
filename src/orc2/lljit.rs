@@ -7,20 +7,32 @@ use std::{
 };
 
 use libc::{c_char, c_void};
+#[llvm_versions(13.0..=latest)]
+use llvm_sys::orc2::lljit::{
+    LLVMOrcLLJITGetDataLayoutStr, LLVMOrcLLJITGetIRTransformLayer, LLVMOrcLLJITGetObjLinkingLayer,
+    LLVMOrcLLJITGetObjTransformLayer,
+};
+use llvm_sys::orc2::LLVMOrcExecutionSessionRef;
+#[llvm_versions(12.0..=latest)]
 use llvm_sys::orc2::{
     lljit::{
         LLVMOrcCreateLLJIT, LLVMOrcCreateLLJITBuilder, LLVMOrcDisposeLLJIT,
         LLVMOrcDisposeLLJITBuilder, LLVMOrcLLJITAddLLVMIRModule, LLVMOrcLLJITAddLLVMIRModuleWithRT,
         LLVMOrcLLJITAddObjectFile, LLVMOrcLLJITAddObjectFileWithRT, LLVMOrcLLJITBuilderRef,
         LLVMOrcLLJITBuilderSetJITTargetMachineBuilder,
-        LLVMOrcLLJITBuilderSetObjectLinkingLayerCreator, LLVMOrcLLJITGetDataLayoutStr,
-        LLVMOrcLLJITGetExecutionSession, LLVMOrcLLJITGetGlobalPrefix,
-        LLVMOrcLLJITGetIRTransformLayer, LLVMOrcLLJITGetMainJITDylib,
-        LLVMOrcLLJITGetObjLinkingLayer, LLVMOrcLLJITGetObjTransformLayer,
-        LLVMOrcLLJITGetTripleString, LLVMOrcLLJITLookup, LLVMOrcLLJITMangleAndIntern,
-        LLVMOrcLLJITRef,
+        LLVMOrcLLJITBuilderSetObjectLinkingLayerCreator, LLVMOrcLLJITGetExecutionSession,
+        LLVMOrcLLJITGetGlobalPrefix, LLVMOrcLLJITGetMainJITDylib, LLVMOrcLLJITGetTripleString,
+        LLVMOrcLLJITLookup, LLVMOrcLLJITMangleAndIntern, LLVMOrcLLJITRef,
     },
-    LLVMOrcExecutionSessionRef, LLVMOrcObjectLayerRef,
+    LLVMOrcObjectLayerRef,
+};
+#[llvm_versions(11.0)]
+use llvm_sys::orc2::{
+    LLVMOrcCreateLLJIT, LLVMOrcCreateLLJITBuilder, LLVMOrcDisposeLLJIT, LLVMOrcDisposeLLJITBuilder,
+    LLVMOrcLLJITAddLLVMIRModule, LLVMOrcLLJITAddObjectFile, LLVMOrcLLJITBuilderRef,
+    LLVMOrcLLJITBuilderSetJITTargetMachineBuilder, LLVMOrcLLJITGetExecutionSession,
+    LLVMOrcLLJITGetGlobalPrefix, LLVMOrcLLJITGetMainJITDylib, LLVMOrcLLJITGetTripleString,
+    LLVMOrcLLJITLookup, LLVMOrcLLJITMangleAndIntern, LLVMOrcLLJITRef,
 };
 
 use crate::{
@@ -31,9 +43,28 @@ use crate::{
 };
 
 use super::{
-    ExecutionSession, IRTransformLayer, JITDylib, JITTargetMachineBuilder, ObjectLayer,
-    ObjectTransformLayer, ResourceTracker, SymbolStringPoolEntry, ThreadSafeModule,
+    ExecutionSession, JITDylib, JITTargetMachineBuilder, SymbolStringPoolEntry, ThreadSafeModule,
 };
+#[llvm_versions(13.0..=latest)]
+use super::{IRTransformLayer, ObjectTransformLayer};
+#[llvm_versions(12.0..=latest)]
+use super::{ObjectLayer, ResourceTracker};
+
+#[derive(Debug)]
+pub enum Error {
+    LLVMError(LLVMError),
+    String(String),
+}
+
+#[llvm_versions(12.0..=latest)]
+impl Into<LLVMError> for Error {
+    fn into(self) -> LLVMError {
+        match self {
+            Error::LLVMError(e) => e,
+            Error::String(s) => LLVMError::new_string_error(&s),
+        }
+    }
+}
 
 /// Represents a reference to an LLVM `LLJIT` execution engine.
 #[derive(Debug, Clone)]
@@ -57,16 +88,17 @@ impl LLJIT {
     ///
     /// let jit = LLJIT::create().expect("LLJIT::create failed");
     /// ```
-    pub fn create() -> Result<Self, LLVMError> {
+    pub fn create() -> Result<Self, Error> {
         unsafe { LLJIT::create_with_builder(null_mut()) }
     }
 
-    unsafe fn create_with_builder(builder: LLVMOrcLLJITBuilderRef) -> Result<Self, LLVMError> {
+    unsafe fn create_with_builder(builder: LLVMOrcLLJITBuilderRef) -> Result<Self, Error> {
         Target::initialize_native(&InitializationConfig::default())
-            .map_err(|e| LLVMError::new_string_error(&e))?;
+            .map_err(|e| Error::String(e))?;
+
         let mut lljit: LLVMOrcLLJITRef = null_mut();
         let error = LLVMOrcCreateLLJIT(&mut lljit, builder);
-        LLVMError::new(error)?;
+        LLVMError::new(error).map_err(|e| Error::LLVMError(e))?;
         Ok(LLJIT::new(lljit))
     }
 
@@ -108,11 +140,7 @@ impl LLJIT {
         let error = unsafe {
             LLVMOrcLLJITAddLLVMIRModule(*self.lljit, jit_dylib.jit_dylib, module.thread_safe_module)
         };
-        if module.owned_by_lljit.borrow().is_some() {
-            return Err(LLVMError::new_string_error(
-                "module does already belong to an lljit instance",
-            ));
-        }
+        // module.owned_by_lljit should be None at this point.
         *module.owned_by_lljit.borrow_mut() = Some(self.clone());
         LLVMError::new(error)
     }
@@ -132,6 +160,7 @@ impl LLJIT {
     /// jit.add_module_with_rt(&module_rt, thread_safe_module)
     ///     .expect("LLJIT::add_module_with_rt failed");
     /// ```
+    #[llvm_versions(12.0..=latest)]
     pub fn add_module_with_rt<'ctx>(
         &self,
         rt: &ResourceTracker,
@@ -165,6 +194,7 @@ impl LLJIT {
         Ok(())
     }
 
+    #[llvm_versions(12.0..=latest)]
     pub fn add_object_file_with_rt(
         &self,
         rt: &ResourceTracker,
@@ -285,20 +315,24 @@ impl LLJIT {
         }
     }
 
+    #[llvm_versions(13.0..=latest)]
     pub fn get_object_linking_layer(&self) -> ObjectLayer {
         unsafe { ObjectLayer::new_non_owning(LLVMOrcLLJITGetObjLinkingLayer(*self.lljit)) }
     }
 
+    #[llvm_versions(13.0..=latest)]
     pub fn get_object_transform_layer(&self) -> ObjectTransformLayer {
         unsafe {
             ObjectTransformLayer::new_non_owning(LLVMOrcLLJITGetObjTransformLayer(*self.lljit))
         }
     }
 
+    #[llvm_versions(13.0..=latest)]
     pub fn get_ir_transform_layer(&self) -> IRTransformLayer {
         unsafe { IRTransformLayer::new_non_owning(LLVMOrcLLJITGetIRTransformLayer(*self.lljit)) }
     }
 
+    #[llvm_versions(13.0..=latest)]
     pub fn get_data_layout_string(&self) -> &CStr {
         unsafe { CStr::from_ptr(LLVMOrcLLJITGetDataLayoutStr(*self.lljit)) }
     }
@@ -315,8 +349,10 @@ impl Drop for LLJIT {
 }
 
 /// An `LLJITBuilder` is used to create custom [`LLJIT`] instances.
+#[llvm_versioned_item]
 pub struct LLJITBuilder {
     builder: LLVMOrcLLJITBuilderRef,
+    #[llvm_versions(12.0..=latest)]
     object_linking_layer_creator: Option<Box<dyn ObjectLinkingLayerCreator>>,
 }
 
@@ -325,6 +361,7 @@ impl LLJITBuilder {
         assert!(!builder.is_null());
         LLJITBuilder {
             builder,
+            #[cfg(not(feature = "llvm11-0"))]
             object_linking_layer_creator: None,
         }
     }
@@ -345,7 +382,7 @@ impl LLJITBuilder {
     ///
     /// let jit_builder = LLJITBuilder::create();
     /// let jit = jit_builder.build().expect("LLJITBuilder::build failed");
-    pub fn build(self) -> Result<LLJIT, LLVMError> {
+    pub fn build(self) -> Result<LLJIT, Error> {
         unsafe {
             let lljit = LLJIT::create_with_builder(self.builder)?;
             self.transfer_ownership_to_llvm();
@@ -370,6 +407,7 @@ impl LLJITBuilder {
         }
     }
 
+    #[llvm_versions(12.0..=latest)]
     pub fn set_object_linking_layer_creator<'ctx>(
         &'ctx self,
         object_linking_layer_creator: &'ctx mut Box<dyn ObjectLinkingLayerCreator>,
@@ -383,6 +421,7 @@ impl LLJITBuilder {
         }
     }
 
+    #[llvm_versions(12.0..=latest)]
     pub fn set_object_linking_layer_creator_raw<'ctx, Ctx>(
         &'ctx self,
         object_linking_layer_creator_function: extern "C" fn(
@@ -404,13 +443,20 @@ impl LLJITBuilder {
 
 impl Debug for LLJITBuilder {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("LLJITBuilder")
+        #[cfg(not(feature = "llvm11-0"))]
+        return f
+            .debug_struct("LLJITBuilder")
             .field("builder", &self.builder)
             .field(
                 "object_linking_layer_creator",
                 &self.object_linking_layer_creator.as_ref().map(|_| ()),
             )
-            .finish()
+            .finish();
+        #[cfg(feature = "llvm11-0")]
+        return f
+            .debug_struct("LLJITBuilder")
+            .field("builder", &self.builder)
+            .finish();
     }
 }
 
@@ -422,6 +468,7 @@ impl Drop for LLJITBuilder {
     }
 }
 
+#[llvm_versions(12.0..=latest)]
 #[no_mangle]
 extern "C" fn object_linking_layer_creator_function(
     ctx: *mut c_void,
@@ -440,6 +487,7 @@ extern "C" fn object_linking_layer_creator_function(
     }
 }
 
+#[llvm_versions(12.0..=latest)]
 pub trait ObjectLinkingLayerCreator {
     fn create_object_linking_layer(
         &self,

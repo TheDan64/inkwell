@@ -6,9 +6,11 @@ use std::{
 };
 
 use libc::c_char;
+#[llvm_versions(12.0..=latest)]
+use llvm_sys::error::LLVMCreateStringError;
 use llvm_sys::error::{
-    LLVMConsumeError, LLVMCreateStringError, LLVMDisposeErrorMessage, LLVMErrorRef,
-    LLVMErrorTypeId, LLVMGetErrorMessage, LLVMGetErrorTypeId,
+    LLVMConsumeError, LLVMDisposeErrorMessage, LLVMErrorRef, LLVMErrorTypeId, LLVMGetErrorMessage,
+    LLVMGetErrorTypeId,
 };
 
 use crate::support::to_c_str;
@@ -39,22 +41,26 @@ impl LLVMError {
     /// Returns the error message of the error. This consumes the error
     /// and makes the error unusable afterwards.
     /// ```
+    /// # #[cfg(not(feature = "llvm11-0"))] {
     /// use std::ffi::{CString, CStr};
     /// use inkwell::error::LLVMError;
     ///
     /// let error = LLVMError::new_string_error("llvm error");
     /// assert_eq!(*error.get_message(), *CString::new("llvm error").unwrap().as_c_str());
+    /// # }
     /// ```
     pub fn get_message(mut self) -> LLVMErrorMessage {
         self.handled = true;
         unsafe { LLVMErrorMessage::new(LLVMGetErrorMessage(self.error)) }
     }
+
     /// Creates a new StringError with the given message.
     /// ```
     /// use inkwell::error::LLVMError;
     ///
     /// let error = LLVMError::new_string_error("string error");
     /// ```
+    #[llvm_versions(12.0..=latest)]
     pub fn new_string_error(message: &str) -> Self {
         let error = unsafe { LLVMCreateStringError(to_c_str(message).as_ptr()) };
         LLVMError {
@@ -89,11 +95,13 @@ impl LLVMErrorMessage {
     /// LLVM. It's essentially a `CString` with a custom LLVM
     /// deallocator
     /// ```
+    /// # #[cfg(not(feature = "llvm11-0"))] {
     /// use inkwell::error::{LLVMError, LLVMErrorMessage};
     ///
     /// let error = LLVMError::new_string_error("error");
     /// let error_msg = error.get_message().to_string();
     /// assert_eq!(error_msg, "error");
+    /// # }
     /// ```
     pub fn to_string(&self) -> String {
         (*self).to_string_lossy().into_owned()
