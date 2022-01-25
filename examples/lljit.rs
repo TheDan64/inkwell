@@ -18,8 +18,8 @@ fn run() -> Result<(), LLVMError> {
     let thread_safe_context = ThreadSafeContext::create();
     let foo_module = constant_function_module(&thread_safe_context, 42, "foo");
     let jit_builder = LLJITBuilder::create();
-    let jit = match (jit_builder.build()) {
-        Ok((jit)) => jit,
+    let jit = match jit_builder.build() {
+        Ok(jit) => jit,
         Err(Error::String(s)) => {
             println!("{}", s);
             return Ok(());

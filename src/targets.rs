@@ -1064,6 +1064,12 @@ impl TargetMachine {
         TargetMachine { target_machine }
     }
 
+    pub(crate) unsafe fn transfer_ownership_to_llvm(mut self) -> LLVMTargetMachineRef {
+        let target_machine = self.target_machine;
+        self.target_machine = ptr::null_mut();
+        target_machine
+    }
+
     pub fn get_target(&self) -> Target {
         unsafe {
             Target::new(LLVMGetTargetMachineTarget(self.target_machine))

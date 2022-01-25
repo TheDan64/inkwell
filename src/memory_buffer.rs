@@ -24,8 +24,10 @@ impl MemoryBuffer {
         }
     }
 
-    pub(crate) unsafe fn transfer_ownership_to_llvm(mut self) {
+    pub(crate) unsafe fn transfer_ownership_to_llvm(mut self) -> LLVMMemoryBufferRef {
+        let buffer = self.memory_buffer;
         self.memory_buffer = ptr::null_mut();
+        buffer
     }
 
     pub fn create_from_file(path: &Path) -> Result<Self, LLVMString> {

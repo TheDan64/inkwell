@@ -2,7 +2,7 @@ use std::{
     ffi::CStr,
     fmt::{self, Debug, Formatter},
     mem::{transmute, transmute_copy},
-    ptr::null_mut,
+    ptr,
     rc::Rc,
 };
 
@@ -56,50 +56,49 @@ pub enum Error {
     String(String),
 }
 
-#[llvm_versions(12.0..=latest)]
-impl Into<LLVMError> for Error {
-    fn into(self) -> LLVMError {
-        match self {
-            Error::LLVMError(e) => e,
-            Error::String(s) => LLVMError::new_string_error(&s),
-        }
-    }
-}
-
 /// Represents a reference to an LLVM `LLJIT` execution engine.
 #[derive(Debug, Clone)]
 pub struct LLJIT {
-    lljit: Rc<LLVMOrcLLJITRef>,
+    inner: Rc<LLJITInner>,
 }
 
 impl LLJIT {
-    unsafe fn new(lljit: LLVMOrcLLJITRef) -> Self {
+    unsafe fn create_with_builder(
+        builder: LLVMOrcLLJITBuilderRef,
+        #[cfg(not(feature = "llvm11-0"))] object_linking_layer_creator: Option<
+            Box<Box<dyn ObjectLinkingLayerCreator>>,
+        >,
+    ) -> Result<Self, Error> {
+        Target::initialize_native(&InitializationConfig::default())
+            .map_err(|e| Error::String(e))?;
+
+        let mut lljit: LLVMOrcLLJITRef = ptr::null_mut();
+        let error = LLVMOrcCreateLLJIT(&mut lljit, builder);
+        LLVMError::new(error).map_err(|e| Error::LLVMError(e))?;
         assert!(!lljit.is_null());
-        LLJIT {
-            lljit: Rc::new(lljit),
-        }
+        Ok(LLJIT {
+            inner: Rc::new(LLJITInner {
+                lljit,
+                #[cfg(not(feature = "llvm11-0"))]
+                object_linking_layer_creator,
+            }),
+        })
     }
 
-    /// Creates a `LLJIT` instance with the provided `lljit_builder`.
-    /// If `lljit_builder` is `None` the default LLJITBuilder will be
-    /// used.
+    /// Creates a `LLJIT` instance with the default builder.
     /// ```
     /// use inkwell::orc2::lljit::LLJIT;
     ///
     /// let jit = LLJIT::create().expect("LLJIT::create failed");
     /// ```
     pub fn create() -> Result<Self, Error> {
-        unsafe { LLJIT::create_with_builder(null_mut()) }
-    }
-
-    unsafe fn create_with_builder(builder: LLVMOrcLLJITBuilderRef) -> Result<Self, Error> {
-        Target::initialize_native(&InitializationConfig::default())
-            .map_err(|e| Error::String(e))?;
-
-        let mut lljit: LLVMOrcLLJITRef = null_mut();
-        let error = LLVMOrcCreateLLJIT(&mut lljit, builder);
-        LLVMError::new(error).map_err(|e| Error::LLVMError(e))?;
-        Ok(LLJIT::new(lljit))
+        unsafe {
+            LLJIT::create_with_builder(
+                ptr::null_mut(),
+                #[cfg(not(feature = "llvm11-0"))]
+                None,
+            )
+        }
     }
 
     /// Returns the main [`JITDylib`].
@@ -112,7 +111,7 @@ impl LLJIT {
     pub fn get_main_jit_dylib(&self) -> JITDylib {
         unsafe {
             JITDylib::new(
-                LLVMOrcLLJITGetMainJITDylib(*self.lljit),
+                LLVMOrcLLJITGetMainJITDylib(self.inner.lljit),
                 self.get_execution_session(),
             )
         }
@@ -138,7 +137,11 @@ impl LLJIT {
         module: ThreadSafeModule<'ctx>,
     ) -> Result<(), LLVMError> {
         let error = unsafe {
-            LLVMOrcLLJITAddLLVMIRModule(*self.lljit, jit_dylib.jit_dylib, module.thread_safe_module)
+            LLVMOrcLLJITAddLLVMIRModule(
+                self.inner.lljit,
+                jit_dylib.jit_dylib,
+                module.thread_safe_module,
+            )
         };
         // module.owned_by_lljit should be None at this point.
         *module.owned_by_lljit.borrow_mut() = Some(self.clone());
@@ -167,7 +170,7 @@ impl LLJIT {
         module: ThreadSafeModule<'ctx>,
     ) -> Result<(), LLVMError> {
         let error = unsafe {
-            LLVMOrcLLJITAddLLVMIRModuleWithRT(*self.lljit, rt.rt, module.thread_safe_module)
+            LLVMOrcLLJITAddLLVMIRModuleWithRT(self.inner.lljit, rt.rt, module.thread_safe_module)
         };
         if module.owned_by_lljit.borrow().is_some() {
             return Err(LLVMError::new_string_error(
@@ -185,13 +188,11 @@ impl LLJIT {
     ) -> Result<(), LLVMError> {
         unsafe {
             LLVMError::new(LLVMOrcLLJITAddObjectFile(
-                *self.lljit,
+                self.inner.lljit,
                 jit_dylib.jit_dylib,
-                object_buffer.memory_buffer,
-            ))?;
-            object_buffer.transfer_ownership_to_llvm();
+                object_buffer.transfer_ownership_to_llvm(),
+            ))
         }
-        Ok(())
     }
 
     #[llvm_versions(12.0..=latest)]
@@ -202,13 +203,11 @@ impl LLJIT {
     ) -> Result<(), LLVMError> {
         unsafe {
             LLVMError::new(LLVMOrcLLJITAddObjectFileWithRT(
-                *self.lljit,
+                self.inner.lljit,
                 rt.rt,
-                object_buffer.memory_buffer,
-            ))?;
-            object_buffer.transfer_ownership_to_llvm();
+                object_buffer.transfer_ownership_to_llvm(),
+            ))
         }
-        Ok(())
     }
 
     /// Attempts to lookup a function by `name` in the execution engine.
@@ -219,7 +218,11 @@ impl LLJIT {
     pub fn get_function_address(&self, name: &str) -> Result<u64, LLVMError> {
         let mut function_address = 0;
         let error = unsafe {
-            LLVMOrcLLJITLookup(*self.lljit, &mut function_address, to_c_str(name).as_ptr())
+            LLVMOrcLLJITLookup(
+                self.inner.lljit,
+                &mut function_address,
+                to_c_str(name).as_ptr(),
+            )
         };
         LLVMError::new(error)?;
         Ok(function_address)
@@ -292,24 +295,24 @@ impl LLJIT {
     pub fn get_execution_session(&self) -> ExecutionSession {
         unsafe {
             ExecutionSession::new_non_owning(
-                LLVMOrcLLJITGetExecutionSession(*self.lljit),
+                LLVMOrcLLJITGetExecutionSession(self.inner.lljit),
                 Some(self.clone()),
             )
         }
     }
 
     pub fn get_triple_string(&self) -> &CStr {
-        unsafe { CStr::from_ptr(LLVMOrcLLJITGetTripleString(*self.lljit)) }
+        unsafe { CStr::from_ptr(LLVMOrcLLJITGetTripleString(self.inner.lljit)) }
     }
 
     pub fn get_global_prefix(&self) -> i8 {
-        unsafe { LLVMOrcLLJITGetGlobalPrefix(*self.lljit) }
+        unsafe { LLVMOrcLLJITGetGlobalPrefix(self.inner.lljit) }
     }
 
     pub fn mangle_and_intern(&self, unmangled_name: &str) -> SymbolStringPoolEntry {
         unsafe {
             SymbolStringPoolEntry::new(LLVMOrcLLJITMangleAndIntern(
-                *self.lljit,
+                self.inner.lljit,
                 to_c_str(unmangled_name).as_ptr(),
             ))
         }
@@ -317,33 +320,57 @@ impl LLJIT {
 
     #[llvm_versions(13.0..=latest)]
     pub fn get_object_linking_layer(&self) -> ObjectLayer {
-        unsafe { ObjectLayer::new_non_owning(LLVMOrcLLJITGetObjLinkingLayer(*self.lljit)) }
+        unsafe { ObjectLayer::new_non_owning(LLVMOrcLLJITGetObjLinkingLayer(self.inner.lljit)) }
     }
 
     #[llvm_versions(13.0..=latest)]
     pub fn get_object_transform_layer(&self) -> ObjectTransformLayer {
         unsafe {
-            ObjectTransformLayer::new_non_owning(LLVMOrcLLJITGetObjTransformLayer(*self.lljit))
+            ObjectTransformLayer::new_non_owning(LLVMOrcLLJITGetObjTransformLayer(self.inner.lljit))
         }
     }
 
     #[llvm_versions(13.0..=latest)]
     pub fn get_ir_transform_layer(&self) -> IRTransformLayer {
-        unsafe { IRTransformLayer::new_non_owning(LLVMOrcLLJITGetIRTransformLayer(*self.lljit)) }
+        unsafe {
+            IRTransformLayer::new_non_owning(LLVMOrcLLJITGetIRTransformLayer(self.inner.lljit))
+        }
     }
 
     #[llvm_versions(13.0..=latest)]
     pub fn get_data_layout_string(&self) -> &CStr {
-        unsafe { CStr::from_ptr(LLVMOrcLLJITGetDataLayoutStr(*self.lljit)) }
+        unsafe { CStr::from_ptr(LLVMOrcLLJITGetDataLayoutStr(self.inner.lljit)) }
     }
 }
 
-impl Drop for LLJIT {
+#[llvm_versioned_item]
+struct LLJITInner {
+    lljit: LLVMOrcLLJITRef,
+    #[llvm_versions(12.0..=latest)]
+    object_linking_layer_creator: Option<Box<Box<dyn ObjectLinkingLayerCreator>>>,
+}
+impl Debug for LLJITInner {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        #[cfg(not(feature = "llvm11-0"))]
+        return f
+            .debug_struct("LLJITInner")
+            .field("lljit", &self.lljit)
+            .field(
+                "object_linking_layer_creator",
+                &self.object_linking_layer_creator.as_ref().map(|_| ()),
+            )
+            .finish();
+        #[cfg(feature = "llvm11-0")]
+        return f
+            .debug_struct("LLJITInner")
+            .field("lljit", &self.lljit)
+            .finish();
+    }
+}
+impl Drop for LLJITInner {
     fn drop(&mut self) {
-        if Rc::strong_count(&self.lljit) == 1 {
-            unsafe {
-                LLVMOrcDisposeLLJIT(*self.lljit);
-            }
+        unsafe {
+            LLVMOrcDisposeLLJIT(self.lljit);
         }
     }
 }
@@ -351,16 +378,16 @@ impl Drop for LLJIT {
 /// An `LLJITBuilder` is used to create custom [`LLJIT`] instances.
 #[llvm_versioned_item]
 pub struct LLJITBuilder {
-    builder: LLVMOrcLLJITBuilderRef,
+    builder: LLJITBuilderRef,
     #[llvm_versions(12.0..=latest)]
-    object_linking_layer_creator: Option<Box<dyn ObjectLinkingLayerCreator>>,
+    object_linking_layer_creator: Option<Box<Box<dyn ObjectLinkingLayerCreator>>>,
 }
 
 impl LLJITBuilder {
     unsafe fn new(builder: LLVMOrcLLJITBuilderRef) -> Self {
         assert!(!builder.is_null());
         LLJITBuilder {
-            builder,
+            builder: LLJITBuilderRef { builder },
             #[cfg(not(feature = "llvm11-0"))]
             object_linking_layer_creator: None,
         }
@@ -382,62 +409,71 @@ impl LLJITBuilder {
     ///
     /// let jit_builder = LLJITBuilder::create();
     /// let jit = jit_builder.build().expect("LLJITBuilder::build failed");
+    /// ```
     pub fn build(self) -> Result<LLJIT, Error> {
         unsafe {
-            let lljit = LLJIT::create_with_builder(self.builder)?;
-            self.transfer_ownership_to_llvm();
-            Ok(lljit)
+            match LLJIT::create_with_builder(
+                self.builder.builder,
+                #[cfg(not(feature = "llvm11-0"))]
+                self.object_linking_layer_creator,
+            ) {
+                e @ Err(Error::String(_)) => e,
+                res => {
+                    self.builder.transfer_ownership_to_llvm();
+                    res
+                }
+            }
         }
-    }
-
-    unsafe fn transfer_ownership_to_llvm(mut self) {
-        self.builder = null_mut();
     }
 
     pub fn set_jit_target_machine_builder(
-        &self,
+        self,
         jit_target_machine_builder: JITTargetMachineBuilder,
-    ) {
+    ) -> Self {
         unsafe {
             LLVMOrcLLJITBuilderSetJITTargetMachineBuilder(
-                self.builder,
-                jit_target_machine_builder.builder,
+                self.builder.builder,
+                jit_target_machine_builder.transfer_ownership_to_llvm(),
             );
-            jit_target_machine_builder.transfer_ownership_to_llvm();
         }
+        self
     }
 
     #[llvm_versions(12.0..=latest)]
-    pub fn set_object_linking_layer_creator<'ctx>(
-        &'ctx self,
-        object_linking_layer_creator: &'ctx mut Box<dyn ObjectLinkingLayerCreator>,
-    ) {
+    pub fn set_object_linking_layer_creator(
+        mut self,
+        object_linking_layer_creator: Box<dyn ObjectLinkingLayerCreator>,
+    ) -> Self {
+        let object_linking_layer_creator = Box::new(object_linking_layer_creator);
         unsafe {
             LLVMOrcLLJITBuilderSetObjectLinkingLayerCreator(
-                self.builder,
+                self.builder.builder,
                 object_linking_layer_creator_function,
-                transmute(object_linking_layer_creator),
+                transmute(object_linking_layer_creator.as_ref()),
             );
         }
+        self.object_linking_layer_creator = Some(object_linking_layer_creator);
+        self
     }
 
     #[llvm_versions(12.0..=latest)]
     pub fn set_object_linking_layer_creator_raw<'ctx, Ctx>(
-        &'ctx self,
+        self,
         object_linking_layer_creator_function: extern "C" fn(
             &Ctx,
             LLVMOrcExecutionSessionRef,
             *const c_char,
         ) -> LLVMOrcObjectLayerRef,
         ctx: &'ctx mut Ctx,
-    ) {
+    ) -> Self {
         unsafe {
             LLVMOrcLLJITBuilderSetObjectLinkingLayerCreator(
-                self.builder,
+                self.builder.builder,
                 transmute(object_linking_layer_creator_function),
                 transmute(ctx as *mut Ctx),
             );
         }
+        self
     }
 }
 
@@ -460,7 +496,19 @@ impl Debug for LLJITBuilder {
     }
 }
 
-impl Drop for LLJITBuilder {
+#[derive(Debug)]
+struct LLJITBuilderRef {
+    builder: LLVMOrcLLJITBuilderRef,
+}
+
+impl LLJITBuilderRef {
+    unsafe fn transfer_ownership_to_llvm(mut self) -> LLVMOrcLLJITBuilderRef {
+        let builder = self.builder;
+        self.builder = ptr::null_mut();
+        builder
+    }
+}
+impl Drop for LLJITBuilderRef {
     fn drop(&mut self) {
         unsafe {
             LLVMOrcDisposeLLJITBuilder(self.builder);
@@ -476,14 +524,12 @@ extern "C" fn object_linking_layer_creator_function(
     triple: *const c_char,
 ) -> LLVMOrcObjectLayerRef {
     unsafe {
-        let object_linking_layer_creator: &mut Box<dyn ObjectLinkingLayerCreator> = transmute(ctx);
+        let object_linking_layer_creator: &Box<dyn ObjectLinkingLayerCreator> = transmute(ctx);
         let object_layer = object_linking_layer_creator.create_object_linking_layer(
             ExecutionSession::new_non_owning(execution_session, None),
             CStr::from_ptr(triple),
         );
-        let object_layer_ref = object_layer.object_layer;
-        object_layer.transfer_ownership_to_llvm();
-        object_layer_ref
+        object_layer.transfer_ownership_to_llvm()
     }
 }
 

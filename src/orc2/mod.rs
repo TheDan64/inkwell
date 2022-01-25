@@ -1,32 +1,25 @@
 pub mod lljit;
 
-use std::{
-    cell::RefCell,
-    ffi::CStr,
-    fmt::{self, Debug, Formatter},
-    mem::{transmute, transmute_copy},
-    ptr::null_mut,
-    rc::Rc,
-};
+use std::{cell::RefCell, ffi::CStr, fmt::Debug, ops::Deref, ptr};
 
-use libc::{c_char, c_void};
+#[llvm_versions(12.0..=latest)]
+use llvm_sys::orc2::{
+    ee::LLVMOrcCreateRTDyldObjectLinkingLayerWithSectionMemoryManager, LLVMOrcDisposeObjectLayer,
+    LLVMOrcExecutionSessionCreateBareJITDylib, LLVMOrcExecutionSessionCreateJITDylib,
+    LLVMOrcExecutionSessionGetJITDylibByName, LLVMOrcJITDylibClear,
+    LLVMOrcJITDylibCreateResourceTracker, LLVMOrcJITDylibGetDefaultResourceTracker,
+    LLVMOrcObjectLayerRef, LLVMOrcReleaseResourceTracker, LLVMOrcResourceTrackerRef,
+    LLVMOrcResourceTrackerRemove, LLVMOrcResourceTrackerTransferTo,
+    LLVMOrcRetainSymbolStringPoolEntry, LLVMOrcSymbolStringPoolEntryStr,
+};
 use llvm_sys::orc2::{
     LLVMOrcCreateNewThreadSafeContext, LLVMOrcCreateNewThreadSafeModule,
     LLVMOrcDisposeJITTargetMachineBuilder, LLVMOrcDisposeThreadSafeContext,
     LLVMOrcDisposeThreadSafeModule, LLVMOrcExecutionSessionIntern, LLVMOrcExecutionSessionRef,
-    LLVMOrcJITDylibRef, LLVMOrcJITTargetMachineBuilderDetectHost,
-    LLVMOrcJITTargetMachineBuilderRef, LLVMOrcReleaseSymbolStringPoolEntry,
-    LLVMOrcSymbolStringPoolEntryRef, LLVMOrcThreadSafeContextGetContext,
-    LLVMOrcThreadSafeContextRef, LLVMOrcThreadSafeModuleRef,
-};
-#[llvm_versions(12.0..=latest)]
-use llvm_sys::orc2::{
-    LLVMOrcDisposeObjectLayer, LLVMOrcExecutionSessionCreateBareJITDylib,
-    LLVMOrcExecutionSessionCreateJITDylib, LLVMOrcExecutionSessionGetJITDylibByName,
-    LLVMOrcJITDylibClear, LLVMOrcJITDylibCreateResourceTracker,
-    LLVMOrcJITDylibGetDefaultResourceTracker, LLVMOrcObjectLayerRef, LLVMOrcReleaseResourceTracker,
-    LLVMOrcResourceTrackerRef, LLVMOrcResourceTrackerRemove, LLVMOrcResourceTrackerTransferTo,
-    LLVMOrcRetainSymbolStringPoolEntry, LLVMOrcSymbolStringPoolEntryStr,
+    LLVMOrcJITDylibRef, LLVMOrcJITTargetMachineBuilderCreateFromTargetMachine,
+    LLVMOrcJITTargetMachineBuilderDetectHost, LLVMOrcJITTargetMachineBuilderRef,
+    LLVMOrcReleaseSymbolStringPoolEntry, LLVMOrcSymbolStringPoolEntryRef,
+    LLVMOrcThreadSafeContextGetContext, LLVMOrcThreadSafeContextRef, LLVMOrcThreadSafeModuleRef,
 };
 #[llvm_versions(13.0..=latest)]
 use llvm_sys::orc2::{
@@ -41,7 +34,7 @@ use crate::{
     memory_buffer::MemoryBuffer,
     module::Module,
     support::{to_c_str, LLVMString},
-    targets::{InitializationConfig, Target},
+    targets::TargetMachine,
 };
 
 use self::lljit::LLJIT;
@@ -109,7 +102,7 @@ impl Drop for ThreadSafeContext {
         unsafe {
             LLVMOrcDisposeThreadSafeContext(self.thread_safe_context);
         }
-        self.context.context = null_mut(); // context is already disposed
+        self.context.context = ptr::null_mut(); // context is already disposed
     }
 }
 
@@ -140,7 +133,7 @@ impl<'ctx> Drop for ThreadSafeModule<'ctx> {
                 LLVMOrcDisposeThreadSafeModule(self.thread_safe_module);
             }
         }
-        self.module.module.set(null_mut()); // module is already disposed
+        self.module.module.set(ptr::null_mut()); // module is already disposed
     }
 }
 
@@ -155,20 +148,29 @@ impl JITTargetMachineBuilder {
         JITTargetMachineBuilder { builder }
     }
 
-    unsafe fn transfer_ownership_to_llvm(mut self) {
-        self.builder = null_mut();
+    unsafe fn transfer_ownership_to_llvm(mut self) -> LLVMOrcJITTargetMachineBuilderRef {
+        let builder = self.builder;
+        self.builder = ptr::null_mut();
+        builder
     }
 
     pub fn detect_host() -> Result<Self, LLVMError> {
-        let mut builder = null_mut();
+        let mut builder = ptr::null_mut();
         unsafe {
             LLVMError::new(LLVMOrcJITTargetMachineBuilderDetectHost(&mut builder))?;
             Ok(JITTargetMachineBuilder::new(builder))
         }
     }
 
-    pub fn create_from_target_machine() {
-        todo!();
+    #[llvm_versions(12.0..=latest)]
+    pub fn create_from_target_machine(target_machine: TargetMachine) -> Self {
+        unsafe {
+            JITTargetMachineBuilder::new(
+                LLVMOrcJITTargetMachineBuilderCreateFromTargetMachine(
+                    target_machine.transfer_ownership_to_llvm(),
+                ),
+            )
+        }
     }
 
     #[llvm_versions(13.0..=latest)]
@@ -288,21 +290,27 @@ impl ResourceTracker {
         }
     }
 
+    unsafe fn transfer_ownership_to_llvm(mut self) -> LLVMOrcResourceTrackerRef {
+        let rt = self.rt;
+        self.rt = ptr::null_mut();
+        rt
+    }
+
     pub fn transfer_to(&self, destination: &ResourceTracker) {
         unsafe {
             LLVMOrcResourceTrackerTransferTo(self.rt, destination.rt);
         }
     }
 
-    pub fn remove(&self) -> Result<(), LLVMError> {
-        LLVMError::new(unsafe { LLVMOrcResourceTrackerRemove(self.rt) })
+    pub fn remove(self) -> Result<(), LLVMError> {
+        LLVMError::new(unsafe { LLVMOrcResourceTrackerRemove(self.transfer_ownership_to_llvm()) })
     }
 }
 
 #[llvm_versions(12.0..=latest)]
 impl Drop for ResourceTracker {
     fn drop(&mut self) {
-        if !self.default {
+        if !self.default && !self.rt.is_null() {
             unsafe {
                 LLVMOrcReleaseResourceTracker(self.rt);
             }
@@ -360,7 +368,7 @@ impl ExecutionSession {
 
     #[llvm_versions(12.0..=latest)]
     pub fn create_jit_dylib(&self, name: &str) -> Result<JITDylib, LLVMError> {
-        let mut jit_dylib = null_mut();
+        let mut jit_dylib = ptr::null_mut();
         unsafe {
             LLVMError::new(LLVMOrcExecutionSessionCreateJITDylib(
                 self.execution_session,
@@ -385,23 +393,51 @@ impl ExecutionSession {
             Some(unsafe { JITDylib::new(jit_dylib, self.clone()) })
         }
     }
+
+    #[llvm_versions(12.0..=latest)]
+    pub fn create_rt_dyld_object_linking_layer_with_section_memory_manager(
+        &self,
+    ) -> RTDyldObjectLinkingLayer {
+        unsafe {
+            RTDyldObjectLinkingLayer {
+                object_layer: ObjectLayer::new(
+                    LLVMOrcCreateRTDyldObjectLinkingLayerWithSectionMemoryManager(
+                        self.execution_session,
+                    ),
+                ),
+            }
+        }
+    }
 }
 
 #[llvm_versions(12.0..=latest)]
 #[derive(Debug)]
 pub struct ObjectLayer {
     object_layer: LLVMOrcObjectLayerRef,
+    owning: bool,
 }
 
 #[llvm_versions(12.0..=latest)]
 impl ObjectLayer {
     unsafe fn new_non_owning(object_layer: LLVMOrcObjectLayerRef) -> Self {
         assert!(!object_layer.is_null());
-        ObjectLayer { object_layer }
+        ObjectLayer {
+            object_layer,
+            owning: false,
+        }
+    }
+    unsafe fn new(object_layer: LLVMOrcObjectLayerRef) -> Self {
+        assert!(!object_layer.is_null());
+        ObjectLayer {
+            object_layer,
+            owning: true,
+        }
     }
 
-    unsafe fn transfer_ownership_to_llvm(mut self) {
-        self.object_layer = null_mut();
+    unsafe fn transfer_ownership_to_llvm(mut self) -> LLVMOrcObjectLayerRef {
+        let object_layer = self.object_layer;
+        self.object_layer = ptr::null_mut();
+        object_layer
     }
 
     #[llvm_versions(13.0..=latest)]
@@ -414,11 +450,9 @@ impl ObjectLayer {
             LLVMError::new(LLVMOrcObjectLayerAddObjectFile(
                 self.object_layer,
                 jit_dylib.jit_dylib,
-                object_buffer.memory_buffer,
-            ))?;
-            object_buffer.transfer_ownership_to_llvm()
+                object_buffer.transfer_ownership_to_llvm(),
+            ))
         }
-        Ok(())
     }
 
     #[llvm_versions(13.0..=latest)]
@@ -431,11 +465,9 @@ impl ObjectLayer {
             LLVMError::new(LLVMOrcObjectLayerAddObjectFileWithRT(
                 self.object_layer,
                 rt.rt,
-                object_buffer.memory_buffer,
-            ))?;
-            object_buffer.transfer_ownership_to_llvm()
+                object_buffer.transfer_ownership_to_llvm(),
+            ))
         }
-        Ok(())
     }
 
     pub fn emit() {
@@ -444,11 +476,35 @@ impl ObjectLayer {
 }
 
 #[llvm_versions(12.0..=latest)]
+impl From<RTDyldObjectLinkingLayer> for ObjectLayer {
+    fn from(rt_dyld_object_linking_layer: RTDyldObjectLinkingLayer) -> Self {
+        rt_dyld_object_linking_layer.object_layer
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
 impl Drop for ObjectLayer {
     fn drop(&mut self) {
-        unsafe {
-            LLVMOrcDisposeObjectLayer(self.object_layer);
+        if self.owning {
+            unsafe {
+                LLVMOrcDisposeObjectLayer(self.object_layer);
+            }
         }
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
+#[derive(Debug)]
+pub struct RTDyldObjectLinkingLayer {
+    object_layer: ObjectLayer,
+}
+
+#[llvm_versions(12.0..=latest)]
+impl Deref for RTDyldObjectLinkingLayer {
+    type Target = ObjectLayer;
+
+    fn deref(&self) -> &Self::Target {
+        &self.object_layer
     }
 }
 

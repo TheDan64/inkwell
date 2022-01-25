@@ -13,6 +13,8 @@ use llvm_sys::error::{
     LLVMGetErrorTypeId,
 };
 
+#[llvm_versions(12.0..=latest)]
+use crate::orc2::lljit;
 use crate::support::to_c_str;
 
 /// An LLVM Error.
@@ -78,6 +80,16 @@ impl Drop for LLVMError {
     }
 }
 
+#[llvm_versions(12.0..=latest)]
+impl From<lljit::Error> for LLVMError {
+    fn from(err: lljit::Error) -> Self {
+        match err {
+            lljit::Error::LLVMError(err) => err,
+            lljit::Error::String(message) => LLVMError::new_string_error(&message),
+        }
+    }
+}
+
 /// An owned LLVM Error Message.
 #[derive(Eq)]
 pub struct LLVMErrorMessage {
@@ -124,7 +136,7 @@ impl Debug for LLVMErrorMessage {
 
 impl Display for LLVMErrorMessage {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
-        write!(f, "{:?}", self.deref())
+        write!(f, "{}", self.deref().to_string_lossy())
     }
 }
 
