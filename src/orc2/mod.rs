@@ -33,7 +33,7 @@ use crate::{
     error::LLVMError,
     memory_buffer::MemoryBuffer,
     module::Module,
-    support::{to_c_str, LLVMString},
+    support::{to_c_str, AsPtr, LLVMString, OwnedOrBorrowedPtr},
     targets::TargetMachine,
 };
 
@@ -165,11 +165,9 @@ impl JITTargetMachineBuilder {
     #[llvm_versions(12.0..=latest)]
     pub fn create_from_target_machine(target_machine: TargetMachine) -> Self {
         unsafe {
-            JITTargetMachineBuilder::new(
-                LLVMOrcJITTargetMachineBuilderCreateFromTargetMachine(
-                    target_machine.transfer_ownership_to_llvm(),
-                ),
-            )
+            JITTargetMachineBuilder::new(LLVMOrcJITTargetMachineBuilderCreateFromTargetMachine(
+                target_machine.transfer_ownership_to_llvm(),
+            ))
         }
     }
 
@@ -325,7 +323,7 @@ pub struct ExecutionSession {
 }
 
 impl ExecutionSession {
-    unsafe fn new_non_owning(
+    unsafe fn new_borrowed(
         execution_session: LLVMOrcExecutionSessionRef,
         owned_by_lljit: Option<LLJIT>,
     ) -> Self {
@@ -397,10 +395,10 @@ impl ExecutionSession {
     #[llvm_versions(12.0..=latest)]
     pub fn create_rt_dyld_object_linking_layer_with_section_memory_manager(
         &self,
-    ) -> RTDyldObjectLinkingLayer {
+    ) -> RTDyldObjectLinkingLayer<'static> {
         unsafe {
             RTDyldObjectLinkingLayer {
-                object_layer: ObjectLayer::new(
+                object_layer: ObjectLayer::new_owned(
                     LLVMOrcCreateRTDyldObjectLinkingLayerWithSectionMemoryManager(
                         self.execution_session,
                     ),
@@ -411,33 +409,35 @@ impl ExecutionSession {
 }
 
 #[llvm_versions(12.0..=latest)]
+impl_owned_ptr!(
+    ObjectLayerRef,
+    LLVMOrcObjectLayerRef,
+    LLVMOrcDisposeObjectLayer
+);
+
+#[llvm_versions(12.0..=latest)]
 #[derive(Debug)]
-pub struct ObjectLayer {
-    object_layer: LLVMOrcObjectLayerRef,
-    owning: bool,
+pub struct ObjectLayer<'a> {
+    object_layer: OwnedOrBorrowedPtr<'a, ObjectLayerRef>,
 }
 
 #[llvm_versions(12.0..=latest)]
-impl ObjectLayer {
-    unsafe fn new_non_owning(object_layer: LLVMOrcObjectLayerRef) -> Self {
+impl ObjectLayer<'_> {
+    unsafe fn new_borrowed(object_layer: LLVMOrcObjectLayerRef) -> Self {
         assert!(!object_layer.is_null());
         ObjectLayer {
-            object_layer,
-            owning: false,
+            object_layer: OwnedOrBorrowedPtr::borrowed(object_layer),
         }
     }
-    unsafe fn new(object_layer: LLVMOrcObjectLayerRef) -> Self {
+    unsafe fn new_owned(object_layer: LLVMOrcObjectLayerRef) -> Self {
         assert!(!object_layer.is_null());
         ObjectLayer {
-            object_layer,
-            owning: true,
+            object_layer: OwnedOrBorrowedPtr::Owned(ObjectLayerRef(object_layer)),
         }
     }
 
-    unsafe fn transfer_ownership_to_llvm(mut self) -> LLVMOrcObjectLayerRef {
-        let object_layer = self.object_layer;
-        self.object_layer = ptr::null_mut();
-        object_layer
+    unsafe fn transfer_ownership_to_llvm(self) -> LLVMOrcObjectLayerRef {
+        self.object_layer.transfer_ownership_to_llvm()
     }
 
     #[llvm_versions(13.0..=latest)]
@@ -448,7 +448,7 @@ impl ObjectLayer {
     ) -> Result<(), LLVMError> {
         unsafe {
             LLVMError::new(LLVMOrcObjectLayerAddObjectFile(
-                self.object_layer,
+                self.object_layer.as_ptr(),
                 jit_dylib.jit_dylib,
                 object_buffer.transfer_ownership_to_llvm(),
             ))
@@ -463,7 +463,7 @@ impl ObjectLayer {
     ) -> Result<(), LLVMError> {
         unsafe {
             LLVMError::new(LLVMOrcObjectLayerAddObjectFileWithRT(
-                self.object_layer,
+                self.object_layer.as_ptr(),
                 rt.rt,
                 object_buffer.transfer_ownership_to_llvm(),
             ))
@@ -476,32 +476,21 @@ impl ObjectLayer {
 }
 
 #[llvm_versions(12.0..=latest)]
-impl From<RTDyldObjectLinkingLayer> for ObjectLayer {
-    fn from(rt_dyld_object_linking_layer: RTDyldObjectLinkingLayer) -> Self {
+impl<'a> From<RTDyldObjectLinkingLayer<'a>> for ObjectLayer<'a> {
+    fn from(rt_dyld_object_linking_layer: RTDyldObjectLinkingLayer<'a>) -> Self {
         rt_dyld_object_linking_layer.object_layer
     }
 }
 
 #[llvm_versions(12.0..=latest)]
-impl Drop for ObjectLayer {
-    fn drop(&mut self) {
-        if self.owning {
-            unsafe {
-                LLVMOrcDisposeObjectLayer(self.object_layer);
-            }
-        }
-    }
-}
-
-#[llvm_versions(12.0..=latest)]
 #[derive(Debug)]
-pub struct RTDyldObjectLinkingLayer {
-    object_layer: ObjectLayer,
+pub struct RTDyldObjectLinkingLayer<'a> {
+    object_layer: ObjectLayer<'a>,
 }
 
 #[llvm_versions(12.0..=latest)]
-impl Deref for RTDyldObjectLinkingLayer {
-    type Target = ObjectLayer;
+impl<'a> Deref for RTDyldObjectLinkingLayer<'a> {
+    type Target = ObjectLayer<'a>;
 
     fn deref(&self) -> &Self::Target {
         &self.object_layer
@@ -516,7 +505,7 @@ pub struct ObjectTransformLayer {
 
 #[llvm_versions(13.0..=latest)]
 impl ObjectTransformLayer {
-    unsafe fn new_non_owning(object_transform_layer: LLVMOrcObjectTransformLayerRef) -> Self {
+    unsafe fn new_borrowed(object_transform_layer: LLVMOrcObjectTransformLayerRef) -> Self {
         assert!(!object_transform_layer.is_null());
         ObjectTransformLayer {
             object_transform_layer,
@@ -535,7 +524,7 @@ pub struct IRTransformLayer {
 
 #[llvm_versions(13.0..=latest)]
 impl IRTransformLayer {
-    unsafe fn new_non_owning(ir_transform_layer: LLVMOrcIRTransformLayerRef) -> Self {
+    unsafe fn new_borrowed(ir_transform_layer: LLVMOrcIRTransformLayerRef) -> Self {
         assert!(!ir_transform_layer.is_null());
         IRTransformLayer { ir_transform_layer }
     }

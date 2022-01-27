@@ -36,10 +36,11 @@ use llvm_sys::orc2::{
 };
 
 use crate::{
+    data_layout::DataLayout,
     error::LLVMError,
     memory_buffer::MemoryBuffer,
-    support::to_c_str,
-    targets::{InitializationConfig, Target},
+    support::{to_c_str, LLVMStringOrRaw},
+    targets::{InitializationConfig, Target, TargetTriple},
 };
 
 use super::{
@@ -294,15 +295,25 @@ impl LLJIT {
 
     pub fn get_execution_session(&self) -> ExecutionSession {
         unsafe {
-            ExecutionSession::new_non_owning(
+            ExecutionSession::new_borrowed(
                 LLVMOrcLLJITGetExecutionSession(self.inner.lljit),
                 Some(self.clone()),
             )
         }
     }
 
-    pub fn get_triple_string(&self) -> &CStr {
-        unsafe { CStr::from_ptr(LLVMOrcLLJITGetTripleString(self.inner.lljit)) }
+    ///
+    /// ```
+    /// use inkwell::{orc2::lljit::LLJIT, targets::TargetMachine};
+    ///
+    /// let jit = LLJIT::create().expect("LLJIT::create failed");
+    /// let triple = jit.get_triple();
+    /// assert_eq!(triple, TargetMachine::get_default_triple());
+    /// ```
+    pub fn get_triple<'jit>(&'jit self) -> TargetTriple<'jit> {
+        TargetTriple::new(unsafe {
+            LLVMStringOrRaw::borrowed(LLVMOrcLLJITGetTripleString(self.inner.lljit))
+        })
     }
 
     pub fn get_global_prefix(&self) -> i8 {
@@ -320,26 +331,51 @@ impl LLJIT {
 
     #[llvm_versions(13.0..=latest)]
     pub fn get_object_linking_layer(&self) -> ObjectLayer {
-        unsafe { ObjectLayer::new_non_owning(LLVMOrcLLJITGetObjLinkingLayer(self.inner.lljit)) }
+        unsafe { ObjectLayer::new_borrowed(LLVMOrcLLJITGetObjLinkingLayer(self.inner.lljit)) }
     }
 
     #[llvm_versions(13.0..=latest)]
     pub fn get_object_transform_layer(&self) -> ObjectTransformLayer {
         unsafe {
-            ObjectTransformLayer::new_non_owning(LLVMOrcLLJITGetObjTransformLayer(self.inner.lljit))
+            ObjectTransformLayer::new_borrowed(LLVMOrcLLJITGetObjTransformLayer(self.inner.lljit))
         }
     }
 
     #[llvm_versions(13.0..=latest)]
     pub fn get_ir_transform_layer(&self) -> IRTransformLayer {
-        unsafe {
-            IRTransformLayer::new_non_owning(LLVMOrcLLJITGetIRTransformLayer(self.inner.lljit))
-        }
+        unsafe { IRTransformLayer::new_borrowed(LLVMOrcLLJITGetIRTransformLayer(self.inner.lljit)) }
     }
 
+    ///
+    /// ```
+    /// use inkwell::{orc2::lljit::LLJIT};
+    /// # use inkwell::targets::{CodeModel, RelocMode, Target, TargetMachine};
+    /// # use inkwell::OptimizationLevel;
+    ///
+    /// let jit = LLJIT::create().expect("LLJIT::create failed");
+    /// let data_layout = jit.get_data_layout();
+    /// # let target_tripple = TargetMachine::get_default_triple();
+    /// # let target_cpu_features_llvm_string = TargetMachine::get_host_cpu_features();
+    /// # let target_cpu_features = target_cpu_features_llvm_string
+    /// #     .to_str()
+    /// #     .expect("TargetMachine::get_host_cpu_features returned invalid string");
+    /// # let target = Target::from_triple(&target_tripple).expect("Target::from_triple failed");
+    /// # let target_machine = target
+    /// #    .create_target_machine(
+    /// #        &target_tripple,
+    /// #        "",
+    /// #        target_cpu_features,
+    /// #        OptimizationLevel::Default,
+    /// #        RelocMode::Default,
+    /// #        CodeModel::Default,
+    /// #    )
+    /// #    .expect("Target::create_target_machine failed");
+    /// assert_eq!(data_layout, target_machine.get_target_data().get_data_layout());
+    /// ```
+    /// In the example above `target_machine` is the host machine.
     #[llvm_versions(13.0..=latest)]
-    pub fn get_data_layout_string(&self) -> &CStr {
-        unsafe { CStr::from_ptr(LLVMOrcLLJITGetDataLayoutStr(self.inner.lljit)) }
+    pub fn get_data_layout<'jit>(&'jit self) -> DataLayout<'jit> {
+        unsafe { DataLayout::new_borrowed(LLVMOrcLLJITGetDataLayoutStr(self.inner.lljit)) }
     }
 }
 
@@ -526,7 +562,7 @@ extern "C" fn object_linking_layer_creator_function(
     unsafe {
         let object_linking_layer_creator: &Box<dyn ObjectLinkingLayerCreator> = transmute(ctx);
         let object_layer = object_linking_layer_creator.create_object_linking_layer(
-            ExecutionSession::new_non_owning(execution_session, None),
+            ExecutionSession::new_borrowed(execution_session, None),
             CStr::from_ptr(triple),
         );
         object_layer.transfer_ownership_to_llvm()
