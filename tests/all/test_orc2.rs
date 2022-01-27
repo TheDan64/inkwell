@@ -4,13 +4,17 @@ use std::ffi::CStr;
 use inkwell::orc2::{lljit::ObjectLinkingLayerCreator, ObjectLayer};
 use inkwell::{
     builder::Builder,
+    context::Context,
+    memory_buffer::MemoryBuffer,
     module::{Linkage, Module},
     orc2::{
         lljit::{LLJITBuilder, LLJIT},
         ExecutionSession, JITTargetMachineBuilder, ThreadSafeContext, ThreadSafeModule,
     },
     support::LLVMString,
+    targets::{CodeModel, FileType, RelocMode, Target, TargetMachine},
     values::{FunctionValue, IntValue},
+    OptimizationLevel,
 };
 
 #[test]
@@ -155,6 +159,47 @@ fn test_lljit_remove_resource_tracker() {
     }
 }
 
+#[test]
+fn test_lljit_add_object_file() {
+    let context = Context::create();
+    let object_file = constant_function_object_file(&context, 64, "main");
+    let lljit = LLJIT::create().expect("LLJIT::create failed");
+    let main_jd = lljit.get_main_jit_dylib();
+    lljit
+        .add_object_file(&main_jd, object_file)
+        .expect("LLJIT::add_object_file failed");
+    drop(main_jd);
+    unsafe {
+        let function = lljit
+            .get_function::<unsafe extern "C" fn() -> u64>("main")
+            .expect("LLJIT::get_function failed");
+        drop(lljit);
+        assert_eq!(function.call(), 64);
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
+#[test]
+fn test_lljit_add_object_file_with_rt() {
+    let context = Context::create();
+    let object_file = constant_function_object_file(&context, 64, "main");
+    let lljit = LLJIT::create().expect("LLJIT::create failed");
+    let main_jd = lljit.get_main_jit_dylib();
+    let module_rt = main_jd.create_resource_tracker();
+    lljit
+        .add_object_file_with_rt(&module_rt, object_file)
+        .expect("LLJIT::add_object_file_with_rt failed");
+    drop(main_jd);
+    drop(module_rt);
+    unsafe {
+        let function = lljit
+            .get_function::<unsafe extern "C" fn() -> u64>("main")
+            .expect("LLJIT::get_function failed");
+        drop(lljit);
+        assert_eq!(function.call(), 64);
+    }
+}
+
 // TODO: Figure out linking of JITDylibs
 // #[test]
 // fn test_lljit_replace_function() {
@@ -262,25 +307,9 @@ impl ObjectLinkingLayerCreator for SimpleObjectLinkingLayerCreator {
 }
 
 #[llvm_versions(12.0..=latest)]
-#[cfg(all(target_arch = "x86_64", target_os = "linux", target_env = "gnu"))]
 #[test]
 fn test_jit_target_machin_builder_create_from_target_machine() {
-    use inkwell::{
-        targets::{CodeModel, RelocMode, Target, TargetTriple},
-        OptimizationLevel,
-    };
-
-    let target = Target::from_name("x86-64").expect("Target::from_name failed");
-    let target_machine = target
-        .create_target_machine(
-            &TargetTriple::create("x86_64-unknown-linux-gnu"),
-            "x86-64",
-            "",
-            OptimizationLevel::Default,
-            RelocMode::Default,
-            CodeModel::Default,
-        )
-        .expect("Target::create_target_machine failed");
+    let target_machine = get_native_target_machine();
     let jit_target_machine_builder =
         JITTargetMachineBuilder::create_from_target_machine(target_machine);
     let lljit = LLJITBuilder::create()
@@ -291,12 +320,16 @@ fn test_jit_target_machin_builder_create_from_target_machine() {
 }
 
 #[llvm_versions(13.0..=latest)]
-#[cfg(all(target_arch = "x86_64", target_os = "linux", target_env = "gnu"))]
 #[test]
 fn test_jit_target_machin_builder_set_target_triple() {
     let jit_target_machine_builder = JITTargetMachineBuilder::detect_host()
         .expect("JITTargetMachineBuilder::detect_host failed");
-    jit_target_machine_builder.set_target_triple("x86_64-unknown-linux-gnu");
+    let default_triple = TargetMachine::get_default_triple();
+    let target_triple = default_triple
+        .as_str()
+        .to_str()
+        .expect("TargetMachine::get_default_triple returned an invalid string");
+    jit_target_machine_builder.set_target_triple(target_triple);
     let lljit = LLJITBuilder::create()
         .set_jit_target_machine_builder(jit_target_machine_builder)
         .build()
@@ -394,6 +427,7 @@ impl<'ctx> ModuleBuilder<'ctx> {
             .into_int_value()
     }
 }
+
 fn constant_function_module<'ctx>(
     thread_safe_context: &'ctx ThreadSafeContext,
     value: u64,
@@ -402,4 +436,37 @@ fn constant_function_module<'ctx>(
     ModuleBuilder::new(thread_safe_context, name)
         .add_contstant_function(name, value)
         .build()
+}
+
+fn constant_function_object_file(context: &Context, value: u64, name: &str) -> MemoryBuffer {
+    let module = context.create_module(name);
+    let function_type = context.i64_type().fn_type(&vec![], false);
+    let builder = context.create_builder();
+    let function = module.add_function(name, function_type, None);
+    let entry_bb = context.append_basic_block(function, "entry");
+    builder.position_at_end(entry_bb);
+    builder.build_return(Some(&context.i64_type().const_int(value, false)));
+    let target_machine = get_native_target_machine();
+    target_machine
+        .write_to_memory_buffer(&module, FileType::Object)
+        .expect("TargetMachine::write_to_memory_buffer failed")
+}
+
+fn get_native_target_machine() -> TargetMachine {
+    let target_tripple = TargetMachine::get_default_triple();
+    let target_cpu_features_llvm_string = TargetMachine::get_host_cpu_features();
+    let target_cpu_features = target_cpu_features_llvm_string
+        .to_str()
+        .expect("TargetMachine::get_host_cpu_features returned invalid string");
+    let target = Target::from_triple(&target_tripple).expect("Target::from_triple failed");
+    target
+        .create_target_machine(
+            &target_tripple,
+            "",
+            target_cpu_features,
+            OptimizationLevel::Default,
+            RelocMode::Default,
+            CodeModel::Default,
+        )
+        .expect("Target::create_target_machine failed")
 }
