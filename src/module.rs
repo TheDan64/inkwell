@@ -33,7 +33,7 @@ use crate::data_layout::DataLayout;
 use crate::debug_info::{DebugInfoBuilder, DICompileUnit, DWARFEmissionKind, DWARFSourceLanguage};
 use crate::execution_engine::ExecutionEngine;
 use crate::memory_buffer::MemoryBuffer;
-use crate::support::{to_c_str, LLVMString};
+use crate::support::{to_c_str, LLVMString, LLVMStringOrRaw};
 use crate::targets::{InitializationConfig, Target, TargetTriple};
 use crate::types::{AsTypeRef, BasicType, FunctionType, StructType};
 use crate::values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
@@ -149,7 +149,7 @@ pub enum Linkage {
 /// The underlying module will be disposed when dropping this object.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Module<'ctx> {
-    data_layout: RefCell<Option<DataLayout>>,
+    data_layout: RefCell<Option<DataLayout<'ctx>>>,
     pub(crate) module: Cell<LLVMModuleRef>,
     pub(crate) owned_by_ee: RefCell<Option<ExecutionEngine<'ctx>>>,
     _marker: PhantomData<&'ctx Context>,
@@ -373,12 +373,9 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_triple(), triple);
     /// ```
     pub fn get_triple(&self) -> TargetTriple {
-        // REVIEW: This isn't an owned LLVMString, is it? If so, need to deallocate.
-        let target_str = unsafe {
-            LLVMGetTarget(self.module.get())
-        };
+        let target_str = unsafe { LLVMGetTarget(self.module.get()) };
 
-        TargetTriple::new(LLVMString::create_from_c_str(unsafe { CStr::from_ptr(target_str) }))
+        TargetTriple::new(unsafe { LLVMStringOrRaw::borrowed(target_str) })
     }
 
     /// Creates an `ExecutionEngine` from this `Module`.
@@ -664,7 +661,7 @@ impl<'ctx> Module<'ctx> {
         Ok(())
     }
 
-    fn get_borrowed_data_layout(module: LLVMModuleRef) -> DataLayout {
+    fn get_borrowed_data_layout(module: LLVMModuleRef) -> DataLayout<'ctx> {
         #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
         let data_layout = unsafe {
             use llvm_sys::core::LLVMGetDataLayout;

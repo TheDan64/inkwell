@@ -7,9 +7,11 @@ use llvm_sys::support::LLVMLoadLibraryPermanently;
 
 use std::borrow::Cow;
 use std::error::Error;
+use std::ffi::{CStr, CString};
 use std::fmt::{self, Debug, Display, Formatter};
-use std::ffi::{CString, CStr};
+use std::marker::PhantomData;
 use std::ops::Deref;
+use std::ptr;
 
 /// An owned LLVM String. Also known as a LLVM Message
 #[derive(Eq)]
@@ -68,7 +70,7 @@ impl Debug for LLVMString {
 
 impl Display for LLVMString {
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
-        write!(f, "{:?}", self.deref())
+        write!(f, "{}", self.deref().to_string_lossy())
     }
 }
 
@@ -96,30 +98,167 @@ impl Drop for LLVMString {
     }
 }
 
+impl OwnedPtr for LLVMString {
+    type Ptr = *const c_char;
+
+    #[inline]
+    fn as_ptr(&self) -> Self::Ptr {
+        self.ptr
+    }
+
+    unsafe fn transfer_ownership_to_llvm(mut self) {
+        self.ptr = ptr::null_mut();
+    }
+}
+
 // Similar to Cow; however does not provide ability to clone
 // since memory is allocated by LLVM. Could use a better name
 // too. This is meant to be an internal wrapper only. Maybe
 // belongs in a private utils module.
-#[derive(Eq)]
-pub(crate) enum LLVMStringOrRaw {
-    Owned(LLVMString),
-    Borrowed(*const c_char),
+pub(crate) struct LLVMStringOrRaw<'a> {
+    string: OwnedOrBorrowedPtr<'a, LLVMString>,
 }
 
-impl LLVMStringOrRaw {
+impl<'a> LLVMStringOrRaw<'a> {
+    pub(crate) fn owned(string: LLVMString) -> LLVMStringOrRaw<'static> {
+        LLVMStringOrRaw {
+            string: OwnedOrBorrowedPtr::Owned(string),
+        }
+    }
+
+    pub(crate) unsafe fn borrowed(string: *const c_char) -> Self {
+        LLVMStringOrRaw {
+            string: OwnedOrBorrowedPtr::borrowed(string),
+        }
+    }
+
     pub fn as_str(&self) -> &CStr {
-        match self {
-            LLVMStringOrRaw::Owned(llvm_string) => llvm_string.deref(),
-            LLVMStringOrRaw::Borrowed(ptr) => unsafe {
-                CStr::from_ptr(*ptr)
-            },
+        unsafe { CStr::from_ptr(self.string.as_ptr()) }
+    }
+
+    pub(crate) fn as_ptr(&self) -> *const c_char {
+        return self.string.as_ptr();
+    }
+}
+
+impl<'a> PartialEq for LLVMStringOrRaw<'a> {
+    fn eq(&self, other: &LLVMStringOrRaw<'a>) -> bool {
+        self.as_str() == other.as_str()
+    }
+}
+
+impl Eq for LLVMStringOrRaw<'_> {}
+
+impl Debug for LLVMStringOrRaw<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self.string {
+            OwnedOrBorrowedPtr::Owned(..) => f.debug_tuple("Owned").field(&self.as_str()).finish(),
+            OwnedOrBorrowedPtr::Borrowed(..) => {
+                f.debug_tuple("Borrowed").field(&self.as_str()).finish()
+            }
         }
     }
 }
 
-impl PartialEq for LLVMStringOrRaw {
-    fn eq(&self, other: &LLVMStringOrRaw) -> bool {
-        self.as_str() == other.as_str()
+impl Display for LLVMStringOrRaw<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.as_str().to_string_lossy())
+    }
+}
+
+pub(crate) trait OwnedPtr {
+    type Ptr;
+
+    fn as_ptr(&self) -> Self::Ptr;
+    unsafe fn transfer_ownership_to_llvm(self);
+}
+
+macro_rules! impl_owned_ptr {
+    ($vis:vis $name:ident, $ty:ty, $destroy_fn:ident) => {
+        #[derive(Debug, PartialEq)]
+        $vis struct $name($ty);
+
+        impl $crate::support::OwnedPtr for $name {
+            type Ptr = $ty;
+
+            #[inline]
+            fn as_ptr(&self) -> Self::Ptr {
+                self.0
+            }
+
+            unsafe fn transfer_ownership_to_llvm(mut self) {
+                self.0 = std::ptr::null_mut();
+            }
+        }
+
+        impl Drop for $name {
+            fn drop(&mut self) {
+                if !self.0.is_null() {
+                    unsafe {
+                        $destroy_fn(self.0 as *mut _);
+                    }
+                }
+            }
+        }
+    };
+}
+
+pub(crate) enum OwnedOrBorrowedPtr<'a, T>
+where
+    T: OwnedPtr,
+    <T as OwnedPtr>::Ptr: Copy,
+{
+    Owned(T),
+    Borrowed(<T as OwnedPtr>::Ptr, PhantomData<&'a ()>),
+}
+
+impl<T> OwnedOrBorrowedPtr<'_, T>
+where
+    T: OwnedPtr,
+    <T as OwnedPtr>::Ptr: Copy,
+{
+    pub fn borrowed(ptr: <T as OwnedPtr>::Ptr) -> Self {
+        OwnedOrBorrowedPtr::Borrowed(ptr, PhantomData)
+    }
+
+    pub(crate) unsafe fn transfer_ownership_to_llvm(self) -> <T as OwnedPtr>::Ptr {
+        match self {
+            OwnedOrBorrowedPtr::Owned(o) => {
+                let ptr = o.as_ptr();
+                o.transfer_ownership_to_llvm();
+                ptr
+            }
+            OwnedOrBorrowedPtr::Borrowed(b, _) => b,
+        }
+    }
+    pub(crate) fn as_ptr(&self) -> <T as OwnedPtr>::Ptr {
+        match self {
+            OwnedOrBorrowedPtr::Owned(o) => o.as_ptr(),
+            OwnedOrBorrowedPtr::Borrowed(b, _) => *b,
+        }
+    }
+}
+
+impl<T> Debug for OwnedOrBorrowedPtr<'_, T>
+where
+    T: OwnedPtr + Debug,
+    <T as OwnedPtr>::Ptr: Copy + Debug,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Owned(o) => f.debug_tuple("Owned").field(o).finish(),
+            Self::Borrowed(b, _) => f.debug_tuple("Borrowed").field(b).finish(),
+        }
+    }
+}
+
+impl<'a, T> PartialEq for OwnedOrBorrowedPtr<'a, T>
+where
+    T: OwnedPtr + PartialEq,
+    <T as OwnedPtr>::Ptr: Copy + PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.as_ptr() == other.as_ptr()
     }
 }
 
