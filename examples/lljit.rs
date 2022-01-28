@@ -1,7 +1,8 @@
+use either::Either;
 use inkwell::{
     error::LLVMError,
     orc2::{
-        lljit::{Error, LLJITBuilder},
+        lljit::{LLJITBuilder},
         ThreadSafeContext, ThreadSafeModule,
     },
 };
@@ -20,11 +21,11 @@ fn run() -> Result<(), LLVMError> {
     let jit_builder = LLJITBuilder::create();
     let jit = match jit_builder.build() {
         Ok(jit) => jit,
-        Err(Error::String(s)) => {
+        Err(Either::Right(s)) => {
             println!("{}", s);
             return Ok(());
         }
-        Err(Error::LLVMError(e)) => return Err(e),
+        Err(Either::Left(e)) => return Err(e),
     };
     let main_dylib = jit.get_main_jit_dylib();
     jit.add_module(&main_dylib, foo_module)?;

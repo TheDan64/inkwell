@@ -296,10 +296,10 @@ struct SimpleObjectLinkingLayerCreator {}
 #[llvm_versions(12.0..=latest)]
 impl ObjectLinkingLayerCreator for SimpleObjectLinkingLayerCreator {
     fn create_object_linking_layer(
-        &self,
+        &mut self,
         execution_session: ExecutionSession,
         _triple: &CStr,
-    ) -> ObjectLayer {
+    ) -> ObjectLayer<'static> {
         execution_session
             .create_rt_dyld_object_linking_layer_with_section_memory_manager()
             .into()

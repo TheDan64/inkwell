@@ -33,7 +33,7 @@ use crate::{
     error::LLVMError,
     memory_buffer::MemoryBuffer,
     module::Module,
-    support::{to_c_str, AsPtr, LLVMString, OwnedOrBorrowedPtr},
+    support::{to_c_str, LLVMString, OwnedOrBorrowedPtr},
     targets::TargetMachine,
 };
 
@@ -396,15 +396,14 @@ impl ExecutionSession {
     pub fn create_rt_dyld_object_linking_layer_with_section_memory_manager(
         &self,
     ) -> RTDyldObjectLinkingLayer<'static> {
-        unsafe {
-            RTDyldObjectLinkingLayer {
-                object_layer: ObjectLayer::new_owned(
-                    LLVMOrcCreateRTDyldObjectLinkingLayerWithSectionMemoryManager(
-                        self.execution_session,
-                    ),
+        let object_layer = unsafe {
+            ObjectLayer::new_owned(
+                LLVMOrcCreateRTDyldObjectLinkingLayerWithSectionMemoryManager(
+                    self.execution_session,
                 ),
-            }
-        }
+            )
+        };
+        RTDyldObjectLinkingLayer { object_layer }
     }
 }
 
@@ -455,20 +454,20 @@ impl ObjectLayer<'_> {
         }
     }
 
-    #[llvm_versions(13.0..=latest)]
-    pub fn add_object_file_with_rt(
-        &self,
-        rt: &ResourceTracker,
-        object_buffer: MemoryBuffer,
-    ) -> Result<(), LLVMError> {
-        unsafe {
-            LLVMError::new(LLVMOrcObjectLayerAddObjectFileWithRT(
-                self.object_layer.as_ptr(),
-                rt.rt,
-                object_buffer.transfer_ownership_to_llvm(),
-            ))
-        }
-    }
+    // #[llvm_versions(14.0..=latest)]
+    // pub fn add_object_file_with_rt(
+    //     &self,
+    //     rt: &ResourceTracker,
+    //     object_buffer: MemoryBuffer,
+    // ) -> Result<(), LLVMError> {
+    //     unsafe {
+    //         LLVMError::new(LLVMOrcObjectLayerAddObjectFileWithRT(
+    //             self.object_layer.as_ptr(),
+    //             rt.rt,
+    //             object_buffer.transfer_ownership_to_llvm(),
+    //         ))
+    //     }
+    // }
 
     pub fn emit() {
         todo!();

@@ -5,6 +5,7 @@ use std::{
     ops::Deref,
 };
 
+use either::Either;
 use libc::c_char;
 #[llvm_versions(12.0..=latest)]
 use llvm_sys::error::LLVMCreateStringError;
@@ -81,11 +82,12 @@ impl Drop for LLVMError {
 }
 
 #[llvm_versions(12.0..=latest)]
-impl From<lljit::Error> for LLVMError {
-    fn from(err: lljit::Error) -> Self {
+impl<S> From<Either<LLVMError, S>> for LLVMError
+where S: ToString {
+    fn from(err: Either<LLVMError, S>) -> Self {
         match err {
-            lljit::Error::LLVMError(err) => err,
-            lljit::Error::String(message) => LLVMError::new_string_error(&message),
+            Either::Left(err) => err,
+            Either::Right(message) => LLVMError::new_string_error(&message.to_string()),
         }
     }
 }
@@ -115,6 +117,7 @@ impl LLVMErrorMessage {
     /// assert_eq!(error_msg, "error");
     /// # }
     /// ```
+    /// The example does not work on LLVM version 11.
     pub fn to_string(&self) -> String {
         (*self).to_string_lossy().into_owned()
     }
