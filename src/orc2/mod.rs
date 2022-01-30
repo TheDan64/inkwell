@@ -215,8 +215,8 @@ impl JITDylib {
     /// ```
     /// use inkwell::orc2::lljit::LLJIT;
     ///
-    /// let jit = LLJIT::create().expect("LLJIT::create failed");
-    /// let main_jd = jit.get_main_jit_dylib();
+    /// let lljit = LLJIT::create().expect("LLJIT::create failed");
+    /// let main_jd = lljit.get_main_jit_dylib();
     /// let rt = main_jd.get_default_resource_tracker();
     /// ```
     #[llvm_versions(12.0..=latest)]
@@ -234,8 +234,8 @@ impl JITDylib {
     /// ```
     /// use inkwell::orc2::lljit::LLJIT;
     ///
-    /// let jit = LLJIT::create().expect("LLJIT::create failed");
-    /// let main_jd = jit.get_main_jit_dylib();
+    /// let lljit = LLJIT::create().expect("LLJIT::create failed");
+    /// let main_jd = lljit.get_main_jit_dylib();
     /// let rt = main_jd.create_resource_tracker();
     /// ```
     #[llvm_versions(12.0..=latest)]

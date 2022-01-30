@@ -85,7 +85,7 @@ impl LLJIT {
     /// ```
     /// use inkwell::orc2::lljit::LLJIT;
     ///
-    /// let jit = LLJIT::create().expect("LLJIT::create failed");
+    /// let lljit = LLJIT::create().expect("LLJIT::create failed");
     /// ```
     pub fn create() -> Result<Self, Either<LLVMError, String>> {
         unsafe {
@@ -101,8 +101,8 @@ impl LLJIT {
     /// ```
     /// use inkwell::orc2::lljit::LLJIT;
     ///
-    /// let jit = LLJIT::create().expect("LLJIT::create failed");
-    /// let main_jd = jit.get_main_jit_dylib();
+    /// let lljit = LLJIT::create().expect("LLJIT::create failed");
+    /// let main_jd = lljit.get_main_jit_dylib();
     /// ```
     pub fn get_main_jit_dylib(&self) -> JITDylib {
         unsafe {
@@ -123,9 +123,9 @@ impl LLJIT {
     /// // Create module content...
     /// let thread_safe_module = thread_safe_context.create_module(module);
     ///
-    /// let jit = LLJIT::create().expect("LLJIT::create failed");
-    /// let main_jd = jit.get_main_jit_dylib();
-    /// jit.add_module(&main_jd, thread_safe_module)
+    /// let lljit = LLJIT::create().expect("LLJIT::create failed");
+    /// let main_jd = lljit.get_main_jit_dylib();
+    /// lljit.add_module(&main_jd, thread_safe_module)
     ///     .expect("LLJIT::add_module failed");
     /// ```
     pub fn add_module<'ctx>(
@@ -155,10 +155,10 @@ impl LLJIT {
     /// // Create module content...
     /// let thread_safe_module = thread_safe_context.create_module(module);
     ///
-    /// let jit = LLJIT::create().expect("LLJIT::create failed");
-    /// let main_jd = jit.get_main_jit_dylib();
+    /// let lljit = LLJIT::create().expect("LLJIT::create failed");
+    /// let main_jd = lljit.get_main_jit_dylib();
     /// let module_rt = main_jd.create_resource_tracker();
-    /// jit.add_module_with_rt(&module_rt, thread_safe_module)
+    /// lljit.add_module_with_rt(&module_rt, thread_safe_module)
     ///     .expect("LLJIT::add_module_with_rt failed");
     /// ```
     #[llvm_versions(12.0..=latest)]
@@ -341,15 +341,15 @@ impl LLJIT {
     /// builder.build_return(Some(&ret));
     ///
     /// // Create the LLJIT engine and add the module
-    /// let jit = LLJIT::create().expect("LLJIT::create failed");
+    /// let lljit = LLJIT::create().expect("LLJIT::create failed");
     /// let thread_safe_module = thread_safe_context.create_module(module);
-    /// let main_jd = jit.get_main_jit_dylib();
-    /// jit.add_module(&main_jd, thread_safe_module)
+    /// let main_jd = lljit.get_main_jit_dylib();
+    /// lljit.add_module(&main_jd, thread_safe_module)
     ///     .expect("LLJIT::add_module_with_rt failed");
     ///
     /// // lookup the function and execute it
     /// unsafe {
-    ///     let test_fn = jit.get_function::<unsafe extern "C" fn() -> f64>("test_fn")
+    ///     let test_fn = lljit.get_function::<unsafe extern "C" fn() -> f64>("test_fn")
     ///         .expect("LLJIT::get_function failed");
     ///     let return_value = test_fn.call();
     ///     assert_eq!(return_value, 64.0);
@@ -505,8 +505,8 @@ impl LLJIT {
     /// #         .expect("Target::create_target_machine failed")
     /// # }
     ///
-    /// let jit = LLJIT::create().expect("LLJIT::create failed");
-    /// let data_layout = jit.get_data_layout();
+    /// let lljit = LLJIT::create().expect("LLJIT::create failed");
+    /// let data_layout = lljit.get_data_layout();
     /// let target_machine = get_native_target_machine();
     /// assert_eq!(data_layout, target_machine.get_target_data().get_data_layout());
     /// ```
@@ -570,7 +570,7 @@ impl LLJITBuilder {
     /// ```
     /// use inkwell::orc2::lljit::LLJITBuilder;
     ///
-    /// let jit_builder = LLJITBuilder::create();
+    /// let lljit_builder = LLJITBuilder::create();
     /// ```
     pub fn create() -> Self {
         unsafe { LLJITBuilder::new(LLVMOrcCreateLLJITBuilder()) }
@@ -580,8 +580,8 @@ impl LLJITBuilder {
     /// ```
     /// use inkwell::orc2::lljit::LLJITBuilder;
     ///
-    /// let jit_builder = LLJITBuilder::create();
-    /// let jit = jit_builder.build().expect("LLJITBuilder::build failed");
+    /// let lljit_builder = LLJITBuilder::create();
+    /// let lljit = lljit_builder.build().expect("LLJITBuilder::build failed");
     /// ```
     pub fn build(self) -> Result<LLJIT, Either<LLVMError, String>> {
         unsafe {
