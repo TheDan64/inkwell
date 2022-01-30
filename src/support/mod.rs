@@ -105,10 +105,6 @@ impl OwnedPtr for LLVMString {
     fn as_ptr(&self) -> Self::Ptr {
         self.ptr
     }
-
-    unsafe fn transfer_ownership_to_llvm(mut self) {
-        self.ptr = ptr::null_mut();
-    }
 }
 
 // Similar to Cow; however does not provide ability to clone
@@ -170,7 +166,6 @@ pub(crate) trait OwnedPtr {
     type Ptr;
 
     fn as_ptr(&self) -> Self::Ptr;
-    unsafe fn transfer_ownership_to_llvm(self);
 }
 
 macro_rules! impl_owned_ptr {
@@ -184,10 +179,6 @@ macro_rules! impl_owned_ptr {
             #[inline]
             fn as_ptr(&self) -> Self::Ptr {
                 self.0
-            }
-
-            unsafe fn transfer_ownership_to_llvm(mut self) {
-                self.0 = std::ptr::null_mut();
             }
         }
 
@@ -221,16 +212,6 @@ where
         OwnedOrBorrowedPtr::Borrowed(ptr, PhantomData)
     }
 
-    pub(crate) unsafe fn transfer_ownership_to_llvm(self) -> <T as OwnedPtr>::Ptr {
-        match self {
-            OwnedOrBorrowedPtr::Owned(o) => {
-                let ptr = o.as_ptr();
-                o.transfer_ownership_to_llvm();
-                ptr
-            }
-            OwnedOrBorrowedPtr::Borrowed(b, _) => b,
-        }
-    }
     pub(crate) fn as_ptr(&self) -> <T as OwnedPtr>::Ptr {
         match self {
             OwnedOrBorrowedPtr::Owned(o) => o.as_ptr(),

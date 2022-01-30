@@ -1,6 +1,13 @@
 pub mod lljit;
 
-use std::{cell::RefCell, ffi::CStr, fmt::Debug, ops::Deref, ptr};
+use std::{
+    ffi::CStr,
+    fmt::Debug,
+    marker::PhantomData,
+    mem::{forget, transmute},
+    ops::Deref,
+    ptr,
+};
 
 #[llvm_versions(12.0..=latest)]
 use llvm_sys::orc2::{
@@ -36,8 +43,6 @@ use crate::{
     support::{to_c_str, LLVMString, OwnedOrBorrowedPtr},
     targets::TargetMachine,
 };
-
-use self::lljit::LLJIT;
 
 /// The thread safe variant of [`Context`] used in this module.
 #[derive(Debug)]
@@ -113,7 +118,6 @@ impl Drop for ThreadSafeContext {
 pub struct ThreadSafeModule<'ctx> {
     thread_safe_module: LLVMOrcThreadSafeModuleRef,
     module: Module<'ctx>,
-    owned_by_lljit: RefCell<Option<LLJIT>>,
 }
 
 impl<'ctx> ThreadSafeModule<'ctx> {
@@ -122,16 +126,13 @@ impl<'ctx> ThreadSafeModule<'ctx> {
         ThreadSafeModule {
             thread_safe_module,
             module,
-            owned_by_lljit: RefCell::new(None),
         }
     }
 }
 impl<'ctx> Drop for ThreadSafeModule<'ctx> {
     fn drop(&mut self) {
-        if self.owned_by_lljit.borrow().is_none() {
-            unsafe {
-                LLVMOrcDisposeThreadSafeModule(self.thread_safe_module);
-            }
+        unsafe {
+            LLVMOrcDisposeThreadSafeModule(self.thread_safe_module);
         }
         self.module.module.set(ptr::null_mut()); // module is already disposed
     }
@@ -148,12 +149,6 @@ impl JITTargetMachineBuilder {
         JITTargetMachineBuilder { builder }
     }
 
-    unsafe fn transfer_ownership_to_llvm(mut self) -> LLVMOrcJITTargetMachineBuilderRef {
-        let builder = self.builder;
-        self.builder = ptr::null_mut();
-        builder
-    }
-
     pub fn detect_host() -> Result<Self, LLVMError> {
         let mut builder = ptr::null_mut();
         unsafe {
@@ -164,11 +159,13 @@ impl JITTargetMachineBuilder {
 
     #[llvm_versions(12.0..=latest)]
     pub fn create_from_target_machine(target_machine: TargetMachine) -> Self {
-        unsafe {
+        let jit_target_machine_builder = unsafe {
             JITTargetMachineBuilder::new(LLVMOrcJITTargetMachineBuilderCreateFromTargetMachine(
-                target_machine.transfer_ownership_to_llvm(),
+                target_machine.target_machine,
             ))
-        }
+        };
+        forget(target_machine);
+        jit_target_machine_builder
     }
 
     #[llvm_versions(13.0..=latest)]
@@ -197,17 +194,17 @@ impl Drop for JITTargetMachineBuilder {
 
 /// Represents a dynamic library in the execution engine.
 #[derive(Debug)]
-pub struct JITDylib {
+pub struct JITDylib<'jit> {
     jit_dylib: LLVMOrcJITDylibRef,
-    owned_by_es: ExecutionSession,
+    _marker: PhantomData<&'jit ()>,
 }
 
-impl JITDylib {
-    unsafe fn new(jit_dylib: LLVMOrcJITDylibRef, owned_by_es: ExecutionSession) -> Self {
+impl<'jit> JITDylib<'jit> {
+    unsafe fn new(jit_dylib: LLVMOrcJITDylibRef, owned_by_es: ExecutionSession<'jit>) -> Self {
         assert!(!jit_dylib.is_null());
         JITDylib {
             jit_dylib,
-            owned_by_es,
+            _marker: PhantomData,
         }
     }
 
@@ -224,7 +221,6 @@ impl JITDylib {
         unsafe {
             ResourceTracker::new(
                 LLVMOrcJITDylibGetDefaultResourceTracker(self.jit_dylib),
-                self.owned_by_es.clone(),
                 true,
             )
         }
@@ -239,14 +235,8 @@ impl JITDylib {
     /// let rt = main_jd.create_resource_tracker();
     /// ```
     #[llvm_versions(12.0..=latest)]
-    pub fn create_resource_tracker(&self) -> ResourceTracker {
-        unsafe {
-            ResourceTracker::new(
-                LLVMOrcJITDylibCreateResourceTracker(self.jit_dylib),
-                self.owned_by_es.clone(),
-                false,
-            )
-        }
+    pub fn create_resource_tracker(&self) -> ResourceTracker<'jit> {
+        unsafe { ResourceTracker::new(LLVMOrcJITDylibCreateResourceTracker(self.jit_dylib), false) }
     }
 
     pub fn define() {
@@ -267,31 +257,21 @@ impl JITDylib {
 /// Look at [`JITDylib`] for further information.
 #[llvm_versions(12.0..=latest)]
 #[derive(Debug)]
-pub struct ResourceTracker {
+pub struct ResourceTracker<'jit> {
     rt: LLVMOrcResourceTrackerRef,
-    _owned_by_es: ExecutionSession,
     default: bool,
+    _marker: PhantomData<&'jit ()>,
 }
 
 #[llvm_versions(12.0..=latest)]
-impl ResourceTracker {
-    unsafe fn new(
-        rt: LLVMOrcResourceTrackerRef,
-        owned_by_es: ExecutionSession,
-        default: bool,
-    ) -> Self {
+impl<'jit> ResourceTracker<'jit> {
+    unsafe fn new(rt: LLVMOrcResourceTrackerRef, default: bool) -> Self {
         assert!(!rt.is_null());
         ResourceTracker {
             rt,
-            _owned_by_es: owned_by_es,
             default,
+            _marker: PhantomData,
         }
-    }
-
-    unsafe fn transfer_ownership_to_llvm(mut self) -> LLVMOrcResourceTrackerRef {
-        let rt = self.rt;
-        self.rt = ptr::null_mut();
-        rt
     }
 
     pub fn transfer_to(&self, destination: &ResourceTracker) {
@@ -301,12 +281,12 @@ impl ResourceTracker {
     }
 
     pub fn remove(self) -> Result<(), LLVMError> {
-        LLVMError::new(unsafe { LLVMOrcResourceTrackerRemove(self.transfer_ownership_to_llvm()) })
+        LLVMError::new(unsafe { LLVMOrcResourceTrackerRemove(self.rt) })
     }
 }
 
 #[llvm_versions(12.0..=latest)]
-impl Drop for ResourceTracker {
+impl Drop for ResourceTracker<'_> {
     fn drop(&mut self) {
         if !self.default && !self.rt.is_null() {
             unsafe {
@@ -317,20 +297,17 @@ impl Drop for ResourceTracker {
 }
 
 #[derive(Debug, Clone)]
-pub struct ExecutionSession {
+pub struct ExecutionSession<'jit> {
     execution_session: LLVMOrcExecutionSessionRef,
-    _owned_by_lljit: Option<LLJIT>,
+    _marker: PhantomData<&'jit ()>,
 }
 
-impl ExecutionSession {
-    unsafe fn new_borrowed(
-        execution_session: LLVMOrcExecutionSessionRef,
-        owned_by_lljit: Option<LLJIT>,
-    ) -> Self {
+impl<'jit> ExecutionSession<'jit> {
+    unsafe fn new_borrowed(execution_session: LLVMOrcExecutionSessionRef) -> Self {
         assert!(!execution_session.is_null());
         ExecutionSession {
             execution_session,
-            _owned_by_lljit: owned_by_lljit,
+            _marker: PhantomData,
         }
     }
 
@@ -416,12 +393,12 @@ impl_owned_ptr!(
 
 #[llvm_versions(12.0..=latest)]
 #[derive(Debug)]
-pub struct ObjectLayer<'a> {
-    object_layer: OwnedOrBorrowedPtr<'a, ObjectLayerRef>,
+pub struct ObjectLayer<'jit> {
+    object_layer: OwnedOrBorrowedPtr<'jit, ObjectLayerRef>,
 }
 
 #[llvm_versions(12.0..=latest)]
-impl ObjectLayer<'_> {
+impl<'jit> ObjectLayer<'jit> {
     unsafe fn new_borrowed(object_layer: LLVMOrcObjectLayerRef) -> Self {
         assert!(!object_layer.is_null());
         ObjectLayer {
@@ -435,23 +412,21 @@ impl ObjectLayer<'_> {
         }
     }
 
-    unsafe fn transfer_ownership_to_llvm(self) -> LLVMOrcObjectLayerRef {
-        self.object_layer.transfer_ownership_to_llvm()
-    }
-
     #[llvm_versions(13.0..=latest)]
     pub fn add_object_file(
         &self,
         jit_dylib: &JITDylib,
         object_buffer: MemoryBuffer,
     ) -> Result<(), LLVMError> {
-        unsafe {
-            LLVMError::new(LLVMOrcObjectLayerAddObjectFile(
+        let result = LLVMError::new(unsafe {
+            LLVMOrcObjectLayerAddObjectFile(
                 self.object_layer.as_ptr(),
                 jit_dylib.jit_dylib,
-                object_buffer.transfer_ownership_to_llvm(),
-            ))
-        }
+                object_buffer.memory_buffer,
+            )
+        });
+        forget(object_buffer);
+        result
     }
 
     // #[llvm_versions(14.0..=latest)]
@@ -460,13 +435,15 @@ impl ObjectLayer<'_> {
     //     rt: &ResourceTracker,
     //     object_buffer: MemoryBuffer,
     // ) -> Result<(), LLVMError> {
-    //     unsafe {
-    //         LLVMError::new(LLVMOrcObjectLayerAddObjectFileWithRT(
+    //     let result = LLVMError::new(unsafe {
+    //         LLVMOrcObjectLayerAddObjectFileWithRT(
     //             self.object_layer.as_ptr(),
     //             rt.rt,
-    //             object_buffer.transfer_ownership_to_llvm(),
-    //         ))
-    //     }
+    //             object_buffer.memory_buffer,
+    //         )
+    //     });
+    //     forget(object_buffer);
+    //     result
     // }
 
     pub fn emit() {
@@ -475,21 +452,21 @@ impl ObjectLayer<'_> {
 }
 
 #[llvm_versions(12.0..=latest)]
-impl<'a> From<RTDyldObjectLinkingLayer<'a>> for ObjectLayer<'a> {
-    fn from(rt_dyld_object_linking_layer: RTDyldObjectLinkingLayer<'a>) -> Self {
+impl<'jit> From<RTDyldObjectLinkingLayer<'jit>> for ObjectLayer<'jit> {
+    fn from(rt_dyld_object_linking_layer: RTDyldObjectLinkingLayer<'jit>) -> Self {
         rt_dyld_object_linking_layer.object_layer
     }
 }
 
 #[llvm_versions(12.0..=latest)]
 #[derive(Debug)]
-pub struct RTDyldObjectLinkingLayer<'a> {
-    object_layer: ObjectLayer<'a>,
+pub struct RTDyldObjectLinkingLayer<'jit> {
+    object_layer: ObjectLayer<'jit>,
 }
 
 #[llvm_versions(12.0..=latest)]
-impl<'a> Deref for RTDyldObjectLinkingLayer<'a> {
-    type Target = ObjectLayer<'a>;
+impl<'jit> Deref for RTDyldObjectLinkingLayer<'jit> {
+    type Target = ObjectLayer<'jit>;
 
     fn deref(&self) -> &Self::Target {
         &self.object_layer
@@ -498,16 +475,18 @@ impl<'a> Deref for RTDyldObjectLinkingLayer<'a> {
 
 #[llvm_versions(13.0..=latest)]
 #[derive(Debug)]
-pub struct ObjectTransformLayer {
+pub struct ObjectTransformLayer<'jit> {
     object_transform_layer: LLVMOrcObjectTransformLayerRef,
+    _marker: PhantomData<&'jit ()>,
 }
 
 #[llvm_versions(13.0..=latest)]
-impl ObjectTransformLayer {
+impl<'jit> ObjectTransformLayer<'jit> {
     unsafe fn new_borrowed(object_transform_layer: LLVMOrcObjectTransformLayerRef) -> Self {
         assert!(!object_transform_layer.is_null());
         ObjectTransformLayer {
             object_transform_layer,
+            _marker: PhantomData,
         }
     }
     pub fn set_transform() {
@@ -517,15 +496,19 @@ impl ObjectTransformLayer {
 
 #[llvm_versions(13.0..=latest)]
 #[derive(Debug)]
-pub struct IRTransformLayer {
+pub struct IRTransformLayer<'jit> {
     ir_transform_layer: LLVMOrcIRTransformLayerRef,
+    _marker: PhantomData<&'jit ()>,
 }
 
 #[llvm_versions(13.0..=latest)]
-impl IRTransformLayer {
+impl<'jit> IRTransformLayer<'jit> {
     unsafe fn new_borrowed(ir_transform_layer: LLVMOrcIRTransformLayerRef) -> Self {
         assert!(!ir_transform_layer.is_null());
-        IRTransformLayer { ir_transform_layer }
+        IRTransformLayer {
+            ir_transform_layer,
+            _marker: PhantomData,
+        }
     }
 
     pub fn emit() {

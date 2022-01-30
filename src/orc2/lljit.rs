@@ -1,9 +1,8 @@
 use std::{
     ffi::CStr,
-    fmt::{self, Debug, Formatter},
-    mem::{transmute, transmute_copy},
+    marker::PhantomData,
+    mem::{forget, transmute, transmute_copy},
     ptr,
-    rc::Rc,
 };
 
 use either::Either;
@@ -54,16 +53,14 @@ use super::{ObjectLayer, ResourceTracker};
 
 /// Represents a reference to an LLVM `LLJIT` execution engine.
 #[derive(Debug, Clone)]
-pub struct LLJIT {
-    inner: Rc<LLJITInner>,
+pub struct LLJIT<'jit_builder> {
+    pub(crate) lljit: LLVMOrcLLJITRef,
+    _marker: PhantomData<&'jit_builder ()>,
 }
 
-impl LLJIT {
+impl<'jit_builder> LLJIT<'jit_builder> {
     unsafe fn create_with_builder(
         builder: LLVMOrcLLJITBuilderRef,
-        #[cfg(not(feature = "llvm11-0"))] object_linking_layer_creator: Option<
-            Box<Box<dyn ObjectLinkingLayerCreator>>,
-        >,
     ) -> Result<Self, Either<LLVMError, String>> {
         Target::initialize_native(&InitializationConfig::default())
             .map_err(|e| Either::Right(e))?;
@@ -73,11 +70,8 @@ impl LLJIT {
         LLVMError::new(error).map_err(|e| Either::Left(e))?;
         assert!(!lljit.is_null());
         Ok(LLJIT {
-            inner: Rc::new(LLJITInner {
-                lljit,
-                #[cfg(not(feature = "llvm11-0"))]
-                object_linking_layer_creator,
-            }),
+            lljit,
+            _marker: PhantomData,
         })
     }
 
@@ -87,14 +81,8 @@ impl LLJIT {
     ///
     /// let lljit = LLJIT::create().expect("LLJIT::create failed");
     /// ```
-    pub fn create() -> Result<Self, Either<LLVMError, String>> {
-        unsafe {
-            LLJIT::create_with_builder(
-                ptr::null_mut(),
-                #[cfg(not(feature = "llvm11-0"))]
-                None,
-            )
-        }
+    pub fn create() -> Result<LLJIT<'static>, Either<LLVMError, String>> {
+        unsafe { LLJIT::create_with_builder(ptr::null_mut()) }
     }
 
     /// Returns the main [`JITDylib`].
@@ -104,10 +92,10 @@ impl LLJIT {
     /// let lljit = LLJIT::create().expect("LLJIT::create failed");
     /// let main_jd = lljit.get_main_jit_dylib();
     /// ```
-    pub fn get_main_jit_dylib(&self) -> JITDylib {
+    pub fn get_main_jit_dylib<'jit>(&'jit self) -> JITDylib<'jit> {
         unsafe {
             JITDylib::new(
-                LLVMOrcLLJITGetMainJITDylib(self.inner.lljit),
+                LLVMOrcLLJITGetMainJITDylib(self.lljit),
                 self.get_execution_session(),
             )
         }
@@ -133,16 +121,11 @@ impl LLJIT {
         jit_dylib: &JITDylib,
         module: ThreadSafeModule<'ctx>,
     ) -> Result<(), LLVMError> {
-        let error = unsafe {
-            LLVMOrcLLJITAddLLVMIRModule(
-                self.inner.lljit,
-                jit_dylib.jit_dylib,
-                module.thread_safe_module,
-            )
-        };
-        // module.owned_by_lljit should be None at this point.
-        *module.owned_by_lljit.borrow_mut() = Some(self.clone());
-        LLVMError::new(error)
+        let result = LLVMError::new(unsafe {
+            LLVMOrcLLJITAddLLVMIRModule(self.lljit, jit_dylib.jit_dylib, module.thread_safe_module)
+        });
+        forget(module);
+        result
     }
 
     /// Adds `module` to `rt`'s JITDylib in the execution engine.
@@ -167,16 +150,11 @@ impl LLJIT {
         rt: &ResourceTracker,
         module: ThreadSafeModule<'ctx>,
     ) -> Result<(), LLVMError> {
-        let error = unsafe {
-            LLVMOrcLLJITAddLLVMIRModuleWithRT(self.inner.lljit, rt.rt, module.thread_safe_module)
-        };
-        if module.owned_by_lljit.borrow().is_some() {
-            return Err(LLVMError::new_string_error(
-                "module does already belong to an lljit instance",
-            ));
-        }
-        *module.owned_by_lljit.borrow_mut() = Some(self.clone());
-        LLVMError::new(error)
+        let result = LLVMError::new(unsafe {
+            LLVMOrcLLJITAddLLVMIRModuleWithRT(self.lljit, rt.rt, module.thread_safe_module)
+        });
+        forget(module);
+        result
     }
 
     /// Adds `object_buffer` to `jit_dylib` in the execution engine.
@@ -226,13 +204,11 @@ impl LLJIT {
         jit_dylib: &JITDylib,
         object_buffer: MemoryBuffer,
     ) -> Result<(), LLVMError> {
-        unsafe {
-            LLVMError::new(LLVMOrcLLJITAddObjectFile(
-                self.inner.lljit,
-                jit_dylib.jit_dylib,
-                object_buffer.transfer_ownership_to_llvm(),
-            ))
-        }
+        let result = LLVMError::new(unsafe {
+            LLVMOrcLLJITAddObjectFile(self.lljit, jit_dylib.jit_dylib, object_buffer.memory_buffer)
+        });
+        forget(object_buffer);
+        result
     }
 
     /// Adds `object_buffer` to `rt`'s JITDylib in the execution engine.
@@ -283,13 +259,11 @@ impl LLJIT {
         rt: &ResourceTracker,
         object_buffer: MemoryBuffer,
     ) -> Result<(), LLVMError> {
-        unsafe {
-            LLVMError::new(LLVMOrcLLJITAddObjectFileWithRT(
-                self.inner.lljit,
-                rt.rt,
-                object_buffer.transfer_ownership_to_llvm(),
-            ))
-        }
+        let result = LLVMError::new(unsafe {
+            LLVMOrcLLJITAddObjectFileWithRT(self.lljit, rt.rt, object_buffer.memory_buffer)
+        });
+        forget(object_buffer);
+        result
     }
 
     /// Attempts to lookup a function by `name` in the execution engine.
@@ -300,11 +274,7 @@ impl LLJIT {
     pub fn get_function_address(&self, name: &str) -> Result<u64, LLVMError> {
         let mut function_address = 0;
         let error = unsafe {
-            LLVMOrcLLJITLookup(
-                self.inner.lljit,
-                &mut function_address,
-                to_c_str(name).as_ptr(),
-            )
+            LLVMOrcLLJITLookup(self.lljit, &mut function_address, to_c_str(name).as_ptr())
         };
         LLVMError::new(error)?;
         Ok(function_address)
@@ -364,13 +334,16 @@ impl LLJIT {
     /// The [`Function`] wrapper ensures a function won't accidentally outlive the
     /// execution engine it came from, but adding functions or removing resource trackers
     /// after calling this method *may* invalidate the function pointer.
-    pub unsafe fn get_function<F>(&self, name: &str) -> Result<Function<F>, LLVMError>
+    pub unsafe fn get_function<'jit, F>(
+        &'jit self,
+        name: &str,
+    ) -> Result<Function<'jit, F>, LLVMError>
     where
         F: UnsafeFunctionPointer,
     {
         Ok(Function {
             func: transmute_copy(&self.get_function_address(name)?),
-            _owned_by_lljit: self.clone(),
+            _marker: PhantomData,
         })
     }
 
@@ -381,13 +354,8 @@ impl LLJIT {
     /// let lljit = LLJIT::create().expect("LLJIT::create failed");
     /// let execution_session = lljit.get_execution_session();
     /// ```
-    pub fn get_execution_session(&self) -> ExecutionSession {
-        unsafe {
-            ExecutionSession::new_borrowed(
-                LLVMOrcLLJITGetExecutionSession(self.inner.lljit),
-                Some(self.clone()),
-            )
-        }
+    pub fn get_execution_session<'jit>(&'jit self) -> ExecutionSession<'jit> {
+        unsafe { ExecutionSession::new_borrowed(LLVMOrcLLJITGetExecutionSession(self.lljit)) }
     }
 
     ///
@@ -400,7 +368,7 @@ impl LLJIT {
     /// ```
     pub fn get_triple<'jit>(&'jit self) -> TargetTriple<'jit> {
         TargetTriple::new(unsafe {
-            LLVMStringOrRaw::borrowed(LLVMOrcLLJITGetTripleString(self.inner.lljit))
+            LLVMStringOrRaw::borrowed(LLVMOrcLLJITGetTripleString(self.lljit))
         })
     }
 
@@ -416,7 +384,7 @@ impl LLJIT {
     /// ```
     /// This example works on Linux. Other systems *may* have different global prefixes.
     pub fn get_global_prefix(&self) -> char {
-        (unsafe { LLVMOrcLLJITGetGlobalPrefix(self.inner.lljit) } as u8 as char)
+        (unsafe { LLVMOrcLLJITGetGlobalPrefix(self.lljit) } as u8 as char)
     }
 
     /// Mangles `unmangled_name` according to LLJIT's [`DataLayout`] and
@@ -436,7 +404,7 @@ impl LLJIT {
     pub fn mangle_and_intern(&self, unmangled_name: &str) -> SymbolStringPoolEntry {
         unsafe {
             SymbolStringPoolEntry::new(LLVMOrcLLJITMangleAndIntern(
-                self.inner.lljit,
+                self.lljit,
                 to_c_str(unmangled_name).as_ptr(),
             ))
         }
@@ -450,8 +418,8 @@ impl LLJIT {
     /// let object_layer = lljit.get_object_linking_layer();
     /// ```
     #[llvm_versions(13.0..=latest)]
-    pub fn get_object_linking_layer(&self) -> ObjectLayer {
-        unsafe { ObjectLayer::new_borrowed(LLVMOrcLLJITGetObjLinkingLayer(self.inner.lljit)) }
+    pub fn get_object_linking_layer<'jit>(&'jit self) -> ObjectLayer<'jit> {
+        unsafe { ObjectLayer::new_borrowed(LLVMOrcLLJITGetObjLinkingLayer(self.lljit)) }
     }
 
     /// Returns the [`ObjectTransformLayer`].
@@ -462,10 +430,8 @@ impl LLJIT {
     /// let object_transform_layer = lljit.get_object_transform_layer();
     /// ```
     #[llvm_versions(13.0..=latest)]
-    pub fn get_object_transform_layer(&self) -> ObjectTransformLayer {
-        unsafe {
-            ObjectTransformLayer::new_borrowed(LLVMOrcLLJITGetObjTransformLayer(self.inner.lljit))
-        }
+    pub fn get_object_transform_layer<'jit>(&'jit self) -> ObjectTransformLayer<'jit> {
+        unsafe { ObjectTransformLayer::new_borrowed(LLVMOrcLLJITGetObjTransformLayer(self.lljit)) }
     }
 
     /// Returns the [`IRTransformLayer`].
@@ -476,8 +442,8 @@ impl LLJIT {
     /// let ir_transform_layer = lljit.get_ir_transform_layer();
     /// ```
     #[llvm_versions(13.0..=latest)]
-    pub fn get_ir_transform_layer(&self) -> IRTransformLayer {
-        unsafe { IRTransformLayer::new_borrowed(LLVMOrcLLJITGetIRTransformLayer(self.inner.lljit)) }
+    pub fn get_ir_transform_layer<'jit>(&'jit self) -> IRTransformLayer<'jit> {
+        unsafe { IRTransformLayer::new_borrowed(LLVMOrcLLJITGetIRTransformLayer(self.lljit)) }
     }
 
     ///
@@ -512,35 +478,10 @@ impl LLJIT {
     /// ```
     #[llvm_versions(13.0..=latest)]
     pub fn get_data_layout<'jit>(&'jit self) -> DataLayout<'jit> {
-        unsafe { DataLayout::new_borrowed(LLVMOrcLLJITGetDataLayoutStr(self.inner.lljit)) }
+        unsafe { DataLayout::new_borrowed(LLVMOrcLLJITGetDataLayoutStr(self.lljit)) }
     }
 }
-
-#[llvm_versioned_item]
-struct LLJITInner {
-    lljit: LLVMOrcLLJITRef,
-    #[llvm_versions(12.0..=latest)]
-    object_linking_layer_creator: Option<Box<Box<dyn ObjectLinkingLayerCreator>>>,
-}
-impl Debug for LLJITInner {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        #[cfg(not(feature = "llvm11-0"))]
-        return f
-            .debug_struct("LLJITInner")
-            .field("lljit", &self.lljit)
-            .field(
-                "object_linking_layer_creator",
-                &self.object_linking_layer_creator.as_ref().map(|_| ()),
-            )
-            .finish();
-        #[cfg(feature = "llvm11-0")]
-        return f
-            .debug_struct("LLJITInner")
-            .field("lljit", &self.lljit)
-            .finish();
-    }
-}
-impl Drop for LLJITInner {
+impl Drop for LLJIT<'_> {
     fn drop(&mut self) {
         unsafe {
             LLVMOrcDisposeLLJIT(self.lljit);
@@ -550,19 +491,18 @@ impl Drop for LLJITInner {
 
 /// An `LLJITBuilder` is used to create custom [`LLJIT`] instances.
 #[llvm_versioned_item]
-pub struct LLJITBuilder {
+#[derive(Debug)]
+pub struct LLJITBuilder<'jit_builder> {
     builder: LLJITBuilderRef,
-    #[llvm_versions(12.0..=latest)]
-    object_linking_layer_creator: Option<Box<Box<dyn ObjectLinkingLayerCreator>>>,
+    _marker: PhantomData<&'jit_builder ()>,
 }
 
-impl LLJITBuilder {
+impl<'jit_builder> LLJITBuilder<'jit_builder> {
     unsafe fn new(builder: LLVMOrcLLJITBuilderRef) -> Self {
         assert!(!builder.is_null());
         LLJITBuilder {
             builder: LLJITBuilderRef(builder),
-            #[cfg(not(feature = "llvm11-0"))]
-            object_linking_layer_creator: None,
+            _marker: PhantomData,
         }
     }
 
@@ -583,16 +523,12 @@ impl LLJITBuilder {
     /// let lljit_builder = LLJITBuilder::create();
     /// let lljit = lljit_builder.build().expect("LLJITBuilder::build failed");
     /// ```
-    pub fn build(self) -> Result<LLJIT, Either<LLVMError, String>> {
+    pub fn build(self) -> Result<LLJIT<'jit_builder>, Either<LLVMError, String>> {
         unsafe {
-            match LLJIT::create_with_builder(
-                self.builder.as_ptr(),
-                #[cfg(not(feature = "llvm11-0"))]
-                self.object_linking_layer_creator,
-            ) {
+            match LLJIT::create_with_builder(self.builder.as_ptr()) {
                 e @ Err(Either::Right(_)) => e,
                 res => {
-                    self.builder.transfer_ownership_to_llvm();
+                    forget(self.builder);
                     res
                 }
             }
@@ -619,9 +555,10 @@ impl LLJITBuilder {
         unsafe {
             LLVMOrcLLJITBuilderSetJITTargetMachineBuilder(
                 self.builder.as_ptr(),
-                jit_target_machine_builder.transfer_ownership_to_llvm(),
+                jit_target_machine_builder.builder,
             );
         }
+        forget(jit_target_machine_builder);
         self
     }
 
@@ -643,44 +580,23 @@ impl LLJITBuilder {
     ///     });
     ///
     /// let lljit = LLJITBuilder::create()
-    ///     .set_object_linking_layer_creator(object_linking_layer_creator)
+    ///     .set_object_linking_layer_creator(&object_linking_layer_creator)
     ///     .build()
     ///     .expect("LLJITBuilder::build failed");
     /// ```
     #[llvm_versions(12.0..=latest)]
     pub fn set_object_linking_layer_creator(
-        mut self,
-        object_linking_layer_creator: Box<dyn ObjectLinkingLayerCreator>,
+        self,
+        object_linking_layer_creator: &'jit_builder Box<dyn ObjectLinkingLayerCreator + 'jit_builder>,
     ) -> Self {
-        let object_linking_layer_creator = Box::new(object_linking_layer_creator);
         unsafe {
             LLVMOrcLLJITBuilderSetObjectLinkingLayerCreator(
                 self.builder.as_ptr(),
                 object_linking_layer_creator_function,
-                transmute(object_linking_layer_creator.as_ref()),
+                transmute(object_linking_layer_creator),
             );
         }
-        self.object_linking_layer_creator = Some(object_linking_layer_creator);
         self
-    }
-}
-
-impl Debug for LLJITBuilder {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        #[cfg(not(feature = "llvm11-0"))]
-        return f
-            .debug_struct("LLJITBuilder")
-            .field("builder", &self.builder)
-            .field(
-                "object_linking_layer_creator",
-                &self.object_linking_layer_creator.as_ref().map(|_| ()),
-            )
-            .finish();
-        #[cfg(feature = "llvm11-0")]
-        return f
-            .debug_struct("LLJITBuilder")
-            .field("builder", &self.builder)
-            .finish();
     }
 }
 
@@ -700,10 +616,12 @@ extern "C" fn object_linking_layer_creator_function(
     unsafe {
         let object_linking_layer_creator: &mut Box<dyn ObjectLinkingLayerCreator> = transmute(ctx);
         let object_layer = object_linking_layer_creator.create_object_linking_layer(
-            ExecutionSession::new_borrowed(execution_session, None),
+            ExecutionSession::new_borrowed(execution_session),
             CStr::from_ptr(triple),
         );
-        object_layer.transfer_ownership_to_llvm()
+        let object_layer_ref = object_layer.object_layer.as_ptr();
+        forget(object_layer);
+        object_layer_ref
     }
 }
 
@@ -737,7 +655,7 @@ pub trait ObjectLinkingLayerCreator {
     /// let object_linking_layer_creator: Box<dyn ObjectLinkingLayerCreator> =
     ///     Box::new(SimpleObjectLinkingLayerCreator {});
     /// let lljit = LLJITBuilder::create()
-    ///     .set_object_linking_layer_creator(object_linking_layer_creator)
+    ///     .set_object_linking_layer_creator(&object_linking_layer_creator)
     ///     .build()
     ///     .expect("LLJITBuilder::build failed");
     /// ```
@@ -765,9 +683,9 @@ where
 /// A wrapper around a function pointer which ensures the function being pointed
 /// to doesn't accidentally outlive its execution engine.
 #[derive(Debug)]
-pub struct Function<F> {
+pub struct Function<'jit, F> {
     func: F,
-    _owned_by_lljit: LLJIT,
+    _marker: PhantomData<&'jit ()>,
 }
 
 /// Marker trait representing an unsafe function pointer (`unsafe extern "C" fn(A, B, ...) -> Output`).
@@ -793,7 +711,7 @@ macro_rules! impl_unsafe_fn {
     ($( $param:ident ),*) => {
         impl<Output, $( $param ),*> private::SealedUnsafeFunctionPointer for unsafe extern "C" fn($( $param ),*) -> Output {}
 
-        impl<'ctx, Output, $( $param ),*> Function<unsafe extern "C" fn($( $param ),*) -> Output> {
+        impl<'jit, Output, $( $param ),*> Function<'jit, unsafe extern "C" fn($( $param ),*) -> Output> {
             /// This method allows you to call the underlying function while making
             /// sure that the backing storage is not dropped too early and
             /// preserves the `unsafe` marker for any calls.

@@ -33,7 +33,6 @@ fn test_drop_lljit_before_function_use() {
         let function = lljit
             .get_function::<unsafe extern "C" fn() -> u64>("main")
             .expect("LLJIT::get_function failed");
-        drop(lljit);
         assert_eq!(function.call(), 64);
     }
 }
@@ -57,7 +56,6 @@ fn test_lljit_add_module_with_rt_default() {
         let function = lljit
             .get_function::<unsafe extern "C" fn() -> u64>("main")
             .expect("LLJIT::get_function failed");
-        drop(lljit);
         assert_eq!(function.call(), 64);
     }
 }
@@ -88,8 +86,6 @@ fn test_multiple_lljit_instances_single_context() {
         let function_2 = lljit_2
             .get_function::<unsafe extern "C" fn() -> u64>("main_2")
             .expect("LLJIT::get_function failed");
-        drop(lljit_1);
-        drop(lljit_2);
         assert_eq!(function_1.call(), 64);
         assert_eq!(function_2.call(), 42);
     }
@@ -120,7 +116,6 @@ fn test_lljit_multiple_contexts() {
         let function_2 = lljit
             .get_function::<unsafe extern "C" fn() -> u64>("main_2")
             .expect("LLJIT::get_function failed");
-        drop(lljit);
         assert_eq!(function_1.call(), 64);
         assert_eq!(function_2.call(), 42);
     }
@@ -173,7 +168,6 @@ fn test_lljit_add_object_file() {
         let function = lljit
             .get_function::<unsafe extern "C" fn() -> u64>("main")
             .expect("LLJIT::get_function failed");
-        drop(lljit);
         assert_eq!(function.call(), 64);
     }
 }
@@ -195,7 +189,6 @@ fn test_lljit_add_object_file_with_rt() {
         let function = lljit
             .get_function::<unsafe extern "C" fn() -> u64>("main")
             .expect("LLJIT::get_function failed");
-        drop(lljit);
         assert_eq!(function.call(), 64);
     }
 }
@@ -283,9 +276,10 @@ fn test_lljit_builder_set_invalid_jit_target_machine() {
 fn test_lljit_builder_set_object_linking_layer_creator() {
     let object_linking_layer_creator: Box<dyn ObjectLinkingLayerCreator> =
         Box::new(SimpleObjectLinkingLayerCreator {});
-    let lljit =
-        LLJITBuilder::create().set_object_linking_layer_creator(object_linking_layer_creator);
-    let lljit = lljit.build().expect("LLJITBuilder::build failed");
+    let lljit = LLJITBuilder::create()
+        .set_object_linking_layer_creator(&object_linking_layer_creator)
+        .build()
+        .expect("LLJITBuilder::build failed");
     test_basic_lljit_functionality(lljit);
 }
 
@@ -351,7 +345,6 @@ fn test_basic_lljit_functionality(lljit: LLJIT) {
         let function = lljit
             .get_function::<unsafe extern "C" fn() -> u64>("main")
             .expect("LLJIT::get_function failed");
-        drop(lljit);
         assert_eq!(function.call(), 64);
     }
 }
