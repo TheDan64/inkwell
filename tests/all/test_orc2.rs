@@ -5,11 +5,13 @@ use inkwell::orc2::{lljit::ObjectLinkingLayerCreator, ObjectLayer};
 use inkwell::{
     builder::Builder,
     context::Context,
-    memory_buffer::MemoryBuffer,
+    error::LLVMError,
+    memory_buffer::{MemoryBuffer, MemoryBufferRef},
     module::{Linkage, Module},
     orc2::{
         lljit::{LLJITBuilder, LLJIT},
-        ExecutionSession, JITTargetMachineBuilder, ThreadSafeContext, ThreadSafeModule,
+        ExecutionSession, JITTargetMachineBuilder, ObjectTransformer, ThreadSafeContext,
+        ThreadSafeModule,
     },
     support::LLVMString,
     targets::{CodeModel, FileType, RelocMode, Target, TargetMachine},
@@ -20,8 +22,7 @@ use inkwell::{
 #[test]
 fn test_drop_lljit_before_function_use() {
     let thread_safe_context = ThreadSafeContext::create();
-    let module =
-        constant_function_module(&thread_safe_context, 64, "main").expect("invalid test module");
+    let module = constant_function_module(&thread_safe_context, 64, "main");
     let lljit = LLJIT::create().expect("LLJIT::create failed");
     let main_jd = lljit.get_main_jit_dylib();
     lljit
@@ -29,20 +30,14 @@ fn test_drop_lljit_before_function_use() {
         .expect("LLJIT::add_module failed");
     drop(thread_safe_context);
     drop(main_jd);
-    unsafe {
-        let function = lljit
-            .get_function::<unsafe extern "C" fn() -> u64>("main")
-            .expect("LLJIT::get_function failed");
-        assert_eq!(function.call(), 64);
-    }
+    test_main_function(&lljit);
 }
 
 #[llvm_versions(12.0..=latest)]
 #[test]
 fn test_lljit_add_module_with_rt_default() {
     let thread_safe_context = ThreadSafeContext::create();
-    let module =
-        constant_function_module(&thread_safe_context, 64, "main").expect("invalid test module");
+    let module = constant_function_module(&thread_safe_context, 64, "main");
     let lljit = LLJIT::create().expect("LLJIT::create failed");
     let main_jd = lljit.get_main_jit_dylib();
     let module_rt = main_jd.create_resource_tracker();
@@ -52,21 +47,14 @@ fn test_lljit_add_module_with_rt_default() {
     drop(thread_safe_context);
     drop(main_jd);
     drop(module_rt);
-    unsafe {
-        let function = lljit
-            .get_function::<unsafe extern "C" fn() -> u64>("main")
-            .expect("LLJIT::get_function failed");
-        assert_eq!(function.call(), 64);
-    }
+    test_main_function(&lljit);
 }
 
 #[test]
 fn test_multiple_lljit_instances_single_context() {
     let thread_safe_context = ThreadSafeContext::create();
-    let module_1 =
-        constant_function_module(&thread_safe_context, 64, "main_1").expect("invalid test module");
-    let module_2 =
-        constant_function_module(&thread_safe_context, 42, "main_2").expect("invalid test module");
+    let module_1 = constant_function_module(&thread_safe_context, 64, "main_1");
+    let module_2 = constant_function_module(&thread_safe_context, 42, "main_2");
     let lljit_1 = LLJIT::create().expect("LLJIT::create failed");
     let lljit_2 = LLJIT::create().expect("LLJIT::create failed");
     let main_jd_1 = lljit_1.get_main_jit_dylib();
@@ -94,16 +82,14 @@ fn test_multiple_lljit_instances_single_context() {
 #[test]
 fn test_lljit_multiple_contexts() {
     let thread_safe_context_1 = ThreadSafeContext::create();
-    let module_1 = constant_function_module(&thread_safe_context_1, 64, "main_1")
-        .expect("invalid test module");
+    let module_1 = constant_function_module(&thread_safe_context_1, 64, "main_1");
     let lljit = LLJIT::create().expect("LLJIT::create failed");
     let main_jd = lljit.get_main_jit_dylib();
     lljit
         .add_module(&main_jd, module_1)
         .expect("LLJIT::add_module failed");
     let thread_safe_context_2 = ThreadSafeContext::create();
-    let module_2 = constant_function_module(&thread_safe_context_2, 42, "main_2")
-        .expect("invalid test module");
+    let module_2 = constant_function_module(&thread_safe_context_2, 42, "main_2");
     lljit
         .add_module(&main_jd, module_2)
         .expect("LLJIT::add_module failed");
@@ -125,8 +111,7 @@ fn test_lljit_multiple_contexts() {
 #[test]
 fn test_lljit_remove_resource_tracker() {
     let thread_safe_context = ThreadSafeContext::create();
-    let module =
-        constant_function_module(&thread_safe_context, 64, "main").expect("invalid test module");
+    let module = constant_function_module(&thread_safe_context, 64, "main");
     let lljit = LLJIT::create().expect("LLJIT::create failed");
     let main_jd = lljit.get_main_jit_dylib();
     let module_rt = main_jd.create_resource_tracker();
@@ -140,8 +125,7 @@ fn test_lljit_remove_resource_tracker() {
         assert_eq!(function.call(), 64);
     }
     module_rt.remove().expect("ResourceTracker::remove failed");
-    let module =
-        constant_function_module(&thread_safe_context, 42, "main").expect("invalid test module");
+    let module = constant_function_module(&thread_safe_context, 42, "main");
     let module_rt = main_jd.create_resource_tracker();
     lljit
         .add_module_with_rt(&module_rt, module)
@@ -158,18 +142,14 @@ fn test_lljit_remove_resource_tracker() {
 fn test_lljit_add_object_file() {
     let context = Context::create();
     let object_file = constant_function_object_file(&context, 64, "main");
+    drop(context);
     let lljit = LLJIT::create().expect("LLJIT::create failed");
     let main_jd = lljit.get_main_jit_dylib();
     lljit
         .add_object_file(&main_jd, object_file)
         .expect("LLJIT::add_object_file failed");
     drop(main_jd);
-    unsafe {
-        let function = lljit
-            .get_function::<unsafe extern "C" fn() -> u64>("main")
-            .expect("LLJIT::get_function failed");
-        assert_eq!(function.call(), 64);
-    }
+    test_main_function(&lljit);
 }
 
 #[llvm_versions(12.0..=latest)]
@@ -177,20 +157,58 @@ fn test_lljit_add_object_file() {
 fn test_lljit_add_object_file_with_rt() {
     let context = Context::create();
     let object_file = constant_function_object_file(&context, 64, "main");
+    drop(context);
     let lljit = LLJIT::create().expect("LLJIT::create failed");
     let main_jd = lljit.get_main_jit_dylib();
     let module_rt = main_jd.create_resource_tracker();
+    drop(main_jd);
     lljit
         .add_object_file_with_rt(&module_rt, object_file)
         .expect("LLJIT::add_object_file_with_rt failed");
-    drop(main_jd);
     drop(module_rt);
-    unsafe {
-        let function = lljit
-            .get_function::<unsafe extern "C" fn() -> u64>("main")
-            .expect("LLJIT::get_function failed");
-        assert_eq!(function.call(), 64);
-    }
+    test_main_function(&lljit);
+}
+
+#[llvm_versions(13.0..=latest)]
+#[test]
+fn test_object_linking_layer_add_object_file() {
+    let lljit = LLJIT::create().expect("LLJIT::create failed");
+    let object_linking_layer = lljit.get_object_linking_layer();
+    let context = Context::create();
+    let object_file = constant_function_object_file(&context, 64, "main");
+    drop(context);
+    let main_jd = lljit.get_main_jit_dylib();
+    object_linking_layer
+        .add_object_file(&main_jd, object_file)
+        .expect("ObjectLayer::add_object_file failed");
+    drop(main_jd);
+    drop(object_linking_layer);
+    test_main_function(&lljit);
+}
+
+// #[llvm_versions(14.0..=latest)]
+// #[test]
+// fn test_object_linking_layer_add_object_file_with_rt() {
+//     let lljit = LLJIT::create().expect("LLJIT::create failed");
+//     let object_linking_layer = lljit.get_object_linking_layer();
+//     let context = Context::create();
+//     let object_file = constant_function_object_file(&context, 64, "main");
+//     drop(context);
+//     let main_jd = lljit.get_main_jit_dylib();
+//     let module_rt = main_jd.create_resource_tracker();
+//     drop(main_jd);
+//     object_linking_layer.add_object_file_with_rt(&module_rt, object_file)
+//         .expect("ObjectLayer::add_object_file_with_rt failed");
+//     drop(object_linking_layer);
+//     drop(module_rt);
+//     test_main_function(&lljit);
+// }
+
+#[cfg(target_os = "linux")]
+#[test]
+fn test_lljit_get_global_prefix() {
+    let lljit = LLJIT::create().expect("LLJIT::create failed");
+    assert_eq!(lljit.get_global_prefix(), '\0');
 }
 
 // TODO: Figure out linking of JITDylibs
@@ -284,6 +302,22 @@ fn test_lljit_builder_set_object_linking_layer_creator() {
 }
 
 #[llvm_versions(12.0..=latest)]
+#[test]
+fn test_lljit_builder_set_object_linking_layer_creator_closure() {
+    let object_linking_layer_creator: Box<dyn ObjectLinkingLayerCreator> =
+        Box::new(|execution_session: ExecutionSession, _triple: &CStr| {
+            execution_session
+                .create_rt_dyld_object_linking_layer_with_section_memory_manager()
+                .into()
+        });
+    let lljit = LLJITBuilder::create()
+        .set_object_linking_layer_creator(object_linking_layer_creator)
+        .build()
+        .expect("LLJITBuilder::build failed");
+    test_basic_lljit_functionality(lljit);
+}
+
+#[llvm_versions(12.0..=latest)]
 #[derive(Debug)]
 struct SimpleObjectLinkingLayerCreator {}
 
@@ -331,16 +365,70 @@ fn test_jit_target_machin_builder_set_target_triple() {
     test_basic_lljit_functionality(lljit);
 }
 
+#[llvm_versions(12.0..=latest)]
+#[test]
+fn test_execution_session_create_rt_dyld_object_linking_layer_with_section_memory_manager() {
+    let lljit = LLJIT::create().expect("LLJIT::create failed");
+    let execution_session = lljit.get_execution_session();
+    // leaks memory
+    execution_session.create_rt_dyld_object_linking_layer_with_section_memory_manager();
+}
+
+#[llvm_versions(13.0..=latest)]
+#[test]
+fn test_object_transform_layer_modify_buffer() {
+    let thread_safe_context = ThreadSafeContext::create();
+    let module = constant_function_module(&thread_safe_context, 42, "main");
+    let object_buffer = constant_function_object_file(thread_safe_context.context(), 64, "main");
+    let lljit = LLJIT::create().expect("LLJIT::create failed");
+    let object_transformer: Box<dyn ObjectTransformer> = Box::new(|mut buffer: MemoryBufferRef| {
+        buffer.set_memory_buffer(MemoryBuffer::create_from_memory_range_copy(
+            object_buffer.as_slice(),
+            "new memory buffer",
+        ));
+        Ok(())
+    });
+    lljit
+        .get_object_transform_layer()
+        .set_transformer(object_transformer);
+    let main_jd = lljit.get_main_jit_dylib();
+    lljit
+        .add_module(&main_jd, module)
+        .expect("LLJIT::add_module failed");
+    test_main_function(&lljit);
+}
+
+#[llvm_versions(13.0..=latest)]
+#[test]
+fn test_object_transform_layer_error() {
+    let thread_safe_context = ThreadSafeContext::create();
+    let module = constant_function_module(&thread_safe_context, 64, "main");
+    let lljit = LLJIT::create().expect("LLJIT::create failed");
+    let object_transformer: Box<dyn ObjectTransformer> =
+        Box::new(|_buffer: MemoryBufferRef| Err(LLVMError::new_string_error("test error")));
+    lljit
+        .get_object_transform_layer()
+        .set_transformer(object_transformer);
+    let main_jd = lljit.get_main_jit_dylib();
+    lljit
+        .add_module(&main_jd, module)
+        .expect("LLJIT::add_module failed");
+    test_main_function(&lljit);
+}
+
 fn test_basic_lljit_functionality(lljit: LLJIT) {
     let thread_safe_context = ThreadSafeContext::create();
-    let module =
-        constant_function_module(&thread_safe_context, 64, "main").expect("invalid test module");
+    let module = constant_function_module(&thread_safe_context, 64, "main");
     let main_jd = lljit.get_main_jit_dylib();
     lljit
         .add_module(&main_jd, module)
         .expect("LLJIT::add_module failed");
     drop(thread_safe_context);
     drop(main_jd);
+    test_main_function(&lljit);
+}
+
+fn test_main_function(lljit: &LLJIT) {
     unsafe {
         let function = lljit
             .get_function::<unsafe extern "C" fn() -> u64>("main")
@@ -425,10 +513,11 @@ fn constant_function_module<'ctx>(
     thread_safe_context: &'ctx ThreadSafeContext,
     value: u64,
     name: &str,
-) -> Result<ThreadSafeModule<'ctx>, LLVMString> {
+) -> ThreadSafeModule<'ctx> {
     ModuleBuilder::new(thread_safe_context, name)
         .add_contstant_function(name, value)
         .build()
+        .expect("invalid test module")
 }
 
 fn constant_function_object_file(context: &Context, value: u64, name: &str) -> MemoryBuffer {
