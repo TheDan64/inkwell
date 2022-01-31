@@ -15,13 +15,12 @@ use llvm_sys::error::{
 };
 
 #[llvm_versions(12.0..=latest)]
-use crate::orc2::lljit;
 use crate::support::to_c_str;
 
 /// An LLVM Error.
 #[derive(Debug)]
 pub struct LLVMError {
-    error: LLVMErrorRef,
+    pub(crate) error: LLVMErrorRef,
     handled: bool,
 }
 
@@ -83,7 +82,9 @@ impl Drop for LLVMError {
 
 #[llvm_versions(12.0..=latest)]
 impl<S> From<Either<LLVMError, S>> for LLVMError
-where S: ToString {
+where
+    S: ToString,
+{
     fn from(err: Either<LLVMError, S>) -> Self {
         match err {
             Either::Left(err) => err,

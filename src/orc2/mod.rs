@@ -5,10 +5,10 @@ use std::{
     fmt::Debug,
     marker::PhantomData,
     mem::{forget, transmute},
-    ops::Deref,
     ptr,
 };
 
+use libc::c_void;
 #[llvm_versions(12.0..=latest)]
 use llvm_sys::orc2::{
     ee::LLVMOrcCreateRTDyldObjectLinkingLayerWithSectionMemoryManager, LLVMOrcDisposeObjectLayer,
@@ -29,20 +29,28 @@ use llvm_sys::orc2::{
     LLVMOrcThreadSafeContextGetContext, LLVMOrcThreadSafeContextRef, LLVMOrcThreadSafeModuleRef,
 };
 #[llvm_versions(13.0..=latest)]
-use llvm_sys::orc2::{
-    LLVMOrcIRTransformLayerRef, LLVMOrcJITTargetMachineBuilderGetTargetTriple,
-    LLVMOrcJITTargetMachineBuilderSetTargetTriple, LLVMOrcObjectLayerAddObjectFile,
-    LLVMOrcObjectLayerAddObjectFileWithRT, LLVMOrcObjectTransformLayerRef,
+use llvm_sys::{
+    error::LLVMErrorRef,
+    orc2::{
+        LLVMOrcIRTransformLayerRef, LLVMOrcJITTargetMachineBuilderGetTargetTriple,
+        LLVMOrcJITTargetMachineBuilderSetTargetTriple, LLVMOrcObjectLayerAddObjectFile,
+        LLVMOrcObjectTransformLayerRef, LLVMOrcObjectTransformLayerSetTransform,
+    },
+    prelude::LLVMMemoryBufferRef,
 };
+// #[llvm_versions(14.0..=latest)]
+// use llvm_sys::orc2::LLVMOrcObjectLayerAddObjectFileWithRT;
 
 use crate::{
     context::Context,
     error::LLVMError,
-    memory_buffer::MemoryBuffer,
+    memory_buffer::{MemoryBuffer, MemoryBufferRef},
     module::Module,
     support::{to_c_str, LLVMString, OwnedOrBorrowedPtr},
     targets::TargetMachine,
 };
+
+use self::lljit::LLJIT;
 
 /// The thread safe variant of [`Context`] used in this module.
 #[derive(Debug)]
@@ -200,7 +208,7 @@ pub struct JITDylib<'jit> {
 }
 
 impl<'jit> JITDylib<'jit> {
-    unsafe fn new(jit_dylib: LLVMOrcJITDylibRef, owned_by_es: ExecutionSession<'jit>) -> Self {
+    unsafe fn new(jit_dylib: LLVMOrcJITDylibRef) -> Self {
         assert!(!jit_dylib.is_null());
         JITDylib {
             jit_dylib,
@@ -331,13 +339,10 @@ impl<'jit> ExecutionSession<'jit> {
     #[llvm_versions(12.0..=latest)]
     pub fn create_bare_jit_dylib(&self, name: &str) -> JITDylib {
         unsafe {
-            JITDylib::new(
-                LLVMOrcExecutionSessionCreateBareJITDylib(
-                    self.execution_session,
-                    to_c_str(name).as_ptr(),
-                ),
-                self.clone(),
-            )
+            JITDylib::new(LLVMOrcExecutionSessionCreateBareJITDylib(
+                self.execution_session,
+                to_c_str(name).as_ptr(),
+            ))
         }
     }
 
@@ -350,7 +355,7 @@ impl<'jit> ExecutionSession<'jit> {
                 &mut jit_dylib,
                 to_c_str(name).as_ptr(),
             ))?;
-            Ok(JITDylib::new(jit_dylib, self.clone()))
+            Ok(JITDylib::new(jit_dylib))
         }
     }
 
@@ -365,20 +370,16 @@ impl<'jit> ExecutionSession<'jit> {
         if jit_dylib.is_null() {
             None
         } else {
-            Some(unsafe { JITDylib::new(jit_dylib, self.clone()) })
+            Some(unsafe { JITDylib::new(jit_dylib) })
         }
     }
 
     #[llvm_versions(12.0..=latest)]
     pub fn create_rt_dyld_object_linking_layer_with_section_memory_manager(
         &self,
-    ) -> RTDyldObjectLinkingLayer<'static> {
+    ) -> RTDyldObjectLinkingLayer {
         let object_layer = unsafe {
-            ObjectLayer::new_owned(
-                LLVMOrcCreateRTDyldObjectLinkingLayerWithSectionMemoryManager(
-                    self.execution_session,
-                ),
-            )
+            LLVMOrcCreateRTDyldObjectLinkingLayerWithSectionMemoryManager(self.execution_session)
         };
         RTDyldObjectLinkingLayer { object_layer }
     }
@@ -452,45 +453,106 @@ impl<'jit> ObjectLayer<'jit> {
 }
 
 #[llvm_versions(12.0..=latest)]
-impl<'jit> From<RTDyldObjectLinkingLayer<'jit>> for ObjectLayer<'jit> {
-    fn from(rt_dyld_object_linking_layer: RTDyldObjectLinkingLayer<'jit>) -> Self {
-        rt_dyld_object_linking_layer.object_layer
+impl From<RTDyldObjectLinkingLayer> for ObjectLayer<'static> {
+    fn from(rt_dyld_object_linking_layer: RTDyldObjectLinkingLayer) -> Self {
+        unsafe { ObjectLayer::new_borrowed(rt_dyld_object_linking_layer.object_layer) }
     }
 }
 
+// Does not have a drop implementation as calling LLVMOrcDisposeObjectLayer
+// on an RTDyldObjectLinkingLayer segfaults. Does leak memory!!!
 #[llvm_versions(12.0..=latest)]
 #[derive(Debug)]
-pub struct RTDyldObjectLinkingLayer<'jit> {
-    object_layer: ObjectLayer<'jit>,
+#[repr(transparent)]
+#[must_use]
+pub struct RTDyldObjectLinkingLayer {
+    object_layer: LLVMOrcObjectLayerRef,
 }
 
 #[llvm_versions(12.0..=latest)]
-impl<'jit> Deref for RTDyldObjectLinkingLayer<'jit> {
-    type Target = ObjectLayer<'jit>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.object_layer
+impl RTDyldObjectLinkingLayer {
+    pub fn get<'a>(&'a self) -> ObjectLayer<'a> {
+        unsafe { ObjectLayer::new_borrowed(self.object_layer) }
     }
 }
 
 #[llvm_versions(13.0..=latest)]
 #[derive(Debug)]
-pub struct ObjectTransformLayer<'jit> {
+pub struct ObjectTransformLayer<'a, 'jit: 'a> {
     object_transform_layer: LLVMOrcObjectTransformLayerRef,
-    _marker: PhantomData<&'jit ()>,
+    lljit: &'a LLJIT<'jit>,
 }
 
 #[llvm_versions(13.0..=latest)]
-impl<'jit> ObjectTransformLayer<'jit> {
-    unsafe fn new_borrowed(object_transform_layer: LLVMOrcObjectTransformLayerRef) -> Self {
+impl<'a, 'jit: 'a> ObjectTransformLayer<'a, 'jit> {
+    unsafe fn new_borrowed(
+        object_transform_layer: LLVMOrcObjectTransformLayerRef,
+        lljit: &'a LLJIT<'jit>,
+    ) -> Self {
         assert!(!object_transform_layer.is_null());
         ObjectTransformLayer {
             object_transform_layer,
-            _marker: PhantomData,
+            lljit,
         }
     }
-    pub fn set_transform() {
-        todo!();
+
+    /// Sets the [`ObjectTransformer`] for this instance.
+    /// ```
+    /// use inkwell::{
+    ///     memory_buffer::MemoryBufferRef,
+    ///     orc2::{lljit::LLJIT, ObjectTransformer},
+    /// };
+    ///
+    /// let lljit = LLJIT::create().expect("LLJIT::create failed");
+    /// let mut object_transform_layer = lljit.get_object_transform_layer();
+    ///
+    /// let object_transformer: Box<dyn ObjectTransformer> = Box::new(|buffer: MemoryBufferRef| {
+    ///     // Transformer implementation...
+    ///     Ok(())
+    /// });
+    /// object_transform_layer.set_transformer(object_transformer);
+    /// ```
+    #[llvm_versions(13.0..=latest)]
+    pub fn set_transformer(self, object_transformer: Box<dyn ObjectTransformer + 'jit>) {
+        *self.lljit.object_transformer.borrow_mut() = Some(object_transformer);
+        unsafe {
+            LLVMOrcObjectTransformLayerSetTransform(
+                self.object_transform_layer,
+                object_transform_layer_transform_function,
+                transmute(self.lljit.object_transformer.borrow().as_ref().unwrap()),
+            );
+        }
+    }
+}
+
+#[llvm_versions(13.0..=latest)]
+#[no_mangle]
+extern "C" fn object_transform_layer_transform_function(
+    ctx: *mut c_void,
+    object_in_out: *mut LLVMMemoryBufferRef,
+) -> LLVMErrorRef {
+    let object_transformer: &mut Box<dyn ObjectTransformer> = unsafe { transmute(ctx) };
+    match object_transformer.transform(MemoryBufferRef::new(object_in_out)) {
+        Ok(()) => ptr::null_mut(),
+        Err(llvm_error) => {
+            unsafe {
+                MemoryBufferRef::new(object_in_out).set_memory_buffer_unsafe(ptr::null_mut());
+            }
+            llvm_error.error
+        }
+    }
+}
+
+pub trait ObjectTransformer {
+    fn transform(&mut self, object_in_out: MemoryBufferRef) -> Result<(), LLVMError>;
+}
+
+impl<F> ObjectTransformer for F
+where
+    F: FnMut(MemoryBufferRef) -> Result<(), LLVMError>,
+{
+    fn transform(&mut self, object_in_out: MemoryBufferRef) -> Result<(), LLVMError> {
+        self(object_in_out)
     }
 }
 

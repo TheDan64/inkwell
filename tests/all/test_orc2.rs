@@ -277,7 +277,7 @@ fn test_lljit_builder_set_object_linking_layer_creator() {
     let object_linking_layer_creator: Box<dyn ObjectLinkingLayerCreator> =
         Box::new(SimpleObjectLinkingLayerCreator {});
     let lljit = LLJITBuilder::create()
-        .set_object_linking_layer_creator(&object_linking_layer_creator)
+        .set_object_linking_layer_creator(object_linking_layer_creator)
         .build()
         .expect("LLJITBuilder::build failed");
     test_basic_lljit_functionality(lljit);

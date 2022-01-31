@@ -5,12 +5,15 @@ use llvm_sys::object::LLVMCreateObjectFile;
 use crate::object_file::ObjectFile;
 use crate::support::{to_c_str, LLVMString};
 
-use std::mem::{forget, MaybeUninit};
+use std::borrow::Borrow;
+use std::mem::{forget, transmute, MaybeUninit};
+use std::ops::Deref;
 use std::path::Path;
 use std::ptr;
 use std::slice;
 
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct MemoryBuffer {
     pub(crate) memory_buffer: LLVMMemoryBufferRef
 }
@@ -127,5 +130,46 @@ impl Drop for MemoryBuffer {
         unsafe {
             LLVMDisposeMemoryBuffer(self.memory_buffer);
         }
+    }
+}
+
+/// A borrowed reference to a [`MemoryBuffer`].
+#[derive(Debug)]
+pub struct MemoryBufferRef {
+    pub(crate) memory_buffer: *mut LLVMMemoryBufferRef,
+}
+
+impl MemoryBufferRef {
+    pub(crate) fn new(memory_buffer: *mut LLVMMemoryBufferRef) -> Self {
+        assert!(!memory_buffer.is_null());
+        MemoryBufferRef { memory_buffer }
+    }
+
+    /// Set the refrenced [`MemoryBuffer`] to `memory_buffer`.
+    /// Drops the current memory buffer.
+    pub fn set_memory_buffer(&mut self, mut memory_buffer: MemoryBuffer) {
+        unsafe {
+            self.set_memory_buffer_unsafe(&mut memory_buffer.memory_buffer);
+        }
+        forget(memory_buffer);
+    }
+
+    pub(crate) unsafe fn set_memory_buffer_unsafe(
+        &mut self,
+        memory_buffer: *mut LLVMMemoryBufferRef,
+    ) {
+        let old_buffer = *self.memory_buffer;
+        *self.memory_buffer = *memory_buffer;
+        if !old_buffer.is_null() {
+            drop(MemoryBuffer::new(old_buffer));
+        }
+    }
+}
+
+impl Deref for MemoryBufferRef {
+    type Target = MemoryBuffer;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { transmute(self.memory_buffer) }
     }
 }

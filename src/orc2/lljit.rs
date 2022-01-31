@@ -1,5 +1,7 @@
 use std::{
+    cell::RefCell,
     ffi::CStr,
+    fmt,
     marker::PhantomData,
     mem::{forget, transmute, transmute_copy},
     ptr,
@@ -44,7 +46,8 @@ use crate::{
 };
 
 use super::{
-    ExecutionSession, JITDylib, JITTargetMachineBuilder, SymbolStringPoolEntry, ThreadSafeModule,
+    ExecutionSession, JITDylib, JITTargetMachineBuilder, ObjectTransformer, SymbolStringPoolEntry,
+    ThreadSafeModule,
 };
 #[llvm_versions(13.0..=latest)]
 use super::{IRTransformLayer, ObjectTransformLayer};
@@ -52,13 +55,15 @@ use super::{IRTransformLayer, ObjectTransformLayer};
 use super::{ObjectLayer, ResourceTracker};
 
 /// Represents a reference to an LLVM `LLJIT` execution engine.
-#[derive(Debug, Clone)]
-pub struct LLJIT<'jit_builder> {
+#[llvm_versioned_item]
+pub struct LLJIT<'jit> {
     pub(crate) lljit: LLVMOrcLLJITRef,
-    _marker: PhantomData<&'jit_builder ()>,
+    #[llvm_versions(12.0..=latest)]
+    pub(crate) object_transformer: RefCell<Option<Box<dyn ObjectTransformer + 'jit>>>,
+    _marker: PhantomData<&'jit ()>,
 }
 
-impl<'jit_builder> LLJIT<'jit_builder> {
+impl<'jit> LLJIT<'jit> {
     unsafe fn create_with_builder(
         builder: LLVMOrcLLJITBuilderRef,
     ) -> Result<Self, Either<LLVMError, String>> {
@@ -71,6 +76,8 @@ impl<'jit_builder> LLJIT<'jit_builder> {
         assert!(!lljit.is_null());
         Ok(LLJIT {
             lljit,
+            #[cfg(not(feature = "llvm11-0"))]
+            object_transformer: RefCell::new(None),
             _marker: PhantomData,
         })
     }
@@ -81,7 +88,7 @@ impl<'jit_builder> LLJIT<'jit_builder> {
     ///
     /// let lljit = LLJIT::create().expect("LLJIT::create failed");
     /// ```
-    pub fn create() -> Result<LLJIT<'static>, Either<LLVMError, String>> {
+    pub fn create() -> Result<Self, Either<LLVMError, String>> {
         unsafe { LLJIT::create_with_builder(ptr::null_mut()) }
     }
 
@@ -92,13 +99,8 @@ impl<'jit_builder> LLJIT<'jit_builder> {
     /// let lljit = LLJIT::create().expect("LLJIT::create failed");
     /// let main_jd = lljit.get_main_jit_dylib();
     /// ```
-    pub fn get_main_jit_dylib<'jit>(&'jit self) -> JITDylib<'jit> {
-        unsafe {
-            JITDylib::new(
-                LLVMOrcLLJITGetMainJITDylib(self.lljit),
-                self.get_execution_session(),
-            )
-        }
+    pub fn get_main_jit_dylib(&self) -> JITDylib {
+        unsafe { JITDylib::new(LLVMOrcLLJITGetMainJITDylib(self.lljit)) }
     }
 
     /// Adds `module` to `jit_dylib` in the execution engine.
@@ -334,10 +336,7 @@ impl<'jit_builder> LLJIT<'jit_builder> {
     /// The [`Function`] wrapper ensures a function won't accidentally outlive the
     /// execution engine it came from, but adding functions or removing resource trackers
     /// after calling this method *may* invalidate the function pointer.
-    pub unsafe fn get_function<'jit, F>(
-        &'jit self,
-        name: &str,
-    ) -> Result<Function<'jit, F>, LLVMError>
+    pub unsafe fn get_function<F>(&self, name: &str) -> Result<Function<F>, LLVMError>
     where
         F: UnsafeFunctionPointer,
     {
@@ -354,7 +353,7 @@ impl<'jit_builder> LLJIT<'jit_builder> {
     /// let lljit = LLJIT::create().expect("LLJIT::create failed");
     /// let execution_session = lljit.get_execution_session();
     /// ```
-    pub fn get_execution_session<'jit>(&'jit self) -> ExecutionSession<'jit> {
+    pub fn get_execution_session(&self) -> ExecutionSession {
         unsafe { ExecutionSession::new_borrowed(LLVMOrcLLJITGetExecutionSession(self.lljit)) }
     }
 
@@ -366,7 +365,7 @@ impl<'jit_builder> LLJIT<'jit_builder> {
     /// let triple = lljit.get_triple();
     /// assert_eq!(triple, TargetMachine::get_default_triple());
     /// ```
-    pub fn get_triple<'jit>(&'jit self) -> TargetTriple<'jit> {
+    pub fn get_triple(&self) -> TargetTriple {
         TargetTriple::new(unsafe {
             LLVMStringOrRaw::borrowed(LLVMOrcLLJITGetTripleString(self.lljit))
         })
@@ -418,7 +417,7 @@ impl<'jit_builder> LLJIT<'jit_builder> {
     /// let object_layer = lljit.get_object_linking_layer();
     /// ```
     #[llvm_versions(13.0..=latest)]
-    pub fn get_object_linking_layer<'jit>(&'jit self) -> ObjectLayer<'jit> {
+    pub fn get_object_linking_layer(&self) -> ObjectLayer {
         unsafe { ObjectLayer::new_borrowed(LLVMOrcLLJITGetObjLinkingLayer(self.lljit)) }
     }
 
@@ -430,8 +429,10 @@ impl<'jit_builder> LLJIT<'jit_builder> {
     /// let object_transform_layer = lljit.get_object_transform_layer();
     /// ```
     #[llvm_versions(13.0..=latest)]
-    pub fn get_object_transform_layer<'jit>(&'jit self) -> ObjectTransformLayer<'jit> {
-        unsafe { ObjectTransformLayer::new_borrowed(LLVMOrcLLJITGetObjTransformLayer(self.lljit)) }
+    pub fn get_object_transform_layer(&self) -> ObjectTransformLayer<'_, 'jit> {
+        unsafe {
+            ObjectTransformLayer::new_borrowed(LLVMOrcLLJITGetObjTransformLayer(self.lljit), &self)
+        }
     }
 
     /// Returns the [`IRTransformLayer`].
@@ -442,7 +443,7 @@ impl<'jit_builder> LLJIT<'jit_builder> {
     /// let ir_transform_layer = lljit.get_ir_transform_layer();
     /// ```
     #[llvm_versions(13.0..=latest)]
-    pub fn get_ir_transform_layer<'jit>(&'jit self) -> IRTransformLayer<'jit> {
+    pub fn get_ir_transform_layer(&self) -> IRTransformLayer {
         unsafe { IRTransformLayer::new_borrowed(LLVMOrcLLJITGetIRTransformLayer(self.lljit)) }
     }
 
@@ -477,10 +478,21 @@ impl<'jit_builder> LLJIT<'jit_builder> {
     /// assert_eq!(data_layout, target_machine.get_target_data().get_data_layout());
     /// ```
     #[llvm_versions(13.0..=latest)]
-    pub fn get_data_layout<'jit>(&'jit self) -> DataLayout<'jit> {
+    pub fn get_data_layout(&self) -> DataLayout {
         unsafe { DataLayout::new_borrowed(LLVMOrcLLJITGetDataLayoutStr(self.lljit)) }
     }
 }
+
+impl fmt::Debug for LLJIT<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut debug_struct = f.debug_struct("LLJIT");
+        debug_struct.field("lljit", &self.lljit);
+        #[cfg(not(feature = "llvm11-0"))]
+        debug_struct.field("object_transformer", &self.object_transformer.as_ptr());
+        debug_struct.finish()
+    }
+}
+
 impl Drop for LLJIT<'_> {
     fn drop(&mut self) {
         unsafe {
@@ -491,9 +503,10 @@ impl Drop for LLJIT<'_> {
 
 /// An `LLJITBuilder` is used to create custom [`LLJIT`] instances.
 #[llvm_versioned_item]
-#[derive(Debug)]
 pub struct LLJITBuilder<'jit_builder> {
     builder: LLJITBuilderRef,
+    #[llvm_versions(12.0..=latest)]
+    object_linking_layer_creator: Option<Box<dyn ObjectLinkingLayerCreator + 'jit_builder>>,
     _marker: PhantomData<&'jit_builder ()>,
 }
 
@@ -502,6 +515,8 @@ impl<'jit_builder> LLJITBuilder<'jit_builder> {
         assert!(!builder.is_null());
         LLJITBuilder {
             builder: LLJITBuilderRef(builder),
+            #[cfg(not(feature = "llvm11-0"))]
+            object_linking_layer_creator: None,
             _marker: PhantomData,
         }
     }
@@ -523,7 +538,7 @@ impl<'jit_builder> LLJITBuilder<'jit_builder> {
     /// let lljit_builder = LLJITBuilder::create();
     /// let lljit = lljit_builder.build().expect("LLJITBuilder::build failed");
     /// ```
-    pub fn build(self) -> Result<LLJIT<'jit_builder>, Either<LLVMError, String>> {
+    pub fn build<'jit>(self) -> Result<LLJIT<'jit>, Either<LLVMError, String>> {
         unsafe {
             match LLJIT::create_with_builder(self.builder.as_ptr()) {
                 e @ Err(Either::Right(_)) => e,
@@ -580,23 +595,37 @@ impl<'jit_builder> LLJITBuilder<'jit_builder> {
     ///     });
     ///
     /// let lljit = LLJITBuilder::create()
-    ///     .set_object_linking_layer_creator(&object_linking_layer_creator)
+    ///     .set_object_linking_layer_creator(object_linking_layer_creator)
     ///     .build()
     ///     .expect("LLJITBuilder::build failed");
     /// ```
     #[llvm_versions(12.0..=latest)]
     pub fn set_object_linking_layer_creator(
-        self,
-        object_linking_layer_creator: &'jit_builder Box<dyn ObjectLinkingLayerCreator + 'jit_builder>,
+        mut self,
+        object_linking_layer_creator: Box<dyn ObjectLinkingLayerCreator + 'jit_builder>,
     ) -> Self {
+        self.object_linking_layer_creator = Some(object_linking_layer_creator);
         unsafe {
             LLVMOrcLLJITBuilderSetObjectLinkingLayerCreator(
                 self.builder.as_ptr(),
                 object_linking_layer_creator_function,
-                transmute(object_linking_layer_creator),
+                transmute(&self.object_linking_layer_creator),
             );
         }
         self
+    }
+}
+
+impl fmt::Debug for LLJITBuilder<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut debug_struct = f.debug_struct("LLJITBuilder");
+        debug_struct.field("builder", &self.builder);
+        #[cfg(not(feature = "llvm11-0"))]
+        debug_struct.field(
+            "object_linking_layer_creator",
+            &self.object_linking_layer_creator.as_ref().map(|_| ()),
+        );
+        debug_struct.finish()
     }
 }
 
@@ -655,7 +684,7 @@ pub trait ObjectLinkingLayerCreator {
     /// let object_linking_layer_creator: Box<dyn ObjectLinkingLayerCreator> =
     ///     Box::new(SimpleObjectLinkingLayerCreator {});
     /// let lljit = LLJITBuilder::create()
-    ///     .set_object_linking_layer_creator(&object_linking_layer_creator)
+    ///     .set_object_linking_layer_creator(object_linking_layer_creator)
     ///     .build()
     ///     .expect("LLJITBuilder::build failed");
     /// ```
