@@ -6,7 +6,7 @@ use crate::module::Module;
 use crate::types::{AsTypeRef, BasicTypeEnum, FunctionType};
 use crate::values::FunctionValue;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct Intrinsic {
     id: u32,
 }
