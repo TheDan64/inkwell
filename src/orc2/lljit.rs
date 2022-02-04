@@ -340,8 +340,10 @@ impl<'jit> LLJIT<'jit> {
     where
         F: UnsafeFunctionPointer,
     {
+        let function_address = self.get_function_address(name)?;
+        assert!(function_address != 0, "function address is null");
         Ok(Function {
-            func: transmute_copy(&self.get_function_address(name)?),
+            func: transmute_copy(&function_address),
             _marker: PhantomData,
         })
     }
@@ -609,7 +611,9 @@ impl<'jit_builder> LLJITBuilder<'jit_builder> {
             LLVMOrcLLJITBuilderSetObjectLinkingLayerCreator(
                 self.builder.as_ptr(),
                 object_linking_layer_creator_function,
-                transmute(&self.object_linking_layer_creator),
+                transmute::<&ObjectLinkingLayerCreatorCtx<'jit_builder>, _>(
+                    &self.object_linking_layer_creator.as_ref().unwrap(),
+                ),
             );
         }
         self
@@ -636,6 +640,9 @@ impl_owned_ptr!(
 );
 
 #[llvm_versions(12.0..=latest)]
+type ObjectLinkingLayerCreatorCtx<'jit_builder> = Box<dyn ObjectLinkingLayerCreator + 'jit_builder>;
+
+#[llvm_versions(12.0..=latest)]
 #[no_mangle]
 extern "C" fn object_linking_layer_creator_function(
     ctx: *mut c_void,
@@ -643,7 +650,7 @@ extern "C" fn object_linking_layer_creator_function(
     triple: *const c_char,
 ) -> LLVMOrcObjectLayerRef {
     unsafe {
-        let object_linking_layer_creator: &mut Box<dyn ObjectLinkingLayerCreator> = transmute(ctx);
+        let object_linking_layer_creator: &mut ObjectLinkingLayerCreatorCtx = transmute(ctx);
         let object_layer = object_linking_layer_creator.create_object_linking_layer(
             ExecutionSession::new_borrowed(execution_session),
             CStr::from_ptr(triple),
