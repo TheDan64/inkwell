@@ -294,6 +294,31 @@ impl<'ctx> Module<'ctx> {
         }
     }
 
+    /// An iterator over the functions in this `Module`.
+    ///
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::module::Module;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_mod");
+    ///
+    /// assert!(module.get_function("my_fn").is_none());
+    ///
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let fn_value = module.add_function("my_fn", fn_type, None);
+    ///
+    /// let names: Vec<String> = module
+    ///     .get_functions()
+    ///     .map(|f| f.get_name().to_string_lossy().to_string())
+    ///     .collect();
+    ///
+    /// assert_eq!(vec!["my_fn".to_owned()], names);
+    /// ```
+    pub fn get_functions(&self) -> FunctionIterator<'ctx> {
+        FunctionIterator::from_module(self)
+    }
 
     /// Gets a named `StructType` from this `Module`'s `Context`.
     ///
@@ -1461,4 +1486,52 @@ pub enum FlagBehavior {
     /// entries in the second list are dropped during the append operation.
     #[llvm_variant(LLVMModuleFlagBehaviorAppendUnique)]
     AppendUnique,
+}
+
+/// Iterate over all `FunctionValue`s in an llvm module
+#[derive(Debug)]
+pub struct FunctionIterator<'ctx>(FunctionIteratorInner<'ctx>);
+
+/// Inner type so the variants are not publicly visible
+#[derive(Debug)]
+enum FunctionIteratorInner<'ctx> {
+    Empty,
+    Start(FunctionValue<'ctx>),
+    Previous(FunctionValue<'ctx>),
+}
+
+impl<'ctx> FunctionIterator<'ctx> {
+    fn from_module(module: &Module<'ctx>) -> Self {
+        use FunctionIteratorInner::*;
+
+        match module.get_first_function() {
+            None => Self(Empty),
+            Some(first) => Self(Start(first)),
+        }
+    }
+}
+
+impl<'ctx> Iterator for FunctionIterator<'ctx> {
+    type Item = FunctionValue<'ctx>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        use FunctionIteratorInner::*;
+
+        match self.0 {
+            Empty => None,
+            Start(first) => {
+                self.0 = Previous(first);
+
+                Some(first)
+            }
+            Previous(prev) => match prev.get_next_function() {
+                Some(current) => {
+                    self.0 = Previous(current);
+
+                    Some(current)
+                }
+                None => None,
+            },
+        }
+    }
 }
