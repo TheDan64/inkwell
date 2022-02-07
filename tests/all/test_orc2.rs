@@ -1,7 +1,22 @@
-use std::ffi::CStr;
+use std::{
+    collections::HashSet,
+    ffi::CStr,
+    iter::{self, FromIterator},
+    ops::Deref,
+    rc::Rc,
+    sync::Arc,
+    thread,
+};
 
 #[llvm_versions(12.0..=latest)]
-use inkwell::orc2::{lljit::ObjectLinkingLayerCreator, ObjectLayer};
+use inkwell::orc2::{
+    lljit::ObjectLinkingLayerCreator, MaterializationUnit, ObjectLayer, SymbolFlags,
+};
+#[llvm_versions(13.0..=latest)]
+use inkwell::orc2::{
+    lljit::ObjectTransformer, IRTransformLayer, MaterializationResponsibility, Materializer,
+    SymbolFlagsMapPair, SymbolFlagsMapPairs,
+};
 use inkwell::{
     builder::Builder,
     context::Context,
@@ -10,8 +25,8 @@ use inkwell::{
     module::{Linkage, Module},
     orc2::{
         lljit::{LLJITBuilder, LLJIT},
-        ExecutionSession, JITTargetMachineBuilder, ObjectTransformer, ThreadSafeContext,
-        ThreadSafeModule,
+        ExecutionSession, JITDylib, JITTargetMachineBuilder, SymbolStringPoolEntry,
+        ThreadSafeContext, ThreadSafeModule,
     },
     support::LLVMString,
     targets::{CodeModel, FileType, RelocMode, Target, TargetMachine},
@@ -283,10 +298,15 @@ fn test_lljit_builder_set_invalid_jit_target_machine() {
     let jit_target_machine_builder = JITTargetMachineBuilder::detect_host()
         .expect("JITTargetMachineBuilder::detect_host failed");
     jit_target_machine_builder.set_target_triple("invalid");
-    LLJITBuilder::create()
+    let error = LLJITBuilder::create()
         .set_jit_target_machine_builder(jit_target_machine_builder)
         .build()
         .expect_err("LLJITBuilder::build succeeded");
+    let error = error.expect_left("Error is not an LLVMError");
+    assert_eq!(
+        error.get_message().to_string(),
+        "No available targets are compatible with triple \"invalid\""
+    );
 }
 
 #[llvm_versions(12.0..=latest)]
@@ -411,6 +431,256 @@ fn test_object_transform_layer_error() {
         .add_module(&main_jd, module)
         .expect("LLJIT::add_module failed");
     test_main_function(&lljit);
+}
+
+#[llvm_versions(13.0..=latest)]
+#[test]
+fn test_materialization_unit_with_materializer() {
+    let lljit = LLJIT::create().expect("LLJIT::create failed");
+    let context = ThreadSafeContext::create();
+    let ir_transform_layer = lljit.get_ir_transform_layer();
+
+    let materializer = TestMaterializer {
+        context: &context,
+        ir_transform_layer,
+    };
+
+    test_test_materializer(&lljit, materializer);
+}
+
+#[llvm_versions(13.0..=latest)]
+#[derive(Debug, Clone)]
+struct TestMaterializer<'ctx, 'jit> {
+    context: &'ctx ThreadSafeContext,
+    ir_transform_layer: IRTransformLayer<'jit>,
+}
+
+#[llvm_versions(13.0..=latest)]
+impl TestMaterializer<'_, '_> {
+    fn define_symbols(lljit: &LLJIT) -> SymbolFlagsMapPairs {
+        SymbolFlagsMapPairs::from_iter(
+            vec!["main", "fourty_two"]
+                .into_iter()
+                .map(|name| lljit.mangle_and_intern(name))
+                .zip(iter::repeat(SymbolFlags::new(0, 0))),
+        )
+    }
+}
+
+#[llvm_versions(13.0..=latest)]
+impl<'ctx, 'jit> Materializer for TestMaterializer<'ctx, 'jit> {
+    fn materialize(&mut self, materialization_responsibility: MaterializationResponsibility) {
+        let mut module_builder = ModuleBuilder::new(self.context, "simple_materializer");
+        for symbol in materialization_responsibility.get_symbols().names_iter() {
+            let name = symbol.get_string().to_string_lossy();
+            match name.deref() {
+                "fourty_two" => module_builder = module_builder.add_contstant_function(&name, 42),
+                _ => module_builder = module_builder.add_contstant_function(&name, 64),
+            };
+        }
+        match module_builder.build() {
+            Ok(module) => self
+                .ir_transform_layer
+                .emit(materialization_responsibility, module),
+            Err(_) => materialization_responsibility.fail_materialization(),
+        }
+    }
+
+    fn discard(&mut self, _jit_dylib: &JITDylib, _symbol: &SymbolStringPoolEntry) {}
+}
+
+#[llvm_versions(13.0..=latest)]
+#[test]
+fn test_materialization_responsibility_fail_materializing() {
+    let lljit = LLJIT::create().expect("LLJIT::create failed");
+    let materializer: Box<dyn Materializer> = Box::new((
+        |materialization_responsibility: MaterializationResponsibility| {
+            materialization_responsibility.fail_materialization();
+        },
+        |_jit_dylib: &JITDylib, _symbol: &SymbolStringPoolEntry| {},
+    ));
+    let materialization_unit = MaterializationUnit::create(
+        "test materialization unit",
+        SymbolFlagsMapPairs::new(vec![SymbolFlagsMapPair::new(
+            lljit.mangle_and_intern("main"),
+            SymbolFlags::new(0, 0),
+        )]),
+        None,
+        materializer,
+    );
+    let main_jd = lljit.get_main_jit_dylib();
+    main_jd
+        .define(materialization_unit)
+        .expect("JITDylib::define failed");
+
+    let error = lljit
+        .get_function_address("main")
+        .expect_err("LLJIT::get_function_address did not fail");
+    assert_eq!(
+        error.get_message().to_string(),
+        "Failed to materialize symbols: { (main, { main }) }"
+    );
+}
+
+#[llvm_versions(13.0..=latest)]
+#[test]
+fn test_unused_materialization_unit() {
+    let lljit = LLJIT::create().expect("LLJIT::create failed");
+    let context = ThreadSafeContext::create();
+
+    let ir_transform_layer = lljit.get_ir_transform_layer();
+    let materializer = TestMaterializer {
+        context: &context,
+        ir_transform_layer,
+    };
+
+    let symbols = TestMaterializer::define_symbols(&lljit);
+    let materialization_unit = MaterializationUnit::create(
+        "test_materialization_unit",
+        symbols,
+        None,
+        Box::new(materializer),
+    );
+
+    let main_jd = lljit.get_main_jit_dylib();
+    main_jd
+        .define(materialization_unit)
+        .expect("JITDylib::define failed");
+}
+
+#[llvm_versions(13.0..=latest)]
+#[test]
+fn test_materialization_responsibility_replace() {
+    let lljit = LLJIT::create().expect("LLJIT::create failed");
+    let context = ThreadSafeContext::create();
+    let ir_transform_layer = lljit.get_ir_transform_layer();
+
+    let materializer = MaterializeOnlyRequested {
+        static_initializer_symbol: None,
+        materializer: TestMaterializer {
+            context: &context,
+            ir_transform_layer,
+        },
+    };
+
+    test_test_materializer(&lljit, materializer);
+}
+
+#[llvm_versions(13.0..=latest)]
+#[derive(Debug, Clone)]
+struct MaterializeOnlyRequested<M> {
+    materializer: M,
+    static_initializer_symbol: Option<SymbolStringPoolEntry>,
+}
+
+#[llvm_versions(13.0..=latest)]
+impl<M> Materializer for MaterializeOnlyRequested<M>
+where
+    M: Materializer + Clone,
+{
+    fn materialize(&mut self, materialization_responsibility: MaterializationResponsibility) {
+        let requested_symbols: HashSet<_> = HashSet::from_iter(
+            materialization_responsibility
+                .get_requested_symbols()
+                .as_ref()
+                .into_iter()
+                .cloned(),
+        );
+        let not_requested_symbols: Vec<_> = materialization_responsibility
+            .get_symbols()
+            .into_iter()
+            .filter(|symbol| !requested_symbols.contains(symbol.get_name()))
+            .collect();
+
+        // Create new materialization unit for not requested symbols
+        if !not_requested_symbols.is_empty() {
+            let materialization_unit = MaterializationUnit::create(
+                "compile_only_requested",
+                SymbolFlagsMapPairs::new(not_requested_symbols),
+                self.static_initializer_symbol.clone(),
+                Box::new(self.clone()),
+            );
+            if let Err(error) = materialization_responsibility.replace(materialization_unit) {
+                // Log error...
+                eprintln!("{}", error.get_message());
+                materialization_responsibility.fail_materialization();
+                return;
+            }
+        }
+        self.materializer
+            .materialize(materialization_responsibility);
+    }
+
+    fn discard(&mut self, _jit_dylib: &JITDylib, _symbol: &SymbolStringPoolEntry) {}
+}
+
+#[llvm_versions(13.0..=latest)]
+#[test]
+fn test_materialization_responsibility_delegate() {
+    let lljit = LLJIT::create().expect("LLJIT::create failed");
+    let context = ThreadSafeContext::create();
+    let ir_transform_layer = lljit.get_ir_transform_layer();
+
+    let materializer = MultiThreadedMaterializer {
+        materializer: TestMaterializer {
+            context: &context,
+            ir_transform_layer,
+        },
+    };
+
+    test_test_materializer(&lljit, materializer);
+}
+
+#[llvm_versions(13.0..=latest)]
+struct MultiThreadedMaterializer<M> {
+    materializer: M,
+}
+
+#[llvm_versions(13.0..=latest)]
+impl<M> Materializer for MultiThreadedMaterializer<M>
+where
+    M: Materializer + Clone,
+{
+    fn materialize(&mut self, materialization_responsibility: MaterializationResponsibility) {
+        for symbol in materialization_responsibility.get_symbols() {
+            let thread_responsibility =
+                match materialization_responsibility.delegate(vec![symbol.name()]) {
+                    Err(error) => {
+                        eprintln!("{}", error.get_message());
+                        materialization_responsibility.fail_materialization();
+                        return;
+                    }
+                    Ok(ok) => ok,
+                };
+            let mut materializer = self.materializer.clone();
+            materializer.materialize(thread_responsibility);
+            // TODO: Make multithreaded
+            // thread::spawn(move || {
+            //     materializer.materialize(thread_responsibility);
+            // });
+        }
+    }
+
+    fn discard(&mut self, _jit_dylib: &JITDylib, _symboll: &SymbolStringPoolEntry) {}
+}
+
+#[llvm_versions(13.0..=latest)]
+fn test_test_materializer(lljit: &LLJIT, materializer: impl Materializer) {
+    let symbols = TestMaterializer::define_symbols(&lljit);
+    let materialization_unit =
+        MaterializationUnit::create("test_materializer", symbols, None, Box::new(materializer));
+
+    let main_jd = lljit.get_main_jit_dylib();
+    main_jd
+        .define(materialization_unit)
+        .expect("JITDylib::define failed");
+    test_main_function(&lljit);
+    unsafe {
+        let function = lljit
+            .get_function::<unsafe extern "C" fn() -> u64>("fourty_two")
+            .expect("LLJIT::get_function failed");
+        assert_eq!(function.call(), 42);
+    }
 }
 
 fn test_basic_lljit_functionality(lljit: LLJIT) {
