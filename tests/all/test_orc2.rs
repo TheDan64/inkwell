@@ -376,21 +376,20 @@ fn test_execution_session_create_rt_dyld_object_linking_layer_with_section_memor
 
 #[llvm_versions(13.0..=latest)]
 #[test]
-fn test_object_transform_layer_modify_buffer() {
+fn test_object_transformer_modify_buffer() {
     let thread_safe_context = ThreadSafeContext::create();
     let module = constant_function_module(&thread_safe_context, 42, "main");
     let object_buffer = constant_function_object_file(thread_safe_context.context(), 64, "main");
     let lljit = LLJIT::create().expect("LLJIT::create failed");
-    let object_transformer: Box<dyn ObjectTransformer> = Box::new(|mut buffer: MemoryBufferRef| {
-        buffer.set_memory_buffer(MemoryBuffer::create_from_memory_range_copy(
-            object_buffer.as_slice(),
-            "new memory buffer",
-        ));
-        Ok(())
-    });
-    lljit
-        .get_object_transform_layer()
-        .set_transformer(object_transformer);
+    let object_transformer: Box<dyn ObjectTransformer> =
+        Box::new(move |mut buffer: MemoryBufferRef| {
+            buffer.set_memory_buffer(MemoryBuffer::create_from_memory_range_copy(
+                object_buffer.as_slice(),
+                "new memory buffer",
+            ));
+            Ok(())
+        });
+    lljit.set_object_transformer(object_transformer);
     let main_jd = lljit.get_main_jit_dylib();
     lljit
         .add_module(&main_jd, module)
@@ -406,9 +405,7 @@ fn test_object_transform_layer_error() {
     let lljit = LLJIT::create().expect("LLJIT::create failed");
     let object_transformer: Box<dyn ObjectTransformer> =
         Box::new(|_buffer: MemoryBufferRef| Err(LLVMError::new_string_error("test error")));
-    lljit
-        .get_object_transform_layer()
-        .set_transformer(object_transformer);
+    lljit.set_object_transformer(object_transformer);
     let main_jd = lljit.get_main_jit_dylib();
     lljit
         .add_module(&main_jd, module)

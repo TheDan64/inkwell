@@ -3,6 +3,7 @@ pub mod lljit;
 use std::{
     ffi::CStr,
     fmt,
+    iter::FromIterator,
     marker::PhantomData,
     mem::{forget, transmute},
     ptr, slice, vec,
@@ -12,14 +13,38 @@ use libc::c_void;
 #[llvm_versions(12.0..=latest)]
 use llvm_sys::orc2::{
     ee::LLVMOrcCreateRTDyldObjectLinkingLayerWithSectionMemoryManager, LLVMJITCSymbolMapPair,
-    LLVMJITSymbolFlags, LLVMOrcAbsoluteSymbols, LLVMOrcDisposeMaterializationUnit,
-    LLVMOrcDisposeObjectLayer, LLVMOrcExecutionSessionCreateBareJITDylib,
-    LLVMOrcExecutionSessionCreateJITDylib, LLVMOrcExecutionSessionGetJITDylibByName,
-    LLVMOrcJITDylibClear, LLVMOrcJITDylibCreateResourceTracker, LLVMOrcJITDylibDefine,
+    LLVMJITEvaluatedSymbol, LLVMJITSymbolFlags, LLVMOrcAbsoluteSymbols, LLVMOrcCSymbolMapPairs,
+    LLVMOrcDisposeMaterializationUnit, LLVMOrcDisposeObjectLayer,
+    LLVMOrcExecutionSessionCreateBareJITDylib, LLVMOrcExecutionSessionCreateJITDylib,
+    LLVMOrcExecutionSessionGetJITDylibByName, LLVMOrcJITDylibClear,
+    LLVMOrcJITDylibCreateResourceTracker, LLVMOrcJITDylibDefine,
     LLVMOrcJITDylibGetDefaultResourceTracker, LLVMOrcMaterializationUnitRef, LLVMOrcObjectLayerRef,
     LLVMOrcReleaseResourceTracker, LLVMOrcResourceTrackerRef, LLVMOrcResourceTrackerRemove,
     LLVMOrcResourceTrackerTransferTo, LLVMOrcRetainSymbolStringPoolEntry,
     LLVMOrcSymbolStringPoolEntryStr,
+};
+#[llvm_versions(13.0..=latest)]
+use llvm_sys::orc2::{
+    LLVMOrcCDependenceMapPair, LLVMOrcCDependenceMapPairs, LLVMOrcCSymbolAliasMapPair,
+    LLVMOrcCSymbolFlagsMapPair, LLVMOrcCSymbolFlagsMapPairs, LLVMOrcCSymbolsList,
+    LLVMOrcCreateCustomMaterializationUnit, LLVMOrcDisposeSymbols, LLVMOrcIRTransformLayerEmit,
+    LLVMOrcIRTransformLayerRef, LLVMOrcIndirectStubsManagerRef,
+    LLVMOrcJITTargetMachineBuilderGetTargetTriple, LLVMOrcJITTargetMachineBuilderSetTargetTriple,
+    LLVMOrcLazyCallThroughManagerRef, LLVMOrcLazyReexports,
+    LLVMOrcMaterializationResponsibilityAddDependencies,
+    LLVMOrcMaterializationResponsibilityAddDependenciesForAll,
+    LLVMOrcMaterializationResponsibilityDefineMaterializing,
+    LLVMOrcMaterializationResponsibilityDelegate,
+    LLVMOrcMaterializationResponsibilityFailMaterialization,
+    LLVMOrcMaterializationResponsibilityGetExecutionSession,
+    LLVMOrcMaterializationResponsibilityGetInitializerSymbol,
+    LLVMOrcMaterializationResponsibilityGetRequestedSymbols,
+    LLVMOrcMaterializationResponsibilityGetSymbols,
+    LLVMOrcMaterializationResponsibilityGetTargetDylib,
+    LLVMOrcMaterializationResponsibilityNotifyEmitted,
+    LLVMOrcMaterializationResponsibilityNotifyResolved, LLVMOrcMaterializationResponsibilityRef,
+    LLVMOrcMaterializationResponsibilityReplace, LLVMOrcObjectLayerAddObjectFile,
+    LLVMOrcObjectLayerEmit,
 };
 use llvm_sys::orc2::{
     LLVMOrcCreateNewThreadSafeContext, LLVMOrcCreateNewThreadSafeModule,
@@ -30,46 +55,17 @@ use llvm_sys::orc2::{
     LLVMOrcReleaseSymbolStringPoolEntry, LLVMOrcSymbolStringPoolEntryRef,
     LLVMOrcThreadSafeContextGetContext, LLVMOrcThreadSafeContextRef, LLVMOrcThreadSafeModuleRef,
 };
-#[llvm_versions(13.0..=latest)]
-use llvm_sys::{
-    error::LLVMErrorRef,
-    orc2::{
-        LLVMOrcCDependenceMapPair, LLVMOrcCSymbolAliasMapPair, LLVMOrcCSymbolFlagsMapPair,
-        LLVMOrcCSymbolFlagsMapPairs, LLVMOrcCreateCustomMaterializationUnit, LLVMOrcDisposeSymbols,
-        LLVMOrcIRTransformLayerEmit, LLVMOrcIRTransformLayerRef, LLVMOrcIndirectStubsManagerRef,
-        LLVMOrcJITTargetMachineBuilderGetTargetTriple,
-        LLVMOrcJITTargetMachineBuilderSetTargetTriple, LLVMOrcLazyCallThroughManagerRef,
-        LLVMOrcLazyReexports, LLVMOrcMaterializationResponsibilityAddDependencies,
-        LLVMOrcMaterializationResponsibilityAddDependenciesForAll,
-        LLVMOrcMaterializationResponsibilityDefineMaterializing,
-        LLVMOrcMaterializationResponsibilityDelegate,
-        LLVMOrcMaterializationResponsibilityFailMaterialization,
-        LLVMOrcMaterializationResponsibilityGetExecutionSession,
-        LLVMOrcMaterializationResponsibilityGetInitializerSymbol,
-        LLVMOrcMaterializationResponsibilityGetRequestedSymbols,
-        LLVMOrcMaterializationResponsibilityGetSymbols,
-        LLVMOrcMaterializationResponsibilityGetTargetDylib,
-        LLVMOrcMaterializationResponsibilityNotifyEmitted,
-        LLVMOrcMaterializationResponsibilityNotifyResolved,
-        LLVMOrcMaterializationResponsibilityRef, LLVMOrcMaterializationResponsibilityReplace,
-        LLVMOrcObjectLayerAddObjectFile, LLVMOrcObjectLayerEmit, LLVMOrcObjectTransformLayerRef,
-        LLVMOrcObjectTransformLayerSetTransform,
-    },
-    prelude::LLVMMemoryBufferRef,
-};
 // #[llvm_versions(14.0..=latest)]
 // use llvm_sys::orc2::LLVMOrcObjectLayerAddObjectFileWithRT;
 
 use crate::{
     context::Context,
     error::LLVMError,
-    memory_buffer::{MemoryBuffer, MemoryBufferRef},
+    memory_buffer::MemoryBuffer,
     module::Module,
     support::{to_c_str, LLVMString, OwnedOrBorrowedPtr},
     targets::TargetMachine,
 };
-
-use self::lljit::LLJIT;
 
 /// The thread safe variant of [`Context`] used in this module.
 #[derive(Debug)]
@@ -221,6 +217,7 @@ impl Drop for JITTargetMachineBuilder {
 
 /// Represents a dynamic library in the execution engine.
 #[derive(Debug)]
+#[repr(transparent)]
 pub struct JITDylib<'jit> {
     jit_dylib: LLVMOrcJITDylibRef,
     _marker: PhantomData<&'jit ()>,
@@ -267,7 +264,7 @@ impl<'jit> JITDylib<'jit> {
     }
 
     #[llvm_versions(12.0..=latest)]
-    pub fn define(&self, materialization_unit: MaterializationUnit<'jit>) -> Result<(), LLVMError> {
+    pub fn define(&self, materialization_unit: MaterializationUnit) -> Result<(), LLVMError> {
         let result = LLVMError::new(unsafe {
             LLVMOrcJITDylibDefine(self.jit_dylib, materialization_unit.materialization_unit)
         });
@@ -513,93 +510,9 @@ impl RTDyldObjectLinkingLayer {
     }
 }
 
-/// A ObjectTransformLayer can transform object buffers before lowering.
 #[llvm_versions(13.0..=latest)]
-#[derive(Debug)]
-pub struct ObjectTransformLayer<'a, 'jit: 'a> {
-    object_transform_layer: LLVMOrcObjectTransformLayerRef,
-    lljit: &'a LLJIT<'jit>,
-}
-
-#[llvm_versions(13.0..=latest)]
-impl<'a, 'jit: 'a> ObjectTransformLayer<'a, 'jit> {
-    unsafe fn new_borrowed(
-        object_transform_layer: LLVMOrcObjectTransformLayerRef,
-        lljit: &'a LLJIT<'jit>,
-    ) -> Self {
-        assert!(!object_transform_layer.is_null());
-        ObjectTransformLayer {
-            object_transform_layer,
-            lljit,
-        }
-    }
-
-    /// Sets the [`ObjectTransformer`] for this instance.
-    /// ```
-    /// use inkwell::{
-    ///     memory_buffer::MemoryBufferRef,
-    ///     orc2::{lljit::LLJIT, ObjectTransformer},
-    /// };
-    ///
-    /// let lljit = LLJIT::create().expect("LLJIT::create failed");
-    /// let mut object_transform_layer = lljit.get_object_transform_layer();
-    ///
-    /// let object_transformer: Box<dyn ObjectTransformer> = Box::new(|buffer: MemoryBufferRef| {
-    ///     // Transformer implementation...
-    ///     Ok(())
-    /// });
-    /// object_transform_layer.set_transformer(object_transformer);
-    /// ```
-    #[llvm_versions(13.0..=latest)]
-    pub fn set_transformer(self, object_transformer: Box<dyn ObjectTransformer + 'jit>) {
-        *self.lljit.object_transformer.borrow_mut() = Some(object_transformer);
-        unsafe {
-            LLVMOrcObjectTransformLayerSetTransform(
-                self.object_transform_layer,
-                object_transform_layer_transform_function,
-                transmute::<&ObjectTransformerCtx<'jit>, _>(
-                    self.lljit.object_transformer.borrow().as_ref().unwrap(),
-                ),
-            );
-        }
-    }
-}
-
-type ObjectTransformerCtx<'jit> = Box<dyn ObjectTransformer + 'jit>;
-
-#[llvm_versions(13.0..=latest)]
-#[no_mangle]
-extern "C" fn object_transform_layer_transform_function(
-    ctx: *mut c_void,
-    object_in_out: *mut LLVMMemoryBufferRef,
-) -> LLVMErrorRef {
-    let object_transformer: &mut ObjectTransformerCtx = unsafe { transmute(ctx) };
-    match object_transformer.transform(MemoryBufferRef::new(object_in_out)) {
-        Ok(()) => ptr::null_mut(),
-        Err(llvm_error) => {
-            unsafe {
-                MemoryBufferRef::new(object_in_out).set_memory_buffer_unsafe(ptr::null_mut());
-            }
-            llvm_error.error
-        }
-    }
-}
-
-pub trait ObjectTransformer {
-    fn transform(&mut self, object_in_out: MemoryBufferRef) -> Result<(), LLVMError>;
-}
-
-impl<F> ObjectTransformer for F
-where
-    F: FnMut(MemoryBufferRef) -> Result<(), LLVMError>,
-{
-    fn transform(&mut self, object_in_out: MemoryBufferRef) -> Result<(), LLVMError> {
-        self(object_in_out)
-    }
-}
-
-#[llvm_versions(13.0..=latest)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+#[repr(transparent)]
 pub struct IRTransformLayer<'jit> {
     ir_transform_layer: LLVMOrcIRTransformLayerRef,
     _marker: PhantomData<&'jit ()>,
@@ -638,44 +551,30 @@ impl<'jit> IRTransformLayer<'jit> {
 #[llvm_versions(12.0..=latest)]
 #[llvm_versioned_item]
 #[derive(Debug)]
-pub struct MaterializationUnit<'jit> {
+pub struct MaterializationUnit {
     materialization_unit: LLVMOrcMaterializationUnitRef,
-
-    #[llvm_versions(13.0..=latest)]
-    materializer: Option<*mut (dyn Materializer + 'jit)>,
-    _marker: PhantomData<&'jit ()>,
 }
 
 #[llvm_versions(12.0..=latest)]
-impl<'jit> MaterializationUnit<'jit> {
+impl MaterializationUnit {
     unsafe fn new(materialization_unit: LLVMOrcMaterializationUnitRef) -> Self {
         assert!(!materialization_unit.is_null());
         MaterializationUnit {
             materialization_unit,
-            #[cfg(not(any(feature = "llvm11-0", feature = "llvm12-0")))]
-            materializer: None,
-            _marker: PhantomData,
         }
     }
 
     #[llvm_versions(13.0..=latest)]
-    pub fn create(
+    pub fn create<'jit>(
         name: &str,
         mut symbols: SymbolFlagsMapPairs,
         static_initializer: Option<SymbolStringPoolEntry>,
         materializer: Box<(dyn Materializer + 'jit)>,
     ) -> Self {
-        let mut materialization_unit = MaterializationUnit {
-            materialization_unit: ptr::null_mut(),
-            materializer: Some(Box::leak(materializer)),
-            _marker: PhantomData,
-        };
-        let materialization_unit_ref = unsafe {
-            LLVMOrcCreateCustomMaterializationUnit(
+        unsafe {
+            MaterializationUnit::new(LLVMOrcCreateCustomMaterializationUnit(
                 to_c_str(name).as_ptr(),
-                transmute::<&MaterializationUnitCtx<'jit>, _>(
-                    materialization_unit.materializer.as_ref().unwrap(),
-                ),
+                transmute::<*mut MaterializationUnitCtx, _>(Box::into_raw(Box::new(materializer))),
                 symbols.raw_ptr(),
                 symbols.len(),
                 static_initializer
@@ -684,19 +583,13 @@ impl<'jit> MaterializationUnit<'jit> {
                 materialization_unit_materialize,
                 materialization_unit_discard,
                 materialization_unit_destroy,
-            )
-        };
-        assert!(!materialization_unit_ref.is_null());
-        materialization_unit.materialization_unit = materialization_unit_ref;
-        materialization_unit
+            ))
+        }
     }
 
     pub fn from_absolute_symbols(mut symbols: SymbolMapPairs) -> Self {
         unsafe {
-            MaterializationUnit::new(LLVMOrcAbsoluteSymbols(
-                symbols.pairs.as_mut_ptr(),
-                symbols.pairs.len(),
-            ))
+            MaterializationUnit::new(LLVMOrcAbsoluteSymbols(symbols.raw_ptr(), symbols.len()))
         }
     }
 
@@ -720,7 +613,7 @@ impl<'jit> MaterializationUnit<'jit> {
 }
 
 #[llvm_versions(12.0..=latest)]
-impl Drop for MaterializationUnit<'_> {
+impl Drop for MaterializationUnit {
     fn drop(&mut self) {
         unsafe {
             LLVMOrcDisposeMaterializationUnit(self.materialization_unit);
@@ -729,7 +622,7 @@ impl Drop for MaterializationUnit<'_> {
 }
 
 #[llvm_versions(13.0..=latest)]
-type MaterializationUnitCtx<'jit> = *mut (dyn Materializer + 'jit);
+type MaterializationUnitCtx<'jit> = Box<dyn Materializer + 'jit>;
 
 #[llvm_versions(13.0..=latest)]
 #[no_mangle]
@@ -738,14 +631,12 @@ extern "C" fn materialization_unit_materialize(
     materialization_responsibility: LLVMOrcMaterializationResponsibilityRef,
 ) {
     unsafe {
-        let materializer: &MaterializationUnitCtx = transmute(ctx);
-        materializer
-            .as_mut()
-            .unwrap()
-            .materialize(MaterializationResponsibility::new(
-                materialization_responsibility,
-            ));
-        drop(Box::from_raw(*materializer));
+        let materializer: &mut MaterializationUnitCtx = transmute(ctx);
+        materializer.materialize(MaterializationResponsibility::new(
+            materialization_responsibility,
+        ));
+        let materializer: *mut MaterializationUnitCtx = transmute(ctx);
+        drop(Box::from_raw(materializer));
     }
 }
 
@@ -757,11 +648,12 @@ extern "C" fn materialization_unit_discard(
     symbol: LLVMOrcSymbolStringPoolEntryRef,
 ) {
     unsafe {
-        let materializer: &MaterializationUnitCtx = transmute(ctx);
-        materializer
-            .as_mut()
-            .unwrap()
-            .discard(JITDylib::new(jit_dylib), SymbolStringPoolEntry::new(symbol));
+        let materializer: &mut MaterializationUnitCtx = transmute(ctx);
+        let jit_dylib = JITDylib::new(jit_dylib);
+        let symbol = SymbolStringPoolEntry::new(symbol);
+        materializer.discard(&jit_dylib, &symbol);
+        forget(jit_dylib);
+        forget(symbol);
     }
 }
 
@@ -769,20 +661,39 @@ extern "C" fn materialization_unit_discard(
 #[no_mangle]
 extern "C" fn materialization_unit_destroy(ctx: *mut c_void) {
     unsafe {
-        let materializer: &MaterializationUnitCtx = transmute(ctx);
-        drop(Box::from_raw(*materializer))
+        let materializer: *mut MaterializationUnitCtx = transmute(ctx);
+        drop(Box::from_raw(materializer));
     }
 }
 
 #[llvm_versions(13.0..=latest)]
 pub trait Materializer {
     fn materialize(&mut self, materialization_responsibility: MaterializationResponsibility);
-    fn discard(&mut self, jit_dylib: JITDylib, symbol: SymbolStringPoolEntry);
+    fn discard(&mut self, jit_dylib: &JITDylib, symbol: &SymbolStringPoolEntry);
 }
 
 #[llvm_versions(13.0..=latest)]
-#[must_use]
+impl<M, D> Materializer for (M, D)
+where
+    M: FnMut(MaterializationResponsibility),
+    D: FnMut(&JITDylib, &SymbolStringPoolEntry),
+{
+    fn materialize(&mut self, materialization_responsibility: MaterializationResponsibility) {
+        let (materialize, _) = self;
+        materialize(materialization_responsibility)
+    }
+
+    fn discard(&mut self, jit_dylib: &JITDylib, symbol: &SymbolStringPoolEntry) {
+        let (_, discard) = self;
+        discard(jit_dylib, symbol)
+    }
+}
+
+/// Tracks responsibility for materialization. An instance is passed to
+/// the [`Materializer::materialize`] function, when a symbol is requested.
+#[llvm_versions(13.0..=latest)]
 #[derive(Debug)]
+#[must_use]
 pub struct MaterializationResponsibility {
     materialization_responsibility: LLVMOrcMaterializationResponsibilityRef,
 }
@@ -796,14 +707,53 @@ impl MaterializationResponsibility {
         }
     }
 
-    pub fn get_target_jit_dylib<'a>(&'a self) -> JITDylib<'a> {
+    /// Returns the target [`JITDylib`].
+    /// ```
+    /// use inkwell::orc2::{
+    ///     JITDylib, MaterializationResponsibility, Materializer, SymbolStringPoolEntry
+    /// };
+    ///
+    /// struct MyMaterializer {}
+    ///
+    /// impl Materializer for MyMaterializer {
+    ///     fn materialize(&mut self, materialization_responsibility: MaterializationResponsibility) {
+    ///         let jit_dylib = materialization_responsibility.get_target_jit_dylib();
+    ///         // materialize implementation...
+    ///     }
+    ///
+    ///     fn discard(&mut self, jit_dylib: &JITDylib, symbol: &SymbolStringPoolEntry) {
+    ///         // discard implementation...
+    ///     }
+    /// }
+    /// ```
+    pub fn get_target_jit_dylib(&self) -> JITDylib {
         unsafe {
             JITDylib::new(LLVMOrcMaterializationResponsibilityGetTargetDylib(
                 self.materialization_responsibility,
             ))
         }
     }
-    pub fn get_execution_session<'a>(&'a self) -> ExecutionSession<'a> {
+
+    /// Returns the [`ExecutionSession`] where the symbol is requested.
+    /// ```
+    /// use inkwell::orc2::{
+    ///     JITDylib, MaterializationResponsibility, Materializer, SymbolStringPoolEntry
+    /// };
+    ///
+    /// struct MyMaterializer {}
+    ///
+    /// impl Materializer for MyMaterializer {
+    ///     fn materialize(&mut self, materialization_responsibility: MaterializationResponsibility) {
+    ///         let execution_session = materialization_responsibility.get_execution_session();
+    ///         // materialize implementation...
+    ///     }
+    ///
+    ///     fn discard(&mut self, jit_dylib: &JITDylib, symbol: &SymbolStringPoolEntry) {
+    ///         // discard implementation...
+    ///     }
+    /// }
+    /// ```
+    pub fn get_execution_session(&self) -> ExecutionSession {
         unsafe {
             ExecutionSession::new_borrowed(LLVMOrcMaterializationResponsibilityGetExecutionSession(
                 self.materialization_responsibility,
@@ -811,6 +761,45 @@ impl MaterializationResponsibility {
         }
     }
 
+    /// Returns the symbol flags map ([`SymbolFlagsMapPair`]) this instance.
+    /// ```
+    /// use std::iter::{self, FromIterator};
+    /// use inkwell::orc2::{
+    ///     lljit::LLJIT, JITDylib, MaterializationResponsibility, MaterializationUnit,
+    ///     SymbolFlags, SymbolFlagsMapPairs, SymbolStringPoolEntry,
+    /// };
+    ///
+    /// let lljit = LLJIT::create().expect("LLJIT::create failed");
+    /// let symbols = SymbolFlagsMapPairs::from_iter(
+    ///     vec!["main", "fourty_two"]
+    ///         .into_iter()
+    ///         .map(|name| lljit.mangle_and_intern(name))
+    ///         .zip(iter::repeat(SymbolFlags::new(0, 0))),
+    /// );
+    ///
+    /// let materialization_unit = MaterializationUnit::create(
+    ///     "my_materialization_unit",
+    ///     symbols,
+    ///     None,
+    ///     Box::new((
+    ///         |materialization_responsibility: MaterializationResponsibility| {
+    ///             let symbols = materialization_responsibility.get_symbols(); // "main", "fourty_two"
+    ///             // materialize implementation...
+    /// #            let mut symbols = symbols
+    /// #                    .names()
+    /// #                    .map(|name| name.to_string())
+    /// #                    .collect::<Vec<_>>();
+    /// #            symbols.sort_unstable();
+    /// #            assert_eq!(symbols, vec!["fourty_two", "main"]);
+    /// #            materialization_responsibility.fail_materialization();
+    ///         },
+    ///         |jit_dylib: &JITDylib, symbol: &SymbolStringPoolEntry| {},
+    ///     )),
+    /// );
+    ///
+    /// lljit.get_main_jit_dylib().define(materialization_unit);
+    /// lljit.get_function_address("main");
+    /// ```
     pub fn get_symbols(&self) -> SymbolFlagsMapPairs {
         let mut num_pairs: usize = 0;
         unsafe {
@@ -822,6 +811,25 @@ impl MaterializationResponsibility {
         }
     }
 
+    /// Returns the static initializer symbol, if present.
+    /// ```
+    /// use inkwell::orc2::{
+    ///     JITDylib, MaterializationResponsibility, Materializer, SymbolStringPoolEntry
+    /// };
+    ///
+    /// struct MyMaterializer {}
+    ///
+    /// impl Materializer for MyMaterializer {
+    ///     fn materialize(&mut self, materialization_responsibility: MaterializationResponsibility) {
+    ///         let initializer_symbol = materialization_responsibility.get_static_initializer_symbol();
+    ///         // materialize implementation...
+    ///     }
+    ///
+    ///     fn discard(&mut self, jit_dylib: &JITDylib, symbol: &SymbolStringPoolEntry) {
+    ///         // discard implementation...
+    ///     }
+    /// }
+    /// ```
     pub fn get_static_initializer_symbol(&self) -> Option<SymbolStringPoolEntry> {
         let ptr = unsafe {
             LLVMOrcMaterializationResponsibilityGetInitializerSymbol(
@@ -835,6 +843,47 @@ impl MaterializationResponsibility {
         }
     }
 
+    /// Return the requested symbols.
+    /// ```
+    /// use std::iter::{self, FromIterator};
+    /// use inkwell::orc2::{
+    ///     lljit::LLJIT, JITDylib, MaterializationResponsibility, MaterializationUnit,
+    ///     SymbolFlags, SymbolFlagsMapPairs, SymbolStringPoolEntry,
+    /// };
+    ///
+    /// let lljit = LLJIT::create().expect("LLJIT::create failed");
+    /// let symbols = SymbolFlagsMapPairs::from_iter(
+    ///     vec!["main", "fourty_two"]
+    ///         .into_iter()
+    ///         .map(|name| lljit.mangle_and_intern(name))
+    ///         .zip(iter::repeat(SymbolFlags::new(0, 0))),
+    /// );
+    ///
+    /// let materialization_unit = MaterializationUnit::create(
+    ///     "my_materialization_unit",
+    ///     symbols,
+    ///     None,
+    ///     Box::new((
+    ///         |materialization_responsibility: MaterializationResponsibility| {
+    ///             let symbols = materialization_responsibility.get_requested_symbols(); // "main"
+    ///             // materialize implementation...
+    /// #            assert_eq!(
+    /// #                symbols
+    /// #                    .as_ref()
+    /// #                    .into_iter()
+    /// #                    .map(|name| name.to_string())
+    /// #                    .collect::<Vec<_>>(),
+    /// #                vec!["main"]
+    /// #            );
+    /// #            materialization_responsibility.fail_materialization();
+    ///         },
+    ///         |jit_dylib: &JITDylib, symbol: &SymbolStringPoolEntry| {},
+    ///     )),
+    /// );
+    ///
+    /// lljit.get_main_jit_dylib().define(materialization_unit);
+    /// lljit.get_function_address("main");
+    /// ```
     pub fn get_requested_symbols(&self) -> SymbolStringPoolEntries {
         let mut num_symbols = 0;
         unsafe {
@@ -847,22 +896,99 @@ impl MaterializationResponsibility {
         }
     }
 
+    /// Notify the target [`JITDylib`] that the `symbols` have been resolved.
+    /// This updates the addresses of the symbols in the [`JITDylib`].
+    /// Symbols can be resolved in sub sets of all the symbols.
+    /// All symbols have to be resolved when calling [`notify_emitted`](Self::notify_emitted).
+    /// ```
+    /// use inkwell::orc2::{
+    ///     JITDylib, MaterializationResponsibility, Materializer, SymbolStringPoolEntry
+    /// };
+    /// # use inkwell::orc2::SymbolMapPairs;
+    ///
+    /// struct MyMaterializer {}
+    ///
+    /// impl Materializer for MyMaterializer {
+    ///     fn materialize(&mut self, materialization_responsibility: MaterializationResponsibility) {
+    ///         // materialize implementation...
+    /// #        let all_symbols = SymbolMapPairs::new(vec![]);
+    ///         materialization_responsibility.notify_resolved(all_symbols);
+    ///         materialization_responsibility.notify_emitted();
+    ///     }
+    ///
+    ///     fn discard(&mut self, jit_dylib: &JITDylib, symbol: &SymbolStringPoolEntry) {
+    ///         // discard implementation...
+    ///     }
+    /// }
+    /// ```
+    /// In case of an error [`fail_materialization`](Self::fail_materialization) should be called.
     pub fn notify_resolved(&self, mut symbols: SymbolMapPairs) -> Result<(), LLVMError> {
         LLVMError::new(unsafe {
             LLVMOrcMaterializationResponsibilityNotifyResolved(
                 self.materialization_responsibility,
-                symbols.pairs.as_mut_ptr(),
-                symbols.pairs.len(),
+                symbols.raw_ptr(),
+                symbols.len(),
             )
         })
     }
 
-    pub fn notify_emitted(&self) -> Result<(), LLVMError> {
+    /// Notify the [`JITDylib`] that all symbols have been emitted.
+    /// This method will return an [`LLVMError`] if any symbols being resolved
+    /// have been moved to the error state due to the failure of a dependency.
+    /// ```
+    /// use inkwell::orc2::{
+    ///     JITDylib, MaterializationResponsibility, Materializer, SymbolStringPoolEntry
+    /// };
+    ///
+    /// struct MyMaterializer {}
+    ///
+    /// impl Materializer for MyMaterializer {
+    ///     fn materialize(&mut self, materialization_responsibility: MaterializationResponsibility) {
+    ///         // materialize implementation...
+    ///         if let Err((materialization_responsibility, error)) =
+    ///             materialization_responsibility.notify_emitted()
+    ///         {
+    ///             // Log the error...
+    ///             materialization_responsibility.fail_materialization();
+    ///         }
+    ///     }
+    ///
+    ///     fn discard(&mut self, jit_dylib: &JITDylib, symbol: &SymbolStringPoolEntry) {
+    ///         // discard implementation...
+    ///     }
+    /// }
+    /// ```
+    pub fn notify_emitted(self) -> Result<(), (Self, LLVMError)> {
         LLVMError::new(unsafe {
             LLVMOrcMaterializationResponsibilityNotifyEmitted(self.materialization_responsibility)
         })
+        .map_err(|err| (self, err))
     }
 
+    /// Attempt to claim responsibility for new definitions. This is method is
+    /// usefull if new symbols are added by the materialization unit in the
+    /// compilation process.
+    /// ```
+    /// use inkwell::orc2::{
+    ///     JITDylib, MaterializationResponsibility, Materializer, SymbolStringPoolEntry
+    /// };
+    /// # use inkwell::orc2::SymbolFlagsMapPairs;
+    ///
+    /// struct MyMaterializer {}
+    ///
+    /// impl Materializer for MyMaterializer {
+    ///     fn materialize(&mut self, materialization_responsibility: MaterializationResponsibility) {
+    ///         // materialize implementation generating new_symbols...
+    /// #        let new_symbols = SymbolFlagsMapPairs::new(vec![]);
+    ///         materialization_responsibility.define_materializing(new_symbols);
+    ///         // finish materialize implementation...
+    ///     }
+    ///
+    ///     fn discard(&mut self, jit_dylib: &JITDylib, symbol: &SymbolStringPoolEntry) {
+    ///         // discard implementation...
+    ///     }
+    /// }
+    /// ```
     pub fn define_materializing(&self, mut pairs: SymbolFlagsMapPairs) -> Result<(), LLVMError> {
         LLVMError::new(unsafe {
             LLVMOrcMaterializationResponsibilityDefineMaterializing(
@@ -873,6 +999,29 @@ impl MaterializationResponsibility {
         })
     }
 
+    /// Notify all not-yet-emitted covered by this instance that an
+    /// error has occurred.
+    /// This will remove all symbols covered by this `MaterializationResponsibility`
+    /// from the target [`JITDylib`], and send an error to any queries
+    /// waiting on these symbols.
+    /// ```
+    /// use inkwell::orc2::{
+    ///     JITDylib, MaterializationResponsibility, Materializer, SymbolStringPoolEntry
+    /// };
+    ///
+    /// struct MyMaterializer {}
+    ///
+    /// impl Materializer for MyMaterializer {
+    ///     fn materialize(&mut self, materialization_responsibility: MaterializationResponsibility) {
+    ///         // materialize implementation...
+    ///         materialization_responsibility.fail_materialization();
+    ///     }
+    ///
+    ///     fn discard(&mut self, jit_dylib: &JITDylib, symbol: &SymbolStringPoolEntry) {
+    ///         // discard implementation...
+    ///     }
+    /// }
+    /// ```
     pub fn fail_materialization(&self) {
         unsafe {
             LLVMOrcMaterializationResponsibilityFailMaterialization(
@@ -881,15 +1030,78 @@ impl MaterializationResponsibility {
         }
     }
 
-    pub fn replace(&self, materialization_unit: &MaterializationUnit) -> Result<(), LLVMError> {
-        LLVMError::new(unsafe {
+    /// Transfers responsibility to `materialization_unit` for all symbols
+    /// defined by `materialization_unit`.This allows materializers to
+    /// break up work based on run-time information (e.g. by introspecting
+    /// which symbols have actually been looked up and materializing only those).
+    /// ```
+    /// use std::{collections::HashSet, iter::FromIterator};
+    ///
+    /// use inkwell::orc2::{
+    ///     JITDylib, MaterializationResponsibility, MaterializationUnit, Materializer,
+    ///     SymbolFlagsMapPairs, SymbolStringPoolEntry,
+    /// };
+    ///
+    /// #[derive(Debug, Clone)]
+    /// struct MaterializeOnlyRequested<M> {
+    ///     materializer: M,
+    ///     static_initializer_symbol: Option<SymbolStringPoolEntry>,
+    /// }
+    ///
+    /// impl<M> Materializer for MaterializeOnlyRequested<M>
+    /// where
+    ///     M: Materializer + Clone,
+    /// {
+    ///     fn materialize(&mut self, materialization_responsibility: MaterializationResponsibility) {
+    ///         let requested_symbols: HashSet<_> = HashSet::from_iter(
+    ///             materialization_responsibility
+    ///                 .get_requested_symbols()
+    ///                 .as_ref()
+    ///                 .into_iter()
+    ///                 .cloned(),
+    ///         );
+    ///         let not_requested_symbols: Vec<_> = materialization_responsibility
+    ///             .get_symbols()
+    ///             .into_iter()
+    ///             .filter(|symbol| !requested_symbols.contains(symbol.get_name()))
+    ///             .collect();
+    ///
+    ///         // Create new materialization unit for not requested symbols
+    ///         if !not_requested_symbols.is_empty() {
+    ///             let materialization_unit = MaterializationUnit::create(
+    ///                 "compile_only_requested",
+    ///                 SymbolFlagsMapPairs::new(not_requested_symbols),
+    ///                 self.static_initializer_symbol.clone(),
+    ///                 Box::new(self.clone()),
+    ///             );
+    ///             if let Err(error) = materialization_responsibility.replace(materialization_unit) {
+    ///                 // Log error...
+    ///                 eprintln!("{}", error.get_message());
+    ///                 materialization_responsibility.fail_materialization();
+    ///                 return;
+    ///             }
+    ///         }
+    ///         self.materializer
+    ///             .materialize(materialization_responsibility);
+    ///     }
+    ///
+    ///     fn discard(&mut self, _jit_dylib: &JITDylib, _symbol: &SymbolStringPoolEntry) {}
+    /// }
+    /// ```
+    pub fn replace(&self, materialization_unit: MaterializationUnit) -> Result<(), LLVMError> {
+        let result = LLVMError::new(unsafe {
             LLVMOrcMaterializationResponsibilityReplace(
                 self.materialization_responsibility,
                 materialization_unit.materialization_unit,
             )
-        })
+        });
+        forget(materialization_unit);
+        result
     }
 
+    /// Delegates responsibility for the given `symbols` to the returned
+    /// `MaterializationResponsibility`. Useful for breaking up work between
+    /// threads, or different kinds of materialization processes.
     pub fn delegate(
         &self,
         mut symbols: Vec<SymbolStringPoolEntry>,
@@ -906,6 +1118,7 @@ impl MaterializationResponsibility {
         Ok(unsafe { MaterializationResponsibility::new(ptr) })
     }
 
+    /// Adds dependencies to a symbol `name` that the `MaterializationResponsibility`.
     pub fn add_dependencies(
         &self,
         name: SymbolStringPoolEntry,
@@ -915,18 +1128,19 @@ impl MaterializationResponsibility {
             LLVMOrcMaterializationResponsibilityAddDependencies(
                 self.materialization_responsibility,
                 name.entry,
-                dependencies.pairs.as_mut_ptr(),
-                dependencies.pairs.len(),
+                dependencies.raw_ptr(),
+                dependencies.len(),
             )
         }
     }
 
+    /// Adds dependencies to all symbols of the `MaterializationResponsibility`.
     pub fn add_dependencies_for_all(&self, mut dependencies: DependenceMapPairs) {
         unsafe {
             LLVMOrcMaterializationResponsibilityAddDependenciesForAll(
                 self.materialization_responsibility,
-                dependencies.pairs.as_mut_ptr(),
-                dependencies.pairs.len(),
+                dependencies.raw_ptr(),
+                dependencies.len(),
             );
         }
     }
@@ -950,20 +1164,6 @@ impl SymbolFlagsMapPairs {
         SymbolFlagsMapPairs { pairs }
     }
 
-    pub fn zip<N, F>(names: N, flags: F) -> Self
-    where
-        N: IntoIterator<Item = SymbolStringPoolEntry>,
-        F: IntoIterator<Item = SymbolFlags>,
-    {
-        SymbolFlagsMapPairs {
-            pairs: names
-                .into_iter()
-                .zip(flags.into_iter())
-                .map(|(name, flags)| SymbolFlagsMapPair::new(name, flags))
-                .collect(),
-        }
-    }
-
     fn raw_ptr(&mut self) -> LLVMOrcCSymbolFlagsMapPairs {
         unsafe { transmute(self.pairs.as_mut_ptr()) }
     }
@@ -972,12 +1172,20 @@ impl SymbolFlagsMapPairs {
         self.pairs.len()
     }
 
-    pub fn names(&self) -> impl Iterator<Item = &SymbolStringPoolEntry> {
+    pub fn names_iter(&self) -> impl Iterator<Item = &SymbolStringPoolEntry> {
         self.pairs.iter().map(|pair| pair.get_name())
     }
 
-    pub fn flags(&self) -> impl Iterator<Item = &SymbolFlags> {
+    pub fn names(self) -> impl Iterator<Item = SymbolStringPoolEntry> {
+        self.pairs.into_iter().map(|pair| pair.name())
+    }
+
+    pub fn flags_iter(&self) -> impl Iterator<Item = &SymbolFlags> {
         self.pairs.iter().map(|pair| pair.get_flags())
+    }
+
+    pub fn flags(self) -> impl Iterator<Item = SymbolFlags> {
+        self.pairs.into_iter().map(|pair| pair.flags())
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &SymbolFlagsMapPair> {
@@ -997,6 +1205,30 @@ impl IntoIterator for SymbolFlagsMapPairs {
 
     fn into_iter(self) -> Self::IntoIter {
         self.pairs.into_iter()
+    }
+}
+
+#[llvm_versions(13.0..=latest)]
+impl FromIterator<(SymbolStringPoolEntry, SymbolFlags)> for SymbolFlagsMapPairs {
+    fn from_iter<T>(iter: T) -> Self
+    where
+        T: IntoIterator<Item = (SymbolStringPoolEntry, SymbolFlags)>,
+    {
+        SymbolFlagsMapPairs::new(
+            iter.into_iter()
+                .map(|(name, flags)| SymbolFlagsMapPair::new(name, flags))
+                .collect(),
+        )
+    }
+}
+
+#[llvm_versions(13.0..=latest)]
+impl FromIterator<SymbolFlagsMapPair> for SymbolFlagsMapPairs {
+    fn from_iter<T>(iter: T) -> Self
+    where
+        T: IntoIterator<Item = SymbolFlagsMapPair>,
+    {
+        SymbolFlagsMapPairs::new(iter.into_iter().collect())
     }
 }
 
@@ -1021,8 +1253,20 @@ impl SymbolFlagsMapPair {
         unsafe { transmute(&self.pair.Name) }
     }
 
+    pub fn name(self) -> SymbolStringPoolEntry {
+        self.destruct().0
+    }
+
     pub fn get_flags(&self) -> &SymbolFlags {
         unsafe { transmute(&self.pair.Flags) }
+    }
+
+    pub fn flags(self) -> SymbolFlags {
+        self.destruct().1
+    }
+
+    pub fn destruct(self) -> (SymbolStringPoolEntry, SymbolFlags) {
+        unsafe { (transmute(self.pair.Name), transmute(self.pair.Flags)) }
     }
 }
 
@@ -1053,12 +1297,12 @@ impl SymbolFlags {
         }
     }
 
-    pub fn get_generic_flags(&self) -> &u8 {
-        &self.flags.GenericFlags
+    pub fn get_generic_flags(&self) -> u8 {
+        self.flags.GenericFlags
     }
 
-    pub fn get_target_flags(&self) -> &u8 {
-        &self.flags.TargetFlags
+    pub fn get_target_flags(&self) -> u8 {
+        self.flags.TargetFlags
     }
 }
 
@@ -1073,8 +1317,8 @@ impl Clone for SymbolFlags {
 impl fmt::Debug for SymbolFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("SymbolFlags")
-            .field("generic_flags", self.get_generic_flags())
-            .field("target_flags", self.get_target_flags())
+            .field("generic_flags", &self.get_generic_flags())
+            .field("target_flags", &self.get_target_flags())
             .finish()
     }
 }
@@ -1082,7 +1326,165 @@ impl fmt::Debug for SymbolFlags {
 #[llvm_versions(12.0..=latest)]
 #[derive(Debug)]
 pub struct SymbolMapPairs {
-    pairs: Vec<LLVMJITCSymbolMapPair>,
+    pairs: Vec<SymbolMapPair>,
+}
+
+#[llvm_versions(12.0..=latest)]
+impl SymbolMapPairs {
+    pub fn new(pairs: Vec<SymbolMapPair>) -> Self {
+        SymbolMapPairs { pairs }
+    }
+
+    unsafe fn raw_ptr(&mut self) -> LLVMOrcCSymbolMapPairs {
+        transmute(self.pairs.as_mut_ptr())
+    }
+
+    pub fn len(&self) -> usize {
+        self.pairs.len()
+    }
+
+    pub fn names(self) -> impl Iterator<Item = SymbolStringPoolEntry> {
+        self.pairs.into_iter().map(|pair| pair.name())
+    }
+
+    pub fn names_iter(&self) -> impl Iterator<Item = &SymbolStringPoolEntry> {
+        self.pairs.iter().map(|pair| pair.get_name())
+    }
+
+    pub fn symbols(self) -> impl Iterator<Item = EvaluatedSymbol> {
+        self.pairs.into_iter().map(|pair| pair.symbol())
+    }
+
+    pub fn symbols_iter(&self) -> impl Iterator<Item = &EvaluatedSymbol> {
+        self.pairs.iter().map(|pair| pair.get_symbol())
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &SymbolMapPair> {
+        self.pairs.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut SymbolMapPair> {
+        self.pairs.iter_mut()
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
+impl IntoIterator for SymbolMapPairs {
+    type Item = SymbolMapPair;
+
+    type IntoIter = vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.pairs.into_iter()
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
+impl FromIterator<(SymbolStringPoolEntry, EvaluatedSymbol)> for SymbolMapPairs {
+    fn from_iter<T>(iter: T) -> Self
+    where
+        T: IntoIterator<Item = (SymbolStringPoolEntry, EvaluatedSymbol)>,
+    {
+        SymbolMapPairs::new(
+            iter.into_iter()
+                .map(|(name, symbol)| SymbolMapPair::new(name, symbol))
+                .collect(),
+        )
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
+impl FromIterator<SymbolMapPair> for SymbolMapPairs {
+    fn from_iter<T>(iter: T) -> Self
+    where
+        T: IntoIterator<Item = SymbolMapPair>,
+    {
+        SymbolMapPairs::new(iter.into_iter().collect())
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
+#[repr(transparent)]
+pub struct SymbolMapPair {
+    pair: LLVMJITCSymbolMapPair,
+}
+
+#[llvm_versions(12.0..=latest)]
+impl SymbolMapPair {
+    pub fn new(name: SymbolStringPoolEntry, symbol: EvaluatedSymbol) -> Self {
+        SymbolMapPair {
+            pair: LLVMJITCSymbolMapPair {
+                Name: unsafe { transmute(name) },
+                Sym: unsafe { transmute(symbol) },
+            },
+        }
+    }
+
+    pub fn get_name(&self) -> &SymbolStringPoolEntry {
+        unsafe { transmute(&self.pair.Name) }
+    }
+
+    pub fn name(self) -> SymbolStringPoolEntry {
+        self.destruct().0
+    }
+
+    pub fn get_symbol(&self) -> &EvaluatedSymbol {
+        unsafe { transmute(&self.pair.Sym) }
+    }
+
+    pub fn symbol(self) -> EvaluatedSymbol {
+        self.destruct().1
+    }
+
+    pub fn destruct(self) -> (SymbolStringPoolEntry, EvaluatedSymbol) {
+        unsafe { (transmute(self.pair.Name), transmute(self.pair.Sym)) }
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
+impl fmt::Debug for SymbolMapPair {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SymbolMapPair")
+            .field("name", self.get_name())
+            .field("symbol", self.get_symbol())
+            .finish()
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
+#[repr(transparent)]
+pub struct EvaluatedSymbol {
+    symbol: LLVMJITEvaluatedSymbol,
+}
+
+#[llvm_versions(12.0..=latest)]
+impl EvaluatedSymbol {
+    pub fn new(address: u64, flags: SymbolFlags) -> Self {
+        EvaluatedSymbol {
+            symbol: LLVMJITEvaluatedSymbol {
+                Address: unsafe { transmute(address) },
+                Flags: unsafe { transmute(flags) },
+            },
+        }
+    }
+
+    pub fn get_address(&self) -> u64 {
+        self.symbol.Address
+    }
+
+    pub fn get_flags(&self) -> &SymbolFlags {
+        unsafe { transmute(&self.symbol.Flags) }
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
+impl fmt::Debug for EvaluatedSymbol {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("EvaluatedSymbol")
+            .field("address", &self.get_address())
+            .field("flags", self.get_flags())
+            .finish()
+    }
 }
 
 #[llvm_versions(13.0..=latest)]
@@ -1093,11 +1495,163 @@ pub struct SymbolAliasMapPairs {
 
 #[llvm_versions(13.0..=latest)]
 #[derive(Debug)]
-pub struct DependenceMapPairs {
-    pairs: Vec<LLVMOrcCDependenceMapPair>,
+pub struct DependenceMapPairs<'jit> {
+    pairs: Vec<DependenceMapPair<'jit>>,
 }
 
-#[derive(Eq, PartialEq)]
+#[llvm_versions(13.0..=latest)]
+impl<'jit> DependenceMapPairs<'jit> {
+    pub fn new(pairs: Vec<DependenceMapPair<'jit>>) -> Self {
+        DependenceMapPairs { pairs }
+    }
+
+    unsafe fn raw_ptr(&mut self) -> LLVMOrcCDependenceMapPairs {
+        transmute(self.pairs.as_mut_ptr())
+    }
+
+    pub fn len(&self) -> usize {
+        self.pairs.len()
+    }
+
+    pub fn jit_dylibs(self) -> impl Iterator<Item = JITDylib<'jit>> {
+        self.pairs.into_iter().map(|pair| pair.jit_dylib())
+    }
+
+    pub fn jit_dylibs_iter(&self) -> impl Iterator<Item = &SymbolStringPoolEntry> {
+        self.pairs.iter().map(|pair| pair.get_jit_dylib())
+    }
+
+    pub fn names(self) -> impl Iterator<Item = Vec<SymbolStringPoolEntry>> {
+        let iter: vec::IntoIter<DependenceMapPair<'_>> =
+            unsafe { transmute(self.pairs.into_iter()) };
+        iter.map(|pair| pair.names())
+    }
+
+    pub fn names_iter(&self) -> impl Iterator<Item = &[SymbolStringPoolEntry]> {
+        self.pairs.iter().map(|pair| pair.get_names())
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &DependenceMapPair> {
+        self.pairs.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut DependenceMapPair<'jit>> {
+        self.pairs.iter_mut()
+    }
+}
+
+#[llvm_versions(13.0..=latest)]
+impl<'jit> IntoIterator for DependenceMapPairs<'jit> {
+    type Item = DependenceMapPair<'jit>;
+
+    type IntoIter = vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.pairs.into_iter()
+    }
+}
+
+#[llvm_versions(13.0..=latest)]
+impl<'jit> FromIterator<(JITDylib<'jit>, Vec<SymbolStringPoolEntry>)> for DependenceMapPairs<'jit> {
+    fn from_iter<T>(iter: T) -> Self
+    where
+        T: IntoIterator<Item = (JITDylib<'jit>, Vec<SymbolStringPoolEntry>)>,
+    {
+        DependenceMapPairs::new(
+            iter.into_iter()
+                .map(|(jit_dylib, names)| DependenceMapPair::new(jit_dylib, names))
+                .collect(),
+        )
+    }
+}
+
+#[llvm_versions(13.0..=latest)]
+impl<'jit> FromIterator<DependenceMapPair<'jit>> for DependenceMapPairs<'jit> {
+    fn from_iter<T>(iter: T) -> Self
+    where
+        T: IntoIterator<Item = DependenceMapPair<'jit>>,
+    {
+        DependenceMapPairs::new(iter.into_iter().collect())
+    }
+}
+
+#[llvm_versions(13.0..=latest)]
+#[repr(transparent)]
+pub struct DependenceMapPair<'jit> {
+    pair: LLVMOrcCDependenceMapPair,
+    _marker: PhantomData<&'jit ()>,
+}
+
+#[llvm_versions(13.0..=latest)]
+impl<'jit> DependenceMapPair<'jit> {
+    pub fn new(jit_dylib: JITDylib<'jit>, mut names: Vec<SymbolStringPoolEntry>) -> Self {
+        names.shrink_to_fit();
+        DependenceMapPair {
+            pair: LLVMOrcCDependenceMapPair {
+                JD: unsafe { transmute(jit_dylib) },
+                Names: LLVMOrcCSymbolsList {
+                    Symbols: unsafe { transmute(names.as_mut_ptr()) },
+                    Length: names.len(),
+                },
+            },
+            _marker: PhantomData,
+        }
+    }
+
+    pub fn get_jit_dylib(&self) -> &SymbolStringPoolEntry {
+        unsafe { transmute(&self.pair.JD) }
+    }
+
+    pub fn jit_dylib(self) -> JITDylib<'jit> {
+        self.destruct().0
+    }
+
+    pub fn get_names(&self) -> &[SymbolStringPoolEntry] {
+        unsafe { slice::from_raw_parts(transmute(self.pair.Names.Symbols), self.pair.Names.Length) }
+    }
+
+    pub fn names(self) -> Vec<SymbolStringPoolEntry> {
+        self.destruct().1
+    }
+
+    pub fn destruct(self) -> (JITDylib<'jit>, Vec<SymbolStringPoolEntry>) {
+        unsafe {
+            (
+                transmute(self.pair.JD),
+                Vec::from_raw_parts(
+                    transmute(self.pair.Names.Symbols),
+                    self.pair.Names.Length,
+                    self.pair.Names.Length,
+                ),
+            )
+        }
+    }
+}
+
+#[llvm_versions(13.0..=latest)]
+impl fmt::Debug for DependenceMapPair<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("DependenceMapPair")
+            .field("jit_dylib", &self.get_jit_dylib())
+            .field("names", &self.get_names())
+            .finish()
+    }
+}
+
+#[llvm_versions(13.0..=latest)]
+impl Drop for DependenceMapPair<'_> {
+    fn drop(&mut self) {
+        unsafe {
+            Vec::from_raw_parts(
+                self.pair.Names.Symbols,
+                self.pair.Names.Length,
+                self.pair.Names.Length,
+            );
+        }
+    }
+}
+
+#[derive(Eq, PartialEq, Hash)]
 #[repr(transparent)]
 pub struct SymbolStringPoolEntry {
     entry: LLVMOrcSymbolStringPoolEntryRef,
@@ -1138,6 +1692,13 @@ impl fmt::Debug for SymbolStringPoolEntry {
             .field("entry", &self.get_string())
             .field("ptr", &self.entry)
             .finish();
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
+impl fmt::Display for SymbolStringPoolEntry {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.get_string().to_string_lossy().fmt(f)
     }
 }
 

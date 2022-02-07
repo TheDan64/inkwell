@@ -9,12 +9,6 @@ use std::{
 
 use either::Either;
 use libc::{c_char, c_void};
-#[llvm_versions(13.0..=latest)]
-use llvm_sys::orc2::lljit::{
-    LLVMOrcLLJITGetDataLayoutStr, LLVMOrcLLJITGetIRTransformLayer, LLVMOrcLLJITGetObjLinkingLayer,
-    LLVMOrcLLJITGetObjTransformLayer,
-};
-use llvm_sys::orc2::LLVMOrcExecutionSessionRef;
 #[llvm_versions(12.0..=latest)]
 use llvm_sys::orc2::{
     lljit::{
@@ -28,6 +22,14 @@ use llvm_sys::orc2::{
     },
     LLVMOrcObjectLayerRef,
 };
+#[llvm_versions(13.0..=latest)]
+use llvm_sys::orc2::{
+    lljit::{
+        LLVMOrcLLJITGetDataLayoutStr, LLVMOrcLLJITGetIRTransformLayer,
+        LLVMOrcLLJITGetObjLinkingLayer, LLVMOrcLLJITGetObjTransformLayer,
+    },
+    LLVMOrcObjectTransformLayerSetTransform,
+};
 #[llvm_versions(11.0)]
 use llvm_sys::orc2::{
     LLVMOrcCreateLLJIT, LLVMOrcCreateLLJITBuilder, LLVMOrcDisposeLLJIT, LLVMOrcDisposeLLJITBuilder,
@@ -36,21 +38,23 @@ use llvm_sys::orc2::{
     LLVMOrcLLJITGetGlobalPrefix, LLVMOrcLLJITGetMainJITDylib, LLVMOrcLLJITGetTripleString,
     LLVMOrcLLJITLookup, LLVMOrcLLJITMangleAndIntern, LLVMOrcLLJITRef,
 };
+use llvm_sys::{
+    error::LLVMErrorRef, orc2::LLVMOrcExecutionSessionRef, prelude::LLVMMemoryBufferRef,
+};
 
 use crate::{
     data_layout::DataLayout,
     error::LLVMError,
-    memory_buffer::MemoryBuffer,
+    memory_buffer::{MemoryBuffer, MemoryBufferRef},
     support::{to_c_str, LLVMStringOrRaw, OwnedPtr},
     targets::{InitializationConfig, Target, TargetTriple},
 };
 
-use super::{
-    ExecutionSession, JITDylib, JITTargetMachineBuilder, ObjectTransformer, SymbolStringPoolEntry,
-    ThreadSafeModule,
-};
 #[llvm_versions(13.0..=latest)]
-use super::{IRTransformLayer, ObjectTransformLayer};
+use super::IRTransformLayer;
+use super::{
+    ExecutionSession, JITDylib, JITTargetMachineBuilder, SymbolStringPoolEntry, ThreadSafeModule,
+};
 #[llvm_versions(12.0..=latest)]
 use super::{ObjectLayer, ResourceTracker};
 
@@ -58,8 +62,8 @@ use super::{ObjectLayer, ResourceTracker};
 #[llvm_versioned_item]
 pub struct LLJIT<'jit> {
     pub(crate) lljit: LLVMOrcLLJITRef,
-    #[llvm_versions(12.0..=latest)]
-    pub(crate) object_transformer: RefCell<Option<Box<dyn ObjectTransformer + 'jit>>>,
+    #[llvm_versions(13.0..=latest)]
+    object_transformer: RefCell<Option<Box<dyn ObjectTransformer + 'jit>>>,
     _marker: PhantomData<&'jit ()>,
 }
 
@@ -76,7 +80,7 @@ impl<'jit> LLJIT<'jit> {
         assert!(!lljit.is_null());
         Ok(LLJIT {
             lljit,
-            #[cfg(not(feature = "llvm11-0"))]
+            #[cfg(not(any(feature = "llvm11-0", feature = "llvm12-0")))]
             object_transformer: RefCell::new(None),
             _marker: PhantomData,
         })
@@ -423,17 +427,32 @@ impl<'jit> LLJIT<'jit> {
         unsafe { ObjectLayer::new_borrowed(LLVMOrcLLJITGetObjLinkingLayer(self.lljit)) }
     }
 
-    /// Returns the [`ObjectTransformLayer`].
+    /// Sets the [`ObjectTransformer`] for this instance.
     /// ```
-    /// use inkwell::orc2::lljit::LLJIT;
+    /// use inkwell::{
+    ///     memory_buffer::MemoryBufferRef,
+    ///     orc2::lljit::{LLJIT, ObjectTransformer},
+    /// };
     ///
     /// let lljit = LLJIT::create().expect("LLJIT::create failed");
-    /// let object_transform_layer = lljit.get_object_transform_layer();
+    ///
+    /// let object_transformer: Box<dyn ObjectTransformer> = Box::new(|buffer: MemoryBufferRef| {
+    ///     // Transformer implementation...
+    ///     Ok(())
+    /// });
+    /// lljit.set_object_transformer(object_transformer);
     /// ```
     #[llvm_versions(13.0..=latest)]
-    pub fn get_object_transform_layer(&self) -> ObjectTransformLayer<'_, 'jit> {
+    pub fn set_object_transformer(&self, object_transformer: Box<dyn ObjectTransformer + 'jit>) {
+        *self.object_transformer.borrow_mut() = Some(object_transformer);
         unsafe {
-            ObjectTransformLayer::new_borrowed(LLVMOrcLLJITGetObjTransformLayer(self.lljit), &self)
+            LLVMOrcObjectTransformLayerSetTransform(
+                LLVMOrcLLJITGetObjTransformLayer(self.lljit),
+                object_transform_layer_transform_function,
+                transmute::<&ObjectTransformerCtx<'jit>, _>(
+                    self.object_transformer.borrow().as_ref().unwrap(),
+                ),
+            );
         }
     }
 
@@ -489,7 +508,7 @@ impl fmt::Debug for LLJIT<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut debug_struct = f.debug_struct("LLJIT");
         debug_struct.field("lljit", &self.lljit);
-        #[cfg(not(feature = "llvm11-0"))]
+        #[cfg(not(any(feature = "llvm11-0", feature = "llvm12-0")))]
         debug_struct.field("object_transformer", &self.object_transformer.as_ptr());
         debug_struct.finish()
     }
@@ -500,6 +519,42 @@ impl Drop for LLJIT<'_> {
         unsafe {
             LLVMOrcDisposeLLJIT(self.lljit);
         }
+    }
+}
+
+#[llvm_versions(13.0..=latest)]
+type ObjectTransformerCtx<'jit> = Box<dyn ObjectTransformer + 'jit>;
+
+#[llvm_versions(13.0..=latest)]
+#[no_mangle]
+extern "C" fn object_transform_layer_transform_function(
+    ctx: *mut c_void,
+    object_in_out: *mut LLVMMemoryBufferRef,
+) -> LLVMErrorRef {
+    let object_transformer: &mut ObjectTransformerCtx = unsafe { transmute(ctx) };
+    match object_transformer.transform(MemoryBufferRef::new(object_in_out)) {
+        Ok(()) => ptr::null_mut(),
+        Err(llvm_error) => {
+            unsafe {
+                MemoryBufferRef::new(object_in_out).set_memory_buffer_unsafe(ptr::null_mut());
+            }
+            llvm_error.error
+        }
+    }
+}
+
+#[llvm_versions(13.0..=latest)]
+pub trait ObjectTransformer {
+    fn transform(&mut self, object_in_out: MemoryBufferRef) -> Result<(), LLVMError>;
+}
+
+#[llvm_versions(13.0..=latest)]
+impl<F> ObjectTransformer for F
+where
+    F: FnMut(MemoryBufferRef) -> Result<(), LLVMError>,
+{
+    fn transform(&mut self, object_in_out: MemoryBufferRef) -> Result<(), LLVMError> {
+        self(object_in_out)
     }
 }
 
