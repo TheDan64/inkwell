@@ -29,21 +29,22 @@ impl Intrinsic {
     ///
     /// # Example
     /// ```no_run
-    /// use inkwell::intrinsics::Intrinsic;
+    /// use inkwell::{intrinsics::Intrinsic, context::Context};
     ///
     /// let trap_intrinsic = Intrinsic::find("llvm.trap").unwrap();
     ///
     /// let context = Context::create();
     /// let module = context.create_module("trap");
     /// let builder = context.create_builder();
-    /// let fn_type = struct_type.fn_type(&[], false);
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
     /// let fn_value = module.add_function("trap", fn_type, None);
     /// let entry = context.append_basic_block(fn_value, "entry");
     ///
-    /// let trap_function = trap_intrinsic.get_declaration(module, &[]).unwrap();
+    /// let trap_function = trap_intrinsic.get_declaration(&module, &[]).unwrap();
     ///
     /// builder.position_at_end(entry);
-    /// builder.build(trap_function, &[], "trap_call");
+    /// builder.build_call(trap_function, &[], "trap_call");
     /// ```
     pub fn find(name: &str) -> Option<Self> {
         let id = unsafe {
@@ -74,21 +75,22 @@ impl Intrinsic {
     ///
     /// # Example
     /// ```no_run
-    /// use inkwell::intrinsics::Intrinsic;
+    /// use inkwell::{intrinsics::Intrinsic, context::Context};
     ///
     /// let trap_intrinsic = Intrinsic::find("llvm.trap").unwrap();
     ///
     /// let context = Context::create();
     /// let module = context.create_module("trap");
     /// let builder = context.create_builder();
-    /// let fn_type = struct_type.fn_type(&[], false);
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
     /// let fn_value = module.add_function("trap", fn_type, None);
     /// let entry = context.append_basic_block(fn_value, "entry");
     ///
-    /// let trap_function = trap_intrinsic.get_declaration(module, &[]).unwrap();
+    /// let trap_function = trap_intrinsic.get_declaration(&module, &[]).unwrap();
     ///
     /// builder.position_at_end(entry);
-    /// builder.build(trap_function, &[], "trap_call");
+    /// builder.build_call(trap_function, &[], "trap_call");
     /// ```
     pub fn get_declaration<'ctx>(&self, module: &Module<'ctx>, param_types: &[BasicTypeEnum]) -> Option<FunctionValue<'ctx>> {
         let mut param_types: Vec<LLVMTypeRef> = param_types.iter()
