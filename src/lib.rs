@@ -39,6 +39,7 @@ pub mod passes;
 pub mod targets;
 pub mod types;
 pub mod values;
+pub mod intrinsics;
 
 // Boilerplate to select a desired llvm_sys version at compile & link time.
 #[cfg(feature="llvm3-6")]
