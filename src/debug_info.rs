@@ -131,6 +131,8 @@ use llvm_sys::prelude::{LLVMDIBuilderRef, LLVMMetadataRef};
 use llvm_sys::core::LLVMMetadataAsValue;
 use std::convert::TryInto;
 use std::marker::PhantomData;
+#[cfg(feature="internal-getters")]
+use crate::LLVMReference;
 
 /// Gets the version of debug metadata produced by the current LLVM version.
 pub fn debug_metadata_version() -> libc::c_uint {
@@ -1366,5 +1368,19 @@ mod flags {
         GOOGLERenderScript,
         #[llvm_variant(LLVMDWARFSourceLanguageBORLAND_Delphi)]
         BORLANDDelphi,
+    }
+}
+
+#[cfg(feature="internal-getters")]
+impl LLVMReference<LLVMMetadataRef> for DIType<'_> {
+    unsafe fn get_ref(&self) -> LLVMMetadataRef {
+        self.metadata_ref
+    }
+}
+
+#[cfg(feature="internal-getters")]
+impl LLVMReference<LLVMDIBuilderRef> for DebugInfoBuilder<'_> {
+    unsafe fn get_ref(&self) -> LLVMDIBuilderRef {
+        self.builder
     }
 }

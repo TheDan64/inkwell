@@ -30,6 +30,8 @@ use crate::support::{to_c_str, LLVMString};
 use crate::types::{AnyType, AsTypeRef, IntType, StructType};
 use crate::values::{AsValueRef, GlobalValue};
 use crate::{AddressSpace, OptimizationLevel};
+#[cfg(feature="internal-getters")]
+use crate::LLVMReference;
 
 use std::default::Default;
 use std::ffi::CStr;
@@ -1442,5 +1444,12 @@ impl TargetData {
 impl Drop for TargetData {
     fn drop(&mut self) {
         unsafe { LLVMDisposeTargetData(self.target_data) }
+    }
+}
+
+#[cfg(feature = "internal-getters")]
+impl LLVMReference<LLVMTargetMachineRef> for TargetMachine {
+    unsafe fn get_ref(&self) -> LLVMTargetMachineRef {
+        self.target_machine
     }
 }

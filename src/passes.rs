@@ -26,6 +26,9 @@ use crate::module::Module;
 use crate::targets::TargetData;
 use crate::values::{AsValueRef, FunctionValue};
 
+#[cfg(feature="internal-getters")]
+use crate::LLVMReference;
+
 use std::borrow::Borrow;
 use std::marker::PhantomData;
 
@@ -1268,5 +1271,26 @@ impl PassRegistry {
         unsafe {
             LLVMInitializeAggressiveInstCombiner(self.pass_registry)
         }
+    }
+}
+
+#[cfg(feature="internal-getters")]
+impl<T> LLVMReference<LLVMPassManagerRef> for PassManager<T> {
+    unsafe fn get_ref(&self) -> LLVMPassManagerRef {
+        self.pass_manager
+    }
+}
+
+#[cfg(feature="internal-getters")]
+impl LLVMReference<LLVMPassManagerBuilderRef> for PassManagerBuilder {
+    unsafe fn get_ref(&self) -> LLVMPassManagerBuilderRef {
+        self.pass_manager_builder
+    }
+}
+
+#[cfg(feature="internal-getters")]
+impl LLVMReference<LLVMPassRegistryRef> for PassRegistry {
+    unsafe fn get_ref(&self) -> LLVMPassRegistryRef {
+        self.pass_registry
     }
 }

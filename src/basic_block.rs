@@ -5,6 +5,8 @@ use llvm_sys::core::{LLVMGetBasicBlockParent, LLVMGetBasicBlockTerminator, LLVMG
 use llvm_sys::core::LLVMGetBasicBlockName;
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
 
+#[cfg(feature="internal-getters")]
+use crate::LLVMReference;
 use crate::context::ContextRef;
 use crate::values::{AsValueRef, BasicValueUse, FunctionValue, InstructionValue, PointerValue};
 
@@ -570,5 +572,12 @@ impl fmt::Debug for BasicBlock<'_> {
             .field("llvm_value", &llvm_value)
             .field("llvm_type", &llvm_type)
             .finish()
+    }
+}
+
+#[cfg(feature="internal-getters")]
+impl LLVMReference<LLVMBasicBlockRef> for BasicBlock<'_> {
+    unsafe fn get_ref(&self) -> LLVMBasicBlockRef {
+        self.basic_block
     }
 }
