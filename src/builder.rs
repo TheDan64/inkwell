@@ -4,7 +4,7 @@ use llvm_sys::core::{LLVMBuildAdd, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArray
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::LLVMBuildAtomicCmpXchg;
 #[llvm_versions(8.0..=latest)]
-use llvm_sys::core::{LLVMBuildMemCpy, LLVMBuildMemMove, LLVMBuildMemSet};
+use llvm_sys::core::{LLVMBuildIntCast2, LLVMBuildMemCpy, LLVMBuildMemMove, LLVMBuildMemSet};
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 
 use crate::{AtomicOrdering, AtomicRMWBinOp, IntPredicate, FloatPredicate};
@@ -1245,6 +1245,18 @@ impl<'ctx> Builder<'ctx> {
 
         let value = unsafe {
             LLVMBuildIntCast(self.builder, int.as_value_ref(), int_type.as_type_ref(), c_string.as_ptr())
+        };
+
+        T::new(value)
+    }
+
+    /// Like `build_int_cast`, but respects the signedness of the type being cast to.
+    #[llvm_versions(8.0..=latest)]
+    pub fn build_int_cast_sign_flag<T: IntMathValue<'ctx>>(&self, int: T, int_type: T::BaseType, is_signed: bool, name: &str) -> T {
+        let c_string = to_c_str(name);
+
+        let value = unsafe {
+            LLVMBuildIntCast2(self.builder, int.as_value_ref(), int_type.as_type_ref(), is_signed.into(), c_string.as_ptr())
         };
 
         T::new(value)
