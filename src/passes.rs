@@ -19,6 +19,18 @@ use llvm_sys::transforms::scalar::LLVMAddConstantPropagationPass;
 
 #[llvm_versions(12.0..=latest)]
 use llvm_sys::transforms::scalar::LLVMAddInstructionSimplifyPass;
+#[llvm_versions(13.0..=latest)]
+use llvm_sys::transforms::pass_builder::{LLVMPassBuilderOptionsRef,LLVMCreatePassBuilderOptions,LLVMPassBuilderOptionsSetVerifyEach,LLVMPassBuilderOptionsSetDebugLogging,
+LLVMPassBuilderOptionsSetLoopInterleaving,
+LLVMPassBuilderOptionsSetLoopVectorization,
+LLVMPassBuilderOptionsSetSLPVectorization,
+LLVMPassBuilderOptionsSetLoopUnrolling,
+LLVMPassBuilderOptionsSetForgetAllSCEVInLoopUnroll,
+LLVMPassBuilderOptionsSetLicmMssaOptCap,
+LLVMPassBuilderOptionsSetLicmMssaNoAccForPromotionCap,
+LLVMPassBuilderOptionsSetCallGraphProfile,
+LLVMPassBuilderOptionsSetMergeFunctions,
+LLVMDisposePassBuilderOptions};
 
 use crate::OptimizationLevel;
 use crate::module::Module;
@@ -1267,6 +1279,101 @@ impl PassRegistry {
 
         unsafe {
             LLVMInitializeAggressiveInstCombiner(self.pass_registry)
+        }
+    }
+}
+
+#[llvm_versions(13.0..=latest)]
+#[derive(Debug)]
+pub struct PassBuilderOptions {
+    pub(crate) options_ref : LLVMPassBuilderOptionsRef,
+}
+
+#[llvm_versions(13.0..=latest)]
+impl PassBuilderOptions {
+    /// Create a new set of options for a PassBuilder
+    pub fn create() -> Self{
+        unsafe {
+            PassBuilderOptions {
+                options_ref : LLVMCreatePassBuilderOptions(),
+            }
+        }
+    }
+
+    ///Toggle adding the VerifierPass for the PassBuilder, ensuring all functions inside the module is valid. 
+    pub fn set_verify_each(&self, value : bool) {
+        unsafe {
+            LLVMPassBuilderOptionsSetVerifyEach(self.options_ref, value as i32);
+        }
+    }
+
+    ///Toggle debug logging when running the PassBuilder. 
+    pub fn set_debug_logging(&self, value : bool) {
+        unsafe {
+            LLVMPassBuilderOptionsSetDebugLogging(self.options_ref, value as i32);
+        }
+    }
+
+    pub fn set_loop_interleaving(&self, value : bool) {
+        unsafe {
+            LLVMPassBuilderOptionsSetLoopInterleaving(self.options_ref, value as i32);
+        }
+    }
+
+    pub fn set_loop_vectorization(&self, value : bool) {
+        unsafe {
+            LLVMPassBuilderOptionsSetLoopVectorization(self.options_ref, value as i32);
+        }
+    }
+
+    pub fn set_loop_slp_vectorization(&self, value : bool) {
+        unsafe {
+            LLVMPassBuilderOptionsSetSLPVectorization(self.options_ref, value as i32);
+        }
+    }
+
+    pub fn set_loop_unrolling(&self, value : bool) {
+        unsafe {
+            LLVMPassBuilderOptionsSetLoopUnrolling(self.options_ref, value as i32);
+        }
+    }
+
+    pub fn set_forget_all_scev_in_loop_unroll(&self, value : bool) {
+        unsafe {
+            LLVMPassBuilderOptionsSetForgetAllSCEVInLoopUnroll(self.options_ref, value as i32);
+        }
+    }
+
+    pub fn set_licm_mssa_opt_cap(&self, value : u32) {
+        unsafe {
+            LLVMPassBuilderOptionsSetLicmMssaOptCap(self.options_ref, value);
+        }
+    }
+
+    pub fn set_licm_mssa_no_acc_for_promotion_cap(&self, value : u32) {
+        unsafe {
+            LLVMPassBuilderOptionsSetLicmMssaNoAccForPromotionCap(self.options_ref, value);
+        }
+    }
+
+    pub fn set_call_graph_profile(&self, value : bool) {
+        unsafe {
+            LLVMPassBuilderOptionsSetCallGraphProfile(self.options_ref, value as i32);
+        }
+    }
+
+    pub fn set_merge_functions(&self, value : bool) {
+        unsafe {
+            LLVMPassBuilderOptionsSetMergeFunctions(self.options_ref, value as i32);
+        }
+    }
+}
+
+#[llvm_versions(13.0..=latest)]
+impl Drop for PassBuilderOptions {
+    fn drop(&mut self) {
+        unsafe {
+            LLVMDisposePassBuilderOptions(self.options_ref);
         }
     }
 }
