@@ -14,6 +14,10 @@ use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
 use llvm_sys::LLVMLinkage;
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::LLVMModuleFlagBehavior;
+#[llvm_versions(13.0..=latest)]
+use llvm_sys::transforms::pass_builder::LLVMRunPasses;
+#[llvm_versions(8.0..=latest)]
+use llvm_sys::error::LLVMGetErrorMessage;
 
 use std::cell::{Cell, RefCell, Ref};
 use std::ffi::CStr;
@@ -34,11 +38,13 @@ use crate::debug_info::{DebugInfoBuilder, DICompileUnit, DWARFEmissionKind, DWAR
 use crate::execution_engine::ExecutionEngine;
 use crate::memory_buffer::MemoryBuffer;
 use crate::support::{to_c_str, LLVMString};
-use crate::targets::{InitializationConfig, Target, TargetTriple};
+use crate::targets::{InitializationConfig, Target, TargetTriple, TargetMachine};
 use crate::types::{AsTypeRef, BasicType, FunctionType, StructType};
 use crate::values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
 #[llvm_versions(7.0..=latest)]
 use crate::values::BasicValue;
+#[llvm_versions(13.0..=latest)]
+use crate::passes::PassBuilderOptions;
 
 #[llvm_enum(LLVMLinkage)]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -1424,6 +1430,27 @@ impl<'ctx> Module<'ctx> {
                               #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
                               sdk
         )
+    }
+
+
+    /// Construct and run a set of passes over a module.
+    /// This function takes a string with the passes that should be used. 
+    /// The format of this string is the same as opt's -passes argument for the new pass manager. 
+    /// Individual passes may be specified, separated by commas. 
+    /// Full pipelines may also be invoked using default<O3> and friends. 
+    /// See opt for full reference of the Passes format.
+    #[llvm_versions(13.0..=latest)]
+    pub fn run_passes(&self, passes : &str, machine : &TargetMachine, options : PassBuilderOptions) -> Result<(), LLVMString> {
+        unsafe {
+            let error = LLVMRunPasses(self.module.get(), to_c_str(passes).as_ptr(), machine.target_machine , options.options_ref);
+            if error == std::ptr::null_mut() {
+                Ok(())
+            } else {
+                let message = LLVMGetErrorMessage(error);
+                Err(LLVMString::new(message as *const libc::c_char))
+            }
+        }
+
     }
 }
 
