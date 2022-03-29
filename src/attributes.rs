@@ -277,8 +277,9 @@ impl AttributeLoc {
 }
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference<LLVMAttributeRef> for Attribute {
-    unsafe fn get_ref(&self) -> LLVMAttributeRef {
+impl LLVMReference for Attribute {
+    type Ref = LLVMAttributeRef;
+    unsafe fn get_ref(&self) -> Self::Ref {
         self.attribute
     }
 }

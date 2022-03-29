@@ -224,8 +224,9 @@ impl fmt::Debug for Value<'_> {
 }
 
 #[cfg(feature="internal-getters")]
-impl<T : AsValueRef> LLVMReference<LLVMValueRef> for T {
-    unsafe fn get_ref(&self) -> LLVMValueRef {
+impl LLVMReference for dyn AsValueRef {
+    type Ref = LLVMValueRef;
+    unsafe fn get_ref(&self) -> Self::Ref {
        self.as_value_ref() 
     }
 }

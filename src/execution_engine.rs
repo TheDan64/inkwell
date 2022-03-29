@@ -680,8 +680,9 @@ pub mod experimental {
 
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference<LLVMExecutionEngineRef> for ExecutionEngine<'_> {
-    unsafe fn get_ref(&self) -> LLVMExecutionEngineRef {
+impl LLVMReference for ExecutionEngine<'_> {
+    type Ref = LLVMExecutionEngineRef;
+    unsafe fn get_ref(&self) -> Self::Ref {
         self.execution_engine_inner()
     }
 }

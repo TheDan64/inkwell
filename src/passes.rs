@@ -1275,22 +1275,25 @@ impl PassRegistry {
 }
 
 #[cfg(feature="internal-getters")]
-impl<T> LLVMReference<LLVMPassManagerRef> for PassManager<T> {
-    unsafe fn get_ref(&self) -> LLVMPassManagerRef {
+impl<T> LLVMReference for PassManager<T> {
+    type Ref = LLVMPassManagerRef;
+    unsafe fn get_ref(&self) -> Self::Ref {
         self.pass_manager
     }
 }
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference<LLVMPassManagerBuilderRef> for PassManagerBuilder {
-    unsafe fn get_ref(&self) -> LLVMPassManagerBuilderRef {
+impl LLVMReference for PassManagerBuilder {
+    type Ref = LLVMPassManagerBuilderRef;
+    unsafe fn get_ref(&self) -> Self::Ref {
         self.pass_manager_builder
     }
 }
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference<LLVMPassRegistryRef> for PassRegistry {
-    unsafe fn get_ref(&self) -> LLVMPassRegistryRef {
+impl LLVMReference for PassRegistry {
+    type Ref = LLVMPassRegistryRef;
+    unsafe fn get_ref(&self) -> Self::Ref {
         self.pass_registry
     }
 }

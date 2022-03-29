@@ -1372,15 +1372,17 @@ mod flags {
 }
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference<LLVMMetadataRef> for DIType<'_> {
-    unsafe fn get_ref(&self) -> LLVMMetadataRef {
+impl LLVMReference for DIType<'_> {
+    type Ref = LLVMMetadataRef;
+    unsafe fn get_ref(&self) -> Self::Ref {
         self.metadata_ref
     }
 }
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference<LLVMDIBuilderRef> for DebugInfoBuilder<'_> {
-    unsafe fn get_ref(&self) -> LLVMDIBuilderRef {
+impl LLVMReference for DebugInfoBuilder<'_> {
+    type Ref = LLVMDIBuilderRef;
+    unsafe fn get_ref(&self) -> Self::Ref {
         self.builder
     }
 }

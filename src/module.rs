@@ -1457,8 +1457,9 @@ impl Drop for Module<'_> {
 }
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference<LLVMModuleRef> for Module<'_> {
-    unsafe fn get_ref(&self) -> LLVMModuleRef {
+impl LLVMReference for Module<'_> {
+    type Ref =LLVMModuleRef;
+    unsafe fn get_ref(&self) -> Self::Ref {
         self.module.get()
     }
 }

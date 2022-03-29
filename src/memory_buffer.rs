@@ -135,8 +135,9 @@ impl Drop for MemoryBuffer {
 
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference<LLVMMemoryBufferRef> for MemoryBuffer {
-    unsafe fn get_ref(&self) -> LLVMMemoryBufferRef {
+impl LLVMReference for MemoryBuffer {
+    type Ref = LLVMMemoryBufferRef;
+    unsafe fn get_ref(&self) -> Self::Ref {
         self.memory_buffer
     }
 }

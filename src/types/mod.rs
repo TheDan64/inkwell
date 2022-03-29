@@ -204,8 +204,9 @@ impl fmt::Debug for Type<'_> {
 }
 
 #[cfg(feature="internal-getters")]
-impl<T : AsTypeRef> LLVMReference<LLVMTypeRef> for T {
-    unsafe fn get_ref(&self) -> LLVMTypeRef {
+impl LLVMReference for dyn AsTypeRef {
+    type Ref  = LLVMTypeRef;
+    unsafe fn get_ref(&self) -> Self::Ref {
        self.as_type_ref() 
     }
 }
