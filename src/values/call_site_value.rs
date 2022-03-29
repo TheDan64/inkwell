@@ -240,7 +240,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     #[llvm_versions(3.9..=latest)]
     pub fn attributes(self, loc: AttributeLoc) -> Vec<Attribute> {
         use llvm_sys::core::LLVMGetCallSiteAttributes;
-        use std::mem::MaybeUninit;
+        use std::mem::{ManuallyDrop, MaybeUninit};
 
         let count = self.count_attributes(loc) as usize;
 
@@ -256,8 +256,17 @@ impl<'ctx> CallSiteValue<'ctx> {
             )
         }
 
-        // Safety: everything is initialized
-        unsafe { std::mem::transmute(attribute_refs) }
+        // Safety: all elements are initialized
+        unsafe {
+            // ensure the vector is not dropped
+            let mut attribute_refs = ManuallyDrop::new(attribute_refs);
+
+            Vec::from_raw_parts(
+                attribute_refs.as_mut_ptr() as *mut Attribute,
+                attribute_refs.len(),
+                attribute_refs.capacity(),
+            )
+        }
     }
 
     /// Gets an enum `Attribute` on this `CallSiteValue` at an index and kind id.
