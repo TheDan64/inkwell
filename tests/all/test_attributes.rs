@@ -97,6 +97,8 @@ fn test_attributes_on_function_values() {
 
     assert_eq!(fn_value.count_attributes(AttributeLoc::Return), 0);
     assert_eq!(fn_value.count_attributes(AttributeLoc::Param(0)), 0);
+    assert_eq!(fn_value.attributes(AttributeLoc::Return), vec![]);
+    assert_eq!(fn_value.attributes(AttributeLoc::Param(0)), vec![]);
 
     fn_value.remove_string_attribute(AttributeLoc::Return, "my_key"); // Noop
     fn_value.remove_enum_attribute(AttributeLoc::Return, alignstack_attribute); // Noop
@@ -109,10 +111,12 @@ fn test_attributes_on_function_values() {
     assert_eq!(fn_value.count_attributes(AttributeLoc::Return), 2);
     assert_eq!(fn_value.get_enum_attribute(AttributeLoc::Return, alignstack_attribute), Some(enum_attribute));
     assert_eq!(fn_value.get_string_attribute(AttributeLoc::Return, "my_key"), Some(string_attribute));
+    assert_eq!(fn_value.attributes(AttributeLoc::Return), vec![enum_attribute, string_attribute]);
 
     fn_value.remove_string_attribute(AttributeLoc::Return, "my_key");
 
     assert_eq!(fn_value.count_attributes(AttributeLoc::Return), 1);
+    assert_eq!(fn_value.attributes(AttributeLoc::Return), vec![enum_attribute]);
 
     fn_value.remove_enum_attribute(AttributeLoc::Return, alignstack_attribute);
 
@@ -120,6 +124,8 @@ fn test_attributes_on_function_values() {
     assert_eq!(fn_value.count_attributes(AttributeLoc::Return), 0);
     assert!(fn_value.get_enum_attribute(AttributeLoc::Return, alignstack_attribute).is_none());
     assert!(fn_value.get_string_attribute(AttributeLoc::Return, "my_key").is_none());
+    assert_eq!(fn_value.attributes(AttributeLoc::Function), vec![]);
+    assert_eq!(fn_value.attributes(AttributeLoc::Return), vec![]);
 }
 
 #[test]
@@ -146,6 +152,8 @@ fn test_attributes_on_call_site_values() {
     assert_eq!(call_site_value.count_arguments(), 1);
     assert_eq!(call_site_value.count_attributes(AttributeLoc::Return), 0);
     assert_eq!(call_site_value.count_attributes(AttributeLoc::Param(0)), 0);
+    assert_eq!(call_site_value.attributes(AttributeLoc::Return), vec![]);
+    assert_eq!(call_site_value.attributes(AttributeLoc::Param(0)), vec![]);
 
     call_site_value.remove_string_attribute(AttributeLoc::Return, "my_key"); // Noop
     call_site_value.remove_enum_attribute(AttributeLoc::Return, alignstack_attribute); // Noop
@@ -158,14 +166,17 @@ fn test_attributes_on_call_site_values() {
     assert_eq!(call_site_value.count_attributes(AttributeLoc::Return), 2);
     assert_eq!(call_site_value.get_enum_attribute(AttributeLoc::Return, alignstack_attribute), Some(enum_attribute));
     assert_eq!(call_site_value.get_string_attribute(AttributeLoc::Return, "my_key"), Some(string_attribute));
+    assert_eq!(call_site_value.attributes(AttributeLoc::Return), vec![enum_attribute, string_attribute]);
 
     call_site_value.remove_string_attribute(AttributeLoc::Return, "my_key");
 
     assert_eq!(call_site_value.count_attributes(AttributeLoc::Return), 1);
+    assert_eq!(call_site_value.attributes(AttributeLoc::Return), vec![enum_attribute]);
 
     call_site_value.remove_enum_attribute(AttributeLoc::Return, alignstack_attribute);
 
     assert_eq!(call_site_value.count_attributes(AttributeLoc::Return), 0);
+    assert_eq!(call_site_value.attributes(AttributeLoc::Return), vec![]);
     assert!(call_site_value.get_enum_attribute(AttributeLoc::Return, alignstack_attribute).is_none());
     assert!(call_site_value.get_string_attribute(AttributeLoc::Return, "my_key").is_none());
     assert_eq!(call_site_value.get_called_fn_value(), fn_value);
@@ -173,5 +184,6 @@ fn test_attributes_on_call_site_values() {
     call_site_value.set_alignment_attribute(AttributeLoc::Return, 16);
 
     assert_eq!(call_site_value.count_attributes(AttributeLoc::Return), 1);
+    assert_eq!(call_site_value.attributes(AttributeLoc::Return).len(), 1);
     assert!(call_site_value.get_enum_attribute(AttributeLoc::Return, align_attribute).is_some());
 }
