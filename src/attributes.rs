@@ -140,12 +140,22 @@ impl Attribute {
     ///     any_type,
     /// );
     ///
-    /// assert_eq!(type_attribute.get_type_kind_id(), kind_id);
+    /// assert_eq!(type_attribute.get_enum_kind_id(), kind_id);
     /// ```
     pub fn get_enum_kind_id(self) -> u32 {
-        assert!(self.is_enum() || self.is_type()); // FIXME: SubTypes
+        assert!(self.get_enum_kind_id_is_valid()); // FIXME: SubTypes
 
         unsafe { LLVMGetEnumAttributeKind(self.attribute) }
+    }
+
+    #[llvm_versions(3.6..12.0)]
+    fn get_enum_kind_id_is_valid(self) -> bool {
+        self.is_enum()
+    }
+
+    #[llvm_versions(12.0..=latest)]
+    fn get_enum_kind_id_is_valid(self) -> bool {
+        self.is_enum() || self.is_type()
     }
 
     /// Gets the last enum kind id associated with builtin names.
