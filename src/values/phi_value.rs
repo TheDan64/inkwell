@@ -99,7 +99,7 @@ impl AsValueRef for PhiValue<'_> {
     }
 }
 
-impl TryFrom<InstructionValue> for PhiValue {
+impl TryFrom<InstructionValue<'_>> for PhiValue<'_> {
     type Error = ();
 
     fn try_from(value: InstructionValue) -> Result<Self, Self::Error> {
