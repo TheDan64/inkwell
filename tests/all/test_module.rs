@@ -77,18 +77,38 @@ fn test_get_function() {
     assert_eq!(*module.get_context(), context);
     assert!(module.get_first_function().is_none());
     assert!(module.get_last_function().is_none());
-    assert!(module.get_function("some_fn").is_none());
+    assert!(module.get_function("function_1").is_none());
+
+    let functions: Vec<_> = module.get_functions().collect();
+    assert!(functions.is_empty());
 
     let void_type = context.void_type();
-    let some_fn_type = void_type.fn_type(&[], false);
-    let some_fn = module.add_function("some_fn", some_fn_type, None);
+    let function_1_type = void_type.fn_type(&[], false);
+    let function_1 = module.add_function("function_1", function_1_type, None);
+
     let first_fn = module.get_first_function().unwrap();
     let last_fn = module.get_last_function().unwrap();
-    let named_fn = module.get_function("some_fn").unwrap();
+    let named_fn = module.get_function("function_1").unwrap();
 
-    assert_eq!(first_fn, some_fn);
-    assert_eq!(last_fn, some_fn);
-    assert_eq!(named_fn, some_fn);
+    assert_eq!(first_fn, function_1);
+    assert_eq!(last_fn, function_1);
+    assert_eq!(named_fn, function_1);
+
+    let functions: Vec<_> = module.get_functions().collect();
+    assert_eq!(functions, vec![function_1]);
+
+    let void_type = context.void_type();
+    let function_2_type = void_type.fn_type(&[], false);
+    let function_2 = module.add_function("function_2", function_2_type, None);
+
+    let first_fn = module.get_first_function().unwrap();
+    let last_fn = module.get_last_function().unwrap();
+
+    assert_eq!(first_fn, function_1);
+    assert_eq!(last_fn, function_2);
+
+    let functions: Vec<_> = module.get_functions().collect();
+    assert_eq!(functions, vec![function_1, function_2]);
 }
 
 #[test]

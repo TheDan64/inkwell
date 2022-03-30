@@ -752,6 +752,7 @@ impl Target {
     #[llvm_versions(9.0..=latest)]
     pub fn initialize_riscv(config: &InitializationConfig) {
         use llvm_sys::target::{
+            LLVMInitializeRISCVAsmParser, LLVMInitializeRISCVAsmPrinter, LLVMInitializeRISCVDisassembler,
             LLVMInitializeRISCVTarget, LLVMInitializeRISCVTargetInfo, LLVMInitializeRISCVTargetMC,
         };
 
@@ -765,11 +766,20 @@ impl Target {
             unsafe { LLVMInitializeRISCVTargetInfo() };
         }
 
-        // No asm printer
+        if config.asm_printer {
+            let _guard = TARGET_LOCK.write();
+            unsafe { LLVMInitializeRISCVAsmPrinter() };
+        }
 
-        // No asm parser
+        if config.asm_parser {
+            let _guard = TARGET_LOCK.write();
+            unsafe { LLVMInitializeRISCVAsmParser() };
+        }
 
-        // No disassembler
+        if config.disassembler {
+            let _guard = TARGET_LOCK.write();
+            unsafe { LLVMInitializeRISCVDisassembler() };
+        }
 
         if config.machine_code {
             let _guard = TARGET_LOCK.write();
