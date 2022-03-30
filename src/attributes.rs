@@ -124,8 +124,26 @@ impl Attribute {
     ///
     /// assert_eq!(enum_attribute.get_enum_kind_id(), 0);
     /// ```
+    ///
+    /// This function also works for type `Attribute`s.
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::attributes::Attribute;
+    /// use inkwell::types::AnyType;
+    ///
+    /// let context = Context::create();
+    /// let kind_id = Attribute::get_named_enum_kind_id("sret");
+    /// let any_type = context.i32_type().as_any_type_enum();
+    /// let type_attribute = context.create_type_attribute(
+    ///     kind_id,
+    ///     any_type,
+    /// );
+    ///
+    /// assert_eq!(type_attribute.get_type_kind_id(), kind_id);
+    /// ```
     pub fn get_enum_kind_id(self) -> u32 {
-        assert!(self.is_enum()); // FIXME: SubTypes
+        assert!(self.is_enum() || self.is_type()); // FIXME: SubTypes
 
         unsafe { LLVMGetEnumAttributeKind(self.attribute) }
     }
