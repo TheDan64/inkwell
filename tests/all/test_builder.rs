@@ -730,6 +730,29 @@ fn test_vector_convert_ops() {
     assert!(fn_value.verify(true));
 }
 
+#[llvm_versions(8.0..=latest)]
+#[test]
+fn test_vector_convert_ops_respect_target_signedness() {
+    let context = Context::create();
+    let module = context.create_module("test");
+    let int8_vec_type = context.i8_type().vec_type(3);
+
+    // Here we're building a function that takes in a <3 x i8> (signed) and returns it casted to and from a <3 x i8> (unsigned)
+    let fn_type = int8_vec_type.fn_type(&[int8_vec_type.into()], false);
+    let fn_value = module.add_function("test_int_vec_cast", fn_type, None);
+    let entry = context.append_basic_block(fn_value, "entry");
+    let builder = context.create_builder();
+
+    builder.position_at_end(entry);
+    let in_vec = fn_value.get_first_param().unwrap().into_vector_value();
+    let casted_vec = builder.build_int_cast_sign_flag(in_vec, int8_vec_type, true, "casted_vec");
+    let _uncasted_vec =
+        builder.build_int_cast_sign_flag(casted_vec, int8_vec_type, true, "uncasted_vec");
+    builder.build_return(Some(&casted_vec));
+
+    assert!(fn_value.verify(true));
+}
+
 #[test]
 fn test_vector_binary_ops() {
     let context = Context::create();
