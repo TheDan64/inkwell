@@ -177,9 +177,9 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         dwo_id: libc::c_uint,
         split_debug_inlining: bool,
         debug_info_for_profiling: bool,
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
+        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"))]
         sysroot: &str,
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
+        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"))]
         sdk: &str,
     ) -> (Self, DICompileUnit<'ctx>) {
         let builder = unsafe {
@@ -209,9 +209,9 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             dwo_id,
             split_debug_inlining,
             debug_info_for_profiling,
-            #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
+            #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"))]
             sysroot,
-            #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
+            #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"))]
             sdk
         );
 
@@ -244,9 +244,9 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         dwo_id: libc::c_uint,
         split_debug_inlining: bool,
         debug_info_for_profiling: bool,
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
+        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"))]
         sysroot: &str,
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
+        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"))]
         sdk: &str,
     ) -> DICompileUnit<'ctx> {
 
@@ -271,7 +271,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 debug_info_for_profiling as _,
             ) }
 
-            #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
+            #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"))]
              { LLVMDIBuilderCreateCompileUnit(
                 self.builder,
                 language.into(),
@@ -684,7 +684,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateConstantValueExpression(
                 self.builder,
-                value,
+                value as _,
             )
         };
 
@@ -838,7 +838,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateExpression(
                 self.builder,
-                address_operations.as_mut_ptr(),
+                address_operations.as_mut_ptr() as *mut _,
                 address_operations.len(),
             )
         };

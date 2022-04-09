@@ -151,7 +151,8 @@ fn test_default_triple() {
 
     #[cfg(target_os = "linux")]
     let cond = default_triple == "x86_64-pc-linux-gnu" ||
-               default_triple == "x86_64-unknown-linux-gnu";
+               default_triple == "x86_64-unknown-linux-gnu" ||
+               default_triple == "x86_64-redhat-linux-gnu";
 
     #[cfg(target_os = "macos")]
     let cond = default_triple.starts_with("x86_64-apple-darwin");
