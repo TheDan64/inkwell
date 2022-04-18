@@ -543,8 +543,11 @@ extern "C" fn object_transform_layer_transform_function(
     }
 }
 
+/// Represents the object transform function that is used by the `ObjectTransformLayer`
 #[llvm_versions(13.0..=latest)]
 pub trait ObjectTransformer {
+    /// The `transfrom` function applies transformations to an object file buffer
+    /// (`object_in_out`).
     fn transform(&mut self, object_in_out: MemoryBufferRef) -> Result<(), LLVMError>;
 }
 

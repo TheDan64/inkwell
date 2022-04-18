@@ -161,6 +161,7 @@ impl<'ctx> Drop for ThreadSafeModule<'ctx> {
     }
 }
 
+/// A builder that is used to build a `TargetMachine`
 #[derive(Debug)]
 pub struct JITTargetMachineBuilder {
     builder: LLVMOrcJITTargetMachineBuilderRef,
@@ -172,6 +173,13 @@ impl JITTargetMachineBuilder {
         JITTargetMachineBuilder { builder }
     }
 
+    /// Create a `JITTargetMachineBuilder` by detecting the host.
+    /// ```
+    /// use inkwell::orc2::JITTargetMachineBuilder;
+    ///
+    /// let jit_target_machine_builder = JITTargetMachineBuilder::detect_host()
+    ///     .expect("JITTargetMachineBuilder::detect_host failed");
+    /// ```
     pub fn detect_host() -> Result<Self, LLVMError> {
         let mut builder = ptr::null_mut();
         unsafe {
@@ -180,6 +188,31 @@ impl JITTargetMachineBuilder {
         }
     }
 
+    /// Create a JITTargetMachineBuilder from the given TargetMachine template.
+    /// ```
+    /// use inkwell::{
+    ///     orc2::JITTargetMachineBuilder,
+    ///     targets::{CodeModel, InitializationConfig, RelocMode, Target, TargetTriple},
+    ///     OptimizationLevel,
+    /// };
+    ///
+    /// Target::initialize_x86(&InitializationConfig::default());
+    /// let target_triple = TargetTriple::create("x86_64-unknown-linux-gnu");
+    /// let target = Target::from_triple(&target_triple).expect("Target::from_triple failed");
+    /// let target_machine = target
+    ///     .create_target_machine(
+    ///         &target_triple,
+    ///         "",
+    ///         "",
+    ///         OptimizationLevel::Default,
+    ///         RelocMode::Default,
+    ///         CodeModel::Default,
+    ///     )
+    ///     .expect("Target::create_target_machine failed");
+    ///
+    /// let jit_target_machine_builder =
+    ///     JITTargetMachineBuilder::create_from_target_machine(target_machine);
+    /// ```
     #[llvm_versions(12.0..=latest)]
     pub fn create_from_target_machine(target_machine: TargetMachine) -> Self {
         let jit_target_machine_builder = unsafe {
@@ -191,11 +224,33 @@ impl JITTargetMachineBuilder {
         jit_target_machine_builder
     }
 
+    /// Returns the target triple.
+    /// ```
+    /// use inkwell::orc2::JITTargetMachineBuilder;
+    ///
+    /// let jit_target_machine_builder = JITTargetMachineBuilder::detect_host()
+    ///     .expect("JITTargetMachineBuilder::detect_host failed");
+    ///
+    /// let target_triple = jit_target_machine_builder.get_target_triple();
+    /// ```
     #[llvm_versions(13.0..=latest)]
     pub fn get_target_triple(&self) -> LLVMString {
         unsafe { LLVMString::new(LLVMOrcJITTargetMachineBuilderGetTargetTriple(self.builder)) }
     }
 
+    /// Sets the target triple to `target_triple`.
+    /// ```
+    /// use inkwell::{orc2::JITTargetMachineBuilder, targets::TargetMachine};
+    ///
+    /// let jit_target_machine_builder = JITTargetMachineBuilder::detect_host()
+    ///     .expect("JITTargetMachineBuilder::detect_host failed");
+    /// let default_triple = TargetMachine::get_default_triple();
+    /// let target_triple = default_triple
+    ///     .as_str()
+    ///     .to_str()
+    ///     .expect("TargetMachine::get_default_triple returned an invalid string");
+    /// jit_target_machine_builder.set_target_triple(target_triple);
+    /// ```
     #[llvm_versions(13.0..=latest)]
     pub fn set_target_triple(&self, target_triple: &str) {
         unsafe {
@@ -263,6 +318,32 @@ impl<'jit> JITDylib<'jit> {
         unsafe { ResourceTracker::new(LLVMOrcJITDylibCreateResourceTracker(self.jit_dylib), false) }
     }
 
+    /// Add the given [`MaterializationUnit`] to this instance.
+    /// ```
+    /// use inkwell::orc2::{
+    ///     lljit::LLJIT, JITDylib, MaterializationResponsibility, MaterializationUnit, Materializer,
+    ///     SymbolFlagsMapPairs, SymbolStringPoolEntry,
+    /// };
+    ///
+    /// let lljit = LLJIT::create().expect("LLJIT::create failed");
+    /// let jit_dylib = lljit.get_main_jit_dylib();
+    /// let materializer: Box<dyn Materializer> = Box::new((
+    ///     |materialization_responsibility: MaterializationResponsibility| {
+    ///         // materialize implementation
+    ///     },
+    ///     |jit_dylib: &JITDylib, symbol: &SymbolStringPoolEntry| {
+    ///         // discard implementation
+    ///     },
+    /// ));
+    /// let materialization_unit = MaterializationUnit::create(
+    ///     "my materialization unit",
+    ///     SymbolFlagsMapPairs::new(vec![ /* symbols */]),
+    ///     None,
+    ///     materializer,
+    /// );
+    ///
+    /// jit_dylib.define(materialization_unit).expect("JITDylib::define failed");
+    /// ```
     #[llvm_versions(12.0..=latest)]
     pub fn define(&self, materialization_unit: MaterializationUnit) -> Result<(), LLVMError> {
         let result = LLVMError::new(unsafe {
@@ -272,13 +353,24 @@ impl<'jit> JITDylib<'jit> {
         result
     }
 
+    /// Removes all trackers associated with this `JITDylib`
+    /// ```
+    /// use inkwell::orc2::lljit::LLJIT;
+    ///
+    /// let lljit = LLJIT::create().expect("LLJIT::create failed");
+    /// let jit_dylib = lljit.get_main_jit_dylib();
+    ///
+    /// jit_dylib.clear().expect("JITDylib::clear failed");
+    /// ```
     #[llvm_versions(12.0..=latest)]
     pub fn clear(&self) -> Result<(), LLVMError> {
         LLVMError::new(unsafe { LLVMOrcJITDylibClear(self.jit_dylib) })
     }
 
-    pub fn add_generator() {
-        todo!();
+    pub fn add_generator(&self, definition_generator: DefinitionGenerator) {
+        unsafe {
+            LLVMOrcJITDylibAddGenerator(self.jit_dylib, definition_generator.definition_generator);
+        }
     }
 }
 
