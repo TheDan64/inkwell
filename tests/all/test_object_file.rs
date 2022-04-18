@@ -87,6 +87,15 @@ fn test_section_iterator() {
     gv_c.set_initializer(&context.i32_type().const_zero().as_basic_value_enum());
     gv_c.set_section("C");
 
+    let func = module.add_function("d", context.void_type().fn_type(&[], false), None);
+    func.set_section("D");
+
+    // add a body to the function to make the section non-empty
+    let basic_block = context.append_basic_block(func, "entry");
+    let builder = context.create_builder();
+    builder.position_at_end(basic_block);
+    builder.build_return(None);
+
     apply_target_to_module(&target_machine, &module);
 
     let memory_buffer = target_machine
@@ -97,6 +106,7 @@ fn test_section_iterator() {
     let mut has_section_a = false;
     let mut has_section_b = false;
     let mut has_section_c = false;
+    let mut has_section_d = false;
     for section in object_file.get_sections() {
         if let Some(name) = section.get_name() {
             match name.to_str().unwrap() {
@@ -115,6 +125,11 @@ fn test_section_iterator() {
                     has_section_c = true;
                     assert_eq!(section.size(), 4);
                 }
+                "D" => {
+                    assert!(!has_section_d);
+                    has_section_d = true;
+                    assert_eq!(section.size(), 1);
+                }
                 _ => {}
             }
         }
@@ -122,6 +137,7 @@ fn test_section_iterator() {
     assert!(has_section_a);
     assert!(has_section_b);
     assert!(has_section_c);
+    assert!(has_section_d);
 }
 
 #[test]

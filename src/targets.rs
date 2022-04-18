@@ -769,14 +769,14 @@ impl Target {
             unsafe { LLVMInitializeRISCVAsmPrinter() };
         }
 
-        if config.asm_printer {
-            let _guard = TARGET_LOCK.write();
-            unsafe { LLVMInitializeRISCVAsmPrinter() };
-        }
-
         if config.asm_parser {
             let _guard = TARGET_LOCK.write();
             unsafe { LLVMInitializeRISCVAsmParser() };
+        }
+
+        if config.disassembler {
+            let _guard = TARGET_LOCK.write();
+            unsafe { LLVMInitializeRISCVDisassembler() };
         }
 
         if config.machine_code {

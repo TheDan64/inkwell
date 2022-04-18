@@ -21,6 +21,7 @@ mod test_context;
 mod test_debug_info;
 mod test_execution_engine;
 mod test_instruction_values;
+mod test_intrinsics;
 mod test_module;
 mod test_object_file;
 #[cfg(all(
@@ -29,6 +30,7 @@ mod test_object_file;
 ))]
 mod test_orc2;
 mod test_passes;
+mod test_phi_conversion;
 mod test_targets;
 mod test_tari_example;
 mod test_types;

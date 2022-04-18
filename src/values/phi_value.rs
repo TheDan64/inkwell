@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use llvm_sys::core::{LLVMAddIncoming, LLVMCountIncoming, LLVMGetIncomingBlock, LLVMGetIncomingValue};
 use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 
@@ -5,7 +6,7 @@ use std::ffi::CStr;
 
 use crate::basic_block::BasicBlock;
 use crate::values::traits::AsValueRef;
-use crate::values::{BasicValue, BasicValueEnum, InstructionValue, Value};
+use crate::values::{BasicValue, BasicValueEnum, InstructionOpcode, InstructionValue, Value};
 
 // REVIEW: Metadata for phi values?
 /// A Phi Instruction returns a value based on which basic block branched into
@@ -95,5 +96,19 @@ impl<'ctx> PhiValue<'ctx> {
 impl AsValueRef for PhiValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.phi_value.value
+    }
+}
+
+impl TryFrom<InstructionValue<'_>> for PhiValue<'_> {
+    type Error = ();
+
+    fn try_from(value: InstructionValue) -> Result<Self, Self::Error> {
+        if value.get_opcode() == InstructionOpcode::Phi {
+            unsafe {
+                Ok(PhiValue::new(value.as_value_ref()))
+            }
+        } else {
+            Err(())
+        }
     }
 }
