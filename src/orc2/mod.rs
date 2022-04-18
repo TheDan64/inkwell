@@ -6,6 +6,7 @@ use std::{
     iter::FromIterator,
     marker::PhantomData,
     mem::{forget, transmute},
+    ops::Deref,
     ptr, slice, vec,
 };
 
@@ -13,14 +14,17 @@ use libc::c_void;
 #[llvm_versions(12.0..=latest)]
 use llvm_sys::orc2::{
     ee::LLVMOrcCreateRTDyldObjectLinkingLayerWithSectionMemoryManager, LLVMJITCSymbolMapPair,
-    LLVMJITEvaluatedSymbol, LLVMJITSymbolFlags, LLVMOrcAbsoluteSymbols, LLVMOrcCSymbolMapPairs,
+    LLVMJITEvaluatedSymbol, LLVMJITSymbolFlags, LLVMOrcAbsoluteSymbols, LLVMOrcCLookupSet,
+    LLVMOrcCLookupSetElement, LLVMOrcCSymbolMapPairs, LLVMOrcCreateCustomCAPIDefinitionGenerator,
+    LLVMOrcDefinitionGeneratorRef, LLVMOrcDisposeDefinitionGenerator,
     LLVMOrcDisposeMaterializationUnit, LLVMOrcDisposeObjectLayer,
     LLVMOrcExecutionSessionCreateBareJITDylib, LLVMOrcExecutionSessionCreateJITDylib,
     LLVMOrcExecutionSessionGetJITDylibByName, LLVMOrcJITDylibClear,
     LLVMOrcJITDylibCreateResourceTracker, LLVMOrcJITDylibDefine,
-    LLVMOrcJITDylibGetDefaultResourceTracker, LLVMOrcMaterializationUnitRef, LLVMOrcObjectLayerRef,
+    LLVMOrcJITDylibGetDefaultResourceTracker, LLVMOrcJITDylibLookupFlags, LLVMOrcLookupKind,
+    LLVMOrcLookupStateRef, LLVMOrcMaterializationUnitRef, LLVMOrcObjectLayerRef,
     LLVMOrcReleaseResourceTracker, LLVMOrcResourceTrackerRef, LLVMOrcResourceTrackerRemove,
-    LLVMOrcResourceTrackerTransferTo, LLVMOrcRetainSymbolStringPoolEntry,
+    LLVMOrcResourceTrackerTransferTo, LLVMOrcRetainSymbolStringPoolEntry, LLVMOrcSymbolLookupFlags,
     LLVMOrcSymbolStringPoolEntryStr,
 };
 #[llvm_versions(13.0..=latest)]
@@ -46,14 +50,23 @@ use llvm_sys::orc2::{
     LLVMOrcMaterializationResponsibilityReplace, LLVMOrcObjectLayerAddObjectFile,
     LLVMOrcObjectLayerEmit,
 };
+#[llvm_versions(11.0)]
 use llvm_sys::orc2::{
-    LLVMOrcCreateNewThreadSafeContext, LLVMOrcCreateNewThreadSafeModule,
-    LLVMOrcDisposeJITTargetMachineBuilder, LLVMOrcDisposeThreadSafeContext,
-    LLVMOrcDisposeThreadSafeModule, LLVMOrcExecutionSessionIntern, LLVMOrcExecutionSessionRef,
-    LLVMOrcJITDylibRef, LLVMOrcJITTargetMachineBuilderCreateFromTargetMachine,
-    LLVMOrcJITTargetMachineBuilderDetectHost, LLVMOrcJITTargetMachineBuilderRef,
-    LLVMOrcReleaseSymbolStringPoolEntry, LLVMOrcSymbolStringPoolEntryRef,
-    LLVMOrcThreadSafeContextGetContext, LLVMOrcThreadSafeContextRef, LLVMOrcThreadSafeModuleRef,
+    LLVMOrcDisposeJITDylibDefinitionGenerator, LLVMOrcJITDylibDefinitionGeneratorRef,
+};
+use llvm_sys::{
+    error::LLVMErrorRef,
+    orc2::{
+        LLVMOrcCreateNewThreadSafeContext, LLVMOrcCreateNewThreadSafeModule,
+        LLVMOrcDisposeJITTargetMachineBuilder, LLVMOrcDisposeThreadSafeContext,
+        LLVMOrcDisposeThreadSafeModule, LLVMOrcExecutionSessionIntern, LLVMOrcExecutionSessionRef,
+        LLVMOrcJITDylibAddGenerator, LLVMOrcJITDylibRef,
+        LLVMOrcJITTargetMachineBuilderCreateFromTargetMachine,
+        LLVMOrcJITTargetMachineBuilderDetectHost, LLVMOrcJITTargetMachineBuilderRef,
+        LLVMOrcReleaseSymbolStringPoolEntry, LLVMOrcSymbolStringPoolEntryRef,
+        LLVMOrcThreadSafeContextGetContext, LLVMOrcThreadSafeContextRef,
+        LLVMOrcThreadSafeModuleRef,
+    },
 };
 // #[llvm_versions(14.0..=latest)]
 // use llvm_sys::orc2::LLVMOrcObjectLayerAddObjectFileWithRT;
@@ -369,8 +382,9 @@ impl<'jit> JITDylib<'jit> {
 
     pub fn add_generator(&self, definition_generator: DefinitionGenerator) {
         unsafe {
-            LLVMOrcJITDylibAddGenerator(self.jit_dylib, definition_generator.definition_generator);
+            LLVMOrcJITDylibAddGenerator(self.jit_dylib, definition_generator.definition_generator.definition_generator);
         }
+        forget(definition_generator);
     }
 }
 
@@ -1238,6 +1252,169 @@ impl MaterializationResponsibility {
     }
 }
 
+#[llvm_versions(11.0)]
+type LLVMOrcDefinitionGeneratorRef = LLVMOrcJITDylibDefinitionGeneratorRef;
+#[llvm_versions(11.0)]
+unsafe extern "C" fn LLVMOrcDisposeDefinitionGenerator(
+    definition_generator: LLVMOrcDefinitionGeneratorRef,
+) {
+    LLVMOrcDisposeJITDylibDefinitionGenerator(definition_generator);
+}
+
+pub struct DefinitionGeneratorRef<'jit> {
+    definition_generator: LLVMOrcDefinitionGeneratorRef,
+    _marker: PhantomData<&'jit ()>,
+}
+
+impl<'jit> DefinitionGeneratorRef<'jit> {
+    unsafe fn new(definition_generator: LLVMOrcDefinitionGeneratorRef) -> Self {
+        assert!(!definition_generator.is_null());
+        DefinitionGeneratorRef {
+            definition_generator,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl fmt::Debug for DefinitionGeneratorRef<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("DefinitionGenerator")
+            .field("definition_generator", &self.definition_generator)
+            .finish()
+    }
+}
+
+#[derive(Debug)]
+pub struct DefinitionGenerator<'jit> {
+    definition_generator: DefinitionGeneratorRef<'jit>,
+}
+
+impl<'jit> DefinitionGenerator<'jit> {
+    unsafe fn new(definition_generator: LLVMOrcDefinitionGeneratorRef) -> Self {
+        DefinitionGenerator {
+            definition_generator: DefinitionGeneratorRef::new(definition_generator),
+        }
+    }
+    #[llvm_versions(12.0..=latest)]
+    pub fn create_custom_capi_definition_generator<G>(capi_definition_generator: &mut G) -> Self
+    where
+        G: CAPIDefinitionGenerator + 'jit,
+    {
+        unsafe {
+            DefinitionGenerator::new(LLVMOrcCreateCustomCAPIDefinitionGenerator(
+                <G as UnsafeCapiDefinitionGenerator>::try_to_generate,
+                capi_definition_generator as *mut _ as _,
+            ))
+        }
+    }
+}
+
+impl<'jit> Deref for DefinitionGenerator<'jit> {
+    type Target = DefinitionGeneratorRef<'jit>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.definition_generator
+    }
+}
+
+impl Drop for DefinitionGenerator<'_> {
+    fn drop(&mut self) {
+        unsafe {
+            LLVMOrcDisposeDefinitionGenerator(self.definition_generator.definition_generator);
+        }
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
+trait UnsafeCapiDefinitionGenerator {
+    extern "C" fn try_to_generate(
+        generator: LLVMOrcDefinitionGeneratorRef,
+        context: *mut c_void,
+        lookup_state: *mut LLVMOrcLookupStateRef,
+        lookup_kind: LLVMOrcLookupKind,
+        dylib: LLVMOrcJITDylibRef,
+        dylib_lookup_flags: LLVMOrcJITDylibLookupFlags,
+        lookup_set: LLVMOrcCLookupSet,
+        lookup_set_size: usize,
+    ) -> LLVMErrorRef;
+}
+
+#[llvm_versions(12.0..=latest)]
+impl<T> UnsafeCapiDefinitionGenerator for T
+where
+    T: CAPIDefinitionGenerator,
+{
+    extern "C" fn try_to_generate(
+        generator: LLVMOrcDefinitionGeneratorRef,
+        context: *mut c_void,
+        lookup_state: *mut LLVMOrcLookupStateRef,
+        lookup_kind: LLVMOrcLookupKind,
+        jit_dylib: LLVMOrcJITDylibRef,
+        jit_dylib_lookup_flags: LLVMOrcJITDylibLookupFlags,
+        lookup_set: LLVMOrcCLookupSet,
+        lookup_set_size: usize,
+    ) -> LLVMErrorRef {
+        let capi_definition_generator = unsafe { &mut *(context as *mut T) };
+        let lookup_state = unsafe { &mut *(lookup_state as *mut LookupState) };
+        match capi_definition_generator.try_to_generate(
+            unsafe { DefinitionGeneratorRef::new(generator) },
+            lookup_state,
+            LookupKind::new(lookup_kind),
+            unsafe { JITDylib::new(jit_dylib) },
+            JITDylibLookupFlags::new(jit_dylib_lookup_flags),
+            unsafe { CLookupSet::from_raw_parts(lookup_set, lookup_set_size) },
+        ) {
+            Ok(()) => ptr::null_mut(),
+            Err(err) => err.error,
+        }
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
+pub trait CAPIDefinitionGenerator {
+    fn try_to_generate(
+        &mut self,
+        definition_generator: DefinitionGeneratorRef,
+        lookup_state: &mut LookupState,
+        lookup_kind: LookupKind,
+        jit_dylib: JITDylib,
+        jit_dylib_lookup_flags: JITDylibLookupFlags,
+        c_lookup_set: CLookupSet,
+    ) -> Result<(), LLVMError>;
+}
+
+#[llvm_versions(12.0..=latest)]
+impl<F> CAPIDefinitionGenerator for F
+where
+    F: FnMut(
+        DefinitionGeneratorRef,
+        &mut LookupState,
+        LookupKind,
+        JITDylib,
+        JITDylibLookupFlags,
+        CLookupSet,
+    ) -> Result<(), LLVMError>,
+{
+    fn try_to_generate(
+        &mut self,
+        definition_generator: DefinitionGeneratorRef<'_>,
+        lookup_state: &mut LookupState,
+        lookup_kind: LookupKind,
+        jit_dylib: JITDylib<'_>,
+        jit_dylib_lookup_flags: JITDylibLookupFlags,
+        c_lookup_set: CLookupSet,
+    ) -> Result<(), LLVMError> {
+        self(
+            definition_generator,
+            lookup_state,
+            lookup_kind,
+            jit_dylib,
+            jit_dylib_lookup_flags,
+            c_lookup_set,
+        )
+    }
+}
+
 #[llvm_versions(13.0..=latest)]
 #[derive(Debug)]
 pub struct SymbolFlagsMapPairs {
@@ -1817,9 +1994,18 @@ impl SymbolStringPoolEntries {
 }
 
 #[llvm_versions(13.0..=latest)]
+impl Deref for SymbolStringPoolEntries {
+    type Target = [SymbolStringPoolEntry];
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { slice::from_raw_parts(transmute(self.entries), self.len) }
+    }
+}
+
+#[llvm_versions(13.0..=latest)]
 impl AsRef<[SymbolStringPoolEntry]> for SymbolStringPoolEntries {
     fn as_ref(&self) -> &[SymbolStringPoolEntry] {
-        unsafe { slice::from_raw_parts(transmute(self.entries), self.len) }
+        self.deref()
     }
 }
 
@@ -1856,4 +2042,109 @@ pub struct LazyCallThroughManager {
 #[derive(Debug)]
 pub struct IndirectStubsManager {
     indirect_stubs_manager: LLVMOrcIndirectStubsManagerRef,
+}
+
+#[llvm_versions(12.0..=latest)]
+#[derive(Debug)]
+#[repr(transparent)]
+pub struct LookupState {
+    lookup_state: LLVMOrcLookupStateRef,
+}
+
+#[llvm_versions(12.0..=latest)]
+impl LookupState {
+    unsafe fn new(lookup_state: LLVMOrcLookupStateRef) -> Self {
+        assert!(!lookup_state.is_null());
+        LookupState { lookup_state }
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
+#[derive(Debug)]
+#[repr(transparent)]
+pub struct LookupKind {
+    lookup_kind: LLVMOrcLookupKind,
+}
+
+#[llvm_versions(12.0..=latest)]
+impl LookupKind {
+    fn new(lookup_kind: LLVMOrcLookupKind) -> Self {
+        LookupKind { lookup_kind }
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
+#[llvm_enum(LLVMOrcJITDylibLookupFlags)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum JITDylibLookupFlags {
+    #[llvm_variant(LLVMOrcJITDylibLookupFlagsMatchExportedSymbolsOnly)]
+    MatchExportedSymbolsOnly,
+    #[llvm_variant(LLVMOrcJITDylibLookupFlagsMatchAllSymbols)]
+    MatchAllSymbols,
+}
+
+#[llvm_versions(12.0..=latest)]
+#[derive(Debug)]
+pub struct CLookupSet {
+    set: LLVMOrcCLookupSet,
+    size: usize,
+}
+
+#[llvm_versions(12.0..=latest)]
+impl CLookupSet {
+    unsafe fn from_raw_parts(set: LLVMOrcCLookupSet, size: usize) -> Self {
+        assert!(!set.is_null());
+        CLookupSet { set, size }
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
+impl Deref for CLookupSet {
+    type Target = [CLookupSetElement];
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { slice::from_raw_parts(transmute(self.set), self.size) }
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
+impl AsRef<[CLookupSetElement]> for CLookupSet {
+    fn as_ref(&self) -> &[CLookupSetElement] {
+        self.deref()
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
+impl AsMut<[CLookupSetElement]> for CLookupSet {
+    fn as_mut(&mut self) -> &mut [CLookupSetElement] {
+        unsafe { slice::from_raw_parts_mut(transmute(self.set), self.size) }
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
+#[derive(Debug)]
+#[repr(transparent)]
+pub struct CLookupSetElement {
+    element: LLVMOrcCLookupSetElement,
+}
+
+#[llvm_versions(12.0..=latest)]
+impl CLookupSetElement {
+    pub fn get_name(&self) -> SymbolStringPoolEntry {
+        unsafe { SymbolStringPoolEntry::new(self.element.Name) }
+    }
+
+    pub fn get_flags(&self) -> SymbolLookupFlags {
+        self.element.LookupFlags.clone().into()
+    }
+}
+
+#[llvm_versions(12.0..=latest)]
+#[llvm_enum(LLVMOrcSymbolLookupFlags)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum SymbolLookupFlags {
+    #[llvm_variant(LLVMOrcSymbolLookupFlagsRequiredSymbol)]
+    RequiredSymbol,
+    #[llvm_variant(LLVMOrcSymbolLookupFlagsWeaklyReferencedSymbol)]
+    ReferencedSymbol,
 }

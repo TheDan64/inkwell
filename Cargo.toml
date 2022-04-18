@@ -105,7 +105,7 @@ llvm-sys-90 = { package = "llvm-sys", version = "90.2.1", optional = true }
 llvm-sys-100 = { package = "llvm-sys", version = "100.2.3", optional = true }
 llvm-sys-110 = { package = "llvm-sys", version = "110.0.3", optional = true }
 llvm-sys-120 = { package = "llvm-sys", version = "120.2.3", optional = true }
-llvm-sys-130 = { package = "llvm-sys", version = "130.0.3", optional = true }
+llvm-sys-130 = { package = "llvm-sys", git = "https://gitlab.com/taricorp/llvm-sys.rs", rev = "61b067d9d20f4603458ba5bc3ae93873fdadcfd0", optional = true }
 once_cell = "1.4.1"
 parking_lot = "0.12"
 static-alloc = { version = "0.2", optional = true }
