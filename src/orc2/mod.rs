@@ -380,9 +380,14 @@ impl<'jit> JITDylib<'jit> {
         LLVMError::new(unsafe { LLVMOrcJITDylibClear(self.jit_dylib) })
     }
 
-    pub fn add_generator(&self, definition_generator: DefinitionGenerator) {
+    pub fn add_generator(&self, definition_generator: DefinitionGenerator<'jit>) {
         unsafe {
-            LLVMOrcJITDylibAddGenerator(self.jit_dylib, definition_generator.definition_generator.definition_generator);
+            LLVMOrcJITDylibAddGenerator(
+                self.jit_dylib,
+                definition_generator
+                    .definition_generator
+                    .definition_generator,
+            );
         }
         forget(definition_generator);
     }
@@ -1296,9 +1301,11 @@ impl<'jit> DefinitionGenerator<'jit> {
         }
     }
     #[llvm_versions(12.0..=latest)]
-    pub fn create_custom_capi_definition_generator<G>(capi_definition_generator: &mut G) -> Self
+    pub fn create_custom_capi_definition_generator<G>(
+        capi_definition_generator: &'jit mut Wrapper<'jit, G>,
+    ) -> Self
     where
-        G: CAPIDefinitionGenerator + 'jit,
+        G: CAPIDefinitionGenerator,
     {
         unsafe {
             DefinitionGenerator::new(LLVMOrcCreateCustomCAPIDefinitionGenerator(
@@ -1321,6 +1328,22 @@ impl Drop for DefinitionGenerator<'_> {
     fn drop(&mut self) {
         unsafe {
             LLVMOrcDisposeDefinitionGenerator(self.definition_generator.definition_generator);
+        }
+    }
+}
+
+#[derive(Debug)]
+#[repr(transparent)]
+pub struct Wrapper<'a, T> {
+    value: T,
+    _marker: PhantomData<&'a ()>,
+}
+
+impl<'a, T> Wrapper<'a, T> {
+    pub fn new(value: T) -> Self {
+        Self {
+            value,
+            _marker: PhantomData,
         }
     }
 }

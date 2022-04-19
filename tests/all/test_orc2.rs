@@ -7,9 +7,8 @@ use std::{
 
 #[llvm_versions(12.0..=latest)]
 use inkwell::orc2::{
-    lljit::ObjectLinkingLayerCreator, CLookupSet, EvaluatedSymbol,
-    JITDylibLookupFlags, LookupKind, LookupState, MaterializationUnit, ObjectLayer, SymbolFlags,
-    SymbolMapPair, SymbolMapPairs,
+    lljit::ObjectLinkingLayerCreator, CLookupSet, EvaluatedSymbol, JITDylibLookupFlags, LookupKind,
+    LookupState, MaterializationUnit, ObjectLayer, SymbolFlags, SymbolMapPair, SymbolMapPairs,
 };
 #[llvm_versions(13.0..=latest)]
 use inkwell::orc2::{
@@ -24,8 +23,9 @@ use inkwell::{
     module::{Linkage, Module},
     orc2::{
         lljit::{LLJITBuilder, LLJIT},
-        DefinitionGenerator, DefinitionGeneratorRef, ExecutionSession, JITDylib,
-        JITTargetMachineBuilder, SymbolStringPoolEntry, ThreadSafeContext, ThreadSafeModule,
+        Wrapper, CAPIDefinitionGenerator, DefinitionGenerator, DefinitionGeneratorRef,
+        ExecutionSession, JITDylib, JITTargetMachineBuilder, SymbolStringPoolEntry,
+        ThreadSafeContext, ThreadSafeModule,
     },
     support::LLVMString,
     targets::{CodeModel, FileType, RelocMode, Target, TargetMachine},
@@ -670,7 +670,7 @@ fn test_jit_dylib_add_generator() {
     let lljit = LLJIT::create().expect("LLJIT::create failed");
     let main_jd = lljit.get_main_jit_dylib();
 
-    let mut capi_definition_generator =
+    let mut capi_definition_generator = Wrapper::new(
         |definition_generator: DefinitionGeneratorRef,
          lookup_state: &mut LookupState,
          lookup_kind: LookupKind,
@@ -678,9 +678,9 @@ fn test_jit_dylib_add_generator() {
          jit_dylib_lookup_flags: JITDylibLookupFlags,
          c_lookup_set: CLookupSet| {
             let module = constant_function_module(&thread_safe_context, 64, "main");
-            lljit.add_module(&jit_dylib, module);
-            Ok(())
-        };
+            lljit.add_module(&jit_dylib, module)
+        },
+    );
     let definition_generator = DefinitionGenerator::create_custom_capi_definition_generator(
         &mut capi_definition_generator,
     );
