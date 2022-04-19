@@ -3,7 +3,7 @@ use std::{
     ffi::CStr,
     fmt,
     marker::PhantomData,
-    mem::{forget, transmute, transmute_copy},
+    mem::{forget, transmute_copy},
     ptr,
 };
 
@@ -449,9 +449,7 @@ impl<'jit> LLJIT<'jit> {
             LLVMOrcObjectTransformLayerSetTransform(
                 LLVMOrcLLJITGetObjTransformLayer(self.lljit),
                 object_transform_layer_transform_function,
-                transmute::<&ObjectTransformerCtx<'jit>, _>(
-                    self.object_transformer.borrow().as_ref().unwrap(),
-                ),
+                self.object_transformer.borrow().as_ref().unwrap() as *const _ as *mut c_void,
             );
         }
     }
@@ -531,7 +529,7 @@ extern "C" fn object_transform_layer_transform_function(
     ctx: *mut c_void,
     object_in_out: *mut LLVMMemoryBufferRef,
 ) -> LLVMErrorRef {
-    let object_transformer: &mut ObjectTransformerCtx = unsafe { transmute(ctx) };
+    let object_transformer: &mut ObjectTransformerCtx = unsafe { &mut *(ctx as *mut _) };
     match object_transformer.transform(MemoryBufferRef::new(object_in_out)) {
         Ok(()) => ptr::null_mut(),
         Err(llvm_error) => {
@@ -669,9 +667,7 @@ impl<'jit_builder> LLJITBuilder<'jit_builder> {
             LLVMOrcLLJITBuilderSetObjectLinkingLayerCreator(
                 self.builder.as_ptr(),
                 object_linking_layer_creator_function,
-                transmute::<&ObjectLinkingLayerCreatorCtx<'jit_builder>, _>(
-                    &self.object_linking_layer_creator.as_ref().unwrap(),
-                ),
+                &self.object_linking_layer_creator.as_ref().unwrap() as *const _ as *mut c_void,
             );
         }
         self
@@ -707,16 +703,15 @@ extern "C" fn object_linking_layer_creator_function(
     execution_session: LLVMOrcExecutionSessionRef,
     triple: *const c_char,
 ) -> LLVMOrcObjectLayerRef {
-    unsafe {
-        let object_linking_layer_creator: &mut ObjectLinkingLayerCreatorCtx = transmute(ctx);
-        let object_layer = object_linking_layer_creator.create_object_linking_layer(
-            ExecutionSession::new_borrowed(execution_session),
-            CStr::from_ptr(triple),
-        );
-        let object_layer_ref = object_layer.object_layer.as_ptr();
-        forget(object_layer);
-        object_layer_ref
-    }
+    let object_linking_layer_creator: &mut ObjectLinkingLayerCreatorCtx =
+        unsafe { &mut *(ctx as *mut _) };
+    let object_layer = object_linking_layer_creator.create_object_linking_layer(
+        unsafe { ExecutionSession::new_borrowed(execution_session) },
+        unsafe { CStr::from_ptr(triple) },
+    );
+    let object_layer_ref = object_layer.object_layer.as_ptr();
+    forget(object_layer);
+    object_layer_ref
 }
 
 /// Represents a function that is used to create [`ObjectLayer`] instances.

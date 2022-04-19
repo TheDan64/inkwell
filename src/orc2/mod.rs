@@ -685,7 +685,7 @@ impl MaterializationUnit {
         unsafe {
             MaterializationUnit::new(LLVMOrcCreateCustomMaterializationUnit(
                 to_c_str(name).as_ptr(),
-                transmute::<*mut MaterializationUnitCtx, _>(Box::into_raw(Box::new(materializer))),
+                Box::into_raw(Box::new(materializer)) as _,
                 symbols.raw_ptr(),
                 symbols.len(),
                 static_initializer
@@ -742,12 +742,11 @@ extern "C" fn materialization_unit_materialize(
     materialization_responsibility: LLVMOrcMaterializationResponsibilityRef,
 ) {
     unsafe {
-        let materializer: &mut MaterializationUnitCtx = transmute(ctx);
+        let materializer: &mut MaterializationUnitCtx = &mut *(ctx as *mut _);
         materializer.materialize(MaterializationResponsibility::new(
             materialization_responsibility,
         ));
-        let materializer: *mut MaterializationUnitCtx = transmute(ctx);
-        drop(Box::from_raw(materializer));
+        Box::from_raw(materializer as *mut MaterializationUnitCtx);
     }
 }
 
@@ -759,7 +758,7 @@ extern "C" fn materialization_unit_discard(
     symbol: LLVMOrcSymbolStringPoolEntryRef,
 ) {
     unsafe {
-        let materializer: &mut MaterializationUnitCtx = transmute(ctx);
+        let materializer: &mut MaterializationUnitCtx = &mut *(ctx as *mut _);
         let jit_dylib = JITDylib::new(jit_dylib);
         let symbol = SymbolStringPoolEntry::new(symbol);
         materializer.discard(&jit_dylib, &symbol);
@@ -772,8 +771,7 @@ extern "C" fn materialization_unit_discard(
 #[no_mangle]
 extern "C" fn materialization_unit_destroy(ctx: *mut c_void) {
     unsafe {
-        let materializer: *mut MaterializationUnitCtx = transmute(ctx);
-        drop(Box::from_raw(materializer));
+        Box::<MaterializationUnitCtx>::from_raw(ctx as _);
     }
 }
 
@@ -1221,7 +1219,7 @@ impl MaterializationResponsibility {
         LLVMError::new(unsafe {
             LLVMOrcMaterializationResponsibilityDelegate(
                 self.materialization_responsibility,
-                transmute(symbols.as_mut_ptr()),
+                symbols.as_mut_ptr() as *mut LLVMOrcSymbolStringPoolEntryRef,
                 symbols.len(),
                 &mut ptr,
             )
@@ -1300,6 +1298,7 @@ impl<'jit> DefinitionGenerator<'jit> {
             definition_generator: DefinitionGeneratorRef::new(definition_generator),
         }
     }
+
     #[llvm_versions(12.0..=latest)]
     pub fn create_custom_capi_definition_generator<G>(
         capi_definition_generator: &'jit mut Wrapper<'jit, G>,
@@ -1310,7 +1309,7 @@ impl<'jit> DefinitionGenerator<'jit> {
         unsafe {
             DefinitionGenerator::new(LLVMOrcCreateCustomCAPIDefinitionGenerator(
                 <G as UnsafeCapiDefinitionGenerator>::try_to_generate,
-                capi_definition_generator as *mut _ as _,
+                capi_definition_generator as *mut _ as *mut c_void,
             ))
         }
     }
@@ -1448,7 +1447,7 @@ pub struct SymbolFlagsMapPairs {
 impl SymbolFlagsMapPairs {
     unsafe fn from_raw_parts(ptr: LLVMOrcCSymbolFlagsMapPairs, num_pairs: usize) -> Self {
         SymbolFlagsMapPairs {
-            pairs: Vec::from_raw_parts(transmute(ptr), num_pairs, num_pairs),
+            pairs: Vec::from_raw_parts(ptr as *mut SymbolFlagsMapPair, num_pairs, num_pairs),
         }
     }
 
@@ -1457,7 +1456,7 @@ impl SymbolFlagsMapPairs {
     }
 
     fn raw_ptr(&mut self) -> LLVMOrcCSymbolFlagsMapPairs {
-        unsafe { transmute(self.pairs.as_mut_ptr()) }
+        self.pairs.as_mut_ptr() as LLVMOrcCSymbolFlagsMapPairs
     }
 
     pub fn len(&self) -> usize {
@@ -1535,14 +1534,14 @@ impl SymbolFlagsMapPair {
     pub fn new(name: SymbolStringPoolEntry, flags: SymbolFlags) -> Self {
         Self {
             pair: LLVMOrcCSymbolFlagsMapPair {
-                Name: unsafe { transmute(name) },
-                Flags: unsafe { transmute(flags) },
+                Name: name.entry,
+                Flags: flags.flags,
             },
         }
     }
 
     pub fn get_name(&self) -> &SymbolStringPoolEntry {
-        unsafe { transmute(&self.pair.Name) }
+        unsafe { &*(self.pair.Name as *const SymbolStringPoolEntry) }
     }
 
     pub fn name(self) -> SymbolStringPoolEntry {
@@ -1627,8 +1626,8 @@ impl SymbolMapPairs {
         SymbolMapPairs { pairs }
     }
 
-    unsafe fn raw_ptr(&mut self) -> LLVMOrcCSymbolMapPairs {
-        transmute(self.pairs.as_mut_ptr())
+    fn raw_ptr(&mut self) -> LLVMOrcCSymbolMapPairs {
+        self.pairs.as_mut_ptr() as LLVMOrcCSymbolMapPairs
     }
 
     pub fn len(&self) -> usize {
@@ -1706,14 +1705,14 @@ impl SymbolMapPair {
     pub fn new(name: SymbolStringPoolEntry, symbol: EvaluatedSymbol) -> Self {
         SymbolMapPair {
             pair: LLVMJITCSymbolMapPair {
-                Name: unsafe { transmute(name) },
-                Sym: unsafe { transmute(symbol) },
+                Name: name.entry,
+                Sym: symbol.symbol,
             },
         }
     }
 
     pub fn get_name(&self) -> &SymbolStringPoolEntry {
-        unsafe { transmute(&self.pair.Name) }
+        unsafe { &*(self.pair.Name as *const SymbolStringPoolEntry) }
     }
 
     pub fn name(self) -> SymbolStringPoolEntry {
@@ -1754,8 +1753,8 @@ impl EvaluatedSymbol {
     pub fn new(address: u64, flags: SymbolFlags) -> Self {
         EvaluatedSymbol {
             symbol: LLVMJITEvaluatedSymbol {
-                Address: unsafe { transmute(address) },
-                Flags: unsafe { transmute(flags) },
+                Address: address,
+                Flags: flags.flags,
             },
         }
     }
@@ -1798,7 +1797,7 @@ impl<'jit> DependenceMapPairs<'jit> {
     }
 
     unsafe fn raw_ptr(&mut self) -> LLVMOrcCDependenceMapPairs {
-        transmute(self.pairs.as_mut_ptr())
+        self.pairs.as_mut_ptr() as LLVMOrcCDependenceMapPairs
     }
 
     pub fn len(&self) -> usize {
