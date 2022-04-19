@@ -3,14 +3,13 @@ use std::{
     ffi::CStr,
     iter::{self, FromIterator},
     ops::Deref,
-    rc::Rc,
-    sync::Arc,
-    thread,
 };
 
 #[llvm_versions(12.0..=latest)]
 use inkwell::orc2::{
-    lljit::ObjectLinkingLayerCreator, MaterializationUnit, ObjectLayer, SymbolFlags,
+    lljit::ObjectLinkingLayerCreator, CLookupSet, EvaluatedSymbol,
+    JITDylibLookupFlags, LookupKind, LookupState, MaterializationUnit, ObjectLayer, SymbolFlags,
+    SymbolMapPair, SymbolMapPairs,
 };
 #[llvm_versions(13.0..=latest)]
 use inkwell::orc2::{
@@ -25,8 +24,8 @@ use inkwell::{
     module::{Linkage, Module},
     orc2::{
         lljit::{LLJITBuilder, LLJIT},
-        ExecutionSession, JITDylib, JITTargetMachineBuilder, SymbolStringPoolEntry,
-        ThreadSafeContext, ThreadSafeModule,
+        DefinitionGenerator, DefinitionGeneratorRef, ExecutionSession, JITDylib,
+        JITTargetMachineBuilder, SymbolStringPoolEntry, ThreadSafeContext, ThreadSafeModule,
     },
     support::LLVMString,
     targets::{CodeModel, FileType, RelocMode, Target, TargetMachine},
@@ -662,6 +661,32 @@ where
     }
 
     fn discard(&mut self, _jit_dylib: &JITDylib, _symboll: &SymbolStringPoolEntry) {}
+}
+
+#[llvm_versions(12.0..=latest)]
+#[test]
+fn test_jit_dylib_add_generator() {
+    let thread_safe_context = ThreadSafeContext::create();
+    let lljit = LLJIT::create().expect("LLJIT::create failed");
+    let main_jd = lljit.get_main_jit_dylib();
+
+    let mut capi_definition_generator =
+        |definition_generator: DefinitionGeneratorRef,
+         lookup_state: &mut LookupState,
+         lookup_kind: LookupKind,
+         jit_dylib: JITDylib,
+         jit_dylib_lookup_flags: JITDylibLookupFlags,
+         c_lookup_set: CLookupSet| {
+            let module = constant_function_module(&thread_safe_context, 64, "main");
+            lljit.add_module(&jit_dylib, module);
+            Ok(())
+        };
+    let definition_generator = DefinitionGenerator::create_custom_capi_definition_generator(
+        &mut capi_definition_generator,
+    );
+
+    main_jd.add_generator(definition_generator);
+    test_main_function(&lljit);
 }
 
 #[llvm_versions(13.0..=latest)]
