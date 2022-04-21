@@ -1555,7 +1555,7 @@ impl SymbolFlagsMapPair {
     }
 
     pub fn get_name(&self) -> &SymbolStringPoolEntry {
-        unsafe { &*(self.pair.Name as *const SymbolStringPoolEntry) }
+        unsafe { transmute(&self.pair.Name) }
     }
 
     pub fn name(self) -> SymbolStringPoolEntry {
@@ -1726,7 +1726,7 @@ impl SymbolMapPair {
     }
 
     pub fn get_name(&self) -> &SymbolStringPoolEntry {
-        unsafe { &*(self.pair.Name as *const SymbolStringPoolEntry) }
+        unsafe { transmute(&self.pair.Name) }
     }
 
     pub fn name(self) -> SymbolStringPoolEntry {
