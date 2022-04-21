@@ -2,6 +2,7 @@ use std::{
     error::Error,
     ffi::CStr,
     fmt::{self, Debug, Display, Formatter},
+    mem::forget,
     ops::Deref,
 };
 
@@ -21,7 +22,6 @@ use crate::support::to_c_str;
 #[derive(Debug)]
 pub struct LLVMError {
     pub(crate) error: LLVMErrorRef,
-    handled: bool,
 }
 
 impl LLVMError {
@@ -29,10 +29,7 @@ impl LLVMError {
         if error.is_null() {
             return Ok(());
         }
-        Err(LLVMError {
-            error,
-            handled: false,
-        })
+        Err(LLVMError { error })
     }
     // Null type id == success
     pub fn get_type_id(&self) -> LLVMErrorTypeId {
@@ -51,9 +48,10 @@ impl LLVMError {
     /// assert_eq!(*error.get_message(), *CString::new("llvm error").unwrap().as_c_str());
     /// # }
     /// ```
-    pub fn get_message(mut self) -> LLVMErrorMessage {
-        self.handled = true;
-        unsafe { LLVMErrorMessage::new(LLVMGetErrorMessage(self.error)) }
+    pub fn get_message(self) -> LLVMErrorMessage {
+        let result = unsafe { LLVMErrorMessage::new(LLVMGetErrorMessage(self.error)) };
+        forget(self);
+        result
     }
 
     /// Creates a new StringError with the given message.
@@ -65,18 +63,19 @@ impl LLVMError {
     #[llvm_versions(12.0..=latest)]
     pub fn new_string_error(message: &str) -> Self {
         let error = unsafe { LLVMCreateStringError(to_c_str(message).as_ptr()) };
-        LLVMError {
-            error,
-            handled: false,
-        }
+        LLVMError { error }
+    }
+
+    pub(crate) fn leak(self) -> LLVMErrorRef {
+        let error = self.error;
+        forget(self);
+        error
     }
 }
 
 impl Drop for LLVMError {
     fn drop(&mut self) {
-        if !self.handled {
-            unsafe { LLVMConsumeError(self.error) }
-        }
+        unsafe { LLVMConsumeError(self.error) }
     }
 }
 

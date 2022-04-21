@@ -147,19 +147,19 @@ impl MemoryBufferRef {
 
     /// Set the refrenced [`MemoryBuffer`] to `memory_buffer`.
     /// Drops the current memory buffer.
-    pub fn set_memory_buffer(&mut self, mut memory_buffer: MemoryBuffer) {
+    pub fn set_memory_buffer(&mut self, memory_buffer: MemoryBuffer) {
         unsafe {
-            self.set_memory_buffer_unsafe(&mut memory_buffer.memory_buffer);
+            self.set_memory_buffer_unsafe(memory_buffer.memory_buffer);
         }
         forget(memory_buffer);
     }
 
     pub(crate) unsafe fn set_memory_buffer_unsafe(
         &mut self,
-        memory_buffer: *mut LLVMMemoryBufferRef,
+        memory_buffer: LLVMMemoryBufferRef,
     ) {
         let old_buffer = *self.memory_buffer;
-        *self.memory_buffer = *memory_buffer;
+        *self.memory_buffer = memory_buffer;
         if !old_buffer.is_null() {
             drop(MemoryBuffer::new(old_buffer));
         }

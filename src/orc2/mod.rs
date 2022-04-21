@@ -340,7 +340,7 @@ impl<'jit> JITDylib<'jit> {
     ///
     /// let lljit = LLJIT::create().expect("LLJIT::create failed");
     /// let jit_dylib = lljit.get_main_jit_dylib();
-    /// let materializer: Box<dyn Materializer> = Box::new((
+    /// let materializer = Box::new((
     ///     |materialization_responsibility: MaterializationResponsibility| {
     ///         // materialize implementation
     ///     },
@@ -662,38 +662,43 @@ impl<'jit> IRTransformLayer<'jit> {
 #[llvm_versions(12.0..=latest)]
 #[llvm_versioned_item]
 #[derive(Debug)]
-pub struct MaterializationUnit {
+pub struct MaterializationUnit<'jit> {
     materialization_unit: LLVMOrcMaterializationUnitRef,
+    _marker: PhantomData<&'jit ()>,
 }
 
 #[llvm_versions(12.0..=latest)]
-impl MaterializationUnit {
+impl<'jit> MaterializationUnit<'jit> {
     unsafe fn new(materialization_unit: LLVMOrcMaterializationUnitRef) -> Self {
         assert!(!materialization_unit.is_null());
         MaterializationUnit {
             materialization_unit,
+            _marker: PhantomData,
         }
     }
 
     #[llvm_versions(13.0..=latest)]
-    pub fn create<'jit>(
+    pub fn create<M>(
         name: &str,
         mut symbols: SymbolFlagsMapPairs,
         static_initializer: Option<SymbolStringPoolEntry>,
-        materializer: Box<(dyn Materializer + 'jit)>,
-    ) -> Self {
+        materializer: Box<M>,
+    ) -> Self
+    where
+        M: Materializer + 'jit,
+    {
         unsafe {
             MaterializationUnit::new(LLVMOrcCreateCustomMaterializationUnit(
                 to_c_str(name).as_ptr(),
-                Box::into_raw(Box::new(materializer)) as _,
+                Box::into_raw(materializer) as *mut c_void,
                 symbols.raw_ptr(),
                 symbols.len(),
                 static_initializer
                     .map(|s| s.entry)
                     .unwrap_or(ptr::null_mut()),
-                materialization_unit_materialize,
-                materialization_unit_discard,
-                materialization_unit_destroy,
+                <M as UnsafeMaterializer>::materialization_unit_materialize,
+                <M as UnsafeMaterializer>::materialization_unit_discard,
+                <M as UnsafeMaterializer>::materialization_unit_destroy,
             ))
         }
     }
@@ -724,7 +729,7 @@ impl MaterializationUnit {
 }
 
 #[llvm_versions(12.0..=latest)]
-impl Drop for MaterializationUnit {
+impl Drop for MaterializationUnit<'_> {
     fn drop(&mut self) {
         unsafe {
             LLVMOrcDisposeMaterializationUnit(self.materialization_unit);
@@ -733,45 +738,54 @@ impl Drop for MaterializationUnit {
 }
 
 #[llvm_versions(13.0..=latest)]
-type MaterializationUnitCtx<'jit> = Box<dyn Materializer + 'jit>;
-
-#[llvm_versions(13.0..=latest)]
-#[no_mangle]
-extern "C" fn materialization_unit_materialize(
-    ctx: *mut c_void,
-    materialization_responsibility: LLVMOrcMaterializationResponsibilityRef,
-) {
-    unsafe {
-        let materializer: &mut MaterializationUnitCtx = &mut *(ctx as *mut _);
-        materializer.materialize(MaterializationResponsibility::new(
-            materialization_responsibility,
-        ));
-        Box::from_raw(materializer as *mut MaterializationUnitCtx);
-    }
+trait UnsafeMaterializer {
+    extern "C" fn materialization_unit_materialize(
+        ctx: *mut c_void,
+        materialization_responsibility: LLVMOrcMaterializationResponsibilityRef,
+    );
+    extern "C" fn materialization_unit_discard(
+        ctx: *mut c_void,
+        jit_dylib: LLVMOrcJITDylibRef,
+        symbol: LLVMOrcSymbolStringPoolEntryRef,
+    );
+    extern "C" fn materialization_unit_destroy(ctx: *mut c_void);
 }
 
 #[llvm_versions(13.0..=latest)]
-#[no_mangle]
-extern "C" fn materialization_unit_discard(
-    ctx: *mut c_void,
-    jit_dylib: LLVMOrcJITDylibRef,
-    symbol: LLVMOrcSymbolStringPoolEntryRef,
-) {
-    unsafe {
-        let materializer: &mut MaterializationUnitCtx = &mut *(ctx as *mut _);
-        let jit_dylib = JITDylib::new(jit_dylib);
-        let symbol = SymbolStringPoolEntry::new(symbol);
-        materializer.discard(&jit_dylib, &symbol);
-        forget(jit_dylib);
-        forget(symbol);
+impl<T> UnsafeMaterializer for T
+where
+    T: Materializer,
+{
+    extern "C" fn materialization_unit_materialize(
+        ctx: *mut c_void,
+        materialization_responsibility: LLVMOrcMaterializationResponsibilityRef,
+    ) {
+        unsafe {
+            let mut materializer: Box<T> = Box::from_raw(ctx as *mut T);
+            materializer.materialize(MaterializationResponsibility::new(
+                materialization_responsibility,
+            ));
+        }
     }
-}
-
-#[llvm_versions(13.0..=latest)]
-#[no_mangle]
-extern "C" fn materialization_unit_destroy(ctx: *mut c_void) {
-    unsafe {
-        Box::<MaterializationUnitCtx>::from_raw(ctx as _);
+    extern "C" fn materialization_unit_discard(
+        ctx: *mut c_void,
+        jit_dylib: LLVMOrcJITDylibRef,
+        symbol: LLVMOrcSymbolStringPoolEntryRef,
+    ) {
+        unsafe {
+            let mut materializer: Box<T> = Box::from_raw(ctx as *mut T);
+            let jit_dylib = JITDylib::new(jit_dylib);
+            let symbol = SymbolStringPoolEntry::new(symbol);
+            materializer.discard(&jit_dylib, &symbol);
+            forget(jit_dylib);
+            forget(symbol);
+            forget(materializer); // TODO: check if this forget it correct
+        }
+    }
+    extern "C" fn materialization_unit_destroy(ctx: *mut c_void) {
+        unsafe {
+            Box::<T>::from_raw(ctx as _);
+        }
     }
 }
 
@@ -1387,7 +1401,7 @@ where
             unsafe { CLookupSet::from_raw_parts(lookup_set, lookup_set_size) },
         ) {
             Ok(()) => ptr::null_mut(),
-            Err(err) => err.error,
+            Err(err) => err.leak(),
         }
     }
 }

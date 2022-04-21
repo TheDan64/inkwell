@@ -59,11 +59,11 @@ use super::{
 use super::{ObjectLayer, ResourceTracker};
 
 /// Represents a reference to an LLVM `LLJIT` execution engine.
+#[derive(Debug)]
+#[repr(transparent)]
 #[llvm_versioned_item]
 pub struct LLJIT<'jit> {
     pub(crate) lljit: LLVMOrcLLJITRef,
-    #[llvm_versions(13.0..=latest)]
-    object_transformer: RefCell<Option<Box<dyn ObjectTransformer + 'jit>>>,
     _marker: PhantomData<&'jit ()>,
 }
 
@@ -80,8 +80,6 @@ impl<'jit> LLJIT<'jit> {
         assert!(!lljit.is_null());
         Ok(LLJIT {
             lljit,
-            #[cfg(not(any(feature = "llvm11-0", feature = "llvm12-0")))]
-            object_transformer: RefCell::new(None),
             _marker: PhantomData,
         })
     }
@@ -436,20 +434,20 @@ impl<'jit> LLJIT<'jit> {
     ///
     /// let lljit = LLJIT::create().expect("LLJIT::create failed");
     ///
-    /// let object_transformer: Box<dyn ObjectTransformer> = Box::new(|buffer: MemoryBufferRef| {
+    /// let mut object_transformer = |buffer: &mut MemoryBufferRef| {
     ///     // Transformer implementation...
     ///     Ok(())
-    /// });
-    /// lljit.set_object_transformer(object_transformer);
+    /// };
+    /// lljit.set_object_transformer(&mut object_transformer);
     /// ```
     #[llvm_versions(13.0..=latest)]
-    pub fn set_object_transformer(&self, object_transformer: Box<dyn ObjectTransformer + 'jit>) {
-        *self.object_transformer.borrow_mut() = Some(object_transformer);
+    pub fn set_object_transformer<O>(&self, object_transformer: &'jit mut O)
+    where O: ObjectTransformer + 'jit{
         unsafe {
             LLVMOrcObjectTransformLayerSetTransform(
                 LLVMOrcLLJITGetObjTransformLayer(self.lljit),
-                object_transform_layer_transform_function,
-                self.object_transformer.borrow().as_ref().unwrap() as *const _ as *mut c_void,
+                <O as UnsafeObjectTransformer>::try_to_transform,
+                object_transformer as *mut _ as *mut c_void,
             );
         }
     }
@@ -502,16 +500,6 @@ impl<'jit> LLJIT<'jit> {
     }
 }
 
-impl fmt::Debug for LLJIT<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut debug_struct = f.debug_struct("LLJIT");
-        debug_struct.field("lljit", &self.lljit);
-        #[cfg(not(any(feature = "llvm11-0", feature = "llvm12-0")))]
-        debug_struct.field("object_transformer", &self.object_transformer.as_ptr());
-        debug_struct.finish()
-    }
-}
-
 impl Drop for LLJIT<'_> {
     fn drop(&mut self) {
         unsafe {
@@ -521,22 +509,32 @@ impl Drop for LLJIT<'_> {
 }
 
 #[llvm_versions(13.0..=latest)]
-type ObjectTransformerCtx<'jit> = Box<dyn ObjectTransformer + 'jit>;
+trait UnsafeObjectTransformer {
+    extern "C" fn try_to_transform(
+        ctx: *mut c_void,
+        object_in_out: *mut LLVMMemoryBufferRef,
+    ) -> LLVMErrorRef;
+}
 
 #[llvm_versions(13.0..=latest)]
-#[no_mangle]
-extern "C" fn object_transform_layer_transform_function(
-    ctx: *mut c_void,
-    object_in_out: *mut LLVMMemoryBufferRef,
-) -> LLVMErrorRef {
-    let object_transformer: &mut ObjectTransformerCtx = unsafe { &mut *(ctx as *mut _) };
-    match object_transformer.transform(MemoryBufferRef::new(object_in_out)) {
-        Ok(()) => ptr::null_mut(),
-        Err(llvm_error) => {
-            unsafe {
-                MemoryBufferRef::new(object_in_out).set_memory_buffer_unsafe(ptr::null_mut());
+impl<T> UnsafeObjectTransformer for T
+where
+    T: ObjectTransformer,
+{
+    extern "C" fn try_to_transform(
+        ctx: *mut c_void,
+        object_in_out: *mut LLVMMemoryBufferRef,
+    ) -> LLVMErrorRef {
+        let object_transformer: &mut T = unsafe { &mut *(ctx as *mut _) };
+        let mut memory_buffer_ref = MemoryBufferRef::new(object_in_out);
+        match object_transformer.try_to_transform(&mut memory_buffer_ref) {
+            Ok(()) => ptr::null_mut(),
+            Err(llvm_error) => {
+                unsafe {
+                    memory_buffer_ref.set_memory_buffer_unsafe(ptr::null_mut());
+                }
+                llvm_error.leak()
             }
-            llvm_error.error
         }
     }
 }
@@ -546,25 +544,25 @@ extern "C" fn object_transform_layer_transform_function(
 pub trait ObjectTransformer {
     /// The `transfrom` function applies transformations to an object file buffer
     /// (`object_in_out`).
-    fn transform(&mut self, object_in_out: MemoryBufferRef) -> Result<(), LLVMError>;
+    fn try_to_transform(&mut self, object_in_out: &mut MemoryBufferRef) -> Result<(), LLVMError>;
 }
 
 #[llvm_versions(13.0..=latest)]
 impl<F> ObjectTransformer for F
 where
-    F: FnMut(MemoryBufferRef) -> Result<(), LLVMError>,
+    F: FnMut(&mut MemoryBufferRef) -> Result<(), LLVMError>,
 {
-    fn transform(&mut self, object_in_out: MemoryBufferRef) -> Result<(), LLVMError> {
+    fn try_to_transform(&mut self, object_in_out: &mut MemoryBufferRef) -> Result<(), LLVMError> {
         self(object_in_out)
     }
 }
 
 /// An `LLJITBuilder` is used to create custom [`LLJIT`] instances.
+#[derive(Debug)]
+#[repr(transparent)]
 #[llvm_versioned_item]
 pub struct LLJITBuilder<'jit_builder> {
     builder: LLJITBuilderRef,
-    #[llvm_versions(12.0..=latest)]
-    object_linking_layer_creator: Option<Box<dyn ObjectLinkingLayerCreator + 'jit_builder>>,
     _marker: PhantomData<&'jit_builder ()>,
 }
 
@@ -573,8 +571,6 @@ impl<'jit_builder> LLJITBuilder<'jit_builder> {
         assert!(!builder.is_null());
         LLJITBuilder {
             builder: LLJITBuilderRef(builder),
-            #[cfg(not(feature = "llvm11-0"))]
-            object_linking_layer_creator: None,
             _marker: PhantomData,
         }
     }
@@ -645,45 +641,34 @@ impl<'jit_builder> LLJITBuilder<'jit_builder> {
     /// };
     ///
     /// // Create ObjectLinkingLayerCreator
-    /// let object_linking_layer_creator: Box<dyn ObjectLinkingLayerCreator> =
-    ///     Box::new(|execution_session: ExecutionSession, _triple: &CStr| {
+    /// let mut object_linking_layer_creator =
+    ///     |execution_session: ExecutionSession, _triple: &CStr| {
     ///         execution_session
     ///             .create_rt_dyld_object_linking_layer_with_section_memory_manager()
     ///             .into()
-    ///     });
+    ///     };
     ///
     /// let lljit = LLJITBuilder::create()
-    ///     .set_object_linking_layer_creator(object_linking_layer_creator)
+    ///     .set_object_linking_layer_creator(&mut object_linking_layer_creator)
     ///     .build()
     ///     .expect("LLJITBuilder::build failed");
     /// ```
     #[llvm_versions(12.0..=latest)]
-    pub fn set_object_linking_layer_creator(
-        mut self,
-        object_linking_layer_creator: Box<dyn ObjectLinkingLayerCreator + 'jit_builder>,
-    ) -> Self {
-        self.object_linking_layer_creator = Some(object_linking_layer_creator);
+    pub fn set_object_linking_layer_creator<O>(
+        self,
+        object_linking_layer_creator: &'jit_builder mut O,
+    ) -> Self
+    where
+        O: ObjectLinkingLayerCreator + 'jit_builder,
+    {
         unsafe {
             LLVMOrcLLJITBuilderSetObjectLinkingLayerCreator(
                 self.builder.as_ptr(),
-                object_linking_layer_creator_function,
-                &self.object_linking_layer_creator.as_ref().unwrap() as *const _ as *mut c_void,
+                <O as UnsafeObjectLinkingLayerCreator>::create_object_linking_layer,
+                object_linking_layer_creator as *mut _ as *mut c_void,
             );
         }
         self
-    }
-}
-
-impl fmt::Debug for LLJITBuilder<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut debug_struct = f.debug_struct("LLJITBuilder");
-        debug_struct.field("builder", &self.builder);
-        #[cfg(not(feature = "llvm11-0"))]
-        debug_struct.field(
-            "object_linking_layer_creator",
-            &self.object_linking_layer_creator.as_ref().map(|_| ()),
-        );
-        debug_struct.finish()
     }
 }
 
@@ -694,24 +679,33 @@ impl_owned_ptr!(
 );
 
 #[llvm_versions(12.0..=latest)]
-type ObjectLinkingLayerCreatorCtx<'jit_builder> = Box<dyn ObjectLinkingLayerCreator + 'jit_builder>;
+trait UnsafeObjectLinkingLayerCreator {
+    extern "C" fn create_object_linking_layer(
+        ctx: *mut c_void,
+        execution_session: LLVMOrcExecutionSessionRef,
+        triple: *const c_char,
+    ) -> LLVMOrcObjectLayerRef;
+}
 
 #[llvm_versions(12.0..=latest)]
-#[no_mangle]
-extern "C" fn object_linking_layer_creator_function(
-    ctx: *mut c_void,
-    execution_session: LLVMOrcExecutionSessionRef,
-    triple: *const c_char,
-) -> LLVMOrcObjectLayerRef {
-    let object_linking_layer_creator: &mut ObjectLinkingLayerCreatorCtx =
-        unsafe { &mut *(ctx as *mut _) };
-    let object_layer = object_linking_layer_creator.create_object_linking_layer(
-        unsafe { ExecutionSession::new_borrowed(execution_session) },
-        unsafe { CStr::from_ptr(triple) },
-    );
-    let object_layer_ref = object_layer.object_layer.as_ptr();
-    forget(object_layer);
-    object_layer_ref
+impl<T> UnsafeObjectLinkingLayerCreator for T
+where
+    T: ObjectLinkingLayerCreator,
+{
+    extern "C" fn create_object_linking_layer(
+        ctx: *mut c_void,
+        execution_session: LLVMOrcExecutionSessionRef,
+        triple: *const c_char,
+    ) -> LLVMOrcObjectLayerRef {
+        let object_linking_layer_creator: &mut T = unsafe { &mut *(ctx as *mut _) };
+        let object_layer = object_linking_layer_creator.create_object_linking_layer(
+            unsafe { ExecutionSession::new_borrowed(execution_session) },
+            unsafe { CStr::from_ptr(triple) },
+        );
+        let object_layer_ref = object_layer.object_layer.as_ptr();
+        forget(object_layer);
+        object_layer_ref
+    }
 }
 
 /// Represents a function that is used to create [`ObjectLayer`] instances.
@@ -741,10 +735,9 @@ pub trait ObjectLinkingLayerCreator {
     ///     }
     /// }
     ///
-    /// let object_linking_layer_creator: Box<dyn ObjectLinkingLayerCreator> =
-    ///     Box::new(SimpleObjectLinkingLayerCreator {});
+    /// let mut object_linking_layer_creator = SimpleObjectLinkingLayerCreator {};
     /// let lljit = LLJITBuilder::create()
-    ///     .set_object_linking_layer_creator(object_linking_layer_creator)
+    ///     .set_object_linking_layer_creator(&mut object_linking_layer_creator)
     ///     .build()
     ///     .expect("LLJITBuilder::build failed");
     /// ```

@@ -1,5 +1,6 @@
 use std::{
     collections::HashSet,
+    default::Default,
     ffi::CStr,
     iter::{self, FromIterator},
     ops::Deref,
@@ -23,12 +24,12 @@ use inkwell::{
     module::{Linkage, Module},
     orc2::{
         lljit::{LLJITBuilder, LLJIT},
-        Wrapper, CAPIDefinitionGenerator, DefinitionGenerator, DefinitionGeneratorRef,
-        ExecutionSession, JITDylib, JITTargetMachineBuilder, SymbolStringPoolEntry,
-        ThreadSafeContext, ThreadSafeModule,
+        CAPIDefinitionGenerator, DefinitionGenerator, DefinitionGeneratorRef, ExecutionSession,
+        JITDylib, JITTargetMachineBuilder, SymbolStringPoolEntry, ThreadSafeContext,
+        ThreadSafeModule, Wrapper,
     },
     support::LLVMString,
-    targets::{CodeModel, FileType, RelocMode, Target, TargetMachine},
+    targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine},
     values::{FunctionValue, IntValue},
     OptimizationLevel,
 };
@@ -311,10 +312,9 @@ fn test_lljit_builder_set_invalid_jit_target_machine() {
 #[llvm_versions(12.0..=latest)]
 #[test]
 fn test_lljit_builder_set_object_linking_layer_creator() {
-    let object_linking_layer_creator: Box<dyn ObjectLinkingLayerCreator> =
-        Box::new(SimpleObjectLinkingLayerCreator {});
+    let mut object_linking_layer_creator = SimpleObjectLinkingLayerCreator {};
     let lljit = LLJITBuilder::create()
-        .set_object_linking_layer_creator(object_linking_layer_creator)
+        .set_object_linking_layer_creator(&mut object_linking_layer_creator)
         .build()
         .expect("LLJITBuilder::build failed");
     test_basic_lljit_functionality(lljit);
@@ -323,14 +323,13 @@ fn test_lljit_builder_set_object_linking_layer_creator() {
 #[llvm_versions(12.0..=latest)]
 #[test]
 fn test_lljit_builder_set_object_linking_layer_creator_closure() {
-    let object_linking_layer_creator: Box<dyn ObjectLinkingLayerCreator> =
-        Box::new(|execution_session: ExecutionSession, _triple: &CStr| {
-            execution_session
-                .create_rt_dyld_object_linking_layer_with_section_memory_manager()
-                .into()
-        });
+    let mut object_linking_layer_creator = |execution_session: ExecutionSession, _triple: &CStr| {
+        execution_session
+            .create_rt_dyld_object_linking_layer_with_section_memory_manager()
+            .into()
+    };
     let lljit = LLJITBuilder::create()
-        .set_object_linking_layer_creator(object_linking_layer_creator)
+        .set_object_linking_layer_creator(&mut object_linking_layer_creator)
         .build()
         .expect("LLJITBuilder::build failed");
     test_basic_lljit_functionality(lljit);
@@ -400,15 +399,14 @@ fn test_object_transformer_modify_buffer() {
     let module = constant_function_module(&thread_safe_context, 42, "main");
     let object_buffer = constant_function_object_file(thread_safe_context.context(), 64, "main");
     let lljit = LLJIT::create().expect("LLJIT::create failed");
-    let object_transformer: Box<dyn ObjectTransformer> =
-        Box::new(move |mut buffer: MemoryBufferRef| {
-            buffer.set_memory_buffer(MemoryBuffer::create_from_memory_range_copy(
-                object_buffer.as_slice(),
-                "new memory buffer",
-            ));
-            Ok(())
-        });
-    lljit.set_object_transformer(object_transformer);
+    let mut object_transformer = |buffer: &mut MemoryBufferRef| {
+        buffer.set_memory_buffer(MemoryBuffer::create_from_memory_range_copy(
+            object_buffer.as_slice(),
+            "new memory buffer",
+        ));
+        Ok(())
+    };
+    lljit.set_object_transformer(&mut object_transformer);
     let main_jd = lljit.get_main_jit_dylib();
     lljit
         .add_module(&main_jd, module)
@@ -422,14 +420,14 @@ fn test_object_transform_layer_error() {
     let thread_safe_context = ThreadSafeContext::create();
     let module = constant_function_module(&thread_safe_context, 64, "main");
     let lljit = LLJIT::create().expect("LLJIT::create failed");
-    let object_transformer: Box<dyn ObjectTransformer> =
-        Box::new(|_buffer: MemoryBufferRef| Err(LLVMError::new_string_error("test error")));
-    lljit.set_object_transformer(object_transformer);
+    let mut object_transformer =
+        |_buffer: &mut MemoryBufferRef| Err(LLVMError::new_string_error("test error"));
+    lljit.set_object_transformer(&mut object_transformer);
     let main_jd = lljit.get_main_jit_dylib();
     lljit
         .add_module(&main_jd, module)
         .expect("LLJIT::add_module failed");
-    test_main_function(&lljit);
+    test_main_failed_materialising(&lljit);
 }
 
 #[llvm_versions(13.0..=latest)]
@@ -492,7 +490,7 @@ impl<'ctx, 'jit> Materializer for TestMaterializer<'ctx, 'jit> {
 #[test]
 fn test_materialization_responsibility_fail_materializing() {
     let lljit = LLJIT::create().expect("LLJIT::create failed");
-    let materializer: Box<dyn Materializer> = Box::new((
+    let materializer = Box::new((
         |materialization_responsibility: MaterializationResponsibility| {
             materialization_responsibility.fail_materialization();
         },
@@ -511,14 +509,7 @@ fn test_materialization_responsibility_fail_materializing() {
     main_jd
         .define(materialization_unit)
         .expect("JITDylib::define failed");
-
-    let error = lljit
-        .get_function_address("main")
-        .expect_err("LLJIT::get_function_address did not fail");
-    assert_eq!(
-        error.get_message().to_string(),
-        "Failed to materialize symbols: { (main, { main }) }"
-    );
+    test_main_failed_materialising(&lljit);
 }
 
 #[llvm_versions(13.0..=latest)]
@@ -665,7 +656,7 @@ where
 
 #[llvm_versions(12.0..=latest)]
 #[test]
-fn test_jit_dylib_add_generator() {
+fn test_jit_capi_definition_generator() {
     let thread_safe_context = ThreadSafeContext::create();
     let lljit = LLJIT::create().expect("LLJIT::create failed");
     let main_jd = lljit.get_main_jit_dylib();
@@ -676,9 +667,21 @@ fn test_jit_dylib_add_generator() {
          lookup_kind: LookupKind,
          jit_dylib: JITDylib,
          jit_dylib_lookup_flags: JITDylibLookupFlags,
-         c_lookup_set: CLookupSet| {
-            let module = constant_function_module(&thread_safe_context, 64, "main");
-            lljit.add_module(&jit_dylib, module)
+         c_lookup_set: CLookupSet|
+         -> Result<(), LLVMError> {
+            for element in c_lookup_set.iter() {
+                let module = constant_function_module(
+                    &thread_safe_context,
+                    64,
+                    element
+                        .get_name()
+                        .get_string()
+                        .to_str()
+                        .expect("CStr::to_str failed"),
+                );
+                lljit.add_module(&jit_dylib, module)?;
+            }
+            Ok(())
         },
     );
     let definition_generator = DefinitionGenerator::create_custom_capi_definition_generator(
@@ -687,6 +690,30 @@ fn test_jit_dylib_add_generator() {
 
     main_jd.add_generator(definition_generator);
     test_main_function(&lljit);
+}
+
+#[llvm_versions(12.0..=latest)]
+#[test]
+fn test_jit_capi_definition_generator_error() {
+    let thread_safe_context = ThreadSafeContext::create();
+    let lljit = LLJIT::create().expect("LLJIT::create failed");
+    let main_jd = lljit.get_main_jit_dylib();
+
+    let mut capi_definition_generator = Wrapper::new(
+        |definition_generator: DefinitionGeneratorRef,
+         lookup_state: &mut LookupState,
+         lookup_kind: LookupKind,
+         jit_dylib: JITDylib,
+         jit_dylib_lookup_flags: JITDylibLookupFlags,
+         c_lookup_set: CLookupSet|
+         -> Result<(), LLVMError> { Err(LLVMError::new_string_error("test error")) },
+    );
+    let definition_generator = DefinitionGenerator::create_custom_capi_definition_generator(
+        &mut capi_definition_generator,
+    );
+
+    main_jd.add_generator(definition_generator);
+    test_main_failed_with_error(&lljit, "test error")
 }
 
 #[llvm_versions(13.0..=latest)]
@@ -727,6 +754,17 @@ fn test_main_function(lljit: &LLJIT) {
             .expect("LLJIT::get_function failed");
         assert_eq!(function.call(), 64);
     }
+}
+
+fn test_main_failed_materialising(lljit: &LLJIT) {
+    test_main_failed_with_error(lljit, "Failed to materialize symbols: { (main, { main }) }");
+}
+
+fn test_main_failed_with_error(lljit: &LLJIT, error: &str) {
+    let err = lljit
+        .get_function_address("main")
+        .expect_err("LLJIT::get_function_address did not fail");
+    assert_eq!(err.get_message().to_string(), error);
 }
 
 #[derive(Debug)]
@@ -827,6 +865,8 @@ fn constant_function_object_file(context: &Context, value: u64, name: &str) -> M
 }
 
 fn get_native_target_machine() -> TargetMachine {
+    Target::initialize_native(&InitializationConfig::default())
+        .expect("Target::initialize_native failed");
     let target_tripple = TargetMachine::get_default_triple();
     let target_cpu_features_llvm_string = TargetMachine::get_host_cpu_features();
     let target_cpu_features = target_cpu_features_llvm_string
