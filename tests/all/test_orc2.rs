@@ -383,15 +383,6 @@ fn test_jit_target_machin_builder_set_target_triple() {
     test_basic_lljit_functionality(lljit);
 }
 
-#[llvm_versions(12.0..=latest)]
-#[test]
-fn test_execution_session_create_rt_dyld_object_linking_layer_with_section_memory_manager() {
-    let lljit = LLJIT::create().expect("LLJIT::create failed");
-    let execution_session = lljit.get_execution_session();
-    // leaks memory
-    execution_session.create_rt_dyld_object_linking_layer_with_section_memory_manager();
-}
-
 #[llvm_versions(13.0..=latest)]
 #[test]
 fn test_object_transformer_modify_buffer() {
