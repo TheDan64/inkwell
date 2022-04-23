@@ -13,7 +13,10 @@ use crate::values::{BasicMetadataValueEnum, Value};
 use std::ffi::CStr;
 use std::fmt;
 
-// TODOC: Varies by version
+// FIXME: use #[doc(cfg(...))] for this rustdoc comment when it's stabilized:
+// https://github.com/rust-lang/rust/issues/43781
+/// Value returned by [`Context::get_kind_id()`](crate::context::Context::get_kind_id)
+/// for the first input string that isn't known. Each LLVM version has a different set of pre-defined metadata kinds.
 #[cfg(feature = "llvm3-6")]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 12;
 #[cfg(feature = "llvm3-7")]
@@ -39,6 +42,8 @@ pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 30;
 #[cfg(feature = "llvm12-0")]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 31;
 #[cfg(feature = "llvm13-0")]
+pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 31;
+#[cfg(feature = "llvm14-0")]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 31;
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]

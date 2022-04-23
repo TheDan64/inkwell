@@ -225,7 +225,6 @@ impl Context {
     pub fn create_inline_asm(&self, ty: FunctionType, mut assembly: String, mut constraints: String, sideeffects: bool, alignstack: bool, dialect: Option<InlineAsmDialect>,
         can_throw: bool,
     ) -> PointerValue {
-        #[cfg(any(feature = "llvm13-0"))]
         let can_throw_llvmbool = can_throw as i32;
 
         let value = unsafe {

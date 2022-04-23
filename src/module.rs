@@ -1416,18 +1416,18 @@ impl<'ctx> Module<'ctx> {
         dwo_id: libc::c_uint,
         split_debug_inlining: bool,
         debug_info_for_profiling: bool,
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
+        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"))]
         sysroot: &str,
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
+        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"))]
         sdk: &str,
     ) -> (DebugInfoBuilder<'ctx>, DICompileUnit<'ctx>) {
         DebugInfoBuilder::new(self, allow_unresolved,
                               language, filename, directory, producer, is_optimized, flags,
                               runtime_ver, split_name, kind, dwo_id, split_debug_inlining,
                               debug_info_for_profiling,
-                              #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
+                              #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"))]
                               sysroot,
-                              #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0"))]
+                              #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"))]
                               sdk
         )
     }
