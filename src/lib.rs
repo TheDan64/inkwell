@@ -445,3 +445,16 @@ pub trait LLVMReference {
     /// Leaking `T` outside of the unsafe block can lead to undefined behaviour
     unsafe fn get_ref(&self) -> Self::Ref;
 }
+
+/// Exposes LLVM internal references in traits to the outside.
+/// This is similar to the LLVMReference but keeps the generics for easier trait implementation
+#[cfg(feature = "internal-getters")]
+pub trait LLVMTraitReference<T> {
+    /// Returns an underlying llvm reference
+    /// # Safety
+    /// This method is inherintly unsafe as it is designed to return internal LLVM references
+    /// Always encapsulate the entire operation in an unsafe call.
+    /// Leaking `T` outside of the unsafe block can lead to undefined behaviour
+    unsafe fn get_ref(&self) -> T;
+}
+

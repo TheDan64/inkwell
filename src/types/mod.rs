@@ -52,7 +52,7 @@ use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::values::IntValue;
 #[cfg(feature="internal-getters")]
-use crate::LLVMReference;
+use crate::LLVMTraitReference;
 
 // Worth noting that types seem to be singletons. At the very least, primitives are.
 // Though this is likely only true per thread since LLVM claims to not be very thread-safe.
@@ -204,9 +204,9 @@ impl fmt::Debug for Type<'_> {
 }
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference for dyn AsTypeRef {
-    type Ref  = LLVMTypeRef;
-    unsafe fn get_ref(&self) -> Self::Ref {
+impl<T> LLVMTraitReference<LLVMTypeRef> for T 
+where T : AsTypeRef {
+    unsafe fn get_ref(&self) -> LLVMTypeRef {
        self.as_type_ref() 
     }
 }
