@@ -9,7 +9,7 @@ use llvm_sys::core::{LLVMIsAAtomicRMWInst, LLVMIsAAtomicCmpXchgInst};
 use llvm_sys::LLVMOpcode;
 use llvm_sys::prelude::LLVMValueRef;
 
-use crate::basic_block::BasicBlock;
+use crate::{basic_block::BasicBlock, types::AnyTypeEnum};
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, Value, MetadataValue};
 use crate::{AtomicOrdering, IntPredicate, FloatPredicate};
@@ -134,6 +134,11 @@ impl<'ctx> InstructionValue<'ctx> {
         InstructionValue {
             instruction_value: value,
         }
+    }
+
+    /// Get type of the current InstructionValue
+    pub fn get_type(self) -> AnyTypeEnum<'ctx> {
+        unsafe { AnyTypeEnum::new(self.instruction_value.get_type()) }
     }
 
     pub fn get_opcode(self) -> InstructionOpcode {
