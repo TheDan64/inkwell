@@ -1092,9 +1092,8 @@ impl Deref for ContextRef<'_> {
 }
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference for Context {
-    type Ref  = LLVMContextRef;
-    unsafe fn get_ref(&self) -> Self::Ref {
+impl LLVMReference<LLVMContextRef> for Context {
+    unsafe fn get_ref(&self) -> LLVMContextRef {
         self.context
     }
 }

@@ -2306,9 +2306,8 @@ impl Drop for Builder<'_> {
 }
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference for Builder<'_> {
-    type Ref = LLVMBuilderRef;
-    unsafe fn get_ref(&self) -> Self::Ref {
+impl LLVMReference<LLVMBuilderRef> for Builder<'_> {
+    unsafe fn get_ref(&self) -> LLVMBuilderRef {
         self.builder
     }
 }

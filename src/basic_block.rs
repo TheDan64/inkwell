@@ -576,9 +576,8 @@ impl fmt::Debug for BasicBlock<'_> {
 }
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference for BasicBlock<'_> {
-    type Ref = LLVMBasicBlockRef;
-    unsafe fn get_ref(&self) -> Self::Ref {
+impl LLVMReference<LLVMBasicBlockRef> for BasicBlock<'_> {
+    unsafe fn get_ref(&self) -> LLVMBasicBlockRef {
         self.basic_block
     }
 }

@@ -1382,33 +1382,29 @@ impl Drop for PassBuilderOptions {
 }
 
 #[cfg(feature="internal-getters")]
-impl<T> LLVMReference for PassManager<T> {
-    type Ref = LLVMPassManagerRef;
-    unsafe fn get_ref(&self) -> Self::Ref {
+impl<T> LLVMReference<LLVMPassManagerRef> for PassManager<T> {
+    unsafe fn get_ref(&self) -> LLVMPassManagerRef{
         self.pass_manager
     }
 }
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference for PassManagerBuilder {
-    type Ref = LLVMPassManagerBuilderRef;
-    unsafe fn get_ref(&self) -> Self::Ref {
+impl LLVMReference<LLVMPassManagerBuilderRef> for PassManagerBuilder {
+    unsafe fn get_ref(&self) -> LLVMPassManagerBuilderRef {
         self.pass_manager_builder
     }
 }
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference for PassRegistry {
-    type Ref = LLVMPassRegistryRef;
-    unsafe fn get_ref(&self) -> Self::Ref {
+impl LLVMReference<LLVMPassRegistryRef> for PassRegistry {
+    unsafe fn get_ref(&self) -> LLVMPassRegistryRef{
         self.pass_registry
     }
 }
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference for PassBuilderOptions {
-    type Ref = LLVMPassBuilderOptionsRef;
-    unsafe fn get_ref(&self) -> Self::Ref {
+impl LLVMReference<LLVMPassBuilderOptionsRef>  for PassBuilderOptions {
+    unsafe fn get_ref(&self) -> LLVMPassBuilderOptionsRef {
         self.options_ref
     }
 }

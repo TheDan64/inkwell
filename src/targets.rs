@@ -1448,9 +1448,8 @@ impl Drop for TargetData {
 }
 
 #[cfg(feature = "internal-getters")]
-impl LLVMReference for TargetMachine {
-    type Ref = LLVMTargetMachineRef;
-    unsafe fn get_ref(&self) -> Self::Ref {
+impl LLVMReference<LLVMTargetMachineRef> for TargetMachine {
+    unsafe fn get_ref(&self) -> LLVMTargetMachineRef {
         self.target_machine
     }
 }

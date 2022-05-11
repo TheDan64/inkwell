@@ -81,9 +81,8 @@ pub(crate) extern "C" fn get_error_str_diagnostic_handler(diagnostic_info: LLVMD
 }
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference for DiagnosticInfo {
-    type Ref = LLVMDiagnosticInfoRef;
-    unsafe fn get_ref(&self) -> Self::Ref {
+impl LLVMReference<LLVMDiagnosticInfoRef> for DiagnosticInfo {
+    unsafe fn get_ref(&self) -> LLVMDiagnosticInfoRef {
         self.diagnostic_info
     }
 }

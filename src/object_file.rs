@@ -351,33 +351,29 @@ impl Symbol {
 }
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference for ObjectFile {
-    type Ref = LLVMObjectFileRef;
-    unsafe fn get_ref(&self) -> Self::Ref {
+impl LLVMReference<LLVMObjectFileRef> for ObjectFile {
+    unsafe fn get_ref(&self) -> LLVMObjectFileRef {
         self.object_file
     }
 }
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference for Symbol {
-    type Ref = LLVMSymbolIteratorRef;
-    unsafe fn get_ref(&self) -> Self::Ref {
+impl LLVMReference<LLVMSymbolIteratorRef> for Symbol {
+    unsafe fn get_ref(&self) -> LLVMSymbolIteratorRef {
         self.symbol
     }
 }
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference for Section {
-    type Ref = LLVMSectionIteratorRef;
-    unsafe fn get_ref(&self) -> Self::Ref {
+impl LLVMReference<LLVMSectionIteratorRef> for Section {
+    unsafe fn get_ref(&self) -> LLVMSectionIteratorRef {
         self.section
     }
 }
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference for Relocation {
-    type Ref = LLVMRelocationIteratorRef;
-    unsafe fn get_ref(&self) -> Self::Ref {
+impl LLVMReference<LLVMRelocationIteratorRef> for Relocation {
+    unsafe fn get_ref(&self) -> LLVMRelocationIteratorRef {
         self.relocation
     }
 }

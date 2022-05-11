@@ -59,9 +59,8 @@ impl Comdat {
 
 
 #[cfg(feature="internal-getters")]
-impl LLVMReference for Comdat {
-    type Ref = LLVMComdatRef;
-    unsafe fn get_ref(&self) -> Self::Ref {
+impl LLVMReference<LLVMComdatRef> for Comdat {
+    unsafe fn get_ref(&self) -> LLVMComdatRef {
         self.0
     }
 }
