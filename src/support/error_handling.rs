@@ -9,6 +9,9 @@ use llvm_sys::prelude::LLVMDiagnosticInfoRef;
 use llvm_sys::LLVMDiagnosticSeverity;
 use libc::c_void;
 
+#[cfg(feature="internal-getters")]
+use crate::LLVMReference;
+
 // REVIEW: Maybe it's possible to have a safe wrapper? If we can
 // wrap the provided function input ptr into a &CStr somehow
 // TODOC: Can be used like this:
@@ -74,5 +77,12 @@ pub(crate) extern "C" fn get_error_str_diagnostic_handler(diagnostic_info: LLVMD
         unsafe {
             *c_ptr_ptr = diagnostic_info.get_description();
         }
+    }
+}
+
+#[cfg(feature="internal-getters")]
+impl LLVMReference<LLVMDiagnosticInfoRef> for DiagnosticInfo {
+    unsafe fn get_ref(&self) -> LLVMDiagnosticInfoRef {
+        self.diagnostic_info
     }
 }

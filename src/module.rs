@@ -43,6 +43,8 @@ use crate::types::{AsTypeRef, BasicType, FunctionType, StructType};
 use crate::values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
 #[llvm_versions(7.0..=latest)]
 use crate::values::BasicValue;
+#[cfg(feature="internal-getters")]
+use crate::LLVMReference;
 #[llvm_versions(13.0..=latest)]
 use crate::passes::PassBuilderOptions;
 
@@ -1478,6 +1480,13 @@ impl Drop for Module<'_> {
         }
 
         // Context & EE will drop naturally if they are unique references at this point
+    }
+}
+
+#[cfg(feature="internal-getters")]
+impl LLVMReference<LLVMModuleRef> for Module<'_> {
+    unsafe fn get_ref(&self) -> LLVMModuleRef {
+        self.module.get()
     }
 }
 

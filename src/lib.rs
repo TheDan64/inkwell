@@ -432,3 +432,15 @@ pub enum InlineAsmDialect {
     #[llvm_variant(LLVMInlineAsmDialectIntel)]
     Intel,
 }
+
+
+/// Exposes LLVM internal references to the outside.
+#[cfg(feature = "internal-getters")]
+pub trait LLVMReference<T> {
+    /// Returns an underlying llvm reference
+    /// # Safety
+    /// This method is inherintly unsafe as it is designed to return internal LLVM references
+    /// Always encapsulate the entire operation in an unsafe call.
+    /// Leaking `T` outside of the unsafe block can lead to undefined behaviour
+    unsafe fn get_ref(&self) -> T;
+}

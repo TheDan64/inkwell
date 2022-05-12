@@ -88,6 +88,7 @@ target-all = [
 ]
 experimental = ["static-alloc"]
 nightly = ["inkwell_internals/nightly"]
+internal-getters = []
 
 [dependencies]
 either = "1.5"

@@ -10,6 +10,9 @@ use std::path::Path;
 use std::ptr;
 use std::slice;
 
+#[cfg(feature="internal-getters")]
+use crate::LLVMReference;
+
 #[derive(Debug)]
 pub struct MemoryBuffer {
     pub(crate) memory_buffer: LLVMMemoryBufferRef
@@ -127,5 +130,13 @@ impl Drop for MemoryBuffer {
         unsafe {
             LLVMDisposeMemoryBuffer(self.memory_buffer);
         }
+    }
+}
+
+
+#[cfg(feature="internal-getters")]
+impl LLVMReference<LLVMMemoryBufferRef> for MemoryBuffer {
+    unsafe fn get_ref(&self) -> LLVMMemoryBufferRef {
+        self.memory_buffer
     }
 }

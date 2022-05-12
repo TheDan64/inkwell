@@ -10,6 +10,8 @@ use llvm_sys::core::{LLVMGetTypeAttributeValue, LLVMIsTypeAttribute};
 #[llvm_versions(3.9..=latest)]
 use std::ffi::CStr;
 
+#[cfg(feature="internal-getters")]
+use crate::LLVMReference;
 use crate::types::AnyTypeEnum;
 
 // SubTypes: Attribute<Enum>, Attribute<String>
@@ -271,5 +273,12 @@ impl AttributeLoc {
             },
             AttributeLoc::Function => u32::max_value(),
         }
+    }
+}
+
+#[cfg(feature="internal-getters")]
+impl LLVMReference<LLVMAttributeRef> for Attribute {
+    unsafe fn get_ref(&self) -> LLVMAttributeRef {
+        self.attribute
     }
 }

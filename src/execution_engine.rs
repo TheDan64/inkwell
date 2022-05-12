@@ -14,6 +14,9 @@ use std::fmt::{self, Debug, Display, Formatter};
 use std::marker::PhantomData;
 use std::mem::{forget, transmute_copy, size_of, MaybeUninit};
 
+#[cfg(feature="internal-getters")]
+use crate::LLVMReference;
+
 static EE_INNER_PANIC: &str = "ExecutionEngineInner should exist until Drop";
 
 #[derive(Debug, PartialEq, Eq)]
@@ -672,5 +675,13 @@ pub mod experimental {
 
         // REVIEW: This doesn't seem very mangled...
         assert_eq!(mangled_symbol.to_str().unwrap(), "MyStructName");
+    }
+}
+
+
+#[cfg(feature="internal-getters")]
+impl LLVMReference<LLVMExecutionEngineRef> for ExecutionEngine<'_> {
+    unsafe fn get_ref(&self) -> LLVMExecutionEngineRef {
+        self.execution_engine_inner()
     }
 }

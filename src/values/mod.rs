@@ -42,6 +42,8 @@ pub use crate::values::callable_value::CallableValue;
 pub use crate::values::traits::{AnyValue, AggregateValue, BasicValue, IntMathValue, FloatMathValue, PointerMathValue};
 pub use crate::values::vec_value::VectorValue;
 pub(crate) use crate::values::traits::AsValueRef;
+#[cfg(feature="internal-getters")]
+use crate::LLVMReference;
 
 use llvm_sys::core::{LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMTypeOf, LLVMDumpValue, LLVMIsAInstruction, LLVMReplaceAllUsesWith, LLVMGetFirstUse};
 use llvm_sys::prelude::{LLVMValueRef, LLVMTypeRef};
@@ -218,5 +220,13 @@ impl fmt::Debug for Value<'_> {
             .field("llvm_value", &llvm_value)
             .field("llvm_type", &llvm_type)
             .finish()
+    }
+}
+
+#[cfg(feature="internal-getters")]
+impl<T> LLVMReference<LLVMValueRef> for T 
+where T : AsValueRef {
+    unsafe fn get_ref(&self) -> LLVMValueRef {
+       self.as_value_ref() 
     }
 }

@@ -17,6 +17,8 @@ use crate::debug_info::DILocation;
 use crate::values::StructValue;
 use crate::values::CallableValue;
 use crate::types::{AsTypeRef, BasicType, IntMathType, FloatMathType, PointerType, PointerMathType};
+#[cfg(feature="internal-getters")]
+use crate::LLVMReference;
 
 use std::marker::PhantomData;
 
@@ -2300,5 +2302,12 @@ impl Drop for Builder<'_> {
         unsafe {
             LLVMDisposeBuilder(self.builder);
         }
+    }
+}
+
+#[cfg(feature="internal-getters")]
+impl LLVMReference<LLVMBuilderRef> for Builder<'_> {
+    unsafe fn get_ref(&self) -> LLVMBuilderRef {
+        self.builder
     }
 }

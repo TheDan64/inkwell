@@ -33,6 +33,8 @@ use crate::types::{AnyTypeEnum, BasicTypeEnum, FloatType, IntType, StructType, V
 #[llvm_versions(6.0..=latest)]
 use crate::types::MetadataType;
 use crate::values::{AsValueRef, BasicMetadataValueEnum, BasicValueEnum, FunctionValue, StructValue, MetadataValue, VectorValue, PointerValue};
+#[cfg(feature="internal-getters")]
+use crate::LLVMReference;
 
 use std::marker::PhantomData;
 use std::mem::{forget, ManuallyDrop};
@@ -1086,5 +1088,12 @@ impl Deref for ContextRef<'_> {
 
     fn deref(&self) -> &Self::Target {
         &*self.context
+    }
+}
+
+#[cfg(feature="internal-getters")]
+impl LLVMReference<LLVMContextRef> for Context {
+    unsafe fn get_ref(&self) -> LLVMContextRef {
+        self.context
     }
 }

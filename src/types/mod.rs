@@ -33,6 +33,7 @@ pub use crate::types::struct_type::StructType;
 pub use crate::types::traits::{AnyType, BasicType, IntMathType, FloatMathType, PointerMathType};
 pub use crate::types::vec_type::VectorType;
 pub use crate::types::void_type::VoidType;
+// Export the AsTypeRef to the outside based on features
 pub(crate) use crate::types::traits::AsTypeRef;
 
 use llvm_sys::LLVMTypeKind;
@@ -50,6 +51,8 @@ use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::values::IntValue;
+#[cfg(feature="internal-getters")]
+use crate::LLVMReference;
 
 // Worth noting that types seem to be singletons. At the very least, primitives are.
 // Though this is likely only true per thread since LLVM claims to not be very thread-safe.
@@ -197,5 +200,13 @@ impl fmt::Debug for Type<'_> {
             .field("address", &self.ty)
             .field("llvm_type", &llvm_type)
             .finish()
+    }
+}
+
+#[cfg(feature="internal-getters")]
+impl<T> LLVMReference<LLVMTypeRef> for T 
+where T : AsTypeRef {
+    unsafe fn get_ref(&self) -> LLVMTypeRef {
+       self.as_type_ref() 
     }
 }

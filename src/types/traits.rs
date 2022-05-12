@@ -11,7 +11,9 @@ use crate::support::LLVMString;
 // This is an ugly privacy hack so that Type can stay private to this module
 // and so that super traits using this trait will be not be implementable
 // outside this library
+/// Accessor to the inner LLVM type reference
 pub trait AsTypeRef {
+    /// Returns the internal LLVM reference behind the type
     fn as_type_ref(&self) -> LLVMTypeRef;
 }
 
