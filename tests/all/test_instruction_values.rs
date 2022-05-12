@@ -1,4 +1,5 @@
 use inkwell::context::Context;
+use inkwell::types::AnyTypeEnum;
 use inkwell::values::{BasicValue, InstructionOpcode::*};
 use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate};
 
@@ -236,6 +237,11 @@ fn test_instructions() {
     assert_eq!(fcmp.as_instruction().unwrap().get_fcmp_predicate().unwrap(), FloatPredicate::OEQ);
     assert_eq!(free_instruction.get_opcode(), Call);
     assert_eq!(return_instruction.get_opcode(), Return);
+
+    // test instruction type
+    assert_eq!(store_instruction.get_type(), AnyTypeEnum::from(void_type));
+    assert_eq!(free_instruction.get_type(), AnyTypeEnum::from(void_type));
+    assert_eq!(f32_sum.as_instruction().unwrap().get_type(), AnyTypeEnum::from(f32_type));
 
     // test instruction cloning
     let instruction_clone = return_instruction.clone();
