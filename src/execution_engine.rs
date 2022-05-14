@@ -1,5 +1,10 @@
 use libc::c_int;
-use llvm_sys::execution_engine::{LLVMGetExecutionEngineTargetData, LLVMExecutionEngineRef, LLVMRunFunction, LLVMRunFunctionAsMain, LLVMDisposeExecutionEngine, LLVMGetFunctionAddress, LLVMAddModule, LLVMFindFunction, LLVMLinkInMCJIT, LLVMLinkInInterpreter, LLVMRemoveModule, LLVMGenericValueRef, LLVMFreeMachineCodeForFunction, LLVMAddGlobalMapping, LLVMRunStaticConstructors, LLVMRunStaticDestructors};
+use llvm_sys::execution_engine::{
+    LLVMAddGlobalMapping, LLVMAddModule, LLVMDisposeExecutionEngine, LLVMExecutionEngineRef, LLVMFindFunction,
+    LLVMFreeMachineCodeForFunction, LLVMGenericValueRef, LLVMGetExecutionEngineTargetData, LLVMGetFunctionAddress,
+    LLVMLinkInInterpreter, LLVMLinkInMCJIT, LLVMRemoveModule, LLVMRunFunction, LLVMRunFunctionAsMain,
+    LLVMRunStaticConstructors, LLVMRunStaticDestructors,
+};
 
 use crate::context::Context;
 use crate::module::Module;
@@ -8,13 +13,13 @@ use crate::targets::TargetData;
 use crate::values::{AnyValue, AsValueRef, FunctionValue, GenericValue};
 
 use std::error::Error;
-use std::rc::Rc;
-use std::ops::Deref;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::marker::PhantomData;
-use std::mem::{forget, transmute_copy, size_of, MaybeUninit};
+use std::mem::{forget, size_of, transmute_copy, MaybeUninit};
+use std::ops::Deref;
+use std::rc::Rc;
 
-#[cfg(feature="internal-getters")]
+#[cfg(feature = "internal-getters")]
 use crate::LLVMReference;
 
 static EE_INNER_PANIC: &str = "ExecutionEngineInner should exist until Drop";
@@ -93,10 +98,7 @@ pub struct ExecutionEngine<'ctx> {
 }
 
 impl<'ctx> ExecutionEngine<'ctx> {
-    pub(crate) unsafe fn new(
-        execution_engine: Rc<LLVMExecutionEngineRef>,
-        jit_mode: bool,
-    ) -> Self {
+    pub(crate) unsafe fn new(execution_engine: Rc<LLVMExecutionEngineRef>, jit_mode: bool) -> Self {
         assert!(!execution_engine.is_null());
 
         // REVIEW: Will we have to do this for LLVMGetExecutionEngineTargetMachine too?
@@ -121,9 +123,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
     /// This function probably doesn't need to be called, but is here due to
     /// linking(?) requirements. Bad things happen if we don't provide it.
     pub fn link_in_mc_jit() {
-        unsafe {
-            LLVMLinkInMCJIT()
-        }
+        unsafe { LLVMLinkInMCJIT() }
     }
 
     /// This function probably doesn't need to be called, but is here due to
@@ -176,9 +176,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
     /// assert_eq!(result, 128.);
     /// ```
     pub fn add_global_mapping(&self, value: &dyn AnyValue<'ctx>, addr: usize) {
-        unsafe {
-            LLVMAddGlobalMapping(self.execution_engine_inner(), value.as_value_ref(), addr as *mut _)
-        }
+        unsafe { LLVMAddGlobalMapping(self.execution_engine_inner(), value.as_value_ref(), addr as *mut _) }
     }
 
     /// Adds a module to an `ExecutionEngine`.
@@ -199,9 +197,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
     /// assert!(ee.add_module(&module).is_err());
     /// ```
     pub fn add_module(&self, module: &Module<'ctx>) -> Result<(), ()> {
-        unsafe {
-            LLVMAddModule(self.execution_engine_inner(), module.module.get())
-        }
+        unsafe { LLVMAddModule(self.execution_engine_inner(), module.module.get()) }
 
         if module.owned_by_ee.borrow().is_some() {
             return Err(());
@@ -214,17 +210,23 @@ impl<'ctx> ExecutionEngine<'ctx> {
 
     pub fn remove_module(&self, module: &Module<'ctx>) -> Result<(), RemoveModuleError> {
         match *module.owned_by_ee.borrow() {
-            Some(ref ee) if ee.execution_engine_inner() != self.execution_engine_inner() =>
-                return Err(RemoveModuleError::IncorrectModuleOwner),
+            Some(ref ee) if ee.execution_engine_inner() != self.execution_engine_inner() => {
+                return Err(RemoveModuleError::IncorrectModuleOwner)
+            },
             None => return Err(RemoveModuleError::ModuleNotOwned),
-            _ => ()
+            _ => (),
         }
 
         let mut new_module = MaybeUninit::uninit();
         let mut err_string = MaybeUninit::uninit();
 
         let code = unsafe {
-            LLVMRemoveModule(self.execution_engine_inner(), module.module.get(), new_module.as_mut_ptr(), err_string.as_mut_ptr())
+            LLVMRemoveModule(
+                self.execution_engine_inner(),
+                module.module.get(),
+                new_module.as_mut_ptr(),
+                err_string.as_mut_ptr(),
+            )
         };
 
         if code == 1 {
@@ -308,8 +310,11 @@ impl<'ctx> ExecutionEngine<'ctx> {
 
         let address = self.get_function_address(fn_name)?;
 
-        assert_eq!(size_of::<F>(), size_of::<usize>(),
-            "The type `F` must have the same size as a function pointer");
+        assert_eq!(
+            size_of::<F>(),
+            size_of::<usize>(),
+            "The type `F` must have the same size as a function pointer"
+        );
 
         let execution_engine = self.execution_engine.as_ref().expect(EE_INNER_PANIC);
 
@@ -331,9 +336,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
         self.get_function_value(fn_name)?;
 
         let c_string = to_c_str(fn_name);
-        let address = unsafe {
-            LLVMGetFunctionAddress(self.execution_engine_inner(), c_string.as_ptr())
-        };
+        let address = unsafe { LLVMGetFunctionAddress(self.execution_engine_inner(), c_string.as_ptr()) };
 
         // REVIEW: Can also return 0 if no targets are initialized.
         // One option might be to set a (thread local?) global to true if any at all of the targets have been
@@ -349,7 +352,9 @@ impl<'ctx> ExecutionEngine<'ctx> {
     // REVIEW: Not sure if an EE's target data can change.. if so we might want to update the value
     // when making this call
     pub fn get_target_data(&self) -> &TargetData {
-        self.target_data.as_ref().expect("TargetData should always exist until Drop")
+        self.target_data
+            .as_ref()
+            .expect("TargetData should always exist until Drop")
     }
 
     // REVIEW: Can also find nothing if no targeting is initialized. Maybe best to
@@ -364,14 +369,10 @@ impl<'ctx> ExecutionEngine<'ctx> {
         let c_string = to_c_str(fn_name);
         let mut function = MaybeUninit::uninit();
 
-        let code = unsafe {
-            LLVMFindFunction(self.execution_engine_inner(), c_string.as_ptr(), function.as_mut_ptr())
-        };
+        let code = unsafe { LLVMFindFunction(self.execution_engine_inner(), c_string.as_ptr(), function.as_mut_ptr()) };
 
         if code == 0 {
-            return unsafe {
-                FunctionValue::new(function.assume_init()).ok_or(FunctionLookupError::FunctionNotFound)
-            }
+            return unsafe { FunctionValue::new(function.assume_init()).ok_or(FunctionLookupError::FunctionNotFound) };
         };
 
         Err(FunctionLookupError::FunctionNotFound)
@@ -379,12 +380,19 @@ impl<'ctx> ExecutionEngine<'ctx> {
 
     // TODOC: Marked as unsafe because input function could very well do something unsafe. It's up to the caller
     // to ensure that doesn't happen by defining their function correctly.
-    pub unsafe fn run_function(&self, function: FunctionValue<'ctx>, args: &[&GenericValue<'ctx>]) -> GenericValue<'ctx> {
-        let mut args: Vec<LLVMGenericValueRef> = args.iter()
-                                                     .map(|val| val.generic_value)
-                                                     .collect();
+    pub unsafe fn run_function(
+        &self,
+        function: FunctionValue<'ctx>,
+        args: &[&GenericValue<'ctx>],
+    ) -> GenericValue<'ctx> {
+        let mut args: Vec<LLVMGenericValueRef> = args.iter().map(|val| val.generic_value).collect();
 
-        let value = LLVMRunFunction(self.execution_engine_inner(), function.as_value_ref(), args.len() as u32, args.as_mut_ptr()); // REVIEW: usize to u32 ok??
+        let value = LLVMRunFunction(
+            self.execution_engine_inner(),
+            function.as_value_ref(),
+            args.len() as u32,
+            args.as_mut_ptr(),
+        ); // REVIEW: usize to u32 ok??
 
         GenericValue::new(value)
     }
@@ -398,27 +406,27 @@ impl<'ctx> ExecutionEngine<'ctx> {
 
         let environment_variables = vec![]; // TODO: Support envp. Likely needs to be null terminated
 
-        LLVMRunFunctionAsMain(self.execution_engine_inner(), function.as_value_ref(), raw_args.len() as u32, raw_args.as_ptr(), environment_variables.as_ptr()) // REVIEW: usize to u32 cast ok??
+        LLVMRunFunctionAsMain(
+            self.execution_engine_inner(),
+            function.as_value_ref(),
+            raw_args.len() as u32,
+            raw_args.as_ptr(),
+            environment_variables.as_ptr(),
+        ) // REVIEW: usize to u32 cast ok??
     }
 
     pub fn free_fn_machine_code(&self, function: FunctionValue<'ctx>) {
-        unsafe {
-            LLVMFreeMachineCodeForFunction(self.execution_engine_inner(), function.as_value_ref())
-        }
+        unsafe { LLVMFreeMachineCodeForFunction(self.execution_engine_inner(), function.as_value_ref()) }
     }
 
     // REVIEW: Is this actually safe?
     pub fn run_static_constructors(&self) {
-        unsafe {
-            LLVMRunStaticConstructors(self.execution_engine_inner())
-        }
+        unsafe { LLVMRunStaticConstructors(self.execution_engine_inner()) }
     }
 
     // REVIEW: Is this actually safe? Can you double destruct/free?
     pub fn run_static_destructors(&self) {
-        unsafe {
-            LLVMRunStaticDestructors(self.execution_engine_inner())
-        }
+        unsafe { LLVMRunStaticDestructors(self.execution_engine_inner()) }
     }
 }
 
@@ -443,9 +451,7 @@ impl Clone for ExecutionEngine<'_> {
     fn clone(&self) -> Self {
         let execution_engine_rc = self.execution_engine_rc().clone();
 
-        unsafe {
-            ExecutionEngine::new(execution_engine_rc, self.jit_mode)
-        }
+        unsafe { ExecutionEngine::new(execution_engine_rc, self.jit_mode) }
     }
 }
 
@@ -481,9 +487,7 @@ pub struct JitFunction<'ctx, F> {
 
 impl<F> Debug for JitFunction<'_, F> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        f.debug_tuple("JitFunction")
-            .field(&"<unnamed>")
-            .finish()
+        f.debug_tuple("JitFunction").field(&"<unnamed>").finish()
     }
 }
 
@@ -529,15 +533,18 @@ impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J, K, L, M);
 
 #[cfg(all(feature = "experimental", not(any(feature = "llvm3-6", feature = "llvm3-7"))))]
 pub mod experimental {
-    use llvm_sys::error::{LLVMErrorRef, LLVMGetErrorTypeId, LLVMConsumeError, LLVMGetErrorMessage, LLVMErrorTypeId};
-    use llvm_sys::orc::{LLVMOrcCreateInstance, LLVMOrcDisposeInstance, LLVMOrcJITStackRef, LLVMOrcAddEagerlyCompiledIR, LLVMOrcAddLazilyCompiledIR, LLVMOrcGetErrorMsg, LLVMOrcGetMangledSymbol, LLVMOrcDisposeMangledSymbol};
+    use llvm_sys::error::{LLVMConsumeError, LLVMErrorRef, LLVMErrorTypeId, LLVMGetErrorMessage, LLVMGetErrorTypeId};
+    use llvm_sys::orc::{
+        LLVMOrcAddEagerlyCompiledIR, LLVMOrcAddLazilyCompiledIR, LLVMOrcCreateInstance, LLVMOrcDisposeInstance,
+        LLVMOrcDisposeMangledSymbol, LLVMOrcGetErrorMsg, LLVMOrcGetMangledSymbol, LLVMOrcJITStackRef,
+    };
 
     use crate::module::Module;
     use crate::support::to_c_str;
     use crate::targets::TargetMachine;
 
-    use std::mem::MaybeUninit;
     use std::ffi::{CStr, CString};
+    use std::mem::MaybeUninit;
     use std::ops::Deref;
 
     #[derive(Debug)]
@@ -547,17 +554,13 @@ pub mod experimental {
         type Target = CStr;
 
         fn deref(&self) -> &CStr {
-            unsafe {
-                CStr::from_ptr(self.0)
-            }
+            unsafe { CStr::from_ptr(self.0) }
         }
     }
 
     impl Drop for MangledSymbol {
         fn drop(&mut self) {
-            unsafe {
-                LLVMOrcDisposeMangledSymbol(self.0)
-            }
+            unsafe { LLVMOrcDisposeMangledSymbol(self.0) }
         }
     }
 
@@ -566,10 +569,9 @@ pub mod experimental {
 
     impl LLVMError {
         // Null type id == success
-        pub fn get_type_id(&self) -> LLVMErrorTypeId { // FIXME: Don't expose LLVMErrorTypeId
-            unsafe {
-                LLVMGetErrorTypeId(self.0)
-            }
+        pub fn get_type_id(&self) -> LLVMErrorTypeId {
+            // FIXME: Don't expose LLVMErrorTypeId
+            unsafe { LLVMGetErrorTypeId(self.0) }
         }
     }
 
@@ -585,9 +587,7 @@ pub mod experimental {
 
     impl Drop for LLVMError {
         fn drop(&mut self) {
-            unsafe {
-                LLVMConsumeError(self.0)
-            }
+            unsafe { LLVMConsumeError(self.0) }
         }
     }
 
@@ -597,9 +597,7 @@ pub mod experimental {
 
     impl Orc {
         pub fn create(target_machine: TargetMachine) -> Self {
-            let stack_ref = unsafe {
-                LLVMOrcCreateInstance(target_machine.target_machine)
-            };
+            let stack_ref = unsafe { LLVMOrcCreateInstance(target_machine.target_machine) };
 
             Orc(stack_ref)
         }
@@ -623,9 +621,7 @@ pub mod experimental {
                 panic!("Needs to be optional")
             }
 
-            unsafe {
-                CStr::from_ptr(err_str)
-            }
+            unsafe { CStr::from_ptr(err_str) }
         }
 
         pub fn get_mangled_symbol(&self, symbol: &str) -> MangledSymbol {
@@ -642,29 +638,29 @@ pub mod experimental {
         fn drop(&mut self) {
             // REVIEW: This returns an LLVMErrorRef, not sure what we can do with it...
             // print to stderr maybe?
-            LLVMError(unsafe {
-                LLVMOrcDisposeInstance(self.0)
-            });
+            LLVMError(unsafe { LLVMOrcDisposeInstance(self.0) });
         }
     }
 
     #[test]
     fn test_mangled_str() {
-        use crate::OptimizationLevel;
         use crate::targets::{CodeModel, InitializationConfig, RelocMode, Target};
+        use crate::OptimizationLevel;
 
         Target::initialize_native(&InitializationConfig::default()).unwrap();
 
         let target_triple = TargetMachine::get_default_triple();
         let target = Target::from_triple(&target_triple).unwrap();
-        let target_machine = target.create_target_machine(
-            &target_triple,
-            &"",
-            &"",
-            OptimizationLevel::None,
-            RelocMode::Default,
-            CodeModel::Default,
-        ).unwrap();
+        let target_machine = target
+            .create_target_machine(
+                &target_triple,
+                &"",
+                &"",
+                OptimizationLevel::None,
+                RelocMode::Default,
+                CodeModel::Default,
+            )
+            .unwrap();
         let orc = Orc::create(target_machine);
 
         assert_eq!(orc.get_error().to_str().unwrap(), "");
@@ -678,8 +674,7 @@ pub mod experimental {
     }
 }
 
-
-#[cfg(feature="internal-getters")]
+#[cfg(feature = "internal-getters")]
 impl LLVMReference<LLVMExecutionEngineRef> for ExecutionEngine<'_> {
     unsafe fn get_ref(&self) -> LLVMExecutionEngineRef {
         self.execution_engine_inner()

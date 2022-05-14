@@ -1,14 +1,14 @@
 extern crate inkwell;
 
-use self::inkwell::OptimizationLevel;
 use self::inkwell::context::Context;
 use self::inkwell::memory_buffer::MemoryBuffer;
 use self::inkwell::module::Module;
 use self::inkwell::targets::{Target, TargetTriple};
 use self::inkwell::values::AnyValue;
+use self::inkwell::OptimizationLevel;
 
 use std::env::temp_dir;
-use std::fs::{File, remove_file};
+use std::fs::{remove_file, File};
 use std::io::Read;
 use std::path::Path;
 
@@ -137,7 +137,10 @@ fn test_write_and_load_memory_buffer() {
 
     let module2 = context.create_module_from_ir(memory_buffer).unwrap();
 
-    assert_eq!(module2.get_function("my_fn").unwrap().print_to_string(), function.print_to_string());
+    assert_eq!(
+        module2.get_function("my_fn").unwrap().print_to_string(),
+        function.print_to_string()
+    );
 
     let memory_buffer2 = module.write_bitcode_to_memory();
     let object_file = memory_buffer2.create_object_file();
@@ -197,24 +200,24 @@ fn test_get_struct_type_global_context() {
 // TODO: test compile fail
 // #[test]
 // fn test_module_no_double_free() {
-    // let _module = {
-    //     let context = Context::create();
+// let _module = {
+//     let context = Context::create();
 
-    //     context.create_module("my_mod")
-    // };
+//     context.create_module("my_mod")
+// };
 // }
 
 // #[test]
 // fn test_owned_module_dropped_ee_and_context() {
-    // let _module = {
-    //     let context = Context::create();
-    //     let module = context.create_module("my_mod");
+// let _module = {
+//     let context = Context::create();
+//     let module = context.create_module("my_mod");
 
-    //     module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-    //     module
-    // };
+//     module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+//     module
+// };
 
-    // Context and EE will live on in the module until here
+// Context and EE will live on in the module until here
 // }
 
 #[test]
@@ -325,7 +328,10 @@ fn test_print_to_file() {
 
     let bad_path = Path::new("/tmp/some/silly/path/that/sure/doesn't/exist");
 
-    assert_eq!(module.print_to_file(bad_path).unwrap_err().to_str(), Ok("No such file or directory"));
+    assert_eq!(
+        module.print_to_file(bad_path).unwrap_err().to_str(),
+        Ok("No such file or directory")
+    );
 
     let mut temp_path = temp_dir();
 
@@ -345,8 +351,15 @@ fn test_get_set_target() {
     assert_eq!(module.get_name().to_str(), Ok("mod"));
     assert_eq!(module.get_triple(), TargetTriple::create(""));
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
-                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[cfg(not(any(
+        feature = "llvm3-6",
+        feature = "llvm3-7",
+        feature = "llvm3-8",
+        feature = "llvm3-9",
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0"
+    )))]
     assert_eq!(module.get_source_file_name().to_str(), Ok("mod"));
 
     #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
@@ -357,8 +370,15 @@ fn test_get_set_target() {
     assert_eq!(module.get_name().to_str(), Ok("mod2"));
     assert_eq!(module.get_triple(), triple);
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
-                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[cfg(not(any(
+        feature = "llvm3-6",
+        feature = "llvm3-7",
+        feature = "llvm3-8",
+        feature = "llvm3-9",
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0"
+    )))]
     {
         module.set_source_file_name("foo.rs");
 
@@ -401,7 +421,9 @@ fn test_linking_modules() {
     // fn_val2 is no longer the same instance of f2
     assert_ne!(module.get_function("f2"), Some(fn_val2));
 
-    let _execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).expect("Could not create Execution Engine");
+    let _execution_engine = module
+        .create_jit_execution_engine(OptimizationLevel::None)
+        .expect("Could not create Execution Engine");
     let module4 = context.create_module("mod4");
 
     // EE owned module links in unowned (empty) module
@@ -419,7 +441,10 @@ fn test_linking_modules() {
     #[cfg(feature = "llvm3-6")] // Likely a LLVM bug that no error message is produced in 3-6
     assert_eq!(module.link_in_module(module5).unwrap_err().to_str(), Ok(""));
     #[cfg(not(feature = "llvm3-6"))]
-    assert_eq!(module.link_in_module(module5).unwrap_err().to_str(), Ok("Linking globals named \'f2\': symbol multiply defined!"));
+    assert_eq!(
+        module.link_in_module(module5).unwrap_err().to_str(),
+        Ok("Linking globals named \'f2\': symbol multiply defined!")
+    );
 
     let module6 = context.create_module("mod5");
     let fn_val4 = module6.add_function("f4", fn_type, None);
@@ -428,7 +453,9 @@ fn test_linking_modules() {
     builder.position_at_end(basic_block4);
     builder.build_return(None);
 
-    let execution_engine2 = module6.create_jit_execution_engine(OptimizationLevel::None).expect("Could not create Execution Engine");
+    let execution_engine2 = module6
+        .create_jit_execution_engine(OptimizationLevel::None)
+        .expect("Could not create Execution Engine");
 
     // EE owned module cannot link another EE owned module
     assert!(module.link_in_module(module6).is_err());
@@ -437,8 +464,15 @@ fn test_linking_modules() {
 
 #[test]
 fn test_metadata_flags() {
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
-                  feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[cfg(not(any(
+        feature = "llvm3-6",
+        feature = "llvm3-7",
+        feature = "llvm3-8",
+        feature = "llvm3-9",
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0"
+    )))]
     {
         let context = Context::create();
         let module = context.create_module("my_module");
@@ -487,19 +521,25 @@ fn test_double_ee_from_same_module() {
     builder.position_at_end(basic_block);
     builder.build_return(None);
 
-    module.create_execution_engine().expect("Could not create Execution Engine");
+    module
+        .create_execution_engine()
+        .expect("Could not create Execution Engine");
 
     assert!(module.create_execution_engine().is_err());
 
     let module2 = module.clone();
 
-    module2.create_jit_execution_engine(OptimizationLevel::None).expect("Could not create Execution Engine");
+    module2
+        .create_jit_execution_engine(OptimizationLevel::None)
+        .expect("Could not create Execution Engine");
 
     assert!(module.create_jit_execution_engine(OptimizationLevel::None).is_err());
 
     let module3 = module.clone();
 
-    module3.create_interpreter_execution_engine().expect("Could not create Execution Engine");
+    module3
+        .create_interpreter_execution_engine()
+        .expect("Could not create Execution Engine");
 
     assert!(module.create_interpreter_execution_engine().is_err());
 }

@@ -23,35 +23,39 @@ mod vec_type;
 mod void_type;
 
 pub use crate::types::array_type::ArrayType;
-pub use crate::types::enums::{AnyTypeEnum, BasicTypeEnum, BasicMetadataTypeEnum};
+pub use crate::types::enums::{AnyTypeEnum, BasicMetadataTypeEnum, BasicTypeEnum};
 pub use crate::types::float_type::FloatType;
 pub use crate::types::fn_type::FunctionType;
 pub use crate::types::int_type::{IntType, StringRadix};
 pub use crate::types::metadata_type::MetadataType;
 pub use crate::types::ptr_type::PointerType;
 pub use crate::types::struct_type::StructType;
-pub use crate::types::traits::{AnyType, BasicType, IntMathType, FloatMathType, PointerMathType};
+pub use crate::types::traits::{AnyType, BasicType, FloatMathType, IntMathType, PointerMathType};
 pub use crate::types::vec_type::VectorType;
 pub use crate::types::void_type::VoidType;
 // Export the AsTypeRef to the outside based on features
 pub(crate) use crate::types::traits::AsTypeRef;
 
-use llvm_sys::LLVMTypeKind;
 #[llvm_versions(3.7..=4.0)]
 use llvm_sys::core::LLVMDumpType;
-use llvm_sys::core::{LLVMAlignOf, LLVMGetTypeContext, LLVMFunctionType, LLVMArrayType, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMTypeIsSized, LLVMSizeOf, LLVMVectorType, LLVMGetElementType, LLVMConstNull, LLVMGetTypeKind, LLVMConstPointerNull};
+use llvm_sys::core::{
+    LLVMAlignOf, LLVMArrayType, LLVMConstNull, LLVMConstPointerNull, LLVMFunctionType, LLVMGetElementType,
+    LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMSizeOf,
+    LLVMTypeIsSized, LLVMVectorType,
+};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
+use llvm_sys::LLVMTypeKind;
 #[cfg(feature = "experimental")]
 use static_alloc::Bump;
 
 use std::fmt;
 use std::marker::PhantomData;
 
-use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::values::IntValue;
-#[cfg(feature="internal-getters")]
+use crate::AddressSpace;
+#[cfg(feature = "internal-getters")]
 use crate::LLVMReference;
 
 // Worth noting that types seem to be singletons. At the very least, primitives are.
@@ -87,33 +91,32 @@ impl<'ctx> Type<'ctx> {
         unsafe {
             match LLVMGetTypeKind(self.ty) {
                 LLVMTypeKind::LLVMMetadataTypeKind => LLVMConstPointerNull(self.ty),
-                _ => LLVMConstNull(self.ty)
+                _ => LLVMConstNull(self.ty),
             }
         }
     }
 
     fn ptr_type(self, address_space: AddressSpace) -> PointerType<'ctx> {
-        unsafe {
-            PointerType::new(LLVMPointerType(self.ty, address_space as u32))
-        }
+        unsafe { PointerType::new(LLVMPointerType(self.ty, address_space as u32)) }
     }
 
     fn vec_type(self, size: u32) -> VectorType<'ctx> {
         assert!(size != 0, "Vectors of size zero are not allowed.");
         // -- https://llvm.org/docs/LangRef.html#vector-type
 
-        unsafe {
-            VectorType::new(LLVMVectorType(self.ty, size))
-        }
+        unsafe { VectorType::new(LLVMVectorType(self.ty, size)) }
     }
 
     #[cfg(not(feature = "experimental"))]
     fn fn_type(self, param_types: &[BasicMetadataTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
-        let mut param_types: Vec<LLVMTypeRef> = param_types.iter()
-                                                           .map(|val| val.as_type_ref())
-                                                           .collect();
+        let mut param_types: Vec<LLVMTypeRef> = param_types.iter().map(|val| val.as_type_ref()).collect();
         unsafe {
-            FunctionType::new(LLVMFunctionType(self.ty, param_types.as_mut_ptr(), param_types.len() as u32, is_var_args as i32))
+            FunctionType::new(LLVMFunctionType(
+                self.ty,
+                param_types.as_mut_ptr(),
+                param_types.len() as u32,
+                is_var_args as i32,
+            ))
         }
     }
 
@@ -131,41 +134,36 @@ impl<'ctx> Type<'ctx> {
         }
 
         unsafe {
-            FunctionType::new(LLVMFunctionType(self.ty, pool_start.unwrap_or(std::ptr::null_mut()), param_types.len() as u32, is_var_args as i32))
+            FunctionType::new(LLVMFunctionType(
+                self.ty,
+                pool_start.unwrap_or(std::ptr::null_mut()),
+                param_types.len() as u32,
+                is_var_args as i32,
+            ))
         }
     }
 
     fn array_type(self, size: u32) -> ArrayType<'ctx> {
-        unsafe {
-            ArrayType::new(LLVMArrayType(self.ty, size))
-        }
+        unsafe { ArrayType::new(LLVMArrayType(self.ty, size)) }
     }
 
     fn get_undef(self) -> LLVMValueRef {
-        unsafe {
-            LLVMGetUndef(self.ty)
-        }
+        unsafe { LLVMGetUndef(self.ty) }
     }
 
     fn get_alignment(self) -> IntValue<'ctx> {
-        unsafe {
-            IntValue::new(LLVMAlignOf(self.ty))
-        }
+        unsafe { IntValue::new(LLVMAlignOf(self.ty)) }
     }
 
     fn get_context(self) -> ContextRef<'ctx> {
-        unsafe {
-            ContextRef::new(LLVMGetTypeContext(self.ty))
-        }
+        unsafe { ContextRef::new(LLVMGetTypeContext(self.ty)) }
     }
 
     // REVIEW: This should be known at compile time, maybe as a const fn?
     // On an enum or trait, this would not be known at compile time (unless
     // enum has only sized types for example)
     fn is_sized(self) -> bool {
-        unsafe {
-            LLVMTypeIsSized(self.ty) == 1
-        }
+        unsafe { LLVMTypeIsSized(self.ty) == 1 }
     }
 
     fn size_of(self) -> Option<IntValue<'ctx>> {
@@ -173,23 +171,16 @@ impl<'ctx> Type<'ctx> {
             return None;
         }
 
-        unsafe {
-            Some(IntValue::new(LLVMSizeOf(self.ty)))
-        }
+        unsafe { Some(IntValue::new(LLVMSizeOf(self.ty))) }
     }
 
     fn print_to_string(self) -> LLVMString {
-        unsafe {
-            LLVMString::new(LLVMPrintTypeToString(self.ty))
-        }
+        unsafe { LLVMString::new(LLVMPrintTypeToString(self.ty)) }
     }
 
     pub fn get_element_type(self) -> AnyTypeEnum<'ctx> {
-        unsafe {
-            AnyTypeEnum::new(LLVMGetElementType(self.ty))
-        }
+        unsafe { AnyTypeEnum::new(LLVMGetElementType(self.ty)) }
     }
-
 }
 
 impl fmt::Debug for Type<'_> {
@@ -203,10 +194,12 @@ impl fmt::Debug for Type<'_> {
     }
 }
 
-#[cfg(feature="internal-getters")]
-impl<T> LLVMReference<LLVMTypeRef> for T 
-where T : AsTypeRef {
+#[cfg(feature = "internal-getters")]
+impl<T> LLVMReference<LLVMTypeRef> for T
+where
+    T: AsTypeRef,
+{
     unsafe fn get_ref(&self) -> LLVMTypeRef {
-       self.as_type_ref() 
+        self.as_type_ref()
     }
 }

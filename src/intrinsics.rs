@@ -20,9 +20,7 @@ impl Intrinsic {
     ///
     /// SAFETY: the id is a valid LLVM intrinsic ID
     pub(crate) unsafe fn new(id: u32) -> Self {
-        Self {
-            id
-        }
+        Self { id }
     }
 
     /// Find llvm intrinsic id from name
@@ -47,26 +45,20 @@ impl Intrinsic {
     /// builder.build_call(trap_function, &[], "trap_call");
     /// ```
     pub fn find(name: &str) -> Option<Self> {
-        let id = unsafe {
-            LLVMLookupIntrinsicID(name.as_ptr() as *const ::libc::c_char, name.len())
-        };
+        let id = unsafe { LLVMLookupIntrinsicID(name.as_ptr() as *const ::libc::c_char, name.len()) };
 
         if id == 0 {
             return None;
         }
 
-        return Some(unsafe {
-            Intrinsic::new(id)
-        });
+        return Some(unsafe { Intrinsic::new(id) });
     }
 
     /// Check if specified intrinsic is overloaded
     ///
     /// Overloaded intrinsics need some argument types to be specified to declare them
     pub fn is_overloaded(&self) -> bool {
-        unsafe {
-            LLVMIntrinsicIsOverloaded(self.id) != 0
-        }
+        unsafe { LLVMIntrinsicIsOverloaded(self.id) != 0 }
     }
 
     /// Create or insert the declaration of an intrinsic.
@@ -92,10 +84,12 @@ impl Intrinsic {
     /// builder.position_at_end(entry);
     /// builder.build_call(trap_function, &[], "trap_call");
     /// ```
-    pub fn get_declaration<'ctx>(&self, module: &Module<'ctx>, param_types: &[BasicTypeEnum]) -> Option<FunctionValue<'ctx>> {
-        let mut param_types: Vec<LLVMTypeRef> = param_types.iter()
-            .map(|val| val.as_type_ref())
-            .collect();
+    pub fn get_declaration<'ctx>(
+        &self,
+        module: &Module<'ctx>,
+        param_types: &[BasicTypeEnum],
+    ) -> Option<FunctionValue<'ctx>> {
+        let mut param_types: Vec<LLVMTypeRef> = param_types.iter().map(|val| val.as_type_ref()).collect();
 
         // param_types should be empty for non-overloaded intrinsics (I think?)
         // for overloaded intrinsics they determine the overload used
@@ -106,14 +100,12 @@ impl Intrinsic {
         }
 
         let res = unsafe {
-            FunctionValue::new(
-                LLVMGetIntrinsicDeclaration(
-                    module.module.get(),
-                    self.id,
-                    param_types.as_mut_ptr(),
-                    param_types.len()
-                )
-            )
+            FunctionValue::new(LLVMGetIntrinsicDeclaration(
+                module.module.get(),
+                self.id,
+                param_types.as_mut_ptr(),
+                param_types.len(),
+            ))
         };
 
         res

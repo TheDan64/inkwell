@@ -2,9 +2,7 @@ extern crate inkwell;
 
 use self::inkwell::context::Context;
 use self::inkwell::module::Module;
-use self::inkwell::targets::{
-    CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine,
-};
+use self::inkwell::targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine};
 use self::inkwell::types::IntType;
 use self::inkwell::values::BasicValue;
 use self::inkwell::OptimizationLevel;
@@ -18,10 +16,7 @@ fn get_host_cpu_features() -> String {
     TargetMachine::get_host_cpu_features().to_string()
 }
 #[llvm_versions(4.0..=latest)]
-fn ptr_sized_int_type<'ctx>(
-    target_machine: &TargetMachine,
-    context: &'ctx Context,
-) -> IntType<'ctx> {
+fn ptr_sized_int_type<'ctx>(target_machine: &TargetMachine, context: &'ctx Context) -> IntType<'ctx> {
     let target_data = target_machine.get_target_data();
     context.ptr_sized_int_type(&target_data, None)
 }
@@ -40,10 +35,7 @@ fn get_host_cpu_features() -> String {
     "".to_string()
 }
 #[llvm_versions(3.6..4.0)]
-fn ptr_sized_int_type<'ctx>(
-    _target_machine: &TargetMachine,
-    context: &'ctx Context,
-) -> IntType<'ctx> {
+fn ptr_sized_int_type<'ctx>(_target_machine: &TargetMachine, context: &'ctx Context) -> IntType<'ctx> {
     context.i64_type()
 }
 #[llvm_versions(3.6..4.0)]
@@ -52,8 +44,7 @@ fn apply_target_to_module(target_machine: &TargetMachine, module: &Module) {
 }
 
 fn get_native_target_machine() -> TargetMachine {
-    Target::initialize_native(&InitializationConfig::default())
-        .expect("Failed to initialize native target");
+    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
     let target_triple = TargetMachine::get_default_triple();
     let target = Target::from_triple(&target_triple).unwrap();
     target
@@ -114,23 +105,23 @@ fn test_section_iterator() {
                     assert!(!has_section_a);
                     has_section_a = true;
                     assert_eq!(section.size(), 1);
-                }
+                },
                 "B" => {
                     assert!(!has_section_b);
                     has_section_b = true;
                     assert_eq!(section.size(), 2);
-                }
+                },
                 "C" => {
                     assert!(!has_section_c);
                     has_section_c = true;
                     assert_eq!(section.size(), 4);
-                }
+                },
                 "D" => {
                     assert!(!has_section_d);
                     has_section_d = true;
                     assert_eq!(section.size(), 1);
-                }
-                _ => {}
+                },
+                _ => {},
             }
         }
     }
@@ -172,18 +163,18 @@ fn test_symbol_iterator() {
                     assert!(!has_symbol_a);
                     has_symbol_a = true;
                     assert_eq!(symbol.size(), 1);
-                }
+                },
                 "b" => {
                     assert!(!has_symbol_b);
                     has_symbol_b = true;
                     assert_eq!(symbol.size(), 2);
-                }
+                },
                 "c" => {
                     assert!(!has_symbol_c);
                     has_symbol_c = true;
                     assert_eq!(symbol.size(), 4);
-                }
-                _ => {}
+                },
+                _ => {},
             }
         }
     }
@@ -200,15 +191,9 @@ fn test_reloc_iterator() {
     let intptr_t = ptr_sized_int_type(&target_machine, &context);
 
     let mut module = context.create_module("test_reloc_iterator");
-    let x_ptr = module
-        .add_global(context.i8_type(), None, "x")
-        .as_pointer_value();
-    let x_plus_4 = x_ptr
-        .const_to_int(intptr_t)
-        .const_add(intptr_t.const_int(4, false));
-    module
-        .add_global(intptr_t, None, "a")
-        .set_initializer(&x_plus_4);
+    let x_ptr = module.add_global(context.i8_type(), None, "x").as_pointer_value();
+    let x_plus_4 = x_ptr.const_to_int(intptr_t).const_add(intptr_t.const_int(4, false));
+    module.add_global(intptr_t, None, "a").set_initializer(&x_plus_4);
 
     apply_target_to_module(&target_machine, &module);
 
@@ -235,12 +220,7 @@ fn test_section_contains_nul() {
     let mut module = context.create_module("test_section_iterator");
 
     let gv = module.add_global(context.i32_type(), None, "gv");
-    gv.set_initializer(
-        &context
-            .i32_type()
-            .const_int(0xff0000ff, false)
-            .as_basic_value_enum(),
-    );
+    gv.set_initializer(&context.i32_type().const_int(0xff0000ff, false).as_basic_value_enum());
     gv.set_section("test");
 
     apply_target_to_module(&target_machine, &module);

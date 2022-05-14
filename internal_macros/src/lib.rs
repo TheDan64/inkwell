@@ -12,15 +12,17 @@ use std::iter::IntoIterator;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
-use syn::{parse_quote, parse_macro_input, parenthesized};
-use syn::parse::{Parse, ParseStream, Result, Error};
 use syn::fold::Fold;
+use syn::parse::{Error, Parse, ParseStream, Result};
 use syn::spanned::Spanned;
-use syn::{Token, LitFloat, Ident, Item, Field, Variant, Attribute};
+use syn::{parenthesized, parse_macro_input, parse_quote};
+use syn::{Attribute, Field, Ident, Item, LitFloat, Token, Variant};
 
 // This array should match the LLVM features in the top level Cargo manifest
-const FEATURE_VERSIONS: [&str; 15] =
-    ["llvm3-6", "llvm3-7", "llvm3-8", "llvm3-9", "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0", "llvm10-0", "llvm11-0", "llvm12-0", "llvm13-0", "llvm14-0"];
+const FEATURE_VERSIONS: [&str; 15] = [
+    "llvm3-6", "llvm3-7", "llvm3-8", "llvm3-9", "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0",
+    "llvm10-0", "llvm11-0", "llvm12-0", "llvm13-0", "llvm14-0",
+];
 
 /// Gets the index of the feature version that represents `latest`
 fn get_latest_feature_index(features: &[&str]) -> usize {
@@ -31,8 +33,11 @@ fn get_latest_feature_index(features: &[&str]) -> usize {
 fn get_feature_index(features: &[&str], feature: String, span: Span) -> Result<usize> {
     let feat = feature.as_str();
     match features.iter().position(|&s| s == feat) {
-        None => Err(Error::new(span, format!("Invalid feature version: {}, not defined", feature))),
-        Some(index) => Ok(index)
+        None => Err(Error::new(
+            span,
+            format!("Invalid feature version: {}, not defined", feature),
+        )),
+        Some(index) => Ok(index),
     }
 }
 
@@ -45,41 +50,50 @@ fn get_features(vt: VersionType) -> Result<Vec<&'static str>> {
             let feature = f64_to_feature_string(version);
             let index = get_feature_index(&features, feature, span)?;
             Ok(features[index..=index].to_vec())
-        }
+        },
         VersionType::InclusiveRangeToLatest(version, span) => {
             let feature = f64_to_feature_string(version);
             let index = get_feature_index(&features, feature, span)?;
             Ok(features[index..=latest].to_vec())
-        }
+        },
         VersionType::InclusiveRange((start, start_span), (end, end_span)) => {
             let start_feature = f64_to_feature_string(start);
             let end_feature = f64_to_feature_string(end);
             let start_index = get_feature_index(&features, start_feature, start_span)?;
             let end_index = get_feature_index(&features, end_feature, end_span)?;
             if end_index < start_index {
-                let message = format!("Invalid version range: {} must be greater than or equal to {}", start, end);
+                let message = format!(
+                    "Invalid version range: {} must be greater than or equal to {}",
+                    start, end
+                );
                 Err(Error::new(end_span, message))
             } else {
                 Ok(features[start_index..=end_index].to_vec())
             }
-        }
+        },
         VersionType::ExclusiveRangeToLatest(version, span) => {
             let feature = f64_to_feature_string(version);
             let index = get_feature_index(&features, feature, span)?;
             if latest == index {
-                let message = format!("Invalid version range: {}..latest produces an empty feature set", version);
+                let message = format!(
+                    "Invalid version range: {}..latest produces an empty feature set",
+                    version
+                );
                 Err(Error::new(span, message))
             } else {
                 Ok(features[index..latest].to_vec())
             }
-        }
+        },
         VersionType::ExclusiveRange((start, start_span), (end, end_span)) => {
             let start_feature = f64_to_feature_string(start);
             let end_feature = f64_to_feature_string(end);
             let start_index = get_feature_index(&features, start_feature, start_span)?;
             let end_index = get_feature_index(&features, end_feature, end_span)?;
             if end_index == start_index {
-                let message = format!("Invalid version range: {}..{} produces an empty feature set", start, end);
+                let message = format!(
+                    "Invalid version range: {}..{} produces an empty feature set",
+                    start, end
+                );
                 Err(Error::new(start_span, message))
             } else if end_index < start_index {
                 let message = format!("Invalid version range: {} must be greater than {}", start, end);
@@ -87,7 +101,7 @@ fn get_features(vt: VersionType) -> Result<Vec<&'static str>> {
             } else {
                 Ok(features[start_index..end_index].to_vec())
             }
-        }
+        },
     }
 }
 
@@ -136,7 +150,10 @@ impl Parse for VersionType {
                 } else if lookahead.peek(LitFloat) {
                     let to = input.parse::<LitFloat>().unwrap();
                     let to_val = to.base10_parse().unwrap();
-                    Ok(VersionType::InclusiveRange((from_val, from.span()), (to_val, to.span())))
+                    Ok(VersionType::InclusiveRange(
+                        (from_val, from.span()),
+                        (to_val, to.span()),
+                    ))
                 } else {
                     Err(lookahead.error())
                 }
@@ -153,7 +170,10 @@ impl Parse for VersionType {
                 } else if lookahead.peek(LitFloat) {
                     let to = input.parse::<LitFloat>().unwrap();
                     let to_val = to.base10_parse().unwrap();
-                    Ok(VersionType::ExclusiveRange((from_val, from.span()), (to_val, to.span())))
+                    Ok(VersionType::ExclusiveRange(
+                        (from_val, from.span()),
+                        (to_val, to.span()),
+                    ))
                 } else {
                     Err(lookahead.error())
                 }
@@ -237,7 +257,7 @@ impl FeatureSet {
                 parse_quote! {
                     #[cfg(any(#(feature = #features),*))]
                 }
-            }
+            },
             Err(err) => {
                 // We've hit an error, but we can't break out yet,
                 // so we set the error in the FeatureSet state and
@@ -245,7 +265,7 @@ impl FeatureSet {
                 // the error
                 self.set_error(err);
                 attr.clone()
-            }
+            },
         }
     }
 }
@@ -255,7 +275,8 @@ impl Fold for FeatureSet {
             return variant;
         }
 
-        let attrs = variant.attrs
+        let attrs = variant
+            .attrs
             .iter()
             .map(|attr| self.expand_llvm_versions_attr(attr))
             .collect::<Vec<_>>();
@@ -268,7 +289,8 @@ impl Fold for FeatureSet {
             return field;
         }
 
-        let attrs = field.attrs
+        let attrs = field
+            .attrs
             .iter()
             .map(|attr| self.expand_llvm_versions_attr(attr))
             .collect::<Vec<_>>();
@@ -436,7 +458,8 @@ impl Fold for EnumVariants {
                     let variant_meta = meta.nested.first().unwrap();
                     // The element should be an identifier
                     if let NestedMeta::Meta(Meta::Path(name)) = variant_meta {
-                        self.variants.push(EnumVariant::with_name(&variant, name.get_ident().unwrap().clone()));
+                        self.variants
+                            .push(EnumVariant::with_name(&variant, name.get_ident().unwrap().clone()));
                         // Strip the llvm_variant attribute from the final AST
                         variant.attrs.retain(|attr| !attr.path.is_ident("llvm_variant"));
                         return variant;
@@ -478,11 +501,7 @@ impl Parse for LLVMEnumType {
             return Err(variants.into_error());
         }
 
-        Ok(Self {
-            name,
-            decl,
-            variants,
-        })
+        Ok(Self { name, decl, variants })
     }
 }
 
@@ -516,7 +535,7 @@ impl Parse for LLVMEnumType {
 /// source variant is named `Return` and mapped manually to `LLVMRet`.
 #[proc_macro_attribute]
 pub fn llvm_enum(attribute_args: TokenStream, attributee: TokenStream) -> TokenStream {
-    use syn::{Path, PatPath, Arm};
+    use syn::{Arm, PatPath, Path};
 
     // Expect something like #[llvm_enum(LLVMOpcode)]
     let llvm_ty = parse_macro_input!(attribute_args as Path);

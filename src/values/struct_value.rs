@@ -27,9 +27,7 @@ impl<'ctx> StructValue<'ctx> {
     }
 
     pub fn get_type(self) -> StructType<'ctx> {
-        unsafe {
-            StructType::new(self.struct_value.get_type())
-        }
+        unsafe { StructType::new(self.struct_value.get_type()) }
     }
 
     pub fn is_null(self) -> bool {

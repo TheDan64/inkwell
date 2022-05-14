@@ -1,14 +1,14 @@
-use llvm_sys::core::{LLVMGetPointerAddressSpace, LLVMConstArray};
+use llvm_sys::core::{LLVMConstArray, LLVMGetPointerAddressSpace};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
-use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::types::traits::AsTypeRef;
-use crate::types::{AnyTypeEnum, BasicTypeEnum, ArrayType, FunctionType, Type, VectorType};
-use crate::values::{AsValueRef, ArrayValue, PointerValue, IntValue};
+use crate::types::{AnyTypeEnum, ArrayType, BasicTypeEnum, FunctionType, Type, VectorType};
+use crate::values::{ArrayValue, AsValueRef, IntValue, PointerValue};
+use crate::AddressSpace;
 
-use std::convert::TryFrom;
 use crate::types::enums::BasicMetadataTypeEnum;
+use std::convert::TryFrom;
 
 /// A `PointerType` is the type of a pointer constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -149,9 +149,7 @@ impl<'ctx> PointerType<'ctx> {
     /// assert_eq!(f32_ptr_type.get_address_space(), AddressSpace::Generic);
     /// ```
     pub fn get_address_space(self) -> AddressSpace {
-        let addr_space = unsafe {
-            LLVMGetPointerAddressSpace(self.as_type_ref())
-        };
+        let addr_space = unsafe { LLVMGetPointerAddressSpace(self.as_type_ref()) };
 
         AddressSpace::try_from(addr_space).expect("Unexpectedly found invalid AddressSpace value")
     }
@@ -180,9 +178,7 @@ impl<'ctx> PointerType<'ctx> {
     /// assert!(f32_ptr_null.is_null());
     /// ```
     pub fn const_null(self) -> PointerValue<'ctx> {
-        unsafe {
-            PointerValue::new(self.ptr_type.const_zero())
-        }
+        unsafe { PointerValue::new(self.ptr_type.const_zero()) }
     }
 
     // REVIEW: Unlike the other const_zero functions, this one becomes null instead of a 0 value. Maybe remove?
@@ -202,9 +198,7 @@ impl<'ctx> PointerType<'ctx> {
     /// let f32_ptr_zero = f32_ptr_type.const_zero();
     /// ```
     pub fn const_zero(self) -> PointerValue<'ctx> {
-        unsafe {
-            PointerValue::new(self.ptr_type.const_zero())
-        }
+        unsafe { PointerValue::new(self.ptr_type.const_zero()) }
     }
 
     /// Creates an undefined instance of a `PointerType`.
@@ -222,9 +216,7 @@ impl<'ctx> PointerType<'ctx> {
     /// assert!(f32_ptr_undef.is_undef());
     /// ```
     pub fn get_undef(self) -> PointerValue<'ctx> {
-        unsafe {
-            PointerValue::new(self.ptr_type.get_undef())
-        }
+        unsafe { PointerValue::new(self.ptr_type.get_undef()) }
     }
 
     /// Creates a `VectorType` with this `PointerType` for its element type.
@@ -282,11 +274,13 @@ impl<'ctx> PointerType<'ctx> {
     /// assert!(f32_ptr_array.is_const());
     /// ```
     pub fn const_array(self, values: &[PointerValue<'ctx>]) -> ArrayValue<'ctx> {
-        let mut values: Vec<LLVMValueRef> = values.iter()
-                                                  .map(|val| val.as_value_ref())
-                                                  .collect();
+        let mut values: Vec<LLVMValueRef> = values.iter().map(|val| val.as_value_ref()).collect();
         unsafe {
-            ArrayValue::new(LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32))
+            ArrayValue::new(LLVMConstArray(
+                self.as_type_ref(),
+                values.as_mut_ptr(),
+                values.len() as u32,
+            ))
         }
     }
 }

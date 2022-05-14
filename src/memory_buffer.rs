@@ -1,6 +1,10 @@
-use llvm_sys::core::{LLVMCreateMemoryBufferWithContentsOfFile, LLVMCreateMemoryBufferWithSTDIN, LLVMCreateMemoryBufferWithMemoryRange, LLVMCreateMemoryBufferWithMemoryRangeCopy, LLVMGetBufferStart, LLVMGetBufferSize, LLVMDisposeMemoryBuffer};
-use llvm_sys::prelude::LLVMMemoryBufferRef;
+use llvm_sys::core::{
+    LLVMCreateMemoryBufferWithContentsOfFile, LLVMCreateMemoryBufferWithMemoryRange,
+    LLVMCreateMemoryBufferWithMemoryRangeCopy, LLVMCreateMemoryBufferWithSTDIN, LLVMDisposeMemoryBuffer,
+    LLVMGetBufferSize, LLVMGetBufferStart,
+};
 use llvm_sys::object::LLVMCreateObjectFile;
+use llvm_sys::prelude::LLVMMemoryBufferRef;
 
 use crate::object_file::ObjectFile;
 use crate::support::{to_c_str, LLVMString};
@@ -10,21 +14,19 @@ use std::path::Path;
 use std::ptr;
 use std::slice;
 
-#[cfg(feature="internal-getters")]
+#[cfg(feature = "internal-getters")]
 use crate::LLVMReference;
 
 #[derive(Debug)]
 pub struct MemoryBuffer {
-    pub(crate) memory_buffer: LLVMMemoryBufferRef
+    pub(crate) memory_buffer: LLVMMemoryBufferRef,
 }
 
 impl MemoryBuffer {
     pub(crate) fn new(memory_buffer: LLVMMemoryBufferRef) -> Self {
         assert!(!memory_buffer.is_null());
 
-        MemoryBuffer {
-            memory_buffer
-        }
+        MemoryBuffer { memory_buffer }
     }
 
     pub fn create_from_file(path: &Path) -> Result<Self, LLVMString> {
@@ -33,7 +35,11 @@ impl MemoryBuffer {
         let mut err_string = MaybeUninit::uninit();
 
         let return_code = unsafe {
-            LLVMCreateMemoryBufferWithContentsOfFile(path.as_ptr() as *const ::libc::c_char, &mut memory_buffer, err_string.as_mut_ptr())
+            LLVMCreateMemoryBufferWithContentsOfFile(
+                path.as_ptr() as *const ::libc::c_char,
+                &mut memory_buffer,
+                err_string.as_mut_ptr(),
+            )
         };
 
         // TODO: Verify 1 is error code (LLVM can be inconsistent)
@@ -50,9 +56,7 @@ impl MemoryBuffer {
         let mut memory_buffer = ptr::null_mut();
         let mut err_string = MaybeUninit::uninit();
 
-        let return_code = unsafe {
-            LLVMCreateMemoryBufferWithSTDIN(&mut memory_buffer, err_string.as_mut_ptr())
-        };
+        let return_code = unsafe { LLVMCreateMemoryBufferWithSTDIN(&mut memory_buffer, err_string.as_mut_ptr()) };
 
         // TODO: Verify 1 is error code (LLVM can be inconsistent)
         if return_code == 1 {
@@ -71,7 +75,12 @@ impl MemoryBuffer {
         let name_c_string = to_c_str(name);
 
         let memory_buffer = unsafe {
-            LLVMCreateMemoryBufferWithMemoryRange(input.as_ptr() as *const ::libc::c_char, input.len(), name_c_string.as_ptr(), false as i32)
+            LLVMCreateMemoryBufferWithMemoryRange(
+                input.as_ptr() as *const ::libc::c_char,
+                input.len(),
+                name_c_string.as_ptr(),
+                false as i32,
+            )
         };
 
         MemoryBuffer::new(memory_buffer)
@@ -86,7 +95,11 @@ impl MemoryBuffer {
         let name_c_string = to_c_str(name);
 
         let memory_buffer = unsafe {
-            LLVMCreateMemoryBufferWithMemoryRangeCopy(input.as_ptr() as *const ::libc::c_char, input.len(), name_c_string.as_ptr())
+            LLVMCreateMemoryBufferWithMemoryRangeCopy(
+                input.as_ptr() as *const ::libc::c_char,
+                input.len(),
+                name_c_string.as_ptr(),
+            )
         };
 
         MemoryBuffer::new(memory_buffer)
@@ -103,17 +116,13 @@ impl MemoryBuffer {
 
     /// Gets the byte size of this `MemoryBuffer`.
     pub fn get_size(&self) -> usize {
-        unsafe {
-            LLVMGetBufferSize(self.memory_buffer)
-        }
+        unsafe { LLVMGetBufferSize(self.memory_buffer) }
     }
 
     /// Convert this `MemoryBuffer` into an `ObjectFile`. LLVM does not currently
     /// provide any way to determine the cause of error if conversion fails.
     pub fn create_object_file(self) -> Result<ObjectFile, ()> {
-        let object_file = unsafe {
-            LLVMCreateObjectFile(self.memory_buffer)
-        };
+        let object_file = unsafe { LLVMCreateObjectFile(self.memory_buffer) };
 
         forget(self);
 
@@ -133,8 +142,7 @@ impl Drop for MemoryBuffer {
     }
 }
 
-
-#[cfg(feature="internal-getters")]
+#[cfg(feature = "internal-getters")]
 impl LLVMReference<LLVMMemoryBufferRef> for MemoryBuffer {
     unsafe fn get_ref(&self) -> LLVMMemoryBufferRef {
         self.memory_buffer

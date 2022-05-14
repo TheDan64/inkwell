@@ -19,18 +19,34 @@ pub mod support;
 #[deny(missing_docs)]
 pub mod attributes;
 #[deny(missing_docs)]
-#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9",
-              feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
-pub mod comdat;
-#[deny(missing_docs)]
 pub mod basic_block;
 pub mod builder;
 #[deny(missing_docs)]
+#[cfg(not(any(
+    feature = "llvm3-6",
+    feature = "llvm3-7",
+    feature = "llvm3-8",
+    feature = "llvm3-9",
+    feature = "llvm4-0",
+    feature = "llvm5-0",
+    feature = "llvm6-0"
+)))]
+pub mod comdat;
+#[deny(missing_docs)]
 pub mod context;
 pub mod data_layout;
-#[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9", feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+#[cfg(not(any(
+    feature = "llvm3-6",
+    feature = "llvm3-7",
+    feature = "llvm3-8",
+    feature = "llvm3-9",
+    feature = "llvm4-0",
+    feature = "llvm5-0",
+    feature = "llvm6-0"
+)))]
 pub mod debug_info;
 pub mod execution_engine;
+pub mod intrinsics;
 pub mod memory_buffer;
 #[deny(missing_docs)]
 pub mod module;
@@ -39,41 +55,43 @@ pub mod passes;
 pub mod targets;
 pub mod types;
 pub mod values;
-pub mod intrinsics;
 
 // Boilerplate to select a desired llvm_sys version at compile & link time.
-#[cfg(feature="llvm3-6")]
-extern crate llvm_sys_36 as llvm_sys;
-#[cfg(feature="llvm3-7")]
-extern crate llvm_sys_37 as llvm_sys;
-#[cfg(feature="llvm3-8")]
-extern crate llvm_sys_38 as llvm_sys;
-#[cfg(feature="llvm3-9")]
-extern crate llvm_sys_39 as llvm_sys;
-#[cfg(feature="llvm4-0")]
-extern crate llvm_sys_40 as llvm_sys;
-#[cfg(feature="llvm5-0")]
-extern crate llvm_sys_50 as llvm_sys;
-#[cfg(feature="llvm6-0")]
-extern crate llvm_sys_60 as llvm_sys;
-#[cfg(feature="llvm7-0")]
-extern crate llvm_sys_70 as llvm_sys;
-#[cfg(feature="llvm8-0")]
-extern crate llvm_sys_80 as llvm_sys;
-#[cfg(feature="llvm9-0")]
-extern crate llvm_sys_90 as llvm_sys;
-#[cfg(feature="llvm10-0")]
+#[cfg(feature = "llvm10-0")]
 extern crate llvm_sys_100 as llvm_sys;
-#[cfg(feature="llvm11-0")]
+#[cfg(feature = "llvm11-0")]
 extern crate llvm_sys_110 as llvm_sys;
-#[cfg(feature="llvm12-0")]
+#[cfg(feature = "llvm12-0")]
 extern crate llvm_sys_120 as llvm_sys;
-#[cfg(feature="llvm13-0")]
+#[cfg(feature = "llvm13-0")]
 extern crate llvm_sys_130 as llvm_sys;
-#[cfg(feature="llvm14-0")]
+#[cfg(feature = "llvm14-0")]
 extern crate llvm_sys_140 as llvm_sys;
+#[cfg(feature = "llvm3-6")]
+extern crate llvm_sys_36 as llvm_sys;
+#[cfg(feature = "llvm3-7")]
+extern crate llvm_sys_37 as llvm_sys;
+#[cfg(feature = "llvm3-8")]
+extern crate llvm_sys_38 as llvm_sys;
+#[cfg(feature = "llvm3-9")]
+extern crate llvm_sys_39 as llvm_sys;
+#[cfg(feature = "llvm4-0")]
+extern crate llvm_sys_40 as llvm_sys;
+#[cfg(feature = "llvm5-0")]
+extern crate llvm_sys_50 as llvm_sys;
+#[cfg(feature = "llvm6-0")]
+extern crate llvm_sys_60 as llvm_sys;
+#[cfg(feature = "llvm7-0")]
+extern crate llvm_sys_70 as llvm_sys;
+#[cfg(feature = "llvm8-0")]
+extern crate llvm_sys_80 as llvm_sys;
+#[cfg(feature = "llvm9-0")]
+extern crate llvm_sys_90 as llvm_sys;
 
-use llvm_sys::{LLVMIntPredicate, LLVMRealPredicate, LLVMVisibility, LLVMThreadLocalMode, LLVMDLLStorageClass, LLVMAtomicOrdering, LLVMAtomicRMWBinOp};
+use llvm_sys::{
+    LLVMAtomicOrdering, LLVMAtomicRMWBinOp, LLVMDLLStorageClass, LLVMIntPredicate, LLVMRealPredicate,
+    LLVMThreadLocalMode, LLVMVisibility,
+};
 
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::LLVMInlineAsmDialect;
@@ -109,7 +127,7 @@ macro_rules! assert_unique_used_features {
     }
 }
 
-assert_unique_used_features!{"llvm3-6", "llvm3-7", "llvm3-8", "llvm3-9", "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0", "llvm10-0", "llvm11-0", "llvm12-0", "llvm13-0", "llvm14-0"}
+assert_unique_used_features! {"llvm3-6", "llvm3-7", "llvm3-8", "llvm3-9", "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0", "llvm10-0", "llvm11-0", "llvm12-0", "llvm13-0", "llvm14-0"}
 
 /// Defines the address space in which a global will be inserted.
 ///
@@ -118,10 +136,10 @@ assert_unique_used_features!{"llvm3-6", "llvm3-7", "llvm3-8", "llvm3-9", "llvm4-
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum AddressSpace {
     Generic = 0,
-    Global  = 1,
-    Shared  = 3,
-    Const   = 4,
-    Local   = 5,
+    Global = 1,
+    Shared = 3,
+    Const = 4,
+    Local = 5,
 }
 
 impl TryFrom<u32> for AddressSpace {
@@ -344,9 +362,9 @@ pub enum AtomicRMWBinOp {
 #[repr(u32)]
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum OptimizationLevel {
-    None       = 0,
-    Less       = 1,
-    Default    = 2,
+    None = 0,
+    Less = 1,
+    Default = 2,
     Aggressive = 3,
 }
 
@@ -390,7 +408,7 @@ impl ThreadLocalMode {
             LLVMThreadLocalMode::LLVMLocalDynamicTLSModel => Some(ThreadLocalMode::LocalDynamicTLSModel),
             LLVMThreadLocalMode::LLVMInitialExecTLSModel => Some(ThreadLocalMode::InitialExecTLSModel),
             LLVMThreadLocalMode::LLVMLocalExecTLSModel => Some(ThreadLocalMode::LocalExecTLSModel),
-            LLVMThreadLocalMode::LLVMNotThreadLocal => None
+            LLVMThreadLocalMode::LLVMNotThreadLocal => None,
         }
     }
 
@@ -432,7 +450,6 @@ pub enum InlineAsmDialect {
     #[llvm_variant(LLVMInlineAsmDialectIntel)]
     Intel,
 }
-
 
 /// Exposes LLVM internal references to the outside.
 #[cfg(feature = "internal-getters")]

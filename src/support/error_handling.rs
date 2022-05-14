@@ -1,15 +1,15 @@
 //! This module contains some supplemental functions for dealing with errors.
 
+use libc::c_void;
+use llvm_sys::core::{LLVMGetDiagInfoDescription, LLVMGetDiagInfoSeverity};
 #[llvm_versions(3.6..3.8)]
 use llvm_sys::core::{LLVMInstallFatalErrorHandler, LLVMResetFatalErrorHandler};
 #[llvm_versions(3.8..=latest)]
 use llvm_sys::error_handling::{LLVMInstallFatalErrorHandler, LLVMResetFatalErrorHandler};
-use llvm_sys::core::{LLVMGetDiagInfoDescription, LLVMGetDiagInfoSeverity};
 use llvm_sys::prelude::LLVMDiagnosticInfoRef;
 use llvm_sys::LLVMDiagnosticSeverity;
-use libc::c_void;
 
-#[cfg(feature="internal-getters")]
+#[cfg(feature = "internal-getters")]
 use crate::LLVMReference;
 
 // REVIEW: Maybe it's possible to have a safe wrapper? If we can
@@ -31,9 +31,7 @@ pub unsafe fn install_fatal_error_handler(handler: extern "C" fn(*const ::libc::
 
 /// Resets LLVM's fatal error handler back to the default
 pub fn reset_fatal_error_handler() {
-    unsafe {
-        LLVMResetFatalErrorHandler()
-    }
+    unsafe { LLVMResetFatalErrorHandler() }
 }
 
 pub(crate) struct DiagnosticInfo {
@@ -42,15 +40,11 @@ pub(crate) struct DiagnosticInfo {
 
 impl DiagnosticInfo {
     pub(crate) fn new(diagnostic_info: LLVMDiagnosticInfoRef) -> Self {
-        DiagnosticInfo {
-            diagnostic_info,
-        }
+        DiagnosticInfo { diagnostic_info }
     }
 
     pub(crate) fn get_description(&self) -> *mut ::libc::c_char {
-        unsafe {
-            LLVMGetDiagInfoDescription(self.diagnostic_info)
-        }
+        unsafe { LLVMGetDiagInfoDescription(self.diagnostic_info) }
     }
 
     pub(crate) fn severity_is_error(&self) -> bool {
@@ -68,7 +62,10 @@ impl DiagnosticInfo {
 //
 // https://github.com/llvm-mirror/llvm/blob/master/tools/llvm-c-test/diagnostic.c was super useful
 // for figuring out how to get this to work
-pub(crate) extern "C" fn get_error_str_diagnostic_handler(diagnostic_info: LLVMDiagnosticInfoRef, void_ptr: *mut c_void) {
+pub(crate) extern "C" fn get_error_str_diagnostic_handler(
+    diagnostic_info: LLVMDiagnosticInfoRef,
+    void_ptr: *mut c_void,
+) {
     let diagnostic_info = DiagnosticInfo::new(diagnostic_info);
 
     if diagnostic_info.severity_is_error() {
@@ -80,7 +77,7 @@ pub(crate) extern "C" fn get_error_str_diagnostic_handler(diagnostic_info: LLVMD
     }
 }
 
-#[cfg(feature="internal-getters")]
+#[cfg(feature = "internal-getters")]
 impl LLVMReference<LLVMDiagnosticInfoRef> for DiagnosticInfo {
     unsafe fn get_ref(&self) -> LLVMDiagnosticInfoRef {
         self.diagnostic_info

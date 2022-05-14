@@ -1,15 +1,18 @@
 use either::Either;
-use llvm_sys::LLVMTypeKind;
-use llvm_sys::core::{LLVMIsTailCall, LLVMSetTailCall, LLVMGetTypeKind, LLVMTypeOf, LLVMSetInstructionCallConv, LLVMGetInstructionCallConv, LLVMSetInstrParamAlignment};
+use llvm_sys::core::{
+    LLVMGetInstructionCallConv, LLVMGetTypeKind, LLVMIsTailCall, LLVMSetInstrParamAlignment,
+    LLVMSetInstructionCallConv, LLVMSetTailCall, LLVMTypeOf,
+};
 use llvm_sys::prelude::LLVMValueRef;
+use llvm_sys::LLVMTypeKind;
 
 #[llvm_versions(3.9..=latest)]
-use crate::attributes::{Attribute};
+use crate::attributes::Attribute;
 use crate::attributes::AttributeLoc;
 use crate::support::LLVMString;
-use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, Value};
 #[llvm_versions(3.9..=latest)]
 use crate::values::FunctionValue;
+use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, Value};
 
 /// A value resulting from a function call. It may have function attributes applied to it.
 ///
@@ -44,9 +47,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// call_site_value.set_tail_call(true);
     /// ```
     pub fn set_tail_call(self, tail_call: bool) {
-        unsafe {
-            LLVMSetTailCall(self.as_value_ref(), tail_call as i32)
-        }
+        unsafe { LLVMSetTailCall(self.as_value_ref(), tail_call as i32) }
     }
 
     /// Determines whether or not this call is a tail call.
@@ -73,9 +74,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// assert!(call_site_value.is_tail_call());
     /// ```
     pub fn is_tail_call(self) -> bool {
-        unsafe {
-            LLVMIsTailCall(self.as_value_ref()) == 1
-        }
+        unsafe { LLVMIsTailCall(self.as_value_ref()) == 1 }
     }
 
     /// Try to convert this `CallSiteValue` to a `BasicValueEnum` if not a void return type.
@@ -137,9 +136,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     pub fn add_attribute(self, loc: AttributeLoc, attribute: Attribute) {
         use llvm_sys::core::LLVMAddCallSiteAttribute;
 
-        unsafe {
-            LLVMAddCallSiteAttribute(self.as_value_ref(), loc.get_index(), attribute.attribute)
-        }
+        unsafe { LLVMAddCallSiteAttribute(self.as_value_ref(), loc.get_index(), attribute.attribute) }
     }
 
     /// Gets the `FunctionValue` this `CallSiteValue` is based on.
@@ -169,9 +166,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     pub fn get_called_fn_value(self) -> FunctionValue<'ctx> {
         use llvm_sys::core::LLVMGetCalledValue;
 
-        unsafe {
-            FunctionValue::new(LLVMGetCalledValue(self.as_value_ref())).expect("This should never be null?")
-        }
+        unsafe { FunctionValue::new(LLVMGetCalledValue(self.as_value_ref())).expect("This should never be null?") }
     }
 
     /// Counts the number of `Attribute`s on this `CallSiteValue` at an index.
@@ -205,9 +200,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     pub fn count_attributes(self, loc: AttributeLoc) -> u32 {
         use llvm_sys::core::LLVMGetCallSiteAttributeCount;
 
-        unsafe {
-            LLVMGetCallSiteAttributeCount(self.as_value_ref(), loc.get_index())
-        }
+        unsafe { LLVMGetCallSiteAttributeCount(self.as_value_ref(), loc.get_index()) }
     }
 
     /// Get all `Attribute`s on this `CallSiteValue` at an index.
@@ -301,17 +294,13 @@ impl<'ctx> CallSiteValue<'ctx> {
     pub fn get_enum_attribute(self, loc: AttributeLoc, kind_id: u32) -> Option<Attribute> {
         use llvm_sys::core::LLVMGetCallSiteEnumAttribute;
 
-        let ptr = unsafe {
-            LLVMGetCallSiteEnumAttribute(self.as_value_ref(), loc.get_index(), kind_id)
-        };
+        let ptr = unsafe { LLVMGetCallSiteEnumAttribute(self.as_value_ref(), loc.get_index(), kind_id) };
 
         if ptr.is_null() {
             return None;
         }
 
-        unsafe {
-            Some(Attribute::new(ptr))
-        }
+        unsafe { Some(Attribute::new(ptr)) }
     }
 
     /// Gets a string `Attribute` on this `CallSiteValue` at an index and key.
@@ -347,16 +336,19 @@ impl<'ctx> CallSiteValue<'ctx> {
         use llvm_sys::core::LLVMGetCallSiteStringAttribute;
 
         let ptr = unsafe {
-            LLVMGetCallSiteStringAttribute(self.as_value_ref(), loc.get_index(), key.as_ptr() as *const ::libc::c_char, key.len() as u32)
+            LLVMGetCallSiteStringAttribute(
+                self.as_value_ref(),
+                loc.get_index(),
+                key.as_ptr() as *const ::libc::c_char,
+                key.len() as u32,
+            )
         };
 
         if ptr.is_null() {
             return None;
         }
 
-        unsafe {
-            Some(Attribute::new(ptr))
-        }
+        unsafe { Some(Attribute::new(ptr)) }
     }
 
     /// Removes an enum `Attribute` on this `CallSiteValue` at an index and kind id.
@@ -391,9 +383,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     pub fn remove_enum_attribute(self, loc: AttributeLoc, kind_id: u32) {
         use llvm_sys::core::LLVMRemoveCallSiteEnumAttribute;
 
-        unsafe {
-            LLVMRemoveCallSiteEnumAttribute(self.as_value_ref(), loc.get_index(), kind_id)
-        }
+        unsafe { LLVMRemoveCallSiteEnumAttribute(self.as_value_ref(), loc.get_index(), kind_id) }
     }
 
     /// Removes a string `Attribute` on this `CallSiteValue` at an index and key.
@@ -429,7 +419,12 @@ impl<'ctx> CallSiteValue<'ctx> {
         use llvm_sys::core::LLVMRemoveCallSiteStringAttribute;
 
         unsafe {
-            LLVMRemoveCallSiteStringAttribute(self.as_value_ref(), loc.get_index(), key.as_ptr() as *const ::libc::c_char, key.len() as u32)
+            LLVMRemoveCallSiteStringAttribute(
+                self.as_value_ref(),
+                loc.get_index(),
+                key.as_ptr() as *const ::libc::c_char,
+                key.len() as u32,
+            )
         }
     }
 
@@ -461,9 +456,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     pub fn count_arguments(self) -> u32 {
         use llvm_sys::core::LLVMGetNumArgOperands;
 
-        unsafe {
-            LLVMGetNumArgOperands(self.as_value_ref())
-        }
+        unsafe { LLVMGetNumArgOperands(self.as_value_ref()) }
     }
 
     /// Gets the calling convention for this `CallSiteValue`.
@@ -488,9 +481,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// assert_eq!(call_site_value.get_call_convention(), 0);
     /// ```
     pub fn get_call_convention(self) -> u32 {
-        unsafe {
-            LLVMGetInstructionCallConv(self.as_value_ref())
-        }
+        unsafe { LLVMGetInstructionCallConv(self.as_value_ref()) }
     }
 
     /// Sets the calling convention for this `CallSiteValue`.
@@ -517,9 +508,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// assert_eq!(call_site_value.get_call_convention(), 2);
     /// ```
     pub fn set_call_convention(self, conv: u32) {
-        unsafe {
-            LLVMSetInstructionCallConv(self.as_value_ref(), conv)
-        }
+        unsafe { LLVMSetInstructionCallConv(self.as_value_ref(), conv) }
     }
 
     /// Shortcut for setting the alignment `Attribute` for this `CallSiteValue`.
@@ -551,9 +540,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     pub fn set_alignment_attribute(self, loc: AttributeLoc, alignment: u32) {
         assert_eq!(alignment.count_ones(), 1, "Alignment must be a power of two.");
 
-        unsafe {
-            LLVMSetInstrParamAlignment(self.as_value_ref(), loc.get_index(), alignment)
-        }
+        unsafe { LLVMSetInstrParamAlignment(self.as_value_ref(), loc.get_index(), alignment) }
     }
 
     /// Prints the definition of a `CallSiteValue` to a `LLVMString`.

@@ -108,8 +108,14 @@ fn test_operands() {
     assert!(store_operand_use1.get_next_use().is_none());
     assert_eq!(store_operand_use1, arg1_second_use);
 
-    assert_eq!(store_operand_use0.get_user().into_instruction_value(), store_instruction);
-    assert_eq!(store_operand_use1.get_user().into_instruction_value(), store_instruction);
+    assert_eq!(
+        store_operand_use0.get_user().into_instruction_value(),
+        store_instruction
+    );
+    assert_eq!(
+        store_operand_use1.get_user().into_instruction_value(),
+        store_instruction
+    );
     assert_eq!(store_operand_use0.get_used_value().left().unwrap(), f32_val);
     assert_eq!(store_operand_use1.get_used_value().left().unwrap(), arg1);
 
@@ -184,11 +190,13 @@ fn test_get_next_use() {
     let first_use = f32_val.get_first_use().unwrap();
 
     assert_eq!(first_use.get_user(), add_pi1.as_instruction_value().unwrap());
-    assert_eq!(first_use.get_next_use().map(|x| x.get_user().into_float_value()), Some(add_pi0));
+    assert_eq!(
+        first_use.get_next_use().map(|x| x.get_user().into_float_value()),
+        Some(add_pi0)
+    );
     assert!(arg1.get_first_use().is_some());
     assert!(module.verify().is_ok());
 }
-
 
 #[test]
 fn test_instructions() {
@@ -229,19 +237,28 @@ fn test_instructions() {
     assert_eq!(ptr.as_instruction().unwrap().get_opcode(), IntToPtr);
     assert_eq!(icmp.as_instruction().unwrap().get_opcode(), ICmp);
     assert_eq!(ptr.as_instruction().unwrap().get_icmp_predicate(), None);
-    assert_eq!(icmp.as_instruction().unwrap().get_icmp_predicate().unwrap(), IntPredicate::EQ);
+    assert_eq!(
+        icmp.as_instruction().unwrap().get_icmp_predicate().unwrap(),
+        IntPredicate::EQ
+    );
     assert_eq!(f32_sum.as_instruction().unwrap().get_opcode(), FAdd);
     assert_eq!(fcmp.as_instruction().unwrap().get_opcode(), FCmp);
     assert_eq!(f32_sum.as_instruction().unwrap().get_fcmp_predicate(), None);
     assert_eq!(icmp.as_instruction().unwrap().get_fcmp_predicate(), None);
-    assert_eq!(fcmp.as_instruction().unwrap().get_fcmp_predicate().unwrap(), FloatPredicate::OEQ);
+    assert_eq!(
+        fcmp.as_instruction().unwrap().get_fcmp_predicate().unwrap(),
+        FloatPredicate::OEQ
+    );
     assert_eq!(free_instruction.get_opcode(), Call);
     assert_eq!(return_instruction.get_opcode(), Return);
 
     // test instruction type
     assert_eq!(store_instruction.get_type(), AnyTypeEnum::from(void_type));
     assert_eq!(free_instruction.get_type(), AnyTypeEnum::from(void_type));
-    assert_eq!(f32_sum.as_instruction().unwrap().get_type(), AnyTypeEnum::from(f32_type));
+    assert_eq!(
+        f32_sum.as_instruction().unwrap().get_type(),
+        AnyTypeEnum::from(f32_type)
+    );
 
     // test instruction cloning
     let instruction_clone = return_instruction.clone();
@@ -363,7 +380,10 @@ fn test_mem_instructions() {
     assert!(store_instruction.set_alignment(14).is_err());
     assert_eq!(store_instruction.get_alignment().unwrap(), 0);
 
-    let fadd_instruction = builder.build_float_add(load.into_float_value(), f32_val, "").as_instruction_value().unwrap();
+    let fadd_instruction = builder
+        .build_float_add(load.into_float_value(), f32_val, "")
+        .as_instruction_value()
+        .unwrap();
     assert!(fadd_instruction.get_volatile().is_err());
     assert!(fadd_instruction.set_volatile(false).is_err());
     assert!(fadd_instruction.get_alignment().is_err());
@@ -424,7 +444,10 @@ fn test_mem_instructions() {
     assert!(store_instruction.set_alignment(14).is_err());
     assert_eq!(store_instruction.get_alignment().unwrap(), 4);
 
-    let fadd_instruction = builder.build_float_add(load.into_float_value(), f32_val, "").as_instruction_value().unwrap();
+    let fadd_instruction = builder
+        .build_float_add(load.into_float_value(), f32_val, "")
+        .as_instruction_value()
+        .unwrap();
     assert!(fadd_instruction.get_volatile().is_err());
     assert!(fadd_instruction.set_volatile(false).is_err());
     assert!(fadd_instruction.get_alignment().is_err());
@@ -460,19 +483,35 @@ fn test_atomic_ordering_mem_instructions() {
     let load = builder.build_load(arg1, "");
     let load_instruction = load.as_instruction_value().unwrap();
 
-    assert_eq!(store_instruction.get_atomic_ordering().unwrap(), AtomicOrdering::NotAtomic);
-    assert_eq!(load_instruction.get_atomic_ordering().unwrap(), AtomicOrdering::NotAtomic);
+    assert_eq!(
+        store_instruction.get_atomic_ordering().unwrap(),
+        AtomicOrdering::NotAtomic
+    );
+    assert_eq!(
+        load_instruction.get_atomic_ordering().unwrap(),
+        AtomicOrdering::NotAtomic
+    );
     assert!(store_instruction.set_atomic_ordering(AtomicOrdering::Monotonic).is_ok());
-    assert_eq!(store_instruction.get_atomic_ordering().unwrap(), AtomicOrdering::Monotonic);
+    assert_eq!(
+        store_instruction.get_atomic_ordering().unwrap(),
+        AtomicOrdering::Monotonic
+    );
     assert!(store_instruction.set_atomic_ordering(AtomicOrdering::Release).is_ok());
     assert!(load_instruction.set_atomic_ordering(AtomicOrdering::Acquire).is_ok());
 
     assert!(store_instruction.set_atomic_ordering(AtomicOrdering::Acquire).is_err());
-    assert!(store_instruction.set_atomic_ordering(AtomicOrdering::AcquireRelease).is_err());
-    assert!(load_instruction.set_atomic_ordering(AtomicOrdering::AcquireRelease).is_err());
+    assert!(store_instruction
+        .set_atomic_ordering(AtomicOrdering::AcquireRelease)
+        .is_err());
+    assert!(load_instruction
+        .set_atomic_ordering(AtomicOrdering::AcquireRelease)
+        .is_err());
     assert!(load_instruction.set_atomic_ordering(AtomicOrdering::Release).is_err());
 
-    let fadd_instruction = builder.build_float_add(load.into_float_value(), f32_val, "").as_instruction_value().unwrap();
+    let fadd_instruction = builder
+        .build_float_add(load.into_float_value(), f32_val, "")
+        .as_instruction_value()
+        .unwrap();
     assert!(fadd_instruction.get_atomic_ordering().is_err());
     assert!(fadd_instruction.set_atomic_ordering(AtomicOrdering::NotAtomic).is_err());
 }

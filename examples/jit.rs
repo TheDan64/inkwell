@@ -1,10 +1,10 @@
 extern crate inkwell;
 
-use inkwell::OptimizationLevel;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::execution_engine::{ExecutionEngine, JitFunction};
 use inkwell::module::Module;
+use inkwell::OptimizationLevel;
 
 use std::error::Error;
 
@@ -42,7 +42,6 @@ impl<'ctx> CodeGen<'ctx> {
         unsafe { self.execution_engine.get_function("sum").ok() }
     }
 }
-
 
 fn main() -> Result<(), Box<dyn Error>> {
     let context = Context::create();

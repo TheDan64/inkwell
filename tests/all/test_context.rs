@@ -1,5 +1,5 @@
-use inkwell::AddressSpace;
 use inkwell::context::Context;
+use inkwell::AddressSpace;
 
 #[test]
 fn test_no_context_double_free() {

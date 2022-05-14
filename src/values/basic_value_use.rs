@@ -1,5 +1,8 @@
-use either::{Either, Either::{Left, Right}};
-use llvm_sys::core::{LLVMGetNextUse, LLVMGetUser, LLVMGetUsedValue, LLVMIsABasicBlock, LLVMValueAsBasicBlock};
+use either::{
+    Either,
+    Either::{Left, Right},
+};
+use llvm_sys::core::{LLVMGetNextUse, LLVMGetUsedValue, LLVMGetUser, LLVMIsABasicBlock, LLVMValueAsBasicBlock};
 use llvm_sys::prelude::LLVMUseRef;
 
 use std::marker::PhantomData;
@@ -72,17 +75,13 @@ impl<'ctx> BasicValueUse<'ctx> {
     /// 1) In the store instruction
     /// 2) In the pointer bitcast
     pub fn get_next_use(self) -> Option<Self> {
-        let use_ = unsafe {
-            LLVMGetNextUse(self.0)
-        };
+        let use_ = unsafe { LLVMGetNextUse(self.0) };
 
         if use_.is_null() {
             return None;
         }
 
-        unsafe {
-            Some(Self::new(use_))
-        }
+        unsafe { Some(Self::new(use_)) }
     }
 
     /// Gets the user (an `AnyValueEnum`) of this use.
@@ -118,9 +117,7 @@ impl<'ctx> BasicValueUse<'ctx> {
     /// assert_eq!(store_operand_use1.get_user(), store_instruction);
     /// ```
     pub fn get_user(self) -> AnyValueEnum<'ctx> {
-        unsafe {
-            AnyValueEnum::new(LLVMGetUser(self.0))
-        }
+        unsafe { AnyValueEnum::new(LLVMGetUser(self.0)) }
     }
 
     /// Gets the used value (a `BasicValueEnum` or `BasicBlock`) of this use.
@@ -161,24 +158,16 @@ impl<'ctx> BasicValueUse<'ctx> {
     /// assert_eq!(bitcast_use_value, free_operand0);
     /// ```
     pub fn get_used_value(self) -> Either<BasicValueEnum<'ctx>, BasicBlock<'ctx>> {
-        let used_value = unsafe {
-            LLVMGetUsedValue(self.0)
-        };
+        let used_value = unsafe { LLVMGetUsedValue(self.0) };
 
-        let is_basic_block = unsafe {
-            !LLVMIsABasicBlock(used_value).is_null()
-        };
+        let is_basic_block = unsafe { !LLVMIsABasicBlock(used_value).is_null() };
 
         if is_basic_block {
-            let bb = unsafe {
-                BasicBlock::new(LLVMValueAsBasicBlock(used_value))
-            };
+            let bb = unsafe { BasicBlock::new(LLVMValueAsBasicBlock(used_value)) };
 
             Right(bb.expect("BasicBlock should always be valid"))
         } else {
-            unsafe {
-                Left(BasicValueEnum::new(used_value))
-            }
+            unsafe { Left(BasicValueEnum::new(used_value)) }
         }
     }
 }

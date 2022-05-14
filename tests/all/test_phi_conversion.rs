@@ -1,9 +1,7 @@
 use std::convert::TryInto;
 
 use inkwell::context::Context;
-use inkwell::values::{
-    BasicValue, BasicValueEnum, InstructionOpcode::*, InstructionValue, PhiValue,
-};
+use inkwell::values::{BasicValue, BasicValueEnum, InstructionOpcode::*, InstructionValue, PhiValue};
 use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate};
 
 #[test]
