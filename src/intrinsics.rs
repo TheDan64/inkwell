@@ -3,7 +3,7 @@ use llvm_sys::core::{LLVMGetIntrinsicDeclaration, LLVMIntrinsicIsOverloaded, LLV
 use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::module::Module;
-use crate::types::{AsTypeRef, BasicTypeEnum, FunctionType};
+use crate::types::{AsTypeRef, BasicTypeEnum};
 use crate::values::FunctionValue;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]

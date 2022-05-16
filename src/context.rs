@@ -1055,7 +1055,7 @@ impl<'ctx> ContextRef<'ctx> {
         }
     }
 
-    /// Gets a usable context object with a correct lifetime.
+    // /// Gets a usable context object with a correct lifetime.
     // FIXME: Not safe :(
     // #[cfg(feature = "experimental")]
     // pub unsafe fn get(&self) -> &'ctx Context {

@@ -412,6 +412,7 @@ fn test_global_expressions() {
     // therefore, it's currently not possible to test that the data was set without generating the IR
     assert!(
         gv.print_to_string().to_string().contains("!dbg"),
-        format!("expected !dbg but generated gv was {}", gv.print_to_string())
+        "expected !dbg but generated gv was {}",
+        gv.print_to_string()
     );
 }
