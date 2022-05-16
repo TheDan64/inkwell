@@ -14,7 +14,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
+      uses: KyleMayes/install-llvm-action@v1.5.2
       with:
         version: "3.6"
     - name: Build
@@ -30,7 +30,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
+      uses: KyleMayes/install-llvm-action@v1.5.2
       with:
         version: "3.7"
     - name: Build
@@ -46,7 +46,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
+      uses: KyleMayes/install-llvm-action@v1.5.2
       with:
         version: "3.8"
     - name: Build
@@ -78,7 +78,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
+      uses: KyleMayes/install-llvm-action@v1.5.2
       with:
         version: "4.0"
     - name: Build
@@ -94,7 +94,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
+      uses: KyleMayes/install-llvm-action@v1.5.2
       with:
         version: "5.0"
     - name: Build
@@ -110,7 +110,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
+      uses: KyleMayes/install-llvm-action@v1.5.2
       with:
         version: "6.0"
     - name: Build
@@ -126,7 +126,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
+      uses: KyleMayes/install-llvm-action@v1.5.2
       with:
         version: "7.0"
     - name: Build
@@ -142,7 +142,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
+      uses: KyleMayes/install-llvm-action@v1.5.2
       with:
         version: "8.0"
     - name: Build
@@ -158,7 +158,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
+      uses: KyleMayes/install-llvm-action@v1.5.2
       with:
         version: "9.0"
     - name: Build
@@ -174,7 +174,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
+      uses: KyleMayes/install-llvm-action@v1.5.2
       with:
         version: "10.0"
         cached: true
@@ -191,7 +191,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
+      uses: KyleMayes/install-llvm-action@v1.5.2
       with:
         version: "11.0"
         cached: true
@@ -208,7 +208,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Install LLVM and Clang
-      uses: KyleMayes/install-llvm-action@v1.4.1
+      uses: KyleMayes/install-llvm-action@v1.5.2
       with:
         version: "12.0"
         cached: true
@@ -216,3 +216,37 @@ jobs:
       run: cargo build --release --features llvm12-0 --verbose
     - name: Run tests
       run: cargo test --release --features llvm12-0 --verbose
+
+  llvm13:
+    name: LLVM 13 Ubuntu
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Install LLVM and Clang
+      uses: KyleMayes/install-llvm-action@v1.5.2
+      with:
+        version: "13.0"
+        cached: true
+    - name: Build
+      run: cargo build --release --features llvm13-0 --verbose
+    - name: Run tests
+      run: cargo test --release --features llvm13-0 --verbose
+
+  llvm14:
+    name: LLVM 14 Ubuntu
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Install LLVM and Clang
+      uses: KyleMayes/install-llvm-action@v1.5.2
+      with:
+        version: "14.0"
+        cached: true
+    - name: Build
+      run: cargo build --release --features llvm14-0 --verbose
+    - name: Run tests
+      run: cargo test --release --features llvm14-0 --verbose
