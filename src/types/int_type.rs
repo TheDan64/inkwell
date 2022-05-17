@@ -7,7 +7,7 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use crate::context::ContextRef;
 use crate::types::traits::AsTypeRef;
-use crate::types::{ArrayType, BasicTypeEnum, FunctionType, PointerType, Type, VectorType};
+use crate::types::{ArrayType, FunctionType, PointerType, Type, VectorType};
 use crate::values::{ArrayValue, AsValueRef, GenericValue, IntValue};
 use crate::AddressSpace;
 

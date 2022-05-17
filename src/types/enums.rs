@@ -8,7 +8,6 @@ use crate::types::{ArrayType, FloatType, FunctionType, IntType, PointerType, Str
 use crate::values::{BasicValue, BasicValueEnum, IntValue};
 
 use std::convert::TryFrom;
-use std::iter::FromIterator;
 
 macro_rules! enum_type_set {
     ($(#[$enum_attrs:meta])* $enum_name:ident: { $($(#[$variant_attrs:meta])* $args:ident,)+ }) => (

@@ -1,8 +1,7 @@
 use std::convert::TryInto;
 
 use inkwell::context::Context;
-use inkwell::values::{BasicValue, BasicValueEnum, InstructionOpcode::*, InstructionValue, PhiValue};
-use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate};
+use inkwell::values::PhiValue;
 
 #[test]
 fn test_phi_conversion() {

@@ -1227,7 +1227,7 @@ fn test_bitcast() {
 
     builder.build_return(None);
 
-    assert!(module.verify().is_ok(), module.print_to_string().to_string());
+    assert!(module.verify().is_ok(), "{}", module.print_to_string().to_string());
 
     let first_iv = cast.as_instruction_value().unwrap();
 

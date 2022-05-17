@@ -3,7 +3,7 @@ use llvm_sys::prelude::LLVMTypeRef;
 use crate::context::ContextRef;
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::traits::AsTypeRef;
-use crate::types::{BasicTypeEnum, FunctionType, Type};
+use crate::types::{FunctionType, Type};
 
 /// A `VoidType` is a special type with no possible direct instances. It's only
 /// useful as a function return type.

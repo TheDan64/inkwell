@@ -3,8 +3,7 @@ use llvm_sys::prelude::LLVMTypeRef;
 use crate::context::ContextRef;
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::traits::AsTypeRef;
-use crate::types::{ArrayType, BasicTypeEnum, FunctionType, Type, VectorType};
-use crate::values::{IntValue, MetadataValue};
+use crate::types::{FunctionType, Type};
 
 /// A `MetadataType` is the type of a metadata.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
