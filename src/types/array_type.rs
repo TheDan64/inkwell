@@ -2,11 +2,14 @@ use llvm_sys::core::{LLVMConstArray, LLVMGetArrayLength};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use crate::context::ContextRef;
+use crate::support::LLVMString;
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::traits::AsTypeRef;
 use crate::types::{BasicTypeEnum, FunctionType, PointerType, Type};
 use crate::values::{ArrayValue, AsValueRef, IntValue};
 use crate::AddressSpace;
+
+use std::fmt::{self, Display};
 
 /// An `ArrayType` is the type of contiguous constants or variables.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -185,6 +188,11 @@ impl<'ctx> ArrayType<'ctx> {
         unsafe { LLVMGetArrayLength(self.as_type_ref()) }
     }
 
+    /// Print the definition of an `ArrayType` to `LLVMString`
+    pub fn print_to_string(self) -> LLVMString {
+        self.array_type.print_to_string()
+    }
+
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of an `ArrayType` to stderr. Not available in newer LLVM versions.
     #[llvm_versions(3.7..=4.0)]
@@ -231,5 +239,11 @@ impl<'ctx> ArrayType<'ctx> {
 impl AsTypeRef for ArrayType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
         self.array_type.ty
+    }
+}
+
+impl Display for ArrayType<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }

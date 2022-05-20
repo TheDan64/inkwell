@@ -4,10 +4,11 @@ use llvm_sys::core::{
 use llvm_sys::prelude::LLVMTypeRef;
 use llvm_sys::LLVMTypeKind;
 
-use std::fmt;
+use std::fmt::{self, Display};
 use std::mem::forget;
 
 use crate::context::ContextRef;
+use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
 use crate::types::{AnyType, BasicTypeEnum, PointerType, Type};
 use crate::AddressSpace;
@@ -152,6 +153,11 @@ impl<'ctx> FunctionType<'ctx> {
         self.fn_type.get_context()
     }
 
+    /// Print the definition of a `FunctionType` to `LLVMString`.
+    pub fn print_to_string(self) -> LLVMString {
+        self.fn_type.print_to_string()
+    }
+
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of an `IntType` to stderr. Not available in newer LLVM versions.
     #[llvm_versions(3.7..=4.0)]
@@ -207,5 +213,11 @@ impl fmt::Debug for FunctionType<'_> {
 impl AsTypeRef for FunctionType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
         self.fn_type.ty
+    }
+}
+
+impl Display for FunctionType<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }

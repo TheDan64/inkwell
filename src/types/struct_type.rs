@@ -7,9 +7,11 @@ use llvm_sys::core::{
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use std::ffi::CStr;
+use std::fmt::{self, Display};
 use std::mem::forget;
 
 use crate::context::ContextRef;
+use crate::support::LLVMString;
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::traits::AsTypeRef;
 use crate::types::{ArrayType, BasicTypeEnum, FunctionType, PointerType, Type};
@@ -312,6 +314,11 @@ impl<'ctx> StructType<'ctx> {
         raw_vec.iter().map(|val| unsafe { BasicTypeEnum::new(*val) }).collect()
     }
 
+    /// Print the definition of a `StructType` to `LLVMString`.
+    pub fn print_to_string(self) -> LLVMString {
+        self.struct_type.print_to_string()
+    }
+
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of an `StructType` to stderr. Not available in newer LLVM versions.
     #[llvm_versions(3.7..=4.0)]
@@ -404,5 +411,11 @@ impl<'ctx> StructType<'ctx> {
 impl AsTypeRef for StructType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
         self.struct_type.ty
+    }
+}
+
+impl Display for StructType<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }

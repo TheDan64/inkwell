@@ -2,10 +2,13 @@ use llvm_sys::core::{LLVMConstArray, LLVMConstVector, LLVMGetVectorSize};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use crate::context::ContextRef;
+use crate::support::LLVMString;
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::{traits::AsTypeRef, ArrayType, BasicTypeEnum, FunctionType, PointerType, Type};
 use crate::values::{ArrayValue, AsValueRef, BasicValue, IntValue, VectorValue};
 use crate::AddressSpace;
+
+use std::fmt::{self, Display};
 
 /// A `VectorType` is the type of a multiple value SIMD constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -117,6 +120,11 @@ impl<'ctx> VectorType<'ctx> {
     /// ```
     pub fn const_zero(self) -> VectorValue<'ctx> {
         unsafe { VectorValue::new(self.vec_type.const_zero()) }
+    }
+
+    /// Print the definition of a `VectorType` to `LLVMString`.
+    pub fn print_to_string(self) -> LLVMString {
+        self.vec_type.print_to_string()
     }
 
     // See Type::print_to_stderr note on 5.0+ status
@@ -267,5 +275,11 @@ impl<'ctx> VectorType<'ctx> {
 impl AsTypeRef for VectorType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
         self.vec_type.ty
+    }
+}
+
+impl Display for VectorType<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }

@@ -2,6 +2,7 @@ use llvm_sys::core::{LLVMConstArray, LLVMGetPointerAddressSpace};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use crate::context::ContextRef;
+use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
 use crate::types::{AnyTypeEnum, ArrayType, FunctionType, Type, VectorType};
 use crate::values::{ArrayValue, AsValueRef, IntValue, PointerValue};
@@ -9,6 +10,7 @@ use crate::AddressSpace;
 
 use crate::types::enums::BasicMetadataTypeEnum;
 use std::convert::TryFrom;
+use std::fmt::{self, Display};
 
 /// A `PointerType` is the type of a pointer constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -154,6 +156,11 @@ impl<'ctx> PointerType<'ctx> {
         AddressSpace::try_from(addr_space).expect("Unexpectedly found invalid AddressSpace value")
     }
 
+    /// Print the definition of a `PointerType` to `LLVMString`.
+    pub fn print_to_string(self) -> LLVMString {
+        self.ptr_type.print_to_string()
+    }
+
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of an `IntType` to stderr. Not available in newer LLVM versions.
     #[llvm_versions(3.7..=4.0)]
@@ -288,5 +295,12 @@ impl<'ctx> PointerType<'ctx> {
 impl AsTypeRef for PointerType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
         self.ptr_type.ty
+    }
+}
+
+
+impl Display for PointerType<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }
