@@ -3,11 +3,14 @@ use llvm_sys::execution_engine::LLVMCreateGenericValueOfFloat;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use crate::context::ContextRef;
+use crate::support::LLVMString;
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::traits::AsTypeRef;
 use crate::types::{ArrayType, FunctionType, PointerType, Type, VectorType};
 use crate::values::{ArrayValue, AsValueRef, FloatValue, GenericValue, IntValue};
 use crate::AddressSpace;
+
+use std::fmt::{self, Display};
 
 /// A `FloatType` is the type of a floating point constant or variable.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -214,6 +217,11 @@ impl<'ctx> FloatType<'ctx> {
         self.float_type.ptr_type(address_space)
     }
 
+    /// Print the definition of a `FloatType` to `LLVMString`.
+    pub fn print_to_string(self) -> LLVMString {
+        self.float_type.print_to_string()
+    }
+
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of an `IntType` to stderr. Not available in newer LLVM versions.
     #[llvm_versions(3.7..=4.0)]
@@ -271,5 +279,11 @@ impl<'ctx> FloatType<'ctx> {
 impl AsTypeRef for FloatType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
         self.float_type.ty
+    }
+}
+
+impl Display for FloatType<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }

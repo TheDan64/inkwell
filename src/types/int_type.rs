@@ -6,6 +6,7 @@ use llvm_sys::execution_engine::LLVMCreateGenericValueOfInt;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use crate::context::ContextRef;
+use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
 use crate::types::{ArrayType, FunctionType, PointerType, Type, VectorType};
 use crate::values::{ArrayValue, AsValueRef, GenericValue, IntValue};
@@ -13,6 +14,7 @@ use crate::AddressSpace;
 
 use crate::types::enums::BasicMetadataTypeEnum;
 use std::convert::TryFrom;
+use std::fmt::{self, Display};
 
 /// How to interpret a string or digits used to construct an integer constant.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -325,6 +327,12 @@ impl<'ctx> IntType<'ctx> {
         unsafe { LLVMGetIntTypeWidth(self.as_type_ref()) }
     }
 
+    /// Print the definition of an `IntType` to `LLVMString`.
+    pub fn print_to_string(self) -> LLVMString {
+        self.int_type.print_to_string()
+    }
+
+
     // See Type::print_to_stderr note on 5.0+ status
     /// Prints the definition of an `IntType` to stderr. Not available in newer LLVM versions.
     #[llvm_versions(3.7..=4.0)]
@@ -383,5 +391,11 @@ impl<'ctx> IntType<'ctx> {
 impl AsTypeRef for IntType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
         self.int_type.ty
+    }
+}
+
+impl Display for IntType<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }
