@@ -791,7 +791,7 @@ impl<'ctx> Module<'ctx> {
         }
     }
 
-    /// Prints the content of the `Module` to a string.
+    /// Prints the content of the `Module` to an `LLVMString`.
     pub fn print_to_string(&self) -> LLVMString {
         unsafe { LLVMString::new(LLVMPrintModuleToString(self.module.get())) }
     }
@@ -819,6 +819,11 @@ impl<'ctx> Module<'ctx> {
         }
 
         Ok(())
+    }
+
+    /// Prints the content of the `Module` to a `String`.
+    pub fn to_string(&self) -> String {
+        self.print_to_string().to_string()
     }
 
     /// Sets the inline assembly for the `Module`.

@@ -3,8 +3,10 @@ use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 use std::convert::TryFrom;
 
 use std::ffi::CStr;
+use std::fmt::{self, Display};
 
 use crate::basic_block::BasicBlock;
+use crate::support::LLVMString;
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, InstructionOpcode, InstructionValue, Value};
 
@@ -92,6 +94,10 @@ impl<'ctx> PhiValue<'ctx> {
     pub fn as_basic_value(self) -> BasicValueEnum<'ctx> {
         unsafe { BasicValueEnum::new(self.as_value_ref()) }
     }
+
+    pub fn print_to_string(self) -> LLVMString {
+        self.phi_value.print_to_string()
+    }
 }
 
 impl AsValueRef for PhiValue<'_> {
@@ -109,5 +115,11 @@ impl TryFrom<InstructionValue<'_>> for PhiValue<'_> {
         } else {
             Err(())
         }
+    }
+}
+
+impl Display for PhiValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }

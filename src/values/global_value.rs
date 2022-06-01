@@ -26,6 +26,7 @@ use llvm_sys::LLVMThreadLocalMode;
 use llvm_sys::LLVMUnnamedAddr;
 
 use std::ffi::CStr;
+use std::fmt::{self, Display};
 
 #[llvm_versions(7.0..=latest)]
 use crate::comdat::Comdat;
@@ -292,6 +293,12 @@ impl<'ctx> GlobalValue<'ctx> {
 impl AsValueRef for GlobalValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.global_value.value
+    }
+}
+
+impl Display for GlobalValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }
 

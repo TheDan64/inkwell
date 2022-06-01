@@ -2,8 +2,9 @@ use llvm_sys::core::{LLVMIsAConstantArray, LLVMIsAConstantDataArray};
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
-use std::fmt;
+use std::fmt::{self, Display};
 
+use crate::support::LLVMString;
 use crate::types::ArrayType;
 use crate::values::traits::{AnyValue, AsValueRef};
 use crate::values::{InstructionValue, Value};
@@ -44,6 +45,11 @@ impl<'ctx> ArrayValue<'ctx> {
         self.array_value.is_undef()
     }
 
+    /// Print this `Array_value` to `LLVMString`.
+    pub fn print_to_string(self) -> LLVMString {
+        self.array_value.print_to_string()
+    }
+
     /// Prints this `ArrayValue` to standard error.
     pub fn print_to_stderr(self) {
         self.array_value.print_to_stderr()
@@ -82,6 +88,12 @@ impl<'ctx> ArrayValue<'ctx> {
 impl AsValueRef for ArrayValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.array_value.value
+    }
+}
+
+impl Display for ArrayValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }
 

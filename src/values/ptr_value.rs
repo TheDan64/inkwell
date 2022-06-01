@@ -4,7 +4,9 @@ use llvm_sys::core::{
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
+use std::fmt::{self, Display};
 
+use crate::support::LLVMString;
 use crate::types::{AsTypeRef, IntType, PointerType};
 use crate::values::{AsValueRef, InstructionValue, IntValue, Value};
 
@@ -53,6 +55,10 @@ impl<'ctx> PointerValue<'ctx> {
     /// ```
     pub fn is_const(self) -> bool {
         self.ptr_value.is_const()
+    }
+
+    pub fn print_to_string(self) -> LLVMString {
+        self.ptr_value.print_to_string()
     }
 
     pub fn print_to_stderr(self) {
@@ -112,5 +118,11 @@ impl<'ctx> PointerValue<'ctx> {
 impl AsValueRef for PointerValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.ptr_value.value
+    }
+}
+
+impl Display for PointerValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }

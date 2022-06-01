@@ -13,7 +13,7 @@ use crate::values::traits::AsValueRef;
 use crate::values::{BasicMetadataValueEnum, Value};
 
 use std::ffi::CStr;
-use std::fmt;
+use std::fmt::{self, Display};
 
 // FIXME: use #[doc(cfg(...))] for this rustdoc comment when it's stabilized:
 // https://github.com/rust-lang/rust/issues/43781
@@ -136,6 +136,12 @@ impl<'ctx> MetadataValue<'ctx> {
 impl AsValueRef for MetadataValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.metadata_value.value
+    }
+}
+
+impl Display for MetadataValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }
 

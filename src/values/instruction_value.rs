@@ -18,6 +18,9 @@ use llvm_sys::core::{LLVMIsAAtomicCmpXchgInst, LLVMIsAAtomicRMWInst};
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMOpcode;
 
+use std::{fmt, fmt::Display};
+
+use crate::support::LLVMString;
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, MetadataValue, Value};
 use crate::{basic_block::BasicBlock, types::AnyTypeEnum};
@@ -650,6 +653,11 @@ impl<'ctx> InstructionValue<'ctx> {
 
         Ok(())
     }
+
+    /// Print `InstructionValue` to `LLVMString`.
+    pub fn print_to_string(self) -> LLVMString {
+        self.instruction_value.print_to_string()
+    }
 }
 
 impl Clone for InstructionValue<'_> {
@@ -663,5 +671,11 @@ impl Clone for InstructionValue<'_> {
 impl AsValueRef for InstructionValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.instruction_value.value
+    }
+}
+
+impl Display for InstructionValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }

@@ -1,3 +1,5 @@
+use std::fmt::{self, Display};
+
 use either::Either;
 use llvm_sys::core::{
     LLVMGetInstructionCallConv, LLVMGetTypeKind, LLVMIsTailCall, LLVMSetInstrParamAlignment,
@@ -552,5 +554,11 @@ impl<'ctx> CallSiteValue<'ctx> {
 impl AsValueRef for CallSiteValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.0.value
+    }
+}
+
+impl Display for CallSiteValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }

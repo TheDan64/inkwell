@@ -5,7 +5,9 @@ use llvm_sys::core::{
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
+use std::fmt::{self, Display};
 
+use crate::support::LLVMString;
 use crate::types::{AsTypeRef, FloatType, IntType};
 use crate::values::traits::AsValueRef;
 use crate::values::{InstructionValue, IntValue, Value};
@@ -41,6 +43,10 @@ impl<'ctx> FloatValue<'ctx> {
 
     pub fn is_undef(self) -> bool {
         self.float_value.is_undef()
+    }
+
+    pub fn print_to_string(self) -> LLVMString {
+        self.print_to_string()
     }
 
     pub fn print_to_stderr(self) {
@@ -151,5 +157,11 @@ impl<'ctx> FloatValue<'ctx> {
 impl AsValueRef for FloatValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.float_value.value
+    }
+}
+
+impl Display for FloatValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }

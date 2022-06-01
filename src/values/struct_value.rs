@@ -1,7 +1,9 @@
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
+use std::fmt::{self, Display};
 
+use crate::support::LLVMString;
 use crate::types::StructType;
 use crate::values::traits::AsValueRef;
 use crate::values::{InstructionValue, Value};
@@ -38,6 +40,10 @@ impl<'ctx> StructValue<'ctx> {
         self.struct_value.is_undef()
     }
 
+    pub fn print_to_string(self) -> LLVMString {
+        self.struct_value.print_to_string()
+    }
+
     pub fn print_to_stderr(self) {
         self.struct_value.print_to_stderr()
     }
@@ -54,5 +60,11 @@ impl<'ctx> StructValue<'ctx> {
 impl AsValueRef for StructValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.struct_value.value
+    }
+}
+
+impl Display for StructValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }

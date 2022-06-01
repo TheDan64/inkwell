@@ -2,6 +2,7 @@ use llvm_sys::core::{LLVMGetTypeKind, LLVMIsAInstruction, LLVMTypeOf};
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMTypeKind;
 
+use crate::support::LLVMString;
 use crate::types::{AnyTypeEnum, BasicTypeEnum};
 use crate::values::traits::AsValueRef;
 use crate::values::{
@@ -10,6 +11,9 @@ use crate::values::{
 };
 
 use std::convert::TryFrom;
+use std::fmt::{self, Display};
+
+use super::AnyValue;
 
 macro_rules! enum_value_set {
     ($enum_name:ident: $($args:ident),*) => (
@@ -300,6 +304,18 @@ impl<'ctx> BasicValueEnum<'ctx> {
             panic!("Found {:?} but expected the VectorValue variant", self)
         }
     }
+
+    /// Print `BasicValueEnum` to `LLVMString`
+    pub fn print_to_string(self) -> LLVMString {
+        match self {
+            BasicValueEnum::ArrayValue(v) => v.print_to_string(),
+            BasicValueEnum::IntValue(v) => v.print_to_string(),
+            BasicValueEnum::FloatValue(v) => v.print_to_string(),
+            BasicValueEnum::PointerValue(v) => v.print_to_string(),
+            BasicValueEnum::StructValue(v) => v.print_to_string(),
+            BasicValueEnum::VectorValue(v) => v.print_to_string(),
+        }
+    }
 }
 
 impl<'ctx> AggregateValueEnum<'ctx> {
@@ -438,6 +454,19 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
             panic!("Found {:?} but expected MetaData variant", self)
         }
     }
+
+    /// Print `BasicMetadataValueEnum` to `LLVMString`.
+    pub fn print_to_string(self) -> LLVMString {
+        match self {
+            BasicMetadataValueEnum::ArrayValue(v) => v.print_to_string(),
+            BasicMetadataValueEnum::IntValue(v) => v.print_to_string(),
+            BasicMetadataValueEnum::FloatValue(v) => v.print_to_string(),
+            BasicMetadataValueEnum::PointerValue(v) => v.print_to_string(),
+            BasicMetadataValueEnum::StructValue(v) => v.print_to_string(),
+            BasicMetadataValueEnum::VectorValue(v) => v.print_to_string(),
+            BasicMetadataValueEnum::MetadataValue(v) => v.print_to_string(),
+        }
+    }
 }
 
 impl<'ctx> From<BasicValueEnum<'ctx>> for AnyValueEnum<'ctx> {
@@ -465,5 +494,29 @@ impl<'ctx> TryFrom<AnyValueEnum<'ctx>> for BasicValueEnum<'ctx> {
             AnyValueEnum::VectorValue(vv) => vv.into(),
             _ => return Err(()),
         })
+    }
+}
+
+impl Display for AggregateValueEnum<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
+    }
+}
+
+impl Display for AnyValueEnum<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
+    }
+}
+
+impl Display for BasicValueEnum<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
+    }
+}
+
+impl Display for BasicMetadataValueEnum<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }

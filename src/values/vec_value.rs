@@ -5,7 +5,9 @@ use llvm_sys::core::{
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
+use std::fmt::{self, Display};
 
+use crate::support::LLVMString;
 use crate::types::VectorType;
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, InstructionValue, IntValue, Value};
@@ -48,6 +50,10 @@ impl<'ctx> VectorValue<'ctx> {
 
     pub fn is_constant_data_vector(self) -> bool {
         unsafe { !LLVMIsAConstantDataVector(self.as_value_ref()).is_null() }
+    }
+
+    pub fn print_to_string(self) -> LLVMString {
+        self.vec_value.print_to_string()
     }
 
     pub fn print_to_stderr(self) {
@@ -158,5 +164,11 @@ impl<'ctx> VectorValue<'ctx> {
 impl AsValueRef for VectorValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.vec_value.value
+    }
+}
+
+impl Display for VectorValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }
