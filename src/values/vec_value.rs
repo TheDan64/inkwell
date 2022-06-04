@@ -7,10 +7,11 @@ use llvm_sys::prelude::LLVMValueRef;
 use std::ffi::CStr;
 use std::fmt::{self, Display};
 
-use crate::support::LLVMString;
 use crate::types::VectorType;
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, InstructionValue, IntValue, Value};
+
+use super::AnyValue;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct VectorValue<'ctx> {
@@ -50,10 +51,6 @@ impl<'ctx> VectorValue<'ctx> {
 
     pub fn is_constant_data_vector(self) -> bool {
         unsafe { !LLVMIsAConstantDataVector(self.as_value_ref()).is_null() }
-    }
-
-    pub fn print_to_string(self) -> LLVMString {
-        self.vec_value.print_to_string()
     }
 
     pub fn print_to_stderr(self) {

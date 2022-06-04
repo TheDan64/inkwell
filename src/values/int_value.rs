@@ -14,11 +14,12 @@ use llvm_sys::prelude::LLVMValueRef;
 use std::ffi::CStr;
 use std::fmt::{self, Display};
 
-use crate::support::LLVMString;
 use crate::types::{AsTypeRef, FloatType, IntType, PointerType};
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, FloatValue, InstructionValue, PointerValue, Value};
 use crate::IntPredicate;
+
+use super::AnyValue;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct IntValue<'ctx> {
@@ -50,10 +51,6 @@ impl<'ctx> IntValue<'ctx> {
 
     pub fn is_undef(self) -> bool {
         self.int_value.is_undef()
-    }
-
-    pub fn print_to_string(self) -> LLVMString {
-        self.int_value.print_to_string()
     }
 
     pub fn print_to_stderr(self) {

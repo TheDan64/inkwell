@@ -4,7 +4,6 @@ use llvm_sys::prelude::LLVMValueRef;
 use std::ffi::CStr;
 use std::fmt::{self, Display};
 
-use crate::support::LLVMString;
 use crate::types::ArrayType;
 use crate::values::traits::{AnyValue, AsValueRef};
 use crate::values::{InstructionValue, Value};
@@ -43,11 +42,6 @@ impl<'ctx> ArrayValue<'ctx> {
     /// Determines whether or not this value is undefined.
     pub fn is_undef(self) -> bool {
         self.array_value.is_undef()
-    }
-
-    /// Print this `Array_value` to `LLVMString`.
-    pub fn print_to_string(self) -> LLVMString {
-        self.array_value.print_to_string()
     }
 
     /// Prints this `ArrayValue` to standard error.

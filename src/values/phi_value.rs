@@ -6,9 +6,10 @@ use std::ffi::CStr;
 use std::fmt::{self, Display};
 
 use crate::basic_block::BasicBlock;
-use crate::support::LLVMString;
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, InstructionOpcode, InstructionValue, Value};
+
+use super::AnyValue;
 
 // REVIEW: Metadata for phi values?
 /// A Phi Instruction returns a value based on which basic block branched into
@@ -93,10 +94,6 @@ impl<'ctx> PhiValue<'ctx> {
 
     pub fn as_basic_value(self) -> BasicValueEnum<'ctx> {
         unsafe { BasicValueEnum::new(self.as_value_ref()) }
-    }
-
-    pub fn print_to_string(self) -> LLVMString {
-        self.phi_value.print_to_string()
     }
 }
 

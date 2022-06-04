@@ -11,10 +11,11 @@ use llvm_sys::LLVMTypeKind;
 #[llvm_versions(3.9..=latest)]
 use crate::attributes::Attribute;
 use crate::attributes::AttributeLoc;
-use crate::support::LLVMString;
 #[llvm_versions(3.9..=latest)]
 use crate::values::FunctionValue;
 use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, Value};
+
+use super::AnyValue;
 
 /// A value resulting from a function call. It may have function attributes applied to it.
 ///
@@ -543,11 +544,6 @@ impl<'ctx> CallSiteValue<'ctx> {
         assert_eq!(alignment.count_ones(), 1, "Alignment must be a power of two.");
 
         unsafe { LLVMSetInstrParamAlignment(self.as_value_ref(), loc.get_index(), alignment) }
-    }
-
-    /// Prints the definition of a `CallSiteValue` to a `LLVMString`.
-    pub fn print_to_string(self) -> LLVMString {
-        self.0.print_to_string()
     }
 }
 

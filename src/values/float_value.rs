@@ -7,11 +7,12 @@ use llvm_sys::prelude::LLVMValueRef;
 use std::ffi::CStr;
 use std::fmt::{self, Display};
 
-use crate::support::LLVMString;
 use crate::types::{AsTypeRef, FloatType, IntType};
 use crate::values::traits::AsValueRef;
 use crate::values::{InstructionValue, IntValue, Value};
 use crate::FloatPredicate;
+
+use super::AnyValue;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct FloatValue<'ctx> {
@@ -43,10 +44,6 @@ impl<'ctx> FloatValue<'ctx> {
 
     pub fn is_undef(self) -> bool {
         self.float_value.is_undef()
-    }
-
-    pub fn print_to_string(self) -> LLVMString {
-        self.print_to_string()
     }
 
     pub fn print_to_stderr(self) {

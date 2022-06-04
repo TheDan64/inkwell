@@ -20,11 +20,12 @@ use llvm_sys::LLVMOpcode;
 
 use std::{fmt, fmt::Display};
 
-use crate::support::LLVMString;
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, MetadataValue, Value};
 use crate::{basic_block::BasicBlock, types::AnyTypeEnum};
 use crate::{AtomicOrdering, FloatPredicate, IntPredicate};
+
+use super::AnyValue;
 
 // REVIEW: Split up into structs for SubTypes on InstructionValues?
 // REVIEW: This should maybe be split up into InstructionOpcode and ConstOpcode?
@@ -652,11 +653,6 @@ impl<'ctx> InstructionValue<'ctx> {
         }
 
         Ok(())
-    }
-
-    /// Print `InstructionValue` to `LLVMString`.
-    pub fn print_to_string(self) -> LLVMString {
-        self.instruction_value.print_to_string()
     }
 }
 

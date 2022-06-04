@@ -8,9 +8,10 @@ use llvm_sys::core::LLVMValueAsMetadata;
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::prelude::LLVMMetadataRef;
 
-use crate::support::LLVMString;
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicMetadataValueEnum, Value};
+
+use super::AnyValue;
 
 use std::ffi::CStr;
 use std::fmt::{self, Display};
@@ -118,10 +119,6 @@ impl<'ctx> MetadataValue<'ctx> {
         vec.iter()
             .map(|val| unsafe { BasicMetadataValueEnum::new(*val) })
             .collect()
-    }
-
-    pub fn print_to_string(self) -> LLVMString {
-        self.metadata_value.print_to_string()
     }
 
     pub fn print_to_stderr(self) {

@@ -2,7 +2,6 @@ use llvm_sys::core::{LLVMGetTypeKind, LLVMIsAInstruction, LLVMTypeOf};
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMTypeKind;
 
-use crate::support::LLVMString;
 use crate::types::{AnyTypeEnum, BasicTypeEnum};
 use crate::values::traits::AsValueRef;
 use crate::values::{
@@ -68,7 +67,7 @@ macro_rules! enum_value_set {
 }
 
 enum_value_set! {AggregateValueEnum: ArrayValue, StructValue}
-enum_value_set! {AnyValueEnum: ArrayValue, IntValue, FloatValue, PhiValue, FunctionValue, PointerValue, StructValue, VectorValue, InstructionValue}
+enum_value_set! {AnyValueEnum: ArrayValue, IntValue, FloatValue, PhiValue, FunctionValue, PointerValue, StructValue, VectorValue, InstructionValue, MetadataValue}
 enum_value_set! {BasicValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue, VectorValue}
 enum_value_set! {BasicMetadataValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue, VectorValue, MetadataValue}
 
@@ -304,18 +303,6 @@ impl<'ctx> BasicValueEnum<'ctx> {
             panic!("Found {:?} but expected the VectorValue variant", self)
         }
     }
-
-    /// Print `BasicValueEnum` to `LLVMString`
-    pub fn print_to_string(self) -> LLVMString {
-        match self {
-            BasicValueEnum::ArrayValue(v) => v.print_to_string(),
-            BasicValueEnum::IntValue(v) => v.print_to_string(),
-            BasicValueEnum::FloatValue(v) => v.print_to_string(),
-            BasicValueEnum::PointerValue(v) => v.print_to_string(),
-            BasicValueEnum::StructValue(v) => v.print_to_string(),
-            BasicValueEnum::VectorValue(v) => v.print_to_string(),
-        }
-    }
 }
 
 impl<'ctx> AggregateValueEnum<'ctx> {
@@ -452,19 +439,6 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
             v
         } else {
             panic!("Found {:?} but expected MetaData variant", self)
-        }
-    }
-
-    /// Print `BasicMetadataValueEnum` to `LLVMString`.
-    pub fn print_to_string(self) -> LLVMString {
-        match self {
-            BasicMetadataValueEnum::ArrayValue(v) => v.print_to_string(),
-            BasicMetadataValueEnum::IntValue(v) => v.print_to_string(),
-            BasicMetadataValueEnum::FloatValue(v) => v.print_to_string(),
-            BasicMetadataValueEnum::PointerValue(v) => v.print_to_string(),
-            BasicMetadataValueEnum::StructValue(v) => v.print_to_string(),
-            BasicMetadataValueEnum::VectorValue(v) => v.print_to_string(),
-            BasicMetadataValueEnum::MetadataValue(v) => v.print_to_string(),
         }
     }
 }

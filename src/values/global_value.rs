@@ -31,12 +31,14 @@ use std::fmt::{self, Display};
 #[llvm_versions(7.0..=latest)]
 use crate::comdat::Comdat;
 use crate::module::Linkage;
-use crate::support::{to_c_str, LLVMString};
+use crate::support::to_c_str;
 use crate::values::traits::AsValueRef;
 #[llvm_versions(8.0..=latest)]
 use crate::values::MetadataValue;
 use crate::values::{BasicValue, BasicValueEnum, PointerValue, Value};
 use crate::{DLLStorageClass, GlobalVisibility, ThreadLocalMode};
+
+use super::AnyValue;
 
 // REVIEW: GlobalValues are always PointerValues. With SubTypes, we should
 // compress this into a PointerValue<Global> type
@@ -283,10 +285,6 @@ impl<'ctx> GlobalValue<'ctx> {
 
     pub fn set_linkage(self, linkage: Linkage) {
         unsafe { LLVMSetLinkage(self.as_value_ref(), linkage.into()) }
-    }
-
-    pub fn print_to_string(self) -> LLVMString {
-        self.global_value.print_to_string()
     }
 }
 
