@@ -2,7 +2,7 @@ use llvm_sys::core::{LLVMIsAConstantArray, LLVMIsAConstantDataArray};
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
-use std::fmt;
+use std::fmt::{self, Display};
 
 use crate::types::ArrayType;
 use crate::values::traits::{AnyValue, AsValueRef};
@@ -82,6 +82,12 @@ impl<'ctx> ArrayValue<'ctx> {
 impl AsValueRef for ArrayValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.array_value.value
+    }
+}
+
+impl Display for ArrayValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }
 

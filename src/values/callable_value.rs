@@ -1,5 +1,6 @@
 use either::Either;
 use std::convert::TryFrom;
+use std::fmt::{self, Display};
 
 use crate::values::AsValueRef;
 use crate::values::{AnyValue, FunctionValue, PointerValue};
@@ -118,5 +119,11 @@ impl<'ctx> TryFrom<PointerValue<'ctx>> for CallableValue<'ctx> {
         } else {
             Err(())
         }
+    }
+}
+
+impl Display for CallableValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }

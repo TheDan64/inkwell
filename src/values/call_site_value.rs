@@ -1,3 +1,5 @@
+use std::fmt::{self, Display};
+
 use either::Either;
 use llvm_sys::core::{
     LLVMGetInstructionCallConv, LLVMGetTypeKind, LLVMIsTailCall, LLVMSetInstrParamAlignment,
@@ -9,10 +11,11 @@ use llvm_sys::LLVMTypeKind;
 #[llvm_versions(3.9..=latest)]
 use crate::attributes::Attribute;
 use crate::attributes::AttributeLoc;
-use crate::support::LLVMString;
 #[llvm_versions(3.9..=latest)]
 use crate::values::FunctionValue;
 use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, Value};
+
+use super::AnyValue;
 
 /// A value resulting from a function call. It may have function attributes applied to it.
 ///
@@ -542,15 +545,16 @@ impl<'ctx> CallSiteValue<'ctx> {
 
         unsafe { LLVMSetInstrParamAlignment(self.as_value_ref(), loc.get_index(), alignment) }
     }
-
-    /// Prints the definition of a `CallSiteValue` to a `LLVMString`.
-    pub fn print_to_string(self) -> LLVMString {
-        self.0.print_to_string()
-    }
 }
 
 impl AsValueRef for CallSiteValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.0.value
+    }
+}
+
+impl Display for CallSiteValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }

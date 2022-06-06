@@ -3,10 +3,13 @@ use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 use std::convert::TryFrom;
 
 use std::ffi::CStr;
+use std::fmt::{self, Display};
 
 use crate::basic_block::BasicBlock;
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, InstructionOpcode, InstructionValue, Value};
+
+use super::AnyValue;
 
 // REVIEW: Metadata for phi values?
 /// A Phi Instruction returns a value based on which basic block branched into
@@ -109,5 +112,11 @@ impl TryFrom<InstructionValue<'_>> for PhiValue<'_> {
         } else {
             Err(())
         }
+    }
+}
+
+impl Display for PhiValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }

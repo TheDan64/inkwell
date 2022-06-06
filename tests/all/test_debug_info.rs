@@ -1,6 +1,7 @@
 use inkwell::context::Context;
 use inkwell::debug_info::{AsDIScope, DIFlags, DIFlagsConstants, DISubprogram, DWARFEmissionKind, DWARFSourceLanguage};
 use inkwell::module::FlagBehavior;
+use inkwell::values::AnyValue;
 
 #[test]
 fn test_smoke() {

@@ -18,7 +18,7 @@ use llvm_sys::debuginfo::{LLVMGetSubprogram, LLVMSetSubprogram};
 use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 
 use std::ffi::CStr;
-use std::fmt;
+use std::fmt::{self, Display};
 use std::marker::PhantomData;
 use std::mem::forget;
 
@@ -543,6 +543,12 @@ impl<'ctx> FunctionValue<'ctx> {
 impl AsValueRef for FunctionValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.fn_value.value
+    }
+}
+
+impl Display for FunctionValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }
 

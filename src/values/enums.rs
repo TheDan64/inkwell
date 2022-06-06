@@ -10,6 +10,9 @@ use crate::values::{
 };
 
 use std::convert::TryFrom;
+use std::fmt::{self, Display};
+
+use super::AnyValue;
 
 macro_rules! enum_value_set {
     ($enum_name:ident: $($args:ident),*) => (
@@ -64,7 +67,7 @@ macro_rules! enum_value_set {
 }
 
 enum_value_set! {AggregateValueEnum: ArrayValue, StructValue}
-enum_value_set! {AnyValueEnum: ArrayValue, IntValue, FloatValue, PhiValue, FunctionValue, PointerValue, StructValue, VectorValue, InstructionValue}
+enum_value_set! {AnyValueEnum: ArrayValue, IntValue, FloatValue, PhiValue, FunctionValue, PointerValue, StructValue, VectorValue, InstructionValue, MetadataValue}
 enum_value_set! {BasicValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue, VectorValue}
 enum_value_set! {BasicMetadataValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue, VectorValue, MetadataValue}
 
@@ -465,5 +468,29 @@ impl<'ctx> TryFrom<AnyValueEnum<'ctx>> for BasicValueEnum<'ctx> {
             AnyValueEnum::VectorValue(vv) => vv.into(),
             _ => return Err(()),
         })
+    }
+}
+
+impl Display for AggregateValueEnum<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
+    }
+}
+
+impl Display for AnyValueEnum<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
+    }
+}
+
+impl Display for BasicValueEnum<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
+    }
+}
+
+impl Display for BasicMetadataValueEnum<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }

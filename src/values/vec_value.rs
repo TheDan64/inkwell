@@ -5,10 +5,13 @@ use llvm_sys::core::{
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
+use std::fmt::{self, Display};
 
 use crate::types::VectorType;
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, InstructionValue, IntValue, Value};
+
+use super::AnyValue;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct VectorValue<'ctx> {
@@ -158,5 +161,11 @@ impl<'ctx> VectorValue<'ctx> {
 impl AsValueRef for VectorValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.vec_value.value
+    }
+}
+
+impl Display for VectorValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }

@@ -5,11 +5,14 @@ use llvm_sys::core::{
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
+use std::fmt::{self, Display};
 
 use crate::types::{AsTypeRef, FloatType, IntType};
 use crate::values::traits::AsValueRef;
 use crate::values::{InstructionValue, IntValue, Value};
 use crate::FloatPredicate;
+
+use super::AnyValue;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct FloatValue<'ctx> {
@@ -151,5 +154,11 @@ impl<'ctx> FloatValue<'ctx> {
 impl AsValueRef for FloatValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.float_value.value
+    }
+}
+
+impl Display for FloatValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }

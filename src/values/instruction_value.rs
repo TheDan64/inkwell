@@ -18,10 +18,14 @@ use llvm_sys::core::{LLVMIsAAtomicCmpXchgInst, LLVMIsAAtomicRMWInst};
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMOpcode;
 
+use std::{fmt, fmt::Display};
+
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, MetadataValue, Value};
 use crate::{basic_block::BasicBlock, types::AnyTypeEnum};
 use crate::{AtomicOrdering, FloatPredicate, IntPredicate};
+
+use super::AnyValue;
 
 // REVIEW: Split up into structs for SubTypes on InstructionValues?
 // REVIEW: This should maybe be split up into InstructionOpcode and ConstOpcode?
@@ -663,5 +667,11 @@ impl Clone for InstructionValue<'_> {
 impl AsValueRef for InstructionValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.instruction_value.value
+    }
+}
+
+impl Display for InstructionValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
     }
 }
