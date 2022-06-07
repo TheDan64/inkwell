@@ -103,7 +103,13 @@ impl AsValueRef for PhiValue<'_> {
     }
 }
 
-impl TryFrom<InstructionValue<'_>> for PhiValue<'_> {
+impl Display for PhiValue<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.print_to_string())
+    }
+}
+
+impl<'ctx> TryFrom<InstructionValue<'ctx>> for PhiValue<'ctx> {
     type Error = ();
 
     fn try_from(value: InstructionValue) -> Result<Self, Self::Error> {
@@ -112,11 +118,5 @@ impl TryFrom<InstructionValue<'_>> for PhiValue<'_> {
         } else {
             Err(())
         }
-    }
-}
-
-impl Display for PhiValue<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.print_to_string())
     }
 }
