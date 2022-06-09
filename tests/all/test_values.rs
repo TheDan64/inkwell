@@ -87,7 +87,7 @@ fn test_set_get_name() {
     let f32_val = f32_type.const_float(0.0);
     let f64_val = f64_type.const_float(0.0);
     let f128_val = f128_type.const_float(0.0);
-    let ptr_val = bool_type.ptr_type(AddressSpace::Generic).const_null();
+    let ptr_val = bool_type.ptr_type(AddressSpace::Zero).const_null();
     let array_val = f64_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
     let vec_val = VectorType::const_vector(&[i8_val]);
@@ -143,7 +143,7 @@ fn test_set_get_name() {
     assert_eq!(ppc_f128_val.get_name().to_str(), Ok(""));
 
     let void_type = context.void_type();
-    let ptr_type = bool_type.ptr_type(AddressSpace::Generic);
+    let ptr_type = bool_type.ptr_type(AddressSpace::Zero);
     let struct_type = context.struct_type(&[bool_type.into()], false);
     let vec_type = bool_type.vec_type(1);
 
@@ -229,7 +229,7 @@ fn test_undef() {
     let f32_val = f32_type.const_float(0.0);
     let f64_val = f64_type.const_float(0.0);
     let f128_val = f128_type.const_float(0.0);
-    let ptr_val = bool_type.ptr_type(AddressSpace::Generic).const_null();
+    let ptr_val = bool_type.ptr_type(AddressSpace::Zero).const_null();
     let array_val = f64_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
     let vec_val = VectorType::const_vector(&[i8_val]);
@@ -261,7 +261,7 @@ fn test_undef() {
     let f32_undef = f32_type.get_undef();
     let f64_undef = f64_type.get_undef();
     let f128_undef = f128_type.get_undef();
-    let ptr_undef = bool_type.ptr_type(AddressSpace::Generic).get_undef();
+    let ptr_undef = bool_type.ptr_type(AddressSpace::Zero).get_undef();
     let array_undef = array_type.get_undef();
     let struct_undef = context.struct_type(&[bool_type.into()], false).get_undef();
     let vec_undef = bool_type.vec_type(1).get_undef();
@@ -678,7 +678,7 @@ fn test_global_byte_array() {
     let my_str = "Hello, World";
     let i8_type = context.i8_type();
     let i8_array_type = i8_type.array_type(my_str.len() as u32);
-    let global_string = module.add_global(i8_array_type, Some(AddressSpace::Generic), "message");
+    let global_string = module.add_global(i8_array_type, Some(AddressSpace::Zero), "message");
 
     let mut chars = Vec::with_capacity(my_str.len());
 
@@ -810,7 +810,7 @@ fn test_globals() {
 
     assert!(global.get_thread_local_mode().is_none());
 
-    let global2 = module.add_global(i8_type, Some(AddressSpace::Const), "my_global2");
+    let global2 = module.add_global(i8_type, Some(AddressSpace::Four), "my_global2");
 
     assert_eq!(global2.get_previous_global().unwrap(), global);
     assert_eq!(global.get_next_global().unwrap(), global2);
@@ -1134,7 +1134,7 @@ fn test_non_fn_ptr_called() {
     let builder = context.create_builder();
     let module = context.create_module("my_mod");
     let i8_type = context.i8_type();
-    let i8_ptr_type = i8_type.ptr_type(AddressSpace::Generic);
+    let i8_ptr_type = i8_type.ptr_type(AddressSpace::Zero);
     let fn_type = i8_type.fn_type(&[i8_ptr_type.into()], false);
     let fn_value = module.add_function("my_func", fn_type, None);
     let bb = context.append_basic_block(fn_value, "entry");
@@ -1178,7 +1178,7 @@ fn test_aggregate_returns() {
     let builder = context.create_builder();
     let module = context.create_module("my_mod");
     let i32_type = context.i32_type();
-    let i32_ptr_type = i32_type.ptr_type(AddressSpace::Local);
+    let i32_ptr_type = i32_type.ptr_type(AddressSpace::Five);
     let i32_three = i32_type.const_int(3, false);
     let i32_seven = i32_type.const_int(7, false);
     let struct_type = context.struct_type(&[i32_type.into(), i32_type.into()], false);

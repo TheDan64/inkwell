@@ -175,7 +175,7 @@ impl<'ctx> VectorType<'ctx> {
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
     /// let f32_vec_type = f32_type.vec_type(3);
-    /// let f32_vec_ptr_type = f32_vec_type.ptr_type(AddressSpace::Generic);
+    /// let f32_vec_ptr_type = f32_vec_type.ptr_type(AddressSpace::Zero);
     ///
     /// assert_eq!(f32_vec_ptr_type.get_element_type().into_vector_type(), f32_vec_type);
     /// ```

@@ -388,7 +388,7 @@ fn test_global_expressions() {
     );
 
     let di_type = dibuilder.create_basic_type("type_name", 0_u64, 0x00, DIFlags::ZERO);
-    let gv = module.add_global(context.i64_type(), Some(inkwell::AddressSpace::Global), "gv");
+    let gv = module.add_global(context.i64_type(), Some(inkwell::AddressSpace::One), "gv");
 
     let const_v = dibuilder.create_constant_expression(10);
 

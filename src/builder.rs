@@ -38,11 +38,11 @@ use crate::basic_block::BasicBlock;
 #[llvm_versions(7.0..=latest)]
 use crate::debug_info::DILocation;
 use crate::support::to_c_str;
-use crate::types::{AsTypeRef, BasicType, FloatMathType, IntMathType, PointerMathType, PointerType};
+use crate::types::{BasicType, AsTypeRef, PointerType, AnyType, IntMathType, PointerMathType, FloatMathType};
 use crate::values::{
     AggregateValue, AggregateValueEnum, AsValueRef, BasicMetadataValueEnum, BasicValue, BasicValueEnum, CallSiteValue,
     CallableValue, FloatMathValue, FunctionValue, GlobalValue, InstructionOpcode, InstructionValue, IntMathValue,
-    IntValue, PhiValue, PointerMathValue, PointerValue, StructValue, VectorValue,
+    IntValue, PhiValue, PointerMathValue, PointerValue, StructValue, VectorValue, AnyValue, AnyValueEnum,
 };
 #[cfg(feature = "internal-getters")]
 use crate::LLVMReference;
@@ -762,10 +762,10 @@ impl<'ctx> Builder<'ctx> {
     /// let module = context.create_module("struct_gep");
     /// let void_type = context.void_type();
     /// let i32_ty = context.i32_type();
-    /// let i32_ptr_ty = i32_ty.ptr_type(AddressSpace::Generic);
+    /// let i32_ptr_ty = i32_ty.ptr_type(AddressSpace::Zero);
     /// let field_types = &[i32_ty.into(), i32_ty.into()];
     /// let struct_ty = context.struct_type(field_types, false);
-    /// let struct_ptr_ty = struct_ty.ptr_type(AddressSpace::Generic);
+    /// let struct_ptr_ty = struct_ty.ptr_type(AddressSpace::Zero);
     /// let fn_type = void_type.fn_type(&[i32_ptr_ty.into(), struct_ptr_ty.into()], false);
     /// let fn_value = module.add_function("", fn_type, None);
     /// let entry = context.append_basic_block(fn_value, "entry");
@@ -852,7 +852,7 @@ impl<'ctx> Builder<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let i32_type = context.i32_type();
-    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Generic);
+    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Zero);
     /// let fn_type = void_type.fn_type(&[i32_ptr_type.into(), i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("ret", fn_type, None);
     /// let entry = context.append_basic_block(fn_value, "entry");
@@ -945,7 +945,7 @@ impl<'ctx> Builder<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let i32_type = context.i32_type();
-    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Generic);
+    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Zero);
     /// let i32_seven = i32_type.const_int(7, false);
     /// let fn_type = void_type.fn_type(&[i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("ret", fn_type, None);
@@ -975,7 +975,7 @@ impl<'ctx> Builder<'ctx> {
     /// let module = context.create_module("ret");
     /// let builder = context.create_builder();
     /// let i32_type = context.i32_type();
-    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Generic);
+    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Zero);
     /// let fn_type = i32_type.fn_type(&[i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("ret", fn_type, None);
     /// let entry = context.append_basic_block(fn_value, "entry");
@@ -1333,15 +1333,24 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// assert!(module.verify().is_ok());
     /// ```
-    pub fn build_bitcast<T, V>(&self, val: V, ty: T, name: &str) -> BasicValueEnum<'ctx>
+    pub fn build_bitcast<T, V>(&self, val: V, ty: T, name: &str) -> AnyValueEnum<'ctx>
     where
-        T: BasicType<'ctx>,
-        V: BasicValue<'ctx>,
+        T: AnyType<'ctx>,
+        V: AnyValue<'ctx>,
     {
         let c_string = to_c_str(name);
         let value = unsafe { LLVMBuildBitCast(self.builder, val.as_value_ref(), ty.as_type_ref(), c_string.as_ptr()) };
 
-        unsafe { BasicValueEnum::new(value) }
+        let value = unsafe {
+            LLVMBuildBitCast(
+                self.builder,
+                val.as_value_ref(),
+                ty.as_type_ref(),
+                c_string.as_ptr(),
+            )
+        };
+
+        unsafe { AnyValueEnum::new(value) }
     }
 
     pub fn build_int_s_extend_or_bit_cast<T: IntMathValue<'ctx>>(
@@ -2491,7 +2500,7 @@ impl<'ctx> Builder<'ctx> {
     /// let void_type = context.void_type();
     /// let i32_type = context.i32_type();
     /// let i32_seven = i32_type.const_int(7, false);
-    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Generic);
+    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Zero);
     /// let fn_type = void_type.fn_type(&[i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("rmw", fn_type, None);
     /// let entry = context.append_basic_block(fn_value, "entry");
@@ -2544,7 +2553,7 @@ impl<'ctx> Builder<'ctx> {
     /// let module = context.create_module("cmpxchg");
     /// let void_type = context.void_type();
     /// let i32_type = context.i32_type();
-    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Generic);
+    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Zero);
     /// let fn_type = void_type.fn_type(&[i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("", fn_type, None);
     /// let i32_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
