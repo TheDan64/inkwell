@@ -6,7 +6,7 @@ use libc::c_char;
 use llvm_sys::core::LLVMGetVersion;
 use llvm_sys::core::{LLVMCreateMessage, LLVMDisposeMessage};
 use llvm_sys::error_handling::LLVMEnablePrettyStackTrace;
-use llvm_sys::support::{LLVMLoadLibraryPermanently, LLVMSearchForAddressOfSymbol};
+use llvm_sys::support::{LLVMLoadLibraryPermanently, LLVMParseCommandLineOptions, LLVMSearchForAddressOfSymbol};
 
 use std::borrow::Cow;
 use std::error::Error;
@@ -136,6 +136,18 @@ pub fn get_llvm_version() -> (u32, u32, u32) {
     unsafe { LLVMGetVersion(&mut major, &mut minor, &mut patch) };
 
     return (major, minor, patch);
+}
+
+pub fn parse_command_line_options(argc: i32, argv: &[&str], overview: &str) {
+    let argv: Vec<*const ::libc::c_char> = argv
+        .iter()
+        .map(|arg| to_c_str(arg).as_ptr())
+        .collect();
+    let overview = to_c_str(overview);
+
+    unsafe {
+        LLVMParseCommandLineOptions(argc, argv.as_ptr(), overview.as_ptr());
+    }
 }
 
 /// Possible errors that can occur when loading a library
