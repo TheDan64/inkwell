@@ -11,6 +11,7 @@ use llvm_sys::core::{
 };
 use llvm_sys::prelude::LLVMValueRef;
 
+use std::convert::TryFrom;
 use std::ffi::CStr;
 use std::fmt::{self, Display};
 
@@ -340,5 +341,17 @@ impl AsValueRef for IntValue<'_> {
 impl Display for IntValue<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.print_to_string())
+    }
+}
+
+impl<'ctx> TryFrom<InstructionValue<'ctx>> for IntValue<'ctx> {
+    type Error = ();
+
+    fn try_from(value: InstructionValue) -> Result<Self, Self::Error> {
+        if value.get_type().is_int_type() {
+            unsafe { Ok(IntValue::new(value.as_value_ref())) }
+        } else {
+            Err(())
+        }
     }
 }

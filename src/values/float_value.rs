@@ -4,6 +4,7 @@ use llvm_sys::core::{
 };
 use llvm_sys::prelude::LLVMValueRef;
 
+use std::convert::TryFrom;
 use std::ffi::CStr;
 use std::fmt::{self, Display};
 
@@ -160,5 +161,17 @@ impl AsValueRef for FloatValue<'_> {
 impl Display for FloatValue<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.print_to_string())
+    }
+}
+
+impl<'ctx> TryFrom<InstructionValue<'ctx>> for FloatValue<'ctx> {
+    type Error = ();
+
+    fn try_from(value: InstructionValue) -> Result<Self, Self::Error> {
+        if value.get_type().is_float_type() {
+            unsafe { Ok(FloatValue::new(value.as_value_ref())) }
+        } else {
+            Err(())
+        }
     }
 }
