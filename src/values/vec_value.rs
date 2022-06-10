@@ -63,6 +63,11 @@ impl<'ctx> VectorValue<'ctx> {
         self.vec_value.get_name()
     }
 
+    /// Set name of the `VectorValue`.
+    pub fn set_name(&self, name: &str) {
+        self.vec_value.set_name(name)
+    }
+
     pub fn get_type(self) -> VectorType<'ctx> {
         unsafe { VectorType::new(self.vec_value.get_type()) }
     }

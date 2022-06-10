@@ -29,6 +29,11 @@ impl<'ctx> StructValue<'ctx> {
         self.struct_value.get_name()
     }
 
+    /// Get name of the `StructValue`.
+    pub fn set_name(&self, name: &str) {
+        self.struct_value.set_name(name)
+    }
+
     pub fn get_type(self) -> StructType<'ctx> {
         unsafe { StructType::new(self.struct_value.get_type()) }
     }

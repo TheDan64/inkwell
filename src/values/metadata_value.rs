@@ -69,6 +69,11 @@ impl<'ctx> MetadataValue<'ctx> {
         unsafe { LLVMValueAsMetadata(self.as_value_ref()) }
     }
 
+    /// Get name of the `MetadataValue`.
+    pub fn get_name(&self) -> &CStr {
+        self.metadata_value.get_name()
+    }
+
     // SubTypes: This can probably go away with subtypes
     pub fn is_node(self) -> bool {
         unsafe { LLVMIsAMDNode(self.as_value_ref()) == self.as_value_ref() }

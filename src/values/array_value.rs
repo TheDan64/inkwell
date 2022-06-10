@@ -23,10 +23,15 @@ impl<'ctx> ArrayValue<'ctx> {
         }
     }
 
-    /// Gets the name of an `ArrayValue`. If the value is a constant, this will
+    /// Get name of the `ArrayValue`. If the value is a constant, this will
     /// return an empty string.
     pub fn get_name(&self) -> &CStr {
         self.array_value.get_name()
+    }
+
+    /// Set name of the `ArrayValue`.
+    pub fn set_name(&self, name: &str) {
+        self.array_value.set_name(name)
     }
 
     /// Gets the type of this `ArrayValue`.

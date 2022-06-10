@@ -18,7 +18,7 @@ use llvm_sys::core::{LLVMIsAAtomicCmpXchgInst, LLVMIsAAtomicRMWInst};
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMOpcode;
 
-use std::{fmt, fmt::Display};
+use std::{fmt, fmt::Display, ffi::CStr};
 
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, MetadataValue, Value};
@@ -146,6 +146,20 @@ impl<'ctx> InstructionValue<'ctx> {
 
         InstructionValue {
             instruction_value: value,
+        }
+    }
+
+    /// Get name of the `InstructionValue`.
+    pub fn get_name(&self) -> &CStr {
+        self.instruction_value.get_name()
+    }
+
+    /// Set name of the `InstructionValue`.
+    pub fn set_name(&self, name: &str) {
+        if self.get_type().is_void_type() {
+            panic!("Cannot set name of the VoidType instruction: {:?}", self);
+        } else {
+            self.instruction_value.set_name(name)
         }
     }
 
