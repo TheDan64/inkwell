@@ -124,6 +124,25 @@ impl Attribute {
     ///
     /// assert_eq!(enum_attribute.get_enum_kind_id(), 0);
     /// ```
+    #[llvm_versions(3.6..12.0)]
+    pub fn get_enum_kind_id(self) -> u32 {
+        assert!(self.get_enum_kind_id_is_valid()); // FIXME: SubTypes
+
+        unsafe { LLVMGetEnumAttributeKind(self.attribute) }
+    }
+
+    /// Gets the kind id associated with an enum `Attribute`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let enum_attribute = context.create_enum_attribute(0, 10);
+    ///
+    /// assert_eq!(enum_attribute.get_enum_kind_id(), 0);
+    /// ```
     ///
     /// This function also works for type `Attribute`s.
     ///
@@ -142,6 +161,7 @@ impl Attribute {
     ///
     /// assert_eq!(type_attribute.get_enum_kind_id(), kind_id);
     /// ```
+    #[llvm_versions(12.0..=latest)]
     pub fn get_enum_kind_id(self) -> u32 {
         assert!(self.get_enum_kind_id_is_valid()); // FIXME: SubTypes
 
