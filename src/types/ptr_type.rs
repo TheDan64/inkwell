@@ -298,7 +298,6 @@ impl AsTypeRef for PointerType<'_> {
     }
 }
 
-
 impl Display for PointerType<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.print_to_string())

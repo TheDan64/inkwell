@@ -124,10 +124,58 @@ impl Attribute {
     ///
     /// assert_eq!(enum_attribute.get_enum_kind_id(), 0);
     /// ```
+    #[llvm_versions(3.6..12.0)]
     pub fn get_enum_kind_id(self) -> u32 {
-        assert!(self.is_enum()); // FIXME: SubTypes
+        assert!(self.get_enum_kind_id_is_valid()); // FIXME: SubTypes
 
         unsafe { LLVMGetEnumAttributeKind(self.attribute) }
+    }
+
+    /// Gets the kind id associated with an enum `Attribute`.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let enum_attribute = context.create_enum_attribute(0, 10);
+    ///
+    /// assert_eq!(enum_attribute.get_enum_kind_id(), 0);
+    /// ```
+    ///
+    /// This function also works for type `Attribute`s.
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::attributes::Attribute;
+    /// use inkwell::types::AnyType;
+    ///
+    /// let context = Context::create();
+    /// let kind_id = Attribute::get_named_enum_kind_id("sret");
+    /// let any_type = context.i32_type().as_any_type_enum();
+    /// let type_attribute = context.create_type_attribute(
+    ///     kind_id,
+    ///     any_type,
+    /// );
+    ///
+    /// assert_eq!(type_attribute.get_enum_kind_id(), kind_id);
+    /// ```
+    #[llvm_versions(12.0..=latest)]
+    pub fn get_enum_kind_id(self) -> u32 {
+        assert!(self.get_enum_kind_id_is_valid()); // FIXME: SubTypes
+
+        unsafe { LLVMGetEnumAttributeKind(self.attribute) }
+    }
+
+    #[llvm_versions(3.6..12.0)]
+    fn get_enum_kind_id_is_valid(self) -> bool {
+        self.is_enum()
+    }
+
+    #[llvm_versions(12.0..=latest)]
+    fn get_enum_kind_id_is_valid(self) -> bool {
+        self.is_enum() || self.is_type()
     }
 
     /// Gets the last enum kind id associated with builtin names.
