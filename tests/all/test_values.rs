@@ -721,21 +721,7 @@ fn test_globals() {
     assert!(!global.has_unnamed_addr());
     assert!(!global.is_externally_initialized());
     assert_eq!(global.get_name().to_str(), Ok("my_global"));
-    // REVIEW: Segfaults in 4.0 -> 11.0
-    #[cfg(not(any(
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    )))]
-    assert_eq!(global.get_section().to_str(), Ok(""));
+    assert_eq!(global.get_section(), None);
     assert_eq!(global.get_dll_storage_class(), DLLStorageClass::default());
     assert_eq!(global.get_visibility(), GlobalVisibility::default());
     assert_eq!(global.get_linkage(), External);
@@ -757,7 +743,7 @@ fn test_globals() {
     global.set_unnamed_addr(true);
     global.set_constant(true);
     global.set_visibility(GlobalVisibility::Hidden);
-    global.set_section("not sure what goes here");
+    global.set_section(Some("not sure what goes here"));
 
     // REVIEW: Not sure why this is Global when we set it to Local
     #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
@@ -773,7 +759,11 @@ fn test_globals() {
     assert!(global.has_unnamed_addr());
     assert!(global.is_constant());
     assert!(!global.is_declaration());
-    assert_eq!(global.get_section().to_str(), Ok("not sure what goes here"));
+    assert_eq!(global.get_section().unwrap().to_str(), Ok("not sure what goes here"));
+
+    global.set_section(None);
+
+    assert_eq!(global.get_section(), None);
 
     // Either linkage is non-local or visibility is default.
     global.set_visibility(GlobalVisibility::Default);
