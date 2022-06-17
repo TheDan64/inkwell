@@ -2,10 +2,10 @@ extern crate inkwell;
 
 use self::inkwell::context::Context;
 use self::inkwell::passes::{PassManager, PassManagerBuilder, PassRegistry};
-use self::inkwell::OptimizationLevel::Aggressive;
 
 #[llvm_versions(13.0..=latest)]
 use self::inkwell::passes::PassBuilderOptions;
+#[llvm_versions(13.0..=latest)]
 use self::inkwell::targets::{CodeModel, InitializationConfig, RelocMode, Target, TargetMachine};
 use self::inkwell::OptimizationLevel;
 
@@ -140,7 +140,7 @@ fn test_init_all_passes_for_module() {
 fn test_pass_manager_builder() {
     let pass_manager_builder = PassManagerBuilder::create();
 
-    pass_manager_builder.set_optimization_level(Aggressive);
+    pass_manager_builder.set_optimization_level(OptimizationLevel::Aggressive);
     pass_manager_builder.set_size_level(2);
     pass_manager_builder.set_inliner_with_threshold(42);
     pass_manager_builder.set_disable_unit_at_a_time(true);
@@ -260,21 +260,21 @@ fn test_run_passes() {
     pass_options.set_call_graph_profile(true);
     pass_options.set_merge_functions(true);
 
-    let initialization_config = &inkwell::targets::InitializationConfig::default();
-    inkwell::targets::Target::initialize_all(initialization_config);
+    let initialization_config = &InitializationConfig::default();
+    Target::initialize_all(initialization_config);
     let context = Context::create();
     let module = context.create_module("my_module");
-    let triple = inkwell::targets::TargetMachine::get_default_triple();
-    let target = inkwell::targets::Target::from_triple(&triple).unwrap();
+    let triple = TargetMachine::get_default_triple();
+    let target = Target::from_triple(&triple).unwrap();
     let machine = target
         .create_target_machine(
             &triple,
             //TODO : Add cpu features as optionals
             "generic", //TargetMachine::get_host_cpu_name().to_string().as_str(),
             "",        //TargetMachine::get_host_cpu_features().to_string().as_str(),
-            inkwell::OptimizationLevel::Default,
-            inkwell::targets::RelocMode::Default,
-            inkwell::targets::CodeModel::Default,
+            OptimizationLevel::Default,
+            RelocMode::Default,
+            CodeModel::Default,
         )
         .unwrap();
 

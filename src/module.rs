@@ -15,7 +15,7 @@ use llvm_sys::core::{
 use llvm_sys::core::{LLVMAddModuleFlag, LLVMGetModuleFlag};
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::{LLVMGetModuleIdentifier, LLVMSetModuleIdentifier};
-#[llvm_versions(8.0..=latest)]
+#[llvm_versions(13.0..=latest)]
 use llvm_sys::error::LLVMGetErrorMessage;
 use llvm_sys::execution_engine::{
     LLVMCreateExecutionEngineForModule, LLVMCreateInterpreterForModule, LLVMCreateJITCompilerForModule,
@@ -47,7 +47,9 @@ use crate::memory_buffer::MemoryBuffer;
 #[llvm_versions(13.0..=latest)]
 use crate::passes::PassBuilderOptions;
 use crate::support::{to_c_str, LLVMString};
-use crate::targets::{InitializationConfig, Target, TargetMachine, TargetTriple};
+#[llvm_versions(13.0..=latest)]
+use crate::targets::TargetMachine;
+use crate::targets::{InitializationConfig, Target, TargetTriple};
 use crate::types::{AsTypeRef, BasicType, FunctionType, StructType};
 #[llvm_versions(7.0..=latest)]
 use crate::values::BasicValue;

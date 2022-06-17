@@ -29,7 +29,7 @@ use crate::basic_block::BasicBlock;
 use crate::debug_info::DISubprogram;
 use crate::module::Linkage;
 use crate::support::to_c_str;
-use crate::types::{AnyType, FunctionType, PointerType};
+use crate::types::{FunctionType, PointerType};
 use crate::values::traits::{AnyValue, AsValueRef};
 use crate::values::{BasicValueEnum, GlobalValue, Value};
 

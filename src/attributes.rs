@@ -13,6 +13,7 @@ use llvm_sys::prelude::LLVMAttributeRef;
 #[llvm_versions(3.9..=latest)]
 use std::ffi::CStr;
 
+#[llvm_versions(12.0..=latest)]
 use crate::types::AnyTypeEnum;
 #[cfg(feature = "internal-getters")]
 use crate::LLVMReference;

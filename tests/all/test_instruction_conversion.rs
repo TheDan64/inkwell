@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 
 use inkwell::context::Context;
-use inkwell::values::{ArrayValue, FloatValue, IntValue, PhiValue, PointerValue};
+use inkwell::values::{FloatValue, IntValue, PhiValue, PointerValue};
 use inkwell::AddressSpace;
 
 #[test]

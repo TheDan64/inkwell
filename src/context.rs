@@ -36,9 +36,11 @@ use crate::memory_buffer::MemoryBuffer;
 use crate::module::Module;
 use crate::support::{to_c_str, LLVMString};
 use crate::targets::TargetData;
+#[llvm_versions(12.0..=latest)]
+use crate::types::AnyTypeEnum;
 #[llvm_versions(6.0..=latest)]
 use crate::types::MetadataType;
-use crate::types::{AnyTypeEnum, AsTypeRef, BasicTypeEnum, FloatType, FunctionType, IntType, StructType, VoidType};
+use crate::types::{AsTypeRef, BasicTypeEnum, FloatType, FunctionType, IntType, StructType, VoidType};
 use crate::values::{
     AsValueRef, BasicMetadataValueEnum, BasicValueEnum, FunctionValue, MetadataValue, PointerValue, StructValue,
     VectorValue,

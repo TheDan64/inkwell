@@ -3,7 +3,7 @@ use inkwell::attributes::AttributeLoc;
 use inkwell::comdat::ComdatSelectionKind;
 use inkwell::context::Context;
 use inkwell::module::Linkage::*;
-use inkwell::types::{AnyType, StringRadix, VectorType};
+use inkwell::types::{StringRadix, VectorType};
 use inkwell::values::{AnyValue, BasicValue, CallableValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
 use inkwell::{AddressSpace, DLLStorageClass, FloatPredicate, GlobalVisibility, ThreadLocalMode};
 
