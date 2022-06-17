@@ -16,7 +16,7 @@ jobs:
           - ["3.6", "3-6"]
           - ["3.7", "3-7"]
           - ["3.8", "3-8"]
-          # - ["3.9", "3-9"]
+          - ["3.9", "3-9"]
           - ["4.0", "4-0"]
           - ["5.0", "5-0"]
           - ["6.0", "6-0"]
@@ -26,11 +26,13 @@ jobs:
           - ["10.0", "10-0"]
           - ["11.0", "11-0"]
           - ["12.0", "12-0"]
+          - ["13.0", "13-0"]
+          - ["14.0", "14-0"]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
       - name: Install LLVM and Clang
-        uses: KyleMayes/install-llvm-action@v1.4.1
+        uses: KyleMayes/install-llvm-action@v1.5.2
         with:
           version: ${{ matrix.llvm-version[0] }}
       - name: Build
