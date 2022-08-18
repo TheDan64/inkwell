@@ -326,7 +326,7 @@ fn test_volatile_atomicrmw_cmpxchg() {
     assert_eq!(cmpxchg.get_volatile().unwrap(), false);
 }
 
-#[llvm_versions(3.6..=10.0)]
+#[llvm_versions(4.0..=10.0)]
 #[test]
 fn test_mem_instructions() {
     let context = Context::create();
@@ -454,7 +454,6 @@ fn test_mem_instructions() {
     assert!(fadd_instruction.set_alignment(16).is_err());
 }
 
-#[llvm_versions(3.8..=latest)]
 #[test]
 fn test_atomic_ordering_mem_instructions() {
     let context = Context::create();

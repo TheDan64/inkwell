@@ -7,14 +7,12 @@ use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffe
 use llvm_sys::core::{
     LLVMAddFunction, LLVMAddGlobal, LLVMAddGlobalInAddressSpace, LLVMAddNamedMetadataOperand, LLVMCloneModule,
     LLVMDisposeModule, LLVMDumpModule, LLVMGetFirstFunction, LLVMGetFirstGlobal, LLVMGetLastFunction,
-    LLVMGetLastGlobal, LLVMGetModuleContext, LLVMGetNamedFunction, LLVMGetNamedGlobal, LLVMGetNamedMetadataNumOperands,
-    LLVMGetNamedMetadataOperands, LLVMGetTarget, LLVMGetTypeByName, LLVMPrintModuleToFile, LLVMPrintModuleToString,
-    LLVMSetDataLayout, LLVMSetTarget,
+    LLVMGetLastGlobal, LLVMGetModuleContext, LLVMGetModuleIdentifier, LLVMGetNamedFunction, LLVMGetNamedGlobal,
+    LLVMGetNamedMetadataNumOperands, LLVMGetNamedMetadataOperands, LLVMGetTarget, LLVMGetTypeByName,
+    LLVMPrintModuleToFile, LLVMPrintModuleToString, LLVMSetDataLayout, LLVMSetModuleIdentifier, LLVMSetTarget,
 };
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::core::{LLVMAddModuleFlag, LLVMGetModuleFlag};
-#[llvm_versions(3.9..=latest)]
-use llvm_sys::core::{LLVMGetModuleIdentifier, LLVMSetModuleIdentifier};
 #[llvm_versions(13.0..=latest)]
 use llvm_sys::error::LLVMGetErrorMessage;
 use llvm_sys::execution_engine::{
@@ -1176,7 +1174,6 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(module.get_name().to_str(), Ok("my_mdoule"));
     /// ```
-    #[llvm_versions(3.9..=latest)]
     pub fn get_name(&self) -> &CStr {
         let mut length = 0;
         let cstr_ptr = unsafe { LLVMGetModuleIdentifier(self.module.get(), &mut length) };
@@ -1198,7 +1195,6 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(module.get_name().to_str(), Ok("my_module2"));
     /// ```
-    #[llvm_versions(3.9..=latest)]
     pub fn set_name(&self, name: &str) {
         unsafe { LLVMSetModuleIdentifier(self.module.get(), name.as_ptr() as *const ::libc::c_char, name.len()) }
     }
@@ -1279,49 +1275,29 @@ impl<'ctx> Module<'ctx> {
             return Err(LLVMString::create_from_str(string));
         }
 
-        #[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]
-        {
-            use llvm_sys::linker::{LLVMLinkModules, LLVMLinkerMode};
+        use crate::support::error_handling::get_error_str_diagnostic_handler;
+        use libc::c_void;
+        use llvm_sys::linker::LLVMLinkModules2;
 
-            let mut err_string = ptr::null_mut();
-            // As of 3.7, LLVMLinkerDestroySource is the only option
-            let mode = LLVMLinkerMode::LLVMLinkerDestroySource;
-            let code = unsafe { LLVMLinkModules(self.module.get(), other.module.get(), mode, &mut err_string) };
+        let context = self.get_context();
 
-            forget(other);
+        let mut char_ptr: *mut ::libc::c_char = ptr::null_mut();
+        let char_ptr_ptr = &mut char_ptr as *mut *mut ::libc::c_char as *mut *mut c_void as *mut c_void;
 
-            if code == 1 {
-                unsafe { Err(LLVMString::new(err_string)) }
-            } else {
-                Ok(())
-            }
-        }
-        #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
-        {
-            use crate::support::error_handling::get_error_str_diagnostic_handler;
-            use libc::c_void;
-            use llvm_sys::linker::LLVMLinkModules2;
+        // Newer LLVM versions don't use an out ptr anymore which was really straightforward...
+        // Here we assign an error handler to extract the error message, if any, for us.
+        context.set_diagnostic_handler(get_error_str_diagnostic_handler, char_ptr_ptr);
 
-            let context = self.get_context();
+        let code = unsafe { LLVMLinkModules2(self.module.get(), other.module.get()) };
 
-            let mut char_ptr: *mut ::libc::c_char = ptr::null_mut();
-            let char_ptr_ptr = &mut char_ptr as *mut *mut ::libc::c_char as *mut *mut c_void as *mut c_void;
+        forget(other);
 
-            // Newer LLVM versions don't use an out ptr anymore which was really straightforward...
-            // Here we assign an error handler to extract the error message, if any, for us.
-            context.set_diagnostic_handler(get_error_str_diagnostic_handler, char_ptr_ptr);
+        if code == 1 {
+            debug_assert!(!char_ptr.is_null());
 
-            let code = unsafe { LLVMLinkModules2(self.module.get(), other.module.get()) };
-
-            forget(other);
-
-            if code == 1 {
-                debug_assert!(!char_ptr.is_null());
-
-                unsafe { Err(LLVMString::new(char_ptr)) }
-            } else {
-                Ok(())
-            }
+            unsafe { Err(LLVMString::new(char_ptr)) }
+        } else {
+            Ok(())
         }
     }
 

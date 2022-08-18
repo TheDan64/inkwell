@@ -1,16 +1,13 @@
 //! `Attribute`s are optional modifiers to functions, function parameters, and return types.
 
-#[llvm_versions(3.9..=latest)]
 use llvm_sys::core::{
     LLVMGetEnumAttributeKind, LLVMGetEnumAttributeKindForName, LLVMGetEnumAttributeValue, LLVMGetLastEnumAttributeKind,
     LLVMGetStringAttributeKind, LLVMGetStringAttributeValue, LLVMIsEnumAttribute, LLVMIsStringAttribute,
 };
 #[llvm_versions(12.0..=latest)]
 use llvm_sys::core::{LLVMGetTypeAttributeValue, LLVMIsTypeAttribute};
-#[llvm_versions(3.9..=latest)]
 use llvm_sys::prelude::LLVMAttributeRef;
 
-#[llvm_versions(3.9..=latest)]
 use std::ffi::CStr;
 
 #[llvm_versions(12.0..=latest)]
@@ -21,13 +18,11 @@ use crate::LLVMReference;
 // SubTypes: Attribute<Enum>, Attribute<String>
 /// Functions, function parameters, and return types can have `Attribute`s to indicate
 /// how they should be treated by optimizations and code generation.
-#[llvm_versions(3.9..=latest)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Attribute {
     pub(crate) attribute: LLVMAttributeRef,
 }
 
-#[llvm_versions(3.9..=latest)]
 impl Attribute {
     pub(crate) unsafe fn new(attribute: LLVMAttributeRef) -> Self {
         debug_assert!(!attribute.is_null());
@@ -125,7 +120,7 @@ impl Attribute {
     ///
     /// assert_eq!(enum_attribute.get_enum_kind_id(), 0);
     /// ```
-    #[llvm_versions(3.6..12.0)]
+    #[llvm_versions(4.0..12.0)]
     pub fn get_enum_kind_id(self) -> u32 {
         assert!(self.get_enum_kind_id_is_valid()); // FIXME: SubTypes
 
@@ -169,7 +164,7 @@ impl Attribute {
         unsafe { LLVMGetEnumAttributeKind(self.attribute) }
     }
 
-    #[llvm_versions(3.6..12.0)]
+    #[llvm_versions(4.0..12.0)]
     fn get_enum_kind_id_is_valid(self) -> bool {
         self.is_enum()
     }
@@ -222,6 +217,7 @@ impl Attribute {
     ///
     /// assert_eq!(string_attribute.get_string_kind_id().to_str(), Ok("my_key"));
     /// ```
+    // TODO: Check if null, return option
     pub fn get_string_kind_id(&self) -> &CStr {
         assert!(self.is_string()); // FIXME: SubTypes
 

@@ -1,6 +1,6 @@
 #[llvm_versions(8.0..=latest)]
 use llvm_sys::core::LLVMGlobalSetMetadata;
-#[llvm_versions(3.6..8.0)]
+#[llvm_versions(4.0..8.0)]
 use llvm_sys::core::{
     LLVMDeleteGlobal, LLVMGetAlignment, LLVMGetDLLStorageClass, LLVMGetInitializer, LLVMGetLinkage, LLVMGetNextGlobal,
     LLVMGetPreviousGlobal, LLVMGetSection, LLVMGetThreadLocalMode, LLVMGetVisibility, LLVMIsDeclaration,
@@ -18,7 +18,7 @@ use llvm_sys::core::{
 };
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::core::{LLVMGetUnnamedAddress, LLVMSetUnnamedAddress};
-#[llvm_versions(3.6..=6.0)]
+#[llvm_versions(4.0..=6.0)]
 use llvm_sys::core::{LLVMHasUnnamedAddr, LLVMSetUnnamedAddr};
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMThreadLocalMode;
@@ -157,7 +157,7 @@ impl<'ctx> GlobalValue<'ctx> {
         unsafe { LLVMIsDeclaration(self.as_value_ref()) == 1 }
     }
 
-    #[llvm_versions(3.6..7.0)]
+    #[llvm_versions(4.0..7.0)]
     pub fn has_unnamed_addr(self) -> bool {
         unsafe { LLVMHasUnnamedAddr(self.as_value_ref()) == 1 }
     }
@@ -167,7 +167,7 @@ impl<'ctx> GlobalValue<'ctx> {
         unsafe { LLVMGetUnnamedAddress(self.as_value_ref()) == LLVMUnnamedAddr::LLVMGlobalUnnamedAddr }
     }
 
-    #[llvm_versions(3.6..7.0)]
+    #[llvm_versions(4.0..7.0)]
     pub fn set_unnamed_addr(self, has_unnamed_addr: bool) {
         unsafe { LLVMSetUnnamedAddr(self.as_value_ref(), has_unnamed_addr as i32) }
     }

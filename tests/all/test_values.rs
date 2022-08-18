@@ -567,8 +567,7 @@ fn test_metadata() {
         let ret_instr = builder.build_return(None);
         let ret_instr_md = context.metadata_node(&[md_string.into()]);
 
-        ret_instr.set_metadata(ret_instr_md, 2);
-
+        assert!(ret_instr.set_metadata(ret_instr_md, 2).is_ok());
         assert!(ret_instr.has_metadata());
         assert!(ret_instr.get_metadata(1).is_none());
 

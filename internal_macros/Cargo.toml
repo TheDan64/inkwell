@@ -1,17 +1,17 @@
 [package]
-name = "inkwell_internals"
-version = "0.5.0"
 authors = ["Daniel Kolsoi <thadan64@gmail.com>"]
 description = "Internal macro crate for inkwell"
-edition = "2018"
-repository = "https://github.com/TheDan64/inkwell"
-readme = "README.md"
+edition = "2021"
 license = "Apache-2.0"
+name = "inkwell_internals"
+readme = "README.md"
+repository = "https://github.com/TheDan64/inkwell"
+version = "0.5.0"
 
 [dependencies]
-quote = "1.0"
-syn = { version = "1.0", features = ["full", "fold"] }
 proc-macro2 = "1.0"
+quote = "1.0"
+syn = {version = "1.0", features = ["full", "fold"]}
 
 [lib]
 proc-macro = true

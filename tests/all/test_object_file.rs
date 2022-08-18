@@ -26,21 +26,13 @@ fn apply_target_to_module<'ctx>(target_machine: &TargetMachine, module: &Module)
     module.set_data_layout(&target_machine.get_target_data().get_data_layout());
 }
 
-#[llvm_versions(3.6..7.0)]
+#[llvm_versions(4.0..7.0)]
 fn get_host_cpu_name() -> String {
     "".to_string()
 }
-#[llvm_versions(3.6..7.0)]
+#[llvm_versions(4.0..7.0)]
 fn get_host_cpu_features() -> String {
     "".to_string()
-}
-#[llvm_versions(3.6..4.0)]
-fn ptr_sized_int_type<'ctx>(_target_machine: &TargetMachine, context: &'ctx Context) -> IntType<'ctx> {
-    context.i64_type()
-}
-#[llvm_versions(3.6..4.0)]
-fn apply_target_to_module(target_machine: &TargetMachine, module: &Module) {
-    module.set_triple(&target_machine.get_triple());
 }
 
 fn get_native_target_machine() -> TargetMachine {
