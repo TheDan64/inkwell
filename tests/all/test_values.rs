@@ -41,7 +41,6 @@ fn test_call_site() {
 
     let call_site = builder.build_call(function, &[], "to_infinity_and_beyond");
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     assert_eq!(call_site.count_arguments(), 0);
     assert!(!call_site.is_tail_call());
 
@@ -320,36 +319,6 @@ fn test_verify_fn() {
 
     let function = module.add_function("fn", fn_type, None);
 
-    #[cfg(not(any(
-        feature = "llvm3-9",
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    )))]
-    assert!(!function.verify(false));
-    // REVIEW: Why does 3.9 -> 8.0 return true here? LLVM bug? Bugfix?
-    #[cfg(any(
-        feature = "llvm3-9",
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
     assert!(function.verify(false));
 
     let basic_block = context.append_basic_block(function, "entry");
@@ -389,66 +358,29 @@ fn test_metadata() {
     assert_eq!(context.get_kind_id("nontemporal"), 9);
     assert_eq!(context.get_kind_id("llvm.mem.parallel_loop_access"), 10);
     assert_eq!(context.get_kind_id("nonnull"), 11);
+    assert_eq!(context.get_kind_id("dereferenceable"), 12);
+    assert_eq!(context.get_kind_id("dereferenceable_or_null"), 13);
+    assert_eq!(context.get_kind_id("make.implicit"), 14);
+    assert_eq!(context.get_kind_id("unpredictable"), 15);
+    assert_eq!(context.get_kind_id("invariant.group"), 16);
+    assert_eq!(context.get_kind_id("align"), 17);
+    assert_eq!(context.get_kind_id("llvm.loop"), 18);
+    assert_eq!(context.get_kind_id("type"), 19);
+    assert_eq!(context.get_kind_id("section_prefix"), 20);
+    assert_eq!(context.get_kind_id("absolute_symbol"), 21);
 
-    #[cfg(not(feature = "llvm3-6"))]
-    {
-        assert_eq!(context.get_kind_id("dereferenceable"), 12);
-        assert_eq!(context.get_kind_id("dereferenceable_or_null"), 13);
-    }
-
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
-    {
-        assert_eq!(context.get_kind_id("make.implicit"), 14);
-        assert_eq!(context.get_kind_id("unpredictable"), 15);
-        assert_eq!(context.get_kind_id("invariant.group"), 16);
-        assert_eq!(context.get_kind_id("align"), 17);
-    }
-
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
-    {
-        assert_eq!(context.get_kind_id("llvm.loop"), 18);
-        assert_eq!(context.get_kind_id("type"), 19);
-    }
-
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
-    {
-        assert_eq!(context.get_kind_id("section_prefix"), 20);
-        assert_eq!(context.get_kind_id("absolute_symbol"), 21);
-    }
-
-    #[cfg(not(any(
-        feature = "llvm3-6",
-        feature = "llvm3-7",
-        feature = "llvm3-8",
-        feature = "llvm3-9",
-        feature = "llvm4-0"
-    )))]
+    #[cfg(not(feature = "llvm4-0"))]
     {
         assert_eq!(context.get_kind_id("associated"), 22);
     }
 
-    #[cfg(not(any(
-        feature = "llvm3-6",
-        feature = "llvm3-7",
-        feature = "llvm3-8",
-        feature = "llvm3-9",
-        feature = "llvm4-0",
-        feature = "llvm5-0"
-    )))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0")))]
     {
         assert_eq!(context.get_kind_id("callees"), 23);
         assert_eq!(context.get_kind_id("irr_loop"), 24);
     }
 
-    #[cfg(not(any(
-        feature = "llvm3-6",
-        feature = "llvm3-7",
-        feature = "llvm3-8",
-        feature = "llvm3-9",
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0"
-    )))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     {
         assert_eq!(module.get_global_metadata_size("my_string_md"), 0);
         assert_eq!(module.get_global_metadata("my_string_md").len(), 0);
@@ -678,11 +610,7 @@ fn test_function_value_no_params() {
     assert!(fn_value.get_first_param().is_none());
     assert!(fn_value.get_last_param().is_none());
     assert!(fn_value.get_nth_param(0).is_none());
-
-    // Here we're able to avoid a segfault in every version except 3.8 :(
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-8")))]
     assert!(fn_value.get_personality_function().is_none());
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     assert!(!fn_value.has_personality_function());
     assert!(!fn_value.is_null());
     assert!(!fn_value.is_undef());
@@ -781,15 +709,7 @@ fn test_globals() {
 
     let global = module.add_global(i8_type, None, "my_global");
 
-    #[cfg(not(any(
-        feature = "llvm3-6",
-        feature = "llvm3-7",
-        feature = "llvm3-8",
-        feature = "llvm3-9",
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0"
-    )))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     assert_eq!(global.get_unnamed_address(), UnnamedAddress::None);
     assert!(global.get_previous_global().is_none());
     assert!(global.get_next_global().is_none());
@@ -829,15 +749,7 @@ fn test_globals() {
     assert!(module.get_global("my_global").is_none());
     assert_eq!(module.get_global("glob").unwrap(), global);
 
-    #[cfg(not(any(
-        feature = "llvm3-6",
-        feature = "llvm3-7",
-        feature = "llvm3-8",
-        feature = "llvm3-9",
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0"
-    )))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     global.set_unnamed_address(UnnamedAddress::Local);
     global.set_dll_storage_class(DLLStorageClass::Import);
     global.set_initializer(&i8_zero);
@@ -848,15 +760,7 @@ fn test_globals() {
     global.set_section("not sure what goes here");
 
     // REVIEW: Not sure why this is Global when we set it to Local
-    #[cfg(not(any(
-        feature = "llvm3-6",
-        feature = "llvm3-7",
-        feature = "llvm3-8",
-        feature = "llvm3-9",
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0"
-    )))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     assert_eq!(global.get_unnamed_address(), UnnamedAddress::Global);
     assert_eq!(global.get_dll_storage_class(), DLLStorageClass::Import);
     assert_eq!(global.get_initializer().unwrap().into_int_value(), i8_zero);
@@ -877,30 +781,14 @@ fn test_globals() {
 
     assert_eq!(global.get_linkage(), Private);
 
-    #[cfg(not(any(
-        feature = "llvm3-6",
-        feature = "llvm3-7",
-        feature = "llvm3-8",
-        feature = "llvm3-9",
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0"
-    )))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     global.set_unnamed_address(UnnamedAddress::Global);
     global.set_dll_storage_class(DLLStorageClass::Export);
     global.set_thread_local(false);
     global.set_linkage(External);
     global.set_visibility(GlobalVisibility::Protected);
 
-    #[cfg(not(any(
-        feature = "llvm3-6",
-        feature = "llvm3-7",
-        feature = "llvm3-8",
-        feature = "llvm3-9",
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0"
-    )))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     assert_eq!(global.get_unnamed_address(), UnnamedAddress::Global);
     assert!(!global.is_thread_local());
     assert_eq!(global.get_visibility(), GlobalVisibility::Protected);
@@ -952,15 +840,7 @@ fn test_globals() {
     // REVIEW: This doesn't seem to work. LLVM bug?
     assert!(global2.is_externally_initialized());
 
-    #[cfg(not(any(
-        feature = "llvm3-6",
-        feature = "llvm3-7",
-        feature = "llvm3-8",
-        feature = "llvm3-9",
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0"
-    )))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     {
         assert!(global.get_comdat().is_none());
 

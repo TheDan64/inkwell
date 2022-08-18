@@ -75,32 +75,12 @@ fn test_target_and_target_machine() {
 
     let bad_target2 = Target::from_triple(&TargetTriple::create("sadas"));
 
-    #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
-    assert_eq!(
-        bad_target2.unwrap_err().to_string(),
-        "No available targets are compatible with this triple, see -version for the available targets."
-    );
-    #[cfg(any(
-        feature = "llvm3-9",
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0"
-    ))]
+    #[cfg(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0"))]
     assert_eq!(
         bad_target2.unwrap_err().to_string(),
         "No available targets are compatible with this triple."
     );
-    #[cfg(not(any(
-        feature = "llvm3-6",
-        feature = "llvm3-7",
-        feature = "llvm3-8",
-        feature = "llvm3-9",
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0"
-    )))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0")))]
     assert_eq!(
         bad_target2.unwrap_err().to_string(),
         "No available targets are compatible with triple \"sadas\""
@@ -163,15 +143,7 @@ fn test_target_and_target_machine() {
     assert_eq!(target_machine.get_cpu().to_str(), Ok("x86-64"));
     assert_eq!(target_machine.get_feature_string().to_str(), Ok("+avx2"));
 
-    #[cfg(not(any(
-        feature = "llvm3-6",
-        feature = "llvm3-7",
-        feature = "llvm3-8",
-        feature = "llvm3-9",
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0"
-    )))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     {
         // TODO: Try and find a triple that actually gets normalized..
         assert_eq!(
@@ -220,10 +192,7 @@ fn test_target_data() {
     }
     assert!(data_layout.as_str().to_str().unwrap().matches("-").count() > 2);
 
-    #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
-    assert_eq!(module.get_data_layout().as_str().to_str(), Ok(""));
     // REVIEW: Why is llvm 3.9+ a %? 4.0 on travis doesn't have it, but does for me locally...
-    // #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     // assert_eq!(module.get_data_layout().as_str(), &*CString::new("%").unwrap());
 
     module.set_data_layout(&data_layout);

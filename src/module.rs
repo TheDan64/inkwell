@@ -710,13 +710,6 @@ impl<'ctx> Module<'ctx> {
     }
 
     fn get_borrowed_data_layout(module: LLVMModuleRef) -> DataLayout {
-        #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
-        let data_layout = unsafe {
-            use llvm_sys::core::LLVMGetDataLayout;
-
-            LLVMGetDataLayout(module)
-        };
-        #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
         let data_layout = unsafe {
             use llvm_sys::core::LLVMGetDataLayoutStr;
 
@@ -828,15 +821,7 @@ impl<'ctx> Module<'ctx> {
 
     /// Sets the inline assembly for the `Module`.
     pub fn set_inline_assembly(&self, asm: &str) {
-        #[cfg(any(
-            feature = "llvm3-6",
-            feature = "llvm3-7",
-            feature = "llvm3-8",
-            feature = "llvm3-9",
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0"
-        ))]
+        #[cfg(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
         {
             use llvm_sys::core::LLVMSetModuleInlineAsm;
 
@@ -844,15 +829,7 @@ impl<'ctx> Module<'ctx> {
 
             unsafe { LLVMSetModuleInlineAsm(self.module.get(), c_string.as_ptr()) }
         }
-        #[cfg(not(any(
-            feature = "llvm3-6",
-            feature = "llvm3-7",
-            feature = "llvm3-8",
-            feature = "llvm3-9",
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0"
-        )))]
+        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
         {
             use llvm_sys::core::LLVMSetModuleInlineAsm2;
 

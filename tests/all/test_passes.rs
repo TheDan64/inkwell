@@ -1,13 +1,11 @@
-extern crate inkwell;
-
-use self::inkwell::context::Context;
-use self::inkwell::passes::{PassManager, PassManagerBuilder, PassRegistry};
+use inkwell::context::Context;
+use inkwell::passes::{PassManager, PassManagerBuilder, PassRegistry};
 
 #[llvm_versions(13.0..=latest)]
-use self::inkwell::passes::PassBuilderOptions;
+use inkwell::passes::PassBuilderOptions;
 #[llvm_versions(13.0..=latest)]
-use self::inkwell::targets::{CodeModel, InitializationConfig, RelocMode, Target, TargetMachine};
-use self::inkwell::OptimizationLevel;
+use inkwell::targets::{CodeModel, InitializationConfig, RelocMode, Target, TargetMachine};
+use inkwell::OptimizationLevel;
 
 #[test]
 fn test_init_all_passes_for_module() {
@@ -18,10 +16,6 @@ fn test_init_all_passes_for_module() {
     pass_manager.add_argument_promotion_pass();
     pass_manager.add_constant_merge_pass();
     #[cfg(not(any(
-        feature = "llvm3-6",
-        feature = "llvm3-7",
-        feature = "llvm3-8",
-        feature = "llvm3-9",
         feature = "llvm4-0",
         feature = "llvm5-0",
         feature = "llvm6-0",
@@ -43,18 +37,11 @@ fn test_init_all_passes_for_module() {
     pass_manager.add_internalize_pass(true);
     pass_manager.add_strip_dead_prototypes_pass();
     pass_manager.add_strip_symbol_pass();
-    #[cfg(any(
-        feature = "llvm3-6",
-        feature = "llvm3-7",
-        feature = "llvm3-8",
-        feature = "llvm3-9",
-        feature = "llvm4-0"
-    ))]
+    #[cfg(feature = "llvm4-0")]
     pass_manager.add_bb_vectorize_pass();
     pass_manager.add_loop_vectorize_pass();
     pass_manager.add_slp_vectorize_pass();
     pass_manager.add_aggressive_dce_pass();
-    #[cfg(not(feature = "llvm3-6"))]
     pass_manager.add_bit_tracking_dce_pass();
     pass_manager.add_alignment_from_assumptions_pass();
     pass_manager.add_cfg_simplification_pass();
@@ -95,37 +82,16 @@ fn test_init_all_passes_for_module() {
     pass_manager.add_type_based_alias_analysis_pass();
     pass_manager.add_scoped_no_alias_aa_pass();
     pass_manager.add_basic_alias_analysis_pass();
+    pass_manager.add_early_cse_mem_ssa_pass();
+    pass_manager.add_new_gvn_pass();
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
-    {
-        pass_manager.add_early_cse_mem_ssa_pass();
-        pass_manager.add_new_gvn_pass();
-    }
-
-    #[cfg(not(any(
-        feature = "llvm3-6",
-        feature = "llvm3-7",
-        feature = "llvm3-8",
-        feature = "llvm3-9",
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0"
-    )))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     {
         pass_manager.add_aggressive_inst_combiner_pass();
         pass_manager.add_loop_unroll_and_jam_pass();
     }
 
-    #[cfg(not(any(
-        feature = "llvm3-6",
-        feature = "llvm3-7",
-        feature = "llvm3-8",
-        feature = "llvm3-9",
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0"
-    )))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0")))]
     {
         pass_manager.add_coroutine_early_pass();
         pass_manager.add_coroutine_split_pass();
@@ -163,10 +129,7 @@ fn test_pass_manager_builder() {
     builder.position_at_end(entry);
     builder.build_return(None);
 
-    #[cfg(not(feature = "llvm3-7"))]
     assert!(!fn_pass_manager.initialize());
-    #[cfg(feature = "llvm3-7")]
-    fn_pass_manager.initialize();
 
     // TODO: Test with actual changes? Would be true in that case
     // REVIEW: Segfaults in 4.0
@@ -181,32 +144,9 @@ fn test_pass_manager_builder() {
 
     let module2 = module.clone();
 
-    // TODOC: In 3.6, 3.8, & 3.9 it returns false. Seems like a LLVM bug?
-    #[cfg(not(any(
-        feature = "llvm3-7",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    )))]
+    #[cfg(any(feature = "llvm4-0", feature = "llvm5-0"))]
     assert!(!module_pass_manager.run_on(&module));
-    #[cfg(any(
-        feature = "llvm3-7",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0")))]
     assert!(module_pass_manager.run_on(&module));
 
     let lto_pass_manager = PassManager::create(());
@@ -232,15 +172,7 @@ fn test_pass_registry() {
     pass_registry.initialize_ipa();
     pass_registry.initialize_codegen();
     pass_registry.initialize_target();
-    #[cfg(not(any(
-        feature = "llvm3-6",
-        feature = "llvm3-7",
-        feature = "llvm3-8",
-        feature = "llvm3-9",
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0"
-    )))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     pass_registry.initialize_aggressive_inst_combiner();
 }
 
