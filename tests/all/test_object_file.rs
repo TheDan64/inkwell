@@ -58,15 +58,21 @@ fn test_section_iterator() {
 
     let gv_a = module.add_global(context.i8_type(), None, "a");
     gv_a.set_initializer(&context.i8_type().const_zero().as_basic_value_enum());
+    assert!(gv_a.get_section().is_none());
     gv_a.set_section(Some("A"));
+    assert_eq!(gv_a.get_section().unwrap().to_str(), Ok("A"));
 
     let gv_b = module.add_global(context.i16_type(), None, "b");
     gv_b.set_initializer(&context.i16_type().const_zero().as_basic_value_enum());
+    assert!(gv_b.get_section().is_none());
     gv_b.set_section(Some("B"));
+    assert_eq!(gv_b.get_section().unwrap().to_str(), Ok("B"));
 
     let gv_c = module.add_global(context.i32_type(), None, "c");
     gv_c.set_initializer(&context.i32_type().const_zero().as_basic_value_enum());
+    assert!(gv_c.get_section().is_none());
     gv_c.set_section(Some("C"));
+    assert_eq!(gv_c.get_section().unwrap().to_str(), Ok("C"));
 
     let func = module.add_function("d", context.void_type().fn_type(&[], false), None);
 
