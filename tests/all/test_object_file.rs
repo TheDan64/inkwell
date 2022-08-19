@@ -58,18 +58,29 @@ fn test_section_iterator() {
 
     let gv_a = module.add_global(context.i8_type(), None, "a");
     gv_a.set_initializer(&context.i8_type().const_zero().as_basic_value_enum());
-    gv_a.set_section("A");
+    assert!(gv_a.get_section().is_none());
+    gv_a.set_section(Some("A"));
+    assert_eq!(gv_a.get_section().unwrap().to_str(), Ok("A"));
 
     let gv_b = module.add_global(context.i16_type(), None, "b");
     gv_b.set_initializer(&context.i16_type().const_zero().as_basic_value_enum());
-    gv_b.set_section("B");
+    assert!(gv_b.get_section().is_none());
+    gv_b.set_section(Some("B"));
+    assert_eq!(gv_b.get_section().unwrap().to_str(), Ok("B"));
 
     let gv_c = module.add_global(context.i32_type(), None, "c");
     gv_c.set_initializer(&context.i32_type().const_zero().as_basic_value_enum());
-    gv_c.set_section("C");
+    assert!(gv_c.get_section().is_none());
+    gv_c.set_section(Some("C"));
+    assert_eq!(gv_c.get_section().unwrap().to_str(), Ok("C"));
 
     let func = module.add_function("d", context.void_type().fn_type(&[], false), None);
-    func.set_section("D");
+
+    assert!(func.get_section().is_none());
+
+    func.set_section(Some("D"));
+
+    assert_eq!(func.get_section().unwrap().to_str(), Ok("D"));
 
     // add a body to the function to make the section non-empty
     let basic_block = context.append_basic_block(func, "entry");
@@ -211,7 +222,7 @@ fn test_section_contains_nul() {
 
     let gv = module.add_global(context.i32_type(), None, "gv");
     gv.set_initializer(&context.i32_type().const_int(0xff0000ff, false).as_basic_value_enum());
-    gv.set_section("test");
+    gv.set_section(Some("test"));
 
     apply_target_to_module(&target_machine, &module);
 

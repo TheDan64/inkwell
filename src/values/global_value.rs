@@ -27,6 +27,7 @@ use llvm_sys::LLVMUnnamedAddr;
 
 use std::ffi::CStr;
 use std::fmt::{self, Display};
+use std::ptr;
 
 #[llvm_versions(7.0..=latest)]
 use crate::comdat::Comdat;
@@ -209,14 +210,26 @@ impl<'ctx> GlobalValue<'ctx> {
         GlobalVisibility::new(visibility)
     }
 
-    pub fn get_section(&self) -> &CStr {
-        unsafe { CStr::from_ptr(LLVMGetSection(self.as_value_ref())) }
+    pub fn get_section(&self) -> Option<&CStr> {
+        let ptr = unsafe { LLVMGetSection(self.as_value_ref()) };
+
+        if ptr.is_null() {
+            return None;
+        }
+
+        Some(unsafe { CStr::from_ptr(ptr) })
     }
 
-    pub fn set_section(self, section: &str) {
-        let c_string = to_c_str(section);
+    pub fn set_section(self, section: Option<&str>) {
+        let c_string = section.map(to_c_str);
 
-        unsafe { LLVMSetSection(self.as_value_ref(), c_string.as_ptr()) }
+        unsafe {
+            LLVMSetSection(
+                self.as_value_ref(),
+                // The as_ref call is important here so that we don't drop the cstr mid use
+                c_string.as_ref().map(|s| s.as_ptr()).unwrap_or(ptr::null()),
+            )
+        }
     }
 
     pub unsafe fn delete(self) {
