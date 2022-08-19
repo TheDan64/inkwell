@@ -308,45 +308,8 @@ impl Target {
         }
     }
 
-    // TODOC: Called AMDGPU in 3.7+
-    #[cfg(feature = "llvm3-6")]
-    pub fn initialize_r600(config: &InitializationConfig) {
-        use llvm_sys::target::{
-            LLVMInitializeR600AsmParser, LLVMInitializeR600AsmPrinter, LLVMInitializeR600Target,
-            LLVMInitializeR600TargetInfo, LLVMInitializeR600TargetMC,
-        };
-
-        if config.base {
-            let _guard = TARGET_LOCK.write();
-            unsafe { LLVMInitializeR600Target() };
-        }
-
-        if config.info {
-            let _guard = TARGET_LOCK.write();
-            unsafe { LLVMInitializeR600TargetInfo() };
-        }
-
-        if config.asm_printer {
-            let _guard = TARGET_LOCK.write();
-            unsafe { LLVMInitializeR600AsmPrinter() };
-        }
-
-        if config.asm_parser {
-            let _guard = TARGET_LOCK.write();
-            unsafe { LLVMInitializeR600AsmParser() };
-        }
-
-        if config.machine_code {
-            let _guard = TARGET_LOCK.write();
-            unsafe { LLVMInitializeR600TargetMC() };
-        }
-
-        // Disassembler Status Unknown
-    }
-
-    // TODOC: Called R600 in 3.6
     #[cfg(feature = "target-amdgpu")]
-    #[llvm_versions(3.7..=latest)]
+    #[llvm_versions(4.0..=latest)]
     pub fn initialize_amd_gpu(config: &InitializationConfig) {
         use llvm_sys::target::{
             LLVMInitializeAMDGPUAsmParser, LLVMInitializeAMDGPUAsmPrinter, LLVMInitializeAMDGPUTarget,
@@ -484,28 +447,6 @@ impl Target {
         }
 
         // Disassembler status unknown
-    }
-
-    #[llvm_versions(3.6..=3.8)]
-    pub fn initialize_cpp_backend(config: &InitializationConfig) {
-        use llvm_sys::target::{
-            LLVMInitializeCppBackendTarget, LLVMInitializeCppBackendTargetInfo, LLVMInitializeCppBackendTargetMC,
-        };
-
-        if config.base {
-            let _guard = TARGET_LOCK.write();
-            unsafe { LLVMInitializeCppBackendTarget() };
-        }
-
-        if config.info {
-            let _guard = TARGET_LOCK.write();
-            unsafe { LLVMInitializeCppBackendTargetInfo() };
-        }
-
-        if config.machine_code {
-            let _guard = TARGET_LOCK.write();
-            unsafe { LLVMInitializeCppBackendTargetMC() };
-        }
     }
 
     #[cfg(feature = "target-msp430")]
@@ -651,9 +592,7 @@ impl Target {
         }
     }
 
-    // TODOC: Disassembler only supported in LLVM 4.0+
     #[cfg(feature = "target-bpf")]
-    #[llvm_versions(3.7..=latest)]
     pub fn initialize_bpf(config: &InitializationConfig) {
         use llvm_sys::target::{
             LLVMInitializeBPFAsmPrinter, LLVMInitializeBPFTarget, LLVMInitializeBPFTargetInfo,
@@ -677,14 +616,11 @@ impl Target {
 
         // No asm parser
 
-        #[cfg(not(any(feature = "llvm3-7", feature = "llvm3-8", feature = "llvm3-9")))]
-        {
-            if config.disassembler {
-                use llvm_sys::target::LLVMInitializeBPFDisassembler;
+        if config.disassembler {
+            use llvm_sys::target::LLVMInitializeBPFDisassembler;
 
-                let _guard = TARGET_LOCK.write();
-                unsafe { LLVMInitializeBPFDisassembler() };
-            }
+            let _guard = TARGET_LOCK.write();
+            unsafe { LLVMInitializeBPFDisassembler() };
         }
 
         if config.machine_code {

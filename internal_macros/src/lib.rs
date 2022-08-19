@@ -2,13 +2,6 @@
 //! and should not be expected to have public support nor stability.
 //! Here be dragons 🐉
 
-extern crate proc_macro;
-extern crate proc_macro2;
-extern crate quote;
-extern crate syn;
-
-use std::iter::IntoIterator;
-
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::quote;
@@ -19,9 +12,9 @@ use syn::{parenthesized, parse_macro_input, parse_quote};
 use syn::{Attribute, Field, Ident, Item, LitFloat, Token, Variant};
 
 // This array should match the LLVM features in the top level Cargo manifest
-const FEATURE_VERSIONS: [&str; 15] = [
-    "llvm3-6", "llvm3-7", "llvm3-8", "llvm3-9", "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0",
-    "llvm10-0", "llvm11-0", "llvm12-0", "llvm13-0", "llvm14-0",
+const FEATURE_VERSIONS: [&str; 11] = [
+    "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0", "llvm10-0", "llvm11-0", "llvm12-0", "llvm13-0",
+    "llvm14-0",
 ];
 
 /// Gets the index of the feature version that represents `latest`

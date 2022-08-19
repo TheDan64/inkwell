@@ -20,21 +20,11 @@ use std::fmt::{self, Display};
 // https://github.com/rust-lang/rust/issues/43781
 /// Value returned by [`Context::get_kind_id()`](crate::context::Context::get_kind_id)
 /// for the first input string that isn't known. Each LLVM version has a different set of pre-defined metadata kinds.
-#[cfg(feature = "llvm3-6")]
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 12;
-#[cfg(feature = "llvm3-7")]
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 14;
-#[cfg(feature = "llvm3-8")]
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 18;
-#[cfg(feature = "llvm3-9")]
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 20;
 #[cfg(feature = "llvm4-0")]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 22;
 #[cfg(feature = "llvm5-0")]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 23;
-#[cfg(feature = "llvm6-0")]
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 25;
-#[cfg(feature = "llvm7-0")]
+#[cfg(any(feature = "llvm6-0", feature = "llvm7-0"))]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 25;
 #[cfg(feature = "llvm8-0")]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 26;
@@ -42,11 +32,7 @@ pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 26;
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 28;
 #[cfg(any(feature = "llvm10-0", feature = "llvm11-0"))]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 30;
-#[cfg(feature = "llvm12-0")]
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 31;
-#[cfg(feature = "llvm13-0")]
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 31;
-#[cfg(feature = "llvm14-0")]
+#[cfg(any(feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"))]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 31;
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]

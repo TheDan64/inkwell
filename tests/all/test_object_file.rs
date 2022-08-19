@@ -1,11 +1,9 @@
-extern crate inkwell;
-
-use self::inkwell::context::Context;
-use self::inkwell::module::Module;
-use self::inkwell::targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine};
-use self::inkwell::types::IntType;
-use self::inkwell::values::BasicValue;
-use self::inkwell::OptimizationLevel;
+use inkwell::context::Context;
+use inkwell::module::Module;
+use inkwell::targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine};
+use inkwell::types::IntType;
+use inkwell::values::BasicValue;
+use inkwell::OptimizationLevel;
 
 #[llvm_versions(7.0..=latest)]
 fn get_host_cpu_name() -> String {
@@ -26,21 +24,13 @@ fn apply_target_to_module<'ctx>(target_machine: &TargetMachine, module: &Module)
     module.set_data_layout(&target_machine.get_target_data().get_data_layout());
 }
 
-#[llvm_versions(3.6..7.0)]
+#[llvm_versions(4.0..7.0)]
 fn get_host_cpu_name() -> String {
     "".to_string()
 }
-#[llvm_versions(3.6..7.0)]
+#[llvm_versions(4.0..7.0)]
 fn get_host_cpu_features() -> String {
     "".to_string()
-}
-#[llvm_versions(3.6..4.0)]
-fn ptr_sized_int_type<'ctx>(_target_machine: &TargetMachine, context: &'ctx Context) -> IntType<'ctx> {
-    context.i64_type()
-}
-#[llvm_versions(3.6..4.0)]
-fn apply_target_to_module(target_machine: &TargetMachine, module: &Module) {
-    module.set_triple(&target_machine.get_triple());
 }
 
 fn get_native_target_machine() -> TargetMachine {

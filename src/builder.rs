@@ -1,14 +1,12 @@
 //! A `Builder` enables you to build instructions.
 
-#[llvm_versions(3.9..=latest)]
-use llvm_sys::core::LLVMBuildAtomicCmpXchg;
 use llvm_sys::core::{
     LLVMAddCase, LLVMAddClause, LLVMAddDestination, LLVMBuildAShr, LLVMBuildAdd, LLVMBuildAddrSpaceCast,
     LLVMBuildAggregateRet, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc,
-    LLVMBuildAtomicRMW, LLVMBuildBitCast, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr,
-    LLVMBuildExactSDiv, LLVMBuildExtractElement, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv,
-    LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFPCast, LLVMBuildFPExt, LLVMBuildFPToSI, LLVMBuildFPToUI, LLVMBuildFPTrunc,
-    LLVMBuildFRem, LLVMBuildFSub, LLVMBuildFence, LLVMBuildFree, LLVMBuildGEP, LLVMBuildGlobalString,
+    LLVMBuildAtomicCmpXchg, LLVMBuildAtomicRMW, LLVMBuildBitCast, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast,
+    LLVMBuildCondBr, LLVMBuildExactSDiv, LLVMBuildExtractElement, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp,
+    LLVMBuildFDiv, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFPCast, LLVMBuildFPExt, LLVMBuildFPToSI, LLVMBuildFPToUI,
+    LLVMBuildFPTrunc, LLVMBuildFRem, LLVMBuildFSub, LLVMBuildFence, LLVMBuildFree, LLVMBuildGEP, LLVMBuildGlobalString,
     LLVMBuildGlobalStringPtr, LLVMBuildICmp, LLVMBuildInBoundsGEP, LLVMBuildIndirectBr, LLVMBuildInsertElement,
     LLVMBuildInsertValue, LLVMBuildIntCast, LLVMBuildIntToPtr, LLVMBuildInvoke, LLVMBuildIsNotNull, LLVMBuildIsNull,
     LLVMBuildLShr, LLVMBuildLandingPad, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNSWAdd, LLVMBuildNSWMul,
@@ -31,13 +29,10 @@ use crate::basic_block::BasicBlock;
 use crate::debug_info::DILocation;
 use crate::support::to_c_str;
 use crate::types::{AsTypeRef, BasicType, FloatMathType, IntMathType, PointerMathType, PointerType};
-use crate::values::CallableValue;
-#[llvm_versions(3.9..=latest)]
-use crate::values::StructValue;
 use crate::values::{
     AggregateValue, AggregateValueEnum, AsValueRef, BasicMetadataValueEnum, BasicValue, BasicValueEnum, CallSiteValue,
-    FloatMathValue, FunctionValue, GlobalValue, InstructionOpcode, InstructionValue, IntMathValue, IntValue, PhiValue,
-    PointerMathValue, PointerValue, VectorValue,
+    CallableValue, FloatMathValue, FunctionValue, GlobalValue, InstructionOpcode, InstructionValue, IntMathValue,
+    IntValue, PhiValue, PointerMathValue, PointerValue, StructValue, VectorValue,
 };
 #[cfg(feature = "internal-getters")]
 use crate::LLVMReference;
@@ -2292,7 +2287,6 @@ impl<'ctx> Builder<'ctx> {
     /// builder.build_return(None);
     /// ```
     // https://llvm.org/docs/LangRef.html#cmpxchg-instruction
-    #[llvm_versions(3.9..=latest)]
     pub fn build_cmpxchg<V: BasicValue<'ctx>>(
         &self,
         ptr: PointerValue<'ctx>,

@@ -3,6 +3,7 @@ pub mod error_handling;
 
 use libc::c_char;
 use llvm_sys::core::{LLVMCreateMessage, LLVMDisposeMessage};
+use llvm_sys::error_handling::LLVMEnablePrettyStackTrace;
 use llvm_sys::support::LLVMLoadLibraryPermanently;
 
 use std::borrow::Cow;
@@ -137,11 +138,6 @@ pub fn is_multithreaded() -> bool {
 }
 
 pub fn enable_llvm_pretty_stack_trace() {
-    #[llvm_versions(3.6..=3.7)]
-    use llvm_sys::core::LLVMEnablePrettyStackTrace;
-    #[llvm_versions(3.8..=latest)]
-    use llvm_sys::error_handling::LLVMEnablePrettyStackTrace;
-
     unsafe { LLVMEnablePrettyStackTrace() }
 }
 
@@ -165,13 +161,6 @@ pub(crate) fn to_c_str<'s>(mut s: &'s str) -> Cow<'s, CStr> {
 
 #[test]
 fn test_to_c_str() {
-    // TODO: If we raise our MSRV to >= 1.42 we can use matches!() here or
-    // is_owned()/is_borrowed() if it ever gets stabilized.
-    if let Cow::Borrowed(_) = to_c_str("my string") {
-        panic!();
-    }
-
-    if let Cow::Owned(_) = to_c_str("my string\0") {
-        panic!();
-    }
+    assert!(matches!(to_c_str("my string"), Cow::Owned(_)));
+    assert!(matches!(to_c_str("my string\0"), Cow::Borrowed(_)));
 }

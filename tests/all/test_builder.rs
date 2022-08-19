@@ -689,9 +689,6 @@ fn test_no_builder_double_free2() {
     // you're suppose to do in LLVM and LTO(?) has made it a more prominent issue?
     // builder.build_unreachable();
 
-    // #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
-    // assert_eq!(*module.print_to_string(), *CString::new("; ModuleID = \'my_mod\'\n\ndefine void @my_fn() {\nentry:\n  unreachable\n}\n").unwrap());
-    // #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     // assert_eq!(*module.print_to_string(), *CString::new("; ModuleID = \'my_mod\'\nsource_filename = \"my_mod\"\n\ndefine void @my_fn() {\nentry:\n  unreachable\n}\n").unwrap());
 
     // 2nd Context drops fine
@@ -1275,7 +1272,6 @@ fn test_atomicrmw() {
     assert!(result.is_err());
 }
 
-#[llvm_versions(3.9..=latest)]
 #[test]
 fn test_cmpxchg() {
     let context = Context::create();

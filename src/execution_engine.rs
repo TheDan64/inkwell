@@ -531,7 +531,7 @@ macro_rules! impl_unsafe_fn {
 
 impl_unsafe_fn!(A, B, C, D, E, F, G, H, I, J, K, L, M);
 
-#[cfg(all(feature = "experimental", not(any(feature = "llvm3-6", feature = "llvm3-7"))))]
+#[cfg(feature = "experimental")]
 pub mod experimental {
     use llvm_sys::error::{LLVMConsumeError, LLVMErrorRef, LLVMErrorTypeId, LLVMGetErrorMessage, LLVMGetErrorTypeId};
     use llvm_sys::orc::{

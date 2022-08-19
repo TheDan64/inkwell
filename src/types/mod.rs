@@ -36,8 +36,6 @@ pub use crate::types::void_type::VoidType;
 // Export the AsTypeRef to the outside based on features
 pub(crate) use crate::types::traits::AsTypeRef;
 
-#[llvm_versions(3.7..=4.0)]
-use llvm_sys::core::LLVMDumpType;
 use llvm_sys::core::{
     LLVMAlignOf, LLVMArrayType, LLVMConstNull, LLVMConstPointerNull, LLVMFunctionType, LLVMGetElementType,
     LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMSizeOf,
@@ -73,17 +71,6 @@ impl<'ctx> Type<'ctx> {
         Type {
             ty,
             _marker: PhantomData,
-        }
-    }
-
-    // REVIEW: LLVM 5.0+ seems to have removed this function in release mode
-    // and so will fail to link when used. I've decided to remove it from 5.0+
-    // for now. We should consider removing it altogether since print_to_string
-    // could be used and manually written to stderr in rust...
-    #[llvm_versions(3.7..=4.0)]
-    fn print_to_stderr(self) {
-        unsafe {
-            LLVMDumpType(self.ty);
         }
     }
 

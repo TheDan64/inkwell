@@ -2,9 +2,6 @@
 
 use libc::c_void;
 use llvm_sys::core::{LLVMGetDiagInfoDescription, LLVMGetDiagInfoSeverity};
-#[llvm_versions(3.6..3.8)]
-use llvm_sys::core::{LLVMInstallFatalErrorHandler, LLVMResetFatalErrorHandler};
-#[llvm_versions(3.8..=latest)]
 use llvm_sys::error_handling::{LLVMInstallFatalErrorHandler, LLVMResetFatalErrorHandler};
 use llvm_sys::prelude::LLVMDiagnosticInfoRef;
 use llvm_sys::LLVMDiagnosticSeverity;
