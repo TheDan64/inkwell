@@ -2,10 +2,13 @@ use either::Either;
 use std::convert::TryFrom;
 use std::fmt::{self, Display};
 
+use crate::types::AsTypeRef;
 use crate::values::AsValueRef;
 use crate::values::{AnyValue, FunctionValue, PointerValue};
 
 use llvm_sys::core::{LLVMGetElementType, LLVMGetReturnType, LLVMGetTypeKind, LLVMTypeOf};
+#[llvm_versions(14.0..=latest)]
+use llvm_sys::prelude::LLVMTypeRef;
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMTypeKind;
 
@@ -89,6 +92,18 @@ impl<'ctx> AsValueRef for CallableValue<'ctx> {
 }
 
 impl<'ctx> AnyValue<'ctx> for CallableValue<'ctx> {}
+
+#[llvm_versions(14.0..=latest)]
+impl<'ctx> AsTypeRef for CallableValue<'ctx> {
+    fn as_type_ref(&self) -> LLVMTypeRef {
+        use either::Either::*;
+
+        match self.0 {
+            Left(function) => function.get_type().as_type_ref(),
+            Right(pointer) => pointer.get_type().get_element_type().as_type_ref(),
+        }
+    }
+}
 
 impl<'ctx> CallableValue<'ctx> {
     pub(crate) fn returns_void(&self) -> bool {

@@ -4,12 +4,16 @@ use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyModule};
 #[allow(deprecated)]
 use llvm_sys::bit_reader::LLVMParseBitcodeInContext;
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
+#[llvm_versions(4.0..14.0)]
+use llvm_sys::core::LLVMGetTypeByName;
+#[llvm_versions(14.0..=latest)]
+use llvm_sys::core::LLVMGetTypeByName2;
 use llvm_sys::core::{
     LLVMAddFunction, LLVMAddGlobal, LLVMAddGlobalInAddressSpace, LLVMAddNamedMetadataOperand, LLVMCloneModule,
     LLVMDisposeModule, LLVMDumpModule, LLVMGetFirstFunction, LLVMGetFirstGlobal, LLVMGetLastFunction,
     LLVMGetLastGlobal, LLVMGetModuleContext, LLVMGetModuleIdentifier, LLVMGetNamedFunction, LLVMGetNamedGlobal,
-    LLVMGetNamedMetadataNumOperands, LLVMGetNamedMetadataOperands, LLVMGetTarget, LLVMGetTypeByName,
-    LLVMPrintModuleToFile, LLVMPrintModuleToString, LLVMSetDataLayout, LLVMSetModuleIdentifier, LLVMSetTarget,
+    LLVMGetNamedMetadataNumOperands, LLVMGetNamedMetadataOperands, LLVMGetTarget, LLVMPrintModuleToFile,
+    LLVMPrintModuleToString, LLVMSetDataLayout, LLVMSetModuleIdentifier, LLVMSetTarget,
 };
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::core::{LLVMAddModuleFlag, LLVMGetModuleFlag};
@@ -344,6 +348,37 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(module.get_struct_type("foo").unwrap(), opaque);
     /// ```
+    ///
+    #[llvm_versions(14.0..=latest)]
+    pub fn get_struct_type(&self, name: &str) -> Option<StructType<'ctx>> {
+        let c_string = to_c_str(name);
+
+        let struct_type = unsafe { LLVMGetTypeByName2(self.get_context().context, c_string.as_ptr()) };
+
+        if struct_type.is_null() {
+            return None;
+        }
+
+        unsafe { Some(StructType::new(struct_type)) }
+    }
+
+    /// Gets a named `StructType` from this `Module`'s `Context`.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    ///
+    /// assert!(module.get_struct_type("foo").is_none());
+    ///
+    /// let opaque = context.opaque_struct_type("foo");
+    ///
+    /// assert_eq!(module.get_struct_type("foo").unwrap(), opaque);
+    /// ```
+    #[llvm_versions(4.0..14.0)]
     pub fn get_struct_type(&self, name: &str) -> Option<StructType<'ctx>> {
         let c_string = to_c_str(name);
 
