@@ -4,12 +4,16 @@ use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyModule};
 #[allow(deprecated)]
 use llvm_sys::bit_reader::LLVMParseBitcodeInContext;
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
+#[llvm_versions(4.0..14.0)]
+use llvm_sys::core::LLVMGetTypeByName;
+#[llvm_versions(14.0..=latest)]
+use llvm_sys::core::LLVMGetTypeByName2;
 use llvm_sys::core::{
     LLVMAddFunction, LLVMAddGlobal, LLVMAddGlobalInAddressSpace, LLVMAddNamedMetadataOperand, LLVMCloneModule,
     LLVMDisposeModule, LLVMDumpModule, LLVMGetFirstFunction, LLVMGetFirstGlobal, LLVMGetLastFunction,
     LLVMGetLastGlobal, LLVMGetModuleContext, LLVMGetModuleIdentifier, LLVMGetNamedFunction, LLVMGetNamedGlobal,
-    LLVMGetNamedMetadataNumOperands, LLVMGetNamedMetadataOperands, LLVMGetTarget, LLVMGetTypeByName,
-    LLVMPrintModuleToFile, LLVMPrintModuleToString, LLVMSetDataLayout, LLVMSetModuleIdentifier, LLVMSetTarget,
+    LLVMGetNamedMetadataNumOperands, LLVMGetNamedMetadataOperands, LLVMGetTarget, LLVMPrintModuleToFile,
+    LLVMPrintModuleToString, LLVMSetDataLayout, LLVMSetModuleIdentifier, LLVMSetTarget,
 };
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::core::{LLVMAddModuleFlag, LLVMGetModuleFlag};
@@ -344,9 +348,38 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(module.get_struct_type("foo").unwrap(), opaque);
     /// ```
+    ///
     pub fn get_struct_type(&self, name: &str) -> Option<StructType<'ctx>> {
         let c_string = to_c_str(name);
 
+        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
+        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        )))]
+        let struct_type = unsafe { LLVMGetTypeByName2(self.get_context().context, c_string.as_ptr()) };
+
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        ))]
         let struct_type = unsafe { LLVMGetTypeByName(self.module.get(), c_string.as_ptr()) };
 
         if struct_type.is_null() {
