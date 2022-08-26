@@ -7,7 +7,6 @@ use crate::values::AsValueRef;
 use crate::values::{AnyValue, FunctionValue, PointerValue};
 
 use llvm_sys::core::{LLVMGetElementType, LLVMGetReturnType, LLVMGetTypeKind, LLVMTypeOf};
-#[llvm_versions(14.0..=latest)]
 use llvm_sys::prelude::LLVMTypeRef;
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMTypeKind;
