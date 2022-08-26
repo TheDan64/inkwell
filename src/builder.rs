@@ -175,7 +175,18 @@ impl<'ctx> Builder<'ctx> {
         let c_string = to_c_str(name);
         let mut args: Vec<LLVMValueRef> = args.iter().map(|val| val.as_value_ref()).collect();
 
-        #[cfg(feature = "llvm14-0")]
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        )))]
         let value = unsafe {
             let fn_ty_ref = callable_value.as_type_ref();
             LLVMBuildCall2(
@@ -188,7 +199,18 @@ impl<'ctx> Builder<'ctx> {
             )
         };
 
-        #[cfg(not(feature = "llvm14-0"))]
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        ))]
         let value = unsafe {
             LLVMBuildCall(
                 self.builder,
@@ -301,7 +323,20 @@ impl<'ctx> Builder<'ctx> {
         let c_string = to_c_str(name);
         let mut args: Vec<LLVMValueRef> = args.iter().map(|val| val.as_value_ref()).collect();
 
-        #[cfg(feature = "llvm14-0")]
+        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
+        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        )))]
         let value = unsafe {
             let fn_ty_ref = callable_value.as_type_ref();
             LLVMBuildInvoke2(
@@ -316,7 +351,18 @@ impl<'ctx> Builder<'ctx> {
             )
         };
 
-        #[cfg(not(feature = "llvm14-0"))]
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        ))]
         let value = unsafe {
             LLVMBuildInvoke(
                 self.builder,
@@ -596,7 +642,21 @@ impl<'ctx> Builder<'ctx> {
         let c_string = to_c_str(name);
 
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
-        #[cfg(feature = "llvm14-0")]
+
+        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
+        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        )))]
         let value = LLVMBuildGEP2(
             self.builder,
             ptr.get_type().get_element_type().as_type_ref(),
@@ -606,7 +666,18 @@ impl<'ctx> Builder<'ctx> {
             c_string.as_ptr(),
         );
 
-        #[cfg(not(feature = "llvm14-0"))]
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        ))]
         let value = LLVMBuildGEP(
             self.builder,
             ptr.as_value_ref(),
@@ -631,7 +702,20 @@ impl<'ctx> Builder<'ctx> {
 
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
-        #[cfg(feature = "llvm14-0")]
+        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
+        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        )))]
         let value = LLVMBuildInBoundsGEP2(
             self.builder,
             ptr.get_type().get_element_type().as_type_ref(),
@@ -641,7 +725,18 @@ impl<'ctx> Builder<'ctx> {
             c_string.as_ptr(),
         );
 
-        #[cfg(not(feature = "llvm14-0"))]
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        ))]
         let value = LLVMBuildInBoundsGEP(
             self.builder,
             ptr.as_value_ref(),
@@ -702,7 +797,20 @@ impl<'ctx> Builder<'ctx> {
 
         let c_string = to_c_str(name);
 
-        #[cfg(feature = "llvm14-0")]
+        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
+        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        )))]
         let value = unsafe {
             LLVMBuildStructGEP2(
                 self.builder,
@@ -713,7 +821,18 @@ impl<'ctx> Builder<'ctx> {
             )
         };
 
-        #[cfg(not(feature = "llvm14-0"))]
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        ))]
         let value = unsafe { LLVMBuildStructGEP(self.builder, ptr.as_value_ref(), index, c_string.as_ptr()) };
 
         unsafe { Ok(PointerValue::new(value)) }
@@ -752,7 +871,20 @@ impl<'ctx> Builder<'ctx> {
     ) -> IntValue<'ctx> {
         let c_string = to_c_str(name);
 
-        #[cfg(feature = "llvm14-0")]
+        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
+        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        )))]
         let value = unsafe {
             LLVMBuildPtrDiff2(
                 self.builder,
@@ -763,7 +895,18 @@ impl<'ctx> Builder<'ctx> {
             )
         };
 
-        #[cfg(not(feature = "llvm14-0"))]
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        ))]
         let value = unsafe {
             LLVMBuildPtrDiff(
                 self.builder,
@@ -847,7 +990,20 @@ impl<'ctx> Builder<'ctx> {
     pub fn build_load(&self, ptr: PointerValue<'ctx>, name: &str) -> BasicValueEnum<'ctx> {
         let c_string = to_c_str(name);
 
-        #[cfg(feature = "llvm14-0")]
+        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
+        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        )))]
         let value = unsafe {
             LLVMBuildLoad2(
                 self.builder,
@@ -857,7 +1013,18 @@ impl<'ctx> Builder<'ctx> {
             )
         };
 
-        #[cfg(not(feature = "llvm14-0"))]
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        ))]
         let value = unsafe { LLVMBuildLoad(self.builder, ptr.as_value_ref(), c_string.as_ptr()) };
 
         unsafe { BasicValueEnum::new(value) }

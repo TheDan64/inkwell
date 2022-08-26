@@ -75,7 +75,20 @@ impl<'ctx> PointerValue<'ctx> {
     pub unsafe fn const_gep(self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
-        #[cfg(feature = "llvm14-0")]
+        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
+        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        )))]
         let value = {
             LLVMConstGEP2(
                 self.get_type().get_element_type().as_type_ref(),
@@ -85,7 +98,18 @@ impl<'ctx> PointerValue<'ctx> {
             )
         };
 
-        #[cfg(not(feature = "llvm14-0"))]
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        ))]
         let value = {
             LLVMConstGEP(
                 self.as_value_ref(),
@@ -101,7 +125,20 @@ impl<'ctx> PointerValue<'ctx> {
     pub unsafe fn const_in_bounds_gep(self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
-        #[cfg(feature = "llvm14-0")]
+        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
+        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        )))]
         let value = {
             LLVMConstInBoundsGEP2(
                 self.get_type().get_element_type().as_type_ref(),
@@ -111,7 +148,18 @@ impl<'ctx> PointerValue<'ctx> {
             )
         };
 
-        #[cfg(not(feature = "llvm14-0"))]
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        ))]
         let value = {
             LLVMConstInBoundsGEP(
                 self.as_value_ref(),

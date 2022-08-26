@@ -93,7 +93,6 @@ impl<'ctx> AsValueRef for CallableValue<'ctx> {
 
 impl<'ctx> AnyValue<'ctx> for CallableValue<'ctx> {}
 
-#[llvm_versions(14.0..=latest)]
 impl<'ctx> AsTypeRef for CallableValue<'ctx> {
     fn as_type_ref(&self) -> LLVMTypeRef {
         use either::Either::*;
