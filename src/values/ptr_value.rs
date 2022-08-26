@@ -69,14 +69,13 @@ impl<'ctx> PointerValue<'ctx> {
     pub fn as_instruction(self) -> Option<InstructionValue<'ctx>> {
         self.ptr_value.as_instruction()
     }
-}
 
-#[llvm_versions(14.0..=latest)]
-impl<'ctx> PointerValue<'ctx> {
     // REVIEW: Should this be on array value too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
     pub unsafe fn const_gep(self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
+
+        #[cfg(feature = "llvm14-0")]
         let value = {
             LLVMConstGEP2(
                 self.get_type().get_element_type().as_type_ref(),
@@ -86,31 +85,7 @@ impl<'ctx> PointerValue<'ctx> {
             )
         };
 
-        PointerValue::new(value)
-    }
-
-    /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    pub unsafe fn const_in_bounds_gep(self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
-        let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
-        let value = {
-            LLVMConstInBoundsGEP2(
-                self.get_type().get_element_type().as_type_ref(),
-                self.as_value_ref(),
-                index_values.as_mut_ptr(),
-                index_values.len() as u32,
-            )
-        };
-
-        PointerValue::new(value)
-    }
-}
-
-#[llvm_versions(4.0..14.0)]
-impl<'ctx> PointerValue<'ctx> {
-    // REVIEW: Should this be on array value too?
-    /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    pub unsafe fn const_gep(self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
-        let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
+        #[cfg(not(feature = "llvm14-0"))]
         let value = {
             LLVMConstGEP(
                 self.as_value_ref(),
@@ -125,6 +100,18 @@ impl<'ctx> PointerValue<'ctx> {
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
     pub unsafe fn const_in_bounds_gep(self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
+
+        #[cfg(feature = "llvm14-0")]
+        let value = {
+            LLVMConstInBoundsGEP2(
+                self.get_type().get_element_type().as_type_ref(),
+                self.as_value_ref(),
+                index_values.as_mut_ptr(),
+                index_values.len() as u32,
+            )
+        };
+
+        #[cfg(not(feature = "llvm14-0"))]
         let value = {
             LLVMConstInBoundsGEP(
                 self.as_value_ref(),
