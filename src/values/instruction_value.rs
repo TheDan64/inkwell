@@ -142,8 +142,12 @@ impl<'ctx> InstructionValue<'ctx> {
     }
 
     /// Get name of the `InstructionValue`.
-    pub fn get_name(&self) -> &CStr {
-        self.instruction_value.get_name()
+    pub fn get_name(&self) -> Option<&CStr> {
+        if self.get_type().is_void_type() {
+            None
+        } else {
+            Some(self.instruction_value.get_name())
+        }
     }
 
     /// Set name of the `InstructionValue`.
