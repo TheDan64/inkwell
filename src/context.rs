@@ -3,7 +3,7 @@
 #[llvm_versions(7.0..=latest)]
 use crate::InlineAsmDialect;
 use libc::c_void;
-#[llvm_versions(3.6..7.0)]
+#[llvm_versions(4.0..7.0)]
 use llvm_sys::core::LLVMConstInlineAsm;
 #[llvm_versions(12.0..=latest)]
 use llvm_sys::core::LLVMCreateTypeAttribute;
@@ -13,22 +13,20 @@ use llvm_sys::core::LLVMGetInlineAsm;
 use llvm_sys::core::LLVMMetadataTypeInContext;
 use llvm_sys::core::{
     LLVMAppendBasicBlockInContext, LLVMConstStringInContext, LLVMConstStructInContext, LLVMContextCreate,
-    LLVMContextDispose, LLVMContextSetDiagnosticHandler, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext,
-    LLVMFP128TypeInContext, LLVMFloatTypeInContext, LLVMGetGlobalContext, LLVMGetMDKindIDInContext,
-    LLVMHalfTypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext,
-    LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMMDNodeInContext,
-    LLVMMDStringInContext, LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext, LLVMStructCreateNamed,
-    LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMX86FP80TypeInContext,
+    LLVMContextDispose, LLVMContextSetDiagnosticHandler, LLVMCreateBuilderInContext, LLVMCreateEnumAttribute,
+    LLVMCreateStringAttribute, LLVMDoubleTypeInContext, LLVMFP128TypeInContext, LLVMFloatTypeInContext,
+    LLVMGetGlobalContext, LLVMGetMDKindIDInContext, LLVMHalfTypeInContext, LLVMInsertBasicBlockInContext,
+    LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext,
+    LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMMDNodeInContext, LLVMMDStringInContext,
+    LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext, LLVMStructCreateNamed, LLVMStructTypeInContext,
+    LLVMVoidTypeInContext, LLVMX86FP80TypeInContext,
 };
-#[llvm_versions(3.9..=latest)]
-use llvm_sys::core::{LLVMCreateEnumAttribute, LLVMCreateStringAttribute};
 use llvm_sys::ir_reader::LLVMParseIRInContext;
 use llvm_sys::prelude::{LLVMContextRef, LLVMDiagnosticInfoRef, LLVMTypeRef, LLVMValueRef};
 use llvm_sys::target::{LLVMIntPtrTypeForASInContext, LLVMIntPtrTypeInContext};
 use once_cell::sync::Lazy;
 use parking_lot::{Mutex, MutexGuard};
 
-#[llvm_versions(3.9..=latest)]
 use crate::attributes::Attribute;
 use crate::basic_block::BasicBlock;
 use crate::builder::Builder;
@@ -36,9 +34,11 @@ use crate::memory_buffer::MemoryBuffer;
 use crate::module::Module;
 use crate::support::{to_c_str, LLVMString};
 use crate::targets::TargetData;
+#[llvm_versions(12.0..=latest)]
+use crate::types::AnyTypeEnum;
 #[llvm_versions(6.0..=latest)]
 use crate::types::MetadataType;
-use crate::types::{AnyTypeEnum, AsTypeRef, BasicTypeEnum, FloatType, FunctionType, IntType, StructType, VoidType};
+use crate::types::{AsTypeRef, BasicTypeEnum, FloatType, FunctionType, IntType, StructType, VoidType};
 use crate::values::{
     AsValueRef, BasicMetadataValueEnum, BasicValueEnum, FunctionValue, MetadataValue, PointerValue, StructValue,
     VectorValue,
@@ -323,7 +323,7 @@ impl Context {
     /// builder.build_call(callable_value, params, "exit");
     /// builder.build_return(None);
     /// ```
-    #[llvm_versions(3.6..7.0)]
+    #[llvm_versions(4.0..7.0)]
     pub fn create_inline_asm(
         &self,
         ty: FunctionType,
@@ -943,7 +943,6 @@ impl Context {
     ///
     /// assert!(enum_attribute.is_enum());
     /// ```
-    #[llvm_versions(3.9..=latest)]
     pub fn create_enum_attribute(&self, kind_id: u32, val: u64) -> Attribute {
         unsafe { Attribute::new(LLVMCreateEnumAttribute(self.context, kind_id, val)) }
     }
@@ -960,7 +959,6 @@ impl Context {
     ///
     /// assert!(string_attribute.is_string());
     /// ```
-    #[llvm_versions(3.9..=latest)]
     pub fn create_string_attribute(&self, key: &str, val: &str) -> Attribute {
         unsafe {
             Attribute::new(LLVMCreateStringAttribute(

@@ -78,13 +78,6 @@ impl<'ctx> VoidType<'ctx> {
     pub fn print_to_string(self) -> LLVMString {
         self.void_type.print_to_string()
     }
-
-    // See Type::print_to_stderr note on 5.0+ status
-    /// Prints the definition of a `VoidType` to stderr. Not available in newer LLVM versions.
-    #[llvm_versions(3.7..=4.0)]
-    pub fn print_to_stderr(self) {
-        self.void_type.print_to_stderr()
-    }
 }
 
 impl AsTypeRef for VoidType<'_> {

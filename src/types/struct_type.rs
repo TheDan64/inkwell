@@ -1,8 +1,6 @@
-#[llvm_versions(3.7..=latest)]
-use llvm_sys::core::LLVMStructGetTypeAtIndex;
 use llvm_sys::core::{
     LLVMConstArray, LLVMConstNamedStruct, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName,
-    LLVMIsOpaqueStruct, LLVMIsPackedStruct, LLVMStructSetBody,
+    LLVMIsOpaqueStruct, LLVMIsPackedStruct, LLVMStructGetTypeAtIndex, LLVMStructSetBody,
 };
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
@@ -46,7 +44,6 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// assert_eq!(struct_type.get_field_type_at_index(0).unwrap().into_float_type(), f32_type);
     /// ```
-    #[llvm_versions(3.7..=latest)]
     pub fn get_field_type_at_index(self, index: u32) -> Option<BasicTypeEnum<'ctx>> {
         // LLVM doesn't seem to just return null if opaque.
         // TODO: One day, with SubTypes (& maybe specialization?) we could just
@@ -317,13 +314,6 @@ impl<'ctx> StructType<'ctx> {
     /// Print the definition of a `StructType` to `LLVMString`.
     pub fn print_to_string(self) -> LLVMString {
         self.struct_type.print_to_string()
-    }
-
-    // See Type::print_to_stderr note on 5.0+ status
-    /// Prints the definition of an `StructType` to stderr. Not available in newer LLVM versions.
-    #[llvm_versions(3.7..=4.0)]
-    pub fn print_to_stderr(self) {
-        self.struct_type.print_to_stderr()
     }
 
     /// Creates an undefined instance of a `StructType`.

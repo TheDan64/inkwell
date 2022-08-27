@@ -222,13 +222,6 @@ impl<'ctx> FloatType<'ctx> {
         self.float_type.print_to_string()
     }
 
-    // See Type::print_to_stderr note on 5.0+ status
-    /// Prints the definition of an `IntType` to stderr. Not available in newer LLVM versions.
-    #[llvm_versions(3.7..=4.0)]
-    pub fn print_to_stderr(self) {
-        self.float_type.print_to_stderr()
-    }
-
     /// Creates an undefined instance of a `FloatType`.
     ///
     /// # Example

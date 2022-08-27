@@ -282,10 +282,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     ) -> DICompileUnit<'ctx> {
         let metadata_ref = unsafe {
             #[cfg(any(
-                feature = "llvm3-6",
-                feature = "llvm3-7",
-                feature = "llvm3-8",
-                feature = "llvm3-9",
                 feature = "llvm4-0",
                 feature = "llvm5-0",
                 feature = "llvm6-0",

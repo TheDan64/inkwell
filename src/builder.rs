@@ -1,29 +1,37 @@
 //! A `Builder` enables you to build instructions.
 
-#[llvm_versions(3.9..=latest)]
-use llvm_sys::core::LLVMBuildAtomicCmpXchg;
 use llvm_sys::core::{
     LLVMAddCase, LLVMAddClause, LLVMAddDestination, LLVMBuildAShr, LLVMBuildAdd, LLVMBuildAddrSpaceCast,
     LLVMBuildAggregateRet, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc,
-    LLVMBuildAtomicRMW, LLVMBuildBitCast, LLVMBuildBr, LLVMBuildCall, LLVMBuildCast, LLVMBuildCondBr,
+    LLVMBuildAtomicCmpXchg, LLVMBuildAtomicRMW, LLVMBuildBitCast, LLVMBuildBr, LLVMBuildCast, LLVMBuildCondBr,
     LLVMBuildExactSDiv, LLVMBuildExtractElement, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv,
     LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFPCast, LLVMBuildFPExt, LLVMBuildFPToSI, LLVMBuildFPToUI, LLVMBuildFPTrunc,
-    LLVMBuildFRem, LLVMBuildFSub, LLVMBuildFence, LLVMBuildFree, LLVMBuildGEP, LLVMBuildGlobalString,
-    LLVMBuildGlobalStringPtr, LLVMBuildICmp, LLVMBuildInBoundsGEP, LLVMBuildIndirectBr, LLVMBuildInsertElement,
-    LLVMBuildInsertValue, LLVMBuildIntCast, LLVMBuildIntToPtr, LLVMBuildInvoke, LLVMBuildIsNotNull, LLVMBuildIsNull,
-    LLVMBuildLShr, LLVMBuildLandingPad, LLVMBuildLoad, LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNSWAdd, LLVMBuildNSWMul,
-    LLVMBuildNSWNeg, LLVMBuildNSWSub, LLVMBuildNUWAdd, LLVMBuildNUWMul, LLVMBuildNUWNeg, LLVMBuildNUWSub, LLVMBuildNeg,
-    LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildPtrDiff, LLVMBuildPtrToInt,
-    LLVMBuildResume, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildSDiv, LLVMBuildSExt, LLVMBuildSExtOrBitCast,
-    LLVMBuildSIToFP, LLVMBuildSRem, LLVMBuildSelect, LLVMBuildShl, LLVMBuildShuffleVector, LLVMBuildStore,
-    LLVMBuildStructGEP, LLVMBuildSub, LLVMBuildSwitch, LLVMBuildTrunc, LLVMBuildTruncOrBitCast, LLVMBuildUDiv,
+    LLVMBuildFRem, LLVMBuildFSub, LLVMBuildFence, LLVMBuildFree, LLVMBuildGlobalString, LLVMBuildGlobalStringPtr,
+    LLVMBuildICmp, LLVMBuildIndirectBr, LLVMBuildInsertElement, LLVMBuildInsertValue, LLVMBuildIntCast,
+    LLVMBuildIntToPtr, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLShr, LLVMBuildLandingPad, LLVMBuildMalloc,
+    LLVMBuildMul, LLVMBuildNSWAdd, LLVMBuildNSWMul, LLVMBuildNSWNeg, LLVMBuildNSWSub, LLVMBuildNUWAdd, LLVMBuildNUWMul,
+    LLVMBuildNUWNeg, LLVMBuildNUWSub, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast,
+    LLVMBuildPtrToInt, LLVMBuildResume, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildSDiv, LLVMBuildSExt,
+    LLVMBuildSExtOrBitCast, LLVMBuildSIToFP, LLVMBuildSRem, LLVMBuildSelect, LLVMBuildShl, LLVMBuildShuffleVector,
+    LLVMBuildStore, LLVMBuildSub, LLVMBuildSwitch, LLVMBuildTrunc, LLVMBuildTruncOrBitCast, LLVMBuildUDiv,
     LLVMBuildUIToFP, LLVMBuildURem, LLVMBuildUnreachable, LLVMBuildVAArg, LLVMBuildXor, LLVMBuildZExt,
     LLVMBuildZExtOrBitCast, LLVMClearInsertionPosition, LLVMDisposeBuilder, LLVMGetInsertBlock, LLVMInsertIntoBuilder,
     LLVMInsertIntoBuilderWithName, LLVMPositionBuilder, LLVMPositionBuilderAtEnd, LLVMPositionBuilderBefore,
     LLVMSetCleanup,
 };
+#[llvm_versions(4.0..14.0)]
+use llvm_sys::core::{
+    LLVMBuildCall, LLVMBuildGEP, LLVMBuildInBoundsGEP, LLVMBuildInvoke, LLVMBuildLoad, LLVMBuildPtrDiff,
+    LLVMBuildStructGEP,
+};
+#[llvm_versions(14.0..=latest)]
+use llvm_sys::core::{
+    LLVMBuildCall2, LLVMBuildGEP2, LLVMBuildInBoundsGEP2, LLVMBuildInvoke2, LLVMBuildLoad2, LLVMBuildPtrDiff2,
+    LLVMBuildStructGEP2,
+};
 #[llvm_versions(8.0..=latest)]
 use llvm_sys::core::{LLVMBuildIntCast2, LLVMBuildMemCpy, LLVMBuildMemMove, LLVMBuildMemSet};
+
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 
 use crate::basic_block::BasicBlock;
@@ -31,13 +39,10 @@ use crate::basic_block::BasicBlock;
 use crate::debug_info::DILocation;
 use crate::support::to_c_str;
 use crate::types::{AsTypeRef, BasicType, FloatMathType, IntMathType, PointerMathType, PointerType};
-use crate::values::CallableValue;
-#[llvm_versions(3.9..=latest)]
-use crate::values::StructValue;
 use crate::values::{
     AggregateValue, AggregateValueEnum, AsValueRef, BasicMetadataValueEnum, BasicValue, BasicValueEnum, CallSiteValue,
-    FloatMathValue, FunctionValue, GlobalValue, InstructionOpcode, InstructionValue, IntMathValue, IntValue, PhiValue,
-    PointerMathValue, PointerValue, VectorValue,
+    CallableValue, FloatMathValue, FunctionValue, GlobalValue, InstructionOpcode, InstructionValue, IntMathValue,
+    IntValue, PhiValue, PointerMathValue, PointerValue, StructValue, VectorValue,
 };
 #[cfg(feature = "internal-getters")]
 use crate::LLVMReference;
@@ -169,6 +174,43 @@ impl<'ctx> Builder<'ctx> {
 
         let c_string = to_c_str(name);
         let mut args: Vec<LLVMValueRef> = args.iter().map(|val| val.as_value_ref()).collect();
+
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        )))]
+        let value = unsafe {
+            let fn_ty_ref = callable_value.as_type_ref();
+            LLVMBuildCall2(
+                self.builder,
+                fn_ty_ref,
+                fn_val_ref,
+                args.as_mut_ptr(),
+                args.len() as u32,
+                c_string.as_ptr(),
+            )
+        };
+
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        ))]
         let value = unsafe {
             LLVMBuildCall(
                 self.builder,
@@ -272,7 +314,7 @@ impl<'ctx> Builder<'ctx> {
     where
         F: Into<CallableValue<'ctx>>,
     {
-        let callable_value = function.into();
+        let callable_value: CallableValue<'ctx> = function.into();
         let fn_val_ref = callable_value.as_value_ref();
 
         // LLVM gets upset when void return calls are named because they don't return anything
@@ -280,6 +322,47 @@ impl<'ctx> Builder<'ctx> {
 
         let c_string = to_c_str(name);
         let mut args: Vec<LLVMValueRef> = args.iter().map(|val| val.as_value_ref()).collect();
+
+        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
+        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        )))]
+        let value = unsafe {
+            let fn_ty_ref = callable_value.as_type_ref();
+            LLVMBuildInvoke2(
+                self.builder,
+                fn_ty_ref,
+                fn_val_ref,
+                args.as_mut_ptr(),
+                args.len() as u32,
+                then_block.basic_block,
+                catch_block.basic_block,
+                c_string.as_ptr(),
+            )
+        };
+
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        ))]
         let value = unsafe {
             LLVMBuildInvoke(
                 self.builder,
@@ -559,6 +642,42 @@ impl<'ctx> Builder<'ctx> {
         let c_string = to_c_str(name);
 
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
+
+        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
+        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        )))]
+        let value = LLVMBuildGEP2(
+            self.builder,
+            ptr.get_type().get_element_type().as_type_ref(),
+            ptr.as_value_ref(),
+            index_values.as_mut_ptr(),
+            index_values.len() as u32,
+            c_string.as_ptr(),
+        );
+
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        ))]
         let value = LLVMBuildGEP(
             self.builder,
             ptr.as_value_ref(),
@@ -582,6 +701,42 @@ impl<'ctx> Builder<'ctx> {
         let c_string = to_c_str(name);
 
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
+
+        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
+        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        )))]
+        let value = LLVMBuildInBoundsGEP2(
+            self.builder,
+            ptr.get_type().get_element_type().as_type_ref(),
+            ptr.as_value_ref(),
+            index_values.as_mut_ptr(),
+            index_values.len() as u32,
+            c_string.as_ptr(),
+        );
+
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        ))]
         let value = LLVMBuildInBoundsGEP(
             self.builder,
             ptr.as_value_ref(),
@@ -641,6 +796,43 @@ impl<'ctx> Builder<'ctx> {
         }
 
         let c_string = to_c_str(name);
+
+        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
+        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        )))]
+        let value = unsafe {
+            LLVMBuildStructGEP2(
+                self.builder,
+                ptr.get_type().get_element_type().as_type_ref(),
+                ptr.as_value_ref(),
+                index,
+                c_string.as_ptr(),
+            )
+        };
+
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        ))]
         let value = unsafe { LLVMBuildStructGEP(self.builder, ptr.as_value_ref(), index, c_string.as_ptr()) };
 
         unsafe { Ok(PointerValue::new(value)) }
@@ -678,6 +870,43 @@ impl<'ctx> Builder<'ctx> {
         name: &str,
     ) -> IntValue<'ctx> {
         let c_string = to_c_str(name);
+
+        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
+        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        )))]
+        let value = unsafe {
+            LLVMBuildPtrDiff2(
+                self.builder,
+                lhs_ptr.get_type().as_type_ref(),
+                lhs_ptr.as_value_ref(),
+                rhs_ptr.as_value_ref(),
+                c_string.as_ptr(),
+            )
+        };
+
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        ))]
         let value = unsafe {
             LLVMBuildPtrDiff(
                 self.builder,
@@ -760,6 +989,42 @@ impl<'ctx> Builder<'ctx> {
     /// ```
     pub fn build_load(&self, ptr: PointerValue<'ctx>, name: &str) -> BasicValueEnum<'ctx> {
         let c_string = to_c_str(name);
+
+        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
+        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        )))]
+        let value = unsafe {
+            LLVMBuildLoad2(
+                self.builder,
+                ptr.get_type().get_element_type().as_type_ref(),
+                ptr.as_value_ref(),
+                c_string.as_ptr(),
+            )
+        };
+
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        ))]
         let value = unsafe { LLVMBuildLoad(self.builder, ptr.as_value_ref(), c_string.as_ptr()) };
 
         unsafe { BasicValueEnum::new(value) }
@@ -2292,7 +2557,6 @@ impl<'ctx> Builder<'ctx> {
     /// builder.build_return(None);
     /// ```
     // https://llvm.org/docs/LangRef.html#cmpxchg-instruction
-    #[llvm_versions(3.9..=latest)]
     pub fn build_cmpxchg<V: BasicValue<'ctx>>(
         &self,
         ptr: PointerValue<'ctx>,

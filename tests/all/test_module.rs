@@ -1,11 +1,9 @@
-extern crate inkwell;
-
-use self::inkwell::context::Context;
-use self::inkwell::memory_buffer::MemoryBuffer;
-use self::inkwell::module::Module;
-use self::inkwell::targets::{Target, TargetTriple};
-use self::inkwell::values::AnyValue;
-use self::inkwell::OptimizationLevel;
+use inkwell::context::Context;
+use inkwell::memory_buffer::MemoryBuffer;
+use inkwell::module::Module;
+use inkwell::targets::{Target, TargetTriple};
+use inkwell::values::AnyValue;
+use inkwell::OptimizationLevel;
 
 use std::env::temp_dir;
 use std::fs::{remove_file, File};
@@ -347,38 +345,19 @@ fn test_get_set_target() {
     let module = context.create_module("mod");
     let triple = TargetTriple::create("x86_64-pc-linux-gnu");
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     assert_eq!(module.get_name().to_str(), Ok("mod"));
     assert_eq!(module.get_triple(), TargetTriple::create(""));
 
-    #[cfg(not(any(
-        feature = "llvm3-6",
-        feature = "llvm3-7",
-        feature = "llvm3-8",
-        feature = "llvm3-9",
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0"
-    )))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     assert_eq!(module.get_source_file_name().to_str(), Ok("mod"));
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     module.set_name("mod2");
     module.set_triple(&triple);
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
     assert_eq!(module.get_name().to_str(), Ok("mod2"));
     assert_eq!(module.get_triple(), triple);
 
-    #[cfg(not(any(
-        feature = "llvm3-6",
-        feature = "llvm3-7",
-        feature = "llvm3-8",
-        feature = "llvm3-9",
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0"
-    )))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     {
         module.set_source_file_name("foo.rs");
 
@@ -438,9 +417,6 @@ fn test_linking_modules() {
 
     // EE owned module links in unowned module which has
     // another definition for the same funciton name, "f2"
-    #[cfg(feature = "llvm3-6")] // Likely a LLVM bug that no error message is produced in 3-6
-    assert_eq!(module.link_in_module(module5).unwrap_err().to_str(), Ok(""));
-    #[cfg(not(feature = "llvm3-6"))]
     assert_eq!(
         module.link_in_module(module5).unwrap_err().to_str(),
         Ok("Linking globals named \'f2\': symbol multiply defined!")
@@ -464,20 +440,12 @@ fn test_linking_modules() {
 
 #[test]
 fn test_metadata_flags() {
-    #[cfg(not(any(
-        feature = "llvm3-6",
-        feature = "llvm3-7",
-        feature = "llvm3-8",
-        feature = "llvm3-9",
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0"
-    )))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     {
         let context = Context::create();
         let module = context.create_module("my_module");
 
-        use self::inkwell::module::FlagBehavior;
+        use inkwell::module::FlagBehavior;
 
         assert!(module.get_flag("some_key").is_none());
 

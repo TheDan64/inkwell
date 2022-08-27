@@ -237,7 +237,6 @@ impl<'ctx> AnyTypeEnum<'ctx> {
             LLVMTypeKind::LLVMX86_MMXTypeKind => panic!("FIXME: Unsupported type: MMX"),
             #[cfg(any(feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"))]
             LLVMTypeKind::LLVMX86_AMXTypeKind => panic!("FIXME: Unsupported type: AMX"),
-            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
             LLVMTypeKind::LLVMTokenTypeKind => panic!("FIXME: Unsupported type: Token"),
         }
     }
@@ -408,7 +407,6 @@ impl<'ctx> BasicTypeEnum<'ctx> {
             LLVMTypeKind::LLVMLabelTypeKind => unreachable!("Unsupported basic type: Label"),
             LLVMTypeKind::LLVMVoidTypeKind => unreachable!("Unsupported basic type: VoidType"),
             LLVMTypeKind::LLVMFunctionTypeKind => unreachable!("Unsupported basic type: FunctionType"),
-            #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
             LLVMTypeKind::LLVMTokenTypeKind => unreachable!("Unsupported basic type: Token"),
         }
     }

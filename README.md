@@ -1,11 +1,11 @@
 # Inkwell(s)
 
 [![Crates.io](https://img.shields.io/crates/v/inkwell.svg?style=plastic)](https://crates.io/crates/inkwell)
-[![Build Status](https://travis-ci.com/TheDan64/inkwell.svg?branch=master)](https://travis-ci.com/TheDan64/inkwell)
+[![Build Status](https://github.com/TheDan64/inkwell/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/TheDan64/inkwell/actions/workflows/test.yml?query=branch%3Amaster)
 [![codecov](https://codecov.io/gh/TheDan64/inkwell/branch/master/graph/badge.svg)](https://codecov.io/gh/TheDan64/inkwell)
 [![lines of code](https://tokei.rs/b1/github/TheDan64/inkwell)](https://github.com/Aaronepower/tokei)
 [![Join the chat at https://gitter.im/inkwell-rs/Lobby](https://badges.gitter.im/inkwell-rs/Lobby.svg)](https://gitter.im/inkwell-rs/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-![Minimum rustc 1.42](https://img.shields.io/badge/rustc-1.42+-brightgreen.svg)
+![Minimum rustc 1.56](https://img.shields.io/badge/rustc-1.56+-brightgreen.svg)
 
 **I**t's a **N**ew **K**ind of **W**rapper for **E**xposing **LL**VM (*S*afely)
 
@@ -13,9 +13,8 @@ Inkwell aims to help you pen your own programming languages by safely wrapping l
 
 ## Requirements
 
-* Rust 1.42+
-* Rust Stable, Beta, or Nightly
-* LLVM 3.6, 3.7, 3.8, 3.9, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, or 13.0
+* Rust 1.56+ (Stable, Beta, or Nightly)
+* LLVM 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, or 14.0
 
 ## Usage
 
@@ -31,10 +30,6 @@ Supported versions:
 
 | LLVM Version | Cargo Feature Flag |
 | :----------: | :-----------: |
-| 3.6.x        | llvm3-6       |
-| 3.7.x        | llvm3-7       |
-| 3.8.x        | llvm3-8       |
-| 3.9.x        | llvm3-9       |
 | 4.0.x        | llvm4-0       |
 | 5.0.x        | llvm5-0       |
 | 6.0.x        | llvm6-0       |
@@ -45,6 +40,7 @@ Supported versions:
 | 11.0.x       | llvm11-0      |
 | 12.0.x       | llvm12-0      |
 | 13.0.x       | llvm13-0      |
+| 14.0.x       | llvm14-0      |
 
 Please be aware that we may make breaking changes on master from time to time since we are
 pre-v1.0.0, in compliance with semver. Please prefer a crates.io release whenever possible!

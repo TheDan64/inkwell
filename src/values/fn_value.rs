@@ -1,5 +1,4 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-#[llvm_versions(3.9..=latest)]
 use llvm_sys::core::{
     LLVMAddAttributeAtIndex, LLVMGetAttributeCountAtIndex, LLVMGetEnumAttributeAtIndex, LLVMGetStringAttributeAtIndex,
     LLVMRemoveEnumAttributeAtIndex, LLVMRemoveStringAttributeAtIndex,
@@ -8,10 +7,9 @@ use llvm_sys::core::{
     LLVMCountBasicBlocks, LLVMCountParams, LLVMDeleteFunction, LLVMGetBasicBlocks, LLVMGetFirstBasicBlock,
     LLVMGetFirstParam, LLVMGetFunctionCallConv, LLVMGetGC, LLVMGetIntrinsicID, LLVMGetLastBasicBlock, LLVMGetLastParam,
     LLVMGetLinkage, LLVMGetNextFunction, LLVMGetNextParam, LLVMGetParam, LLVMGetParams, LLVMGetPreviousFunction,
-    LLVMIsAFunction, LLVMIsConstant, LLVMSetFunctionCallConv, LLVMSetGC, LLVMSetLinkage, LLVMSetParamAlignment,
-    LLVMSetSection,
+    LLVMGetSection, LLVMIsAFunction, LLVMIsConstant, LLVMSetFunctionCallConv, LLVMSetGC, LLVMSetLinkage,
+    LLVMSetParamAlignment, LLVMSetSection,
 };
-#[llvm_versions(3.7..=latest)]
 use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::debuginfo::{LLVMGetSubprogram, LLVMSetSubprogram};
@@ -21,15 +19,15 @@ use std::ffi::CStr;
 use std::fmt::{self, Display};
 use std::marker::PhantomData;
 use std::mem::forget;
+use std::ptr;
 
-#[llvm_versions(3.9..=latest)]
 use crate::attributes::{Attribute, AttributeLoc};
 use crate::basic_block::BasicBlock;
 #[llvm_versions(7.0..=latest)]
 use crate::debug_info::DISubprogram;
 use crate::module::Linkage;
 use crate::support::to_c_str;
-use crate::types::{AnyType, FunctionType, PointerType};
+use crate::types::{FunctionType, PointerType};
 use crate::values::traits::{AnyValue, AsValueRef};
 use crate::values::{BasicValueEnum, GlobalValue, Value};
 
@@ -209,40 +207,21 @@ impl<'ctx> FunctionValue<'ctx> {
     }
 
     // TODOC: How this works as an exception handler
-    #[llvm_versions(3.9..=latest)]
     pub fn has_personality_function(self) -> bool {
         use llvm_sys::core::LLVMHasPersonalityFn;
 
         unsafe { LLVMHasPersonalityFn(self.as_value_ref()) == 1 }
     }
 
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-8")))]
     pub fn get_personality_function(self) -> Option<FunctionValue<'ctx>> {
-        // This prevents a segfault in 3.9+ when not having a pfn
-        // however that segfault will unforuntately still happen in 3.8
-        // because LLVMHasPersonalityFn doesn't exist yet :(
-        #[cfg(not(any(feature = "llvm3-7", feature = "llvm3-8")))]
-        {
-            if !self.has_personality_function() {
-                return None;
-            }
+        // This prevents a segfault when not having a pfn
+        if !self.has_personality_function() {
+            return None;
         }
 
         unsafe { FunctionValue::new(LLVMGetPersonalityFn(self.as_value_ref())) }
     }
 
-    // TODOC: This function will segfault in 3.8 due to a LLVM bug when
-    // there is no personality fn. This segfault is worked around and
-    // avoided in later LLVM versions. Therefore this fn is unsafe in 3.8
-    // but not in all other versions
-    #[cfg(feature = "llvm3-8")]
-    pub unsafe fn get_personality_function(self) -> Option<FunctionValue<'ctx>> {
-        let value = LLVMGetPersonalityFn(self.as_value_ref());
-
-        FunctionValue::new(value)
-    }
-
-    #[llvm_versions(3.7..=latest)]
     pub fn set_personality_function(self, personality_fn: FunctionValue<'ctx>) {
         unsafe { LLVMSetPersonalityFn(self.as_value_ref(), personality_fn.as_value_ref()) }
     }
@@ -292,7 +271,6 @@ impl<'ctx> FunctionValue<'ctx> {
     /// fn_value.add_attribute(AttributeLoc::Return, string_attribute);
     /// fn_value.add_attribute(AttributeLoc::Return, enum_attribute);
     /// ```
-    #[llvm_versions(3.9..=latest)]
     pub fn add_attribute(self, loc: AttributeLoc, attribute: Attribute) {
         unsafe { LLVMAddAttributeAtIndex(self.as_value_ref(), loc.get_index(), attribute.attribute) }
     }
@@ -318,7 +296,6 @@ impl<'ctx> FunctionValue<'ctx> {
     ///
     /// assert_eq!(fn_value.count_attributes(AttributeLoc::Return), 2);
     /// ```
-    #[llvm_versions(3.9..=latest)]
     pub fn count_attributes(self, loc: AttributeLoc) -> u32 {
         unsafe { LLVMGetAttributeCountAtIndex(self.as_value_ref(), loc.get_index()) }
     }
@@ -342,9 +319,8 @@ impl<'ctx> FunctionValue<'ctx> {
     /// fn_value.add_attribute(AttributeLoc::Return, string_attribute);
     /// fn_value.add_attribute(AttributeLoc::Return, enum_attribute);
     ///
-    /// assert_eq!(fn_value.attributes(AttributeLoc::Return), vec![ string_attribute, enum_attribute ]);
+    /// assert_eq!(fn_value.attributes(AttributeLoc::Return), vec![string_attribute, enum_attribute]);
     /// ```
-    #[llvm_versions(3.9..=latest)]
     pub fn attributes(self, loc: AttributeLoc) -> Vec<Attribute> {
         use llvm_sys::core::LLVMGetAttributesAtIndex;
         use std::mem::{ManuallyDrop, MaybeUninit};
@@ -394,7 +370,6 @@ impl<'ctx> FunctionValue<'ctx> {
     /// fn_value.add_attribute(AttributeLoc::Return, string_attribute);
     /// fn_value.remove_string_attribute(AttributeLoc::Return, "my_key");
     /// ```
-    #[llvm_versions(3.9..=latest)]
     pub fn remove_string_attribute(self, loc: AttributeLoc, key: &str) {
         unsafe {
             LLVMRemoveStringAttributeAtIndex(
@@ -424,7 +399,6 @@ impl<'ctx> FunctionValue<'ctx> {
     /// fn_value.add_attribute(AttributeLoc::Return, enum_attribute);
     /// fn_value.remove_enum_attribute(AttributeLoc::Return, 1);
     /// ```
-    #[llvm_versions(3.9..=latest)]
     pub fn remove_enum_attribute(self, loc: AttributeLoc, kind_id: u32) {
         unsafe { LLVMRemoveEnumAttributeAtIndex(self.as_value_ref(), loc.get_index(), kind_id) }
     }
@@ -449,7 +423,6 @@ impl<'ctx> FunctionValue<'ctx> {
     /// assert_eq!(fn_value.get_enum_attribute(AttributeLoc::Return, 1), Some(enum_attribute));
     /// ```
     // SubTypes: -> Option<Attribute<Enum>>
-    #[llvm_versions(3.9..=latest)]
     pub fn get_enum_attribute(self, loc: AttributeLoc, kind_id: u32) -> Option<Attribute> {
         let ptr = unsafe { LLVMGetEnumAttributeAtIndex(self.as_value_ref(), loc.get_index(), kind_id) };
 
@@ -480,7 +453,6 @@ impl<'ctx> FunctionValue<'ctx> {
     /// assert_eq!(fn_value.get_string_attribute(AttributeLoc::Return, "my_key"), Some(string_attribute));
     /// ```
     // SubTypes: -> Option<Attribute<String>>
-    #[llvm_versions(3.9..=latest)]
     pub fn get_string_attribute(self, loc: AttributeLoc, key: &str) -> Option<Attribute> {
         let ptr = unsafe {
             LLVMGetStringAttributeAtIndex(
@@ -532,11 +504,29 @@ impl<'ctx> FunctionValue<'ctx> {
         }
     }
 
-    /// Set the section to which this function should belong
-    pub fn set_section(self, section: &str) {
-        let c_string = to_c_str(section);
+    // TODO: Share code with GlobalValue::set/get_section
+    /// Get the section to which this function belongs
+    pub fn get_section(&self) -> Option<&CStr> {
+        let ptr = unsafe { LLVMGetSection(self.as_value_ref()) };
 
-        unsafe { LLVMSetSection(self.as_value_ref(), c_string.as_ptr()) }
+        if ptr.is_null() {
+            return None;
+        }
+
+        Some(unsafe { CStr::from_ptr(ptr) })
+    }
+
+    /// Set the section to which this function should belong
+    pub fn set_section(self, section: Option<&str>) {
+        let c_string = section.map(to_c_str);
+
+        unsafe {
+            LLVMSetSection(
+                self.as_value_ref(),
+                // The as_ref call is important here so that we don't drop the cstr mid use
+                c_string.as_ref().map(|s| s.as_ptr()).unwrap_or(ptr::null()),
+            )
+        }
     }
 }
 

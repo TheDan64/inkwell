@@ -22,28 +22,12 @@ pub mod attributes;
 pub mod basic_block;
 pub mod builder;
 #[deny(missing_docs)]
-#[cfg(not(any(
-    feature = "llvm3-6",
-    feature = "llvm3-7",
-    feature = "llvm3-8",
-    feature = "llvm3-9",
-    feature = "llvm4-0",
-    feature = "llvm5-0",
-    feature = "llvm6-0"
-)))]
+#[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
 pub mod comdat;
 #[deny(missing_docs)]
 pub mod context;
 pub mod data_layout;
-#[cfg(not(any(
-    feature = "llvm3-6",
-    feature = "llvm3-7",
-    feature = "llvm3-8",
-    feature = "llvm3-9",
-    feature = "llvm4-0",
-    feature = "llvm5-0",
-    feature = "llvm6-0"
-)))]
+#[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
 pub mod debug_info;
 pub mod execution_engine;
 pub mod intrinsics;
@@ -67,14 +51,6 @@ extern crate llvm_sys_120 as llvm_sys;
 extern crate llvm_sys_130 as llvm_sys;
 #[cfg(feature = "llvm14-0")]
 extern crate llvm_sys_140 as llvm_sys;
-#[cfg(feature = "llvm3-6")]
-extern crate llvm_sys_36 as llvm_sys;
-#[cfg(feature = "llvm3-7")]
-extern crate llvm_sys_37 as llvm_sys;
-#[cfg(feature = "llvm3-8")]
-extern crate llvm_sys_38 as llvm_sys;
-#[cfg(feature = "llvm3-9")]
-extern crate llvm_sys_39 as llvm_sys;
 #[cfg(feature = "llvm4-0")]
 extern crate llvm_sys_40 as llvm_sys;
 #[cfg(feature = "llvm5-0")]
@@ -127,7 +103,7 @@ macro_rules! assert_unique_used_features {
     }
 }
 
-assert_unique_used_features! {"llvm3-6", "llvm3-7", "llvm3-8", "llvm3-9", "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0", "llvm10-0", "llvm11-0", "llvm12-0", "llvm13-0", "llvm14-0"}
+assert_unique_used_features! {"llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0", "llvm10-0", "llvm11-0", "llvm12-0", "llvm13-0", "llvm14-0"}
 
 /// Defines the address space in which a global will be inserted.
 ///

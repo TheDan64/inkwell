@@ -1,7 +1,5 @@
-extern crate inkwell;
-
-use self::inkwell::context::Context;
-use self::inkwell::values::InstructionOpcode;
+use inkwell::context::Context;
+use inkwell::values::InstructionOpcode;
 
 #[test]
 fn test_basic_block_ordering() {
@@ -70,14 +68,10 @@ fn test_basic_block_ordering() {
     let bb3 = function.get_first_basic_block().unwrap();
 
     assert_eq!(bb3, basic_block3);
-
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
-    {
-        assert_eq!(basic_block.get_name().to_str(), Ok("entry"));
-        assert_eq!(basic_block2.get_name().to_str(), Ok("block2"));
-        assert_eq!(basic_block3.get_name().to_str(), Ok("block3"));
-        assert_eq!(basic_block5.get_name().to_str(), Ok("block5"));
-    }
+    assert_eq!(basic_block.get_name().to_str(), Ok("entry"));
+    assert_eq!(basic_block2.get_name().to_str(), Ok("block2"));
+    assert_eq!(basic_block3.get_name().to_str(), Ok("block3"));
+    assert_eq!(basic_block5.get_name().to_str(), Ok("block5"));
 }
 
 #[test]

@@ -4,18 +4,20 @@ use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyModule};
 #[allow(deprecated)]
 use llvm_sys::bit_reader::LLVMParseBitcodeInContext;
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
+#[llvm_versions(4.0..14.0)]
+use llvm_sys::core::LLVMGetTypeByName;
+#[llvm_versions(14.0..=latest)]
+use llvm_sys::core::LLVMGetTypeByName2;
 use llvm_sys::core::{
     LLVMAddFunction, LLVMAddGlobal, LLVMAddGlobalInAddressSpace, LLVMAddNamedMetadataOperand, LLVMCloneModule,
     LLVMDisposeModule, LLVMDumpModule, LLVMGetFirstFunction, LLVMGetFirstGlobal, LLVMGetLastFunction,
-    LLVMGetLastGlobal, LLVMGetModuleContext, LLVMGetNamedFunction, LLVMGetNamedGlobal, LLVMGetNamedMetadataNumOperands,
-    LLVMGetNamedMetadataOperands, LLVMGetTarget, LLVMGetTypeByName, LLVMPrintModuleToFile, LLVMPrintModuleToString,
-    LLVMSetDataLayout, LLVMSetTarget,
+    LLVMGetLastGlobal, LLVMGetModuleContext, LLVMGetModuleIdentifier, LLVMGetNamedFunction, LLVMGetNamedGlobal,
+    LLVMGetNamedMetadataNumOperands, LLVMGetNamedMetadataOperands, LLVMGetTarget, LLVMPrintModuleToFile,
+    LLVMPrintModuleToString, LLVMSetDataLayout, LLVMSetModuleIdentifier, LLVMSetTarget,
 };
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::core::{LLVMAddModuleFlag, LLVMGetModuleFlag};
-#[llvm_versions(3.9..=latest)]
-use llvm_sys::core::{LLVMGetModuleIdentifier, LLVMSetModuleIdentifier};
-#[llvm_versions(8.0..=latest)]
+#[llvm_versions(13.0..=latest)]
 use llvm_sys::error::LLVMGetErrorMessage;
 use llvm_sys::execution_engine::{
     LLVMCreateExecutionEngineForModule, LLVMCreateInterpreterForModule, LLVMCreateJITCompilerForModule,
@@ -47,7 +49,9 @@ use crate::memory_buffer::MemoryBuffer;
 #[llvm_versions(13.0..=latest)]
 use crate::passes::PassBuilderOptions;
 use crate::support::{to_c_str, LLVMString};
-use crate::targets::{InitializationConfig, Target, TargetMachine, TargetTriple};
+#[llvm_versions(13.0..=latest)]
+use crate::targets::TargetMachine;
+use crate::targets::{InitializationConfig, Target, TargetTriple};
 use crate::types::{AsTypeRef, BasicType, FunctionType, StructType};
 #[llvm_versions(7.0..=latest)]
 use crate::values::BasicValue;
@@ -344,9 +348,38 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(module.get_struct_type("foo").unwrap(), opaque);
     /// ```
+    ///
     pub fn get_struct_type(&self, name: &str) -> Option<StructType<'ctx>> {
         let c_string = to_c_str(name);
 
+        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
+        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        )))]
+        let struct_type = unsafe { LLVMGetTypeByName2(self.get_context().context, c_string.as_ptr()) };
+
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0",
+            feature = "llvm9-0",
+            feature = "llvm10-0",
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+        ))]
         let struct_type = unsafe { LLVMGetTypeByName(self.module.get(), c_string.as_ptr()) };
 
         if struct_type.is_null() {
@@ -710,13 +743,6 @@ impl<'ctx> Module<'ctx> {
     }
 
     fn get_borrowed_data_layout(module: LLVMModuleRef) -> DataLayout {
-        #[cfg(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8"))]
-        let data_layout = unsafe {
-            use llvm_sys::core::LLVMGetDataLayout;
-
-            LLVMGetDataLayout(module)
-        };
-        #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7", feature = "llvm3-8")))]
         let data_layout = unsafe {
             use llvm_sys::core::LLVMGetDataLayoutStr;
 
@@ -828,15 +854,7 @@ impl<'ctx> Module<'ctx> {
 
     /// Sets the inline assembly for the `Module`.
     pub fn set_inline_assembly(&self, asm: &str) {
-        #[cfg(any(
-            feature = "llvm3-6",
-            feature = "llvm3-7",
-            feature = "llvm3-8",
-            feature = "llvm3-9",
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0"
-        ))]
+        #[cfg(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
         {
             use llvm_sys::core::LLVMSetModuleInlineAsm;
 
@@ -844,15 +862,7 @@ impl<'ctx> Module<'ctx> {
 
             unsafe { LLVMSetModuleInlineAsm(self.module.get(), c_string.as_ptr()) }
         }
-        #[cfg(not(any(
-            feature = "llvm3-6",
-            feature = "llvm3-7",
-            feature = "llvm3-8",
-            feature = "llvm3-9",
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0"
-        )))]
+        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
         {
             use llvm_sys::core::LLVMSetModuleInlineAsm2;
 
@@ -1174,7 +1184,6 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(module.get_name().to_str(), Ok("my_mdoule"));
     /// ```
-    #[llvm_versions(3.9..=latest)]
     pub fn get_name(&self) -> &CStr {
         let mut length = 0;
         let cstr_ptr = unsafe { LLVMGetModuleIdentifier(self.module.get(), &mut length) };
@@ -1196,7 +1205,6 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(module.get_name().to_str(), Ok("my_module2"));
     /// ```
-    #[llvm_versions(3.9..=latest)]
     pub fn set_name(&self, name: &str) {
         unsafe { LLVMSetModuleIdentifier(self.module.get(), name.as_ptr() as *const ::libc::c_char, name.len()) }
     }
@@ -1277,49 +1285,29 @@ impl<'ctx> Module<'ctx> {
             return Err(LLVMString::create_from_str(string));
         }
 
-        #[cfg(any(feature = "llvm3-6", feature = "llvm3-7"))]
-        {
-            use llvm_sys::linker::{LLVMLinkModules, LLVMLinkerMode};
+        use crate::support::error_handling::get_error_str_diagnostic_handler;
+        use libc::c_void;
+        use llvm_sys::linker::LLVMLinkModules2;
 
-            let mut err_string = ptr::null_mut();
-            // As of 3.7, LLVMLinkerDestroySource is the only option
-            let mode = LLVMLinkerMode::LLVMLinkerDestroySource;
-            let code = unsafe { LLVMLinkModules(self.module.get(), other.module.get(), mode, &mut err_string) };
+        let context = self.get_context();
 
-            forget(other);
+        let mut char_ptr: *mut ::libc::c_char = ptr::null_mut();
+        let char_ptr_ptr = &mut char_ptr as *mut *mut ::libc::c_char as *mut *mut c_void as *mut c_void;
 
-            if code == 1 {
-                unsafe { Err(LLVMString::new(err_string)) }
-            } else {
-                Ok(())
-            }
-        }
-        #[cfg(not(any(feature = "llvm3-6", feature = "llvm3-7")))]
-        {
-            use crate::support::error_handling::get_error_str_diagnostic_handler;
-            use libc::c_void;
-            use llvm_sys::linker::LLVMLinkModules2;
+        // Newer LLVM versions don't use an out ptr anymore which was really straightforward...
+        // Here we assign an error handler to extract the error message, if any, for us.
+        context.set_diagnostic_handler(get_error_str_diagnostic_handler, char_ptr_ptr);
 
-            let context = self.get_context();
+        let code = unsafe { LLVMLinkModules2(self.module.get(), other.module.get()) };
 
-            let mut char_ptr: *mut ::libc::c_char = ptr::null_mut();
-            let char_ptr_ptr = &mut char_ptr as *mut *mut ::libc::c_char as *mut *mut c_void as *mut c_void;
+        forget(other);
 
-            // Newer LLVM versions don't use an out ptr anymore which was really straightforward...
-            // Here we assign an error handler to extract the error message, if any, for us.
-            context.set_diagnostic_handler(get_error_str_diagnostic_handler, char_ptr_ptr);
+        if code == 1 {
+            debug_assert!(!char_ptr.is_null());
 
-            let code = unsafe { LLVMLinkModules2(self.module.get(), other.module.get()) };
-
-            forget(other);
-
-            if code == 1 {
-                debug_assert!(!char_ptr.is_null());
-
-                unsafe { Err(LLVMString::new(char_ptr)) }
-            } else {
-                Ok(())
-            }
+            unsafe { Err(LLVMString::new(char_ptr)) }
+        } else {
+            Ok(())
         }
     }
 

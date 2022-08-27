@@ -10,7 +10,7 @@ use crate::values::{
     FunctionValue, GlobalValue, InstructionValue, IntValue, PhiValue, PointerValue, StructValue, Value, VectorValue,
 };
 
-use super::{MetadataValue, BasicMetadataValueEnum};
+use super::{BasicMetadataValueEnum, MetadataValue};
 
 // This is an ugly privacy hack so that Type can stay private to this module
 // and so that super traits using this trait will be not be implementable

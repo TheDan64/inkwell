@@ -101,15 +101,7 @@ impl<'ctx> Value<'ctx> {
     // add a ParamValue wrapper type that always have it but conditional types (IntValue<Variable>)
     // that also have it. This isn't a huge deal though, since it hasn't proven to be UB so far
     fn set_name(self, name: &str) {
-        #[cfg(any(
-            feature = "llvm3-6",
-            feature = "llvm3-7",
-            feature = "llvm3-8",
-            feature = "llvm3-9",
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0"
-        ))]
+        #[cfg(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
         {
             use crate::support::to_c_str;
             use llvm_sys::core::LLVMSetValueName;
@@ -120,15 +112,7 @@ impl<'ctx> Value<'ctx> {
                 LLVMSetValueName(self.value, c_string.as_ptr());
             }
         }
-        #[cfg(not(any(
-            feature = "llvm3-6",
-            feature = "llvm3-7",
-            feature = "llvm3-8",
-            feature = "llvm3-9",
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0"
-        )))]
+        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
         {
             use llvm_sys::core::LLVMSetValueName2;
 
@@ -139,29 +123,13 @@ impl<'ctx> Value<'ctx> {
     // get_name should *not* return a LLVMString, because it is not an owned value AFAICT
     // TODO: Should make this take ownership of self. But what is the lifetime of the string? 'ctx?
     fn get_name(&self) -> &CStr {
-        #[cfg(any(
-            feature = "llvm3-6",
-            feature = "llvm3-7",
-            feature = "llvm3-8",
-            feature = "llvm3-9",
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0"
-        ))]
+        #[cfg(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
         let ptr = unsafe {
             use llvm_sys::core::LLVMGetValueName;
 
             LLVMGetValueName(self.value)
         };
-        #[cfg(not(any(
-            feature = "llvm3-6",
-            feature = "llvm3-7",
-            feature = "llvm3-8",
-            feature = "llvm3-9",
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0"
-        )))]
+        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
         let ptr = unsafe {
             use llvm_sys::core::LLVMGetValueName2;
             let mut len = 0;

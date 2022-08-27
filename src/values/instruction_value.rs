@@ -2,16 +2,13 @@ use either::{
     Either,
     Either::{Left, Right},
 };
-#[llvm_versions(3.9..=latest)]
-use llvm_sys::core::LLVMInstructionRemoveFromParent;
 use llvm_sys::core::{
     LLVMGetAlignment, LLVMGetFCmpPredicate, LLVMGetICmpPredicate, LLVMGetInstructionOpcode, LLVMGetInstructionParent,
     LLVMGetMetadata, LLVMGetNextInstruction, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse,
     LLVMGetPreviousInstruction, LLVMGetVolatile, LLVMHasMetadata, LLVMInstructionClone, LLVMInstructionEraseFromParent,
-    LLVMIsAAllocaInst, LLVMIsABasicBlock, LLVMIsALoadInst, LLVMIsAStoreInst, LLVMIsTailCall, LLVMSetAlignment,
-    LLVMSetMetadata, LLVMSetOperand, LLVMSetVolatile, LLVMValueAsBasicBlock,
+    LLVMInstructionRemoveFromParent, LLVMIsAAllocaInst, LLVMIsABasicBlock, LLVMIsALoadInst, LLVMIsAStoreInst,
+    LLVMIsTailCall, LLVMSetAlignment, LLVMSetMetadata, LLVMSetOperand, LLVMSetVolatile, LLVMValueAsBasicBlock,
 };
-#[llvm_versions(3.8..=latest)]
 use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
 #[llvm_versions(10.0..=latest)]
 use llvm_sys::core::{LLVMIsAAtomicCmpXchgInst, LLVMIsAAtomicRMWInst};
@@ -46,15 +43,10 @@ pub enum InstructionOpcode {
     Call,
     #[llvm_versions(9.0..=latest)]
     CallBr,
-    #[llvm_versions(3.8..=latest)]
     CatchPad,
-    #[llvm_versions(3.8..=latest)]
     CatchRet,
-    #[llvm_versions(3.8..=latest)]
     CatchSwitch,
-    #[llvm_versions(3.8..=latest)]
     CleanupPad,
-    #[llvm_versions(3.8..=latest)]
     CleanupRet,
     ExtractElement,
     ExtractValue,
@@ -200,7 +192,7 @@ impl<'ctx> InstructionValue<'ctx> {
     }
 
     // REVIEW: Potentially unsafe if parent BB or grandparent fn were removed?
-    #[llvm_versions(3.9..=latest)]
+    #[llvm_versions(4.0..=latest)]
     pub fn remove_from_basic_block(self) {
         unsafe { LLVMInstructionRemoveFromParent(self.as_value_ref()) }
     }
@@ -229,7 +221,7 @@ impl<'ctx> InstructionValue<'ctx> {
 
     // SubTypes: Only apply to memory access instructions
     /// Returns whether or not a memory access instruction is volatile.
-    #[llvm_versions(3.6..=9.0)]
+    #[llvm_versions(4.0..=9.0)]
     pub fn get_volatile(self) -> Result<bool, &'static str> {
         // Although cmpxchg and atomicrmw can have volatile, LLVM's C API
         // does not export that functionality until 10.0.
@@ -252,7 +244,7 @@ impl<'ctx> InstructionValue<'ctx> {
 
     // SubTypes: Only apply to memory access instructions
     /// Sets whether or not a memory access instruction is volatile.
-    #[llvm_versions(3.6..=9.0)]
+    #[llvm_versions(4.0..=9.0)]
     pub fn set_volatile(self, volatile: bool) -> Result<(), &'static str> {
         // Although cmpxchg and atomicrmw can have volatile, LLVM's C API
         // does not export that functionality until 10.0.
@@ -303,7 +295,6 @@ impl<'ctx> InstructionValue<'ctx> {
 
     // SubTypes: Only apply to memory access instructions
     /// Returns atomic ordering on a memory access instruction.
-    #[llvm_versions(3.8..=latest)]
     pub fn get_atomic_ordering(self) -> Result<AtomicOrdering, &'static str> {
         if !self.is_a_load_inst() && !self.is_a_store_inst() {
             return Err("Value is not a load or store.");
@@ -313,7 +304,6 @@ impl<'ctx> InstructionValue<'ctx> {
 
     // SubTypes: Only apply to memory access instructions
     /// Sets atomic ordering on a memory access instruction.
-    #[llvm_versions(3.8..=latest)]
     pub fn set_atomic_ordering(self, ordering: AtomicOrdering) -> Result<(), &'static str> {
         // Although fence and atomicrmw both have an ordering, the LLVM C API
         // does not support them. The cmpxchg instruction has two orderings and

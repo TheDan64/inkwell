@@ -157,9 +157,6 @@ fn test_add_remove_module() {
 // but fail when multiple tests are run
 // #[test]
 // fn test_no_longer_segfaults() {
-//     #[cfg(feature = "llvm3-6")]
-//     Target::initialize_r600(&InitializationConfig::default());
-//     #[cfg(not(feature = "llvm3-6"))]
 //     Target::initialize_amd_gpu(&InitializationConfig::default());
 
 //     let context = Context::create();

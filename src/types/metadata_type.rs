@@ -57,7 +57,6 @@ impl<'ctx> MetadataType<'ctx> {
         self.metadata_type.get_context()
     }
 
-
     /// Print the definition of a `MetadataType` to `LLVMString`.
     pub fn print_to_string(self) -> LLVMString {
         self.metadata_type.print_to_string()
@@ -70,12 +69,11 @@ impl AsTypeRef for MetadataType<'_> {
         self.metadata_type.ty
     }
 
-    #[llvm_versions(3.6..6.0)]
+    #[llvm_versions(4.0..6.0)]
     fn as_type_ref(&self) -> LLVMTypeRef {
         unimplemented!("MetadataType is only available in LLVM > 6.0")
     }
 }
-
 
 impl Display for MetadataType<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

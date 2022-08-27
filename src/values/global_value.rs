@@ -1,6 +1,6 @@
 #[llvm_versions(8.0..=latest)]
 use llvm_sys::core::LLVMGlobalSetMetadata;
-#[llvm_versions(3.6..8.0)]
+#[llvm_versions(4.0..8.0)]
 use llvm_sys::core::{
     LLVMDeleteGlobal, LLVMGetAlignment, LLVMGetDLLStorageClass, LLVMGetInitializer, LLVMGetLinkage, LLVMGetNextGlobal,
     LLVMGetPreviousGlobal, LLVMGetSection, LLVMGetThreadLocalMode, LLVMGetVisibility, LLVMIsDeclaration,
@@ -18,7 +18,7 @@ use llvm_sys::core::{
 };
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::core::{LLVMGetUnnamedAddress, LLVMSetUnnamedAddress};
-#[llvm_versions(3.6..=6.0)]
+#[llvm_versions(4.0..=6.0)]
 use llvm_sys::core::{LLVMHasUnnamedAddr, LLVMSetUnnamedAddr};
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMThreadLocalMode;
@@ -27,6 +27,7 @@ use llvm_sys::LLVMUnnamedAddr;
 
 use std::ffi::CStr;
 use std::fmt::{self, Display};
+use std::ptr;
 
 #[llvm_versions(7.0..=latest)]
 use crate::comdat::Comdat;
@@ -162,7 +163,7 @@ impl<'ctx> GlobalValue<'ctx> {
         unsafe { LLVMIsDeclaration(self.as_value_ref()) == 1 }
     }
 
-    #[llvm_versions(3.6..7.0)]
+    #[llvm_versions(4.0..7.0)]
     pub fn has_unnamed_addr(self) -> bool {
         unsafe { LLVMHasUnnamedAddr(self.as_value_ref()) == 1 }
     }
@@ -172,7 +173,7 @@ impl<'ctx> GlobalValue<'ctx> {
         unsafe { LLVMGetUnnamedAddress(self.as_value_ref()) == LLVMUnnamedAddr::LLVMGlobalUnnamedAddr }
     }
 
-    #[llvm_versions(3.6..7.0)]
+    #[llvm_versions(4.0..7.0)]
     pub fn set_unnamed_addr(self, has_unnamed_addr: bool) {
         unsafe { LLVMSetUnnamedAddr(self.as_value_ref(), has_unnamed_addr as i32) }
     }
@@ -214,14 +215,26 @@ impl<'ctx> GlobalValue<'ctx> {
         GlobalVisibility::new(visibility)
     }
 
-    pub fn get_section(&self) -> &CStr {
-        unsafe { CStr::from_ptr(LLVMGetSection(self.as_value_ref())) }
+    pub fn get_section(&self) -> Option<&CStr> {
+        let ptr = unsafe { LLVMGetSection(self.as_value_ref()) };
+
+        if ptr.is_null() {
+            return None;
+        }
+
+        Some(unsafe { CStr::from_ptr(ptr) })
     }
 
-    pub fn set_section(self, section: &str) {
-        let c_string = to_c_str(section);
+    pub fn set_section(self, section: Option<&str>) {
+        let c_string = section.map(to_c_str);
 
-        unsafe { LLVMSetSection(self.as_value_ref(), c_string.as_ptr()) }
+        unsafe {
+            LLVMSetSection(
+                self.as_value_ref(),
+                // The as_ref call is important here so that we don't drop the cstr mid use
+                c_string.as_ref().map(|s| s.as_ptr()).unwrap_or(ptr::null()),
+            )
+        }
     }
 
     pub unsafe fn delete(self) {
