@@ -228,6 +228,18 @@ impl<'ctx> BasicValueEnum<'ctx> {
         }
     }
 
+    /// Set name of the `BasicValueEnum`.
+    pub fn set_name(&self, name: &str) {
+        match self {
+            BasicValueEnum::ArrayValue(v) => v.set_name(name),
+            BasicValueEnum::IntValue(v) => v.set_name(name),
+            BasicValueEnum::FloatValue(v) => v.set_name(name),
+            BasicValueEnum::PointerValue(v) => v.set_name(name),
+            BasicValueEnum::StructValue(v) => v.set_name(name),
+            BasicValueEnum::VectorValue(v) => v.set_name(name),
+        }
+    }
+
     pub fn get_type(&self) -> BasicTypeEnum<'ctx> {
         unsafe { BasicTypeEnum::new(LLVMTypeOf(self.as_value_ref())) }
     }

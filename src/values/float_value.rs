@@ -29,10 +29,15 @@ impl<'ctx> FloatValue<'ctx> {
         }
     }
 
-    /// Gets the name of a `FloatValue`. If the value is a constant, this will
+    /// Gets name of the `FloatValue`. If the value is a constant, this will
     /// return an empty string.
     pub fn get_name(&self) -> &CStr {
         self.float_value.get_name()
+    }
+
+    /// Set name of the `FloatValue`.
+    pub fn set_name(&self, name: &str) {
+        self.float_value.set_name(name)
     }
 
     pub fn get_type(self) -> FloatType<'ctx> {

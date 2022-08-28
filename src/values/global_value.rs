@@ -57,9 +57,14 @@ impl<'ctx> GlobalValue<'ctx> {
         }
     }
 
-    /// Gets the name of a `GlobalValue`.
+    /// Get name of the `GlobalValue`.
     pub fn get_name(&self) -> &CStr {
         self.global_value.get_name()
+    }
+
+    /// Set name of the `GlobalValue`.
+    pub fn set_name(&self, name: &str) -> () {
+        self.global_value.set_name(name)
     }
 
     pub fn get_previous_global(self) -> Option<GlobalValue<'ctx>> {

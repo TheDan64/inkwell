@@ -5,11 +5,12 @@ use llvm_sys::core::{
     LLVMGetBasicBlockTerminator, LLVMGetFirstInstruction, LLVMGetFirstUse, LLVMGetLastInstruction,
     LLVMGetNextBasicBlock, LLVMGetPreviousBasicBlock, LLVMGetTypeContext, LLVMIsABasicBlock, LLVMIsConstant,
     LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString,
-    LLVMRemoveBasicBlockFromParent, LLVMReplaceAllUsesWith, LLVMTypeOf,
+    LLVMRemoveBasicBlockFromParent, LLVMReplaceAllUsesWith, LLVMSetValueName, LLVMTypeOf,
 };
 use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 
 use crate::context::ContextRef;
+use crate::support::to_c_str;
 use crate::values::{AsValueRef, BasicValueUse, FunctionValue, InstructionValue, PointerValue};
 #[cfg(feature = "internal-getters")]
 use crate::LLVMReference;
@@ -418,6 +419,12 @@ impl<'ctx> BasicBlock<'ctx> {
         let ptr = unsafe { LLVMGetBasicBlockName(self.basic_block) };
 
         unsafe { CStr::from_ptr(ptr) }
+    }
+
+    /// Set name of the `BasicBlock`.
+    pub fn set_name(&self, name: &str) {
+        let c_string = to_c_str(name);
+        unsafe { LLVMSetValueName(LLVMBasicBlockAsValue(self.basic_block), c_string.as_ptr()) };
     }
 
     /// Replaces all uses of this basic block with another.
