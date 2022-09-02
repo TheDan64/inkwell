@@ -417,3 +417,93 @@ fn test_global_expressions() {
         gv.print_to_string()
     );
 }
+
+#[test]
+fn test_pointer_types() {
+    let context = Context::create();
+    let module = context.create_module("bin");
+
+    let (dibuilder, _) = module.create_debug_info_builder(
+        true,
+        DWARFSourceLanguage::C,
+        "source_file",
+        ".",
+        "my llvm compiler frontend",
+        false,
+        "",
+        0,
+        "",
+        DWARFEmissionKind::Full,
+        0,
+        false,
+        false,
+        #[cfg(any(
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+            feature = "llvm14-0"
+        ))]
+        "",
+        #[cfg(any(
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+            feature = "llvm14-0"
+        ))]
+        "",
+    );
+
+    let di_type = dibuilder
+        .create_basic_type("type_name", 0_u64, 0x00, DIFlags::ZERO)
+        .unwrap()
+        .as_type();
+
+    //Smoke test that the pointer gets created
+    dibuilder.create_pointer_type("pointer_name", di_type, 64, 64, inkwell::AddressSpace::Global);
+}
+
+#[test]
+fn test_array_type() {
+    let context = Context::create();
+    let module = context.create_module("bin");
+
+    let (dibuilder, _) = module.create_debug_info_builder(
+        true,
+        DWARFSourceLanguage::C,
+        "source_file",
+        ".",
+        "my llvm compiler frontend",
+        false,
+        "",
+        0,
+        "",
+        DWARFEmissionKind::Full,
+        0,
+        false,
+        false,
+        #[cfg(any(
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+            feature = "llvm14-0"
+        ))]
+        "",
+        #[cfg(any(
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+            feature = "llvm14-0"
+        ))]
+        "",
+    );
+
+    let di_type = dibuilder
+        .create_basic_type("type_name", 8_u64, 0x00, DIFlags::ZERO)
+        .unwrap()
+        .as_type();
+
+    //Smoke test that the array gets created
+    dibuilder.create_array_type(di_type, 160, 64, &[(0..20)]);
+
+    dibuilder.create_array_type(di_type, 160, 64, &[(0..20), (-1..30), (20..55)]);
+}

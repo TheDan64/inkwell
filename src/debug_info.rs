@@ -105,6 +105,7 @@ use crate::context::Context;
 pub use crate::debug_info::flags::{DIFlags, DIFlagsConstants};
 use crate::module::Module;
 use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, MetadataValue, PointerValue};
+use crate::AddressSpace;
 
 #[cfg(feature = "internal-getters")]
 use crate::LLVMReference;
@@ -118,11 +119,12 @@ use llvm_sys::debuginfo::LLVMMetadataReplaceAllUsesWith;
 use llvm_sys::debuginfo::LLVMTemporaryMDNode;
 use llvm_sys::debuginfo::{LLVMCreateDIBuilder, LLVMCreateDIBuilderDisallowUnresolved};
 use llvm_sys::debuginfo::{
-    LLVMDIBuilderCreateAutoVariable, LLVMDIBuilderCreateBasicType, LLVMDIBuilderCreateCompileUnit,
-    LLVMDIBuilderCreateDebugLocation, LLVMDIBuilderCreateExpression, LLVMDIBuilderCreateFile,
-    LLVMDIBuilderCreateFunction, LLVMDIBuilderCreateLexicalBlock, LLVMDIBuilderCreateMemberType,
-    LLVMDIBuilderCreateNameSpace, LLVMDIBuilderCreateParameterVariable, LLVMDIBuilderCreateStructType,
-    LLVMDIBuilderCreateSubroutineType, LLVMDIBuilderCreateUnionType, LLVMDIBuilderFinalize,
+    LLVMDIBuilderCreateArrayType, LLVMDIBuilderCreateAutoVariable, LLVMDIBuilderCreateBasicType,
+    LLVMDIBuilderCreateCompileUnit, LLVMDIBuilderCreateDebugLocation, LLVMDIBuilderCreateExpression,
+    LLVMDIBuilderCreateFile, LLVMDIBuilderCreateFunction, LLVMDIBuilderCreateLexicalBlock,
+    LLVMDIBuilderCreateMemberType, LLVMDIBuilderCreateNameSpace, LLVMDIBuilderCreateParameterVariable,
+    LLVMDIBuilderCreatePointerType, LLVMDIBuilderCreateStructType, LLVMDIBuilderCreateSubroutineType,
+    LLVMDIBuilderCreateUnionType, LLVMDIBuilderFinalize, LLVMDIBuilderGetOrCreateSubrange,
     LLVMDIBuilderInsertDbgValueBefore, LLVMDIBuilderInsertDeclareAtEnd, LLVMDIBuilderInsertDeclareBefore,
     LLVMDILocationGetColumn, LLVMDILocationGetLine, LLVMDILocationGetScope, LLVMDITypeGetAlignInBits,
     LLVMDITypeGetOffsetInBits, LLVMDITypeGetSizeInBits,
@@ -132,6 +134,7 @@ use llvm_sys::debuginfo::{LLVMDIBuilderCreateConstantValueExpression, LLVMDIBuil
 use llvm_sys::prelude::{LLVMDIBuilderRef, LLVMMetadataRef};
 use std::convert::TryInto;
 use std::marker::PhantomData;
+use std::ops::Range;
 
 /// Gets the version of debug metadata produced by the current LLVM version.
 pub fn debug_metadata_version() -> libc::c_uint {
@@ -672,6 +675,68 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             )
         };
         DISubroutineType {
+            metadata_ref,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Creates a pointer type
+    pub fn create_pointer_type(
+        &self,
+        name: &str,
+        pointee: DIType<'ctx>,
+        size_in_bits: u64,
+        align_in_bits: u32,
+        address_space: AddressSpace,
+    ) -> DIDerivedType<'ctx> {
+        let metadata_ref = unsafe {
+            LLVMDIBuilderCreatePointerType(
+                self.builder,
+                pointee.metadata_ref,
+                size_in_bits,
+                align_in_bits,
+                address_space as u32,
+                name.as_ptr() as _,
+                name.len(),
+            )
+        };
+
+        DIDerivedType {
+            metadata_ref,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Creates an array type
+    pub fn create_array_type(
+        &self,
+        inner_type: DIType<'ctx>,
+        size_in_bits: u64,
+        align_in_bits: u32,
+        subscripts: &[Range<i64>],
+    ) -> DICompositeType<'ctx> {
+        //Create subranges
+        let mut subscripts = subscripts
+            .iter()
+            .map(|range| {
+                let lower = range.start;
+                let upper = range.end;
+                let subscript_size = upper - lower;
+                unsafe { LLVMDIBuilderGetOrCreateSubrange(self.builder, lower, subscript_size) }
+            })
+            .collect::<Vec<_>>();
+        let metadata_ref = unsafe {
+            LLVMDIBuilderCreateArrayType(
+                self.builder,
+                size_in_bits,
+                align_in_bits,
+                inner_type.metadata_ref,
+                subscripts.as_mut_ptr(),
+                subscripts.len().try_into().unwrap(),
+            )
+        };
+
+        DICompositeType {
             metadata_ref,
             _marker: PhantomData,
         }
