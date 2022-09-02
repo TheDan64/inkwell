@@ -454,7 +454,13 @@ fn test_pointer_types() {
     );
 
     let di_type = dibuilder
-        .create_basic_type("type_name", 0_u64, 0x00, DIFlags::ZERO)
+        .create_basic_type(
+            "type_name",
+            8_u64,
+            0x00,
+            #[cfg(not(feature = "llvm7-0"))]
+            DIFlags::ZERO,
+        )
         .unwrap()
         .as_type();
 
@@ -498,7 +504,13 @@ fn test_array_type() {
     );
 
     let di_type = dibuilder
-        .create_basic_type("type_name", 8_u64, 0x00, DIFlags::ZERO)
+        .create_basic_type(
+            "type_name",
+            8_u64,
+            0x00,
+            #[cfg(not(feature = "llvm7-0"))]
+            DIFlags::ZERO,
+        )
         .unwrap()
         .as_type();
 
