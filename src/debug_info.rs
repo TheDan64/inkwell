@@ -132,6 +132,7 @@ use llvm_sys::debuginfo::{
 #[llvm_versions(8.0..=latest)]
 use llvm_sys::debuginfo::{LLVMDIBuilderCreateConstantValueExpression, LLVMDIBuilderCreateGlobalVariableExpression};
 use llvm_sys::prelude::{LLVMDIBuilderRef, LLVMMetadataRef};
+use llvm_sys_140::debuginfo::LLVMDIBuilderCreateReferenceType;
 use std::convert::TryInto;
 use std::marker::PhantomData;
 use std::ops::Range;
@@ -698,6 +699,26 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 address_space as u32,
                 name.as_ptr() as _,
                 name.len(),
+            )
+        };
+
+        DIDerivedType {
+            metadata_ref,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Creates a pointer type
+    pub fn create_reference_type(
+        &self,
+        pointee: DIType<'ctx>,
+        tag: u32,
+    ) -> DIDerivedType<'ctx> {
+        let metadata_ref = unsafe {
+            LLVMDIBuilderCreateReferenceType(
+                self.builder,
+                tag,
+                pointee.metadata_ref,
             )
         };
 
