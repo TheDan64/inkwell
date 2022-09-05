@@ -123,16 +123,15 @@ use llvm_sys::debuginfo::{
     LLVMDIBuilderCreateCompileUnit, LLVMDIBuilderCreateDebugLocation, LLVMDIBuilderCreateExpression,
     LLVMDIBuilderCreateFile, LLVMDIBuilderCreateFunction, LLVMDIBuilderCreateLexicalBlock,
     LLVMDIBuilderCreateMemberType, LLVMDIBuilderCreateNameSpace, LLVMDIBuilderCreateParameterVariable,
-    LLVMDIBuilderCreatePointerType, LLVMDIBuilderCreateStructType, LLVMDIBuilderCreateSubroutineType,
-    LLVMDIBuilderCreateUnionType, LLVMDIBuilderFinalize, LLVMDIBuilderGetOrCreateSubrange,
-    LLVMDIBuilderInsertDbgValueBefore, LLVMDIBuilderInsertDeclareAtEnd, LLVMDIBuilderInsertDeclareBefore,
-    LLVMDILocationGetColumn, LLVMDILocationGetLine, LLVMDILocationGetScope, LLVMDITypeGetAlignInBits,
-    LLVMDITypeGetOffsetInBits, LLVMDITypeGetSizeInBits,
+    LLVMDIBuilderCreatePointerType, LLVMDIBuilderCreateReferenceType, LLVMDIBuilderCreateStructType, 
+    LLVMDIBuilderCreateSubroutineType, LLVMDIBuilderCreateUnionType, LLVMDIBuilderFinalize, 
+    LLVMDIBuilderGetOrCreateSubrange, LLVMDIBuilderInsertDbgValueBefore, LLVMDIBuilderInsertDeclareAtEnd, 
+    LLVMDIBuilderInsertDeclareBefore, LLVMDILocationGetColumn, LLVMDILocationGetLine, LLVMDILocationGetScope, 
+    LLVMDITypeGetAlignInBits, LLVMDITypeGetOffsetInBits, LLVMDITypeGetSizeInBits,
 };
 #[llvm_versions(8.0..=latest)]
 use llvm_sys::debuginfo::{LLVMDIBuilderCreateConstantValueExpression, LLVMDIBuilderCreateGlobalVariableExpression};
 use llvm_sys::prelude::{LLVMDIBuilderRef, LLVMMetadataRef};
-use llvm_sys_140::debuginfo::LLVMDIBuilderCreateReferenceType;
 use std::convert::TryInto;
 use std::marker::PhantomData;
 use std::ops::Range;
