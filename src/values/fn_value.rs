@@ -32,11 +32,12 @@ use crate::values::traits::{AnyValue, AsValueRef};
 use crate::values::{BasicValueEnum, GlobalValue, Value};
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
-pub struct FunctionValue<'ctx> {
-    fn_value: Value<'ctx>,
+pub struct FunctionValue<'ctx, 'mod> {
+    fn_value: Value<'mod>,
+    context: PhantomData<&'ctx Context>,
 }
 
-impl<'ctx> FunctionValue<'ctx> {
+impl<'ctx, 'mod> FunctionValue<'ctx, 'mod> {
     pub(crate) unsafe fn new(value: LLVMValueRef) -> Option<Self> {
         if value.is_null() {
             return None;
@@ -213,7 +214,7 @@ impl<'ctx> FunctionValue<'ctx> {
         unsafe { LLVMHasPersonalityFn(self.as_value_ref()) == 1 }
     }
 
-    pub fn get_personality_function(self) -> Option<FunctionValue<'ctx>> {
+    pub fn get_personality_function(self) -> Option<Self> {
         // This prevents a segfault when not having a pfn
         if !self.has_personality_function() {
             return None;
@@ -222,7 +223,7 @@ impl<'ctx> FunctionValue<'ctx> {
         unsafe { FunctionValue::new(LLVMGetPersonalityFn(self.as_value_ref())) }
     }
 
-    pub fn set_personality_function(self, personality_fn: FunctionValue<'ctx>) {
+    pub fn set_personality_function(self, personality_fn: Self) {
         unsafe { LLVMSetPersonalityFn(self.as_value_ref(), personality_fn.as_value_ref()) }
     }
 
@@ -248,7 +249,7 @@ impl<'ctx> FunctionValue<'ctx> {
         unsafe { LLVMSetGC(self.as_value_ref(), c_string.as_ptr()) }
     }
 
-    pub fn replace_all_uses_with(self, other: FunctionValue<'ctx>) {
+    pub fn replace_all_uses_with(self, other: Self) {
         self.fn_value.replace_all_uses_with(other.as_value_ref())
     }
 
@@ -479,7 +480,7 @@ impl<'ctx> FunctionValue<'ctx> {
     /// Gets the `GlobalValue` version of this `FunctionValue`. This allows
     /// you to further inspect its global properties or even convert it to
     /// a `PointerValue`.
-    pub fn as_global_value(self) -> GlobalValue<'ctx> {
+    pub fn as_global_value(self) -> GlobalValue<'ctx, 'mod> {
         unsafe { GlobalValue::new(self.as_value_ref()) }
     }
 
@@ -530,19 +531,19 @@ impl<'ctx> FunctionValue<'ctx> {
     }
 }
 
-impl AsValueRef for FunctionValue<'_> {
+impl AsValueRef for FunctionValue<'_, '_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.fn_value.value
     }
 }
 
-impl Display for FunctionValue<'_> {
+impl Display for FunctionValue<'_, '_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.print_to_string())
     }
 }
 
-impl fmt::Debug for FunctionValue<'_> {
+impl fmt::Debug for FunctionValue<'_, '_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let llvm_value = self.print_to_string();
         let llvm_type = self.get_type();

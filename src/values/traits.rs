@@ -28,6 +28,14 @@ macro_rules! trait_value_set {
         // REVIEW: Possible encompassing methods to implement:
         // as_instruction, is_sized, ge/set metadata methods
     );
+    ($trait_name:ident<'mod>: $($args:ident),*) => (
+        $(
+            impl<'ctx> $trait_name<'ctx> for $args<'ctx, '_> {}
+        )*
+
+        // REVIEW: Possible encompassing methods to implement:
+        // as_instruction, is_sized, ge/set metadata methods
+    );
 }
 
 macro_rules! math_trait_value_set {
@@ -142,8 +150,8 @@ pub trait AnyValue<'ctx>: AsValueRef + Debug {
 }
 
 trait_value_set! {AggregateValue: ArrayValue, AggregateValueEnum, StructValue}
-trait_value_set! {AnyValue: AnyValueEnum, BasicValueEnum, BasicMetadataValueEnum, AggregateValueEnum, ArrayValue, IntValue, FloatValue, GlobalValue, PhiValue, PointerValue, FunctionValue, StructValue, VectorValue, InstructionValue, CallSiteValue, MetadataValue}
-trait_value_set! {BasicValue: ArrayValue, BasicValueEnum, AggregateValueEnum, IntValue, FloatValue, GlobalValue, StructValue, PointerValue, VectorValue}
+trait_value_set! {AnyValue: AnyValueEnum, BasicValueEnum, BasicMetadataValueEnum, AggregateValueEnum, ArrayValue, IntValue, FloatValue, GlobalValue, PhiValue, PointerValue, FunctionValue<'mod>, StructValue, VectorValue, InstructionValue, CallSiteValue, MetadataValue}
+trait_value_set! {BasicValue: ArrayValue, BasicValueEnum, AggregateValueEnum, IntValue, FloatValue, GlobalValue<'mod>, StructValue, PointerValue, VectorValue}
 math_trait_value_set! {IntMathValue: (IntValue => IntType), (VectorValue => VectorType)}
 math_trait_value_set! {FloatMathValue: (FloatValue => FloatType), (VectorValue => VectorType)}
 math_trait_value_set! {PointerMathValue: (PointerValue => PointerType), (VectorValue => VectorType)}

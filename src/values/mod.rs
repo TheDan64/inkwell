@@ -25,7 +25,6 @@ use crate::support::LLVMString;
 pub use crate::values::array_value::ArrayValue;
 pub use crate::values::basic_value_use::BasicValueUse;
 pub use crate::values::call_site_value::CallSiteValue;
-pub use crate::values::callable_value::CallableValue;
 pub use crate::values::enums::{AggregateValueEnum, AnyValueEnum, BasicMetadataValueEnum, BasicValueEnum};
 pub use crate::values::float_value::FloatValue;
 pub use crate::values::fn_value::FunctionValue;

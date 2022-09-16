@@ -91,7 +91,7 @@ fn test_section_iterator() {
     apply_target_to_module(&target_machine, &module);
 
     let memory_buffer = target_machine
-        .write_to_memory_buffer(&mut module, FileType::Object)
+        .write_to_memory_buffer(&module, FileType::Object)
         .unwrap();
     let object_file = memory_buffer.create_object_file().unwrap();
 

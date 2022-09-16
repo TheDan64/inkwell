@@ -204,7 +204,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(fn_val.get_name().to_str(), Ok("my_function"));
     /// assert_eq!(fn_val.get_linkage(), Linkage::External);
     /// ```
-    pub fn add_function(&self, name: &str, ty: FunctionType<'ctx>, linkage: Option<Linkage>) -> FunctionValue<'ctx> {
+    pub fn add_function<'mod>(&'mod self, name: &str, ty: FunctionType<'ctx>, linkage: Option<Linkage>) -> FunctionValue<'ctx, 'mod> {
         let c_string = to_c_str(name);
         let fn_value = unsafe {
             FunctionValue::new(LLVMAddFunction(self.module.get(), c_string.as_ptr(), ty.as_type_ref()))
@@ -252,7 +252,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(fn_value, module.get_first_function().unwrap());
     /// ```
-    pub fn get_first_function(&self) -> Option<FunctionValue<'ctx>> {
+    pub fn get_first_function<'mod>(&'mod self) -> Option<FunctionValue<'ctx, 'mod>> {
         unsafe { FunctionValue::new(LLVMGetFirstFunction(self.module.get())) }
     }
 
@@ -274,7 +274,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(fn_value, module.get_last_function().unwrap());
     /// ```
-    pub fn get_last_function(&self) -> Option<FunctionValue<'ctx>> {
+    pub fn get_last_function<'mod>(&'mod self) -> Option<FunctionValue<'ctx, 'mod>> {
         unsafe { FunctionValue::new(LLVMGetLastFunction(self.module.get())) }
     }
 
@@ -296,7 +296,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(fn_value, module.get_function("my_fn").unwrap());
     /// ```
-    pub fn get_function(&self, name: &str) -> Option<FunctionValue<'ctx>> {
+    pub fn get_function<'mod>(&'mod self, name: &str) -> Option<FunctionValue<'ctx, 'mod>> {
         let c_string = to_c_str(name);
 
         unsafe { FunctionValue::new(LLVMGetNamedFunction(self.module.get(), c_string.as_ptr())) }
@@ -324,7 +324,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(vec!["my_fn".to_owned()], names);
     /// ```
-    pub fn get_functions(&self) -> FunctionIterator<'ctx> {
+    pub fn get_functions<'mod>(&'mod self) -> FunctionIterator<'ctx, 'mod> {
         FunctionIterator::from_module(self)
     }
 
@@ -591,12 +591,12 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_first_global().unwrap(), global);
     /// assert_eq!(module.get_last_global().unwrap(), global);
     /// ```
-    pub fn add_global<T: BasicType<'ctx>>(
-        &self,
+    pub fn add_global<'mod, T: BasicType<'ctx>>(
+        &'mod self,
         type_: T,
         address_space: Option<AddressSpace>,
         name: &str,
-    ) -> GlobalValue<'ctx> {
+    ) -> GlobalValue<'ctx, 'mod> {
         let c_string = to_c_str(name);
 
         let value = unsafe {
@@ -1004,7 +1004,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(module.get_first_global().unwrap(), global);
     /// ```
-    pub fn get_first_global(&self) -> Option<GlobalValue<'ctx>> {
+    pub fn get_first_global<'mod>(&'mod self) -> Option<GlobalValue<'ctx, 'mod>> {
         let value = unsafe { LLVMGetFirstGlobal(self.module.get()) };
 
         if value.is_null() {
@@ -1032,7 +1032,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(module.get_last_global().unwrap(), global);
     /// ```
-    pub fn get_last_global(&self) -> Option<GlobalValue<'ctx>> {
+    pub fn get_last_global<'mod>(&'mod self) -> Option<GlobalValue<'ctx, 'mod>> {
         let value = unsafe { LLVMGetLastGlobal(self.module.get()) };
 
         if value.is_null() {
@@ -1060,7 +1060,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(module.get_global("my_global").unwrap(), global);
     /// ```
-    pub fn get_global(&self, name: &str) -> Option<GlobalValue<'ctx>> {
+    pub fn get_global<'mod>(&'mod self, name: &str) -> Option<GlobalValue<'ctx, 'mod>> {
         let c_string = to_c_str(name);
         let value = unsafe { LLVMGetNamedGlobal(self.module.get(), c_string.as_ptr()) };
 
@@ -1528,18 +1528,18 @@ pub enum FlagBehavior {
 
 /// Iterate over all `FunctionValue`s in an llvm module
 #[derive(Debug)]
-pub struct FunctionIterator<'ctx>(FunctionIteratorInner<'ctx>);
+pub struct FunctionIterator<'ctx, 'mod>(FunctionIteratorInner<'ctx, 'mod>);
 
 /// Inner type so the variants are not publicly visible
 #[derive(Debug)]
-enum FunctionIteratorInner<'ctx> {
+enum FunctionIteratorInner<'ctx, 'mod> {
     Empty,
-    Start(FunctionValue<'ctx>),
-    Previous(FunctionValue<'ctx>),
+    Start(FunctionValue<'ctx, 'mod>),
+    Previous(FunctionValue<'ctx, 'mod>),
 }
 
-impl<'ctx> FunctionIterator<'ctx> {
-    fn from_module(module: &Module<'ctx>) -> Self {
+impl<'ctx, 'mod> FunctionIterator<'ctx, 'mod> {
+    fn from_module(module: &'mod Module<'ctx>) -> Self {
         use FunctionIteratorInner::*;
 
         match module.get_first_function() {
@@ -1549,8 +1549,8 @@ impl<'ctx> FunctionIterator<'ctx> {
     }
 }
 
-impl<'ctx> Iterator for FunctionIterator<'ctx> {
-    type Item = FunctionValue<'ctx>;
+impl<'ctx, 'mod> Iterator for FunctionIterator<'ctx, 'mod> {
+    type Item = FunctionValue<'ctx, 'mod>;
 
     fn next(&mut self) -> Option<Self::Item> {
         use FunctionIteratorInner::*;

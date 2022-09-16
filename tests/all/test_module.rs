@@ -511,3 +511,23 @@ fn test_double_ee_from_same_module() {
 
     assert!(module.create_interpreter_execution_engine().is_err());
 }
+
+#[test]
+fn test_add_module_lt() {
+    let ctx = Context::create();
+
+    // fn_value lives longer than module.
+    let fn_value =
+    {
+        let module = ctx.create_module("test");
+        let fn_type = ctx.f64_type().fn_type(&[], false);
+        let fn_value = module.add_function("test_fn", fn_type, None);
+
+        // This is OK, it prints "define double @test_fn()\n"
+        println!("{fn_value}");
+        fn_value
+    };
+
+    // Segmentation fault
+    println!("{fn_value}");
+}

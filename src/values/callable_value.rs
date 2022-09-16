@@ -75,9 +75,9 @@ use llvm_sys::LLVMTypeKind;
 /// builder.build_return(Some(&ret_val));
 /// ```
 #[derive(Debug)]
-pub struct CallableValue<'ctx>(Either<FunctionValue<'ctx>, PointerValue<'ctx>>);
+pub struct CallableValue<'ctx, 'mod>(Either<FunctionValue<'ctx, 'mod>, PointerValue<'ctx>>);
 
-impl<'ctx> AsValueRef for CallableValue<'ctx> {
+impl AsValueRef for CallableValue<'_, '_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         use either::Either::*;
 
@@ -88,9 +88,9 @@ impl<'ctx> AsValueRef for CallableValue<'ctx> {
     }
 }
 
-impl<'ctx> AnyValue<'ctx> for CallableValue<'ctx> {}
+impl AnyValue for CallableValue<'_> {}
 
-impl<'ctx> CallableValue<'ctx> {
+impl CallableValue<'_> {
     pub(crate) fn returns_void(&self) -> bool {
         let return_type =
             unsafe { LLVMGetTypeKind(LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(self.as_value_ref())))) };
@@ -99,13 +99,13 @@ impl<'ctx> CallableValue<'ctx> {
     }
 }
 
-impl<'ctx> From<FunctionValue<'ctx>> for CallableValue<'ctx> {
-    fn from(value: FunctionValue<'ctx>) -> Self {
+impl<'ctx, 'mod> From<FunctionValue<'ctx, 'mod>> for CallableValue<'ctx, 'mod> {
+    fn from(value: FunctionValue<'ctx, 'mod>) -> Self {
         Self(Either::Left(value))
     }
 }
 
-impl<'ctx> TryFrom<PointerValue<'ctx>> for CallableValue<'ctx> {
+impl<'ctx> TryFrom<PointerValue<'ctx>> for CallableValue<'ctx, '_> {
     type Error = ();
 
     fn try_from(value: PointerValue<'ctx>) -> Result<Self, Self::Error> {
@@ -122,7 +122,7 @@ impl<'ctx> TryFrom<PointerValue<'ctx>> for CallableValue<'ctx> {
     }
 }
 
-impl Display for CallableValue<'_> {
+impl Display for CallableValue<'_, '_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.print_to_string())
     }

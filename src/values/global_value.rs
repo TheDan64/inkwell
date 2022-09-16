@@ -31,6 +31,7 @@ use std::ptr;
 
 #[llvm_versions(7.0..=latest)]
 use crate::comdat::Comdat;
+use crate::context::Context;
 use crate::module::Linkage;
 use crate::support::to_c_str;
 use crate::values::traits::AsValueRef;
@@ -44,11 +45,12 @@ use super::AnyValue;
 // REVIEW: GlobalValues are always PointerValues. With SubTypes, we should
 // compress this into a PointerValue<Global> type
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-pub struct GlobalValue<'ctx> {
-    global_value: Value<'ctx>,
+pub struct GlobalValue<'ctx, 'mod> {
+    global_value: Value<'mod>,
+    context: PhantomData<&'ctx Context>,
 }
 
-impl<'ctx> GlobalValue<'ctx> {
+impl<'ctx, 'mod> GlobalValue<'ctx, 'mod> {
     pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
@@ -62,7 +64,7 @@ impl<'ctx> GlobalValue<'ctx> {
         self.global_value.get_name()
     }
 
-    pub fn get_previous_global(self) -> Option<GlobalValue<'ctx>> {
+    pub fn get_previous_global(self) -> Option<Self> {
         let value = unsafe { LLVMGetPreviousGlobal(self.as_value_ref()) };
 
         if value.is_null() {
@@ -72,7 +74,7 @@ impl<'ctx> GlobalValue<'ctx> {
         unsafe { Some(GlobalValue::new(value)) }
     }
 
-    pub fn get_next_global(self) -> Option<GlobalValue<'ctx>> {
+    pub fn get_next_global(self) -> Option<Self> {
         let value = unsafe { LLVMGetNextGlobal(self.as_value_ref()) };
 
         if value.is_null() {
@@ -301,13 +303,13 @@ impl<'ctx> GlobalValue<'ctx> {
     }
 }
 
-impl AsValueRef for GlobalValue<'_> {
+impl AsValueRef for GlobalValue<'_, '_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.global_value.value
     }
 }
 
-impl Display for GlobalValue<'_> {
+impl Display for GlobalValue<'_, '_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.print_to_string())
     }
