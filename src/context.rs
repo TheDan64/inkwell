@@ -1240,7 +1240,7 @@ impl LLVMReference<LLVMContextRef> for Context {
 /// A `ContextRef` is a smart pointer allowing borrowed access to a type's `Context`.
 #[derive(Debug, PartialEq, Eq)]
 pub struct ContextRef<'ctx> {
-    context: ContextImpl,
+    pub(crate) context: ContextImpl,
     _marker: PhantomData<&'ctx Context>,
 }
 
