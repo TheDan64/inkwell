@@ -4,7 +4,7 @@ use inkwell::comdat::ComdatSelectionKind;
 use inkwell::context::Context;
 use inkwell::module::Linkage::*;
 use inkwell::types::{StringRadix, VectorType};
-use inkwell::values::{AnyValue, BasicValue, CallableValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
+use inkwell::values::{AnyValue, CallableValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
 use inkwell::{AddressSpace, DLLStorageClass, FloatPredicate, GlobalVisibility, ThreadLocalMode};
 
 use std::convert::TryFrom;

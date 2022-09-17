@@ -392,7 +392,7 @@ impl<'ctx> BasicBlock<'ctx> {
     /// let function = module.add_function("do_nothing", fn_type, None);
     /// let basic_block = context.append_basic_block(function, "entry");
     ///
-    /// assert_eq!(context, *basic_block.get_context());
+    /// assert_eq!(context, basic_block.get_context());
     /// ```
     pub fn get_context(self) -> ContextRef<'ctx> {
         unsafe { ContextRef::new(LLVMGetTypeContext(LLVMTypeOf(LLVMBasicBlockAsValue(self.basic_block)))) }

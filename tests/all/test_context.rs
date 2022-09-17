@@ -27,8 +27,8 @@ fn test_get_context_from_contextless_value() {
         Context::get_global(|global_context| {
             let int = global_context.i8_type();
 
-            assert_ne!(*int.get_context(), context);
-            assert_eq!(*int.get_context(), *global_context);
+            assert_ne!(int.get_context(), context);
+            assert_eq!(int.get_context(), *global_context);
             assert_ne!(*global_context, context);
         })
     };
@@ -43,7 +43,7 @@ fn test_basic_block_context() {
     let fn_value = module.add_function("my_fn", fn_type, None);
     let basic_block = context.append_basic_block(fn_value, "entry");
 
-    assert_eq!(*basic_block.get_context(), context);
+    assert_eq!(basic_block.get_context(), context);
 }
 
 #[test]
@@ -58,12 +58,12 @@ fn test_values_get_context() {
     let fn_type = f32_type.fn_type(&[], false);
     let struct_type = context.struct_type(&[i8_type.into(), f32_type.into()], false);
 
-    assert_eq!(*f32_type.get_context(), context);
-    assert_eq!(*void_type.get_context(), context);
-    assert_eq!(*f32_vec_type.get_context(), context);
-    assert_eq!(*f32_ptr_type.get_context(), context);
-    assert_eq!(*f32_array_type.get_context(), context);
-    assert_eq!(*fn_type.get_context(), context);
-    assert_eq!(*i8_type.get_context(), context);
-    assert_eq!(*struct_type.get_context(), context);
+    assert_eq!(f32_type.get_context(), context);
+    assert_eq!(void_type.get_context(), context);
+    assert_eq!(f32_vec_type.get_context(), context);
+    assert_eq!(f32_ptr_type.get_context(), context);
+    assert_eq!(f32_array_type.get_context(), context);
+    assert_eq!(fn_type.get_context(), context);
+    assert_eq!(i8_type.get_context(), context);
+    assert_eq!(struct_type.get_context(), context);
 }

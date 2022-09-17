@@ -316,12 +316,12 @@ fn test_ptr_sized_int() {
 
     let int_type3 = context.ptr_sized_int_type(&target_data, None);
 
-    assert_eq!(*int_type3.get_context(), context);
+    assert_eq!(int_type3.get_context(), context);
     assert_eq!(int_type3.get_bit_width(), target_data.get_pointer_byte_size(None) * 8);
 
     let int_type4 = context.ptr_sized_int_type(&target_data, Some(address_space));
 
-    assert_eq!(*int_type4.get_context(), context);
+    assert_eq!(int_type4.get_context(), context);
     assert_eq!(
         int_type4.get_bit_width(),
         target_data.get_pointer_byte_size(Some(address_space)) * 8

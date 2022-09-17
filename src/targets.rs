@@ -1235,9 +1235,9 @@ impl TargetData {
     ) -> IntType<'ctx> {
         let int_type_ptr = match address_space {
             Some(address_space) => unsafe {
-                LLVMIntPtrTypeForASInContext(context.context, self.target_data, address_space as u32)
+                LLVMIntPtrTypeForASInContext(context.context.0, self.target_data, address_space as u32)
             },
-            None => unsafe { LLVMIntPtrTypeInContext(context.context, self.target_data) },
+            None => unsafe { LLVMIntPtrTypeInContext(context.context.0, self.target_data) },
         };
 
         unsafe { IntType::new(int_type_ptr) }

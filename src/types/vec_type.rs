@@ -258,7 +258,7 @@ impl<'ctx> VectorType<'ctx> {
     /// let f32_type = context.f32_type();
     /// let f32_vec_type = f32_type.vec_type(7);
     ///
-    /// assert_eq!(*f32_vec_type.get_context(), context);
+    /// assert_eq!(f32_vec_type.get_context(), context);
     /// ```
     pub fn get_context(self) -> ContextRef<'ctx> {
         self.vec_type.get_context()

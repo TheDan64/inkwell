@@ -2611,7 +2611,7 @@ impl<'ctx> Builder<'ctx> {
         unsafe {
             LLVMSetCurrentDebugLocation(
                 self.builder,
-                LLVMMetadataAsValue(context.context, location.metadata_ref),
+                LLVMMetadataAsValue(context.context.0, location.metadata_ref),
             );
         }
     }

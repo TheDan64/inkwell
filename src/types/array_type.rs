@@ -89,7 +89,7 @@ impl<'ctx> ArrayType<'ctx> {
     /// let i8_type = context.i8_type();
     /// let i8_array_type = i8_type.array_type(3);
     ///
-    /// assert_eq!(*i8_array_type.get_context(), context);
+    /// assert_eq!(i8_array_type.get_context(), context);
     /// ```
     pub fn get_context(self) -> ContextRef<'ctx> {
         self.array_type.get_context()

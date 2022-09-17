@@ -258,7 +258,7 @@ impl<'ctx> IntType<'ctx> {
     /// let context = Context::create();
     /// let i8_type = context.i8_type();
     ///
-    /// assert_eq!(*i8_type.get_context(), context);
+    /// assert_eq!(i8_type.get_context(), context);
     /// ```
     pub fn get_context(self) -> ContextRef<'ctx> {
         self.int_type.get_context()

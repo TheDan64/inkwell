@@ -232,7 +232,7 @@ impl<'ctx> Module<'ctx> {
     /// let local_context = Context::create();
     /// let local_module = local_context.create_module("my_module");
     ///
-    /// assert_eq!(*local_module.get_context(), local_context);
+    /// assert_eq!(local_module.get_context(), local_context);
     /// ```
     pub fn get_context(&self) -> ContextRef<'ctx> {
         unsafe { ContextRef::new(LLVMGetModuleContext(self.module.get())) }
@@ -366,7 +366,7 @@ impl<'ctx> Module<'ctx> {
             feature = "llvm12-0",
             feature = "llvm13-0",
         )))]
-        let struct_type = unsafe { LLVMGetTypeByName2(self.get_context().context, c_string.as_ptr()) };
+        let struct_type = unsafe { LLVMGetTypeByName2(self.get_context().context.0, c_string.as_ptr()) };
 
         #[cfg(any(
             feature = "llvm4-0",
@@ -453,7 +453,7 @@ impl<'ctx> Module<'ctx> {
     /// let module = context.create_module("my_module");
     /// let execution_engine = module.create_execution_engine().unwrap();
     ///
-    /// assert_eq!(*module.get_context(), context);
+    /// assert_eq!(module.get_context(), context);
     /// ```
     // SubType: ExecutionEngine<Basic?>
     pub fn create_execution_engine(&self) -> Result<ExecutionEngine<'ctx>, LLVMString> {
@@ -507,7 +507,7 @@ impl<'ctx> Module<'ctx> {
     /// let module = context.create_module("my_module");
     /// let execution_engine = module.create_interpreter_execution_engine().unwrap();
     ///
-    /// assert_eq!(*module.get_context(), context);
+    /// assert_eq!(module.get_context(), context);
     /// ```
     // SubType: ExecutionEngine<Interpreter>
     pub fn create_interpreter_execution_engine(&self) -> Result<ExecutionEngine<'ctx>, LLVMString> {
@@ -563,7 +563,7 @@ impl<'ctx> Module<'ctx> {
     /// let module = context.create_module("my_module");
     /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     ///
-    /// assert_eq!(*module.get_context(), context);
+    /// assert_eq!(module.get_context(), context);
     /// ```
     // SubType: ExecutionEngine<Jit>
     pub fn create_jit_execution_engine(
@@ -1119,7 +1119,7 @@ impl<'ctx> Module<'ctx> {
     /// let buffer = MemoryBuffer::create_from_file(&path).unwrap();
     /// let module = Module::parse_bitcode_from_buffer(&buffer, &context);
     ///
-    /// assert_eq!(*module.unwrap().get_context(), context);
+    /// assert_eq!(module.unwrap().get_context(), context);
     ///
     /// ```
     pub fn parse_bitcode_from_buffer(buffer: &MemoryBuffer, context: &'ctx Context) -> Result<Self, LLVMString> {
@@ -1132,7 +1132,7 @@ impl<'ctx> Module<'ctx> {
         #[allow(deprecated)]
         let success = unsafe {
             LLVMParseBitcodeInContext(
-                context.context,
+                context.context.0,
                 buffer.memory_buffer,
                 module.as_mut_ptr(),
                 err_string.as_mut_ptr(),
@@ -1161,7 +1161,7 @@ impl<'ctx> Module<'ctx> {
     /// let context = Context::create();
     /// let module = Module::parse_bitcode_from_path(&path, &context);
     ///
-    /// assert_eq!(*module.unwrap().get_context(), context);
+    /// assert_eq!(module.unwrap().get_context(), context);
     ///
     /// ```
     // LLVMGetBitcodeModuleInContext was a pain to use, so I seem to be able to achieve the same effect

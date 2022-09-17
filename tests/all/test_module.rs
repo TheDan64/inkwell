@@ -72,7 +72,7 @@ fn test_get_function() {
     let context = Context::create();
     let module = context.create_module("my_module");
 
-    assert_eq!(*module.get_context(), context);
+    assert_eq!(module.get_context(), context);
     assert!(module.get_first_function().is_none());
     assert!(module.get_last_function().is_none());
     assert!(module.get_function("function_1").is_none());
@@ -171,7 +171,7 @@ fn test_get_struct_type() {
     let context = Context::create();
     let module = context.create_module("my_module");
 
-    assert_eq!(*module.get_context(), context);
+    assert_eq!(module.get_context(), context);
     assert!(module.get_struct_type("foo").is_none());
 
     let opaque = context.opaque_struct_type("foo");
@@ -185,7 +185,7 @@ fn test_get_struct_type_global_context() {
         Context::get_global(|context| {
             let module = context.create_module("my_module");
 
-            assert_eq!(*module.get_context(), *context);
+            assert_eq!(module.get_context(), *context);
             assert!(module.get_struct_type("foo").is_none());
 
             let opaque = context.opaque_struct_type("foo");
@@ -242,7 +242,7 @@ fn test_parse_from_buffer() {
     let module2_result = Module::parse_bitcode_from_buffer(&buffer, &context);
 
     assert!(module2_result.is_ok());
-    assert_eq!(*module2_result.unwrap().get_context(), context);
+    assert_eq!(module2_result.unwrap().get_context(), context);
 
     let module3_result = Module::parse_bitcode_from_buffer(&garbage_buffer, &context);
 
@@ -252,7 +252,7 @@ fn test_parse_from_buffer() {
     let module4_result = Module::parse_bitcode_from_buffer(&buffer2, &context);
 
     assert!(module4_result.is_ok());
-    assert_eq!(*module4_result.unwrap().get_context(), context);
+    assert_eq!(module4_result.unwrap().get_context(), context);
 }
 
 #[test]
@@ -289,7 +289,7 @@ fn test_parse_from_path() {
     let module3_result = Module::parse_bitcode_from_path(&temp_path, &context);
 
     assert!(module3_result.is_ok());
-    assert_eq!(*module3_result.unwrap().get_context(), context);
+    assert_eq!(module3_result.unwrap().get_context(), context);
 }
 
 #[test]

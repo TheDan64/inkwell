@@ -123,10 +123,10 @@ use llvm_sys::debuginfo::{
     LLVMDIBuilderCreateCompileUnit, LLVMDIBuilderCreateDebugLocation, LLVMDIBuilderCreateExpression,
     LLVMDIBuilderCreateFile, LLVMDIBuilderCreateFunction, LLVMDIBuilderCreateLexicalBlock,
     LLVMDIBuilderCreateMemberType, LLVMDIBuilderCreateNameSpace, LLVMDIBuilderCreateParameterVariable,
-    LLVMDIBuilderCreatePointerType, LLVMDIBuilderCreateReferenceType, LLVMDIBuilderCreateStructType, 
-    LLVMDIBuilderCreateSubroutineType, LLVMDIBuilderCreateUnionType, LLVMDIBuilderFinalize, 
-    LLVMDIBuilderGetOrCreateSubrange, LLVMDIBuilderInsertDbgValueBefore, LLVMDIBuilderInsertDeclareAtEnd, 
-    LLVMDIBuilderInsertDeclareBefore, LLVMDILocationGetColumn, LLVMDILocationGetLine, LLVMDILocationGetScope, 
+    LLVMDIBuilderCreatePointerType, LLVMDIBuilderCreateReferenceType, LLVMDIBuilderCreateStructType,
+    LLVMDIBuilderCreateSubroutineType, LLVMDIBuilderCreateUnionType, LLVMDIBuilderFinalize,
+    LLVMDIBuilderGetOrCreateSubrange, LLVMDIBuilderInsertDbgValueBefore, LLVMDIBuilderInsertDeclareAtEnd,
+    LLVMDIBuilderInsertDeclareBefore, LLVMDILocationGetColumn, LLVMDILocationGetLine, LLVMDILocationGetScope,
     LLVMDITypeGetAlignInBits, LLVMDITypeGetOffsetInBits, LLVMDITypeGetSizeInBits,
 };
 #[llvm_versions(8.0..=latest)]
@@ -457,7 +457,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     ) -> DILocation<'ctx> {
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateDebugLocation(
-                context.context,
+                context.context.0,
                 line,
                 column,
                 scope.metadata_ref,
@@ -708,18 +708,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     }
 
     /// Creates a pointer type
-    pub fn create_reference_type(
-        &self,
-        pointee: DIType<'ctx>,
-        tag: u32,
-    ) -> DIDerivedType<'ctx> {
-        let metadata_ref = unsafe {
-            LLVMDIBuilderCreateReferenceType(
-                self.builder,
-                tag,
-                pointee.metadata_ref,
-            )
-        };
+    pub fn create_reference_type(&self, pointee: DIType<'ctx>, tag: u32) -> DIDerivedType<'ctx> {
+        let metadata_ref = unsafe { LLVMDIBuilderCreateReferenceType(self.builder, tag, pointee.metadata_ref) };
 
         DIDerivedType {
             metadata_ref,
@@ -978,8 +968,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     /// Construct a placeholders derived type to be used when building debug info with circular references.
     ///
     /// All placeholders must be replaced before calling finalize().
-    pub unsafe fn create_placeholder_derived_type(&self, context: &Context) -> DIDerivedType<'ctx> {
-        let metadata_ref = LLVMTemporaryMDNode(context.context, std::ptr::null_mut(), 0);
+    pub unsafe fn create_placeholder_derived_type(&self, context: &'ctx Context) -> DIDerivedType<'ctx> {
+        let metadata_ref = LLVMTemporaryMDNode(context.context.0, std::ptr::null_mut(), 0);
         DIDerivedType {
             metadata_ref,
             _marker: PhantomData,
@@ -1258,8 +1248,8 @@ pub struct DIGlobalVariableExpression<'ctx> {
 }
 
 impl<'ctx> DIGlobalVariableExpression<'ctx> {
-    pub fn as_metadata_value(&self, context: &Context) -> MetadataValue<'ctx> {
-        unsafe { MetadataValue::new(LLVMMetadataAsValue(context.context, self.metadata_ref)) }
+    pub fn as_metadata_value(&self, context: &'ctx Context) -> MetadataValue<'ctx> {
+        unsafe { MetadataValue::new(LLVMMetadataAsValue(context.context.0, self.metadata_ref)) }
     }
 }
 

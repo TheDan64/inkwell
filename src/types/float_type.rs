@@ -193,7 +193,7 @@ impl<'ctx> FloatType<'ctx> {
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
     ///
-    /// assert_eq!(*f32_type.get_context(), context);
+    /// assert_eq!(f32_type.get_context(), context);
     /// ```
     pub fn get_context(self) -> ContextRef<'ctx> {
         self.float_type.get_context()

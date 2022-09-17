@@ -144,7 +144,7 @@ impl<'ctx> StructType<'ctx> {
     /// let f32_type = context.f32_type();
     /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
     ///
-    /// assert_eq!(*struct_type.get_context(), context);
+    /// assert_eq!(struct_type.get_context(), context);
     /// ```
     pub fn get_context(self) -> ContextRef<'ctx> {
         self.struct_type.get_context()

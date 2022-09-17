@@ -50,7 +50,7 @@ impl<'ctx> MetadataType<'ctx> {
     /// let context = Context::create();
     /// let md_type = context.metadata_type();
     ///
-    /// assert_eq!(*md_type.get_context(), context);
+    /// assert_eq!(md_type.get_context(), context);
     /// ```
     #[llvm_versions(6.0..=latest)]
     pub fn get_context(self) -> ContextRef<'ctx> {

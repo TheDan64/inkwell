@@ -1,7 +1,6 @@
 use inkwell::context::Context;
 use inkwell::execution_engine::FunctionLookupError;
 use inkwell::targets::{InitializationConfig, Target};
-use inkwell::values::BasicValue;
 use inkwell::{AddressSpace, IntPredicate, OptimizationLevel};
 
 type Thunk = unsafe extern "C" fn();

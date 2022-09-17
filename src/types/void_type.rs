@@ -52,7 +52,7 @@ impl<'ctx> VoidType<'ctx> {
     /// let context = Context::create();
     /// let void_type = context.void_type();
     ///
-    /// assert_eq!(*void_type.get_context(), context);
+    /// assert_eq!(void_type.get_context(), context);
     /// ```
     pub fn get_context(self) -> ContextRef<'ctx> {
         self.void_type.get_context()

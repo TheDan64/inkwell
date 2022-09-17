@@ -92,7 +92,7 @@ impl<'ctx> PointerType<'ctx> {
     /// let f32_type = context.f32_type();
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
     ///
-    /// assert_eq!(*f32_ptr_type.get_context(), context);
+    /// assert_eq!(f32_ptr_type.get_context(), context);
     /// ```
     // TODO: Move to AnyType trait
     pub fn get_context(self) -> ContextRef<'ctx> {

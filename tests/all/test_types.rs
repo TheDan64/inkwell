@@ -16,7 +16,7 @@ fn test_struct_type() {
     assert!(!av_struct.is_opaque());
     assert!(av_struct.is_sized());
     assert!(av_struct.get_name().is_none());
-    assert_eq!(*av_struct.get_context(), context);
+    assert_eq!(av_struct.get_context(), context);
     assert_eq!(av_struct.count_fields(), 2);
     assert_eq!(av_struct.get_field_types(), &[int_vector.into(), float_array.into()]);
 
@@ -36,7 +36,7 @@ fn test_struct_type() {
     assert!(av_struct.is_sized());
     // REVIEW: Is there a way to name a non opaque struct?
     assert!(av_struct.get_name().is_none());
-    assert_eq!(*av_struct.get_context(), context);
+    assert_eq!(av_struct.get_context(), context);
     assert_eq!(av_struct.count_fields(), 2);
 
     let field_1 = av_struct.get_field_type_at_index(0).unwrap();
@@ -54,7 +54,7 @@ fn test_struct_type() {
     assert!(opaque_struct.is_opaque());
     assert!(!opaque_struct.is_sized());
     assert_eq!(opaque_struct.get_name().map(|s| s.to_str()), Some(Ok("opaque_struct")));
-    assert_eq!(*opaque_struct.get_context(), context);
+    assert_eq!(opaque_struct.get_context(), context);
     assert_eq!(opaque_struct.count_fields(), 0);
     assert!(opaque_struct.get_field_types().is_empty());
     assert!(opaque_struct.get_field_type_at_index(0).is_none());
@@ -73,7 +73,7 @@ fn test_struct_type() {
         no_longer_opaque_struct.get_name().map(|s| s.to_str()),
         Some(Ok("opaque_struct"))
     );
-    assert_eq!(*no_longer_opaque_struct.get_context(), context);
+    assert_eq!(no_longer_opaque_struct.get_context(), context);
     assert_eq!(no_longer_opaque_struct.count_fields(), 2);
     assert_eq!(
         no_longer_opaque_struct.get_field_types(),
@@ -98,7 +98,7 @@ fn test_function_type() {
     let fn_type = int.fn_type(&[int.into(), int.into(), float.into()], false);
 
     assert!(!fn_type.is_var_arg());
-    assert_eq!(*fn_type.get_context(), context);
+    assert_eq!(fn_type.get_context(), context);
 
     let param_types = fn_type.get_param_types();
 
@@ -110,7 +110,7 @@ fn test_function_type() {
     let fn_type = int.fn_type(&[int.into(), float.into()], true);
 
     assert!(fn_type.is_var_arg());
-    assert_eq!(*fn_type.get_context(), context);
+    assert_eq!(fn_type.get_context(), context);
 }
 
 #[test]
@@ -353,7 +353,7 @@ fn test_ptr_type() {
     let fn_ptr_type = fn_type.ptr_type(AddressSpace::Generic);
 
     assert_eq!(fn_ptr_type.get_element_type().into_function_type(), fn_type);
-    assert_eq!(*fn_ptr_type.get_context(), context);
+    assert_eq!(fn_ptr_type.get_context(), context);
 }
 
 #[test]

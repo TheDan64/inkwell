@@ -147,7 +147,7 @@ impl<'ctx> FunctionType<'ctx> {
     /// let f32_type = context.f32_type();
     /// let fn_type = f32_type.fn_type(&[], true);
     ///
-    /// assert_eq!(*fn_type.get_context(), context);
+    /// assert_eq!(fn_type.get_context(), context);
     /// ```
     pub fn get_context(self) -> ContextRef<'ctx> {
         self.fn_type.get_context()
