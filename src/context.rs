@@ -70,13 +70,13 @@ thread_local! {
 
 /// This struct allows us to share method impls across Context and ContextRef types
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) struct UnsafeContext(pub(crate) LLVMContextRef);
+pub(crate) struct ContextImpl(pub(crate) LLVMContextRef);
 
-impl UnsafeContext {
+impl ContextImpl {
     pub(crate) unsafe fn new(context: LLVMContextRef) -> Self {
         assert!(!context.is_null());
 
-        UnsafeContext(context)
+        ContextImpl(context)
     }
 
     fn create_builder<'ctx>(&self) -> Builder<'ctx> {
@@ -129,6 +129,19 @@ impl UnsafeContext {
         )))]
         can_throw: bool,
     ) -> PointerValue<'ctx> {
+        #[cfg(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
+        let value = unsafe {
+            LLVMConstInlineAsm(
+                ty.as_type_ref(),
+                assembly.as_mut_ptr() as *mut ::libc::c_char,
+                assembly.len(),
+                constraints.as_mut_ptr() as *mut ::libc::c_char,
+                constraints.len(),
+                sideeffects as i32,
+                alignstack as i32,
+            )
+        };
+        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
         let value = unsafe {
             LLVMGetInlineAsm(
                 ty.as_type_ref(),
@@ -138,7 +151,6 @@ impl UnsafeContext {
                 constraints.len(),
                 sideeffects as i32,
                 alignstack as i32,
-                #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
                 dialect.unwrap_or(InlineAsmDialect::ATT).into(),
                 #[cfg(not(any(
                     feature = "llvm4-0",
@@ -380,7 +392,7 @@ impl PartialEq<ContextRef<'_>> for Context {
 /// can, however, execute on different threads simultaneously according to the LLVM docs.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Context {
-    pub(crate) context: UnsafeContext,
+    pub(crate) context: ContextImpl,
 }
 
 unsafe impl Send for Context {}
@@ -388,7 +400,7 @@ unsafe impl Send for Context {}
 impl Context {
     pub(crate) unsafe fn new(context: LLVMContextRef) -> Self {
         Context {
-            context: UnsafeContext::new(context),
+            context: ContextImpl::new(context),
         }
     }
 
@@ -1230,14 +1242,14 @@ impl LLVMReference<LLVMContextRef> for Context {
 /// A `ContextRef` is a smart pointer allowing borrowed access to a type's `Context`.
 #[derive(Debug, PartialEq, Eq)]
 pub struct ContextRef<'ctx> {
-    context: UnsafeContext,
+    context: ContextImpl,
     _marker: PhantomData<&'ctx Context>,
 }
 
 impl<'ctx> ContextRef<'ctx> {
     pub(crate) unsafe fn new(context: LLVMContextRef) -> Self {
         ContextRef {
-            context: UnsafeContext::new(context),
+            context: ContextImpl::new(context),
             _marker: PhantomData,
         }
     }
