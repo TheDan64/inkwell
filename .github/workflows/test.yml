@@ -1,9 +1,12 @@
-name: Test Suite
+name: Test Suite and Doc
 
 on: [push, pull_request]
 
 env:
   CARGO_TERM_COLOR: always
+  DOC_LLVM_FEATURE: llvm14-0
+  DOC_LLVM_VERSION: '14.0'
+  DOC_PATH: target/doc
 
 jobs:
   tests:
@@ -26,12 +29,32 @@ jobs:
           - ["14.0", "14-0"]
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Install LLVM and Clang
-        uses: KyleMayes/install-llvm-action@v1.5.2
+        uses: KyleMayes/install-llvm-action@v1
         with:
           version: ${{ matrix.llvm-version[0] }}
       - name: Build
         run: cargo build --release --features llvm${{ matrix.llvm-version[1] }} --verbose
       - name: Run tests
         run: cargo test --release --features llvm${{ matrix.llvm-version[1] }} --verbose
+  doc:
+    name: Documentation
+    runs-on: ubuntu-latest
+    needs: tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    steps:
+    - uses: actions/checkout@v3
+    - uses: KyleMayes/install-llvm-action@v1
+      with:
+        version: ${{ env.DOC_LLVM_VERSION }}
+    - name: Build Documentation
+      run: cargo doc --features ${{ env.DOC_LLVM_FEATURE }} --verbose
+    - name: Doc Index Page Redirection
+      run: echo '<meta http-equiv="refresh" content="1; url=inkwell/index.html">' > ${{ env.DOC_PATH }}/index.html
+    - name: Deploy Documentation
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ${{ env.DOC_PATH }}
+        force_orphan: true
