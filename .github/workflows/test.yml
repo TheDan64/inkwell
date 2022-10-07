@@ -51,7 +51,7 @@ jobs:
     - name: Install Rust Nightly
       run: rustup toolchain install nightly
     - name: Build Documentation
-      run: cargo +nightly doc --features ${{ env.DOC_LLVM_FEATURE }} --verbose
+      run: cargo +nightly doc --features ${{ env.DOC_LLVM_FEATURE }},nightly --verbose
     - name: Doc Index Page Redirection
       run: echo '<meta http-equiv="refresh" content="1; url=inkwell/index.html">' > ${{ env.DOC_PATH }}/index.html
     - name: Deploy Documentation
