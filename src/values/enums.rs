@@ -1,6 +1,6 @@
 use llvm_sys::core::{LLVMGetTypeKind, LLVMIsAInstruction, LLVMTypeOf};
 use llvm_sys::prelude::LLVMValueRef;
-use llvm_sys::LLVMTypeKind;
+use llvm_sys::{LLVMTypeKind,LLVMValueKind};
 
 use crate::types::{AnyTypeEnum, BasicTypeEnum};
 use crate::values::traits::AsValueRef;
@@ -82,7 +82,12 @@ impl<'ctx> AnyValueEnum<'ctx> {
             | LLVMTypeKind::LLVMPPC_FP128TypeKind => AnyValueEnum::FloatValue(FloatValue::new(value)),
             LLVMTypeKind::LLVMIntegerTypeKind => AnyValueEnum::IntValue(IntValue::new(value)),
             LLVMTypeKind::LLVMStructTypeKind => AnyValueEnum::StructValue(StructValue::new(value)),
-            LLVMTypeKind::LLVMPointerTypeKind => AnyValueEnum::PointerValue(PointerValue::new(value)),
+            LLVMTypeKind::LLVMPointerTypeKind => {
+                match LLVMGetValueKind(value){
+                    LLVMValueKind::LLVMFunctionValueKind => AnyValueEnum::FunctionValue(FunctionValue::new(value).unwrap()),
+                    _ =>  AnyValueEnum::PointerValue(PointerValue::new(value)),
+                }
+            }
             LLVMTypeKind::LLVMArrayTypeKind => AnyValueEnum::ArrayValue(ArrayValue::new(value)),
             LLVMTypeKind::LLVMVectorTypeKind => AnyValueEnum::VectorValue(VectorValue::new(value)),
             LLVMTypeKind::LLVMFunctionTypeKind => AnyValueEnum::FunctionValue(FunctionValue::new(value).unwrap()),
