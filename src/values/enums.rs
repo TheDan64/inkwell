@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMGetTypeKind, LLVMIsAInstruction, LLVMTypeOf};
+use llvm_sys::core::{LLVMGetTypeKind, LLVMIsAInstruction, LLVMTypeOf,LLVMGetValueKind};
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::{LLVMTypeKind,LLVMValueKind};
 
