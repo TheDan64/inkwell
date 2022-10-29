@@ -1233,7 +1233,7 @@ impl Drop for Context {
 #[cfg(feature = "internal-getters")]
 impl LLVMReference<LLVMContextRef> for Context {
     unsafe fn get_ref(&self) -> LLVMContextRef {
-        self.context
+        self.context.0
     }
 }
 
@@ -2027,6 +2027,6 @@ impl<'ctx> ContextRef<'ctx> {
 #[cfg(feature = "internal-getters")]
 impl LLVMReference<LLVMContextRef> for ContextRef<'_> {
     unsafe fn get_ref(&self) -> LLVMContextRef {
-        self.context
+        self.context.0
     }
 }
