@@ -36,6 +36,8 @@ use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 
 use crate::basic_block::BasicBlock;
 #[llvm_versions(7.0..=latest)]
+use crate::context::AsContextRef;
+#[llvm_versions(7.0..=latest)]
 use crate::debug_info::DILocation;
 use crate::support::to_c_str;
 use crate::types::{AsTypeRef, BasicType, FloatMathType, IntMathType, PointerMathType, PointerType};
@@ -2605,13 +2607,13 @@ impl<'ctx> Builder<'ctx> {
 
     /// Set the debug info source location of the instruction currently pointed at by the builder
     #[llvm_versions(7.0..=latest)]
-    pub fn set_current_debug_location(&self, context: &'ctx crate::context::Context, location: DILocation<'ctx>) {
+    pub fn set_current_debug_location(&self, context: impl AsContextRef<'ctx>, location: DILocation<'ctx>) {
         use llvm_sys::core::LLVMMetadataAsValue;
         use llvm_sys::core::LLVMSetCurrentDebugLocation;
         unsafe {
             LLVMSetCurrentDebugLocation(
                 self.builder,
-                LLVMMetadataAsValue(context.context.0, location.metadata_ref),
+                LLVMMetadataAsValue(context.as_ctx_ref(), location.metadata_ref),
             );
         }
     }

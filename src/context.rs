@@ -46,6 +46,7 @@ use crate::values::{
 use crate::AddressSpace;
 #[cfg(feature = "internal-getters")]
 use crate::LLVMReference;
+pub(crate) use private::AsContextRef;
 
 use std::marker::PhantomData;
 use std::mem::{forget, ManuallyDrop};
@@ -2028,5 +2029,26 @@ impl<'ctx> ContextRef<'ctx> {
 impl LLVMReference<LLVMContextRef> for ContextRef<'_> {
     unsafe fn get_ref(&self) -> LLVMContextRef {
         self.context.0
+    }
+}
+
+pub(crate) mod private {
+    use super::{Context, ContextRef, LLVMContextRef};
+
+    pub trait AsContextRef<'ctx> {
+        /// Returns the internal LLVM reference behind the type
+        fn as_ctx_ref(&self) -> LLVMContextRef;
+    }
+
+    impl<'ctx> AsContextRef<'ctx> for &'ctx Context {
+        fn as_ctx_ref(&self) -> LLVMContextRef {
+            self.context.0
+        }
+    }
+
+    impl<'ctx> AsContextRef<'ctx> for ContextRef<'ctx> {
+        fn as_ctx_ref(&self) -> LLVMContextRef {
+            self.context.0
+        }
     }
 }

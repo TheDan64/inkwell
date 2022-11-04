@@ -40,7 +40,7 @@ use std::rc::Rc;
 
 #[llvm_versions(7.0..=latest)]
 use crate::comdat::Comdat;
-use crate::context::{Context, ContextRef};
+use crate::context::{AsContextRef, Context, ContextRef};
 use crate::data_layout::DataLayout;
 #[llvm_versions(7.0..=latest)]
 use crate::debug_info::{DICompileUnit, DWARFEmissionKind, DWARFSourceLanguage, DebugInfoBuilder};
@@ -1122,7 +1122,10 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.unwrap().get_context(), context);
     ///
     /// ```
-    pub fn parse_bitcode_from_buffer(buffer: &MemoryBuffer, context: &'ctx Context) -> Result<Self, LLVMString> {
+    pub fn parse_bitcode_from_buffer(
+        buffer: &MemoryBuffer,
+        context: impl AsContextRef<'ctx>,
+    ) -> Result<Self, LLVMString> {
         let mut module = MaybeUninit::uninit();
         let mut err_string = MaybeUninit::uninit();
 
@@ -1132,7 +1135,7 @@ impl<'ctx> Module<'ctx> {
         #[allow(deprecated)]
         let success = unsafe {
             LLVMParseBitcodeInContext(
-                context.context.0,
+                context.as_ctx_ref(),
                 buffer.memory_buffer,
                 module.as_mut_ptr(),
                 err_string.as_mut_ptr(),
@@ -1166,10 +1169,13 @@ impl<'ctx> Module<'ctx> {
     /// ```
     // LLVMGetBitcodeModuleInContext was a pain to use, so I seem to be able to achieve the same effect
     // by reusing create_from_file instead. This is basically just a convenience function.
-    pub fn parse_bitcode_from_path<P: AsRef<Path>>(path: P, context: &'ctx Context) -> Result<Self, LLVMString> {
+    pub fn parse_bitcode_from_path<P: AsRef<Path>>(
+        path: P,
+        context: impl AsContextRef<'ctx>,
+    ) -> Result<Self, LLVMString> {
         let buffer = MemoryBuffer::create_from_file(path.as_ref())?;
 
-        Self::parse_bitcode_from_buffer(&buffer, &context)
+        Self::parse_bitcode_from_buffer(&buffer, context)
     }
 
     /// Gets the name of this `Module`.

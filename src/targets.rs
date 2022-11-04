@@ -19,7 +19,7 @@ use llvm_sys::target_machine::{
 use once_cell::sync::Lazy;
 use parking_lot::RwLock;
 
-use crate::context::Context;
+use crate::context::{AsContextRef, Context};
 use crate::data_layout::DataLayout;
 use crate::memory_buffer::MemoryBuffer;
 use crate::module::Module;
@@ -1230,14 +1230,14 @@ impl TargetData {
     #[deprecated(note = "This method will be removed in the future. Please use Context::ptr_sized_int_type instead.")]
     pub fn ptr_sized_int_type_in_context<'ctx>(
         &self,
-        context: &'ctx Context,
+        context: impl AsContextRef<'ctx>,
         address_space: Option<AddressSpace>,
     ) -> IntType<'ctx> {
         let int_type_ptr = match address_space {
             Some(address_space) => unsafe {
-                LLVMIntPtrTypeForASInContext(context.context.0, self.target_data, address_space as u32)
+                LLVMIntPtrTypeForASInContext(context.as_ctx_ref(), self.target_data, address_space as u32)
             },
-            None => unsafe { LLVMIntPtrTypeInContext(context.context.0, self.target_data) },
+            None => unsafe { LLVMIntPtrTypeInContext(context.as_ctx_ref(), self.target_data) },
         };
 
         unsafe { IntType::new(int_type_ptr) }

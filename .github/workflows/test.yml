@@ -35,9 +35,9 @@ jobs:
         with:
           version: ${{ matrix.llvm-version[0] }}
       - name: Build
-        run: cargo build --release --features llvm${{ matrix.llvm-version[1] }} --verbose
+        run: cargo build --release --features llvm${{ matrix.llvm-version[1] }},internal-getters --verbose
       - name: Run tests
-        run: cargo test --release --features llvm${{ matrix.llvm-version[1] }} --verbose
+        run: cargo test --release --features llvm${{ matrix.llvm-version[1] }},internal-getters --verbose
   doc:
     name: Documentation
     runs-on: ubuntu-latest
