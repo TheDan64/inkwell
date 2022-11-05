@@ -15,9 +15,9 @@ use llvm_sys::core::{
     LLVMAppendBasicBlockInContext, LLVMConstStringInContext, LLVMConstStructInContext, LLVMContextCreate,
     LLVMContextDispose, LLVMContextSetDiagnosticHandler, LLVMCreateBuilderInContext, LLVMCreateEnumAttribute,
     LLVMCreateStringAttribute, LLVMDoubleTypeInContext, LLVMFP128TypeInContext, LLVMFloatTypeInContext,
-    LLVMGetGlobalContext, LLVMGetMDKindIDInContext, LLVMHalfTypeInContext, LLVMInsertBasicBlockInContext,
-    LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext,
-    LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMMDNodeInContext, LLVMMDStringInContext,
+    LLVMGetGlobalContext, LLVMGetMDKindIDInContext, LLVMGetTypeByName2, LLVMGetTypeKind, LLVMHalfTypeInContext,
+    LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext,
+    LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMMDNodeInContext, LLVMMDStringInContext,
     LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext, LLVMStructCreateNamed, LLVMStructTypeInContext,
     LLVMVoidTypeInContext, LLVMX86FP80TypeInContext,
 };
@@ -260,6 +260,41 @@ impl ContextImpl {
         let c_string = to_c_str(name);
 
         unsafe { StructType::new(LLVMStructCreateNamed(self.0, c_string.as_ptr())) }
+    }
+
+    fn get_type<'ctx>(&self, name: &str) -> Option<AnyTypeEnum<'ctx>> {
+        let c_string = to_c_str(name);
+
+        let ptr = unsafe { LLVMGetTypeByName2(self.0, c_string.as_ptr()) };
+        if ptr.is_null() {
+            return None;
+        }
+
+        let ty = unsafe { LLVMGetTypeKind(ptr) };
+
+        unsafe {
+            use crate::types::{ArrayType, PointerType, VectorType};
+            use llvm_sys::LLVMTypeKind::*;
+            match ty {
+                LLVMVoidTypeKind => Some(AnyTypeEnum::VoidType(VoidType::new(ptr))),
+                LLVMHalfTypeKind
+                | LLVMFloatTypeKind
+                | LLVMDoubleTypeKind
+                | LLVMX86_FP80TypeKind
+                | LLVMFP128TypeKind
+                | LLVMPPC_FP128TypeKind
+                | LLVMBFloatTypeKind => Some(AnyTypeEnum::FloatType(FloatType::new(ptr))),
+                LLVMIntegerTypeKind => Some(AnyTypeEnum::IntType(IntType::new(ptr))),
+                LLVMFunctionTypeKind => Some(AnyTypeEnum::FunctionType(FunctionType::new(ptr))),
+                LLVMStructTypeKind => Some(AnyTypeEnum::StructType(StructType::new(ptr))),
+                LLVMArrayTypeKind => Some(AnyTypeEnum::ArrayType(ArrayType::new(ptr))),
+                LLVMPointerTypeKind => Some(AnyTypeEnum::PointerType(PointerType::new(ptr))),
+                LLVMVectorTypeKind | LLVMScalableVectorTypeKind => Some(AnyTypeEnum::VectorType(VectorType::new(ptr))),
+                /* Not supported by inkwell. TODO: replace, once supported */
+                LLVMX86_MMXTypeKind | LLVMLabelTypeKind | LLVMTokenTypeKind | LLVMMetadataTypeKind
+                | LLVMX86_AMXTypeKind => None,
+            }
+        }
     }
 
     fn const_struct<'ctx>(&self, values: &[BasicValueEnum], packed: bool) -> StructValue<'ctx> {
@@ -924,6 +959,24 @@ impl Context {
     #[inline]
     pub fn opaque_struct_type(&self, name: &str) -> StructType {
         self.context.opaque_struct_type(name)
+    }
+
+    /// Get type by its name, if it exists.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    ///	let name = "opaque";
+    ///	let opaque = context.opaque_struct_type(name);
+    ///
+    /// let got = context.get_type(name);
+    ///	assert_eq!(got, Some(AnyTypeEnum::from(opaque)));
+    ///
+    /// assert_eq!(context.get_type("non-existent"), None);
+    /// ```
+    #[inline]
+    pub fn get_type<'ctx>(&self, name: &str) -> Option<AnyTypeEnum<'ctx>> {
+        self.context.get_type(name)
     }
 
     /// Creates a constant `StructValue` from constant values.

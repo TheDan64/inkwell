@@ -67,3 +67,18 @@ fn test_values_get_context() {
     assert_eq!(i8_type.get_context(), context);
     assert_eq!(struct_type.get_context(), context);
 }
+
+#[test]
+fn test_get_type() {
+    use inkwell::types::AnyTypeEnum;
+
+    let context = Context::create();
+
+    let name = "opaque";
+    let opaque = context.opaque_struct_type(name);
+
+    let got = context.get_type(name);
+    assert_eq!(got, Some(AnyTypeEnum::from(opaque)));
+
+    assert_eq!(context.get_type("non-existent"), None);
+}
