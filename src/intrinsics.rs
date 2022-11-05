@@ -51,7 +51,7 @@ impl Intrinsic {
             return None;
         }
 
-        return Some(unsafe { Intrinsic::new(id) });
+        Some(unsafe { Intrinsic::new(id) })
     }
 
     /// Check if specified intrinsic is overloaded

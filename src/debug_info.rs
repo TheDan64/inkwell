@@ -546,7 +546,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         runtime_language: u32,
         unique_id: &str,
     ) -> DICompositeType<'ctx> {
-        let mut elements: Vec<LLVMMetadataRef> = elements.into_iter().map(|dt| dt.metadata_ref).collect();
+        let mut elements: Vec<LLVMMetadataRef> = elements.iter().map(|dt| dt.metadata_ref).collect();
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateUnionType(
                 self.builder,
@@ -557,7 +557,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 line_no,
                 size_in_bits,
                 align_in_bits,
-                flags.into(),
+                flags,
                 elements.as_mut_ptr(),
                 elements.len().try_into().unwrap(),
                 runtime_language,

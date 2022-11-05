@@ -29,7 +29,7 @@ use crate::module::Linkage;
 use crate::support::to_c_str;
 use crate::types::{FunctionType, PointerType};
 use crate::values::traits::{AnyValue, AsValueRef};
-use crate::values::{BasicValueEnum, GlobalValue, PointerValue, Value};
+use crate::values::{BasicValueEnum, GlobalValue, Value};
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct FunctionValue<'ctx> {

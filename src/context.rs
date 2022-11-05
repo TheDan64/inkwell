@@ -49,8 +49,8 @@ use crate::LLVMReference;
 pub(crate) use private::AsContextRef;
 
 use std::marker::PhantomData;
-use std::mem::{forget, ManuallyDrop};
-use std::ops::Deref;
+use std::mem::forget;
+
 use std::ptr;
 use std::thread_local;
 
@@ -437,7 +437,7 @@ impl Context {
     where
         F: FnOnce(&Context) -> R,
     {
-        GLOBAL_CTX_LOCK.with(|lazy| func(&*lazy))
+        GLOBAL_CTX_LOCK.with(|lazy| func(lazy))
     }
 
     /// Creates a new `Builder` for a `Context`.

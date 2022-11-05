@@ -261,6 +261,7 @@ fn test_instructions() {
     );
 
     // test instruction cloning
+    #[allow(clippy::redundant_clone)]
     let instruction_clone = return_instruction.clone();
 
     assert_eq!(instruction_clone.get_opcode(), return_instruction.get_opcode());

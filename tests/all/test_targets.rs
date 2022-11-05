@@ -187,10 +187,10 @@ fn test_target_data() {
 
     // https://llvm.org/docs/LangRef.html#data-layout
     let datalayout_specification_re = Regex::new("[Ee]|S\\d+|P\\d+|A\\d+|p(\\d+)?:\\d+:\\d+(:\\d+)?|i\\d+:\\d+(:\\d+)?|v\\d+:\\d+(:\\d+)?|f\\d+:\\d+(:\\d+)?|a:\\d+(:\\d)?|F[in]\\d+|m:[emoxw]|n\\d+(:\\d)*|ni:\\d+(:\\d)*").unwrap();
-    for specification in data_layout.as_str().to_str().unwrap().split("-") {
+    for specification in data_layout.as_str().to_str().unwrap().split('-') {
         assert!(datalayout_specification_re.is_match(specification));
     }
-    assert!(data_layout.as_str().to_str().unwrap().matches("-").count() > 2);
+    assert!(data_layout.as_str().to_str().unwrap().matches('-').count() > 2);
 
     // REVIEW: Why is llvm 3.9+ a %? 4.0 on travis doesn't have it, but does for me locally...
     // assert_eq!(module.get_data_layout().as_str(), &*CString::new("%").unwrap());
@@ -303,23 +303,23 @@ fn test_ptr_sized_int() {
     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     let target_data = execution_engine.get_target_data();
     let address_space = AddressSpace::Global;
-    let int_type = context.ptr_sized_int_type(&target_data, None);
+    let int_type = context.ptr_sized_int_type(target_data, None);
 
     assert_eq!(int_type.get_bit_width(), target_data.get_pointer_byte_size(None) * 8);
 
-    let int_type2 = context.ptr_sized_int_type(&target_data, Some(address_space));
+    let int_type2 = context.ptr_sized_int_type(target_data, Some(address_space));
 
     assert_eq!(
         int_type2.get_bit_width(),
         target_data.get_pointer_byte_size(Some(address_space)) * 8
     );
 
-    let int_type3 = context.ptr_sized_int_type(&target_data, None);
+    let int_type3 = context.ptr_sized_int_type(target_data, None);
 
     assert_eq!(int_type3.get_context(), context);
     assert_eq!(int_type3.get_bit_width(), target_data.get_pointer_byte_size(None) * 8);
 
-    let int_type4 = context.ptr_sized_int_type(&target_data, Some(address_space));
+    let int_type4 = context.ptr_sized_int_type(target_data, Some(address_space));
 
     assert_eq!(int_type4.get_context(), context);
     assert_eq!(
