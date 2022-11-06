@@ -69,6 +69,7 @@ fn test_values_get_context() {
 }
 
 #[test]
+#[llvm_versions(12.0..=latest)]
 fn test_get_type() {
     use inkwell::types::AnyTypeEnum;
 

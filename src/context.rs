@@ -9,13 +9,15 @@ use llvm_sys::core::LLVMConstInlineAsm;
 use llvm_sys::core::LLVMCreateTypeAttribute;
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::core::LLVMGetInlineAsm;
+#[llvm_versions(12.0..=latest)]
+use llvm_sys::core::LLVMGetTypeByName2;
 #[llvm_versions(6.0..=latest)]
 use llvm_sys::core::LLVMMetadataTypeInContext;
 use llvm_sys::core::{
     LLVMAppendBasicBlockInContext, LLVMConstStringInContext, LLVMConstStructInContext, LLVMContextCreate,
     LLVMContextDispose, LLVMContextSetDiagnosticHandler, LLVMCreateBuilderInContext, LLVMCreateEnumAttribute,
     LLVMCreateStringAttribute, LLVMDoubleTypeInContext, LLVMFP128TypeInContext, LLVMFloatTypeInContext,
-    LLVMGetGlobalContext, LLVMGetMDKindIDInContext, LLVMGetTypeByName2, LLVMGetTypeKind, LLVMHalfTypeInContext,
+    LLVMGetGlobalContext, LLVMGetMDKindIDInContext, LLVMGetTypeKind, LLVMHalfTypeInContext,
     LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext,
     LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMMDNodeInContext, LLVMMDStringInContext,
     LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext, LLVMStructCreateNamed, LLVMStructTypeInContext,
@@ -262,6 +264,7 @@ impl ContextImpl {
         unsafe { StructType::new(LLVMStructCreateNamed(self.0, c_string.as_ptr())) }
     }
 
+    #[llvm_versions(12.0..=latest)]
     fn get_type<'ctx>(&self, name: &str) -> Option<AnyTypeEnum<'ctx>> {
         let c_string = to_c_str(name);
 
@@ -951,6 +954,7 @@ impl Context {
     /// assert_eq!(context.get_type("non-existent"), None);
     /// ```
     #[inline]
+    #[llvm_versions(12.0..=latest)]
     pub fn get_type<'ctx>(&self, name: &str) -> Option<AnyTypeEnum<'ctx>> {
         self.context.get_type(name)
     }
@@ -1782,6 +1786,7 @@ impl<'ctx> ContextRef<'ctx> {
     /// assert_eq!(context.get_type("non-existent"), None);
     /// ```
     #[inline]
+    #[llvm_versions(12.0..=latest)]
     pub fn get_type(&self, name: &str) -> Option<AnyTypeEnum<'ctx>> {
         self.context.get_type(name)
     }
