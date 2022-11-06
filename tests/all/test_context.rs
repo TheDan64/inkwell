@@ -68,8 +68,8 @@ fn test_values_get_context() {
     assert_eq!(struct_type.get_context(), context);
 }
 
-#[test]
 #[llvm_versions(12.0..=latest)]
+#[test]
 fn test_get_type() {
     use inkwell::types::AnyTypeEnum;
 
