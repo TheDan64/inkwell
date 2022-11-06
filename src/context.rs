@@ -265,36 +265,12 @@ impl ContextImpl {
     fn get_type<'ctx>(&self, name: &str) -> Option<AnyTypeEnum<'ctx>> {
         let c_string = to_c_str(name);
 
-        let ptr = unsafe { LLVMGetTypeByName2(self.0, c_string.as_ptr()) };
-        if ptr.is_null() {
+        let ty = unsafe { LLVMGetTypeByName2(self.0, c_string.as_ptr()) };
+        if ty.is_null() {
             return None;
         }
 
-        let ty = unsafe { LLVMGetTypeKind(ptr) };
-
-        unsafe {
-            use crate::types::{ArrayType, PointerType, VectorType};
-            use llvm_sys::LLVMTypeKind::*;
-            match ty {
-                LLVMVoidTypeKind => Some(AnyTypeEnum::VoidType(VoidType::new(ptr))),
-                LLVMHalfTypeKind
-                | LLVMFloatTypeKind
-                | LLVMDoubleTypeKind
-                | LLVMX86_FP80TypeKind
-                | LLVMFP128TypeKind
-                | LLVMPPC_FP128TypeKind
-                | LLVMBFloatTypeKind => Some(AnyTypeEnum::FloatType(FloatType::new(ptr))),
-                LLVMIntegerTypeKind => Some(AnyTypeEnum::IntType(IntType::new(ptr))),
-                LLVMFunctionTypeKind => Some(AnyTypeEnum::FunctionType(FunctionType::new(ptr))),
-                LLVMStructTypeKind => Some(AnyTypeEnum::StructType(StructType::new(ptr))),
-                LLVMArrayTypeKind => Some(AnyTypeEnum::ArrayType(ArrayType::new(ptr))),
-                LLVMPointerTypeKind => Some(AnyTypeEnum::PointerType(PointerType::new(ptr))),
-                LLVMVectorTypeKind | LLVMScalableVectorTypeKind => Some(AnyTypeEnum::VectorType(VectorType::new(ptr))),
-                /* Not supported by inkwell. TODO: replace, once supported */
-                LLVMX86_MMXTypeKind | LLVMLabelTypeKind | LLVMTokenTypeKind | LLVMMetadataTypeKind
-                | LLVMX86_AMXTypeKind => None,
-            }
-        }
+        unsafe { Some(AnyTypeEnum::new(ty)) }
     }
 
     fn const_struct<'ctx>(&self, values: &[BasicValueEnum], packed: bool) -> StructValue<'ctx> {
