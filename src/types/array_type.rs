@@ -18,7 +18,11 @@ pub struct ArrayType<'ctx> {
 }
 
 impl<'ctx> ArrayType<'ctx> {
-    pub(crate) unsafe fn new(array_type: LLVMTypeRef) -> Self {
+    /// Create `ArrayType` from [`LLVMTypeRef`]
+    ///
+    /// # Safety
+    /// Undefined behavior, if referenced type isn't array type
+    pub unsafe fn new(array_type: LLVMTypeRef) -> Self {
         assert!(!array_type.is_null());
 
         ArrayType {

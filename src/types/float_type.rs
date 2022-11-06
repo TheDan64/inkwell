@@ -19,7 +19,11 @@ pub struct FloatType<'ctx> {
 }
 
 impl<'ctx> FloatType<'ctx> {
-    pub(crate) unsafe fn new(float_type: LLVMTypeRef) -> Self {
+    /// Create `FloatType` from [`LLVMTypeRef`]
+    ///
+    /// # Safety
+    /// Undefined behavior, if referenced type isn't float type
+    pub unsafe fn new(float_type: LLVMTypeRef) -> Self {
         assert!(!float_type.is_null());
 
         FloatType {

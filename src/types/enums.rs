@@ -203,7 +203,11 @@ impl<'ctx> BasicMetadataTypeEnum<'ctx> {
 }
 
 impl<'ctx> AnyTypeEnum<'ctx> {
-    pub(crate) unsafe fn new(type_: LLVMTypeRef) -> Self {
+    /// Create `AnyTypeEnum` from [`LLVMTypeRef`]
+    ///
+    /// # Safety
+    /// Undefined behavior, if referenced type isn't part of `AnyTypeEnum`
+    pub unsafe fn new(type_: LLVMTypeRef) -> Self {
         match LLVMGetTypeKind(type_) {
             LLVMTypeKind::LLVMVoidTypeKind => AnyTypeEnum::VoidType(VoidType::new(type_)),
             LLVMTypeKind::LLVMHalfTypeKind
@@ -371,7 +375,11 @@ impl<'ctx> AnyTypeEnum<'ctx> {
 }
 
 impl<'ctx> BasicTypeEnum<'ctx> {
-    pub(crate) unsafe fn new(type_: LLVMTypeRef) -> Self {
+    /// Create `BasicTypeEnum` from [`LLVMTypeRef`]
+    ///
+    /// # Safety
+    /// Undefined behavior, if referenced type isn't part of basic type enum.
+    pub unsafe fn new(type_: LLVMTypeRef) -> Self {
         match LLVMGetTypeKind(type_) {
             LLVMTypeKind::LLVMHalfTypeKind
             | LLVMTypeKind::LLVMFloatTypeKind

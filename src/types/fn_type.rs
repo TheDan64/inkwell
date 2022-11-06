@@ -20,7 +20,11 @@ pub struct FunctionType<'ctx> {
 }
 
 impl<'ctx> FunctionType<'ctx> {
-    pub(crate) unsafe fn new(fn_type: LLVMTypeRef) -> Self {
+    /// Create `FunctionType` from [`LLVMTypeRef`]
+    ///
+    /// # Safety
+    /// Undefined behavior, if referenced type isn't function type
+    pub unsafe fn new(fn_type: LLVMTypeRef) -> Self {
         assert!(!fn_type.is_null());
 
         FunctionType {
