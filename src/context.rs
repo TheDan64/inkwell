@@ -1768,6 +1768,24 @@ impl<'ctx> ContextRef<'ctx> {
         self.context.opaque_struct_type(name)
     }
 
+    /// Get type by its name, if it exists.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    ///	let name = "opaque";
+    ///	let opaque = context.opaque_struct_type(name);
+    ///
+    /// let got = context.get_type(name);
+    ///	assert_eq!(got, Some(AnyTypeEnum::from(opaque)));
+    ///
+    /// assert_eq!(context.get_type("non-existent"), None);
+    /// ```
+    #[inline]
+    pub fn get_type(&self, name: &str) -> Option<AnyTypeEnum<'ctx>> {
+        self.context.get_type(name)
+    }
+
     /// Creates a constant `StructValue` from constant values.
     ///
     /// # Example
