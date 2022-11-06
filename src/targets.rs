@@ -19,7 +19,7 @@ use llvm_sys::target_machine::{
 use once_cell::sync::Lazy;
 use parking_lot::RwLock;
 
-use crate::context::{AsContextRef, Context};
+use crate::context::AsContextRef;
 use crate::data_layout::DataLayout;
 use crate::memory_buffer::MemoryBuffer;
 use crate::module::Module;

@@ -63,7 +63,7 @@ impl<'ctx> GlobalValue<'ctx> {
     }
 
     /// Set name of the `GlobalValue`.
-    pub fn set_name(&self, name: &str) -> () {
+    pub fn set_name(&self, name: &str) {
         self.global_value.set_name(name)
     }
 

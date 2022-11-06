@@ -16,7 +16,7 @@ use super::AnyValue;
 /// A value resulting from a function call. It may have function attributes applied to it.
 ///
 /// This struct may be removed in the future in favor of an `InstructionValue<CallSite>` type.
-#[derive(Debug, PartialEq, Clone, Copy, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct CallSiteValue<'ctx>(Value<'ctx>);
 
 impl<'ctx> CallSiteValue<'ctx> {

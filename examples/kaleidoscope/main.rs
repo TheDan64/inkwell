@@ -164,7 +164,7 @@ impl<'a> Lexer<'a> {
                     };
 
                     // Parse float.
-                    if ch != '.' && !ch.is_digit(16) {
+                    if ch != '.' && !ch.is_ascii_hexdigit() {
                         break;
                     }
 

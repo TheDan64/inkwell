@@ -30,7 +30,7 @@ pub enum ComdatSelectionKind {
 }
 
 /// A `Comdat` determines how to resolve duplicate sections when linking.
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub struct Comdat(pub(crate) LLVMComdatRef);
 
 impl Comdat {
