@@ -945,6 +945,10 @@ impl Context {
     /// # Example
     ///
     /// ```no_run
+    /// use inkwell::context::Context;
+	/// use inkwell::types::AnyTypeEnum;
+    ///
+    /// let context = Context::create();
     ///	let name = "opaque";
     ///	let opaque = context.opaque_struct_type(name);
     ///
@@ -1777,6 +1781,10 @@ impl<'ctx> ContextRef<'ctx> {
     /// # Example
     ///
     /// ```no_run
+    /// use inkwell::context::Context;
+	/// use inkwell::types::AnyTypeEnum;
+    ///
+    /// let context = Context::create();
     ///	let name = "opaque";
     ///	let opaque = context.opaque_struct_type(name);
     ///
