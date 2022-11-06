@@ -12,7 +12,7 @@ categories = ["development-tools::ffi"]
 edition = "2021"
 
 [features]
-default = ["target-all"]
+default = ["target-all", "llvm-latest"]
 # Please update internal_macros::FEATURE_VERSIONS when adding a new LLVM version
 llvm4-0 = ["llvm-sys-40"]
 llvm5-0 = ["llvm-sys-50"]
@@ -25,6 +25,8 @@ llvm11-0 = ["llvm-sys-110"]
 llvm12-0 = ["llvm-sys-120"]
 llvm13-0 = ["llvm-sys-130"]
 llvm14-0 = ["llvm-sys-140"]
+# TODO: use latest installed version
+llvm-latest = ["llvm14-0"]
 # Don't link aganist LLVM libraries. This is useful if another dependency is
 # installing LLVM. See llvm-sys for more details. We can't enable a single
 # `no-llvm-linking` feature across the board of llvm versions, as it'll cause
@@ -41,6 +43,7 @@ llvm11-0-no-llvm-linking = ["llvm11-0", "llvm-sys-110/no-llvm-linking"]
 llvm12-0-no-llvm-linking = ["llvm12-0", "llvm-sys-120/no-llvm-linking"]
 llvm13-0-no-llvm-linking = ["llvm13-0", "llvm-sys-130/no-llvm-linking"]
 llvm14-0-no-llvm-linking = ["llvm14-0", "llvm-sys-140/no-llvm-linking"]
+llvm-latest-no-llvm-linking = ["llvm-latest", "llvm14-0-no-llvm-linking"]
 # Don't force linking to libffi on non-windows platforms. Without this feature
 # inkwell always links to libffi on non-windows platforms.
 no-libffi-linking = []
