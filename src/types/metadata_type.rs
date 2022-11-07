@@ -15,8 +15,12 @@ pub struct MetadataType<'ctx> {
 }
 
 impl<'ctx> MetadataType<'ctx> {
+    /// Create `MetadataType` from [`LLVMTypeRef`]
+    ///
+    /// # Safety
+    /// Undefined behavior, if referenced type isn't metadata type
     #[llvm_versions(6.0..=latest)]
-    pub(crate) unsafe fn new(metadata_type: LLVMTypeRef) -> Self {
+    pub unsafe fn new(metadata_type: LLVMTypeRef) -> Self {
         assert!(!metadata_type.is_null());
 
         MetadataType {
