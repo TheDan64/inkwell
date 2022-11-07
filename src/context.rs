@@ -9,6 +9,8 @@ use llvm_sys::core::LLVMConstInlineAsm;
 use llvm_sys::core::LLVMCreateTypeAttribute;
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::core::LLVMGetInlineAsm;
+#[llvm_versions(4.0..12.0)]
+use llvm_sys::core::LLVMGetTypeByName;
 #[llvm_versions(12.0..=latest)]
 use llvm_sys::core::LLVMGetTypeByName2;
 #[llvm_versions(6.0..=latest)]
@@ -265,7 +267,7 @@ impl ContextImpl {
     }
 
     #[llvm_versions(12.0..=latest)]
-    fn get_type<'ctx>(&self, name: &str) -> Option<AnyTypeEnum<'ctx>> {
+    fn get_struct_type<'ctx>(&self, name: &str) -> Option<StructType<'ctx>> {
         let c_string = to_c_str(name);
 
         let ty = unsafe { LLVMGetTypeByName2(self.0, c_string.as_ptr()) };
@@ -273,7 +275,7 @@ impl ContextImpl {
             return None;
         }
 
-        unsafe { Some(AnyTypeEnum::new(ty)) }
+        unsafe { Some(StructType::new(ty)) }
     }
 
     fn const_struct<'ctx>(&self, values: &[BasicValueEnum], packed: bool) -> StructValue<'ctx> {
@@ -940,27 +942,25 @@ impl Context {
         self.context.opaque_struct_type(name)
     }
 
-    /// Get type by its name, if it exists.
+    /// Gets a named [`StructType`] from this `Context`.
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```rust,no_run
     /// use inkwell::context::Context;
-	/// use inkwell::types::AnyTypeEnum;
     ///
     /// let context = Context::create();
-    ///	let name = "opaque";
-    ///	let opaque = context.opaque_struct_type(name);
     ///
-    /// let got = context.get_type(name);
-    ///	assert_eq!(got, Some(AnyTypeEnum::from(opaque)));
+    /// assert!(context.get_struct_type("foo").is_none());
     ///
-    /// assert_eq!(context.get_type("non-existent"), None);
+    /// let opaque = context.opaque_struct_type("foo");
+    ///
+    /// assert_eq!(context.get_struct_type("foo").unwrap(), opaque);
     /// ```
     #[inline]
     #[llvm_versions(12.0..=latest)]
-    pub fn get_type<'ctx>(&self, name: &str) -> Option<AnyTypeEnum<'ctx>> {
-        self.context.get_type(name)
+    pub fn get_struct_type<'ctx>(&self, name: &str) -> Option<StructType<'ctx>> {
+        self.context.get_struct_type(name)
     }
 
     /// Creates a constant `StructValue` from constant values.
@@ -1776,27 +1776,25 @@ impl<'ctx> ContextRef<'ctx> {
         self.context.opaque_struct_type(name)
     }
 
-    /// Get type by its name, if it exists.
+    /// Gets a named [`StructType`] from this `Context`.
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```rust,no_run
     /// use inkwell::context::Context;
-	/// use inkwell::types::AnyTypeEnum;
     ///
     /// let context = Context::create();
-    ///	let name = "opaque";
-    ///	let opaque = context.opaque_struct_type(name);
     ///
-    /// let got = context.get_type(name);
-    ///	assert_eq!(got, Some(AnyTypeEnum::from(opaque)));
+    /// assert!(context.get_struct_type("foo").is_none());
     ///
-    /// assert_eq!(context.get_type("non-existent"), None);
+    /// let opaque = context.opaque_struct_type("foo");
+    ///
+    /// assert_eq!(context.get_struct_type("foo").unwrap(), opaque);
     /// ```
     #[inline]
     #[llvm_versions(12.0..=latest)]
-    pub fn get_type(&self, name: &str) -> Option<AnyTypeEnum<'ctx>> {
-        self.context.get_type(name)
+    pub fn get_struct_type(&self, name: &str) -> Option<StructType<'ctx>> {
+        self.context.get_struct_type(name)
     }
 
     /// Creates a constant `StructValue` from constant values.

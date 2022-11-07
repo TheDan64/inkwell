@@ -70,16 +70,14 @@ fn test_values_get_context() {
 
 #[llvm_versions(12.0..=latest)]
 #[test]
-fn test_get_type() {
-    use inkwell::types::AnyTypeEnum;
-
+fn test_get_struct_type() {
     let context = Context::create();
 
     let name = "opaque";
     let opaque = context.opaque_struct_type(name);
 
-    let got = context.get_type(name);
-    assert_eq!(got, Some(AnyTypeEnum::from(opaque)));
+    let got = context.get_struct_type(name);
+    assert_eq!(got, Some(opaque));
 
-    assert_eq!(context.get_type("non-existent"), None);
+    assert_eq!(context.get_struct_type("non-existent"), None);
 }
