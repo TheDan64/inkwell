@@ -183,12 +183,22 @@ impl<'ctx> Value<'ctx> {
 			return None;
 		}
 
-		Some(unsafe { CStr::from_ptr(ptr) })
+		// On MacOS we need to remove ',' before section name
+		if cfg!(target_os = "macos") {
+			Some(unsafe { CStr::from_ptr(ptr.add(1)) })
+		}
+		else
+		{
+			Some(unsafe { CStr::from_ptr(ptr) })
+		}
 	}
 
 	/// Sets the section of the global value
-	pub fn set_section(self, section: Option<&str>) {
-		let c_string = section.map(to_c_str);
+	fn set_section(self, section: Option<&str>) {
+		#[cfg(target_os = "macos")]
+		let section = section.map(|s| format!(",{}", s));
+
+		let c_string = section.as_deref().map(to_c_str);
 
 		unsafe {
 			LLVMSetSection(
