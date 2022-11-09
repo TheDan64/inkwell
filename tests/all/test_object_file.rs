@@ -120,6 +120,7 @@ fn test_section_iterator() {
                 "D" => {
                     assert!(!has_section_d);
                     has_section_d = true;
+					// FIXME: fails on arm64-apple-darwin22.1.0
                     assert_eq!(section.size(), 1);
                 },
                 _ => {},
@@ -179,6 +180,7 @@ fn test_symbol_iterator() {
             }
         }
     }
+	// FIXME: fails on arm64-apple-darwin22.1.0
     assert!(has_symbol_a);
     assert!(has_symbol_b);
     assert!(has_symbol_c);

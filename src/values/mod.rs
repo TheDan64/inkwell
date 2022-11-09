@@ -21,7 +21,7 @@ mod struct_value;
 mod traits;
 mod vec_value;
 
-use crate::support::LLVMString;
+use crate::support::{LLVMString, to_c_str};
 pub use crate::values::array_value::ArrayValue;
 pub use crate::values::basic_value_use::BasicValueUse;
 pub use crate::values::call_site_value::CallSiteValue;
@@ -47,7 +47,7 @@ use crate::LLVMReference;
 
 use llvm_sys::core::{
     LLVMDumpValue, LLVMGetFirstUse, LLVMIsAInstruction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef, LLVMPrintTypeToString,
-    LLVMPrintValueToString, LLVMReplaceAllUsesWith, LLVMTypeOf,
+    LLVMPrintValueToString, LLVMReplaceAllUsesWith, LLVMTypeOf, LLVMSetSection, LLVMGetSection
 };
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
@@ -174,6 +174,40 @@ impl<'ctx> Value<'ctx> {
 
         unsafe { Some(BasicValueUse::new(use_)) }
     }
+
+	/// Gets the section of the global value
+	pub fn get_section(&self) -> Option<&CStr> {
+		let ptr = unsafe { LLVMGetSection(self.value) };
+
+		if ptr.is_null() {
+			return None;
+		}
+
+		// On MacOS we need to remove ',' before section name
+		if cfg!(target_os = "macos") {
+			Some(unsafe { CStr::from_ptr(ptr.add(1)) })
+		}
+		else
+		{
+			Some(unsafe { CStr::from_ptr(ptr) })
+		}
+	}
+
+	/// Sets the section of the global value
+	fn set_section(self, section: Option<&str>) {
+		#[cfg(target_os = "macos")]
+		let section = section.map(|s| format!(",{}", s));
+
+		let c_string = section.as_deref().map(to_c_str);
+
+		unsafe {
+			LLVMSetSection(
+				self.value,
+				// The as_ref call is important here so that we don't drop the cstr mid use
+				c_string.as_ref().map(|s| s.as_ptr()).unwrap_or(std::ptr::null()),
+			)
+		}
+	}
 }
 
 impl fmt::Debug for Value<'_> {

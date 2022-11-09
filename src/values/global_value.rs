@@ -11,9 +11,9 @@ use llvm_sys::core::{
 #[llvm_versions(8.0..=latest)]
 use llvm_sys::core::{
     LLVMDeleteGlobal, LLVMGetAlignment, LLVMGetDLLStorageClass, LLVMGetInitializer, LLVMGetLinkage, LLVMGetNextGlobal,
-    LLVMGetPreviousGlobal, LLVMGetSection, LLVMGetThreadLocalMode, LLVMGetVisibility, LLVMIsDeclaration,
+    LLVMGetPreviousGlobal, LLVMGetThreadLocalMode, LLVMGetVisibility, LLVMIsDeclaration,
     LLVMIsExternallyInitialized, LLVMIsGlobalConstant, LLVMIsThreadLocal, LLVMSetAlignment, LLVMSetDLLStorageClass,
-    LLVMSetExternallyInitialized, LLVMSetGlobalConstant, LLVMSetInitializer, LLVMSetLinkage, LLVMSetSection,
+    LLVMSetExternallyInitialized, LLVMSetGlobalConstant, LLVMSetInitializer, LLVMSetLinkage,
     LLVMSetThreadLocal, LLVMSetThreadLocalMode, LLVMSetVisibility,
 };
 #[llvm_versions(7.0..=latest)]
@@ -27,12 +27,10 @@ use llvm_sys::LLVMUnnamedAddr;
 
 use std::ffi::CStr;
 use std::fmt::{self, Display};
-use std::ptr;
 
 #[llvm_versions(7.0..=latest)]
 use crate::comdat::Comdat;
 use crate::module::Linkage;
-use crate::support::to_c_str;
 use crate::values::traits::AsValueRef;
 #[llvm_versions(8.0..=latest)]
 use crate::values::MetadataValue;
@@ -215,26 +213,14 @@ impl<'ctx> GlobalValue<'ctx> {
         GlobalVisibility::new(visibility)
     }
 
+	/// Get section, this global value belongs to
     pub fn get_section(&self) -> Option<&CStr> {
-        let ptr = unsafe { LLVMGetSection(self.as_value_ref()) };
-
-        if ptr.is_null() {
-            return None;
-        }
-
-        Some(unsafe { CStr::from_ptr(ptr) })
+        self.global_value.get_section()
     }
 
+	/// Set section, this global value belongs to
     pub fn set_section(self, section: Option<&str>) {
-        let c_string = section.map(to_c_str);
-
-        unsafe {
-            LLVMSetSection(
-                self.as_value_ref(),
-                // The as_ref call is important here so that we don't drop the cstr mid use
-                c_string.as_ref().map(|s| s.as_ptr()).unwrap_or(ptr::null()),
-            )
-        }
+       self.global_value.set_section(section)
     }
 
     pub unsafe fn delete(self) {
