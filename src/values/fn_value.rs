@@ -7,8 +7,7 @@ use llvm_sys::core::{
     LLVMCountBasicBlocks, LLVMCountParams, LLVMDeleteFunction, LLVMGetBasicBlocks, LLVMGetFirstBasicBlock,
     LLVMGetFirstParam, LLVMGetFunctionCallConv, LLVMGetGC, LLVMGetIntrinsicID, LLVMGetLastBasicBlock, LLVMGetLastParam,
     LLVMGetLinkage, LLVMGetNextFunction, LLVMGetNextParam, LLVMGetParam, LLVMGetParams, LLVMGetPreviousFunction,
-    LLVMIsAFunction, LLVMIsConstant, LLVMSetFunctionCallConv, LLVMSetGC, LLVMSetLinkage,
-    LLVMSetParamAlignment,
+    LLVMIsAFunction, LLVMIsConstant, LLVMSetFunctionCallConv, LLVMSetGC, LLVMSetLinkage, LLVMSetParamAlignment,
 };
 use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
 #[llvm_versions(7.0..=latest)]
@@ -510,7 +509,7 @@ impl<'ctx> FunctionValue<'ctx> {
 
     /// Set the section to which this function should belong
     pub fn set_section(self, section: Option<&str>) {
-		self.fn_value.set_section(section)
+        self.fn_value.set_section(section)
     }
 }
 

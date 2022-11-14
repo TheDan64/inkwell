@@ -161,7 +161,7 @@ fn test_default_triple() {
     let default_triple = TargetMachine::get_default_triple();
     let default_triple = default_triple.as_str().to_string_lossy();
 
-	// FIXME: arm arch
+    // FIXME: arm arch
     #[cfg(target_os = "linux")]
     let cond = default_triple == "x86_64-pc-linux-gnu"
         || default_triple == "x86_64-unknown-linux-gnu"
