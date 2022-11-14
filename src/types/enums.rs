@@ -531,27 +531,63 @@ impl<'ctx> TryFrom<AnyTypeEnum<'ctx>> for BasicTypeEnum<'ctx> {
     type Error = ();
 
     fn try_from(value: AnyTypeEnum<'ctx>) -> Result<Self, Self::Error> {
+        use AnyTypeEnum::*;
         Ok(match value {
-            AnyTypeEnum::ArrayType(at) => at.into(),
-            AnyTypeEnum::FloatType(ft) => ft.into(),
-            AnyTypeEnum::IntType(it) => it.into(),
-            AnyTypeEnum::PointerType(pt) => pt.into(),
-            AnyTypeEnum::StructType(st) => st.into(),
-            AnyTypeEnum::VectorType(vt) => vt.into(),
-            _ => return Err(()),
+            ArrayType(at) => at.into(),
+            FloatType(ft) => ft.into(),
+            IntType(it) => it.into(),
+            PointerType(pt) => pt.into(),
+            StructType(st) => st.into(),
+            VectorType(vt) => vt.into(),
+            VoidType(_) | FunctionType(_) => return Err(()),
+        })
+    }
+}
+
+impl<'ctx> TryFrom<AnyTypeEnum<'ctx>> for BasicMetadataTypeEnum<'ctx> {
+    type Error = ();
+
+    fn try_from(value: AnyTypeEnum<'ctx>) -> Result<Self, Self::Error> {
+        use AnyTypeEnum::*;
+        Ok(match value {
+            ArrayType(at) => at.into(),
+            FloatType(ft) => ft.into(),
+            IntType(it) => it.into(),
+            PointerType(pt) => pt.into(),
+            StructType(st) => st.into(),
+            VectorType(vt) => vt.into(),
+            VoidType(_) | FunctionType(_) => return Err(()),
+        })
+    }
+}
+
+impl<'ctx> TryFrom<BasicMetadataTypeEnum<'ctx>> for BasicTypeEnum<'ctx> {
+    type Error = ();
+
+    fn try_from(value: BasicMetadataTypeEnum<'ctx>) -> Result<Self, Self::Error> {
+        use BasicMetadataTypeEnum::*;
+        Ok(match value {
+            ArrayType(at) => at.into(),
+            FloatType(ft) => ft.into(),
+            IntType(it) => it.into(),
+            PointerType(pt) => pt.into(),
+            StructType(st) => st.into(),
+            VectorType(vt) => vt.into(),
+            MetadataType(_) => return Err(()),
         })
     }
 }
 
 impl<'ctx> From<BasicTypeEnum<'ctx>> for BasicMetadataTypeEnum<'ctx> {
     fn from(value: BasicTypeEnum<'ctx>) -> Self {
+        use BasicTypeEnum::*;
         match value {
-            BasicTypeEnum::ArrayType(at) => at.into(),
-            BasicTypeEnum::FloatType(ft) => ft.into(),
-            BasicTypeEnum::IntType(it) => it.into(),
-            BasicTypeEnum::PointerType(pt) => pt.into(),
-            BasicTypeEnum::StructType(st) => st.into(),
-            BasicTypeEnum::VectorType(vt) => vt.into(),
+            ArrayType(at) => at.into(),
+            FloatType(ft) => ft.into(),
+            IntType(it) => it.into(),
+            PointerType(pt) => pt.into(),
+            StructType(st) => st.into(),
+            VectorType(vt) => vt.into(),
         }
     }
 }

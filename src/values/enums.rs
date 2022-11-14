@@ -474,14 +474,50 @@ impl<'ctx> TryFrom<AnyValueEnum<'ctx>> for BasicValueEnum<'ctx> {
     type Error = ();
 
     fn try_from(value: AnyValueEnum<'ctx>) -> Result<Self, Self::Error> {
+        use AnyValueEnum::*;
         Ok(match value {
-            AnyValueEnum::ArrayValue(av) => av.into(),
-            AnyValueEnum::IntValue(iv) => iv.into(),
-            AnyValueEnum::FloatValue(fv) => fv.into(),
-            AnyValueEnum::PointerValue(pv) => pv.into(),
-            AnyValueEnum::StructValue(sv) => sv.into(),
-            AnyValueEnum::VectorValue(vv) => vv.into(),
-            _ => return Err(()),
+            ArrayValue(av) => av.into(),
+            IntValue(iv) => iv.into(),
+            FloatValue(fv) => fv.into(),
+            PointerValue(pv) => pv.into(),
+            StructValue(sv) => sv.into(),
+            VectorValue(vv) => vv.into(),
+            MetadataValue(_) | PhiValue(_) | FunctionValue(_) | InstructionValue(_) => return Err(()),
+        })
+    }
+}
+
+impl<'ctx> TryFrom<AnyValueEnum<'ctx>> for BasicMetadataValueEnum<'ctx> {
+    type Error = ();
+
+    fn try_from(value: AnyValueEnum<'ctx>) -> Result<Self, Self::Error> {
+        use AnyValueEnum::*;
+        Ok(match value {
+            ArrayValue(av) => av.into(),
+            IntValue(iv) => iv.into(),
+            FloatValue(fv) => fv.into(),
+            PointerValue(pv) => pv.into(),
+            StructValue(sv) => sv.into(),
+            VectorValue(vv) => vv.into(),
+            MetadataValue(mv) => mv.into(),
+            PhiValue(_) | FunctionValue(_) | InstructionValue(_) => return Err(()),
+        })
+    }
+}
+
+impl<'ctx> TryFrom<BasicMetadataValueEnum<'ctx>> for BasicValueEnum<'ctx> {
+    type Error = ();
+
+    fn try_from(value: BasicMetadataValueEnum<'ctx>) -> Result<Self, Self::Error> {
+        use BasicMetadataValueEnum::*;
+        Ok(match value {
+            ArrayValue(av) => av.into(),
+            IntValue(iv) => iv.into(),
+            FloatValue(fv) => fv.into(),
+            PointerValue(pv) => pv.into(),
+            StructValue(sv) => sv.into(),
+            VectorValue(vv) => vv.into(),
+            MetadataValue(_) => return Err(()),
         })
     }
 }
