@@ -237,7 +237,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
                 feature = "llvm14-0"
             ))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => AnyTypeEnum::VectorType(VectorType::new(type_)),
-			// FIXME: should inkwell support metadata as AnyType?
+            // FIXME: should inkwell support metadata as AnyType?
             LLVMTypeKind::LLVMMetadataTypeKind => panic!("Metadata type is not supported as AnyType."),
             LLVMTypeKind::LLVMX86_MMXTypeKind => panic!("FIXME: Unsupported type: MMX"),
             #[cfg(any(feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"))]

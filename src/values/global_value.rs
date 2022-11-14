@@ -11,10 +11,10 @@ use llvm_sys::core::{
 #[llvm_versions(8.0..=latest)]
 use llvm_sys::core::{
     LLVMDeleteGlobal, LLVMGetAlignment, LLVMGetDLLStorageClass, LLVMGetInitializer, LLVMGetLinkage, LLVMGetNextGlobal,
-    LLVMGetPreviousGlobal, LLVMGetThreadLocalMode, LLVMGetVisibility, LLVMIsDeclaration,
-    LLVMIsExternallyInitialized, LLVMIsGlobalConstant, LLVMIsThreadLocal, LLVMSetAlignment, LLVMSetDLLStorageClass,
-    LLVMSetExternallyInitialized, LLVMSetGlobalConstant, LLVMSetInitializer, LLVMSetLinkage,
-    LLVMSetThreadLocal, LLVMSetThreadLocalMode, LLVMSetVisibility,
+    LLVMGetPreviousGlobal, LLVMGetThreadLocalMode, LLVMGetVisibility, LLVMIsDeclaration, LLVMIsExternallyInitialized,
+    LLVMIsGlobalConstant, LLVMIsThreadLocal, LLVMSetAlignment, LLVMSetDLLStorageClass, LLVMSetExternallyInitialized,
+    LLVMSetGlobalConstant, LLVMSetInitializer, LLVMSetLinkage, LLVMSetThreadLocal, LLVMSetThreadLocalMode,
+    LLVMSetVisibility,
 };
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::core::{LLVMGetUnnamedAddress, LLVMSetUnnamedAddress};
@@ -213,14 +213,14 @@ impl<'ctx> GlobalValue<'ctx> {
         GlobalVisibility::new(visibility)
     }
 
-	/// Get section, this global value belongs to
+    /// Get section, this global value belongs to
     pub fn get_section(&self) -> Option<&CStr> {
         self.global_value.get_section()
     }
 
-	/// Set section, this global value belongs to
+    /// Set section, this global value belongs to
     pub fn set_section(self, section: Option<&str>) {
-       self.global_value.set_section(section)
+        self.global_value.set_section(section)
     }
 
     pub unsafe fn delete(self) {
