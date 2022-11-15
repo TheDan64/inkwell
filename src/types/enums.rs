@@ -104,6 +104,32 @@ enum_type_set! {
 }
 
 impl<'ctx> BasicMetadataTypeEnum<'ctx> {
+    /// Creates a [`FunctionType`] with this [`BasicMetadataTypeEnum`] for its return type.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::types::BasicMetadataTypeEnum;
+    ///
+    /// let context = Context::create();
+    /// let ty: BasicMetadataTypeEnum = context.i8_type().into();
+    /// let fn_type = ty.fn_type(&[], false);
+    /// ```
+    pub fn fn_type(self, param_types: &[BasicMetadataTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
+        use BasicMetadataTypeEnum::*;
+        match self {
+            ArrayType(ty) => ty.fn_type(param_types, is_var_args),
+            FloatType(ty) => ty.fn_type(param_types, is_var_args),
+            IntType(ty) => ty.fn_type(param_types, is_var_args),
+            PointerType(ty) => ty.fn_type(param_types, is_var_args),
+            StructType(ty) => ty.fn_type(param_types, is_var_args),
+            VectorType(ty) => ty.fn_type(param_types, is_var_args),
+            // TODO: are functions really able to return metadata?
+            MetadataType(ty) => ty.fn_type(param_types, is_var_args),
+        }
+    }
+
     pub fn into_array_type(self) -> ArrayType<'ctx> {
         if let BasicMetadataTypeEnum::ArrayType(t) = self {
             t
@@ -237,7 +263,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
                 feature = "llvm14-0"
             ))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => AnyTypeEnum::VectorType(VectorType::new(type_)),
-			// FIXME: should inkwell support metadata as AnyType?
+            // FIXME: should inkwell support metadata as AnyType?
             LLVMTypeKind::LLVMMetadataTypeKind => panic!("Metadata type is not supported as AnyType."),
             LLVMTypeKind::LLVMX86_MMXTypeKind => panic!("FIXME: Unsupported type: MMX"),
             #[cfg(any(feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"))]
@@ -249,6 +275,39 @@ impl<'ctx> AnyTypeEnum<'ctx> {
     /// This will panic if type is a void or function type.
     pub(crate) fn to_basic_type_enum(&self) -> BasicTypeEnum<'ctx> {
         unsafe { BasicTypeEnum::new(self.as_type_ref()) }
+    }
+
+    /// Creates a [`FunctionType`] with this [`AnyTypeEnum`] for its return type.
+    ///
+    /// # Errors
+    /// Error, if underlying type is [`FunctionType`]
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::types::AnyTypeEnum;
+    ///
+    /// let context = Context::create();
+    /// let ty: AnyTypeEnum = context.i8_type().into();
+    /// let fn_type = ty.fn_type(&[], false).unwrap();
+    /// ```
+    pub fn fn_type(
+        self,
+        param_types: &[BasicMetadataTypeEnum<'ctx>],
+        is_var_args: bool,
+    ) -> Result<FunctionType<'ctx>, ()> {
+        use AnyTypeEnum::*;
+        Ok(match self {
+            ArrayType(ty) => ty.fn_type(param_types, is_var_args),
+            FloatType(ty) => ty.fn_type(param_types, is_var_args),
+            IntType(ty) => ty.fn_type(param_types, is_var_args),
+            PointerType(ty) => ty.fn_type(param_types, is_var_args),
+            StructType(ty) => ty.fn_type(param_types, is_var_args),
+            VectorType(ty) => ty.fn_type(param_types, is_var_args),
+            VoidType(ty) => ty.fn_type(param_types, is_var_args),
+            FunctionType(_) => return Err(()),
+        })
     }
 
     pub fn into_array_type(self) -> ArrayType<'ctx> {
@@ -417,6 +476,30 @@ impl<'ctx> BasicTypeEnum<'ctx> {
             LLVMTypeKind::LLVMVoidTypeKind => panic!("Unsupported basic type: VoidType"),
             LLVMTypeKind::LLVMFunctionTypeKind => panic!("Unsupported basic type: FunctionType"),
             LLVMTypeKind::LLVMTokenTypeKind => panic!("Unsupported basic type: Token"),
+        }
+    }
+
+    /// Creates a [`FunctionType`] with this [`BasicTypeEnum`] for its return type.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::types::BasicTypeEnum;
+    ///
+    /// let context = Context::create();
+    /// let ty: BasicTypeEnum = context.i8_type().into();
+    /// let fn_type = ty.fn_type(&[], false);
+    /// ```
+    pub fn fn_type(self, param_types: &[BasicMetadataTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
+        use BasicTypeEnum::*;
+        match self {
+            ArrayType(ty) => ty.fn_type(param_types, is_var_args),
+            FloatType(ty) => ty.fn_type(param_types, is_var_args),
+            IntType(ty) => ty.fn_type(param_types, is_var_args),
+            PointerType(ty) => ty.fn_type(param_types, is_var_args),
+            StructType(ty) => ty.fn_type(param_types, is_var_args),
+            VectorType(ty) => ty.fn_type(param_types, is_var_args),
         }
     }
 
