@@ -116,6 +116,7 @@ impl<'ctx> BasicMetadataTypeEnum<'ctx> {
     /// let ty: BasicMetadataTypeEnum = context.i8_type().into();
     /// let fn_type = ty.fn_type(&[], false);
     /// ```
+    #[llvm_versions(6.0..=latest)]
     pub fn fn_type(self, param_types: &[BasicMetadataTypeEnum<'ctx>], is_var_args: bool) -> FunctionType<'ctx> {
         use BasicMetadataTypeEnum::*;
         match self {
@@ -128,6 +129,39 @@ impl<'ctx> BasicMetadataTypeEnum<'ctx> {
             // TODO: are functions really able to return metadata?
             MetadataType(ty) => ty.fn_type(param_types, is_var_args),
         }
+    }
+
+    /// Creates a [`FunctionType`] with this [`BasicMetadataTypeEnum`] for its return type.
+    ///
+    /// # Errors
+    /// Error, if underlying type is [`MetadataType`]
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::types::BasicMetadataTypeEnum;
+    ///
+    /// let context = Context::create();
+    /// let ty: BasicMetadataTypeEnum = context.i8_type().into();
+    /// let fn_type = ty.fn_type(&[], false);
+    /// ```
+    #[llvm_versions(4.0..6.0)]
+    pub fn fn_type(
+        self,
+        param_types: &[BasicMetadataTypeEnum<'ctx>],
+        is_var_args: bool,
+    ) -> Result<FunctionType<'ctx>, ()> {
+        use BasicMetadataTypeEnum::*;
+        Ok(match self {
+            ArrayType(ty) => ty.fn_type(param_types, is_var_args),
+            FloatType(ty) => ty.fn_type(param_types, is_var_args),
+            IntType(ty) => ty.fn_type(param_types, is_var_args),
+            PointerType(ty) => ty.fn_type(param_types, is_var_args),
+            StructType(ty) => ty.fn_type(param_types, is_var_args),
+            VectorType(ty) => ty.fn_type(param_types, is_var_args),
+            MetadataType(ty) => return Err(()),
+        })
     }
 
     pub fn into_array_type(self) -> ArrayType<'ctx> {
