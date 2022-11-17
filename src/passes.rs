@@ -12,14 +12,14 @@ use llvm_sys::prelude::{LLVMPassManagerRef, LLVMPassRegistryRef};
 #[llvm_versions(10.0..=latest)]
 use llvm_sys::transforms::ipo::LLVMAddMergeFunctionsPass;
 use llvm_sys::transforms::ipo::{
-    LLVMAddAlwaysInlinerPass, LLVMAddArgumentPromotionPass, LLVMAddConstantMergePass, LLVMAddDeadArgEliminationPass,
+    LLVMAddAlwaysInlinerPass, LLVMAddConstantMergePass, LLVMAddDeadArgEliminationPass,
     LLVMAddFunctionAttrsPass, LLVMAddFunctionInliningPass, LLVMAddGlobalDCEPass, LLVMAddGlobalOptimizerPass,
     LLVMAddIPSCCPPass, LLVMAddInternalizePass, LLVMAddPruneEHPass, LLVMAddStripDeadPrototypesPass,
     LLVMAddStripSymbolsPass,
 };
 use llvm_sys::transforms::pass_manager_builder::{
     LLVMPassManagerBuilderCreate, LLVMPassManagerBuilderDispose, LLVMPassManagerBuilderPopulateFunctionPassManager,
-    LLVMPassManagerBuilderPopulateLTOPassManager, LLVMPassManagerBuilderPopulateModulePassManager,
+    LLVMPassManagerBuilderPopulateModulePassManager,
     LLVMPassManagerBuilderRef, LLVMPassManagerBuilderSetDisableSimplifyLibCalls,
     LLVMPassManagerBuilderSetDisableUnitAtATime, LLVMPassManagerBuilderSetDisableUnrollLoops,
     LLVMPassManagerBuilderSetOptLevel, LLVMPassManagerBuilderSetSizeLevel,
@@ -31,7 +31,7 @@ use llvm_sys::transforms::scalar::{
     LLVMAddDeadStoreEliminationPass, LLVMAddDemoteMemoryToRegisterPass, LLVMAddEarlyCSEPass, LLVMAddGVNPass,
     LLVMAddIndVarSimplifyPass, LLVMAddInstructionCombiningPass, LLVMAddJumpThreadingPass, LLVMAddLICMPass,
     LLVMAddLoopDeletionPass, LLVMAddLoopIdiomPass, LLVMAddLoopRerollPass, LLVMAddLoopRotatePass, LLVMAddLoopUnrollPass,
-    LLVMAddLoopUnswitchPass, LLVMAddLowerExpectIntrinsicPass, LLVMAddMemCpyOptPass, LLVMAddMergedLoadStoreMotionPass,
+    LLVMAddLowerExpectIntrinsicPass, LLVMAddMemCpyOptPass, LLVMAddMergedLoadStoreMotionPass,
     LLVMAddPartiallyInlineLibCallsPass, LLVMAddReassociatePass, LLVMAddSCCPPass, LLVMAddScalarReplAggregatesPass,
     LLVMAddScalarReplAggregatesPassSSA, LLVMAddScalarReplAggregatesPassWithThreshold, LLVMAddScalarizerPass,
     LLVMAddScopedNoAliasAAPass, LLVMAddSimplifyLibCallsPass, LLVMAddTailCallEliminationPass,
@@ -162,37 +162,6 @@ impl PassManagerBuilder {
     pub fn populate_module_pass_manager(&self, pass_manager: &PassManager<Module>) {
         unsafe { LLVMPassManagerBuilderPopulateModulePassManager(self.pass_manager_builder, pass_manager.pass_manager) }
     }
-
-    /// Populates a PassManager<Module> with the expectation of link time
-    /// optimization transformations.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::OptimizationLevel::Aggressive;
-    /// use inkwell::passes::{PassManager, PassManagerBuilder};
-    /// use inkwell::targets::{InitializationConfig, Target};
-    ///
-    /// let config = InitializationConfig::default();
-    /// Target::initialize_native(&config).unwrap();
-    /// let pass_manager_builder = PassManagerBuilder::create();
-    ///
-    /// pass_manager_builder.set_optimization_level(Aggressive);
-    ///
-    /// let lpm = PassManager::create(());
-    ///
-    /// pass_manager_builder.populate_lto_pass_manager(&lpm, false, false);
-    /// ```
-    pub fn populate_lto_pass_manager(&self, pass_manager: &PassManager<Module>, internalize: bool, run_inliner: bool) {
-        unsafe {
-            LLVMPassManagerBuilderPopulateLTOPassManager(
-                self.pass_manager_builder,
-                pass_manager.pass_manager,
-                internalize as i32,
-                run_inliner as i32,
-            )
-        }
-    }
 }
 
 impl Drop for PassManagerBuilder {
@@ -280,28 +249,6 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// and false otherwise.
     pub fn run_on(&self, input: &T) -> bool {
         unsafe { input.run_in_pass_manager(self) }
-    }
-
-    /// This pass promotes "by reference" arguments to be "by value" arguments.
-    /// In practice, this means looking for internal functions that have pointer
-    /// arguments. If it can prove, through the use of alias analysis, that an
-    /// argument is only loaded, then it can pass the value into the function
-    /// instead of the address of the value. This can cause recursive simplification
-    /// of code and lead to the elimination of allocas (especially in C++ template
-    /// code like the STL).
-    ///
-    /// This pass also handles aggregate arguments that are passed into a function,
-    /// scalarizing them if the elements of the aggregate are only loaded. Note that
-    /// it refuses to scalarize aggregates which would require passing in more than
-    /// three operands to the function, because passing thousands of operands for a
-    /// large array or structure is unprofitable!
-    ///
-    /// Note that this transformation could also be done for arguments that are
-    /// only stored to (returning the value instead), but does not currently.
-    /// This case would be best handled when and if LLVM starts supporting multiple
-    /// return values from functions.
-    pub fn add_argument_promotion_pass(&self) {
-        unsafe { LLVMAddArgumentPromotionPass(self.pass_manager) }
     }
 
     /// Merges duplicate global constants together into a single constant that is
@@ -699,32 +646,6 @@ impl<T: PassManagerSubType> PassManager<T> {
         unsafe { LLVMAddLoopUnrollPass(self.pass_manager) }
     }
 
-    /// This pass transforms loops that contain branches on
-    /// loop-invariant conditions to have multiple loops.
-    /// For example, it turns the left into the right code:
-    ///
-    /// ```c
-    /// for (...)                  if (lic)
-    ///     A                          for (...)
-    ///     if (lic)                       A; B; C
-    ///         B                  else
-    ///     C                          for (...)
-    ///                                    A; C
-    /// ```
-    ///
-    /// This can increase the size of the code exponentially
-    /// (doubling it every time a loop is unswitched) so we
-    /// only unswitch if the resultant code will be smaller
-    /// than a threshold.
-    ///
-    /// This pass expects [LICM](https://llvm.org/docs/Passes.html#passes-licm)
-    /// to be run before it to hoist invariant conditions
-    /// out of the loop, to make the unswitching opportunity
-    /// obvious.
-    pub fn add_loop_unswitch_pass(&self) {
-        unsafe { LLVMAddLoopUnswitchPass(self.pass_manager) }
-    }
-
     /// This pass performs various transformations related
     /// to eliminating memcpy calls, or transforming sets
     /// of stores into memsets.
@@ -1006,34 +927,6 @@ impl<T: PassManagerSubType> PassManager<T> {
         use llvm_sys::transforms::scalar::LLVMAddLoopUnrollAndJamPass;
 
         unsafe { LLVMAddLoopUnrollAndJamPass(self.pass_manager) }
-    }
-
-    #[llvm_versions(8.0..=latest)]
-    pub fn add_coroutine_early_pass(&self) {
-        use llvm_sys::transforms::coroutines::LLVMAddCoroEarlyPass;
-
-        unsafe { LLVMAddCoroEarlyPass(self.pass_manager) }
-    }
-
-    #[llvm_versions(8.0..=latest)]
-    pub fn add_coroutine_split_pass(&self) {
-        use llvm_sys::transforms::coroutines::LLVMAddCoroSplitPass;
-
-        unsafe { LLVMAddCoroSplitPass(self.pass_manager) }
-    }
-
-    #[llvm_versions(8.0..=latest)]
-    pub fn add_coroutine_elide_pass(&self) {
-        use llvm_sys::transforms::coroutines::LLVMAddCoroElidePass;
-
-        unsafe { LLVMAddCoroElidePass(self.pass_manager) }
-    }
-
-    #[llvm_versions(8.0..=latest)]
-    pub fn add_coroutine_cleanup_pass(&self) {
-        use llvm_sys::transforms::coroutines::LLVMAddCoroCleanupPass;
-
-        unsafe { LLVMAddCoroCleanupPass(self.pass_manager) }
     }
 }
 

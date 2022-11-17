@@ -1132,7 +1132,7 @@ impl<'ctx> Module<'ctx> {
 
         let success = unsafe {
             LLVMParseIRInContext(
-                context.context,
+                context.context.0,
                 buffer.memory_buffer,
                 module.as_mut_ptr(),
                 err_string.as_mut_ptr(),
