@@ -125,10 +125,7 @@ pub unsafe fn shutdown_llvm() {
 }
 
 pub fn parse_command_line_options(argc: i32, argv: &[&str], overview: &str) {
-    let argv: Vec<*const ::libc::c_char> = argv
-        .iter()
-        .map(|arg| to_c_str(arg).as_ptr())
-        .collect();
+    let argv: Vec<*const ::libc::c_char> = argv.iter().map(|arg| to_c_str(arg).as_ptr()).collect();
     let overview = to_c_str(overview);
 
     unsafe {

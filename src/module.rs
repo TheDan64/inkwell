@@ -1123,10 +1123,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(*module.unwrap().get_context(), context);
     ///
     /// ```
-    pub fn parse_ir_from_buffer(
-        buffer: &MemoryBuffer,
-        context: &'ctx Context,
-    ) -> Result<Self, LLVMString> {
+    pub fn parse_ir_from_buffer(buffer: &MemoryBuffer, context: &'ctx Context) -> Result<Self, LLVMString> {
         let mut module = MaybeUninit::uninit();
         let mut err_string = MaybeUninit::uninit();
 
@@ -1165,10 +1162,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(*module.unwrap().get_context(), context);
     ///
     /// ```
-    pub fn parse_ir_from_path<P: AsRef<Path>>(
-        path: P,
-        context: &'ctx Context,
-    ) -> Result<Self, LLVMString> {
+    pub fn parse_ir_from_path<P: AsRef<Path>>(path: P, context: &'ctx Context) -> Result<Self, LLVMString> {
         let buffer = MemoryBuffer::create_from_file(path.as_ref())?;
 
         Self::parse_ir_from_buffer(&buffer, &context)

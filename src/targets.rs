@@ -756,9 +756,8 @@ impl Target {
     #[llvm_versions(11.0..=latest)]
     pub fn initialize_syncvm(config: &InitializationConfig) {
         use llvm_sys::target::{
-            LLVMInitializeSyncVMAsmParser, LLVMInitializeSyncVMAsmPrinter,
-            LLVMInitializeSyncVMDisassembler, LLVMInitializeSyncVMTarget,
-            LLVMInitializeSyncVMTargetInfo, LLVMInitializeSyncVMTargetMC,
+            LLVMInitializeSyncVMAsmParser, LLVMInitializeSyncVMAsmPrinter, LLVMInitializeSyncVMDisassembler,
+            LLVMInitializeSyncVMTarget, LLVMInitializeSyncVMTargetInfo, LLVMInitializeSyncVMTargetMC,
         };
 
         if config.base {

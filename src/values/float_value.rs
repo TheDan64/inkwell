@@ -1,6 +1,6 @@
 use llvm_sys::core::{
-    LLVMConstFCmp, LLVMConstFNeg, LLVMConstFPCast, LLVMConstFPExt,
-    LLVMConstFPToSI, LLVMConstFPToUI, LLVMConstFPTrunc, LLVMConstRealGetDouble,
+    LLVMConstFCmp, LLVMConstFNeg, LLVMConstFPCast, LLVMConstFPExt, LLVMConstFPToSI, LLVMConstFPToUI, LLVMConstFPTrunc,
+    LLVMConstRealGetDouble,
 };
 use llvm_sys::prelude::LLVMValueRef;
 
