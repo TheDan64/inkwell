@@ -633,7 +633,7 @@ impl<'ctx> Builder<'ctx> {
 
     // REVIEW: Doesn't GEP work on array too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    #[llvm_versions(4.0..=13.0)]
+    #[llvm_versions(4.0..14.0)]
     pub unsafe fn build_gep(
         &self,
         ptr: PointerValue<'ctx>,
@@ -658,7 +658,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Doesn't GEP work on array too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
     #[llvm_versions(14.0..=latest)]
-    pub unsafe fn build_gep2<T: BasicType<'ctx>>(
+    pub unsafe fn build_gep_2<T: BasicType<'ctx>>(
         &self,
         ty: T,
         ptr: PointerValue<'ctx>,
@@ -684,6 +684,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Doesn't GEP work on array too?
     // REVIEW: This could be merge in with build_gep via a in_bounds: bool param
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
+    #[llvm_versions(4.0..14.0)]
     pub unsafe fn build_in_bounds_gep(
         &self,
         ptr: PointerValue<'ctx>,
@@ -694,43 +695,35 @@ impl<'ctx> Builder<'ctx> {
 
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
-        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
-        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
-        #[cfg(not(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-        )))]
-        let value = LLVMBuildInBoundsGEP2(
+        let value = LLVMBuildInBoundsGEP(
             self.builder,
-            ptr.get_type().get_element_type().as_type_ref(),
             ptr.as_value_ref(),
             index_values.as_mut_ptr(),
             index_values.len() as u32,
             c_string.as_ptr(),
         );
 
-        #[cfg(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-        ))]
-        let value = LLVMBuildInBoundsGEP(
+        PointerValue::new(value)
+    }
+
+    // REVIEW: Doesn't GEP work on array too?
+    // REVIEW: This could be merge in with build_gep via a in_bounds: bool param
+    /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
+    #[llvm_versions(14.0..=latest)]
+    pub unsafe fn build_in_bounds_gep_2<T: BasicType<'ctx>>(
+        &self,
+        ty: T,
+        ptr: PointerValue<'ctx>,
+        ordered_indexes: &[IntValue<'ctx>],
+        name: &str,
+    ) -> PointerValue<'ctx> {
+        let c_string = to_c_str(name);
+
+        let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
+
+        let value = LLVMBuildInBoundsGEP2(
             self.builder,
+            ty.as_type_ref(),
             ptr.as_value_ref(),
             index_values.as_mut_ptr(),
             index_values.len() as u32,
@@ -773,6 +766,7 @@ impl<'ctx> Builder<'ctx> {
     /// assert!(builder.build_struct_gep(struct_ptr, 1, "struct_gep").is_ok());
     /// assert!(builder.build_struct_gep(struct_ptr, 2, "struct_gep").is_err());
     /// ```
+    #[llvm_versions(4.0..14.0)]
     pub fn build_struct_gep(&self, ptr: PointerValue<'ctx>, index: u32, name: &str) -> Result<PointerValue<'ctx>, ()> {
         let ptr_ty = ptr.get_type();
         let pointee_ty = ptr_ty.get_element_type();
@@ -789,43 +783,70 @@ impl<'ctx> Builder<'ctx> {
 
         let c_string = to_c_str(name);
 
-        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
-        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
-        #[cfg(not(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-        )))]
+        let value = unsafe { LLVMBuildStructGEP(self.builder, ptr.as_value_ref(), index, c_string.as_ptr()) };
+
+        unsafe { Ok(PointerValue::new(value)) }
+    }
+
+    /// Builds a GEP instruction on a struct pointer. Returns `Err(())` if input `PointerValue` doesn't
+    /// point to a struct or if index is out of bounds.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::AddressSpace;
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let builder = context.create_builder();
+    /// let module = context.create_module("struct_gep");
+    /// let void_type = context.void_type();
+    /// let i32_ty = context.i32_type();
+    /// let i32_ptr_ty = i32_ty.ptr_type(AddressSpace::Zero);
+    /// let field_types = &[i32_ty.into(), i32_ty.into()];
+    /// let struct_ty = context.struct_type(field_types, false);
+    /// let struct_ptr_ty = struct_ty.ptr_type(AddressSpace::Zero);
+    /// let fn_type = void_type.fn_type(&[i32_ptr_ty.into(), struct_ptr_ty.into()], false);
+    /// let fn_value = module.add_function("", fn_type, None);
+    /// let entry = context.append_basic_block(fn_value, "entry");
+    ///
+    /// builder.position_at_end(entry);
+    ///
+    /// let i32_ptr = fn_value.get_first_param().unwrap().into_pointer_value();
+    /// let struct_ptr = fn_value.get_last_param().unwrap().into_pointer_value();
+    ///
+    /// assert!(builder.build_struct_gep_2(i32_ty, i32_ptr, 0, "struct_gep").is_err());
+    /// assert!(builder.build_struct_gep_2(i32_ty, i32_ptr, 10, "struct_gep").is_err());
+    /// assert!(builder.build_struct_gep_2(struct_ty, struct_ptr, 0, "struct_gep").is_ok());
+    /// assert!(builder.build_struct_gep_2(struct_ty, struct_ptr, 1, "struct_gep").is_ok());
+    /// assert!(builder.build_struct_gep_2(struct_ty, struct_ptr, 2, "struct_gep").is_err());
+    /// ```
+    #[llvm_versions(14.0..=latest)]
+    pub fn build_struct_gep_2<T: BasicType<'ctx>>(&self, ty: T, ptr: PointerValue<'ctx>, index: u32, name: &str) -> Result<PointerValue<'ctx>, ()> {
+        let ptr_ty = ptr.get_type();
+        let pointee_ty = ptr_ty.get_element_type();
+
+        if !pointee_ty.is_struct_type() {
+            return Err(());
+        }
+
+        let struct_ty = pointee_ty.into_struct_type();
+
+        if index >= struct_ty.count_fields() {
+            return Err(());
+        }
+
+        let c_string = to_c_str(name);
+
         let value = unsafe {
             LLVMBuildStructGEP2(
                 self.builder,
-                ptr.get_type().get_element_type().as_type_ref(),
+                ty.as_type_ref(),
                 ptr.as_value_ref(),
                 index,
                 c_string.as_ptr(),
             )
         };
-
-        #[cfg(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-        ))]
-        let value = unsafe { LLVMBuildStructGEP(self.builder, ptr.as_value_ref(), index, c_string.as_ptr()) };
 
         unsafe { Ok(PointerValue::new(value)) }
     }
@@ -855,6 +876,7 @@ impl<'ctx> Builder<'ctx> {
     /// builder.build_ptr_diff(i32_ptr_param1, i32_ptr_param2, "diff");
     /// builder.build_return(None);
     /// ```
+    #[llvm_versions(4.0..14.0)]
     pub fn build_ptr_diff(
         &self,
         lhs_ptr: PointerValue<'ctx>,
@@ -862,46 +884,57 @@ impl<'ctx> Builder<'ctx> {
         name: &str,
     ) -> IntValue<'ctx> {
         let c_string = to_c_str(name);
-
-        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
-        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
-        #[cfg(not(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-        )))]
-        let value = unsafe {
-            LLVMBuildPtrDiff2(
+            let value = unsafe {
+            LLVMBuildPtrDiff(
                 self.builder,
-                lhs_ptr.get_type().as_type_ref(),
                 lhs_ptr.as_value_ref(),
                 rhs_ptr.as_value_ref(),
                 c_string.as_ptr(),
             )
         };
 
-        #[cfg(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-        ))]
+        unsafe { IntValue::new(value) }
+    }
+
+    /// Builds an instruction which calculates the difference of two pointers.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::AddressSpace;
+    ///
+    /// // Builds a function which diffs two pointers
+    /// let context = Context::create();
+    /// let module = context.create_module("ret");
+    /// let builder = context.create_builder();
+    /// let void_type = context.void_type();
+    /// let i32_type = context.i32_type();
+    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Zero);
+    /// let fn_type = void_type.fn_type(&[i32_ptr_type.into(), i32_ptr_type.into()], false);
+    /// let fn_value = module.add_function("ret", fn_type, None);
+    /// let entry = context.append_basic_block(fn_value, "entry");
+    /// let i32_ptr_param1 = fn_value.get_first_param().unwrap().into_pointer_value();
+    /// let i32_ptr_param2 = fn_value.get_nth_param(1).unwrap().into_pointer_value();
+    ///
+    /// builder.position_at_end(entry);
+    /// builder.build_ptr_diff_2(i32_ptr_type, i32_ptr_param1, i32_ptr_param2, "diff");
+    /// builder.build_return(None);
+    /// ```
+    #[llvm_versions(14.0..=latest)]
+    pub fn build_ptr_diff_2<T: BasicType<'ctx>>(
+        &self,
+        ty: T,
+        lhs_ptr: PointerValue<'ctx>,
+        rhs_ptr: PointerValue<'ctx>,
+        name: &str,
+    ) -> IntValue<'ctx> {
+        let c_string = to_c_str(name);
+
         let value = unsafe {
-            LLVMBuildPtrDiff(
+            LLVMBuildPtrDiff2(
                 self.builder,
+                ty.as_type_ref(),
                 lhs_ptr.as_value_ref(),
                 rhs_ptr.as_value_ref(),
                 c_string.as_ptr(),
@@ -979,7 +1012,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.build_return(Some(&pointee));
     /// ```
-    #[llvm_versions(4.0..=13.0)]
+    #[llvm_versions(4.0..14.0)]
     pub fn build_load(&self, ptr: PointerValue<'ctx>, name: &str) -> BasicValueEnum<'ctx> {
         let c_string = to_c_str(name);
 
@@ -1009,12 +1042,12 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.position_at_end(entry);
     ///
-    /// let pointee = builder.build_load2(i32_type, i32_ptr_param, "load2");
+    /// let pointee = builder.build_load_2(i32_type, i32_ptr_param, "load2");
     ///
     /// builder.build_return(Some(&pointee));
     /// ```
     #[llvm_versions(14.0..=latest)]
-    pub fn build_load2<T: BasicType<'ctx>>(&self, ty: T, ptr: PointerValue<'ctx>, name: &str) -> BasicValueEnum<'ctx> {
+    pub fn build_load_2<T: BasicType<'ctx>>(&self, ty: T, ptr: PointerValue<'ctx>, name: &str) -> BasicValueEnum<'ctx> {
         let c_string = to_c_str(name);
 
         let value = unsafe { LLVMBuildLoad2(self.builder, ty.as_type_ref(), ptr.as_value_ref(), c_string.as_ptr()) };
@@ -1331,7 +1364,6 @@ impl<'ctx> Builder<'ctx> {
         V: AnyValue<'ctx>,
     {
         let c_string = to_c_str(name);
-        let value = unsafe { LLVMBuildBitCast(self.builder, val.as_value_ref(), ty.as_type_ref(), c_string.as_ptr()) };
 
         let value = unsafe { LLVMBuildBitCast(self.builder, val.as_value_ref(), ty.as_type_ref(), c_string.as_ptr()) };
 

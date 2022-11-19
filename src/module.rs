@@ -23,7 +23,7 @@ use llvm_sys::execution_engine::{
     LLVMCreateExecutionEngineForModule, LLVMCreateInterpreterForModule, LLVMCreateJITCompilerForModule,
 };
 use llvm_sys::ir_reader::LLVMParseIRInContext;
-use llvm_sys::prelude::{LLVMModuleRef, LLVMTypeRef, LLVMValueRef};
+use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
 #[llvm_versions(13.0..=latest)]
 use llvm_sys::transforms::pass_builder::LLVMRunPasses;
 use llvm_sys::LLVMLinkage;

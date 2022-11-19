@@ -48,8 +48,7 @@ use crate::AddressSpace;
 use crate::LLVMReference;
 
 use std::marker::PhantomData;
-use std::mem::{forget, ManuallyDrop};
-use std::ops::Deref;
+use std::mem::forget;
 use std::ptr;
 use std::thread_local;
 
