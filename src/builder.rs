@@ -38,7 +38,9 @@ use crate::basic_block::BasicBlock;
 #[llvm_versions(7.0..=latest)]
 use crate::debug_info::DILocation;
 use crate::support::to_c_str;
-use crate::types::{AnyType, AsTypeRef, BasicType, FloatMathType, IntMathType, PointerMathType, PointerType};
+use crate::types::{
+    AnyType, AsTypeRef, BasicType, FloatMathType, FunctionType, IntMathType, PointerMathType, PointerType,
+};
 use crate::values::{
     AggregateValue, AggregateValueEnum, AnyValue, AnyValueEnum, AsValueRef, BasicMetadataValueEnum, BasicValue,
     BasicValueEnum, CallSiteValue, CallableValue, FloatMathValue, FunctionValue, GlobalValue, InstructionOpcode,
@@ -162,6 +164,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.build_return(Some(&ret_val));
     /// ```
+    #[llvm_versions(4.0..14.0)]
     pub fn build_call<F>(&self, function: F, args: &[BasicMetadataValueEnum<'ctx>], name: &str) -> CallSiteValue<'ctx>
     where
         F: Into<CallableValue<'ctx>>,
@@ -175,23 +178,9 @@ impl<'ctx> Builder<'ctx> {
         let c_string = to_c_str(name);
         let mut args: Vec<LLVMValueRef> = args.iter().map(|val| val.as_value_ref()).collect();
 
-        #[cfg(not(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-        )))]
         let value = unsafe {
-            let fn_ty_ref = callable_value.as_type_ref();
-            LLVMBuildCall2(
+            LLVMBuildCall(
                 self.builder,
-                fn_ty_ref,
                 fn_val_ref,
                 args.as_mut_ptr(),
                 args.len() as u32,
@@ -199,21 +188,65 @@ impl<'ctx> Builder<'ctx> {
             )
         };
 
-        #[cfg(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-        ))]
+        unsafe { CallSiteValue::new(value) }
+    }
+
+    /// Builds a function call instruction.
+    /// [`FunctionValue`]s can be implicitly converted into a [`CallableValue`].
+    /// See [`CallableValue`] for details on calling a [`PointerValue`] that points to a function.
+    ///
+    /// [`FunctionValue`]: crate::values::FunctionValue
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// // A simple function which calls itself:
+    /// let context = Context::create();
+    /// let module = context.create_module("ret");
+    /// let builder = context.create_builder();
+    /// let i32_type = context.i32_type();
+    /// let fn_type = i32_type.fn_type(&[i32_type.into()], false);
+    /// let fn_value = module.add_function("ret", fn_type, None);
+    /// let entry = context.append_basic_block(fn_value, "entry");
+    /// let i32_arg = fn_value.get_first_param().unwrap();
+    /// let md_string = context.metadata_string("a metadata");
+    ///
+    /// builder.position_at_end(entry);
+    ///
+    /// let ret_val = builder.build_call_2(fn_type, fn_value, &[i32_arg.into(), md_string.into()], "call")
+    ///     .try_as_basic_value()
+    ///     .left()
+    ///     .unwrap();
+    ///
+    /// builder.build_return(Some(&ret_val));
+    /// ```
+    #[llvm_versions(14.0..=latest)]
+    pub fn build_call_2<F>(
+        &self,
+        fn_ty: FunctionType<'ctx>,
+        function: F,
+        args: &[BasicMetadataValueEnum<'ctx>],
+        name: &str,
+    ) -> CallSiteValue<'ctx>
+    where
+        F: Into<CallableValue<'ctx>>,
+    {
+        let callable_value = function.into();
+        let fn_ty_ref = fn_ty.as_type_ref();
+        let fn_val_ref = callable_value.as_value_ref();
+
+        // LLVM gets upset when void return calls are named because they don't return anything
+        let name = if callable_value.returns_void() { "" } else { name };
+
+        let c_string = to_c_str(name);
+        let mut args: Vec<LLVMValueRef> = args.iter().map(|val| val.as_value_ref()).collect();
+
         let value = unsafe {
-            LLVMBuildCall(
+            LLVMBuildCall2(
                 self.builder,
+                fn_ty_ref,
                 fn_val_ref,
                 args.as_mut_ptr(),
                 args.len() as u32,
@@ -303,6 +336,7 @@ impl<'ctx> Builder<'ctx> {
     ///     builder.build_return(Some(&f32_type.const_zero()));
     /// }
     /// ```
+    #[llvm_versions(4.0..14.0)]
     pub fn build_invoke<F>(
         &self,
         function: F,
@@ -323,25 +357,9 @@ impl<'ctx> Builder<'ctx> {
         let c_string = to_c_str(name);
         let mut args: Vec<LLVMValueRef> = args.iter().map(|val| val.as_value_ref()).collect();
 
-        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
-        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
-        #[cfg(not(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-        )))]
         let value = unsafe {
-            let fn_ty_ref = callable_value.as_type_ref();
-            LLVMBuildInvoke2(
+            LLVMBuildInvoke(
                 self.builder,
-                fn_ty_ref,
                 fn_val_ref,
                 args.as_mut_ptr(),
                 args.len() as u32,
@@ -351,21 +369,115 @@ impl<'ctx> Builder<'ctx> {
             )
         };
 
-        #[cfg(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-        ))]
+        unsafe { CallSiteValue::new(value) }
+    }
+
+    /// An invoke is similar to a normal function call, but used to
+    /// call functions that may throw an exception, and then respond to the exception.
+    ///
+    /// When the called function returns normally, the `then` block is evaluated next. If instead
+    /// the function threw an exception, the `catch` block is entered. The first non-phi
+    /// instruction of the catch block must be a `landingpad` instruction. See also
+    /// [`Builder::build_landing_pad`].
+    ///
+    /// The [`add_prune_eh_pass`] turns an invoke into a call when the called function is
+    /// guaranteed to never throw an exception.
+    ///
+    /// [`add_prune_eh_pass`]: crate::passes::PassManager::add_prune_eh_pass
+    ///
+    /// This example catches C++ exceptions of type `int`, and returns `0` if an exceptions is thrown.
+    /// For usage of a cleanup landing pad and the `resume` instruction, see [`Builder::build_resume`]
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::AddressSpace;
+    /// use inkwell::module::Linkage;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("sum");
+    /// let builder = context.create_builder();
+    ///
+    /// let f32_type = context.f32_type();
+    /// let fn_type = f32_type.fn_type(&[], false);
+    ///
+    /// // we will pretend this function can throw an exception
+    /// let function = module.add_function("bomb", fn_type, None);
+    /// let basic_block = context.append_basic_block(function, "entry");
+    ///
+    /// builder.position_at_end(basic_block);
+    ///
+    /// let pi = f32_type.const_float(::std::f64::consts::PI);
+    ///
+    /// builder.build_return(Some(&pi));
+    ///
+    /// let function2 = module.add_function("wrapper", fn_type, None);
+    /// let basic_block2 = context.append_basic_block(function2, "entry");
+    ///
+    /// builder.position_at_end(basic_block2);
+    ///
+    /// let then_block = context.append_basic_block(function2, "then_block");
+    /// let catch_block = context.append_basic_block(function2, "catch_block");
+    ///
+    /// let call_site = builder.build_invoke_2(fn_type, function, &[], then_block, catch_block, "get_pi");
+    ///
+    /// {
+    ///     builder.position_at_end(then_block);
+    ///
+    ///     // in the then_block, the `call_site` value is defined and can be used
+    ///     let result = call_site.try_as_basic_value().left().unwrap();
+    ///
+    ///     builder.build_return(Some(&result));
+    /// }
+    ///
+    /// {
+    ///     builder.position_at_end(catch_block);
+    ///
+    ///     // the personality function used by C++
+    ///     let personality_function = {
+    ///         let name = "__gxx_personality_v0";
+    ///         let linkage = Some(Linkage::External);
+    ///
+    ///         module.add_function(name, context.i64_type().fn_type(&[], false), linkage)
+    ///     };
+    ///
+    ///     // type of an exception in C++
+    ///     let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::Generic);
+    ///     let i32_type = context.i32_type();
+    ///     let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
+    ///
+    ///     let null = i8_ptr_type.const_zero();
+    ///     let res = builder.build_landing_pad(exception_type, personality_function, &[null.into()], false, "res");
+    ///
+    ///     // we handle the exception by returning a default value
+    ///     builder.build_return(Some(&f32_type.const_zero()));
+    /// }
+    /// ```
+    #[llvm_versions(14.0..=latest)]
+    pub fn build_invoke_2<F>(
+        &self,
+        fn_ty: FunctionType<'ctx>,
+        function: F,
+        args: &[BasicValueEnum<'ctx>],
+        then_block: BasicBlock<'ctx>,
+        catch_block: BasicBlock<'ctx>,
+        name: &str,
+    ) -> CallSiteValue<'ctx>
+    where
+        F: Into<CallableValue<'ctx>>,
+    {
+        let callable_value: CallableValue<'ctx> = function.into();
+        let fn_ty_ref = fn_ty.as_type_ref();
+        let fn_val_ref = callable_value.as_value_ref();
+
+        // LLVM gets upset when void return calls are named because they don't return anything
+        let name = if callable_value.returns_void() { "" } else { name };
+
+        let c_string = to_c_str(name);
+        let mut args: Vec<LLVMValueRef> = args.iter().map(|val| val.as_value_ref()).collect();
+
         let value = unsafe {
-            LLVMBuildInvoke(
+            LLVMBuildInvoke2(
                 self.builder,
+                fn_ty_ref,
                 fn_val_ref,
                 args.as_mut_ptr(),
                 args.len() as u32,
@@ -822,7 +934,13 @@ impl<'ctx> Builder<'ctx> {
     /// assert!(builder.build_struct_gep_2(struct_ty, struct_ptr, 2, "struct_gep").is_err());
     /// ```
     #[llvm_versions(14.0..=latest)]
-    pub fn build_struct_gep_2<T: BasicType<'ctx>>(&self, ty: T, ptr: PointerValue<'ctx>, index: u32, name: &str) -> Result<PointerValue<'ctx>, ()> {
+    pub fn build_struct_gep_2<T: BasicType<'ctx>>(
+        &self,
+        ty: T,
+        ptr: PointerValue<'ctx>,
+        index: u32,
+        name: &str,
+    ) -> Result<PointerValue<'ctx>, ()> {
         let ptr_ty = ptr.get_type();
         let pointee_ty = ptr_ty.get_element_type();
 
@@ -884,7 +1002,7 @@ impl<'ctx> Builder<'ctx> {
         name: &str,
     ) -> IntValue<'ctx> {
         let c_string = to_c_str(name);
-            let value = unsafe {
+        let value = unsafe {
             LLVMBuildPtrDiff(
                 self.builder,
                 lhs_ptr.as_value_ref(),

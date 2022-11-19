@@ -10,7 +10,7 @@ use std::convert::TryFrom;
 use std::ffi::CStr;
 use std::fmt::{self, Display};
 
-use crate::types::{AsTypeRef, IntType, PointerType, BasicType};
+use crate::types::{AsTypeRef, BasicType, IntType, PointerType};
 use crate::values::{AsValueRef, InstructionValue, IntValue, Value};
 
 use super::AnyValue;
@@ -95,7 +95,11 @@ impl<'ctx> PointerValue<'ctx> {
     // REVIEW: Should this be on array value too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
     #[llvm_versions(14.0..=latest)]
-    pub unsafe fn const_gep_2<T: BasicType<'ctx>>(self, ty: T, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
+    pub unsafe fn const_gep_2<T: BasicType<'ctx>>(
+        self,
+        ty: T,
+        ordered_indexes: &[IntValue<'ctx>],
+    ) -> PointerValue<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
         let value = {
@@ -128,7 +132,11 @@ impl<'ctx> PointerValue<'ctx> {
 
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
     #[llvm_versions(14.0..=latest)]
-    pub unsafe fn const_in_bounds_gep_2<T: BasicType<'ctx>>(self, ty: T, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
+    pub unsafe fn const_in_bounds_gep_2<T: BasicType<'ctx>>(
+        self,
+        ty: T,
+        ordered_indexes: &[IntValue<'ctx>],
+    ) -> PointerValue<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
         let value = {
