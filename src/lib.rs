@@ -331,6 +331,10 @@ pub enum AtomicRMWBinOp {
     #[llvm_versions(10.0..=latest)]
     #[llvm_variant(LLVMAtomicRMWBinOpFSub)]
     FSub,
+    #[llvm_variant(LLVMAtomicRMWBinOpFMax)]
+    FMax,
+    #[llvm_variant(LLVMAtomicRMWBinOpFMin)]
+    FMin,
 }
 
 /// Defines the optimization level used to compile a `Module`.
