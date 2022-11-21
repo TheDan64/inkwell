@@ -11,27 +11,41 @@ use llvm_sys::initialization::{
 use llvm_sys::prelude::{LLVMPassManagerRef, LLVMPassRegistryRef};
 #[llvm_versions(10.0..=latest)]
 use llvm_sys::transforms::ipo::LLVMAddMergeFunctionsPass;
+
+#[llvm_versions(10.0..=14.0)]
 use llvm_sys::transforms::ipo::{
-    LLVMAddAlwaysInlinerPass, LLVMAddArgumentPromotionPass, LLVMAddConstantMergePass, LLVMAddDeadArgEliminationPass,
+    LLVMAddArgumentPromotionPass
+};
+
+use llvm_sys::transforms::ipo::{
+    LLVMAddAlwaysInlinerPass, LLVMAddConstantMergePass, LLVMAddDeadArgEliminationPass,
     LLVMAddFunctionAttrsPass, LLVMAddFunctionInliningPass, LLVMAddGlobalDCEPass, LLVMAddGlobalOptimizerPass,
     LLVMAddIPSCCPPass, LLVMAddInternalizePass, LLVMAddPruneEHPass, LLVMAddStripDeadPrototypesPass,
     LLVMAddStripSymbolsPass,
 };
+
+#[llvm_versions(10.0..=14.0)]
+use llvm_sys::transforms::pass_manager_builder::LLVMPassManagerBuilderPopulateLTOPassManager;
+
 use llvm_sys::transforms::pass_manager_builder::{
     LLVMPassManagerBuilderCreate, LLVMPassManagerBuilderDispose, LLVMPassManagerBuilderPopulateFunctionPassManager,
-    LLVMPassManagerBuilderPopulateLTOPassManager, LLVMPassManagerBuilderPopulateModulePassManager,
+    LLVMPassManagerBuilderPopulateModulePassManager,
     LLVMPassManagerBuilderRef, LLVMPassManagerBuilderSetDisableSimplifyLibCalls,
     LLVMPassManagerBuilderSetDisableUnitAtATime, LLVMPassManagerBuilderSetDisableUnrollLoops,
     LLVMPassManagerBuilderSetOptLevel, LLVMPassManagerBuilderSetSizeLevel,
     LLVMPassManagerBuilderUseInlinerWithThreshold,
 };
+
+#[llvm_versions(10.0..=14.0)]
+use llvm_sys::transforms::scalar::LLVMAddLoopUnswitchPass;
+
 use llvm_sys::transforms::scalar::{
     LLVMAddAggressiveDCEPass, LLVMAddAlignmentFromAssumptionsPass, LLVMAddBasicAliasAnalysisPass,
     LLVMAddBitTrackingDCEPass, LLVMAddCFGSimplificationPass, LLVMAddCorrelatedValuePropagationPass,
     LLVMAddDeadStoreEliminationPass, LLVMAddDemoteMemoryToRegisterPass, LLVMAddEarlyCSEPass, LLVMAddGVNPass,
     LLVMAddIndVarSimplifyPass, LLVMAddInstructionCombiningPass, LLVMAddJumpThreadingPass, LLVMAddLICMPass,
     LLVMAddLoopDeletionPass, LLVMAddLoopIdiomPass, LLVMAddLoopRerollPass, LLVMAddLoopRotatePass, LLVMAddLoopUnrollPass,
-    LLVMAddLoopUnswitchPass, LLVMAddLowerExpectIntrinsicPass, LLVMAddMemCpyOptPass, LLVMAddMergedLoadStoreMotionPass,
+    LLVMAddLowerExpectIntrinsicPass, LLVMAddMemCpyOptPass, LLVMAddMergedLoadStoreMotionPass,
     LLVMAddPartiallyInlineLibCallsPass, LLVMAddReassociatePass, LLVMAddSCCPPass, LLVMAddScalarReplAggregatesPass,
     LLVMAddScalarReplAggregatesPassSSA, LLVMAddScalarReplAggregatesPassWithThreshold, LLVMAddScalarizerPass,
     LLVMAddScopedNoAliasAAPass, LLVMAddSimplifyLibCallsPass, LLVMAddTailCallEliminationPass,
@@ -183,6 +197,7 @@ impl PassManagerBuilder {
     ///
     /// pass_manager_builder.populate_lto_pass_manager(&lpm, false, false);
     /// ```
+    #[llvm_versions(10.0..=14.0)]
     pub fn populate_lto_pass_manager(&self, pass_manager: &PassManager<Module>, internalize: bool, run_inliner: bool) {
         unsafe {
             LLVMPassManagerBuilderPopulateLTOPassManager(
@@ -300,6 +315,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// only stored to (returning the value instead), but does not currently.
     /// This case would be best handled when and if LLVM starts supporting multiple
     /// return values from functions.
+    #[llvm_versions(10.0..=14.0)]
     pub fn add_argument_promotion_pass(&self) {
         unsafe { LLVMAddArgumentPromotionPass(self.pass_manager) }
     }
@@ -721,6 +737,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// to be run before it to hoist invariant conditions
     /// out of the loop, to make the unswitching opportunity
     /// obvious.
+    #[llvm_versions(10.0..=14.0)]
     pub fn add_loop_unswitch_pass(&self) {
         unsafe { LLVMAddLoopUnswitchPass(self.pass_manager) }
     }
@@ -1008,28 +1025,28 @@ impl<T: PassManagerSubType> PassManager<T> {
         unsafe { LLVMAddLoopUnrollAndJamPass(self.pass_manager) }
     }
 
-    #[llvm_versions(8.0..=latest)]
+    #[llvm_versions(8.0..=14.0)]
     pub fn add_coroutine_early_pass(&self) {
         use llvm_sys::transforms::coroutines::LLVMAddCoroEarlyPass;
 
         unsafe { LLVMAddCoroEarlyPass(self.pass_manager) }
     }
 
-    #[llvm_versions(8.0..=latest)]
+    #[llvm_versions(8.0..=14.0)]
     pub fn add_coroutine_split_pass(&self) {
         use llvm_sys::transforms::coroutines::LLVMAddCoroSplitPass;
 
         unsafe { LLVMAddCoroSplitPass(self.pass_manager) }
     }
 
-    #[llvm_versions(8.0..=latest)]
+    #[llvm_versions(8.0..=14.0)]
     pub fn add_coroutine_elide_pass(&self) {
         use llvm_sys::transforms::coroutines::LLVMAddCoroElidePass;
 
         unsafe { LLVMAddCoroElidePass(self.pass_manager) }
     }
 
-    #[llvm_versions(8.0..=latest)]
+    #[llvm_versions(8.0..=14.0)]
     pub fn add_coroutine_cleanup_pass(&self) {
         use llvm_sys::transforms::coroutines::LLVMAddCoroCleanupPass;
 
