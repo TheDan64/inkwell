@@ -41,6 +41,7 @@ Supported versions:
 | 12.0.x       | llvm12-0      |
 | 13.0.x       | llvm13-0      |
 | 14.0.x       | llvm14-0      |
+| 15.0.x [WIP] | llvm15-0      |
 
 Please be aware that we may make breaking changes on master from time to time since we are
 pre-v1.0.0, in compliance with semver. Please prefer a crates.io release whenever possible!
@@ -133,6 +134,13 @@ you need `unsafe` when calling into C).
 ### LLVM's [Kaleidoscope Tutorial](https://llvm.org/docs/tutorial/index.html)
 
 Can be found in the examples directory.
+
+### Build and Test instructions
+
+```sh
+$ cargo build --features llvm15-0
+$ cargo test --features llvm15-0
+```
 
 ## Alternative Crate(s)
 
