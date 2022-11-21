@@ -331,8 +331,12 @@ pub enum AtomicRMWBinOp {
     #[llvm_versions(10.0..=latest)]
     #[llvm_variant(LLVMAtomicRMWBinOpFSub)]
     FSub,
+
+    #[llvm_versions(15.0..=latest)]
     #[llvm_variant(LLVMAtomicRMWBinOpFMax)]
     FMax,
+
+    #[llvm_versions(15.0..=latest)]
     #[llvm_variant(LLVMAtomicRMWBinOpFMin)]
     FMin,
 }
