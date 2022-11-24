@@ -209,7 +209,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Generic);
+    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Zero);
     ///
     /// assert_eq!(f32_ptr_type.get_element_type().into_float_type(), f32_type);
     /// ```

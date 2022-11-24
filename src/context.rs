@@ -48,8 +48,7 @@ use crate::AddressSpace;
 use crate::LLVMReference;
 
 use std::marker::PhantomData;
-use std::mem::{forget, ManuallyDrop};
-use std::ops::Deref;
+use std::mem::forget;
 use std::ptr;
 use std::thread_local;
 
@@ -1212,6 +1211,7 @@ impl Context {
         self.context.const_string(string, null_terminated)
     }
 
+    #[allow(dead_code)]
     #[inline]
     pub(crate) fn set_diagnostic_handler(
         &self,

@@ -107,17 +107,15 @@ macro_rules! assert_unique_used_features {
 
 assert_unique_used_features! {"llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0", "llvm10-0", "llvm11-0", "llvm12-0", "llvm13-0", "llvm14-0", "llvm15-0"}
 
-/// Defines the address space in which a global will be inserted.
-///
-/// # Remarks
-/// See also: https://llvm.org/doxygen/NVPTXBaseInfo_8h_source.html
+/// Defines the abstract LLVM address space.
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum AddressSpace {
-    Generic = 0,
-    Global = 1,
-    Shared = 3,
-    Const = 4,
-    Local = 5,
+    Zero = 0,
+    One = 1,
+    Two = 2,
+    Three = 3,
+    Four = 4,
+    Five = 5,
 }
 
 impl TryFrom<u32> for AddressSpace {
@@ -125,11 +123,12 @@ impl TryFrom<u32> for AddressSpace {
 
     fn try_from(val: u32) -> Result<Self, Self::Error> {
         match val {
-            0 => Ok(AddressSpace::Generic),
-            1 => Ok(AddressSpace::Global),
-            3 => Ok(AddressSpace::Shared),
-            4 => Ok(AddressSpace::Const),
-            5 => Ok(AddressSpace::Local),
+            0 => Ok(AddressSpace::Zero),
+            1 => Ok(AddressSpace::One),
+            2 => Ok(AddressSpace::Two),
+            3 => Ok(AddressSpace::Three),
+            4 => Ok(AddressSpace::Four),
+            5 => Ok(AddressSpace::Five),
             _ => Err(()),
         }
     }

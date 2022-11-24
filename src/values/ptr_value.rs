@@ -10,7 +10,7 @@ use std::convert::TryFrom;
 use std::ffi::CStr;
 use std::fmt::{self, Display};
 
-use crate::types::{AsTypeRef, IntType, PointerType};
+use crate::types::{AsTypeRef, BasicType, IntType, PointerType};
 use crate::values::{AsValueRef, InstructionValue, IntValue, Value};
 
 use super::AnyValue;
@@ -77,44 +77,10 @@ impl<'ctx> PointerValue<'ctx> {
 
     // REVIEW: Should this be on array value too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
+    #[llvm_versions(4.0..14.0)]
     pub unsafe fn const_gep(self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
-        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
-        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
-        #[cfg(not(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-        )))]
-        let value = {
-            LLVMConstGEP2(
-                self.get_type().get_element_type().as_type_ref(),
-                self.as_value_ref(),
-                index_values.as_mut_ptr(),
-                index_values.len() as u32,
-            )
-        };
-
-        #[cfg(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-        ))]
         let value = {
             LLVMConstGEP(
                 self.as_value_ref(),
@@ -126,47 +92,56 @@ impl<'ctx> PointerValue<'ctx> {
         PointerValue::new(value)
     }
 
+    // REVIEW: Should this be on array value too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    pub unsafe fn const_in_bounds_gep(self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
+    #[llvm_versions(14.0..=latest)]
+    pub unsafe fn const_gep_2<T: BasicType<'ctx>>(
+        self,
+        ty: T,
+        ordered_indexes: &[IntValue<'ctx>],
+    ) -> PointerValue<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
-        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
-        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
-        #[cfg(not(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-        )))]
         let value = {
-            LLVMConstInBoundsGEP2(
-                self.get_type().get_element_type().as_type_ref(),
+            LLVMConstGEP2(
+                ty.as_type_ref(),
                 self.as_value_ref(),
                 index_values.as_mut_ptr(),
                 index_values.len() as u32,
             )
         };
 
-        #[cfg(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-        ))]
+        PointerValue::new(value)
+    }
+
+    /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
+    #[llvm_versions(4.0..14.0)]
+    pub unsafe fn const_in_bounds_gep(self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
+        let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
+
         let value = {
             LLVMConstInBoundsGEP(
+                self.as_value_ref(),
+                index_values.as_mut_ptr(),
+                index_values.len() as u32,
+            )
+        };
+
+        PointerValue::new(value)
+    }
+
+    /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
+    #[llvm_versions(14.0..=latest)]
+    pub unsafe fn const_in_bounds_gep_2<T: BasicType<'ctx>>(
+        self,
+        ty: T,
+        ordered_indexes: &[IntValue<'ctx>],
+    ) -> PointerValue<'ctx> {
+        let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
+
+        let value = {
+            LLVMConstInBoundsGEP2(
+                ty.as_type_ref(),
                 self.as_value_ref(),
                 index_values.as_mut_ptr(),
                 index_values.len() as u32,

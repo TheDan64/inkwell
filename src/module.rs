@@ -22,6 +22,7 @@ use llvm_sys::error::LLVMGetErrorMessage;
 use llvm_sys::execution_engine::{
     LLVMCreateExecutionEngineForModule, LLVMCreateInterpreterForModule, LLVMCreateJITCompilerForModule,
 };
+use llvm_sys::ir_reader::LLVMParseIRInContext;
 use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
 #[llvm_versions(13.0..=latest)]
 use llvm_sys::transforms::pass_builder::LLVMRunPasses;
@@ -619,7 +620,7 @@ impl<'ctx> Module<'ctx> {
     /// let context = Context::create();
     /// let module = context.create_module("mod");
     /// let i8_type = context.i8_type();
-    /// let global = module.add_global(i8_type, Some(AddressSpace::Const), "my_global");
+    /// let global = module.add_global(i8_type, Some(AddressSpace::Four), "my_global");
     ///
     /// assert_eq!(module.get_first_global().unwrap(), global);
     /// assert_eq!(module.get_last_global().unwrap(), global);
@@ -1033,7 +1034,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert!(module.get_first_global().is_none());
     ///
-    /// let global = module.add_global(i8_type, Some(AddressSpace::Const), "my_global");
+    /// let global = module.add_global(i8_type, Some(AddressSpace::Four), "my_global");
     ///
     /// assert_eq!(module.get_first_global().unwrap(), global);
     /// ```
@@ -1061,7 +1062,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert!(module.get_last_global().is_none());
     ///
-    /// let global = module.add_global(i8_type, Some(AddressSpace::Const), "my_global");
+    /// let global = module.add_global(i8_type, Some(AddressSpace::Four), "my_global");
     ///
     /// assert_eq!(module.get_last_global().unwrap(), global);
     /// ```
@@ -1089,7 +1090,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert!(module.get_global("my_global").is_none());
     ///
-    /// let global = module.add_global(i8_type, Some(AddressSpace::Const), "my_global");
+    /// let global = module.add_global(i8_type, Some(AddressSpace::Four), "my_global");
     ///
     /// assert_eq!(module.get_global("my_global").unwrap(), global);
     /// ```
@@ -1122,10 +1123,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(*module.unwrap().get_context(), context);
     ///
     /// ```
-    pub fn parse_ir_from_buffer(
-        buffer: &MemoryBuffer,
-        context: &'ctx Context,
-    ) -> Result<Self, LLVMString> {
+    pub fn parse_ir_from_buffer(buffer: &MemoryBuffer, context: &'ctx Context) -> Result<Self, LLVMString> {
         let mut module = MaybeUninit::uninit();
         let mut err_string = MaybeUninit::uninit();
 
@@ -1164,10 +1162,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(*module.unwrap().get_context(), context);
     ///
     /// ```
-    pub fn parse_ir_from_path<P: AsRef<Path>>(
-        path: P,
-        context: &'ctx Context,
-    ) -> Result<Self, LLVMString> {
+    pub fn parse_ir_from_path<P: AsRef<Path>>(path: P, context: &'ctx Context) -> Result<Self, LLVMString> {
         let buffer = MemoryBuffer::create_from_file(path.as_ref())?;
 
         Self::parse_ir_from_buffer(&buffer, &context)
@@ -1217,7 +1212,7 @@ impl<'ctx> Module<'ctx> {
         unsafe { Ok(Module::new(module.assume_init())) }
     }
 
-    /// A convenience function for creating a `Module` from a file for a given context.
+    /// A convenience function for creating a `Module` from a bitcode file for a given context.
     ///
     /// # Example
     ///

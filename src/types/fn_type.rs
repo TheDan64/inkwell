@@ -39,7 +39,7 @@ impl<'ctx> FunctionType<'ctx> {
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
     /// let fn_type = f32_type.fn_type(&[], false);
-    /// let fn_ptr_type = fn_type.ptr_type(AddressSpace::Global);
+    /// let fn_ptr_type = fn_type.ptr_type(AddressSpace::One);
     ///
     /// assert_eq!(fn_ptr_type.get_element_type().into_function_type(), fn_type);
     /// ```

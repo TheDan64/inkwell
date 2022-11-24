@@ -29,14 +29,16 @@ fn test_smoke() {
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
         #[cfg(any(
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
     );
@@ -107,14 +109,16 @@ fn test_struct_with_placeholders() {
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
         #[cfg(any(
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
     );
@@ -231,14 +235,16 @@ fn test_no_explicit_finalize() {
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
         #[cfg(any(
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
     );
@@ -272,14 +278,16 @@ fn test_replacing_placeholder_with_placeholder() {
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
         #[cfg(any(
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
     );
@@ -327,14 +335,16 @@ fn test_anonymous_basic_type() {
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
         #[cfg(any(
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
     );
@@ -375,20 +385,22 @@ fn test_global_expressions() {
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
         #[cfg(any(
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
     );
 
     let di_type = dibuilder.create_basic_type("type_name", 0_u64, 0x00, DIFlags::ZERO);
-    let gv = module.add_global(context.i64_type(), Some(inkwell::AddressSpace::Global), "gv");
+    let gv = module.add_global(context.i64_type(), Some(inkwell::AddressSpace::One), "gv");
 
     let const_v = dibuilder.create_constant_expression(10);
 
@@ -441,14 +453,16 @@ fn test_pointer_types() {
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
         #[cfg(any(
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
     );
@@ -465,7 +479,7 @@ fn test_pointer_types() {
         .as_type();
 
     //Smoke test that the pointer gets created
-    dibuilder.create_pointer_type("pointer_name", di_type, 64, 64, inkwell::AddressSpace::Global);
+    dibuilder.create_pointer_type("pointer_name", di_type, 64, 64, inkwell::AddressSpace::One);
 }
 
 #[test]
@@ -491,14 +505,16 @@ fn test_reference_types() {
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
         #[cfg(any(
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
     );
@@ -541,14 +557,16 @@ fn test_array_type() {
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
         #[cfg(any(
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
     );

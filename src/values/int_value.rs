@@ -2,10 +2,9 @@ use llvm_sys::core::{
     LLVMConstAShr, LLVMConstAdd, LLVMConstAnd, LLVMConstBitCast, LLVMConstICmp, LLVMConstIntCast,
     LLVMConstIntGetSExtValue, LLVMConstIntGetZExtValue, LLVMConstIntToPtr, LLVMConstLShr, LLVMConstMul,
     LLVMConstNSWAdd, LLVMConstNSWMul, LLVMConstNSWNeg, LLVMConstNSWSub, LLVMConstNUWAdd, LLVMConstNUWMul,
-    LLVMConstNUWNeg, LLVMConstNUWSub, LLVMConstNeg, LLVMConstNot, LLVMConstOr, LLVMConstSExt,
-    LLVMConstSExtOrBitCast, LLVMConstSIToFP, LLVMConstSelect, LLVMConstShl, LLVMConstSub,
-    LLVMConstTrunc, LLVMConstTruncOrBitCast, LLVMConstUIToFP, LLVMConstXor,
-    LLVMConstZExt, LLVMConstZExtOrBitCast, LLVMIsAConstantInt,
+    LLVMConstNUWNeg, LLVMConstNUWSub, LLVMConstNeg, LLVMConstNot, LLVMConstOr, LLVMConstSExt, LLVMConstSExtOrBitCast,
+    LLVMConstSIToFP, LLVMConstSelect, LLVMConstShl, LLVMConstSub, LLVMConstTrunc, LLVMConstTruncOrBitCast,
+    LLVMConstUIToFP, LLVMConstXor, LLVMConstZExt, LLVMConstZExtOrBitCast, LLVMIsAConstantInt,
 };
 use llvm_sys::prelude::LLVMValueRef;
 

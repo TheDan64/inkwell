@@ -70,7 +70,7 @@ impl<'ctx> ArrayType<'ctx> {
     /// let context = Context::create();
     /// let i8_type = context.i8_type();
     /// let i8_array_type = i8_type.array_type(3);
-    /// let i8_array_ptr_type = i8_array_type.ptr_type(AddressSpace::Generic);
+    /// let i8_array_ptr_type = i8_array_type.ptr_type(AddressSpace::Zero);
     ///
     /// assert_eq!(i8_array_ptr_type.get_element_type().into_array_type(), i8_array_type);
     /// ```

@@ -12,17 +12,15 @@ use llvm_sys::prelude::{LLVMPassManagerRef, LLVMPassRegistryRef};
 #[llvm_versions(10.0..=latest)]
 use llvm_sys::transforms::ipo::LLVMAddMergeFunctionsPass;
 use llvm_sys::transforms::ipo::{
-    LLVMAddAlwaysInlinerPass, LLVMAddConstantMergePass, LLVMAddDeadArgEliminationPass,
-    LLVMAddFunctionAttrsPass, LLVMAddFunctionInliningPass, LLVMAddGlobalDCEPass, LLVMAddGlobalOptimizerPass,
-    LLVMAddIPSCCPPass, LLVMAddInternalizePass, LLVMAddPruneEHPass, LLVMAddStripDeadPrototypesPass,
-    LLVMAddStripSymbolsPass,
+    LLVMAddAlwaysInlinerPass, LLVMAddConstantMergePass, LLVMAddDeadArgEliminationPass, LLVMAddFunctionAttrsPass,
+    LLVMAddFunctionInliningPass, LLVMAddGlobalDCEPass, LLVMAddGlobalOptimizerPass, LLVMAddIPSCCPPass,
+    LLVMAddInternalizePass, LLVMAddPruneEHPass, LLVMAddStripDeadPrototypesPass, LLVMAddStripSymbolsPass,
 };
 use llvm_sys::transforms::pass_manager_builder::{
     LLVMPassManagerBuilderCreate, LLVMPassManagerBuilderDispose, LLVMPassManagerBuilderPopulateFunctionPassManager,
-    LLVMPassManagerBuilderPopulateModulePassManager,
-    LLVMPassManagerBuilderRef, LLVMPassManagerBuilderSetDisableSimplifyLibCalls,
-    LLVMPassManagerBuilderSetDisableUnitAtATime, LLVMPassManagerBuilderSetDisableUnrollLoops,
-    LLVMPassManagerBuilderSetOptLevel, LLVMPassManagerBuilderSetSizeLevel,
+    LLVMPassManagerBuilderPopulateModulePassManager, LLVMPassManagerBuilderRef,
+    LLVMPassManagerBuilderSetDisableSimplifyLibCalls, LLVMPassManagerBuilderSetDisableUnitAtATime,
+    LLVMPassManagerBuilderSetDisableUnrollLoops, LLVMPassManagerBuilderSetOptLevel, LLVMPassManagerBuilderSetSizeLevel,
     LLVMPassManagerBuilderUseInlinerWithThreshold,
 };
 use llvm_sys::transforms::scalar::{

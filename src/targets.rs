@@ -752,6 +752,45 @@ impl Target {
         }
     }
 
+    #[cfg(feature = "target-syncvm")]
+    #[llvm_versions(11.0..=latest)]
+    pub fn initialize_syncvm(config: &InitializationConfig) {
+        use llvm_sys::target::{
+            LLVMInitializeSyncVMAsmParser, LLVMInitializeSyncVMAsmPrinter, LLVMInitializeSyncVMDisassembler,
+            LLVMInitializeSyncVMTarget, LLVMInitializeSyncVMTargetInfo, LLVMInitializeSyncVMTargetMC,
+        };
+
+        if config.base {
+            let _guard = TARGET_LOCK.write();
+            unsafe { LLVMInitializeSyncVMTarget() };
+        }
+
+        if config.info {
+            let _guard = TARGET_LOCK.write();
+            unsafe { LLVMInitializeSyncVMTargetInfo() };
+        }
+
+        if config.asm_printer {
+            let _guard = TARGET_LOCK.write();
+            unsafe { LLVMInitializeSyncVMAsmPrinter() };
+        }
+
+        if config.asm_parser {
+            let _guard = TARGET_LOCK.write();
+            unsafe { LLVMInitializeSyncVMAsmParser() };
+        }
+
+        if config.disassembler {
+            let _guard = TARGET_LOCK.write();
+            unsafe { LLVMInitializeSyncVMDisassembler() };
+        }
+
+        if config.machine_code {
+            let _guard = TARGET_LOCK.write();
+            unsafe { LLVMInitializeSyncVMTargetMC() };
+        }
+    }
+
     pub fn initialize_native(config: &InitializationConfig) -> Result<(), String> {
         use llvm_sys::target::{
             LLVM_InitializeNativeAsmParser, LLVM_InitializeNativeAsmPrinter, LLVM_InitializeNativeDisassembler,
