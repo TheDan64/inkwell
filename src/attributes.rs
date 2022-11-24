@@ -16,9 +16,10 @@ use crate::types::AnyTypeEnum;
 use crate::LLVMReference;
 
 // SubTypes: Attribute<Enum>, Attribute<String>
+// REVIEW: Should Attributes have a 'ctx lifetime?
 /// Functions, function parameters, and return types can have `Attribute`s to indicate
 /// how they should be treated by optimizations and code generation.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Attribute {
     pub(crate) attribute: LLVMAttributeRef,
 }

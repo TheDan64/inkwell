@@ -7,8 +7,7 @@ use llvm_sys::core::{
     LLVMCountBasicBlocks, LLVMCountParams, LLVMDeleteFunction, LLVMGetBasicBlocks, LLVMGetFirstBasicBlock,
     LLVMGetFirstParam, LLVMGetFunctionCallConv, LLVMGetGC, LLVMGetIntrinsicID, LLVMGetLastBasicBlock, LLVMGetLastParam,
     LLVMGetLinkage, LLVMGetNextFunction, LLVMGetNextParam, LLVMGetParam, LLVMGetParams, LLVMGetPreviousFunction,
-    LLVMGetSection, LLVMIsAFunction, LLVMIsConstant, LLVMSetFunctionCallConv, LLVMSetGC, LLVMSetLinkage,
-    LLVMSetParamAlignment, LLVMSetSection,
+    LLVMIsAFunction, LLVMIsConstant, LLVMSetFunctionCallConv, LLVMSetGC, LLVMSetLinkage, LLVMSetParamAlignment,
 };
 use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
 #[llvm_versions(7.0..=latest)]
@@ -19,7 +18,6 @@ use std::ffi::CStr;
 use std::fmt::{self, Display};
 use std::marker::PhantomData;
 use std::mem::forget;
-use std::ptr;
 
 use crate::attributes::{Attribute, AttributeLoc};
 use crate::basic_block::BasicBlock;
@@ -504,29 +502,14 @@ impl<'ctx> FunctionValue<'ctx> {
         }
     }
 
-    // TODO: Share code with GlobalValue::set/get_section
     /// Get the section to which this function belongs
     pub fn get_section(&self) -> Option<&CStr> {
-        let ptr = unsafe { LLVMGetSection(self.as_value_ref()) };
-
-        if ptr.is_null() {
-            return None;
-        }
-
-        Some(unsafe { CStr::from_ptr(ptr) })
+        self.fn_value.get_section()
     }
 
     /// Set the section to which this function should belong
     pub fn set_section(self, section: Option<&str>) {
-        let c_string = section.map(to_c_str);
-
-        unsafe {
-            LLVMSetSection(
-                self.as_value_ref(),
-                // The as_ref call is important here so that we don't drop the cstr mid use
-                c_string.as_ref().map(|s| s.as_ptr()).unwrap_or(ptr::null()),
-            )
-        }
+        self.fn_value.set_section(section)
     }
 }
 

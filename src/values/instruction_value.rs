@@ -267,7 +267,8 @@ impl<'ctx> InstructionValue<'ctx> {
         {
             return Err("Value is not a load, store, atomicrmw or cmpxchg.");
         }
-        Ok(unsafe { LLVMSetVolatile(self.as_value_ref(), volatile as i32) })
+        unsafe { LLVMSetVolatile(self.as_value_ref(), volatile as i32) };
+        Ok(())
     }
 
     // SubTypes: Only apply to memory access and alloca instructions
@@ -295,7 +296,8 @@ impl<'ctx> InstructionValue<'ctx> {
         if !self.is_a_alloca_inst() && !self.is_a_load_inst() && !self.is_a_store_inst() {
             return Err("Value is not an alloca, load or store.");
         }
-        Ok(unsafe { LLVMSetAlignment(self.as_value_ref(), alignment) })
+        unsafe { LLVMSetAlignment(self.as_value_ref(), alignment) };
+        Ok(())
     }
 
     // SubTypes: Only apply to memory access instructions
@@ -328,7 +330,8 @@ impl<'ctx> InstructionValue<'ctx> {
             },
             _ => {},
         };
-        Ok(unsafe { LLVMSetOrdering(self.as_value_ref(), ordering.into()) })
+        unsafe { LLVMSetOrdering(self.as_value_ref(), ordering.into()) };
+        Ok(())
     }
 
     /// Obtains the number of operands an `InstructionValue` has.

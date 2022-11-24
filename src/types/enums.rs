@@ -203,7 +203,11 @@ impl<'ctx> BasicMetadataTypeEnum<'ctx> {
 }
 
 impl<'ctx> AnyTypeEnum<'ctx> {
-    pub(crate) unsafe fn new(type_: LLVMTypeRef) -> Self {
+    /// Create `AnyTypeEnum` from [`LLVMTypeRef`]
+    ///
+    /// # Safety
+    /// Undefined behavior, if referenced type isn't part of `AnyTypeEnum`
+    pub unsafe fn new(type_: LLVMTypeRef) -> Self {
         match LLVMGetTypeKind(type_) {
             LLVMTypeKind::LLVMVoidTypeKind => AnyTypeEnum::VoidType(VoidType::new(type_)),
             LLVMTypeKind::LLVMHalfTypeKind
@@ -235,7 +239,8 @@ impl<'ctx> AnyTypeEnum<'ctx> {
                 feature = "llvm15-0"
             ))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => AnyTypeEnum::VectorType(VectorType::new(type_)),
-            LLVMTypeKind::LLVMMetadataTypeKind => unreachable!("Metadata type is not supported as AnyType."),
+            // FIXME: should inkwell support metadata as AnyType?
+            LLVMTypeKind::LLVMMetadataTypeKind => panic!("Metadata type is not supported as AnyType."),
             LLVMTypeKind::LLVMX86_MMXTypeKind => panic!("FIXME: Unsupported type: MMX"),
             #[cfg(any(
                 feature = "llvm12-0",
@@ -378,7 +383,11 @@ impl<'ctx> AnyTypeEnum<'ctx> {
 }
 
 impl<'ctx> BasicTypeEnum<'ctx> {
-    pub(crate) unsafe fn new(type_: LLVMTypeRef) -> Self {
+    /// Create `BasicTypeEnum` from [`LLVMTypeRef`]
+    ///
+    /// # Safety
+    /// Undefined behavior, if referenced type isn't part of basic type enum.
+    pub unsafe fn new(type_: LLVMTypeRef) -> Self {
         match LLVMGetTypeKind(type_) {
             LLVMTypeKind::LLVMHalfTypeKind
             | LLVMTypeKind::LLVMFloatTypeKind
@@ -407,9 +416,9 @@ impl<'ctx> BasicTypeEnum<'ctx> {
                 feature = "llvm15-0"
             ))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => BasicTypeEnum::VectorType(VectorType::new(type_)),
-            LLVMTypeKind::LLVMMetadataTypeKind => unreachable!("Unsupported basic type: Metadata"),
+            LLVMTypeKind::LLVMMetadataTypeKind => panic!("Unsupported basic type: Metadata"),
             // see https://llvm.org/docs/LangRef.html#x86-mmx-type
-            LLVMTypeKind::LLVMX86_MMXTypeKind => unreachable!("Unsupported basic type: MMX"),
+            LLVMTypeKind::LLVMX86_MMXTypeKind => panic!("Unsupported basic type: MMX"),
             // see https://llvm.org/docs/LangRef.html#x86-amx-type
             #[cfg(any(
                 feature = "llvm12-0",
@@ -536,27 +545,63 @@ impl<'ctx> TryFrom<AnyTypeEnum<'ctx>> for BasicTypeEnum<'ctx> {
     type Error = ();
 
     fn try_from(value: AnyTypeEnum<'ctx>) -> Result<Self, Self::Error> {
+        use AnyTypeEnum::*;
         Ok(match value {
-            AnyTypeEnum::ArrayType(at) => at.into(),
-            AnyTypeEnum::FloatType(ft) => ft.into(),
-            AnyTypeEnum::IntType(it) => it.into(),
-            AnyTypeEnum::PointerType(pt) => pt.into(),
-            AnyTypeEnum::StructType(st) => st.into(),
-            AnyTypeEnum::VectorType(vt) => vt.into(),
-            _ => return Err(()),
+            ArrayType(at) => at.into(),
+            FloatType(ft) => ft.into(),
+            IntType(it) => it.into(),
+            PointerType(pt) => pt.into(),
+            StructType(st) => st.into(),
+            VectorType(vt) => vt.into(),
+            VoidType(_) | FunctionType(_) => return Err(()),
+        })
+    }
+}
+
+impl<'ctx> TryFrom<AnyTypeEnum<'ctx>> for BasicMetadataTypeEnum<'ctx> {
+    type Error = ();
+
+    fn try_from(value: AnyTypeEnum<'ctx>) -> Result<Self, Self::Error> {
+        use AnyTypeEnum::*;
+        Ok(match value {
+            ArrayType(at) => at.into(),
+            FloatType(ft) => ft.into(),
+            IntType(it) => it.into(),
+            PointerType(pt) => pt.into(),
+            StructType(st) => st.into(),
+            VectorType(vt) => vt.into(),
+            VoidType(_) | FunctionType(_) => return Err(()),
+        })
+    }
+}
+
+impl<'ctx> TryFrom<BasicMetadataTypeEnum<'ctx>> for BasicTypeEnum<'ctx> {
+    type Error = ();
+
+    fn try_from(value: BasicMetadataTypeEnum<'ctx>) -> Result<Self, Self::Error> {
+        use BasicMetadataTypeEnum::*;
+        Ok(match value {
+            ArrayType(at) => at.into(),
+            FloatType(ft) => ft.into(),
+            IntType(it) => it.into(),
+            PointerType(pt) => pt.into(),
+            StructType(st) => st.into(),
+            VectorType(vt) => vt.into(),
+            MetadataType(_) => return Err(()),
         })
     }
 }
 
 impl<'ctx> From<BasicTypeEnum<'ctx>> for BasicMetadataTypeEnum<'ctx> {
     fn from(value: BasicTypeEnum<'ctx>) -> Self {
+        use BasicTypeEnum::*;
         match value {
-            BasicTypeEnum::ArrayType(at) => at.into(),
-            BasicTypeEnum::FloatType(ft) => ft.into(),
-            BasicTypeEnum::IntType(it) => it.into(),
-            BasicTypeEnum::PointerType(pt) => pt.into(),
-            BasicTypeEnum::StructType(st) => st.into(),
-            BasicTypeEnum::VectorType(vt) => vt.into(),
+            ArrayType(at) => at.into(),
+            FloatType(ft) => ft.into(),
+            IntType(it) => it.into(),
+            PointerType(pt) => pt.into(),
+            StructType(st) => st.into(),
+            VectorType(vt) => vt.into(),
         }
     }
 }

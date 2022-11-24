@@ -23,7 +23,11 @@ pub struct StructType<'ctx> {
 }
 
 impl<'ctx> StructType<'ctx> {
-    pub(crate) unsafe fn new(struct_type: LLVMTypeRef) -> Self {
+    /// Create `StructType` from [`LLVMTypeRef`]
+    ///
+    /// # Safety
+    /// Undefined behavior, if referenced type isn't struct type
+    pub unsafe fn new(struct_type: LLVMTypeRef) -> Self {
         assert!(!struct_type.is_null());
 
         StructType {

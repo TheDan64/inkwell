@@ -162,7 +162,7 @@ pub(crate) fn to_c_str<'s>(mut s: &'s str) -> Cow<'s, CStr> {
     }
 
     // Start from the end of the string as it's the most likely place to find a null byte
-    if s.chars().rev().find(|&ch| ch == '\0').is_none() {
+    if !s.chars().rev().any(|ch| ch == '\0') {
         return Cow::from(CString::new(s).expect("unreachable since null bytes are checked"));
     }
 

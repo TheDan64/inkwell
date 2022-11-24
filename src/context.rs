@@ -9,15 +9,19 @@ use llvm_sys::core::LLVMConstInlineAsm;
 use llvm_sys::core::LLVMCreateTypeAttribute;
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::core::LLVMGetInlineAsm;
+#[llvm_versions(4.0..12.0)]
+use llvm_sys::core::LLVMGetTypeByName;
+#[llvm_versions(12.0..=latest)]
+use llvm_sys::core::LLVMGetTypeByName2;
 #[llvm_versions(6.0..=latest)]
 use llvm_sys::core::LLVMMetadataTypeInContext;
 use llvm_sys::core::{
     LLVMAppendBasicBlockInContext, LLVMConstStringInContext, LLVMConstStructInContext, LLVMContextCreate,
     LLVMContextDispose, LLVMContextSetDiagnosticHandler, LLVMCreateBuilderInContext, LLVMCreateEnumAttribute,
     LLVMCreateStringAttribute, LLVMDoubleTypeInContext, LLVMFP128TypeInContext, LLVMFloatTypeInContext,
-    LLVMGetGlobalContext, LLVMGetMDKindIDInContext, LLVMHalfTypeInContext, LLVMInsertBasicBlockInContext,
-    LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext,
-    LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMMDNodeInContext, LLVMMDStringInContext,
+    LLVMGetGlobalContext, LLVMGetMDKindIDInContext, LLVMGetTypeKind, LLVMHalfTypeInContext,
+    LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext,
+    LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMMDNodeInContext, LLVMMDStringInContext,
     LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext, LLVMStructCreateNamed, LLVMStructTypeInContext,
     LLVMVoidTypeInContext, LLVMX86FP80TypeInContext,
 };
@@ -46,6 +50,7 @@ use crate::values::{
 use crate::AddressSpace;
 #[cfg(feature = "internal-getters")]
 use crate::LLVMReference;
+pub(crate) use private::AsContextRef;
 
 use std::marker::PhantomData;
 use std::mem::forget;
@@ -260,6 +265,18 @@ impl ContextImpl {
         unsafe { StructType::new(LLVMStructCreateNamed(self.0, c_string.as_ptr())) }
     }
 
+    #[llvm_versions(12.0..=latest)]
+    fn get_struct_type<'ctx>(&self, name: &str) -> Option<StructType<'ctx>> {
+        let c_string = to_c_str(name);
+
+        let ty = unsafe { LLVMGetTypeByName2(self.0, c_string.as_ptr()) };
+        if ty.is_null() {
+            return None;
+        }
+
+        unsafe { Some(StructType::new(ty)) }
+    }
+
     fn const_struct<'ctx>(&self, values: &[BasicValueEnum], packed: bool) -> StructValue<'ctx> {
         let mut args: Vec<LLVMValueRef> = values.iter().map(|val| val.as_value_ref()).collect();
         unsafe {
@@ -435,7 +452,7 @@ impl Context {
     where
         F: FnOnce(&Context) -> R,
     {
-        GLOBAL_CTX_LOCK.with(|lazy| func(&*lazy))
+        GLOBAL_CTX_LOCK.with(|lazy| func(lazy))
     }
 
     /// Creates a new `Builder` for a `Context`.
@@ -922,6 +939,27 @@ impl Context {
     #[inline]
     pub fn opaque_struct_type(&self, name: &str) -> StructType {
         self.context.opaque_struct_type(name)
+    }
+
+    /// Gets a named [`StructType`] from this `Context`.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    ///
+    /// assert!(context.get_struct_type("foo").is_none());
+    ///
+    /// let opaque = context.opaque_struct_type("foo");
+    ///
+    /// assert_eq!(context.get_struct_type("foo").unwrap(), opaque);
+    /// ```
+    #[inline]
+    #[llvm_versions(12.0..=latest)]
+    pub fn get_struct_type<'ctx>(&self, name: &str) -> Option<StructType<'ctx>> {
+        self.context.get_struct_type(name)
     }
 
     /// Creates a constant `StructValue` from constant values.
@@ -1738,6 +1776,27 @@ impl<'ctx> ContextRef<'ctx> {
         self.context.opaque_struct_type(name)
     }
 
+    /// Gets a named [`StructType`] from this `Context`.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    ///
+    /// assert!(context.get_struct_type("foo").is_none());
+    ///
+    /// let opaque = context.opaque_struct_type("foo");
+    ///
+    /// assert_eq!(context.get_struct_type("foo").unwrap(), opaque);
+    /// ```
+    #[inline]
+    #[llvm_versions(12.0..=latest)]
+    pub fn get_struct_type(&self, name: &str) -> Option<StructType<'ctx>> {
+        self.context.get_struct_type(name)
+    }
+
     /// Creates a constant `StructValue` from constant values.
     ///
     /// # Example
@@ -2028,5 +2087,26 @@ impl<'ctx> ContextRef<'ctx> {
 impl LLVMReference<LLVMContextRef> for ContextRef<'_> {
     unsafe fn get_ref(&self) -> LLVMContextRef {
         self.context.0
+    }
+}
+
+pub(crate) mod private {
+    use super::{Context, ContextRef, LLVMContextRef};
+
+    pub trait AsContextRef<'ctx> {
+        /// Returns the internal LLVM reference behind the type
+        fn as_ctx_ref(&self) -> LLVMContextRef;
+    }
+
+    impl<'ctx> AsContextRef<'ctx> for &'ctx Context {
+        fn as_ctx_ref(&self) -> LLVMContextRef {
+            self.context.0
+        }
+    }
+
+    impl<'ctx> AsContextRef<'ctx> for ContextRef<'ctx> {
+        fn as_ctx_ref(&self) -> LLVMContextRef {
+            self.context.0
+        }
     }
 }

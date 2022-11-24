@@ -101,7 +101,7 @@
 //! ```
 
 use crate::basic_block::BasicBlock;
-use crate::context::Context;
+use crate::context::{AsContextRef, Context};
 pub use crate::debug_info::flags::{DIFlags, DIFlagsConstants};
 use crate::module::Module;
 use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, MetadataValue, PointerValue};
@@ -456,7 +456,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     /// Create a debug location.
     pub fn create_debug_location(
         &self,
-        context: &Context,
+        context: impl AsContextRef<'ctx>,
         line: u32,
         column: u32,
         scope: DIScope<'ctx>,
@@ -464,7 +464,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     ) -> DILocation<'ctx> {
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateDebugLocation(
-                context.context.0,
+                context.as_ctx_ref(),
                 line,
                 column,
                 scope.metadata_ref,
@@ -553,7 +553,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         runtime_language: u32,
         unique_id: &str,
     ) -> DICompositeType<'ctx> {
-        let mut elements: Vec<LLVMMetadataRef> = elements.into_iter().map(|dt| dt.metadata_ref).collect();
+        let mut elements: Vec<LLVMMetadataRef> = elements.iter().map(|dt| dt.metadata_ref).collect();
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateUnionType(
                 self.builder,
@@ -564,7 +564,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 line_no,
                 size_in_bits,
                 align_in_bits,
-                flags.into(),
+                flags,
                 elements.as_mut_ptr(),
                 elements.len().try_into().unwrap(),
                 runtime_language,
@@ -975,8 +975,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     /// Construct a placeholders derived type to be used when building debug info with circular references.
     ///
     /// All placeholders must be replaced before calling finalize().
-    pub unsafe fn create_placeholder_derived_type(&self, context: &'ctx Context) -> DIDerivedType<'ctx> {
-        let metadata_ref = LLVMTemporaryMDNode(context.context.0, std::ptr::null_mut(), 0);
+    pub unsafe fn create_placeholder_derived_type(&self, context: impl AsContextRef<'ctx>) -> DIDerivedType<'ctx> {
+        let metadata_ref = LLVMTemporaryMDNode(context.as_ctx_ref(), std::ptr::null_mut(), 0);
         DIDerivedType {
             metadata_ref,
             _marker: PhantomData,
@@ -1255,8 +1255,8 @@ pub struct DIGlobalVariableExpression<'ctx> {
 }
 
 impl<'ctx> DIGlobalVariableExpression<'ctx> {
-    pub fn as_metadata_value(&self, context: &'ctx Context) -> MetadataValue<'ctx> {
-        unsafe { MetadataValue::new(LLVMMetadataAsValue(context.context.0, self.metadata_ref)) }
+    pub fn as_metadata_value(&self, context: impl AsContextRef<'ctx>) -> MetadataValue<'ctx> {
+        unsafe { MetadataValue::new(LLVMMetadataAsValue(context.as_ctx_ref(), self.metadata_ref)) }
     }
 }
 

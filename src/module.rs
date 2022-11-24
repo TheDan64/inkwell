@@ -6,8 +6,8 @@ use llvm_sys::bit_reader::LLVMParseBitcodeInContext;
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
 #[llvm_versions(4.0..14.0)]
 use llvm_sys::core::LLVMGetTypeByName;
-#[llvm_versions(14.0..=latest)]
-use llvm_sys::core::LLVMGetTypeByName2;
+
+
 use llvm_sys::core::{
     LLVMAddFunction, LLVMAddGlobal, LLVMAddGlobalInAddressSpace, LLVMAddNamedMetadataOperand, LLVMCloneModule,
     LLVMDisposeModule, LLVMDumpModule, LLVMGetFirstFunction, LLVMGetFirstGlobal, LLVMGetLastFunction,
@@ -41,7 +41,7 @@ use std::rc::Rc;
 
 #[llvm_versions(7.0..=latest)]
 use crate::comdat::Comdat;
-use crate::context::{Context, ContextRef};
+use crate::context::{AsContextRef, Context, ContextRef};
 use crate::data_layout::DataLayout;
 #[llvm_versions(7.0..=latest)]
 use crate::debug_info::{DICompileUnit, DWARFEmissionKind, DWARFSourceLanguage, DebugInfoBuilder};
@@ -350,37 +350,10 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_struct_type("foo").unwrap(), opaque);
     /// ```
     ///
+    #[llvm_versions(4.0..12.0)]
     pub fn get_struct_type(&self, name: &str) -> Option<StructType<'ctx>> {
         let c_string = to_c_str(name);
 
-        // This ugly cfg specification is due to limitation of custom attributes (for more information, see https://github.com/rust-lang/rust/issues/54727).
-        // Once custom attriutes inside methods are enabled, this should be replaced with #[llvm_version(14.0..=latest)]
-        #[cfg(not(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-        )))]
-        let struct_type = unsafe { LLVMGetTypeByName2(self.get_context().context.0, c_string.as_ptr()) };
-
-        #[cfg(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-        ))]
         let struct_type = unsafe { LLVMGetTypeByName(self.module.get(), c_string.as_ptr()) };
 
         if struct_type.is_null() {
@@ -388,6 +361,27 @@ impl<'ctx> Module<'ctx> {
         }
 
         unsafe { Some(StructType::new(struct_type)) }
+    }
+
+    /// Gets a named `StructType` from this `Module`'s `Context`.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    ///
+    /// assert!(module.get_struct_type("foo").is_none());
+    ///
+    /// let opaque = context.opaque_struct_type("foo");
+    ///
+    /// assert_eq!(module.get_struct_type("foo").unwrap(), opaque);
+    /// ```
+    #[llvm_versions(12.0..=latest)]
+    pub fn get_struct_type(&self, name: &str) -> Option<StructType<'ctx>> {
+        self.get_context().get_struct_type(name)
     }
 
     /// Assigns a `TargetTriple` to this `Module`.
@@ -1186,7 +1180,10 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.unwrap().get_context(), context);
     ///
     /// ```
-    pub fn parse_bitcode_from_buffer(buffer: &MemoryBuffer, context: &'ctx Context) -> Result<Self, LLVMString> {
+    pub fn parse_bitcode_from_buffer(
+        buffer: &MemoryBuffer,
+        context: impl AsContextRef<'ctx>,
+    ) -> Result<Self, LLVMString> {
         let mut module = MaybeUninit::uninit();
         let mut err_string = MaybeUninit::uninit();
 
@@ -1196,7 +1193,7 @@ impl<'ctx> Module<'ctx> {
         #[allow(deprecated)]
         let success = unsafe {
             LLVMParseBitcodeInContext(
-                context.context.0,
+                context.as_ctx_ref(),
                 buffer.memory_buffer,
                 module.as_mut_ptr(),
                 err_string.as_mut_ptr(),
@@ -1230,10 +1227,13 @@ impl<'ctx> Module<'ctx> {
     /// ```
     // LLVMGetBitcodeModuleInContext was a pain to use, so I seem to be able to achieve the same effect
     // by reusing create_from_file instead. This is basically just a convenience function.
-    pub fn parse_bitcode_from_path<P: AsRef<Path>>(path: P, context: &'ctx Context) -> Result<Self, LLVMString> {
+    pub fn parse_bitcode_from_path<P: AsRef<Path>>(
+        path: P,
+        context: impl AsContextRef<'ctx>,
+    ) -> Result<Self, LLVMString> {
         let buffer = MemoryBuffer::create_from_file(path.as_ref())?;
 
-        Self::parse_bitcode_from_buffer(&buffer, &context)
+        Self::parse_bitcode_from_buffer(&buffer, context)
     }
 
     /// Gets the name of this `Module`.
