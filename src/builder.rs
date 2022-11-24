@@ -238,7 +238,7 @@ impl<'ctx> Builder<'ctx> {
         let fn_val_ref = callable_value.as_value_ref();
 
         // LLVM gets upset when void return calls are named because they don't return anything
-        let name = if callable_value.returns_void() { "" } else { name };
+        let name = if fn_ty.get_return_type().is_none() { "" } else { name };
 
         let c_string = to_c_str(name);
         let mut args: Vec<LLVMValueRef> = args.iter().map(|val| val.as_value_ref()).collect();
