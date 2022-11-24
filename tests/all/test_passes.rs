@@ -31,7 +31,12 @@ fn test_init_all_passes_for_module() {
     pass_manager.add_always_inliner_pass();
     pass_manager.add_global_dce_pass();
     pass_manager.add_global_optimizer_pass();
-    #[cfg(not(any(feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0"
+    )))]
     pass_manager.add_ip_constant_propagation_pass();
     pass_manager.add_prune_eh_pass();
     pass_manager.add_ipsccp_pass();
@@ -72,9 +77,19 @@ fn test_init_all_passes_for_module() {
     pass_manager.add_scalar_repl_aggregates_pass_with_threshold(1);
     pass_manager.add_simplify_lib_calls_pass();
     pass_manager.add_tail_call_elimination_pass();
-    #[cfg(not(any(feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0"
+    )))]
     pass_manager.add_constant_propagation_pass();
-    #[cfg(any(feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0", feature = "llvm15-0"))]
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0"
+    ))]
     pass_manager.add_instruction_simplify_pass();
     pass_manager.add_demote_memory_to_register_pass();
     pass_manager.add_verifier_pass();
@@ -93,7 +108,13 @@ fn test_init_all_passes_for_module() {
         pass_manager.add_loop_unroll_and_jam_pass();
     }
 
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm15-0")))]
+    #[cfg(not(any(
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0",
+        feature = "llvm7-0",
+        feature = "llvm15-0"
+    )))]
     {
         pass_manager.add_coroutine_early_pass();
         pass_manager.add_coroutine_split_pass();
@@ -144,16 +165,18 @@ fn test_pass_manager_builder() {
 
     pass_manager_builder.populate_module_pass_manager(&module_pass_manager);
 
-    let module2 = module.clone();
-
     #[cfg(any(feature = "llvm4-0", feature = "llvm5-0"))]
     assert!(!module_pass_manager.run_on(&module));
     #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0")))]
     assert!(module_pass_manager.run_on(&module));
 
-    #[cfg(not(feature = "llvm15-0"))] {
+    #[cfg(not(feature = "llvm15-0"))]
+    {
+        let module2 = module.clone();
+
         let lto_pass_manager = PassManager::create(());
         pass_manager_builder.populate_lto_pass_manager(&lto_pass_manager, false, false);
+
         assert!(lto_pass_manager.run_on(&module2));
     }
 }

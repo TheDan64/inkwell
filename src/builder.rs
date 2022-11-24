@@ -2748,15 +2748,36 @@ impl<'ctx> Builder<'ctx> {
     }
 
     /// Set the debug info source location of the instruction currently pointed at by the builder
-    #[llvm_versions(7.0..=latest)]
     pub fn set_current_debug_location(&self, context: &'ctx crate::context::Context, location: DILocation<'ctx>) {
-        use llvm_sys::core::LLVMMetadataAsValue;
-        use llvm_sys::core::LLVMSetCurrentDebugLocation;
-        unsafe {
-            LLVMSetCurrentDebugLocation(
-                self.builder,
-                LLVMMetadataAsValue(context.context.0, location.metadata_ref),
-            );
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0"
+        ))]
+        {
+            use llvm_sys::core::LLVMMetadataAsValue;
+            use llvm_sys::core::LLVMSetCurrentDebugLocation;
+            unsafe {
+                LLVMSetCurrentDebugLocation(
+                    self.builder,
+                    LLVMMetadataAsValue(context.context.0, location.metadata_ref),
+                );
+            }
+        }
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0"
+        )))]
+        {
+            use llvm_sys::core::LLVMSetCurrentDebugLocation2;
+            unsafe {
+                LLVMSetCurrentDebugLocation2(self.builder, location.metadata_ref);
+            }
         }
     }
 
@@ -2779,9 +2800,31 @@ impl<'ctx> Builder<'ctx> {
     /// Unset the debug info source location of the instruction currently pointed at by the
     /// builder. If there isn't any debug info, this is a no-op.
     pub fn unset_current_debug_location(&self) {
-        use llvm_sys::core::LLVMSetCurrentDebugLocation;
-        unsafe {
-            LLVMSetCurrentDebugLocation(self.builder, std::ptr::null_mut());
+        #[cfg(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0"
+        ))]
+        {
+            use llvm_sys::core::LLVMSetCurrentDebugLocation;
+            unsafe {
+                LLVMSetCurrentDebugLocation(self.builder, std::ptr::null_mut());
+            }
+        }
+        #[cfg(not(any(
+            feature = "llvm4-0",
+            feature = "llvm5-0",
+            feature = "llvm6-0",
+            feature = "llvm7-0",
+            feature = "llvm8-0"
+        )))]
+        {
+            use llvm_sys::core::LLVMSetCurrentDebugLocation2;
+            unsafe {
+                LLVMSetCurrentDebugLocation2(self.builder, std::ptr::null_mut());
+            }
         }
     }
 }

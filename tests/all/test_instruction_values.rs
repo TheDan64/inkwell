@@ -416,7 +416,10 @@ fn test_mem_instructions() {
     let f32_val = f32_type.const_float(::std::f64::consts::PI);
 
     let store_instruction = builder.build_store(arg1, f32_val);
+    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
     let load = builder.build_load(arg1, "");
+    #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+    let load = builder.build_load_2(f32_ptr_type, arg1, "");
     let load_instruction = load.as_instruction_value().unwrap();
 
     assert_eq!(store_instruction.get_volatile().unwrap(), false);
@@ -479,7 +482,10 @@ fn test_atomic_ordering_mem_instructions() {
     let f32_val = f32_type.const_float(::std::f64::consts::PI);
 
     let store_instruction = builder.build_store(arg1, f32_val);
+    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
     let load = builder.build_load(arg1, "");
+    #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+    let load = builder.build_load_2(f32_ptr_type, arg1, "");
     let load_instruction = load.as_instruction_value().unwrap();
 
     assert_eq!(
