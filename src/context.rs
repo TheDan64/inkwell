@@ -1211,6 +1211,7 @@ impl Context {
         self.context.const_string(string, null_terminated)
     }
 
+    #[allow(dead_code)]
     #[inline]
     pub(crate) fn set_diagnostic_handler(
         &self,
