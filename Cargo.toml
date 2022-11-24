@@ -80,7 +80,6 @@ target-all = [
     "target-lanai",
     "target-webassembly",
     "target-riscv",
-    "target-syncvm",
 ]
 experimental = ["static-alloc"]
 nightly = ["inkwell_internals/nightly"]
