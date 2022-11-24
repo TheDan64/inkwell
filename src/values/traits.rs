@@ -50,6 +50,37 @@ pub trait AggregateValue<'ctx>: BasicValue<'ctx> {
     fn as_aggregate_value_enum(&self) -> AggregateValueEnum<'ctx> {
         unsafe { AggregateValueEnum::new(self.as_value_ref()) }
     }
+
+    // REVIEW: How does LLVM treat out of bound index? Maybe we should return an Option?
+    // or is that only in bounds GEP
+    // REVIEW: Should this be AggregatePointerValue?
+    #[llvm_versions(4.0..15.0)]
+    fn const_extract_value(&self, indexes: &mut [u32]) -> BasicValueEnum<'ctx> {
+        use llvm_sys::core::LLVMConstExtractValue;
+
+        unsafe {
+            BasicValueEnum::new(LLVMConstExtractValue(
+                self.as_value_ref(),
+                indexes.as_mut_ptr(),
+                indexes.len() as u32,
+            ))
+        }
+    }
+
+    // SubTypes: value should really be T in self: VectorValue<T> I think
+    #[llvm_versions(4.0..15.0)]
+    fn const_insert_value<BV: BasicValue<'ctx>>(&self, value: BV, indexes: &mut [u32]) -> BasicValueEnum<'ctx> {
+        use llvm_sys::core::LLVMConstInsertValue;
+
+        unsafe {
+            BasicValueEnum::new(LLVMConstInsertValue(
+                self.as_value_ref(),
+                value.as_value_ref(),
+                indexes.as_mut_ptr(),
+                indexes.len() as u32,
+            ))
+        }
+    }
 }
 
 /// Represents a basic value, which can be used both by itself, or in an `AggregateValue`.

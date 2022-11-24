@@ -36,8 +36,6 @@ use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 
 use crate::basic_block::BasicBlock;
 #[llvm_versions(7.0..=latest)]
-use crate::context::AsContextRef;
-#[llvm_versions(7.0..=latest)]
 use crate::debug_info::DILocation;
 use crate::support::to_c_str;
 use crate::types::{

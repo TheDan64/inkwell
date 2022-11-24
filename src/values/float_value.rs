@@ -64,6 +64,41 @@ impl<'ctx> FloatValue<'ctx> {
         unsafe { FloatValue::new(LLVMConstFNeg(self.as_value_ref())) }
     }
 
+    #[llvm_versions(4.0..15.0)]
+    pub fn const_add(self, rhs: FloatValue<'ctx>) -> Self {
+        use llvm_sys::core::LLVMConstFAdd;
+
+        unsafe { FloatValue::new(LLVMConstFAdd(self.as_value_ref(), rhs.as_value_ref())) }
+    }
+
+    #[llvm_versions(4.0..15.0)]
+    pub fn const_sub(self, rhs: FloatValue<'ctx>) -> Self {
+        use llvm_sys::core::LLVMConstFSub;
+
+        unsafe { FloatValue::new(LLVMConstFSub(self.as_value_ref(), rhs.as_value_ref())) }
+    }
+
+    #[llvm_versions(4.0..15.0)]
+    pub fn const_mul(self, rhs: FloatValue<'ctx>) -> Self {
+        use llvm_sys::core::LLVMConstFMul;
+
+        unsafe { FloatValue::new(LLVMConstFMul(self.as_value_ref(), rhs.as_value_ref())) }
+    }
+
+    #[llvm_versions(4.0..15.0)]
+    pub fn const_div(self, rhs: FloatValue<'ctx>) -> Self {
+        use llvm_sys::core::LLVMConstFDiv;
+
+        unsafe { FloatValue::new(LLVMConstFDiv(self.as_value_ref(), rhs.as_value_ref())) }
+    }
+
+    #[llvm_versions(4.0..15.0)]
+    pub fn const_remainder(self, rhs: FloatValue<'ctx>) -> Self {
+        use llvm_sys::core::LLVMConstFRem;
+
+        unsafe { FloatValue::new(LLVMConstFRem(self.as_value_ref(), rhs.as_value_ref())) }
+    }
+
     pub fn const_cast(self, float_type: FloatType<'ctx>) -> Self {
         unsafe { FloatValue::new(LLVMConstFPCast(self.as_value_ref(), float_type.as_type_ref())) }
     }

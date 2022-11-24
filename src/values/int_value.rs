@@ -117,6 +117,48 @@ impl<'ctx> IntValue<'ctx> {
         unsafe { IntValue::new(LLVMConstNUWMul(self.as_value_ref(), rhs.as_value_ref())) }
     }
 
+    #[llvm_versions(4.0..15.0)]
+    pub fn const_unsigned_div(self, rhs: IntValue<'ctx>) -> Self {
+        use llvm_sys::core::LLVMConstUDiv;
+
+        unsafe { IntValue::new(LLVMConstUDiv(self.as_value_ref(), rhs.as_value_ref())) }
+    }
+
+    #[llvm_versions(4.0..15.0)]
+    pub fn const_signed_div(self, rhs: IntValue<'ctx>) -> Self {
+        use llvm_sys::core::LLVMConstSDiv;
+
+        unsafe { IntValue::new(LLVMConstSDiv(self.as_value_ref(), rhs.as_value_ref())) }
+    }
+
+    #[llvm_versions(4.0..15.0)]
+    pub fn const_exact_signed_div(self, rhs: IntValue<'ctx>) -> Self {
+        use llvm_sys::core::LLVMConstExactSDiv;
+
+        unsafe { IntValue::new(LLVMConstExactSDiv(self.as_value_ref(), rhs.as_value_ref())) }
+    }
+
+    #[llvm_versions(4.0..15.0)]
+    pub fn const_exact_unsigned_div(self, rhs: IntValue<'ctx>) -> Self {
+        use llvm_sys::core::LLVMConstExactUDiv;
+
+        unsafe { IntValue::new(LLVMConstExactUDiv(self.as_value_ref(), rhs.as_value_ref())) }
+    }
+
+    #[llvm_versions(4.0..15.0)]
+    pub fn const_unsigned_remainder(self, rhs: IntValue<'ctx>) -> Self {
+        use llvm_sys::core::LLVMConstURem;
+
+        unsafe { IntValue::new(LLVMConstURem(self.as_value_ref(), rhs.as_value_ref())) }
+    }
+
+    #[llvm_versions(4.0..15.0)]
+    pub fn const_signed_remainder(self, rhs: IntValue<'ctx>) -> Self {
+        use llvm_sys::core::LLVMConstSRem;
+
+        unsafe { IntValue::new(LLVMConstSRem(self.as_value_ref(), rhs.as_value_ref())) }
+    }
+
     pub fn const_and(self, rhs: IntValue<'ctx>) -> Self {
         unsafe { IntValue::new(LLVMConstAnd(self.as_value_ref(), rhs.as_value_ref())) }
     }

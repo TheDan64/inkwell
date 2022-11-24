@@ -331,12 +331,12 @@ pub enum AtomicRMWBinOp {
     #[llvm_variant(LLVMAtomicRMWBinOpFSub)]
     FSub,
 
-    /// Sets memory to the float-typed-greater of the value provided and the value in memory. Returns the value that was in memory.
+    /// Sets memory to the greater of the two float-typed values, one provided and one from memory. Returns the value that was in memory.
     #[llvm_versions(15.0..=latest)]
     #[llvm_variant(LLVMAtomicRMWBinOpFMax)]
     FMax,
 
-    /// Sets memory to the float-typed-lesser of the value provided and the value in memory. Returns the value that was in memory.
+    /// Sets memory to the lesser of the two float-typed values, one provided and one from memory. Returns the value that was in memory.
     #[llvm_versions(15.0..=latest)]
     #[llvm_variant(LLVMAtomicRMWBinOpFMin)]
     FMin,
