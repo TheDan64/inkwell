@@ -84,7 +84,7 @@ internal-getters = []
 
 [dependencies]
 either = "1.5"
-inkwell_internals = { path = "./internal_macros", version = "0.5.0" }
+inkwell_internals = { path = "./internal_macros", version = "0.6.0" }
 libc = "0.2"
 llvm-sys-40 = { package = "llvm-sys", version = "40.4", optional = true }
 llvm-sys-50 = { package = "llvm-sys", version = "50.4", optional = true }
