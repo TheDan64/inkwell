@@ -31,7 +31,7 @@ fn test_build_call() {
     #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
     let pi2_call_site = builder.build_call(function, &[], "get_pi");
     #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
-    let pi2_call_site = builder.build_call_2(fn_type, function, &[], "get_pi");
+    let pi2_call_site = builder.build_call(fn_type, function, &[], "get_pi");
 
     assert!(!pi2_call_site.is_tail_call());
 
@@ -62,13 +62,13 @@ fn test_build_call() {
     #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
     let load = builder.build_load(alloca, "load").into_pointer_value();
     #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
-    let load = builder.build_load_2(fn_ptr_type, alloca, "load").into_pointer_value();
+    let load = builder.build_load(fn_ptr_type, alloca, "load").into_pointer_value();
 
     let callable_value = CallableValue::try_from(load).unwrap();
     #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
     builder.build_call(callable_value, &[], "call");
     #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
-    builder.build_call_2(fn_type2, callable_value, &[], "call");
+    builder.build_call(fn_type2, callable_value, &[], "call");
     builder.build_return(None);
 
     assert!(module.verify().is_ok());
@@ -104,7 +104,7 @@ fn test_build_invoke_cleanup_resume() {
     #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
     let call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi");
     #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
-    let call_site = builder.build_invoke_2(fn_type, function, &[], then_block, catch_block, "get_pi");
+    let call_site = builder.build_invoke(fn_type, function, &[], then_block, catch_block, "get_pi");
 
     assert!(!call_site.is_tail_call());
 
@@ -174,7 +174,7 @@ fn test_build_invoke_catch_all() {
     #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
     let pi2_call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi");
     #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
-    let pi2_call_site = builder.build_invoke_2(fn_type, function, &[], then_block, catch_block, "get_pi");
+    let pi2_call_site = builder.build_invoke(fn_type, function, &[], then_block, catch_block, "get_pi");
 
     assert!(!pi2_call_site.is_tail_call());
 
@@ -248,7 +248,7 @@ fn landing_pad_filter() {
     #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
     let pi2_call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi");
     #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
-    let pi2_call_site = builder.build_invoke_2(fn_type, function, &[], then_block, catch_block, "get_pi");
+    let pi2_call_site = builder.build_invoke(fn_type, function, &[], then_block, catch_block, "get_pi");
 
     assert!(!pi2_call_site.is_tail_call());
 
@@ -351,7 +351,7 @@ fn test_null_checked_ptr_ops() {
     #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
     let index1 = builder.build_load(new_ptr, "deref");
     #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
-    let index1 = builder.build_load_2(i8_ptr_type, new_ptr, "deref");
+    let index1 = builder.build_load(i8_ptr_type, new_ptr, "deref");
 
     builder.build_return(Some(&index1));
 
@@ -391,7 +391,7 @@ fn test_null_checked_ptr_ops() {
     #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
     let index1 = builder.build_load(new_ptr, "deref");
     #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
-    let index1 = builder.build_load_2(i8_ptr_type, new_ptr, "deref");
+    let index1 = builder.build_load(i8_ptr_type, new_ptr, "deref");
 
     builder.build_return(Some(&index1));
 
@@ -903,7 +903,7 @@ fn test_insert_value() {
     let array = builder.build_load(array_alloca, "array_load").into_array_value();
     #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
     let array = builder
-        .build_load_2(array_type, array_alloca, "array_load")
+        .build_load(array_type, array_alloca, "array_load")
         .into_array_value();
     let const_int1 = i32_type.const_int(2, false);
     let const_int2 = i32_type.const_int(5, false);
@@ -935,7 +935,7 @@ fn test_insert_value() {
     let struct_value = builder.build_load(struct_alloca, "struct_load").into_struct_value();
     #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
     let struct_value = builder
-        .build_load_2(struct_type, struct_alloca, "struct_load")
+        .build_load(struct_type, struct_alloca, "struct_load")
         .into_struct_value();
 
     assert!(builder
@@ -1040,7 +1040,7 @@ fn run_memcpy_on<'ctx>(
         #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
         let elem_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
         #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
-        let elem_ptr = unsafe { builder.build_in_bounds_gep_2(array_type, array_ptr, &[index_val], "index") };
+        let elem_ptr = unsafe { builder.build_in_bounds_gep(array_type, array_ptr, &[index_val], "index") };
         let int_val = i32_type.const_int(index + 1, false);
 
         builder.build_store(elem_ptr, int_val);
@@ -1054,7 +1054,7 @@ fn run_memcpy_on<'ctx>(
     #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
     let dest_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
     #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
-    let dest_ptr = unsafe { builder.build_in_bounds_gep_2(array_type, array_ptr, &[index_val], "index") };
+    let dest_ptr = unsafe { builder.build_in_bounds_gep(array_type, array_ptr, &[index_val], "index") };
 
     builder.build_memcpy(dest_ptr, alignment, array_ptr, alignment, size_val)?;
 
@@ -1117,7 +1117,7 @@ fn run_memmove_on<'ctx>(
         #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
         let elem_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
         #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
-        let elem_ptr = unsafe { builder.build_in_bounds_gep_2(array_type, array_ptr, &[index_val], "index") };
+        let elem_ptr = unsafe { builder.build_in_bounds_gep(array_type, array_ptr, &[index_val], "index") };
         let int_val = i32_type.const_int(index + 1, false);
 
         builder.build_store(elem_ptr, int_val);
@@ -1131,7 +1131,7 @@ fn run_memmove_on<'ctx>(
     #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
     let dest_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
     #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
-    let dest_ptr = unsafe { builder.build_in_bounds_gep_2(array_type, array_ptr, &[index_val], "index") };
+    let dest_ptr = unsafe { builder.build_in_bounds_gep(array_type, array_ptr, &[index_val], "index") };
 
     builder.build_memmove(dest_ptr, alignment, array_ptr, alignment, size_val)?;
 
@@ -1201,7 +1201,7 @@ fn run_memset_on<'ctx>(
     #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
     let part_2 = unsafe { builder.build_in_bounds_gep(array_ptr, &[index], "index") };
     #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
-    let part_2 = unsafe { builder.build_in_bounds_gep_2(array_type, array_ptr, &[index], "index") };
+    let part_2 = unsafe { builder.build_in_bounds_gep(array_type, array_ptr, &[index], "index") };
     builder.build_memset(part_2, alignment, val, size_val)?;
     builder.build_return(Some(&array_ptr));
 
@@ -1505,16 +1505,12 @@ fn test_safe_struct_gep() {
     }
     #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
     {
-        assert!(builder.build_struct_gep_2(i32_ty, i32_ptr, 0, "struct_gep").is_err());
-        assert!(builder.build_struct_gep_2(i32_ty, i32_ptr, 10, "struct_gep").is_err());
+        assert!(builder.build_struct_gep(i32_ty, i32_ptr, 0, "struct_gep").is_err());
+        assert!(builder.build_struct_gep(i32_ty, i32_ptr, 10, "struct_gep").is_err());
+        assert!(builder.build_struct_gep(struct_ty, struct_ptr, 0, "struct_gep").is_ok());
+        assert!(builder.build_struct_gep(struct_ty, struct_ptr, 1, "struct_gep").is_ok());
         assert!(builder
-            .build_struct_gep_2(struct_ty, struct_ptr, 0, "struct_gep")
-            .is_ok());
-        assert!(builder
-            .build_struct_gep_2(struct_ty, struct_ptr, 1, "struct_gep")
-            .is_ok());
-        assert!(builder
-            .build_struct_gep_2(struct_ty, struct_ptr, 2, "struct_gep")
+            .build_struct_gep(struct_ty, struct_ptr, 2, "struct_gep")
             .is_err());
     }
 }

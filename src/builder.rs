@@ -215,7 +215,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.position_at_end(entry);
     ///
-    /// let ret_val = builder.build_call_2(fn_type, fn_value, &[i32_arg.into(), md_string.into()], "call")
+    /// let ret_val = builder.build_call(fn_type, fn_value, &[i32_arg.into(), md_string.into()], "call")
     ///     .try_as_basic_value()
     ///     .left()
     ///     .unwrap();
@@ -223,7 +223,7 @@ impl<'ctx> Builder<'ctx> {
     /// builder.build_return(Some(&ret_val));
     /// ```
     #[llvm_versions(14.0..=latest)]
-    pub fn build_call_2<F>(
+    pub fn build_call<F>(
         &self,
         fn_ty: FunctionType<'ctx>,
         function: F,
@@ -417,7 +417,7 @@ impl<'ctx> Builder<'ctx> {
     /// let then_block = context.append_basic_block(function2, "then_block");
     /// let catch_block = context.append_basic_block(function2, "catch_block");
     ///
-    /// let call_site = builder.build_invoke_2(fn_type, function, &[], then_block, catch_block, "get_pi");
+    /// let call_site = builder.build_invoke(fn_type, function, &[], then_block, catch_block, "get_pi");
     ///
     /// {
     ///     builder.position_at_end(then_block);
@@ -452,7 +452,7 @@ impl<'ctx> Builder<'ctx> {
     /// }
     /// ```
     #[llvm_versions(14.0..=latest)]
-    pub fn build_invoke_2<F>(
+    pub fn build_invoke<F>(
         &self,
         fn_ty: FunctionType<'ctx>,
         function: F,
@@ -770,7 +770,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Doesn't GEP work on array too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
     #[llvm_versions(14.0..=latest)]
-    pub unsafe fn build_gep_2<T: BasicType<'ctx>>(
+    pub unsafe fn build_gep<T: BasicType<'ctx>>(
         &self,
         ty: T,
         ptr: PointerValue<'ctx>,
@@ -822,7 +822,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: This could be merge in with build_gep via a in_bounds: bool param
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
     #[llvm_versions(14.0..=latest)]
-    pub unsafe fn build_in_bounds_gep_2<T: BasicType<'ctx>>(
+    pub unsafe fn build_in_bounds_gep<T: BasicType<'ctx>>(
         &self,
         ty: T,
         ptr: PointerValue<'ctx>,
@@ -927,14 +927,14 @@ impl<'ctx> Builder<'ctx> {
     /// let i32_ptr = fn_value.get_first_param().unwrap().into_pointer_value();
     /// let struct_ptr = fn_value.get_last_param().unwrap().into_pointer_value();
     ///
-    /// assert!(builder.build_struct_gep_2(i32_ty, i32_ptr, 0, "struct_gep").is_err());
-    /// assert!(builder.build_struct_gep_2(i32_ty, i32_ptr, 10, "struct_gep").is_err());
-    /// assert!(builder.build_struct_gep_2(struct_ty, struct_ptr, 0, "struct_gep").is_ok());
-    /// assert!(builder.build_struct_gep_2(struct_ty, struct_ptr, 1, "struct_gep").is_ok());
-    /// assert!(builder.build_struct_gep_2(struct_ty, struct_ptr, 2, "struct_gep").is_err());
+    /// assert!(builder.build_struct_gep(i32_ty, i32_ptr, 0, "struct_gep").is_err());
+    /// assert!(builder.build_struct_gep(i32_ty, i32_ptr, 10, "struct_gep").is_err());
+    /// assert!(builder.build_struct_gep(struct_ty, struct_ptr, 0, "struct_gep").is_ok());
+    /// assert!(builder.build_struct_gep(struct_ty, struct_ptr, 1, "struct_gep").is_ok());
+    /// assert!(builder.build_struct_gep(struct_ty, struct_ptr, 2, "struct_gep").is_err());
     /// ```
     #[llvm_versions(14.0..=latest)]
-    pub fn build_struct_gep_2<T: BasicType<'ctx>>(
+    pub fn build_struct_gep<T: BasicType<'ctx>>(
         &self,
         ty: T,
         ptr: PointerValue<'ctx>,
@@ -1036,11 +1036,11 @@ impl<'ctx> Builder<'ctx> {
     /// let i32_ptr_param2 = fn_value.get_nth_param(1).unwrap().into_pointer_value();
     ///
     /// builder.position_at_end(entry);
-    /// builder.build_ptr_diff_2(i32_ptr_type, i32_ptr_param1, i32_ptr_param2, "diff");
+    /// builder.build_ptr_diff(i32_ptr_type, i32_ptr_param1, i32_ptr_param2, "diff");
     /// builder.build_return(None);
     /// ```
     #[llvm_versions(14.0..=latest)]
-    pub fn build_ptr_diff_2<T: BasicType<'ctx>>(
+    pub fn build_ptr_diff<T: BasicType<'ctx>>(
         &self,
         ty: T,
         lhs_ptr: PointerValue<'ctx>,
@@ -1160,12 +1160,12 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.position_at_end(entry);
     ///
-    /// let pointee = builder.build_load_2(i32_type, i32_ptr_param, "load2");
+    /// let pointee = builder.build_load(i32_type, i32_ptr_param, "load2");
     ///
     /// builder.build_return(Some(&pointee));
     /// ```
     #[llvm_versions(14.0..=latest)]
-    pub fn build_load_2<T: BasicType<'ctx>>(&self, ty: T, ptr: PointerValue<'ctx>, name: &str) -> BasicValueEnum<'ctx> {
+    pub fn build_load<T: BasicType<'ctx>>(&self, ty: T, ptr: PointerValue<'ctx>, name: &str) -> BasicValueEnum<'ctx> {
         let c_string = to_c_str(name);
 
         let value = unsafe { LLVMBuildLoad2(self.builder, ty.as_type_ref(), ptr.as_value_ref(), c_string.as_ptr()) };
