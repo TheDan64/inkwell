@@ -525,7 +525,7 @@ fn test_metadata() {
 
 #[test]
 fn test_floats() {
-    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(feature = "llvm15-0"))]
     {
         use inkwell::FloatPredicate;
 

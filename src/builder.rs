@@ -19,7 +19,7 @@ use llvm_sys::core::{
     LLVMInsertIntoBuilderWithName, LLVMPositionBuilder, LLVMPositionBuilderAtEnd, LLVMPositionBuilderBefore,
     LLVMSetCleanup,
 };
-#[llvm_versions(4.0..14.0)]
+#[llvm_versions(4.0..=13.0)]
 use llvm_sys::core::{
     LLVMBuildCall, LLVMBuildGEP, LLVMBuildInBoundsGEP, LLVMBuildInvoke, LLVMBuildLoad, LLVMBuildPtrDiff,
     LLVMBuildStructGEP,
@@ -38,13 +38,11 @@ use crate::basic_block::BasicBlock;
 #[llvm_versions(7.0..=latest)]
 use crate::debug_info::DILocation;
 use crate::support::to_c_str;
-use crate::types::{
-    AnyType, AsTypeRef, BasicType, FloatMathType, FunctionType, IntMathType, PointerMathType, PointerType,
-};
+use crate::types::{AsTypeRef, BasicType, FloatMathType, FunctionType, IntMathType, PointerMathType, PointerType};
 use crate::values::{
-    AggregateValue, AggregateValueEnum, AnyValue, AnyValueEnum, AsValueRef, BasicMetadataValueEnum, BasicValue,
-    BasicValueEnum, CallSiteValue, CallableValue, FloatMathValue, FunctionValue, GlobalValue, InstructionOpcode,
-    InstructionValue, IntMathValue, IntValue, PhiValue, PointerMathValue, PointerValue, StructValue, VectorValue,
+    AggregateValue, AggregateValueEnum, AsValueRef, BasicMetadataValueEnum, BasicValue, BasicValueEnum, CallSiteValue,
+    CallableValue, FloatMathValue, FunctionValue, GlobalValue, InstructionOpcode, InstructionValue, IntMathValue,
+    IntValue, PhiValue, PointerMathValue, PointerValue, StructValue, VectorValue,
 };
 #[cfg(feature = "internal-getters")]
 use crate::LLVMReference;
@@ -164,7 +162,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.build_return(Some(&ret_val));
     /// ```
-    #[llvm_versions(4.0..14.0)]
+    #[llvm_versions(4.0..=13.0)]
     pub fn build_call<F>(&self, function: F, args: &[BasicMetadataValueEnum<'ctx>], name: &str) -> CallSiteValue<'ctx>
     where
         F: Into<CallableValue<'ctx>>,
@@ -336,7 +334,7 @@ impl<'ctx> Builder<'ctx> {
     ///     builder.build_return(Some(&f32_type.const_zero()));
     /// }
     /// ```
-    #[llvm_versions(4.0..14.0)]
+    #[llvm_versions(4.0..=13.0)]
     pub fn build_invoke<F>(
         &self,
         function: F,
@@ -745,7 +743,7 @@ impl<'ctx> Builder<'ctx> {
 
     // REVIEW: Doesn't GEP work on array too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    #[llvm_versions(4.0..14.0)]
+    #[llvm_versions(4.0..=13.0)]
     pub unsafe fn build_gep(
         &self,
         ptr: PointerValue<'ctx>,
@@ -796,7 +794,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Doesn't GEP work on array too?
     // REVIEW: This could be merge in with build_gep via a in_bounds: bool param
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    #[llvm_versions(4.0..14.0)]
+    #[llvm_versions(4.0..=13.0)]
     pub unsafe fn build_in_bounds_gep(
         &self,
         ptr: PointerValue<'ctx>,
@@ -878,7 +876,7 @@ impl<'ctx> Builder<'ctx> {
     /// assert!(builder.build_struct_gep(struct_ptr, 1, "struct_gep").is_ok());
     /// assert!(builder.build_struct_gep(struct_ptr, 2, "struct_gep").is_err());
     /// ```
-    #[llvm_versions(4.0..14.0)]
+    #[llvm_versions(4.0..=13.0)]
     pub fn build_struct_gep(&self, ptr: PointerValue<'ctx>, index: u32, name: &str) -> Result<PointerValue<'ctx>, ()> {
         let ptr_ty = ptr.get_type();
         let pointee_ty = ptr_ty.get_element_type();
@@ -994,7 +992,7 @@ impl<'ctx> Builder<'ctx> {
     /// builder.build_ptr_diff(i32_ptr_param1, i32_ptr_param2, "diff");
     /// builder.build_return(None);
     /// ```
-    #[llvm_versions(4.0..14.0)]
+    #[llvm_versions(4.0..=13.0)]
     pub fn build_ptr_diff(
         &self,
         lhs_ptr: PointerValue<'ctx>,
@@ -1130,7 +1128,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.build_return(Some(&pointee));
     /// ```
-    #[llvm_versions(4.0..14.0)]
+    #[llvm_versions(4.0..=13.0)]
     pub fn build_load(&self, ptr: PointerValue<'ctx>, name: &str) -> BasicValueEnum<'ctx> {
         let c_string = to_c_str(name);
 
@@ -1455,6 +1453,7 @@ impl<'ctx> Builder<'ctx> {
     /// # Example
     ///
     /// ```no_run
+    /// use inkwell::AddressSpace;
     /// use inkwell::context::Context;
     ///
     /// let context = Context::create();
@@ -1463,7 +1462,7 @@ impl<'ctx> Builder<'ctx> {
     /// let f32_type = context.f32_type();
     /// let i32_type = context.i32_type();
     /// let arg_types = [i32_type.into()];
-    /// let fn_type = void_type.fn_type(&arg_types, false);
+    /// let fn_type = void_type.fn_type(&arg_types, false).ptr_type(AddressSpace::Zero);
     /// let fn_value = module.add_function("bc", fn_type, None);
     /// let builder = context.create_builder();
     /// let entry = context.append_basic_block(fn_value, "entry");
@@ -1476,16 +1475,16 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// assert!(module.verify().is_ok());
     /// ```
-    pub fn build_bitcast<T, V>(&self, val: V, ty: T, name: &str) -> AnyValueEnum<'ctx>
+    pub fn build_bitcast<T, V>(&self, val: V, ty: T, name: &str) -> BasicValueEnum<'ctx>
     where
-        T: AnyType<'ctx>,
-        V: AnyValue<'ctx>,
+        T: BasicType<'ctx>,
+        V: BasicValue<'ctx>,
     {
         let c_string = to_c_str(name);
 
         let value = unsafe { LLVMBuildBitCast(self.builder, val.as_value_ref(), ty.as_type_ref(), c_string.as_ptr()) };
 
-        unsafe { AnyValueEnum::new(value) }
+        unsafe { BasicValueEnum::new(value) }
     }
 
     pub fn build_int_s_extend_or_bit_cast<T: IntMathValue<'ctx>>(

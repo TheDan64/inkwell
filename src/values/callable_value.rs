@@ -6,7 +6,7 @@ use crate::types::AsTypeRef;
 use crate::values::AsValueRef;
 use crate::values::{AnyValue, FunctionValue, PointerValue};
 
-use llvm_sys::core::{LLVMGetElementType, LLVMGetReturnType, LLVMGetTypeKind, LLVMTypeOf};
+use llvm_sys::core::{LLVMGetElementType, LLVMGetTypeKind, LLVMTypeOf};
 use llvm_sys::prelude::LLVMTypeRef;
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMTypeKind;
@@ -104,7 +104,10 @@ impl<'ctx> AsTypeRef for CallableValue<'ctx> {
 }
 
 impl<'ctx> CallableValue<'ctx> {
+    #[llvm_versions(4.0..=13.0)]
     pub(crate) fn returns_void(&self) -> bool {
+        use llvm_sys::core::LLVMGetReturnType;
+
         let return_type =
             unsafe { LLVMGetTypeKind(LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(self.as_value_ref())))) };
 

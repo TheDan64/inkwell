@@ -3,13 +3,13 @@
 #[llvm_versions(7.0..=latest)]
 use crate::InlineAsmDialect;
 use libc::c_void;
-#[llvm_versions(4.0..7.0)]
+#[llvm_versions(4.0..=6.0)]
 use llvm_sys::core::LLVMConstInlineAsm;
 #[llvm_versions(12.0..=latest)]
 use llvm_sys::core::LLVMCreateTypeAttribute;
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::core::LLVMGetInlineAsm;
-#[llvm_versions(4.0..12.0)]
+#[llvm_versions(4.0..=11.0)]
 use llvm_sys::core::LLVMGetTypeByName;
 #[llvm_versions(12.0..=latest)]
 use llvm_sys::core::LLVMGetTypeByName2;

@@ -121,7 +121,7 @@ impl Attribute {
     ///
     /// assert_eq!(enum_attribute.get_enum_kind_id(), 0);
     /// ```
-    #[llvm_versions(4.0..12.0)]
+    #[llvm_versions(4.0..=11.0)]
     pub fn get_enum_kind_id(self) -> u32 {
         assert!(self.get_enum_kind_id_is_valid()); // FIXME: SubTypes
 
@@ -165,7 +165,7 @@ impl Attribute {
         unsafe { LLVMGetEnumAttributeKind(self.attribute) }
     }
 
-    #[llvm_versions(4.0..12.0)]
+    #[llvm_versions(4.0..=11.0)]
     fn get_enum_kind_id_is_valid(self) -> bool {
         self.is_enum()
     }

@@ -101,12 +101,11 @@ impl<'ctx> Value<'ctx> {
     // add a ParamValue wrapper type that always have it but conditional types (IntValue<Variable>)
     // that also have it. This isn't a huge deal though, since it hasn't proven to be UB so far
     fn set_name(self, name: &str) {
+        let c_string = to_c_str(name);
+
         #[cfg(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
         {
-            use crate::support::to_c_str;
             use llvm_sys::core::LLVMSetValueName;
-
-            let c_string = to_c_str(name);
 
             unsafe {
                 LLVMSetValueName(self.value, c_string.as_ptr());
@@ -116,7 +115,7 @@ impl<'ctx> Value<'ctx> {
         {
             use llvm_sys::core::LLVMSetValueName2;
 
-            unsafe { LLVMSetValueName2(self.value, name.as_ptr() as *const ::libc::c_char, name.len()) }
+            unsafe { LLVMSetValueName2(self.value, c_string.as_ptr(), name.len()) }
         }
     }
 

@@ -181,7 +181,7 @@ impl PassManagerBuilder {
     ///
     /// pass_manager_builder.populate_lto_pass_manager(&lpm, false, false);
     /// ```
-    #[llvm_versions(4.0..15.0)]
+    #[llvm_versions(4.0..=14.0)]
     pub fn populate_lto_pass_manager(&self, pass_manager: &PassManager<Module>, internalize: bool, run_inliner: bool) {
         unsafe {
             LLVMPassManagerBuilderPopulateLTOPassManager(
@@ -299,7 +299,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// only stored to (returning the value instead), but does not currently.
     /// This case would be best handled when and if LLVM starts supporting multiple
     /// return values from functions.
-    #[llvm_versions(4.0..15.0)]
+    #[llvm_versions(4.0..=14.0)]
     pub fn add_argument_promotion_pass(&self) {
         unsafe { LLVMAddArgumentPromotionPass(self.pass_manager) }
     }
@@ -721,7 +721,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// to be run before it to hoist invariant conditions
     /// out of the loop, to make the unswitching opportunity
     /// obvious.
-    #[llvm_versions(4.0..15.0)]
+    #[llvm_versions(4.0..=14.0)]
     pub fn add_loop_unswitch_pass(&self) {
         use llvm_sys::core::LLVMAddLoopUnswitchPass;
 
@@ -760,7 +760,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// order to rewrite loads and stores as appropriate. This is just
     /// the standard SSA construction algorithm to construct "pruned" SSA form.
     pub fn add_promote_memory_to_register_pass(&self) {
-        #[llvm_versions(4.0..7.0)]
+        #[llvm_versions(4.0..=6.0)]
         use llvm_sys::transforms::scalar::LLVMAddPromoteMemoryToRegisterPass;
         #[llvm_versions(7.0..=latest)]
         use llvm_sys::transforms::util::LLVMAddPromoteMemoryToRegisterPass;
