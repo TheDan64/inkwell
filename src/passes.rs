@@ -183,6 +183,8 @@ impl PassManagerBuilder {
     /// ```
     #[llvm_versions(4.0..=14.0)]
     pub fn populate_lto_pass_manager(&self, pass_manager: &PassManager<Module>, internalize: bool, run_inliner: bool) {
+        use llvm_sys::core::LLVMPassManagerBuilderPopulateLTOPassManager;
+
         unsafe {
             LLVMPassManagerBuilderPopulateLTOPassManager(
                 self.pass_manager_builder,
@@ -301,6 +303,8 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// return values from functions.
     #[llvm_versions(4.0..=14.0)]
     pub fn add_argument_promotion_pass(&self) {
+        use llvm_sys::transforms::ipo::LLVMAddArgumentPromotionPass;
+
         unsafe { LLVMAddArgumentPromotionPass(self.pass_manager) }
     }
 
@@ -723,7 +727,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// obvious.
     #[llvm_versions(4.0..=14.0)]
     pub fn add_loop_unswitch_pass(&self) {
-        use llvm_sys::core::LLVMAddLoopUnswitchPass;
+        use llvm_sys::transforms::scalar::LLVMAddLoopUnswitchPass;
 
         unsafe { LLVMAddLoopUnswitchPass(self.pass_manager) }
     }
