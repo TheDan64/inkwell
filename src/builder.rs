@@ -19,12 +19,12 @@ use llvm_sys::core::{
     LLVMInsertIntoBuilderWithName, LLVMPositionBuilder, LLVMPositionBuilderAtEnd, LLVMPositionBuilderBefore,
     LLVMSetCleanup,
 };
-#[llvm_versions(4.0..=13.0)]
+#[llvm_versions(4.0..=14.0)]
 use llvm_sys::core::{
     LLVMBuildCall, LLVMBuildGEP, LLVMBuildInBoundsGEP, LLVMBuildInvoke, LLVMBuildLoad, LLVMBuildPtrDiff,
     LLVMBuildStructGEP,
 };
-#[llvm_versions(14.0..=latest)]
+#[llvm_versions(15.0..=latest)]
 use llvm_sys::core::{
     LLVMBuildCall2, LLVMBuildGEP2, LLVMBuildInBoundsGEP2, LLVMBuildInvoke2, LLVMBuildLoad2, LLVMBuildPtrDiff2,
     LLVMBuildStructGEP2,
@@ -162,7 +162,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.build_return(Some(&ret_val));
     /// ```
-    #[llvm_versions(4.0..=13.0)]
+    #[llvm_versions(4.0..=14.0)]
     pub fn build_call<F>(&self, function: F, args: &[BasicMetadataValueEnum<'ctx>], name: &str) -> CallSiteValue<'ctx>
     where
         F: Into<CallableValue<'ctx>>,
@@ -220,7 +220,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.build_return(Some(&ret_val));
     /// ```
-    #[llvm_versions(14.0..=latest)]
+    #[llvm_versions(15.0..=latest)]
     pub fn build_call<F>(
         &self,
         fn_ty: FunctionType<'ctx>,
@@ -334,7 +334,7 @@ impl<'ctx> Builder<'ctx> {
     ///     builder.build_return(Some(&f32_type.const_zero()));
     /// }
     /// ```
-    #[llvm_versions(4.0..=13.0)]
+    #[llvm_versions(4.0..=14.0)]
     pub fn build_invoke<F>(
         &self,
         function: F,
@@ -449,7 +449,7 @@ impl<'ctx> Builder<'ctx> {
     ///     builder.build_return(Some(&f32_type.const_zero()));
     /// }
     /// ```
-    #[llvm_versions(14.0..=latest)]
+    #[llvm_versions(15.0..=latest)]
     pub fn build_invoke<F>(
         &self,
         fn_ty: FunctionType<'ctx>,
@@ -743,7 +743,7 @@ impl<'ctx> Builder<'ctx> {
 
     // REVIEW: Doesn't GEP work on array too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    #[llvm_versions(4.0..=13.0)]
+    #[llvm_versions(4.0..=14.0)]
     pub unsafe fn build_gep(
         &self,
         ptr: PointerValue<'ctx>,
@@ -767,7 +767,7 @@ impl<'ctx> Builder<'ctx> {
 
     // REVIEW: Doesn't GEP work on array too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    #[llvm_versions(14.0..=latest)]
+    #[llvm_versions(15.0..=latest)]
     pub unsafe fn build_gep<T: BasicType<'ctx>>(
         &self,
         pointee_ty: T,
@@ -794,7 +794,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Doesn't GEP work on array too?
     // REVIEW: This could be merge in with build_gep via a in_bounds: bool param
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    #[llvm_versions(4.0..=13.0)]
+    #[llvm_versions(4.0..=14.0)]
     pub unsafe fn build_in_bounds_gep(
         &self,
         ptr: PointerValue<'ctx>,
@@ -819,7 +819,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Doesn't GEP work on array too?
     // REVIEW: This could be merge in with build_gep via a in_bounds: bool param
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    #[llvm_versions(14.0..=latest)]
+    #[llvm_versions(15.0..=latest)]
     pub unsafe fn build_in_bounds_gep<T: BasicType<'ctx>>(
         &self,
         pointee_ty: T,
@@ -876,7 +876,7 @@ impl<'ctx> Builder<'ctx> {
     /// assert!(builder.build_struct_gep(struct_ptr, 1, "struct_gep").is_ok());
     /// assert!(builder.build_struct_gep(struct_ptr, 2, "struct_gep").is_err());
     /// ```
-    #[llvm_versions(4.0..=13.0)]
+    #[llvm_versions(4.0..=14.0)]
     pub fn build_struct_gep(&self, ptr: PointerValue<'ctx>, index: u32, name: &str) -> Result<PointerValue<'ctx>, ()> {
         let ptr_ty = ptr.get_type();
         let pointee_ty = ptr_ty.get_element_type();
@@ -931,7 +931,7 @@ impl<'ctx> Builder<'ctx> {
     /// assert!(builder.build_struct_gep(struct_ty, struct_ptr, 1, "struct_gep").is_ok());
     /// assert!(builder.build_struct_gep(struct_ty, struct_ptr, 2, "struct_gep").is_err());
     /// ```
-    #[llvm_versions(14.0..=latest)]
+    #[llvm_versions(15.0..=latest)]
     pub fn build_struct_gep<T: BasicType<'ctx>>(
         &self,
         pointee_ty: T,
@@ -991,7 +991,7 @@ impl<'ctx> Builder<'ctx> {
     /// builder.build_ptr_diff(i32_ptr_param1, i32_ptr_param2, "diff");
     /// builder.build_return(None);
     /// ```
-    #[llvm_versions(4.0..=13.0)]
+    #[llvm_versions(4.0..=14.0)]
     pub fn build_ptr_diff(
         &self,
         lhs_ptr: PointerValue<'ctx>,
@@ -1036,7 +1036,7 @@ impl<'ctx> Builder<'ctx> {
     /// builder.build_ptr_diff(i32_ptr_type, i32_ptr_param1, i32_ptr_param2, "diff");
     /// builder.build_return(None);
     /// ```
-    #[llvm_versions(14.0..=latest)]
+    #[llvm_versions(15.0..=latest)]
     pub fn build_ptr_diff<T: BasicType<'ctx>>(
         &self,
         pointee_ty: T,
@@ -1127,7 +1127,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.build_return(Some(&pointee));
     /// ```
-    #[llvm_versions(4.0..=13.0)]
+    #[llvm_versions(4.0..=14.0)]
     pub fn build_load(&self, ptr: PointerValue<'ctx>, name: &str) -> BasicValueEnum<'ctx> {
         let c_string = to_c_str(name);
 
@@ -1161,7 +1161,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.build_return(Some(&pointee));
     /// ```
-    #[llvm_versions(14.0..=latest)]
+    #[llvm_versions(15.0..=latest)]
     pub fn build_load<T: BasicType<'ctx>>(
         &self,
         pointee_ty: T,

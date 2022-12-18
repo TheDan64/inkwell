@@ -104,7 +104,7 @@ impl<'ctx> AsTypeRef for CallableValue<'ctx> {
 }
 
 impl<'ctx> CallableValue<'ctx> {
-    #[llvm_versions(4.0..=13.0)]
+    #[llvm_versions(4.0..=14.0)]
     pub(crate) fn returns_void(&self) -> bool {
         use llvm_sys::core::LLVMGetReturnType;
 

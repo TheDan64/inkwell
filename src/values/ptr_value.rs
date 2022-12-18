@@ -1,6 +1,6 @@
-#[llvm_versions(4.0..=13.0)]
+#[llvm_versions(4.0..=14.0)]
 use llvm_sys::core::{LLVMConstGEP, LLVMConstInBoundsGEP};
-#[llvm_versions(14.0..=latest)]
+#[llvm_versions(15.0..=latest)]
 use llvm_sys::core::{LLVMConstGEP2, LLVMConstInBoundsGEP2};
 
 use llvm_sys::core::{LLVMConstAddrSpaceCast, LLVMConstPointerCast, LLVMConstPtrToInt};
@@ -77,7 +77,7 @@ impl<'ctx> PointerValue<'ctx> {
 
     // REVIEW: Should this be on array value too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    #[llvm_versions(4.0..=13.0)]
+    #[llvm_versions(4.0..=14.0)]
     pub unsafe fn const_gep(self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
@@ -94,7 +94,7 @@ impl<'ctx> PointerValue<'ctx> {
 
     // REVIEW: Should this be on array value too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    #[llvm_versions(14.0..=latest)]
+    #[llvm_versions(15.0..=latest)]
     pub unsafe fn const_gep<T: BasicType<'ctx>>(self, ty: T, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
@@ -111,7 +111,7 @@ impl<'ctx> PointerValue<'ctx> {
     }
 
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    #[llvm_versions(4.0..=13.0)]
+    #[llvm_versions(4.0..=14.0)]
     pub unsafe fn const_in_bounds_gep(self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
@@ -127,7 +127,7 @@ impl<'ctx> PointerValue<'ctx> {
     }
 
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    #[llvm_versions(14.0..=latest)]
+    #[llvm_versions(15.0..=latest)]
     pub unsafe fn const_in_bounds_gep<T: BasicType<'ctx>>(
         self,
         ty: T,
