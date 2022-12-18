@@ -165,11 +165,6 @@ fn test_pass_manager_builder() {
 
     pass_manager_builder.populate_module_pass_manager(&module_pass_manager);
 
-    #[cfg(any(feature = "llvm4-0", feature = "llvm5-0"))]
-    assert!(!module_pass_manager.run_on(&module));
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0")))]
-    assert!(module_pass_manager.run_on(&module));
-
     #[cfg(not(feature = "llvm15-0"))]
     {
         let module2 = module.clone();
@@ -179,6 +174,11 @@ fn test_pass_manager_builder() {
 
         assert!(lto_pass_manager.run_on(&module2));
     }
+
+    #[cfg(any(feature = "llvm4-0", feature = "llvm5-0"))]
+    assert!(!module_pass_manager.run_on(&module));
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0")))]
+    assert!(module_pass_manager.run_on(&module));
 }
 
 #[test]
