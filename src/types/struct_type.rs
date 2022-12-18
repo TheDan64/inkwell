@@ -190,7 +190,7 @@ impl<'ctx> StructType<'ctx> {
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
     /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
-    /// let struct_ptr_type = struct_type.ptr_type(AddressSpace::Generic);
+    /// let struct_ptr_type = struct_type.ptr_type(AddressSpace::default());
     ///
     /// assert_eq!(struct_ptr_type.get_element_type().into_struct_type(), struct_type);
     /// ```
