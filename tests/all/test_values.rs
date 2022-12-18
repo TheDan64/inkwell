@@ -39,9 +39,9 @@ fn test_call_site() {
 
     let function = module.add_function("do_nothing", fn_type, None);
 
-    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(feature = "llvm15-0"))]
     let call_site = builder.build_call(function, &[], "to_infinity_and_beyond");
-    #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+    #[cfg(feature = "llvm15-0")]
     let call_site = builder.build_call(fn_type, function, &[], "to_infinity_and_beyond");
 
     assert_eq!(call_site.count_arguments(), 0);
@@ -1150,9 +1150,9 @@ fn test_non_fn_ptr_called() {
 
     builder.position_at_end(bb);
     let callable_value = CallableValue::try_from(i8_ptr_param).unwrap();
-    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(feature = "llvm15-0"))]
     builder.build_call(callable_value, &[], "call");
-    #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+    #[cfg(feature = "llvm15-0")]
     builder.build_call(i8_ptr_type.fn_type(&[], false), callable_value, &[], "call");
     builder.build_return(None);
 
@@ -1200,9 +1200,9 @@ fn test_aggregate_returns() {
     let ptr_param2 = fn_value.get_nth_param(1).unwrap().into_pointer_value();
 
     builder.position_at_end(bb);
-    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(feature = "llvm15-0"))]
     builder.build_ptr_diff(ptr_param1, ptr_param2, "diff");
-    #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+    #[cfg(feature = "llvm15-0")]
     builder.build_ptr_diff(i32_ptr_type, ptr_param1, ptr_param2, "diff");
     builder.build_aggregate_return(&[i32_three.into(), i32_seven.into()]);
 

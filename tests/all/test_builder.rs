@@ -28,9 +28,9 @@ fn test_build_call() {
 
     builder.position_at_end(basic_block2);
 
-    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(feature = "llvm15-0"))]
     let pi2_call_site = builder.build_call(function, &[], "get_pi");
-    #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+    #[cfg(feature = "llvm15-0")]
     let pi2_call_site = builder.build_call(fn_type, function, &[], "get_pi");
 
     assert!(!pi2_call_site.is_tail_call());
@@ -59,15 +59,15 @@ fn test_build_call() {
 
     builder.build_store(alloca, fn_ptr);
 
-    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(feature = "llvm15-0"))]
     let load = builder.build_load(alloca, "load").into_pointer_value();
-    #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+    #[cfg(feature = "llvm15-0")]
     let load = builder.build_load(fn_ptr_type, alloca, "load").into_pointer_value();
 
     let callable_value = CallableValue::try_from(load).unwrap();
-    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(feature = "llvm15-0"))]
     builder.build_call(callable_value, &[], "call");
-    #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+    #[cfg(feature = "llvm15-0")]
     builder.build_call(fn_type2, callable_value, &[], "call");
     builder.build_return(None);
 
@@ -101,9 +101,9 @@ fn test_build_invoke_cleanup_resume() {
     let then_block = context.append_basic_block(function2, "then_block");
     let catch_block = context.append_basic_block(function2, "catch_block");
 
-    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(feature = "llvm15-0"))]
     let call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi");
-    #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+    #[cfg(feature = "llvm15-0")]
     let call_site = builder.build_invoke(fn_type, function, &[], then_block, catch_block, "get_pi");
 
     assert!(!call_site.is_tail_call());
@@ -171,9 +171,9 @@ fn test_build_invoke_catch_all() {
     let then_block = context.append_basic_block(function2, "then_block");
     let catch_block = context.append_basic_block(function2, "catch_block");
 
-    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(feature = "llvm15-0"))]
     let pi2_call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi");
-    #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+    #[cfg(feature = "llvm15-0")]
     let pi2_call_site = builder.build_invoke(fn_type, function, &[], then_block, catch_block, "get_pi");
 
     assert!(!pi2_call_site.is_tail_call());
@@ -245,9 +245,9 @@ fn landing_pad_filter() {
     let then_block = context.append_basic_block(function2, "then_block");
     let catch_block = context.append_basic_block(function2, "catch_block");
 
-    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(feature = "llvm15-0"))]
     let pi2_call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi");
-    #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+    #[cfg(feature = "llvm15-0")]
     let pi2_call_site = builder.build_invoke(fn_type, function, &[], then_block, catch_block, "get_pi");
 
     assert!(!pi2_call_site.is_tail_call());
@@ -348,9 +348,9 @@ fn test_null_checked_ptr_ops() {
     let ptr_as_int = builder.build_ptr_to_int(ptr, i64_type, "ptr_as_int");
     let new_ptr_as_int = builder.build_int_add(ptr_as_int, one, "add");
     let new_ptr = builder.build_int_to_ptr(new_ptr_as_int, i8_ptr_type, "int_as_ptr");
-    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(feature = "llvm15-0"))]
     let index1 = builder.build_load(new_ptr, "deref");
-    #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+    #[cfg(feature = "llvm15-0")]
     let index1 = builder.build_load(i8_ptr_type, new_ptr, "deref");
 
     builder.build_return(Some(&index1));
@@ -388,9 +388,9 @@ fn test_null_checked_ptr_ops() {
     let ptr_as_int = builder.build_ptr_to_int(ptr, i64_type, "ptr_as_int");
     let new_ptr_as_int = builder.build_int_add(ptr_as_int, one, "add");
     let new_ptr = builder.build_int_to_ptr(new_ptr_as_int, i8_ptr_type, "int_as_ptr");
-    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(feature = "llvm15-0"))]
     let index1 = builder.build_load(new_ptr, "deref");
-    #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+    #[cfg(feature = "llvm15-0")]
     let index1 = builder.build_load(i8_ptr_type, new_ptr, "deref");
 
     builder.build_return(Some(&index1));
@@ -899,9 +899,9 @@ fn test_insert_value() {
     builder.position_at_end(entry);
 
     let array_alloca = builder.build_alloca(array_type, "array_alloca");
-    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(feature = "llvm15-0"))]
     let array = builder.build_load(array_alloca, "array_load").into_array_value();
-    #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+    #[cfg(feature = "llvm15-0")]
     let array = builder
         .build_load(array_type, array_alloca, "array_load")
         .into_array_value();
@@ -931,9 +931,9 @@ fn test_insert_value() {
     assert!(builder.build_extract_value(array, 3, "extract").is_none());
 
     let struct_alloca = builder.build_alloca(struct_type, "struct_alloca");
-    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(feature = "llvm15-0"))]
     let struct_value = builder.build_load(struct_alloca, "struct_load").into_struct_value();
-    #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+    #[cfg(feature = "llvm15-0")]
     let struct_value = builder
         .build_load(struct_type, struct_alloca, "struct_load")
         .into_struct_value();
@@ -1037,9 +1037,9 @@ fn run_memcpy_on<'ctx>(
     // Initialize the array with the values [1, 2, 3, 4]
     for index in 0..4 {
         let index_val = i32_type.const_int(index, false);
-        #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+        #[cfg(not(feature = "llvm15-0"))]
         let elem_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
-        #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+        #[cfg(feature = "llvm15-0")]
         let elem_ptr = unsafe { builder.build_in_bounds_gep(array_type, array_ptr, &[index_val], "index") };
         let int_val = i32_type.const_int(index + 1, false);
 
@@ -1051,9 +1051,9 @@ fn run_memcpy_on<'ctx>(
     let bytes_to_copy = elems_to_copy * std::mem::size_of::<i32>();
     let size_val = i64_type.const_int(bytes_to_copy as u64, false);
     let index_val = i32_type.const_int(2, false);
-    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(feature = "llvm15-0"))]
     let dest_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
-    #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+    #[cfg(feature = "llvm15-0")]
     let dest_ptr = unsafe { builder.build_in_bounds_gep(array_type, array_ptr, &[index_val], "index") };
 
     builder.build_memcpy(dest_ptr, alignment, array_ptr, alignment, size_val)?;
@@ -1114,9 +1114,9 @@ fn run_memmove_on<'ctx>(
     // Initialize the array with the values [1, 2, 3, 4]
     for index in 0..4 {
         let index_val = i32_type.const_int(index, false);
-        #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+        #[cfg(not(feature = "llvm15-0"))]
         let elem_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
-        #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+        #[cfg(feature = "llvm15-0")]
         let elem_ptr = unsafe { builder.build_in_bounds_gep(array_type, array_ptr, &[index_val], "index") };
         let int_val = i32_type.const_int(index + 1, false);
 
@@ -1128,9 +1128,9 @@ fn run_memmove_on<'ctx>(
     let bytes_to_copy = elems_to_copy * std::mem::size_of::<i32>();
     let size_val = i64_type.const_int(bytes_to_copy as u64, false);
     let index_val = i32_type.const_int(2, false);
-    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(feature = "llvm15-0"))]
     let dest_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
-    #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+    #[cfg(feature = "llvm15-0")]
     let dest_ptr = unsafe { builder.build_in_bounds_gep(array_type, array_ptr, &[index_val], "index") };
 
     builder.build_memmove(dest_ptr, alignment, array_ptr, alignment, size_val)?;
@@ -1198,9 +1198,9 @@ fn run_memset_on<'ctx>(
     // Memset the second half of the array as -1
     let val = i8_type.const_all_ones();
     let index = i32_type.const_int(2, false);
-    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(feature = "llvm15-0"))]
     let part_2 = unsafe { builder.build_in_bounds_gep(array_ptr, &[index], "index") };
-    #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+    #[cfg(feature = "llvm15-0")]
     let part_2 = unsafe { builder.build_in_bounds_gep(array_type, array_ptr, &[index], "index") };
     builder.build_memset(part_2, alignment, val, size_val)?;
     builder.build_return(Some(&array_ptr));
@@ -1495,7 +1495,7 @@ fn test_safe_struct_gep() {
     let i32_ptr = fn_value.get_first_param().unwrap().into_pointer_value();
     let struct_ptr = fn_value.get_last_param().unwrap().into_pointer_value();
 
-    #[cfg(not(any(feature = "llvm14-0", feature = "llvm15-0")))]
+    #[cfg(not(feature = "llvm15-0"))]
     {
         assert!(builder.build_struct_gep(i32_ptr, 0, "struct_gep").is_err());
         assert!(builder.build_struct_gep(i32_ptr, 10, "struct_gep").is_err());
@@ -1503,7 +1503,7 @@ fn test_safe_struct_gep() {
         assert!(builder.build_struct_gep(struct_ptr, 1, "struct_gep").is_ok());
         assert!(builder.build_struct_gep(struct_ptr, 2, "struct_gep").is_err());
     }
-    #[cfg(any(feature = "llvm14-0", feature = "llvm15-0"))]
+    #[cfg(feature = "llvm15-0")]
     {
         assert!(builder.build_struct_gep(i32_ty, i32_ptr, 0, "struct_gep").is_err());
         assert!(builder.build_struct_gep(i32_ty, i32_ptr, 10, "struct_gep").is_err());
