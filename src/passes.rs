@@ -183,7 +183,7 @@ impl PassManagerBuilder {
     /// ```
     #[llvm_versions(4.0..=14.0)]
     pub fn populate_lto_pass_manager(&self, pass_manager: &PassManager<Module>, internalize: bool, run_inliner: bool) {
-        use llvm_sys::core::LLVMPassManagerBuilderPopulateLTOPassManager;
+        use llvm_sys::transforms::pass_manager_builder::LLVMPassManagerBuilderPopulateLTOPassManager;
 
         unsafe {
             LLVMPassManagerBuilderPopulateLTOPassManager(
