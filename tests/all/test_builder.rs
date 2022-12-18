@@ -1238,7 +1238,7 @@ fn test_memset() {
 
 #[test]
 fn test_bitcast() {
-    use inkwell::values::AnyValue;
+    use inkwell::values::BasicValue;
 
     let context = Context::create();
     let module = context.create_module("bc");
@@ -1279,7 +1279,7 @@ fn test_bitcast() {
 
     assert!(module.verify().is_ok(), "{}", module.print_to_string().to_string());
 
-    let first_iv = cast.as_any_value_enum().into_instruction_value();
+    let first_iv = cast.as_instruction_value().unwrap();
 
     builder.position_before(&first_iv);
     builder.build_bitcast(f64_arg, i64_type, "f64toi64");
