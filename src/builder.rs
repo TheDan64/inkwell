@@ -770,7 +770,7 @@ impl<'ctx> Builder<'ctx> {
     #[llvm_versions(14.0..=latest)]
     pub unsafe fn build_gep<T: BasicType<'ctx>>(
         &self,
-        ty: T,
+        pointee_ty: T,
         ptr: PointerValue<'ctx>,
         ordered_indexes: &[IntValue<'ctx>],
         name: &str,
@@ -781,7 +781,7 @@ impl<'ctx> Builder<'ctx> {
 
         let value = LLVMBuildGEP2(
             self.builder,
-            ty.as_type_ref(),
+            pointee_ty.as_type_ref(),
             ptr.as_value_ref(),
             index_values.as_mut_ptr(),
             index_values.len() as u32,
@@ -822,7 +822,7 @@ impl<'ctx> Builder<'ctx> {
     #[llvm_versions(14.0..=latest)]
     pub unsafe fn build_in_bounds_gep<T: BasicType<'ctx>>(
         &self,
-        ty: T,
+        pointee_ty: T,
         ptr: PointerValue<'ctx>,
         ordered_indexes: &[IntValue<'ctx>],
         name: &str,
@@ -833,7 +833,7 @@ impl<'ctx> Builder<'ctx> {
 
         let value = LLVMBuildInBoundsGEP2(
             self.builder,
-            ty.as_type_ref(),
+            pointee_ty.as_type_ref(),
             ptr.as_value_ref(),
             index_values.as_mut_ptr(),
             index_values.len() as u32,
@@ -934,13 +934,12 @@ impl<'ctx> Builder<'ctx> {
     #[llvm_versions(14.0..=latest)]
     pub fn build_struct_gep<T: BasicType<'ctx>>(
         &self,
-        ty: T,
+        pointee_ty: T,
         ptr: PointerValue<'ctx>,
         index: u32,
         name: &str,
     ) -> Result<PointerValue<'ctx>, ()> {
-        let ptr_ty = ptr.get_type();
-        let pointee_ty = ptr_ty.get_element_type();
+        let pointee_ty = pointee_ty.as_any_type_enum();
 
         if !pointee_ty.is_struct_type() {
             return Err(());
@@ -957,7 +956,7 @@ impl<'ctx> Builder<'ctx> {
         let value = unsafe {
             LLVMBuildStructGEP2(
                 self.builder,
-                ty.as_type_ref(),
+                pointee_ty.as_type_ref(),
                 ptr.as_value_ref(),
                 index,
                 c_string.as_ptr(),
@@ -1040,7 +1039,7 @@ impl<'ctx> Builder<'ctx> {
     #[llvm_versions(14.0..=latest)]
     pub fn build_ptr_diff<T: BasicType<'ctx>>(
         &self,
-        ty: T,
+        pointee_ty: T,
         lhs_ptr: PointerValue<'ctx>,
         rhs_ptr: PointerValue<'ctx>,
         name: &str,
@@ -1050,7 +1049,7 @@ impl<'ctx> Builder<'ctx> {
         let value = unsafe {
             LLVMBuildPtrDiff2(
                 self.builder,
-                ty.as_type_ref(),
+                pointee_ty.as_type_ref(),
                 lhs_ptr.as_value_ref(),
                 rhs_ptr.as_value_ref(),
                 c_string.as_ptr(),
@@ -1163,10 +1162,22 @@ impl<'ctx> Builder<'ctx> {
     /// builder.build_return(Some(&pointee));
     /// ```
     #[llvm_versions(14.0..=latest)]
-    pub fn build_load<T: BasicType<'ctx>>(&self, ty: T, ptr: PointerValue<'ctx>, name: &str) -> BasicValueEnum<'ctx> {
+    pub fn build_load<T: BasicType<'ctx>>(
+        &self,
+        pointee_ty: T,
+        ptr: PointerValue<'ctx>,
+        name: &str,
+    ) -> BasicValueEnum<'ctx> {
         let c_string = to_c_str(name);
 
-        let value = unsafe { LLVMBuildLoad2(self.builder, ty.as_type_ref(), ptr.as_value_ref(), c_string.as_ptr()) };
+        let value = unsafe {
+            LLVMBuildLoad2(
+                self.builder,
+                pointee_ty.as_type_ref(),
+                ptr.as_value_ref(),
+                c_string.as_ptr(),
+            )
+        };
 
         unsafe { BasicValueEnum::new(value) }
     }
