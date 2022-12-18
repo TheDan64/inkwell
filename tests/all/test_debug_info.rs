@@ -79,7 +79,11 @@ fn test_smoke() {
     let lexical_block = dibuilder.create_lexical_block(func_scope.as_debug_info_scope(), compile_unit.get_file(), 0, 0);
 
     let loc = dibuilder.create_debug_location(&context, 0, 0, lexical_block.as_debug_info_scope(), None);
+
+    #[cfg(any(feature = "llvm7-0", feature = "llvm8-0",))]
     builder.set_current_debug_location(&context, loc);
+    #[cfg(not(any(feature = "llvm7-0", feature = "llvm8-0",)))]
+    builder.set_current_debug_location(loc);
 
     dibuilder.finalize();
 
