@@ -110,32 +110,11 @@ assert_unique_used_features! {"llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8
 /// # Remarks
 /// See also: https://llvm.org/doxygen/NVPTXBaseInfo_8h_source.html
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
-pub enum AddressSpace {
-    Generic = 0,
-    Global = 1,
-    Shared = 3,
-    Const = 4,
-    Local = 5,
-}
+pub struct AddressSpace(pub u32);
 
 impl Default for AddressSpace {
     fn default() -> Self {
-        AddressSpace::Generic
-    }
-}
-
-impl TryFrom<u32> for AddressSpace {
-    type Error = ();
-
-    fn try_from(val: u32) -> Result<Self, Self::Error> {
-        match val {
-            0 => Ok(AddressSpace::Generic),
-            1 => Ok(AddressSpace::Global),
-            3 => Ok(AddressSpace::Shared),
-            4 => Ok(AddressSpace::Const),
-            5 => Ok(AddressSpace::Local),
-            _ => Err(()),
-        }
+        AddressSpace(0)
     }
 }
 

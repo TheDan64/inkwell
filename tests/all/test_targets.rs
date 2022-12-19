@@ -303,7 +303,7 @@ fn test_ptr_sized_int() {
     let module = context.create_module("sum");
     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     let target_data = execution_engine.get_target_data();
-    let address_space = AddressSpace::Global;
+    let address_space = AddressSpace(1);
     let int_type = context.ptr_sized_int_type(target_data, None);
 
     assert_eq!(int_type.get_bit_width(), target_data.get_pointer_byte_size(None) * 8);

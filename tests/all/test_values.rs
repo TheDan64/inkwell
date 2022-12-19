@@ -810,7 +810,7 @@ fn test_globals() {
 
     assert!(global.get_thread_local_mode().is_none());
 
-    let global2 = module.add_global(i8_type, Some(AddressSpace::Const), "my_global2");
+    let global2 = module.add_global(i8_type, Some(AddressSpace(4)), "my_global2");
 
     assert_eq!(global2.get_previous_global().unwrap(), global);
     assert_eq!(global.get_next_global().unwrap(), global2);
@@ -1178,7 +1178,7 @@ fn test_aggregate_returns() {
     let builder = context.create_builder();
     let module = context.create_module("my_mod");
     let i32_type = context.i32_type();
-    let i32_ptr_type = i32_type.ptr_type(AddressSpace::Local);
+    let i32_ptr_type = i32_type.ptr_type(AddressSpace(5));
     let i32_three = i32_type.const_int(3, false);
     let i32_seven = i32_type.const_int(7, false);
     let struct_type = context.struct_type(&[i32_type.into(), i32_type.into()], false);

@@ -157,7 +157,7 @@ impl<'ctx> PointerType<'ctx> {
     pub fn get_address_space(self) -> AddressSpace {
         let addr_space = unsafe { LLVMGetPointerAddressSpace(self.as_type_ref()) };
 
-        AddressSpace::try_from(addr_space).expect("Unexpectedly found invalid AddressSpace value")
+        AddressSpace(addr_space)
     }
 
     /// Print the definition of a `PointerType` to `LLVMString`.
