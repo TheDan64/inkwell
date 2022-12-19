@@ -54,7 +54,7 @@ fn test_type_attribute() {
         context.i32_type().vec_type(1).as_any_type_enum(),
         context.i32_type().array_type(1).as_any_type_enum(),
         context.i32_type().fn_type(&[], false).as_any_type_enum(),
-        context.i32_type().ptr_type(AddressSpace(5)).as_any_type_enum(),
+        context.i32_type().ptr_type(AddressSpace::FIVE).as_any_type_enum(),
         context
             .struct_type(&[context.i32_type().as_basic_type_enum()], false)
             .as_any_type_enum(),

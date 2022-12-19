@@ -398,13 +398,11 @@ fn test_ptr_address_space() {
     let spaces = [0, 1, 2, 3, 4, 5, 6, 1 << 24 - 1];
 
     for index in spaces {
-        let address_space = AddressSpace(index);
+        let address_space = AddressSpace::try_from(index).unwrap();
 
         let ptr = context.i32_type().ptr_type(address_space);
         assert_eq!(ptr.get_address_space(), address_space);
     }
 
-    let address_space = AddressSpace(1 << 24);
-    let ptr = context.i32_type().ptr_type(address_space);
-    assert_ne!(ptr.get_address_space(), address_space);
+    assert!(AddressSpace::try_from(1 << 24).is_err());
 }

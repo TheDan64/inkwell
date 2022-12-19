@@ -107,14 +107,40 @@ assert_unique_used_features! {"llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8
 
 /// Defines the address space in which a global will be inserted.
 ///
+/// The default address space is zero. The first six address spaces are available as associated
+/// constants. To convert any higher number, use the `TryFrom` instance. An Address space is a
+/// 24-bit number.
+///
 /// # Remarks
 /// See also: https://llvm.org/doxygen/NVPTXBaseInfo_8h_source.html
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
-pub struct AddressSpace(pub u32);
+pub struct AddressSpace(u32);
+
+impl AddressSpace {
+    pub const ZERO: Self = Self(0);
+    pub const ONE: Self = Self(1);
+    pub const TWO: Self = Self(2);
+    pub const THREE: Self = Self(3);
+    pub const FOUR: Self = Self(4);
+    pub const FIVE: Self = Self(5);
+}
 
 impl Default for AddressSpace {
     fn default() -> Self {
         AddressSpace(0)
+    }
+}
+
+impl TryFrom<u32> for AddressSpace {
+    type Error = ();
+
+    fn try_from(val: u32) -> Result<Self, Self::Error> {
+        // address space is a 24-bit integer
+        if val < 1 << 24 {
+            Ok(AddressSpace(val))
+        } else {
+            Err(())
+        }
     }
 }
 
