@@ -612,7 +612,7 @@ impl<'ctx> Module<'ctx> {
     /// let context = Context::create();
     /// let module = context.create_module("mod");
     /// let i8_type = context.i8_type();
-    /// let global = module.add_global(i8_type, Some(AddressSpace::ONE), "my_global");
+    /// let global = module.add_global(i8_type, Some(AddressSpace::from(1u16)), "my_global");
     ///
     /// assert_eq!(module.get_first_global().unwrap(), global);
     /// assert_eq!(module.get_last_global().unwrap(), global);
@@ -1026,7 +1026,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert!(module.get_first_global().is_none());
     ///
-    /// let global = module.add_global(i8_type, Some(AddressSpace::FOUR), "my_global");
+    /// let global = module.add_global(i8_type, Some(AddressSpace::from(4u16)), "my_global");
     ///
     /// assert_eq!(module.get_first_global().unwrap(), global);
     /// ```
@@ -1054,7 +1054,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert!(module.get_last_global().is_none());
     ///
-    /// let global = module.add_global(i8_type, Some(AddressSpace::FOUR), "my_global");
+    /// let global = module.add_global(i8_type, Some(AddressSpace::from(4u16)), "my_global");
     ///
     /// assert_eq!(module.get_last_global().unwrap(), global);
     /// ```
@@ -1082,7 +1082,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert!(module.get_global("my_global").is_none());
     ///
-    /// let global = module.add_global(i8_type, Some(AddressSpace::FOUR), "my_global");
+    /// let global = module.add_global(i8_type, Some(AddressSpace::from(4u16)), "my_global");
     ///
     /// assert_eq!(module.get_global("my_global").unwrap(), global);
     /// ```

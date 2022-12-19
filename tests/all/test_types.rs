@@ -395,7 +395,7 @@ fn test_no_vector_zero() {
 fn test_ptr_address_space() {
     let context = Context::create();
 
-    let spaces = [0, 1, 2, 3, 4, 5, 6, 1 << 24 - 1];
+    let spaces = [0u32, 1, 2, 3, 4, 5, 6, 1 << 24 - 1];
 
     for index in spaces {
         let address_space = AddressSpace::try_from(index).unwrap();
@@ -404,5 +404,5 @@ fn test_ptr_address_space() {
         assert_eq!(ptr.get_address_space(), address_space);
     }
 
-    assert!(AddressSpace::try_from(1 << 24).is_err());
+    assert!(AddressSpace::try_from(1u32 << 24).is_err());
 }
