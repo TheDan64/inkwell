@@ -522,7 +522,6 @@ impl Context {
     /// ```no_run
     /// use std::convert::TryFrom;
     /// use inkwell::context::Context;
-    /// use inkwell::values::CallableValue;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
@@ -555,8 +554,17 @@ impl Context {
     ///     false,
     /// );
     /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
-    /// let callable_value = CallableValue::try_from(asm).unwrap();
-    /// builder.build_call(callable_value, params, "exit");
+    ///
+    /// #[cfg(not(any(feature = "llvm15-0")))]
+    /// {
+    ///     use inkwell::values::CallableValue;
+    ///     let callable_value = CallableValue::try_from(asm).unwrap();
+    ///     builder.build_call(callable_value, params, "exit");
+    /// }
+    ///
+    /// #[cfg(any(feature = "llvm15-0"))]
+    /// builder.build_indirect_call(asm_fn, asm, params, "exit");
+    ///
     /// builder.build_return(None);
     /// ```
     #[inline]
@@ -1357,7 +1365,6 @@ impl<'ctx> ContextRef<'ctx> {
     /// ```no_run
     /// use std::convert::TryFrom;
     /// use inkwell::context::Context;
-    /// use inkwell::values::CallableValue;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
@@ -1390,8 +1397,17 @@ impl<'ctx> ContextRef<'ctx> {
     ///     false,
     /// );
     /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
-    /// let callable_value = CallableValue::try_from(asm).unwrap();
-    /// builder.build_call(callable_value, params, "exit");
+    ///
+    /// #[cfg(not(any(feature = "llvm15-0")))]
+    /// {
+    ///     use inkwell::values::CallableValue;
+    ///     let callable_value = CallableValue::try_from(asm).unwrap();
+    ///     builder.build_call(callable_value, params, "exit");
+    /// }
+    ///
+    /// #[cfg(any(feature = "llvm15-0"))]
+    /// builder.build_indirect_call(asm_fn, asm, params, "exit");
+    ///
     /// builder.build_return(None);
     /// ```
     #[inline]

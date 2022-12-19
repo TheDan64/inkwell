@@ -4,7 +4,7 @@ use inkwell::comdat::ComdatSelectionKind;
 use inkwell::context::Context;
 use inkwell::module::Linkage::*;
 use inkwell::types::{StringRadix, VectorType};
-use inkwell::values::{AnyValue, CallableValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
+use inkwell::values::{AnyValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
 use inkwell::{AddressSpace, DLLStorageClass, GlobalVisibility, ThreadLocalMode};
 
 use std::convert::TryFrom;
@@ -38,11 +38,7 @@ fn test_call_site() {
     let fn_type = void_type.fn_type(&[], false);
 
     let function = module.add_function("do_nothing", fn_type, None);
-
-    #[cfg(not(feature = "llvm15-0"))]
     let call_site = builder.build_call(function, &[], "to_infinity_and_beyond");
-    #[cfg(feature = "llvm15-0")]
-    let call_site = builder.build_call(fn_type, function, &[], "to_infinity_and_beyond");
 
     assert_eq!(call_site.count_arguments(), 0);
     assert!(!call_site.is_tail_call());
@@ -925,6 +921,9 @@ fn test_allocations() {
 
     builder.position_at_end(entry_block);
 
+    // handle opaque pointers
+    let ptr_type = if cfg!(any(feature = "llvm15-0")) { "ptr" } else { "i32*" };
+
     // REVIEW: Alloca (and possibly malloc) seem to be prone to segfaulting
     // when called with a builder that isn't positioned. I wonder if other
     // builder methods have this problem? We could make builder subtypes:
@@ -934,21 +933,21 @@ fn test_allocations() {
 
     let stack_ptr = builder.build_alloca(i32_type, "stack_ptr");
 
-    assert_eq!(stack_ptr.get_type().print_to_string().to_str(), Ok("i32*"));
+    assert_eq!(stack_ptr.get_type().print_to_string().to_str(), Ok(ptr_type));
 
     let stack_array = builder.build_array_alloca(i32_type, i32_three, "stack_array");
 
-    assert_eq!(stack_array.get_type().print_to_string().to_str(), Ok("i32*"));
+    assert_eq!(stack_array.get_type().print_to_string().to_str(), Ok(ptr_type));
 
     let heap_ptr = builder.build_malloc(i32_type, "heap_ptr");
 
     assert!(heap_ptr.is_ok());
-    assert_eq!(heap_ptr.unwrap().get_type().print_to_string().to_str(), Ok("i32*"));
+    assert_eq!(heap_ptr.unwrap().get_type().print_to_string().to_str(), Ok(ptr_type));
 
     let heap_array = builder.build_array_malloc(i32_type, i32_three, "heap_array");
 
     assert!(heap_array.is_ok());
-    assert_eq!(heap_array.unwrap().get_type().print_to_string().to_str(), Ok("i32*"));
+    assert_eq!(heap_array.unwrap().get_type().print_to_string().to_str(), Ok(ptr_type));
 
     let bad_malloc_res = builder.build_malloc(unsized_type, "");
 
@@ -1149,11 +1148,14 @@ fn test_non_fn_ptr_called() {
     let i8_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
 
     builder.position_at_end(bb);
-    let callable_value = CallableValue::try_from(i8_ptr_param).unwrap();
     #[cfg(not(feature = "llvm15-0"))]
-    builder.build_call(callable_value, &[], "call");
+    {
+        use inkwell::values::CallableValue;
+        let callable_value = CallableValue::try_from(i8_ptr_param).unwrap();
+        builder.build_call(callable_value, &[], "call");
+    }
     #[cfg(feature = "llvm15-0")]
-    builder.build_call(i8_ptr_type.fn_type(&[], false), callable_value, &[], "call");
+    builder.build_indirect_call(i8_ptr_type.fn_type(&[], false), i8_ptr_param, &[], "call");
     builder.build_return(None);
 
     assert!(module.verify().is_ok());

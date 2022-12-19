@@ -312,7 +312,16 @@ fn test_const_zero() {
         struct_zero.print_to_string().to_str(),
         Ok("{ i8, fp128 } zeroinitializer")
     );
-    assert_eq!(ptr_zero.print_to_string().to_str(), Ok("double* null"));
+
+    // handle opaque pointers
+    let ptr_type = if cfg!(any(feature = "llvm15-0")) {
+        "ptr null"
+    } else {
+        "double* null"
+    };
+
+    assert_eq!(ptr_zero.print_to_string().to_str(), Ok(ptr_type));
+
     assert_eq!(vec_zero.print_to_string().to_str(), Ok("<42 x double> zeroinitializer"));
     assert_eq!(
         array_zero.print_to_string().to_str(),
@@ -345,6 +354,8 @@ fn test_ptr_type() {
     let ptr_type = i8_type.ptr_type(AddressSpace::Zero);
 
     assert_eq!(ptr_type.get_address_space(), AddressSpace::Zero);
+
+    #[cfg(not(feature = "llvm15-0"))]
     assert_eq!(ptr_type.get_element_type().into_int_type(), i8_type);
 
     // Fn ptr:
@@ -352,7 +363,9 @@ fn test_ptr_type() {
     let fn_type = void_type.fn_type(&[], false);
     let fn_ptr_type = fn_type.ptr_type(AddressSpace::Zero);
 
+    #[cfg(not(feature = "llvm15-0"))]
     assert_eq!(fn_ptr_type.get_element_type().into_function_type(), fn_type);
+
     assert_eq!(fn_ptr_type.get_context(), context);
 }
 

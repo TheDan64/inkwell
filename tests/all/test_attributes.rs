@@ -151,10 +151,7 @@ fn test_attributes_on_call_site_values() {
 
     builder.position_at_end(entry_bb);
 
-    #[cfg(not(feature = "llvm15-0"))]
     let call_site_value = builder.build_call(fn_value, &[i32_type.const_int(1, false).into()], "my_fn");
-    #[cfg(feature = "llvm15-0")]
-    let call_site_value = builder.build_call(fn_type, fn_value, &[i32_type.const_int(1, false).into()], "my_fn");
 
     builder.build_return(None);
 

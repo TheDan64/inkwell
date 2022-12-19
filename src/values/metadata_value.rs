@@ -32,13 +32,10 @@ pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 26;
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 28;
 #[cfg(any(feature = "llvm10-0", feature = "llvm11-0"))]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 30;
-#[cfg(any(
-    feature = "llvm12-0",
-    feature = "llvm13-0",
-    feature = "llvm14-0",
-    feature = "llvm15-0"
-))]
+#[cfg(any(feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0",))]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 31;
+#[cfg(any(feature = "llvm15-0"))]
+pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 36;
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct MetadataValue<'ctx> {

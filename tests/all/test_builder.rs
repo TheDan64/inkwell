@@ -1,5 +1,4 @@
 use inkwell::context::Context;
-use inkwell::values::CallableValue;
 use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, OptimizationLevel};
 
 use std::convert::TryFrom;
@@ -28,10 +27,7 @@ fn test_build_call() {
 
     builder.position_at_end(basic_block2);
 
-    #[cfg(not(feature = "llvm15-0"))]
     let pi2_call_site = builder.build_call(function, &[], "get_pi");
-    #[cfg(feature = "llvm15-0")]
-    let pi2_call_site = builder.build_call(fn_type, function, &[], "get_pi");
 
     assert!(!pi2_call_site.is_tail_call());
 
@@ -64,11 +60,14 @@ fn test_build_call() {
     #[cfg(feature = "llvm15-0")]
     let load = builder.build_load(fn_ptr_type, alloca, "load").into_pointer_value();
 
-    let callable_value = CallableValue::try_from(load).unwrap();
     #[cfg(not(feature = "llvm15-0"))]
-    builder.build_call(callable_value, &[], "call");
+    {
+        use inkwell::values::CallableValue;
+        let callable_value = CallableValue::try_from(load).unwrap();
+        builder.build_call(callable_value, &[], "call");
+    }
     #[cfg(feature = "llvm15-0")]
-    builder.build_call(fn_type2, callable_value, &[], "call");
+    builder.build_indirect_call(fn_type2, load, &[], "call");
     builder.build_return(None);
 
     assert!(module.verify().is_ok());
@@ -101,10 +100,7 @@ fn test_build_invoke_cleanup_resume() {
     let then_block = context.append_basic_block(function2, "then_block");
     let catch_block = context.append_basic_block(function2, "catch_block");
 
-    #[cfg(not(feature = "llvm15-0"))]
     let call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi");
-    #[cfg(feature = "llvm15-0")]
-    let call_site = builder.build_invoke(fn_type, function, &[], then_block, catch_block, "get_pi");
 
     assert!(!call_site.is_tail_call());
 
@@ -171,10 +167,7 @@ fn test_build_invoke_catch_all() {
     let then_block = context.append_basic_block(function2, "then_block");
     let catch_block = context.append_basic_block(function2, "catch_block");
 
-    #[cfg(not(feature = "llvm15-0"))]
     let pi2_call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi");
-    #[cfg(feature = "llvm15-0")]
-    let pi2_call_site = builder.build_invoke(fn_type, function, &[], then_block, catch_block, "get_pi");
 
     assert!(!pi2_call_site.is_tail_call());
 
@@ -245,10 +238,7 @@ fn landing_pad_filter() {
     let then_block = context.append_basic_block(function2, "then_block");
     let catch_block = context.append_basic_block(function2, "catch_block");
 
-    #[cfg(not(feature = "llvm15-0"))]
     let pi2_call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi");
-    #[cfg(feature = "llvm15-0")]
-    let pi2_call_site = builder.build_invoke(fn_type, function, &[], then_block, catch_block, "get_pi");
 
     assert!(!pi2_call_site.is_tail_call());
 
@@ -1031,7 +1021,8 @@ fn run_memcpy_on<'ctx>(
     builder.position_at_end(entry);
 
     let len_value = i64_type.const_int(array_len as u64, false);
-    let array_type = i32_type.array_type(array_len as u32);
+    let element_type = i32_type;
+    let array_type = element_type.array_type(array_len as u32);
     let array_ptr = builder.build_array_malloc(i32_type, len_value, "array_ptr").unwrap();
 
     // Initialize the array with the values [1, 2, 3, 4]
@@ -1040,7 +1031,7 @@ fn run_memcpy_on<'ctx>(
         #[cfg(not(feature = "llvm15-0"))]
         let elem_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
         #[cfg(feature = "llvm15-0")]
-        let elem_ptr = unsafe { builder.build_in_bounds_gep(array_type, array_ptr, &[index_val], "index") };
+        let elem_ptr = unsafe { builder.build_in_bounds_gep(element_type, array_ptr, &[index_val], "index") };
         let int_val = i32_type.const_int(index + 1, false);
 
         builder.build_store(elem_ptr, int_val);
@@ -1054,7 +1045,7 @@ fn run_memcpy_on<'ctx>(
     #[cfg(not(feature = "llvm15-0"))]
     let dest_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
     #[cfg(feature = "llvm15-0")]
-    let dest_ptr = unsafe { builder.build_in_bounds_gep(array_type, array_ptr, &[index_val], "index") };
+    let dest_ptr = unsafe { builder.build_in_bounds_gep(element_type, array_ptr, &[index_val], "index") };
 
     builder.build_memcpy(dest_ptr, alignment, array_ptr, alignment, size_val)?;
 
@@ -1085,7 +1076,7 @@ fn test_memcpy() {
         let func = execution_engine
             .get_function::<unsafe extern "C" fn() -> *const i32>("test_fn")
             .unwrap();
-        let actual = std::slice::from_raw_parts(func.call(), 4);
+        let actual: &[i32] = std::slice::from_raw_parts(func.call(), 4);
 
         assert_eq!(&[1, 2, 1, 2], actual);
     }
@@ -1108,7 +1099,8 @@ fn run_memmove_on<'ctx>(
     builder.position_at_end(entry);
 
     let len_value = i64_type.const_int(array_len as u64, false);
-    let array_type = i32_type.array_type(array_len as u32);
+    let element_type = i32_type;
+    let array_type = element_type.array_type(array_len as u32);
     let array_ptr = builder.build_array_malloc(i32_type, len_value, "array_ptr").unwrap();
 
     // Initialize the array with the values [1, 2, 3, 4]
@@ -1117,7 +1109,7 @@ fn run_memmove_on<'ctx>(
         #[cfg(not(feature = "llvm15-0"))]
         let elem_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
         #[cfg(feature = "llvm15-0")]
-        let elem_ptr = unsafe { builder.build_in_bounds_gep(array_type, array_ptr, &[index_val], "index") };
+        let elem_ptr = unsafe { builder.build_in_bounds_gep(element_type, array_ptr, &[index_val], "index") };
         let int_val = i32_type.const_int(index + 1, false);
 
         builder.build_store(elem_ptr, int_val);
@@ -1131,7 +1123,7 @@ fn run_memmove_on<'ctx>(
     #[cfg(not(feature = "llvm15-0"))]
     let dest_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") };
     #[cfg(feature = "llvm15-0")]
-    let dest_ptr = unsafe { builder.build_in_bounds_gep(array_type, array_ptr, &[index_val], "index") };
+    let dest_ptr = unsafe { builder.build_in_bounds_gep(element_type, array_ptr, &[index_val], "index") };
 
     builder.build_memmove(dest_ptr, alignment, array_ptr, alignment, size_val)?;
 
@@ -1186,7 +1178,8 @@ fn run_memset_on<'ctx>(
     builder.position_at_end(entry);
 
     let len_value = i64_type.const_int(array_len as u64, false);
-    let array_type = i32_type.array_type(array_len as u32);
+    let element_type = i32_type;
+    let array_type = element_type.array_type(array_len as u32);
     let array_ptr = builder.build_array_malloc(i32_type, len_value, "array_ptr").unwrap();
 
     let elems_to_copy = 2;
@@ -1201,7 +1194,7 @@ fn run_memset_on<'ctx>(
     #[cfg(not(feature = "llvm15-0"))]
     let part_2 = unsafe { builder.build_in_bounds_gep(array_ptr, &[index], "index") };
     #[cfg(feature = "llvm15-0")]
-    let part_2 = unsafe { builder.build_in_bounds_gep(array_type, array_ptr, &[index], "index") };
+    let part_2 = unsafe { builder.build_in_bounds_gep(element_type, array_ptr, &[index], "index") };
     builder.build_memset(part_2, alignment, val, size_val)?;
     builder.build_return(Some(&array_ptr));
 
@@ -1309,10 +1302,13 @@ fn test_atomicrmw() {
     let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Unordered);
     assert!(result.is_ok());
 
-    let ptr_value = i64_type.ptr_type(AddressSpace::Zero).get_undef();
-    let zero_value = i32_type.const_zero();
-    let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Unordered);
-    assert!(result.is_err());
+    #[cfg(not(any(feature = "llvm15-0")))]
+    {
+        let ptr_value = i64_type.ptr_type(AddressSpace::Zero).get_undef();
+        let zero_value = i32_type.const_zero();
+        let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Unordered);
+        assert!(result.is_err());
+    }
 
     let ptr_value = i31_type.ptr_type(AddressSpace::Zero).get_undef();
     let zero_value = i31_type.const_zero();
@@ -1414,17 +1410,20 @@ fn test_cmpxchg() {
     );
     assert!(result.is_err());
 
-    let ptr_value = i32_ptr_ptr_type.get_undef();
-    let zero_value = i32_type.const_zero();
-    let neg_one_value = i32_type.const_all_ones();
-    let result = builder.build_cmpxchg(
-        ptr_value,
-        zero_value,
-        neg_one_value,
-        AtomicOrdering::Monotonic,
-        AtomicOrdering::Monotonic,
-    );
-    assert!(result.is_err());
+    #[cfg(not(any(feature = "llvm15-0")))]
+    {
+        let ptr_value = i32_ptr_ptr_type.get_undef();
+        let zero_value = i32_type.const_zero();
+        let neg_one_value = i32_type.const_all_ones();
+        let result = builder.build_cmpxchg(
+            ptr_value,
+            zero_value,
+            neg_one_value,
+            AtomicOrdering::Monotonic,
+            AtomicOrdering::Monotonic,
+        );
+        assert!(result.is_err());
+    }
 
     let ptr_value = i32_ptr_type.get_undef();
     let zero_value = i64_type.const_zero();
@@ -1462,17 +1461,20 @@ fn test_cmpxchg() {
     );
     assert!(result.is_ok());
 
-    let ptr_value = i32_ptr_type.get_undef();
-    let zero_value = i32_ptr_type.const_zero();
-    let neg_one_value = i32_ptr_type.const_zero();
-    let result = builder.build_cmpxchg(
-        ptr_value,
-        zero_value,
-        neg_one_value,
-        AtomicOrdering::Monotonic,
-        AtomicOrdering::Monotonic,
-    );
-    assert!(result.is_err());
+    #[cfg(not(any(feature = "llvm15-0")))]
+    {
+        let ptr_value = i32_ptr_type.get_undef();
+        let zero_value = i32_ptr_type.const_zero();
+        let neg_one_value = i32_ptr_type.const_zero();
+        let result = builder.build_cmpxchg(
+            ptr_value,
+            zero_value,
+            neg_one_value,
+            AtomicOrdering::Monotonic,
+            AtomicOrdering::Monotonic,
+        );
+        assert!(result.is_err());
+    }
 }
 
 #[test]

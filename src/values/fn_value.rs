@@ -198,10 +198,16 @@ impl<'ctx> FunctionValue<'ctx> {
         LLVMDeleteFunction(self.as_value_ref())
     }
 
+    #[llvm_versions(4.0..=7.0)]
     pub fn get_type(self) -> FunctionType<'ctx> {
         let ptr_type = unsafe { PointerType::new(self.fn_value.get_type()) };
 
         ptr_type.get_element_type().into_function_type()
+    }
+
+    #[llvm_versions(8.0..=latest)]
+    pub fn get_type(self) -> FunctionType<'ctx> {
+        unsafe { FunctionType::new(llvm_sys::core::LLVMGlobalGetValueType(self.as_value_ref())) }
     }
 
     // TODOC: How this works as an exception handler

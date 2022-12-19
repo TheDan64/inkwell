@@ -39,11 +39,14 @@ use crate::basic_block::BasicBlock;
 use crate::debug_info::DILocation;
 use crate::support::to_c_str;
 use crate::types::{AsTypeRef, BasicType, FloatMathType, FunctionType, IntMathType, PointerMathType, PointerType};
+#[llvm_versions(4.0..=14.0)]
+use crate::values::CallableValue;
 use crate::values::{
     AggregateValue, AggregateValueEnum, AsValueRef, BasicMetadataValueEnum, BasicValue, BasicValueEnum, CallSiteValue,
-    CallableValue, FloatMathValue, FunctionValue, GlobalValue, InstructionOpcode, InstructionValue, IntMathValue,
-    IntValue, PhiValue, PointerMathValue, PointerValue, StructValue, VectorValue,
+    FloatMathValue, FunctionValue, GlobalValue, InstructionOpcode, InstructionValue, IntMathValue, IntValue, PhiValue,
+    PointerMathValue, PointerValue, StructValue, VectorValue,
 };
+
 #[cfg(feature = "internal-getters")]
 use crate::LLVMReference;
 use crate::{AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate};
@@ -55,6 +58,9 @@ pub struct Builder<'ctx> {
     builder: LLVMBuilderRef,
     _marker: PhantomData<&'ctx ()>,
 }
+
+#[allow(unused)] // only used in documentation
+use crate::context::Context;
 
 impl<'ctx> Builder<'ctx> {
     pub(crate) unsafe fn new(builder: LLVMBuilderRef) -> Self {
@@ -189,11 +195,19 @@ impl<'ctx> Builder<'ctx> {
         unsafe { CallSiteValue::new(value) }
     }
 
-    /// Builds a function call instruction.
-    /// [`FunctionValue`]s can be implicitly converted into a [`CallableValue`].
-    /// See [`CallableValue`] for details on calling a [`PointerValue`] that points to a function.
-    ///
-    /// [`FunctionValue`]: crate::values::FunctionValue
+    /// Builds a function call instruction. Alias for [Builder::build_direct_call].
+    #[llvm_versions(15.0..=latest)]
+    pub fn build_call(
+        &self,
+        function: FunctionValue<'ctx>,
+        args: &[BasicMetadataValueEnum<'ctx>],
+        name: &str,
+    ) -> CallSiteValue<'ctx> {
+        self.build_direct_call(function, args, name)
+    }
+
+    /// Builds a function call instruction. The function being called is known at compile time. If
+    /// you want to call a function pointer, see [Builder::build_indirect_call].
     ///
     /// # Example
     ///
@@ -213,7 +227,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.position_at_end(entry);
     ///
-    /// let ret_val = builder.build_call(fn_type, fn_value, &[i32_arg.into(), md_string.into()], "call")
+    /// let ret_val = builder.build_call(fn_value, &[i32_arg.into(), md_string.into()], "call")
     ///     .try_as_basic_value()
     ///     .left()
     ///     .unwrap();
@@ -221,22 +235,71 @@ impl<'ctx> Builder<'ctx> {
     /// builder.build_return(Some(&ret_val));
     /// ```
     #[llvm_versions(15.0..=latest)]
-    pub fn build_call<F>(
+    pub fn build_direct_call(
         &self,
-        fn_ty: FunctionType<'ctx>,
-        function: F,
+        function: FunctionValue<'ctx>,
         args: &[BasicMetadataValueEnum<'ctx>],
         name: &str,
-    ) -> CallSiteValue<'ctx>
-    where
-        F: Into<CallableValue<'ctx>>,
-    {
-        let callable_value = function.into();
-        let fn_ty_ref = fn_ty.as_type_ref();
-        let fn_val_ref = callable_value.as_value_ref();
+    ) -> CallSiteValue<'ctx> {
+        self.build_call_help(function.get_type(), function.as_value_ref(), args, name)
+    }
 
+    /// Call a function pointer. Because a pointer does not carry a type, the type of the function
+    /// must be specified explicitly.
+    ///
+    /// See [Context::create_inline_asm] for a practical example. Basic usage looks like this:
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// // A simple function which calls itself:
+    /// let context = Context::create();
+    /// let module = context.create_module("ret");
+    /// let builder = context.create_builder();
+    /// let i32_type = context.i32_type();
+    /// let fn_type = i32_type.fn_type(&[i32_type.into()], false);
+    /// let fn_value = module.add_function("ret", fn_type, None);
+    /// let entry = context.append_basic_block(fn_value, "entry");
+    /// let i32_arg = fn_value.get_first_param().unwrap();
+    /// let md_string = context.metadata_string("a metadata");
+    ///
+    /// builder.position_at_end(entry);
+    ///
+    /// let function_pointer = fn_value.as_global_value().as_pointer_value();
+    /// let ret_val = builder.build_indirect_call(fn_value.get_type(), function_pointer, &[i32_arg.into(), md_string.into()], "call")
+    ///     .try_as_basic_value()
+    ///     .left()
+    ///     .unwrap();
+    ///
+    /// builder.build_return(Some(&ret_val));
+    /// ```
+    ///
+    #[llvm_versions(15.0..=latest)]
+    pub fn build_indirect_call(
+        &self,
+        function_type: FunctionType<'ctx>,
+        function_pointer: PointerValue<'ctx>,
+        args: &[BasicMetadataValueEnum<'ctx>],
+        name: &str,
+    ) -> CallSiteValue<'ctx> {
+        self.build_call_help(function_type, function_pointer.as_value_ref(), args, name)
+    }
+
+    #[llvm_versions(15.0..=latest)]
+    fn build_call_help(
+        &self,
+        function_type: FunctionType<'ctx>,
+        fn_val_ref: LLVMValueRef,
+        args: &[BasicMetadataValueEnum<'ctx>],
+        name: &str,
+    ) -> CallSiteValue<'ctx> {
         // LLVM gets upset when void return calls are named because they don't return anything
-        let name = if fn_ty.get_return_type().is_none() { "" } else { name };
+        let name = match function_type.get_return_type() {
+            None => "",
+            Some(_) => name,
+        };
+
+        let fn_ty_ref = function_type.as_type_ref();
 
         let c_string = to_c_str(name);
         let mut args: Vec<LLVMValueRef> = args.iter().map(|val| val.as_value_ref()).collect();
@@ -415,7 +478,7 @@ impl<'ctx> Builder<'ctx> {
     /// let then_block = context.append_basic_block(function2, "then_block");
     /// let catch_block = context.append_basic_block(function2, "catch_block");
     ///
-    /// let call_site = builder.build_invoke(fn_type, function, &[], then_block, catch_block, "get_pi");
+    /// let call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi");
     ///
     /// {
     ///     builder.position_at_end(then_block);
@@ -450,21 +513,67 @@ impl<'ctx> Builder<'ctx> {
     /// }
     /// ```
     #[llvm_versions(15.0..=latest)]
-    pub fn build_invoke<F>(
+    pub fn build_invoke(
         &self,
-        fn_ty: FunctionType<'ctx>,
-        function: F,
+        function: FunctionValue<'ctx>,
         args: &[BasicValueEnum<'ctx>],
         then_block: BasicBlock<'ctx>,
         catch_block: BasicBlock<'ctx>,
         name: &str,
-    ) -> CallSiteValue<'ctx>
-    where
-        F: Into<CallableValue<'ctx>>,
-    {
-        let callable_value: CallableValue<'ctx> = function.into();
+    ) -> CallSiteValue<'ctx> {
+        self.build_direct_invoke(function, args, then_block, catch_block, name)
+    }
+
+    #[llvm_versions(15.0..=latest)]
+    pub fn build_direct_invoke(
+        &self,
+        function: FunctionValue<'ctx>,
+        args: &[BasicValueEnum<'ctx>],
+        then_block: BasicBlock<'ctx>,
+        catch_block: BasicBlock<'ctx>,
+        name: &str,
+    ) -> CallSiteValue<'ctx> {
+        self.build_invoke_help(
+            function.get_type(),
+            function.as_value_ref(),
+            args,
+            then_block,
+            catch_block,
+            name,
+        )
+    }
+
+    #[llvm_versions(15.0..=latest)]
+    pub fn build_indirect_invoke(
+        &self,
+        function_type: FunctionType<'ctx>,
+        function_pointer: PointerValue<'ctx>,
+        args: &[BasicValueEnum<'ctx>],
+        then_block: BasicBlock<'ctx>,
+        catch_block: BasicBlock<'ctx>,
+        name: &str,
+    ) -> CallSiteValue<'ctx> {
+        self.build_invoke_help(
+            function_type,
+            function_pointer.as_value_ref(),
+            args,
+            then_block,
+            catch_block,
+            name,
+        )
+    }
+
+    #[llvm_versions(15.0..=latest)]
+    fn build_invoke_help(
+        &self,
+        fn_ty: FunctionType<'ctx>,
+        fn_val_ref: LLVMValueRef,
+        args: &[BasicValueEnum<'ctx>],
+        then_block: BasicBlock<'ctx>,
+        catch_block: BasicBlock<'ctx>,
+        name: &str,
+    ) -> CallSiteValue<'ctx> {
         let fn_ty_ref = fn_ty.as_type_ref();
-        let fn_val_ref = callable_value.as_value_ref();
 
         // LLVM gets upset when void return calls are named because they don't return anything
         let name = if fn_ty.get_return_type().is_none() { "" } else { name };
@@ -2238,7 +2347,12 @@ impl<'ctx> Builder<'ctx> {
     /// builder.position_at_end(entry);
     ///
     /// let array_alloca = builder.build_alloca(array_type, "array_alloca");
+    ///
+    /// #[cfg(not(any(feature = "llvm15-0")))]
     /// let array = builder.build_load(array_alloca, "array_load").into_array_value();
+    /// #[cfg(any(feature = "llvm15-0"))]
+    /// let array = builder.build_load(i32_type, array_alloca, "array_load").into_array_value();
+    ///
     /// let const_int1 = i32_type.const_int(2, false);
     /// let const_int2 = i32_type.const_int(5, false);
     /// let const_int3 = i32_type.const_int(6, false);
@@ -2298,7 +2412,12 @@ impl<'ctx> Builder<'ctx> {
     /// builder.position_at_end(entry);
     ///
     /// let array_alloca = builder.build_alloca(array_type, "array_alloca");
+    ///
+    /// #[cfg(not(any(feature = "llvm15-0")))]
     /// let array = builder.build_load(array_alloca, "array_load").into_array_value();
+    /// #[cfg(any(feature = "llvm15-0"))]
+    /// let array = builder.build_load(i32_type, array_alloca, "array_load").into_array_value();
+    ///
     /// let const_int1 = i32_type.const_int(2, false);
     /// let const_int2 = i32_type.const_int(5, false);
     /// let const_int3 = i32_type.const_int(6, false);
@@ -2669,6 +2788,8 @@ impl<'ctx> Builder<'ctx> {
         if value.get_type().get_bit_width() < 8 || !value.get_type().get_bit_width().is_power_of_two() {
             return Err("The bitwidth of value must be a power of 2 and greater than 8.");
         }
+
+        #[cfg(not(any(feature = "llvm15-0")))]
         if ptr.get_type().get_element_type() != value.get_type().into() {
             return Err("Pointer's pointee type must match the value's type.");
         }
@@ -2727,6 +2848,8 @@ impl<'ctx> Builder<'ctx> {
         if !cmp.is_int_value() && !cmp.is_pointer_value() {
             return Err("The values must have pointer or integer type.");
         }
+
+        #[cfg(not(any(feature = "llvm15-0")))]
         if ptr.get_type().get_element_type().to_basic_type_enum() != cmp.get_type() {
             return Err("The pointer does not point to an element of the value type.");
         }
