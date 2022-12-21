@@ -9,7 +9,6 @@ use crate::values::{ArrayValue, AsValueRef, IntValue, PointerValue};
 use crate::AddressSpace;
 
 use crate::types::enums::BasicMetadataTypeEnum;
-use std::convert::TryFrom;
 use std::fmt::{self, Display};
 
 /// A `PointerType` is the type of a pointer constant or variable.
