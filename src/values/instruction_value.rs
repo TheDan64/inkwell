@@ -348,7 +348,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Zero);
+    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
     /// let function = module.add_function("take_f32_ptr", fn_type, None);
@@ -408,7 +408,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Zero);
+    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
     /// let function = module.add_function("take_f32_ptr", fn_type, None);
@@ -491,7 +491,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Zero);
+    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
     /// let function = module.add_function("take_f32_ptr", fn_type, None);
@@ -534,7 +534,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Zero);
+    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
     /// let function = module.add_function("take_f32_ptr", fn_type, None);
@@ -580,7 +580,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::Zero);
+    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
     /// let function = module.add_function("take_f32_ptr", fn_type, None);

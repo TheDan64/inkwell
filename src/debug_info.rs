@@ -702,7 +702,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 pointee.metadata_ref,
                 size_in_bits,
                 align_in_bits,
-                address_space as u32,
+                address_space.0,
                 name.as_ptr() as _,
                 name.len(),
             )

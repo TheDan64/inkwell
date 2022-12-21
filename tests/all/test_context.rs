@@ -53,7 +53,7 @@ fn test_values_get_context() {
     let i8_type = context.i8_type();
     let f32_type = context.f32_type();
     let f32_vec_type = f32_type.vec_type(3);
-    let f32_ptr_type = f32_type.ptr_type(AddressSpace::Zero);
+    let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
     let f32_array_type = f32_type.array_type(2);
     let fn_type = f32_type.fn_type(&[], false);
     let struct_type = context.struct_type(&[i8_type.into(), f32_type.into()], false);

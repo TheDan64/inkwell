@@ -109,7 +109,7 @@ fn test_conversion_to_pointer_value() {
 
     // Create a PointerType instruction
     let i64_type = context.i64_type();
-    let i64_ptr_type = i64_type.ptr_type(AddressSpace::Zero);
+    let i64_ptr_type = i64_type.ptr_type(AddressSpace::default());
     let alloca_instr = builder.build_alloca(i64_ptr_type, "alloca").as_instruction().unwrap();
 
     // Test the instruction conversion to a FloatValue

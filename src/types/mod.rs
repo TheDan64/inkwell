@@ -84,7 +84,7 @@ impl<'ctx> Type<'ctx> {
     }
 
     fn ptr_type(self, address_space: AddressSpace) -> PointerType<'ctx> {
-        unsafe { PointerType::new(LLVMPointerType(self.ty, address_space as u32)) }
+        unsafe { PointerType::new(LLVMPointerType(self.ty, address_space.0)) }
     }
 
     fn vec_type(self, size: u32) -> VectorType<'ctx> {

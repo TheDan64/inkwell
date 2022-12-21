@@ -1235,7 +1235,7 @@ impl TargetData {
     ) -> IntType<'ctx> {
         let int_type_ptr = match address_space {
             Some(address_space) => unsafe {
-                LLVMIntPtrTypeForASInContext(context.as_ctx_ref(), self.target_data, address_space as u32)
+                LLVMIntPtrTypeForASInContext(context.as_ctx_ref(), self.target_data, address_space.0)
             },
             None => unsafe { LLVMIntPtrTypeInContext(context.as_ctx_ref(), self.target_data) },
         };
@@ -1270,7 +1270,7 @@ impl TargetData {
 
     pub fn get_pointer_byte_size(&self, address_space: Option<AddressSpace>) -> u32 {
         match address_space {
-            Some(address_space) => unsafe { LLVMPointerSizeForAS(self.target_data, address_space as u32) },
+            Some(address_space) => unsafe { LLVMPointerSizeForAS(self.target_data, address_space.0) },
             None => unsafe { LLVMPointerSize(self.target_data) },
         }
     }

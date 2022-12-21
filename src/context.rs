@@ -215,7 +215,7 @@ impl ContextImpl {
     fn ptr_sized_int_type<'ctx>(&self, target_data: &TargetData, address_space: Option<AddressSpace>) -> IntType<'ctx> {
         let int_type_ptr = match address_space {
             Some(address_space) => unsafe {
-                LLVMIntPtrTypeForASInContext(self.0, target_data.target_data, address_space as u32)
+                LLVMIntPtrTypeForASInContext(self.0, target_data.target_data, address_space.0)
             },
             None => unsafe { LLVMIntPtrTypeInContext(self.0, target_data.target_data) },
         };

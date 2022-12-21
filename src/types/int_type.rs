@@ -308,7 +308,7 @@ impl<'ctx> IntType<'ctx> {
     ///
     /// let context = Context::create();
     /// let i8_type = context.i8_type();
-    /// let i8_ptr_type = i8_type.ptr_type(AddressSpace::Zero);
+    /// let i8_ptr_type = i8_type.ptr_type(AddressSpace::default());
     ///
     /// assert_eq!(i8_ptr_type.get_element_type().into_int_type(), i8_type);
     /// ```

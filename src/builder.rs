@@ -386,7 +386,7 @@ impl<'ctx> Builder<'ctx> {
     ///     };
     ///
     ///     // type of an exception in C++
-    ///     let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::Zero);
+    ///     let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::default());
     ///     let i32_type = context.i32_type();
     ///     let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
     ///
@@ -620,7 +620,7 @@ impl<'ctx> Builder<'ctx> {
     /// let builder = context.create_builder();
     ///
     /// // type of an exception in C++
-    /// let i8_ptr_type = context.i8_type().ptr_type(AddressSpace::Zero);
+    /// let i8_ptr_type = context.i8_type().ptr_type(AddressSpace::default());
     /// let i32_type = context.i32_type();
     /// let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
     ///
@@ -649,7 +649,7 @@ impl<'ctx> Builder<'ctx> {
     /// let builder = context.create_builder();
     ///
     /// // type of an exception in C++
-    /// let i8_ptr_type = context.i8_type().ptr_type(AddressSpace::Zero);
+    /// let i8_ptr_type = context.i8_type().ptr_type(AddressSpace::default());
     /// let i32_type = context.i32_type();
     /// let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
     ///
@@ -681,7 +681,7 @@ impl<'ctx> Builder<'ctx> {
     /// let builder = context.create_builder();
     ///
     /// // type of an exception in C++
-    /// let i8_ptr_type = context.i8_type().ptr_type(AddressSpace::Zero);
+    /// let i8_ptr_type = context.i8_type().ptr_type(AddressSpace::default());
     /// let i32_type = context.i32_type();
     /// let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
     ///
@@ -694,7 +694,7 @@ impl<'ctx> Builder<'ctx> {
     /// };
     ///
     /// // link in the C++ type info for the `int` type
-    /// let type_info_int = module.add_global(i8_ptr_type, Some(AddressSpace::Zero), "_ZTIi");
+    /// let type_info_int = module.add_global(i8_ptr_type, Some(AddressSpace::default()), "_ZTIi");
     /// type_info_int.set_linkage(Linkage::External);
     ///
     /// // make the catch landing pad
@@ -716,7 +716,7 @@ impl<'ctx> Builder<'ctx> {
     /// let builder = context.create_builder();
     ///
     /// // type of an exception in C++
-    /// let i8_ptr_type = context.i8_type().ptr_type(AddressSpace::Zero);
+    /// let i8_ptr_type = context.i8_type().ptr_type(AddressSpace::default());
     /// let i32_type = context.i32_type();
     /// let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
     ///
@@ -729,7 +729,7 @@ impl<'ctx> Builder<'ctx> {
     /// };
     ///
     /// // link in the C++ type info for the `int` type
-    /// let type_info_int = module.add_global(i8_ptr_type, Some(AddressSpace::Zero), "_ZTIi");
+    /// let type_info_int = module.add_global(i8_ptr_type, Some(AddressSpace::default()), "_ZTIi");
     /// type_info_int.set_linkage(Linkage::External);
     ///
     /// // make the filter landing pad
@@ -832,7 +832,7 @@ impl<'ctx> Builder<'ctx> {
     ///     };
     ///
     ///     // type of an exception in C++
-    ///     let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::Zero);
+    ///     let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::default());
     ///     let i32_type = context.i32_type();
     ///     let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
     ///
@@ -966,10 +966,10 @@ impl<'ctx> Builder<'ctx> {
     /// let module = context.create_module("struct_gep");
     /// let void_type = context.void_type();
     /// let i32_ty = context.i32_type();
-    /// let i32_ptr_ty = i32_ty.ptr_type(AddressSpace::Zero);
+    /// let i32_ptr_ty = i32_ty.ptr_type(AddressSpace::default());
     /// let field_types = &[i32_ty.into(), i32_ty.into()];
     /// let struct_ty = context.struct_type(field_types, false);
-    /// let struct_ptr_ty = struct_ty.ptr_type(AddressSpace::Zero);
+    /// let struct_ptr_ty = struct_ty.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[i32_ptr_ty.into(), struct_ptr_ty.into()], false);
     /// let fn_value = module.add_function("", fn_type, None);
     /// let entry = context.append_basic_block(fn_value, "entry");
@@ -1089,7 +1089,7 @@ impl<'ctx> Builder<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let i32_type = context.i32_type();
-    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Zero);
+    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[i32_ptr_type.into(), i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("ret", fn_type, None);
     /// let entry = context.append_basic_block(fn_value, "entry");
@@ -1194,7 +1194,7 @@ impl<'ctx> Builder<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let i32_type = context.i32_type();
-    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Zero);
+    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
     /// let i32_seven = i32_type.const_int(7, false);
     /// let fn_type = void_type.fn_type(&[i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("ret", fn_type, None);
@@ -1224,7 +1224,7 @@ impl<'ctx> Builder<'ctx> {
     /// let module = context.create_module("ret");
     /// let builder = context.create_builder();
     /// let i32_type = context.i32_type();
-    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Zero);
+    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
     /// let fn_type = i32_type.fn_type(&[i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("ret", fn_type, None);
     /// let entry = context.append_basic_block(fn_value, "entry");
@@ -2764,7 +2764,7 @@ impl<'ctx> Builder<'ctx> {
     /// let void_type = context.void_type();
     /// let i32_type = context.i32_type();
     /// let i32_seven = i32_type.const_int(7, false);
-    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Zero);
+    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("rmw", fn_type, None);
     /// let entry = context.append_basic_block(fn_value, "entry");
@@ -2819,7 +2819,7 @@ impl<'ctx> Builder<'ctx> {
     /// let module = context.create_module("cmpxchg");
     /// let void_type = context.void_type();
     /// let i32_type = context.i32_type();
-    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::Zero);
+    /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("", fn_type, None);
     /// let i32_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();

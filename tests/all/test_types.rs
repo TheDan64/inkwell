@@ -165,22 +165,22 @@ fn sized_types(global_ctx: &Context) {
     assert!(!fn_type3.is_sized());
     assert!(!fn_type4.is_sized());
 
-    assert!(bool_type.ptr_type(AddressSpace::Zero).is_sized());
-    assert!(i8_type.ptr_type(AddressSpace::Zero).is_sized());
-    assert!(i16_type.ptr_type(AddressSpace::Zero).is_sized());
-    assert!(i32_type.ptr_type(AddressSpace::Zero).is_sized());
-    assert!(i64_type.ptr_type(AddressSpace::Zero).is_sized());
-    assert!(i128_type.ptr_type(AddressSpace::Zero).is_sized());
-    assert!(f16_type.ptr_type(AddressSpace::Zero).is_sized());
-    assert!(f32_type.ptr_type(AddressSpace::Zero).is_sized());
-    assert!(f64_type.ptr_type(AddressSpace::Zero).is_sized());
-    assert!(f80_type.ptr_type(AddressSpace::Zero).is_sized());
-    assert!(f128_type.ptr_type(AddressSpace::Zero).is_sized());
-    assert!(ppc_f128_type.ptr_type(AddressSpace::Zero).is_sized());
-    assert!(struct_type.ptr_type(AddressSpace::Zero).is_sized());
-    assert!(struct_type2.ptr_type(AddressSpace::Zero).is_sized());
-    assert!(struct_type3.ptr_type(AddressSpace::Zero).is_sized());
-    assert!(struct_type4.ptr_type(AddressSpace::Zero).is_sized());
+    assert!(bool_type.ptr_type(AddressSpace::default()).is_sized());
+    assert!(i8_type.ptr_type(AddressSpace::default()).is_sized());
+    assert!(i16_type.ptr_type(AddressSpace::default()).is_sized());
+    assert!(i32_type.ptr_type(AddressSpace::default()).is_sized());
+    assert!(i64_type.ptr_type(AddressSpace::default()).is_sized());
+    assert!(i128_type.ptr_type(AddressSpace::default()).is_sized());
+    assert!(f16_type.ptr_type(AddressSpace::default()).is_sized());
+    assert!(f32_type.ptr_type(AddressSpace::default()).is_sized());
+    assert!(f64_type.ptr_type(AddressSpace::default()).is_sized());
+    assert!(f80_type.ptr_type(AddressSpace::default()).is_sized());
+    assert!(f128_type.ptr_type(AddressSpace::default()).is_sized());
+    assert!(ppc_f128_type.ptr_type(AddressSpace::default()).is_sized());
+    assert!(struct_type.ptr_type(AddressSpace::default()).is_sized());
+    assert!(struct_type2.ptr_type(AddressSpace::default()).is_sized());
+    assert!(struct_type3.ptr_type(AddressSpace::default()).is_sized());
+    assert!(struct_type4.ptr_type(AddressSpace::default()).is_sized());
 
     assert!(bool_type.array_type(42).is_sized());
     assert!(i8_type.array_type(42).is_sized());
@@ -215,7 +215,7 @@ fn sized_types(global_ctx: &Context) {
     let opaque_struct_type = global_ctx.opaque_struct_type("opaque");
 
     assert!(!opaque_struct_type.is_sized());
-    assert!(opaque_struct_type.ptr_type(AddressSpace::Zero).is_sized());
+    assert!(opaque_struct_type.ptr_type(AddressSpace::default()).is_sized());
     assert!(!opaque_struct_type.array_type(0).is_sized());
 }
 
@@ -235,7 +235,7 @@ fn test_const_zero() {
     let f128_type = context.f128_type();
     let ppc_f128_type = context.ppc_f128_type();
     let struct_type = context.struct_type(&[i8_type.into(), f128_type.into()], false);
-    let ptr_type = f64_type.ptr_type(AddressSpace::Zero);
+    let ptr_type = f64_type.ptr_type(AddressSpace::default());
     let vec_type = f64_type.vec_type(42);
     let array_type = f64_type.array_type(42);
 
@@ -351,9 +351,9 @@ fn test_type_copies() {
 fn test_ptr_type() {
     let context = Context::create();
     let i8_type = context.i8_type();
-    let ptr_type = i8_type.ptr_type(AddressSpace::Zero);
+    let ptr_type = i8_type.ptr_type(AddressSpace::default());
 
-    assert_eq!(ptr_type.get_address_space(), AddressSpace::Zero);
+    assert_eq!(ptr_type.get_address_space(), AddressSpace::default());
 
     #[cfg(not(feature = "llvm15-0"))]
     assert_eq!(ptr_type.get_element_type().into_int_type(), i8_type);
@@ -361,7 +361,7 @@ fn test_ptr_type() {
     // Fn ptr:
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
-    let fn_ptr_type = fn_type.ptr_type(AddressSpace::Zero);
+    let fn_ptr_type = fn_type.ptr_type(AddressSpace::default());
 
     #[cfg(not(feature = "llvm15-0"))]
     assert_eq!(fn_ptr_type.get_element_type().into_function_type(), fn_type);
@@ -372,7 +372,7 @@ fn test_ptr_type() {
 #[test]
 fn test_basic_type_enum() {
     let context = Context::create();
-    let addr = AddressSpace::Zero;
+    let addr = AddressSpace::default();
     let int = context.i32_type();
     let types: &[&dyn BasicType] = &[
         // ints and floats
@@ -402,4 +402,20 @@ fn test_no_vector_zero() {
     let context = Context::create();
     let int = context.i32_type();
     int.vec_type(0);
+}
+
+#[test]
+fn test_ptr_address_space() {
+    let context = Context::create();
+
+    let spaces = [0u32, 1, 2, 3, 4, 5, 6, 1 << 24 - 1];
+
+    for index in spaces {
+        let address_space = AddressSpace::try_from(index).unwrap();
+
+        let ptr = context.i32_type().ptr_type(address_space);
+        assert_eq!(ptr.get_address_space(), address_space);
+    }
+
+    assert!(AddressSpace::try_from(1u32 << 24).is_err());
 }
