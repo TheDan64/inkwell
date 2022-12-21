@@ -107,28 +107,43 @@ assert_unique_used_features! {"llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8
 
 /// Defines the address space in which a global will be inserted.
 ///
+/// The default address space is zero. An address space can always be created from a `u16`:
+/// ```no_run
+/// inkwell::AddressSpace::from(1u16);
+/// ```
+///
+/// An Address space is a 24-bit number. To convert from a u32, use the `TryFrom` instance
+///
+/// ```no_run
+/// inkwell::AddressSpace::try_from(42u32).expect("fits in 24-bit unsigned int");
+/// ```
+///
 /// # Remarks
 /// See also: https://llvm.org/doxygen/NVPTXBaseInfo_8h_source.html
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
-pub enum AddressSpace {
-    Generic = 0,
-    Global = 1,
-    Shared = 3,
-    Const = 4,
-    Local = 5,
+pub struct AddressSpace(u32);
+
+impl Default for AddressSpace {
+    fn default() -> Self {
+        AddressSpace(0)
+    }
+}
+
+impl From<u16> for AddressSpace {
+    fn from(val: u16) -> Self {
+        AddressSpace(val as u32)
+    }
 }
 
 impl TryFrom<u32> for AddressSpace {
     type Error = ();
 
     fn try_from(val: u32) -> Result<Self, Self::Error> {
-        match val {
-            0 => Ok(AddressSpace::Generic),
-            1 => Ok(AddressSpace::Global),
-            3 => Ok(AddressSpace::Shared),
-            4 => Ok(AddressSpace::Const),
-            5 => Ok(AddressSpace::Local),
-            _ => Err(()),
+        // address space is a 24-bit integer
+        if val < 1 << 24 {
+            Ok(AddressSpace(val))
+        } else {
+            Err(())
         }
     }
 }

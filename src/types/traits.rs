@@ -126,7 +126,7 @@ pub trait BasicType<'ctx>: AnyType<'ctx> {
     /// let context = Context::create();
     /// let int = context.i32_type();
     /// let int_basic_type = int.as_basic_type_enum();
-    /// let addr_space = AddressSpace::Generic;
+    /// let addr_space = AddressSpace::default();
     /// assert_eq!(int_basic_type.ptr_type(addr_space), int.ptr_type(addr_space));
     /// ```
     fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
