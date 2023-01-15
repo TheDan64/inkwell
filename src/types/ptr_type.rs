@@ -4,7 +4,9 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
-use crate::types::{AnyTypeEnum, ArrayType, FunctionType, Type, VectorType};
+#[llvm_versions(4.0..=14.0)]
+use crate::types::AnyTypeEnum;
+use crate::types::{ArrayType, FunctionType, Type, VectorType};
 use crate::values::{ArrayValue, AsValueRef, IntValue, PointerValue};
 use crate::AddressSpace;
 
@@ -257,6 +259,7 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// assert_eq!(f32_ptr_type.get_element_type().into_float_type(), f32_type);
     /// ```
+    #[llvm_versions(4.0..=14.0)]
     pub fn get_element_type(self) -> AnyTypeEnum<'ctx> {
         self.ptr_type.get_element_type()
     }

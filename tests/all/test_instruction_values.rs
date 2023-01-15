@@ -53,11 +53,11 @@ fn test_operands() {
     assert!(free_instruction.get_operand(3).is_none());
     assert!(free_instruction.get_operand(4).is_none());
 
-    // let free_operand0_instruction = free_operand0.as_instruction_value().unwrap();
-    // assert_eq!(free_operand0_instruction.get_opcode(), BitCast);
-    // assert_eq!(free_operand0_instruction.get_operand(0).unwrap().left().unwrap(), arg1);
-    // assert!(free_operand0_instruction.get_operand(1).is_none());
-    // assert!(free_operand0_instruction.get_operand(2).is_none());
+    let free_operand0_instruction = free_operand0.as_instruction_value().unwrap();
+    assert_eq!(free_operand0_instruction.get_opcode(), BitCast);
+    assert_eq!(free_operand0_instruction.get_operand(0).unwrap().left().unwrap(), arg1);
+    assert!(free_operand0_instruction.get_operand(1).is_none());
+    assert!(free_operand0_instruction.get_operand(2).is_none());
 
     assert!(module.verify().is_ok());
 
@@ -82,7 +82,6 @@ fn test_operands() {
     assert!(return_instruction.get_operand(2).is_none());
 
     // Test Uses
-    /*
     let bitcast_use_value = free_operand0_instruction
         .get_first_use()
         .unwrap()
@@ -92,7 +91,6 @@ fn test_operands() {
     let free_call_param = free_instruction.get_operand(0).unwrap().left().unwrap();
 
     assert_eq!(bitcast_use_value, free_call_param);
-    */
 
     // These instructions/calls don't return any ir value so they aren't used anywhere
     assert!(store_instruction.get_first_use().is_none());
