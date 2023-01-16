@@ -34,9 +34,9 @@ use llvm_sys::core::{LLVMBuildIntCast2, LLVMBuildMemCpy, LLVMBuildMemMove, LLVMB
 
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 
+use crate::basic_block::BasicBlock;
 #[llvm_versions(7.0..=8.0)]
 use crate::context::AsContextRef;
-use crate::basic_block::BasicBlock;
 #[llvm_versions(7.0..=latest)]
 use crate::debug_info::DILocation;
 use crate::support::to_c_str;
@@ -2888,10 +2888,7 @@ impl<'ctx> Builder<'ctx> {
         use llvm_sys::core::LLVMMetadataAsValue;
         use llvm_sys::core::LLVMSetCurrentDebugLocation;
         unsafe {
-            LLVMSetCurrentDebugLocation(
-                self.builder,
-                LLVMMetadataAsValue(context.context.0, location.metadata_ref),
-            );
+            LLVMSetCurrentDebugLocation(self.builder, LLVMMetadataAsValue(context.as_ctx_ref(), location.metadata_ref));
         }
     }
 
