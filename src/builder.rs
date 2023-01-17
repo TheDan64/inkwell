@@ -2888,7 +2888,10 @@ impl<'ctx> Builder<'ctx> {
         use llvm_sys::core::LLVMMetadataAsValue;
         use llvm_sys::core::LLVMSetCurrentDebugLocation;
         unsafe {
-            LLVMSetCurrentDebugLocation(self.builder, LLVMMetadataAsValue(context.as_ctx_ref(), location.metadata_ref));
+            LLVMSetCurrentDebugLocation(
+                self.builder,
+                LLVMMetadataAsValue(context.as_ctx_ref(), location.metadata_ref),
+            );
         }
     }
 

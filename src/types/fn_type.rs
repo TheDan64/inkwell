@@ -45,6 +45,7 @@ impl<'ctx> FunctionType<'ctx> {
     /// let fn_type = f32_type.fn_type(&[], false);
     /// let fn_ptr_type = fn_type.ptr_type(AddressSpace::default());
     ///
+    /// #[cfg(not(feature = "llvm15-0"))]
     /// assert_eq!(fn_ptr_type.get_element_type().into_function_type(), fn_type);
     /// ```
     pub fn ptr_type(self, address_space: AddressSpace) -> PointerType<'ctx> {
