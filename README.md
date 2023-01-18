@@ -14,7 +14,7 @@ Inkwell aims to help you pen your own programming languages by safely wrapping l
 ## Requirements
 
 * Rust 1.56+ (Stable, Beta, or Nightly)
-* LLVM 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, or 14.0
+* LLVM 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, or 15.0
 
 ## Usage
 
@@ -41,6 +41,7 @@ Supported versions:
 | 12.0.x       | llvm12-0      |
 | 13.0.x       | llvm13-0      |
 | 14.0.x       | llvm14-0      |
+| 15.0.x       | llvm15-0      |
 
 Please be aware that we may make breaking changes on master from time to time since we are
 pre-v1.0.0, in compliance with semver. Please prefer a crates.io release whenever possible!
