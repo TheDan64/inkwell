@@ -25,7 +25,7 @@ use crate::basic_block::BasicBlock;
 use crate::debug_info::DISubprogram;
 use crate::module::Linkage;
 use crate::support::to_c_str;
-use crate::types::{FunctionType, PointerType};
+use crate::types::FunctionType;
 use crate::values::traits::{AnyValue, AsValueRef};
 use crate::values::{BasicValueEnum, GlobalValue, Value};
 
@@ -198,10 +198,18 @@ impl<'ctx> FunctionValue<'ctx> {
         LLVMDeleteFunction(self.as_value_ref())
     }
 
+    #[llvm_versions(4.0..=7.0)]
     pub fn get_type(self) -> FunctionType<'ctx> {
+        use crate::types::PointerType;
+
         let ptr_type = unsafe { PointerType::new(self.fn_value.get_type()) };
 
         ptr_type.get_element_type().into_function_type()
+    }
+
+    #[llvm_versions(8.0..=latest)]
+    pub fn get_type(self) -> FunctionType<'ctx> {
+        unsafe { FunctionType::new(llvm_sys::core::LLVMGlobalGetValueType(self.as_value_ref())) }
     }
 
     // TODOC: How this works as an exception handler

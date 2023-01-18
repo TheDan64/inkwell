@@ -4,7 +4,7 @@ use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyModule};
 #[allow(deprecated)]
 use llvm_sys::bit_reader::LLVMParseBitcodeInContext;
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
-#[llvm_versions(4.0..14.0)]
+#[llvm_versions(4.0..=14.0)]
 use llvm_sys::core::LLVMGetTypeByName;
 
 use llvm_sys::core::{
@@ -348,7 +348,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_struct_type("foo").unwrap(), opaque);
     /// ```
     ///
-    #[llvm_versions(4.0..12.0)]
+    #[llvm_versions(4.0..=11.0)]
     pub fn get_struct_type(&self, name: &str) -> Option<StructType<'ctx>> {
         let c_string = to_c_str(name);
 
@@ -1097,7 +1097,7 @@ impl<'ctx> Module<'ctx> {
         unsafe { Some(GlobalValue::new(value)) }
     }
 
-    /// Creates a new `Module` from a `MemoryBuffer`.
+    /// Creates a new `Module` from a `MemoryBuffer` with bitcode.
     ///
     /// # Example
     ///
@@ -1144,7 +1144,7 @@ impl<'ctx> Module<'ctx> {
         unsafe { Ok(Module::new(module.assume_init())) }
     }
 
-    /// A convenience function for creating a `Module` from a file for a given context.
+    /// A convenience function for creating a `Module` from a bitcode file for a given context.
     ///
     /// # Example
     ///
@@ -1415,14 +1415,16 @@ impl<'ctx> Module<'ctx> {
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         sysroot: &str,
         #[cfg(any(
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         sdk: &str,
     ) -> (DebugInfoBuilder<'ctx>, DICompileUnit<'ctx>) {
@@ -1445,14 +1447,16 @@ impl<'ctx> Module<'ctx> {
                 feature = "llvm11-0",
                 feature = "llvm12-0",
                 feature = "llvm13-0",
-                feature = "llvm14-0"
+                feature = "llvm14-0",
+                feature = "llvm15-0"
             ))]
             sysroot,
             #[cfg(any(
                 feature = "llvm11-0",
                 feature = "llvm12-0",
                 feature = "llvm13-0",
-                feature = "llvm14-0"
+                feature = "llvm14-0",
+                feature = "llvm15-0"
             ))]
             sdk,
         )

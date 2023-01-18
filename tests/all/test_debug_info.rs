@@ -29,14 +29,16 @@ fn test_smoke() {
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
         #[cfg(any(
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
     );
@@ -77,7 +79,11 @@ fn test_smoke() {
     let lexical_block = dibuilder.create_lexical_block(func_scope.as_debug_info_scope(), compile_unit.get_file(), 0, 0);
 
     let loc = dibuilder.create_debug_location(&context, 0, 0, lexical_block.as_debug_info_scope(), None);
+
+    #[cfg(any(feature = "llvm7-0", feature = "llvm8-0",))]
     builder.set_current_debug_location(&context, loc);
+    #[cfg(not(any(feature = "llvm7-0", feature = "llvm8-0",)))]
+    builder.set_current_debug_location(loc);
 
     dibuilder.finalize();
 
@@ -107,14 +113,16 @@ fn test_struct_with_placeholders() {
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
         #[cfg(any(
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
     );
@@ -231,14 +239,16 @@ fn test_no_explicit_finalize() {
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
         #[cfg(any(
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
     );
@@ -272,14 +282,16 @@ fn test_replacing_placeholder_with_placeholder() {
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
         #[cfg(any(
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
     );
@@ -327,14 +339,16 @@ fn test_anonymous_basic_type() {
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
         #[cfg(any(
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
     );
@@ -375,14 +389,16 @@ fn test_global_expressions() {
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
         #[cfg(any(
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
     );
@@ -441,14 +457,16 @@ fn test_pointer_types() {
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
         #[cfg(any(
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
     );
@@ -491,14 +509,16 @@ fn test_reference_types() {
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
         #[cfg(any(
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
     );
@@ -541,14 +561,16 @@ fn test_array_type() {
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
         #[cfg(any(
             feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
-            feature = "llvm14-0"
+            feature = "llvm14-0",
+            feature = "llvm15-0"
         ))]
         "",
     );

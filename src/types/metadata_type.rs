@@ -73,7 +73,7 @@ impl AsTypeRef for MetadataType<'_> {
         self.metadata_type.ty
     }
 
-    #[llvm_versions(4.0..6.0)]
+    #[llvm_versions(4.0..=5.0)]
     fn as_type_ref(&self) -> LLVMTypeRef {
         unimplemented!("MetadataType is only available in LLVM > 6.0")
     }

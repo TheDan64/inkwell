@@ -192,6 +192,7 @@ impl<'ctx> StructType<'ctx> {
     /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
     /// let struct_ptr_type = struct_type.ptr_type(AddressSpace::default());
     ///
+    /// #[cfg(not(feature = "llvm15-0"))]
     /// assert_eq!(struct_ptr_type.get_element_type().into_struct_type(), struct_type);
     /// ```
     pub fn ptr_type(self, address_space: AddressSpace) -> PointerType<'ctx> {

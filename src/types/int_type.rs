@@ -310,6 +310,7 @@ impl<'ctx> IntType<'ctx> {
     /// let i8_type = context.i8_type();
     /// let i8_ptr_type = i8_type.ptr_type(AddressSpace::default());
     ///
+    /// #[cfg(not(feature = "llvm15-0"))]
     /// assert_eq!(i8_ptr_type.get_element_type().into_int_type(), i8_type);
     /// ```
     pub fn ptr_type(self, address_space: AddressSpace) -> PointerType<'ctx> {

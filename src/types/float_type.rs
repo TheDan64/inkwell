@@ -215,6 +215,7 @@ impl<'ctx> FloatType<'ctx> {
     /// let f32_type = context.f32_type();
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
     ///
+    /// #[cfg(not(feature = "llvm15-0"))]
     /// assert_eq!(f32_ptr_type.get_element_type().into_float_type(), f32_type);
     /// ```
     pub fn ptr_type(self, address_space: AddressSpace) -> PointerType<'ctx> {

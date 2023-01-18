@@ -3,13 +3,13 @@
 #[llvm_versions(7.0..=latest)]
 use crate::InlineAsmDialect;
 use libc::c_void;
-#[llvm_versions(4.0..7.0)]
+#[llvm_versions(4.0..=6.0)]
 use llvm_sys::core::LLVMConstInlineAsm;
 #[llvm_versions(12.0..=latest)]
 use llvm_sys::core::LLVMCreateTypeAttribute;
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::core::LLVMGetInlineAsm;
-#[llvm_versions(4.0..12.0)]
+#[llvm_versions(4.0..=11.0)]
 use llvm_sys::core::LLVMGetTypeByName;
 #[llvm_versions(12.0..=latest)]
 use llvm_sys::core::LLVMGetTypeByName2;
@@ -19,9 +19,9 @@ use llvm_sys::core::{
     LLVMAppendBasicBlockInContext, LLVMConstStringInContext, LLVMConstStructInContext, LLVMContextCreate,
     LLVMContextDispose, LLVMContextSetDiagnosticHandler, LLVMCreateBuilderInContext, LLVMCreateEnumAttribute,
     LLVMCreateStringAttribute, LLVMDoubleTypeInContext, LLVMFP128TypeInContext, LLVMFloatTypeInContext,
-    LLVMGetGlobalContext, LLVMGetMDKindIDInContext, LLVMGetTypeKind, LLVMHalfTypeInContext,
-    LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext,
-    LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMMDNodeInContext, LLVMMDStringInContext,
+    LLVMGetGlobalContext, LLVMGetMDKindIDInContext, LLVMHalfTypeInContext, LLVMInsertBasicBlockInContext,
+    LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext,
+    LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMMDNodeInContext, LLVMMDStringInContext,
     LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext, LLVMStructCreateNamed, LLVMStructTypeInContext,
     LLVMVoidTypeInContext, LLVMX86FP80TypeInContext,
 };
@@ -54,7 +54,6 @@ pub(crate) use private::AsContextRef;
 
 use std::marker::PhantomData;
 use std::mem::forget;
-
 use std::ptr;
 use std::thread_local;
 
@@ -523,7 +522,6 @@ impl Context {
     /// ```no_run
     /// use std::convert::TryFrom;
     /// use inkwell::context::Context;
-    /// use inkwell::values::CallableValue;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
@@ -556,8 +554,17 @@ impl Context {
     ///     false,
     /// );
     /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
-    /// let callable_value = CallableValue::try_from(asm).unwrap();
-    /// builder.build_call(callable_value, params, "exit");
+    ///
+    /// #[cfg(not(any(feature = "llvm15-0")))]
+    /// {
+    ///     use inkwell::values::CallableValue;
+    ///     let callable_value = CallableValue::try_from(asm).unwrap();
+    ///     builder.build_call(callable_value, params, "exit");
+    /// }
+    ///
+    /// #[cfg(any(feature = "llvm15-0"))]
+    /// builder.build_indirect_call(asm_fn, asm, params, "exit");
+    ///
     /// builder.build_return(None);
     /// ```
     #[inline]
@@ -1250,6 +1257,7 @@ impl Context {
         self.context.const_string(string, null_terminated)
     }
 
+    #[allow(dead_code)]
     #[inline]
     pub(crate) fn set_diagnostic_handler(
         &self,
@@ -1357,7 +1365,6 @@ impl<'ctx> ContextRef<'ctx> {
     /// ```no_run
     /// use std::convert::TryFrom;
     /// use inkwell::context::Context;
-    /// use inkwell::values::CallableValue;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
@@ -1390,8 +1397,17 @@ impl<'ctx> ContextRef<'ctx> {
     ///     false,
     /// );
     /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
-    /// let callable_value = CallableValue::try_from(asm).unwrap();
-    /// builder.build_call(callable_value, params, "exit");
+    ///
+    /// #[cfg(not(any(feature = "llvm15-0")))]
+    /// {
+    ///     use inkwell::values::CallableValue;
+    ///     let callable_value = CallableValue::try_from(asm).unwrap();
+    ///     builder.build_call(callable_value, params, "exit");
+    /// }
+    ///
+    /// #[cfg(any(feature = "llvm15-0"))]
+    /// builder.build_indirect_call(asm_fn, asm, params, "exit");
+    ///
     /// builder.build_return(None);
     /// ```
     #[inline]

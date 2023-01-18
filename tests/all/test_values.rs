@@ -4,8 +4,8 @@ use inkwell::comdat::ComdatSelectionKind;
 use inkwell::context::Context;
 use inkwell::module::Linkage::*;
 use inkwell::types::{StringRadix, VectorType};
-use inkwell::values::{AnyValue, CallableValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
-use inkwell::{AddressSpace, DLLStorageClass, FloatPredicate, GlobalVisibility, ThreadLocalMode};
+use inkwell::values::{AnyValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
+use inkwell::{AddressSpace, DLLStorageClass, GlobalVisibility, ThreadLocalMode};
 
 use std::convert::TryFrom;
 
@@ -38,7 +38,6 @@ fn test_call_site() {
     let fn_type = void_type.fn_type(&[], false);
 
     let function = module.add_function("do_nothing", fn_type, None);
-
     let call_site = builder.build_call(function, &[], "to_infinity_and_beyond");
 
     assert_eq!(call_site.count_arguments(), 0);
@@ -522,77 +521,82 @@ fn test_metadata() {
 
 #[test]
 fn test_floats() {
-    let context = Context::create();
+    #[cfg(not(feature = "llvm15-0"))]
+    {
+        use inkwell::FloatPredicate;
 
-    let f32_type = context.f32_type();
-    let f64_type = context.f64_type();
-    let f128_type = context.f128_type();
-    let i64_type = context.i32_type();
+        let context = Context::create();
 
-    let f64_pi = f64_type.const_float(::std::f64::consts::PI);
+        let f32_type = context.f32_type();
+        let f64_type = context.f64_type();
+        let f128_type = context.f128_type();
+        let i64_type = context.i32_type();
 
-    let f32_pi = f64_pi.const_truncate(f32_type);
-    let f128_pi = f64_pi.const_extend(f128_type);
-    let i64_pi = f64_pi.const_to_signed_int(i64_type);
-    let u64_pi = f64_pi.const_to_unsigned_int(i64_type);
-    let f128_pi_cast = f64_pi.const_cast(f128_type);
+        let f64_pi = f64_type.const_float(::std::f64::consts::PI);
 
-    assert_eq!(i64_pi.get_type(), i64_type);
-    assert_eq!(u64_pi.get_type(), i64_type);
-    assert_eq!(f32_pi.get_type(), f32_type);
-    assert_eq!(f128_pi.get_type(), f128_type);
-    assert_eq!(f128_pi_cast.get_type(), f128_type);
+        let f32_pi = f64_pi.const_truncate(f32_type);
+        let f128_pi = f64_pi.const_extend(f128_type);
+        let i64_pi = f64_pi.const_to_signed_int(i64_type);
+        let u64_pi = f64_pi.const_to_unsigned_int(i64_type);
+        let f128_pi_cast = f64_pi.const_cast(f128_type);
 
-    // REIVEW: Why are these not FPTrunc, FPExt, FPToSI, FPToUI, BitCast instructions?
-    // Only thing I can think of is that they're constants and therefore precalculated
-    assert!(f32_pi.as_instruction().is_none());
-    assert!(f128_pi.as_instruction().is_none());
-    assert!(i64_pi.as_instruction().is_none());
-    assert!(u64_pi.as_instruction().is_none());
-    assert!(f128_pi_cast.as_instruction().is_none());
+        assert_eq!(i64_pi.get_type(), i64_type);
+        assert_eq!(u64_pi.get_type(), i64_type);
+        assert_eq!(f32_pi.get_type(), f32_type);
+        assert_eq!(f128_pi.get_type(), f128_type);
+        assert_eq!(f128_pi_cast.get_type(), f128_type);
 
-    let f64_one = f64_type.const_float(1.);
-    let f64_two = f64_type.const_float(2.);
-    let neg_two = f64_two.const_neg();
+        // REIVEW: Why are these not FPTrunc, FPExt, FPToSI, FPToUI, BitCast instructions?
+        // Only thing I can think of is that they're constants and therefore precalculated
+        assert!(f32_pi.as_instruction().is_none());
+        assert!(f128_pi.as_instruction().is_none());
+        assert!(i64_pi.as_instruction().is_none());
+        assert!(u64_pi.as_instruction().is_none());
+        assert!(f128_pi_cast.as_instruction().is_none());
 
-    assert_eq!(neg_two.print_to_string().to_str(), Ok("double -2.000000e+00"));
+        let f64_one = f64_type.const_float(1.);
+        let f64_two = f64_type.const_float(2.);
+        let neg_two = f64_two.const_neg();
 
-    let neg_three = neg_two.const_sub(f64_one);
+        assert_eq!(neg_two.print_to_string().to_str(), Ok("double -2.000000e+00"));
 
-    assert_eq!(neg_three.print_to_string().to_str(), Ok("double -3.000000e+00"));
+        let neg_three = neg_two.const_sub(f64_one);
 
-    let pos_six = neg_three.const_mul(neg_two);
+        assert_eq!(neg_three.print_to_string().to_str(), Ok("double -3.000000e+00"));
 
-    assert_eq!(pos_six.print_to_string().to_str(), Ok("double 6.000000e+00"));
+        let pos_six = neg_three.const_mul(neg_two);
 
-    let pos_eight = pos_six.const_add(f64_two);
+        assert_eq!(pos_six.print_to_string().to_str(), Ok("double 6.000000e+00"));
 
-    assert_eq!(pos_eight.print_to_string().to_str(), Ok("double 8.000000e+00"));
+        let pos_eight = pos_six.const_add(f64_two);
 
-    let pos_four = pos_eight.const_div(f64_two);
+        assert_eq!(pos_eight.print_to_string().to_str(), Ok("double 8.000000e+00"));
 
-    assert_eq!(pos_four.print_to_string().to_str(), Ok("double 4.000000e+00"));
+        let pos_four = pos_eight.const_div(f64_two);
 
-    let rem = pos_six.const_remainder(pos_four);
+        assert_eq!(pos_four.print_to_string().to_str(), Ok("double 4.000000e+00"));
 
-    assert_eq!(rem.print_to_string().to_str(), Ok("double 2.000000e+00"));
+        let rem = pos_six.const_remainder(pos_four);
 
-    assert!(f64_one.const_compare(FloatPredicate::PredicateFalse, f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::PredicateTrue, f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::OEQ, f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::OGT, f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::OGE, f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::OLT, f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::OLE, f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::ONE, f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::UEQ, f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::UGT, f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::UGE, f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::ULT, f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::ULE, f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::UNE, f64_two).is_null());
-    assert!(!f64_one.const_compare(FloatPredicate::ORD, f64_two).is_null());
-    assert!(f64_one.const_compare(FloatPredicate::UNO, f64_two).is_null());
+        assert_eq!(rem.print_to_string().to_str(), Ok("double 2.000000e+00"));
+
+        assert!(f64_one.const_compare(FloatPredicate::PredicateFalse, f64_two).is_null());
+        assert!(!f64_one.const_compare(FloatPredicate::PredicateTrue, f64_two).is_null());
+        assert!(f64_one.const_compare(FloatPredicate::OEQ, f64_two).is_null());
+        assert!(f64_one.const_compare(FloatPredicate::OGT, f64_two).is_null());
+        assert!(f64_one.const_compare(FloatPredicate::OGE, f64_two).is_null());
+        assert!(!f64_one.const_compare(FloatPredicate::OLT, f64_two).is_null());
+        assert!(!f64_one.const_compare(FloatPredicate::OLE, f64_two).is_null());
+        assert!(!f64_one.const_compare(FloatPredicate::ONE, f64_two).is_null());
+        assert!(f64_one.const_compare(FloatPredicate::UEQ, f64_two).is_null());
+        assert!(f64_one.const_compare(FloatPredicate::UGT, f64_two).is_null());
+        assert!(f64_one.const_compare(FloatPredicate::UGE, f64_two).is_null());
+        assert!(!f64_one.const_compare(FloatPredicate::ULT, f64_two).is_null());
+        assert!(!f64_one.const_compare(FloatPredicate::ULE, f64_two).is_null());
+        assert!(!f64_one.const_compare(FloatPredicate::UNE, f64_two).is_null());
+        assert!(!f64_one.const_compare(FloatPredicate::ORD, f64_two).is_null());
+        assert!(f64_one.const_compare(FloatPredicate::UNO, f64_two).is_null());
+    }
 }
 
 #[test]
@@ -917,6 +921,9 @@ fn test_allocations() {
 
     builder.position_at_end(entry_block);
 
+    // handle opaque pointers
+    let ptr_type = if cfg!(any(feature = "llvm15-0")) { "ptr" } else { "i32*" };
+
     // REVIEW: Alloca (and possibly malloc) seem to be prone to segfaulting
     // when called with a builder that isn't positioned. I wonder if other
     // builder methods have this problem? We could make builder subtypes:
@@ -926,21 +933,21 @@ fn test_allocations() {
 
     let stack_ptr = builder.build_alloca(i32_type, "stack_ptr");
 
-    assert_eq!(stack_ptr.get_type().print_to_string().to_str(), Ok("i32*"));
+    assert_eq!(stack_ptr.get_type().print_to_string().to_str(), Ok(ptr_type));
 
     let stack_array = builder.build_array_alloca(i32_type, i32_three, "stack_array");
 
-    assert_eq!(stack_array.get_type().print_to_string().to_str(), Ok("i32*"));
+    assert_eq!(stack_array.get_type().print_to_string().to_str(), Ok(ptr_type));
 
     let heap_ptr = builder.build_malloc(i32_type, "heap_ptr");
 
     assert!(heap_ptr.is_ok());
-    assert_eq!(heap_ptr.unwrap().get_type().print_to_string().to_str(), Ok("i32*"));
+    assert_eq!(heap_ptr.unwrap().get_type().print_to_string().to_str(), Ok(ptr_type));
 
     let heap_array = builder.build_array_malloc(i32_type, i32_three, "heap_array");
 
     assert!(heap_array.is_ok());
-    assert_eq!(heap_array.unwrap().get_type().print_to_string().to_str(), Ok("i32*"));
+    assert_eq!(heap_array.unwrap().get_type().print_to_string().to_str(), Ok(ptr_type));
 
     let bad_malloc_res = builder.build_malloc(unsized_type, "");
 
@@ -1141,8 +1148,14 @@ fn test_non_fn_ptr_called() {
     let i8_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
 
     builder.position_at_end(bb);
-    let callable_value = CallableValue::try_from(i8_ptr_param).unwrap();
-    builder.build_call(callable_value, &[], "call");
+    #[cfg(not(feature = "llvm15-0"))]
+    {
+        use inkwell::values::CallableValue;
+        let callable_value = CallableValue::try_from(i8_ptr_param).unwrap();
+        builder.build_call(callable_value, &[], "call");
+    }
+    #[cfg(feature = "llvm15-0")]
+    builder.build_indirect_call(i8_ptr_type.fn_type(&[], false), i8_ptr_param, &[], "call");
     builder.build_return(None);
 
     assert!(module.verify().is_ok());
@@ -1189,7 +1202,10 @@ fn test_aggregate_returns() {
     let ptr_param2 = fn_value.get_nth_param(1).unwrap().into_pointer_value();
 
     builder.position_at_end(bb);
+    #[cfg(not(feature = "llvm15-0"))]
     builder.build_ptr_diff(ptr_param1, ptr_param2, "diff");
+    #[cfg(feature = "llvm15-0")]
+    builder.build_ptr_diff(i32_ptr_type, ptr_param1, ptr_param2, "diff");
     builder.build_aggregate_return(&[i32_three.into(), i32_seven.into()]);
 
     assert!(module.verify().is_ok());

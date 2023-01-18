@@ -4,12 +4,13 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
-use crate::types::{AnyTypeEnum, ArrayType, FunctionType, Type, VectorType};
+#[llvm_versions(4.0..=14.0)]
+use crate::types::AnyTypeEnum;
+use crate::types::{ArrayType, FunctionType, Type, VectorType};
 use crate::values::{ArrayValue, AsValueRef, IntValue, PointerValue};
 use crate::AddressSpace;
 
 use crate::types::enums::BasicMetadataTypeEnum;
-use std::convert::TryFrom;
 use std::fmt::{self, Display};
 
 /// A `PointerType` is the type of a pointer constant or variable.
@@ -78,6 +79,7 @@ impl<'ctx> PointerType<'ctx> {
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
     /// let f32_ptr_ptr_type = f32_ptr_type.ptr_type(AddressSpace::default());
     ///
+    /// #[cfg(not(feature = "llvm15-0"))]
     /// assert_eq!(f32_ptr_ptr_type.get_element_type().into_pointer_type(), f32_ptr_type);
     /// ```
     pub fn ptr_type(self, address_space: AddressSpace) -> PointerType<'ctx> {
@@ -258,6 +260,7 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// assert_eq!(f32_ptr_type.get_element_type().into_float_type(), f32_type);
     /// ```
+    #[llvm_versions(4.0..=14.0)]
     pub fn get_element_type(self) -> AnyTypeEnum<'ctx> {
         self.ptr_type.get_element_type()
     }

@@ -6,7 +6,6 @@ mod array_value;
 mod basic_value_use;
 #[deny(missing_docs)]
 mod call_site_value;
-mod callable_value;
 mod enums;
 mod float_value;
 mod fn_value;
@@ -21,11 +20,16 @@ mod struct_value;
 mod traits;
 mod vec_value;
 
+#[cfg(not(any(feature = "llvm15-0")))]
+mod callable_value;
+
+#[cfg(not(any(feature = "llvm15-0")))]
+pub use crate::values::callable_value::CallableValue;
+
 use crate::support::{to_c_str, LLVMString};
 pub use crate::values::array_value::ArrayValue;
 pub use crate::values::basic_value_use::BasicValueUse;
 pub use crate::values::call_site_value::CallSiteValue;
-pub use crate::values::callable_value::CallableValue;
 pub use crate::values::enums::{AggregateValueEnum, AnyValueEnum, BasicMetadataValueEnum, BasicValueEnum};
 pub use crate::values::float_value::FloatValue;
 pub use crate::values::fn_value::FunctionValue;
@@ -101,12 +105,11 @@ impl<'ctx> Value<'ctx> {
     // add a ParamValue wrapper type that always have it but conditional types (IntValue<Variable>)
     // that also have it. This isn't a huge deal though, since it hasn't proven to be UB so far
     fn set_name(self, name: &str) {
+        let c_string = to_c_str(name);
+
         #[cfg(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
         {
-            use crate::support::to_c_str;
             use llvm_sys::core::LLVMSetValueName;
-
-            let c_string = to_c_str(name);
 
             unsafe {
                 LLVMSetValueName(self.value, c_string.as_ptr());
@@ -116,7 +119,7 @@ impl<'ctx> Value<'ctx> {
         {
             use llvm_sys::core::LLVMSetValueName2;
 
-            unsafe { LLVMSetValueName2(self.value, name.as_ptr() as *const ::libc::c_char, name.len()) }
+            unsafe { LLVMSetValueName2(self.value, c_string.as_ptr(), name.len()) }
         }
     }
 

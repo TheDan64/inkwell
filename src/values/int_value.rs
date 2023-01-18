@@ -1,13 +1,10 @@
-#[llvm_versions(4.0..=latest)]
-use llvm_sys::core::LLVMConstExactUDiv;
 use llvm_sys::core::{
-    LLVMConstAShr, LLVMConstAdd, LLVMConstAnd, LLVMConstBitCast, LLVMConstExactSDiv, LLVMConstICmp, LLVMConstIntCast,
+    LLVMConstAShr, LLVMConstAdd, LLVMConstAnd, LLVMConstBitCast, LLVMConstICmp, LLVMConstIntCast,
     LLVMConstIntGetSExtValue, LLVMConstIntGetZExtValue, LLVMConstIntToPtr, LLVMConstLShr, LLVMConstMul,
     LLVMConstNSWAdd, LLVMConstNSWMul, LLVMConstNSWNeg, LLVMConstNSWSub, LLVMConstNUWAdd, LLVMConstNUWMul,
-    LLVMConstNUWNeg, LLVMConstNUWSub, LLVMConstNeg, LLVMConstNot, LLVMConstOr, LLVMConstSDiv, LLVMConstSExt,
-    LLVMConstSExtOrBitCast, LLVMConstSIToFP, LLVMConstSRem, LLVMConstSelect, LLVMConstShl, LLVMConstSub,
-    LLVMConstTrunc, LLVMConstTruncOrBitCast, LLVMConstUDiv, LLVMConstUIToFP, LLVMConstURem, LLVMConstXor,
-    LLVMConstZExt, LLVMConstZExtOrBitCast, LLVMIsAConstantInt,
+    LLVMConstNUWNeg, LLVMConstNUWSub, LLVMConstNeg, LLVMConstNot, LLVMConstOr, LLVMConstSExt, LLVMConstSExtOrBitCast,
+    LLVMConstSIToFP, LLVMConstSelect, LLVMConstShl, LLVMConstSub, LLVMConstTrunc, LLVMConstTruncOrBitCast,
+    LLVMConstUIToFP, LLVMConstXor, LLVMConstZExt, LLVMConstZExtOrBitCast, LLVMIsAConstantInt,
 };
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -120,28 +117,45 @@ impl<'ctx> IntValue<'ctx> {
         unsafe { IntValue::new(LLVMConstNUWMul(self.as_value_ref(), rhs.as_value_ref())) }
     }
 
+    #[llvm_versions(4.0..=14.0)]
     pub fn const_unsigned_div(self, rhs: IntValue<'ctx>) -> Self {
+        use llvm_sys::core::LLVMConstUDiv;
+
         unsafe { IntValue::new(LLVMConstUDiv(self.as_value_ref(), rhs.as_value_ref())) }
     }
 
+    #[llvm_versions(4.0..=14.0)]
     pub fn const_signed_div(self, rhs: IntValue<'ctx>) -> Self {
+        use llvm_sys::core::LLVMConstSDiv;
+
         unsafe { IntValue::new(LLVMConstSDiv(self.as_value_ref(), rhs.as_value_ref())) }
     }
 
+    #[llvm_versions(4.0..=14.0)]
     pub fn const_exact_signed_div(self, rhs: IntValue<'ctx>) -> Self {
+        use llvm_sys::core::LLVMConstExactSDiv;
+
         unsafe { IntValue::new(LLVMConstExactSDiv(self.as_value_ref(), rhs.as_value_ref())) }
     }
 
-    #[llvm_versions(4.0..=latest)]
+    #[llvm_versions(4.0..=14.0)]
     pub fn const_exact_unsigned_div(self, rhs: IntValue<'ctx>) -> Self {
+        use llvm_sys::core::LLVMConstExactUDiv;
+
         unsafe { IntValue::new(LLVMConstExactUDiv(self.as_value_ref(), rhs.as_value_ref())) }
     }
 
+    #[llvm_versions(4.0..=14.0)]
     pub fn const_unsigned_remainder(self, rhs: IntValue<'ctx>) -> Self {
+        use llvm_sys::core::LLVMConstURem;
+
         unsafe { IntValue::new(LLVMConstURem(self.as_value_ref(), rhs.as_value_ref())) }
     }
 
+    #[llvm_versions(4.0..=14.0)]
     pub fn const_signed_remainder(self, rhs: IntValue<'ctx>) -> Self {
+        use llvm_sys::core::LLVMConstSRem;
+
         unsafe { IntValue::new(LLVMConstSRem(self.as_value_ref(), rhs.as_value_ref())) }
     }
 
