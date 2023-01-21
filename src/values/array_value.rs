@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMIsAConstantArray, LLVMIsAConstantDataArray};
+use llvm_sys::core::{LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsConstantString, LLVMGetAsString};
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
@@ -81,6 +81,51 @@ impl<'ctx> ArrayValue<'ctx> {
     /// ```
     pub fn is_const(self) -> bool {
         self.array_value.is_const()
+    }
+
+    /// Determines whether or not an `ArrayValue` represents a constant array of `i8`s.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let string = context.const_string(b"my_string", false);
+    ///
+    /// assert!(string.is_const_string());
+    /// ```
+    // SubTypes: Impl only for ArrayValue<IntValue<i8>>
+    pub fn is_const_string(self) -> bool {
+        unsafe { LLVMIsConstantString(self.as_value_ref()) == 1 }
+    }
+
+    /// Obtain the string from a constant array of `i8`s.
+    /// 
+    /// # Example
+    /// 
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use std::ffi::CStr;
+    /// 
+    /// let context = Context::create();
+    /// let string = context.const_string(b"hello!", true);
+    /// 
+    /// let result = CStr::from_bytes_with_nul(b"hello!\0").unwrap();
+    /// assert_eq!(string.get_string_constant(), result);
+    /// ```
+    // SubTypes: Impl only for ArrayValue<IntValue<i8>>
+    pub fn get_string_constant(&self) -> &CStr {
+        // REVIEW: Maybe need to check is_const_string?
+
+        let mut len = 0;
+        let ptr = unsafe { LLVMGetAsString(self.as_value_ref(), &mut len) };
+
+        if ptr.is_null() {
+            panic!("FIXME: Need to retun an Option");
+        }
+
+        unsafe { CStr::from_ptr(ptr) }
     }
 }
 

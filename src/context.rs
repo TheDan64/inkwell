@@ -45,7 +45,7 @@ use crate::types::MetadataType;
 use crate::types::{AsTypeRef, BasicTypeEnum, FloatType, FunctionType, IntType, StructType, VoidType};
 use crate::values::{
     AsValueRef, BasicMetadataValueEnum, BasicValueEnum, FunctionValue, MetadataValue, PointerValue, StructValue,
-    VectorValue,
+    ArrayValue,
 };
 use crate::AddressSpace;
 #[cfg(feature = "internal-getters")]
@@ -368,9 +368,9 @@ impl ContextImpl {
         unsafe { Attribute::new(LLVMCreateTypeAttribute(self.0, kind_id, type_ref.as_type_ref())) }
     }
 
-    fn const_string<'ctx>(&self, string: &[u8], null_terminated: bool) -> VectorValue<'ctx> {
+    fn const_string<'ctx>(&self, string: &[u8], null_terminated: bool) -> ArrayValue<'ctx> {
         unsafe {
-            VectorValue::new(LLVMConstStringInContext(
+            ArrayValue::new(LLVMConstStringInContext(
                 self.0,
                 string.as_ptr() as *const ::libc::c_char,
                 string.len() as u32,
@@ -1251,9 +1251,9 @@ impl Context {
     ///
     /// assert_eq!(string.print_to_string().to_string(), "[9 x i8] c\"my_string\"");
     /// ```
-    // SubTypes: Should return VectorValue<IntValue<i8>>
+    // SubTypes: Should return ArrayValue<IntValue<i8>>
     #[inline]
-    pub fn const_string(&self, string: &[u8], null_terminated: bool) -> VectorValue {
+    pub fn const_string(&self, string: &[u8], null_terminated: bool) -> ArrayValue {
         self.context.const_string(string, null_terminated)
     }
 
@@ -2083,9 +2083,9 @@ impl<'ctx> ContextRef<'ctx> {
     ///
     /// assert_eq!(string.print_to_string().to_string(), "[9 x i8] c\"my_string\"");
     /// ```
-    // SubTypes: Should return VectorValue<IntValue<i8>>
+    // SubTypes: Should return ArrayValue<IntValue<i8>>
     #[inline]
-    pub fn const_string(&self, string: &[u8], null_terminated: bool) -> VectorValue<'ctx> {
+    pub fn const_string(&self, string: &[u8], null_terminated: bool) -> ArrayValue<'ctx> {
         self.context.const_string(string, null_terminated)
     }
 

@@ -976,10 +976,8 @@ fn test_string_values() {
     let string = context.const_string(b"my_string", false);
     let string_null = context.const_string(b"my_string", true);
 
-    assert!(!string.is_constant_vector());
-    assert!(!string_null.is_constant_vector());
-    assert!(!string.is_constant_data_vector());
-    assert!(!string_null.is_constant_data_vector());
+    assert!(string.is_const());
+    assert!(string_null.is_const());
 
     assert_eq!(string.print_to_string().to_string(), "[9 x i8] c\"my_string\"");
     assert_eq!(
