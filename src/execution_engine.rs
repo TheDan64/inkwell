@@ -492,7 +492,7 @@ impl<'ctx, F: Copy> JitFunction<'ctx, F> {
     /// This function is unsafe because the function pointer may dangle
     /// if the ExecutionEngine it came from is dropped. The caller is
     /// thus responsible for ensuring the ExecutionEngine remains valid.
-    pub fn into_raw(self) -> F {
+    pub unsafe fn into_raw(self) -> F {
         self.inner
     }
 
@@ -500,7 +500,7 @@ impl<'ctx, F: Copy> JitFunction<'ctx, F> {
     /// This function is unsafe because the function pointer may dangle
     /// if the ExecutionEngine it came from is dropped. The caller is
     /// thus responsible for ensuring the ExecutionEngine remains valid.
-    pub fn as_raw(&self) -> F {
+    pub unsafe fn as_raw(&self) -> F {
         self.inner
     }
 }
