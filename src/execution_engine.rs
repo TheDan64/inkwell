@@ -487,6 +487,24 @@ pub struct JitFunction<'ctx, F> {
     inner: F,
 }
 
+impl<'ctx, F: Copy> JitFunction<'ctx, F> {
+    /// Returns the raw function pointer, consuming self in the process.
+    /// This function is unsafe because the function pointer may dangle
+    /// if the ExecutionEngine it came from is dropped. The caller is
+    /// thus responsible for ensuring the ExecutionEngine remains valid.
+    pub fn into_raw(self) -> F {
+        self.inner
+    }
+
+    /// Returns the raw function pointer.
+    /// This function is unsafe because the function pointer may dangle
+    /// if the ExecutionEngine it came from is dropped. The caller is
+    /// thus responsible for ensuring the ExecutionEngine remains valid.
+    pub fn as_raw(&self) -> F {
+        self.inner
+    }
+}
+
 impl<F> Debug for JitFunction<'_, F> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         f.debug_tuple("JitFunction").field(&"<unnamed>").finish()
