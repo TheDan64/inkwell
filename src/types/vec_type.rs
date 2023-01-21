@@ -270,7 +270,7 @@ impl<'ctx> VectorType<'ctx> {
     }
 }
 
-impl AsTypeRef for VectorType<'_> {
+unsafe impl AsTypeRef for VectorType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
         self.vec_type.ty
     }

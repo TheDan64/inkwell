@@ -61,9 +61,6 @@ use crate::module::Module;
 use crate::values::{AsValueRef, FunctionValue};
 use crate::OptimizationLevel;
 
-#[cfg(feature = "internal-getters")]
-use crate::LLVMReference;
-
 use std::borrow::Borrow;
 use std::marker::PhantomData;
 
@@ -74,16 +71,21 @@ pub struct PassManagerBuilder {
 }
 
 impl PassManagerBuilder {
-    fn new(pass_manager_builder: LLVMPassManagerBuilderRef) -> Self {
+    pub unsafe fn new(pass_manager_builder: LLVMPassManagerBuilderRef) -> Self {
         assert!(!pass_manager_builder.is_null());
 
         PassManagerBuilder { pass_manager_builder }
     }
 
+    /// Acquires the underlying raw pointer belonging to this `PassManagerBuilder` type.
+    pub fn as_mut_ptr(&self) -> LLVMPassManagerBuilderRef {
+        self.pass_manager_builder
+    }
+
     pub fn create() -> Self {
         let pass_manager_builder = unsafe { LLVMPassManagerBuilderCreate() };
 
-        PassManagerBuilder::new(pass_manager_builder)
+        unsafe { PassManagerBuilder::new(pass_manager_builder) }
     }
 
     pub fn set_optimization_level(&self, opt_level: OptimizationLevel) {
@@ -251,6 +253,11 @@ pub struct PassManager<T> {
 }
 
 impl PassManager<FunctionValue<'_>> {
+    /// Acquires the underlying raw pointer belonging to this `PassManager<T>` type.
+    pub fn as_mut_ptr(&self) -> LLVMPassManagerRef {
+        self.pass_manager
+    }
+
     // return true means some pass modified the module, not an error occurred
     pub fn initialize(&self) -> bool {
         unsafe { LLVMInitializeFunctionPassManager(self.pass_manager) == 1 }
@@ -262,7 +269,7 @@ impl PassManager<FunctionValue<'_>> {
 }
 
 impl<T: PassManagerSubType> PassManager<T> {
-    pub(crate) fn new(pass_manager: LLVMPassManagerRef) -> Self {
+    pub unsafe fn new(pass_manager: LLVMPassManagerRef) -> Self {
         assert!(!pass_manager.is_null());
 
         PassManager {
@@ -274,7 +281,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     pub fn create<I: Borrow<T::Input>>(input: I) -> PassManager<T> {
         let pass_manager = unsafe { T::create(input) };
 
-        PassManager::new(pass_manager)
+        unsafe { PassManager::new(pass_manager) }
     }
 
     /// This method returns true if any of the passes modified the function or module
@@ -1056,16 +1063,21 @@ pub struct PassRegistry {
 }
 
 impl PassRegistry {
-    pub fn new(pass_registry: LLVMPassRegistryRef) -> PassRegistry {
+    pub unsafe fn new(pass_registry: LLVMPassRegistryRef) -> PassRegistry {
         assert!(!pass_registry.is_null());
 
         PassRegistry { pass_registry }
     }
 
+    /// Acquires the underlying raw pointer belonging to this `PassRegistry` type.
+    pub fn as_mut_ptr(&self) -> LLVMPassRegistryRef {
+        self.pass_registry
+    }
+
     pub fn get_global() -> PassRegistry {
         let pass_registry = unsafe { LLVMGetGlobalPassRegistry() };
 
-        PassRegistry::new(pass_registry)
+        unsafe { PassRegistry::new(pass_registry) }
     }
 
     pub fn initialize_core(&self) {
@@ -1140,6 +1152,11 @@ impl PassBuilderOptions {
                 options_ref: LLVMCreatePassBuilderOptions(),
             }
         }
+    }
+
+    /// Acquires the underlying raw pointer belonging to this `PassBuilderOptions` type.
+    pub fn as_mut_ptr(&self) -> LLVMPassBuilderOptionsRef {
+        self.options_ref
     }
 
     ///Toggle adding the VerifierPass for the PassBuilder, ensuring all functions inside the module is valid.
@@ -1217,33 +1234,5 @@ impl Drop for PassBuilderOptions {
         unsafe {
             LLVMDisposePassBuilderOptions(self.options_ref);
         }
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl<T> LLVMReference<LLVMPassManagerRef> for PassManager<T> {
-    unsafe fn get_ref(&self) -> LLVMPassManagerRef {
-        self.pass_manager
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMPassManagerBuilderRef> for PassManagerBuilder {
-    unsafe fn get_ref(&self) -> LLVMPassManagerBuilderRef {
-        self.pass_manager_builder
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMPassRegistryRef> for PassRegistry {
-    unsafe fn get_ref(&self) -> LLVMPassRegistryRef {
-        self.pass_registry
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMPassBuilderOptionsRef> for PassBuilderOptions {
-    unsafe fn get_ref(&self) -> LLVMPassBuilderOptionsRef {
-        self.options_ref
     }
 }

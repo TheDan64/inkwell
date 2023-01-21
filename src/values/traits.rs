@@ -14,14 +14,14 @@ use super::{BasicMetadataValueEnum, MetadataValue};
 // This is an ugly privacy hack so that Type can stay private to this module
 // and so that super traits using this trait will be not be implementable
 // outside this library
-pub trait AsValueRef {
+pub unsafe trait AsValueRef {
     fn as_value_ref(&self) -> LLVMValueRef;
 }
 
 macro_rules! trait_value_set {
     ($trait_name:ident: $($args:ident),*) => (
         $(
-            impl<'ctx> $trait_name<'ctx> for $args<'ctx> {}
+            unsafe impl<'ctx> $trait_name<'ctx> for $args<'ctx> {}
         )*
 
         // REVIEW: Possible encompassing methods to implement:
@@ -32,7 +32,7 @@ macro_rules! trait_value_set {
 macro_rules! math_trait_value_set {
     ($trait_name:ident: $(($value_type:ident => $base_type:ident)),*) => (
         $(
-            impl<'ctx> $trait_name<'ctx> for $value_type<'ctx> {
+            unsafe impl<'ctx> $trait_name<'ctx> for $value_type<'ctx> {
                 type BaseType = $base_type<'ctx>;
                 fn new(value: LLVMValueRef) -> Self {
                     unsafe {
@@ -45,7 +45,7 @@ macro_rules! math_trait_value_set {
 }
 
 /// Represents an aggregate value, built on top of other values.
-pub trait AggregateValue<'ctx>: BasicValue<'ctx> {
+pub unsafe trait AggregateValue<'ctx>: BasicValue<'ctx> {
     /// Returns an enum containing a typed version of the `AggregateValue`.
     fn as_aggregate_value_enum(&self) -> AggregateValueEnum<'ctx> {
         unsafe { AggregateValueEnum::new(self.as_value_ref()) }
@@ -84,7 +84,7 @@ pub trait AggregateValue<'ctx>: BasicValue<'ctx> {
 }
 
 /// Represents a basic value, which can be used both by itself, or in an `AggregateValue`.
-pub trait BasicValue<'ctx>: AnyValue<'ctx> {
+pub unsafe trait BasicValue<'ctx>: AnyValue<'ctx> {
     /// Returns an enum containing a typed version of the `BasicValue`.
     fn as_basic_value_enum(&self) -> BasicValueEnum<'ctx> {
         unsafe { BasicValueEnum::new(self.as_value_ref()) }
@@ -116,25 +116,25 @@ pub trait BasicValue<'ctx>: AnyValue<'ctx> {
 }
 
 /// Represents a value which is permitted in integer math operations
-pub trait IntMathValue<'ctx>: BasicValue<'ctx> {
+pub unsafe trait IntMathValue<'ctx>: BasicValue<'ctx> {
     type BaseType: IntMathType<'ctx>;
     fn new(value: LLVMValueRef) -> Self;
 }
 
 /// Represents a value which is permitted in floating point math operations
-pub trait FloatMathValue<'ctx>: BasicValue<'ctx> {
+pub unsafe trait FloatMathValue<'ctx>: BasicValue<'ctx> {
     type BaseType: FloatMathType<'ctx>;
     fn new(value: LLVMValueRef) -> Self;
 }
 
-pub trait PointerMathValue<'ctx>: BasicValue<'ctx> {
+pub unsafe trait PointerMathValue<'ctx>: BasicValue<'ctx> {
     type BaseType: PointerMathType<'ctx>;
     fn new(value: LLVMValueRef) -> Self;
 }
 
 // REVIEW: print_to_string might be a good candidate to live here?
 /// Defines any struct wrapping an LLVM value.
-pub trait AnyValue<'ctx>: AsValueRef + Debug {
+pub unsafe trait AnyValue<'ctx>: AsValueRef + Debug {
     /// Returns an enum containing a typed version of `AnyValue`.
     fn as_any_value_enum(&self) -> AnyValueEnum<'ctx> {
         unsafe { AnyValueEnum::new(self.as_value_ref()) }

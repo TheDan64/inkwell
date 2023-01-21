@@ -128,7 +128,7 @@ impl<'ctx> ArrayValue<'ctx> {
     }
 }
 
-impl AsValueRef for ArrayValue<'_> {
+unsafe impl AsValueRef for ArrayValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.array_value.value
     }

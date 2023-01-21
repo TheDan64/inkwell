@@ -14,19 +14,20 @@ use std::path::Path;
 use std::ptr;
 use std::slice;
 
-#[cfg(feature = "internal-getters")]
-use crate::LLVMReference;
-
 #[derive(Debug)]
 pub struct MemoryBuffer {
     pub(crate) memory_buffer: LLVMMemoryBufferRef,
 }
 
 impl MemoryBuffer {
-    pub(crate) fn new(memory_buffer: LLVMMemoryBufferRef) -> Self {
+    pub unsafe fn new(memory_buffer: LLVMMemoryBufferRef) -> Self {
         assert!(!memory_buffer.is_null());
 
         MemoryBuffer { memory_buffer }
+    }
+
+    pub fn as_mut_ptr(&self) -> LLVMMemoryBufferRef {
+        self.memory_buffer
     }
 
     pub fn create_from_file(path: &Path) -> Result<Self, LLVMString> {
@@ -49,7 +50,7 @@ impl MemoryBuffer {
             }
         }
 
-        Ok(MemoryBuffer::new(memory_buffer))
+        unsafe { Ok(MemoryBuffer::new(memory_buffer)) }
     }
 
     pub fn create_from_stdin() -> Result<Self, LLVMString> {
@@ -65,7 +66,7 @@ impl MemoryBuffer {
             }
         }
 
-        Ok(MemoryBuffer::new(memory_buffer))
+        unsafe { Ok(MemoryBuffer::new(memory_buffer)) }
     }
 
     /// This function is likely slightly cheaper than `create_from_memory_range_copy` since it intentionally
@@ -83,7 +84,7 @@ impl MemoryBuffer {
             )
         };
 
-        MemoryBuffer::new(memory_buffer)
+        unsafe { MemoryBuffer::new(memory_buffer) }
     }
 
     /// This will create a new `MemoryBuffer` from the given input.
@@ -102,7 +103,7 @@ impl MemoryBuffer {
             )
         };
 
-        MemoryBuffer::new(memory_buffer)
+        unsafe { MemoryBuffer::new(memory_buffer) }
     }
 
     /// Gets a byte slice of this `MemoryBuffer`.
@@ -130,7 +131,7 @@ impl MemoryBuffer {
             return Err(());
         }
 
-        Ok(ObjectFile::new(object_file))
+        unsafe { Ok(ObjectFile::new(object_file)) }
     }
 }
 
@@ -139,12 +140,5 @@ impl Drop for MemoryBuffer {
         unsafe {
             LLVMDisposeMemoryBuffer(self.memory_buffer);
         }
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMMemoryBufferRef> for MemoryBuffer {
-    unsafe fn get_ref(&self) -> LLVMMemoryBufferRef {
-        self.memory_buffer
     }
 }

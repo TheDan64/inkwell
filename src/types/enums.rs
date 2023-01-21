@@ -22,7 +22,7 @@ macro_rules! enum_type_set {
             )*
         }
 
-        impl AsTypeRef for $enum_name<'_> {
+        unsafe impl AsTypeRef for $enum_name<'_> {
             fn as_type_ref(&self) -> LLVMTypeRef {
                 match *self {
                     $(

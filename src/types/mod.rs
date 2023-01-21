@@ -30,11 +30,9 @@ pub use crate::types::int_type::{IntType, StringRadix};
 pub use crate::types::metadata_type::MetadataType;
 pub use crate::types::ptr_type::PointerType;
 pub use crate::types::struct_type::StructType;
-pub use crate::types::traits::{AnyType, BasicType, FloatMathType, IntMathType, PointerMathType};
+pub use crate::types::traits::{AnyType, AsTypeRef, BasicType, FloatMathType, IntMathType, PointerMathType};
 pub use crate::types::vec_type::VectorType;
 pub use crate::types::void_type::VoidType;
-// Export the AsTypeRef to the outside based on features
-pub(crate) use crate::types::traits::AsTypeRef;
 
 use llvm_sys::core::{
     LLVMAlignOf, LLVMArrayType, LLVMConstNull, LLVMConstPointerNull, LLVMFunctionType, LLVMGetElementType,
@@ -53,8 +51,6 @@ use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::values::IntValue;
 use crate::AddressSpace;
-#[cfg(feature = "internal-getters")]
-use crate::LLVMReference;
 
 // Worth noting that types seem to be singletons. At the very least, primitives are.
 // Though this is likely only true per thread since LLVM claims to not be very thread-safe.
@@ -178,15 +174,5 @@ impl fmt::Debug for Type<'_> {
             .field("address", &self.ty)
             .field("llvm_type", &llvm_type)
             .finish()
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl<T> LLVMReference<LLVMTypeRef> for T
-where
-    T: AsTypeRef,
-{
-    unsafe fn get_ref(&self) -> LLVMTypeRef {
-        self.as_type_ref()
     }
 }

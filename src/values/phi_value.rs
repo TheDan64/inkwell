@@ -97,7 +97,7 @@ impl<'ctx> PhiValue<'ctx> {
     }
 }
 
-impl AsValueRef for PhiValue<'_> {
+unsafe impl AsValueRef for PhiValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.phi_value.value
     }

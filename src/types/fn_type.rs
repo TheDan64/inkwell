@@ -208,7 +208,7 @@ impl fmt::Debug for FunctionType<'_> {
     }
 }
 
-impl AsTypeRef for FunctionType<'_> {
+unsafe impl AsTypeRef for FunctionType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
         self.fn_type.ty
     }

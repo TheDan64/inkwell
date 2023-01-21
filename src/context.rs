@@ -48,9 +48,6 @@ use crate::values::{
     ArrayValue,
 };
 use crate::AddressSpace;
-#[cfg(feature = "internal-getters")]
-use crate::LLVMReference;
-pub(crate) use private::AsContextRef;
 
 use std::marker::PhantomData;
 use std::mem::forget;
@@ -1276,13 +1273,6 @@ impl Drop for Context {
     }
 }
 
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMContextRef> for Context {
-    unsafe fn get_ref(&self) -> LLVMContextRef {
-        self.context.0
-    }
-}
-
 /// A `ContextRef` is a smart pointer allowing borrowed access to a type's `Context`.
 #[derive(Debug, PartialEq, Eq)]
 pub struct ContextRef<'ctx> {
@@ -2099,30 +2089,22 @@ impl<'ctx> ContextRef<'ctx> {
     }
 }
 
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMContextRef> for ContextRef<'_> {
-    unsafe fn get_ref(&self) -> LLVMContextRef {
+/// This trait abstracts an LLVM `Context` type and should be implemented with caution.
+pub unsafe trait AsContextRef<'ctx> {
+    /// Returns the internal LLVM reference behind the type
+    fn as_ctx_ref(&self) -> LLVMContextRef;
+}
+
+unsafe impl<'ctx> AsContextRef<'ctx> for &'ctx Context {
+    /// Acquires the underlying raw pointer belonging to this `Context` type.
+    fn as_ctx_ref(&self) -> LLVMContextRef {
         self.context.0
     }
 }
 
-pub(crate) mod private {
-    use super::{Context, ContextRef, LLVMContextRef};
-
-    pub trait AsContextRef<'ctx> {
-        /// Returns the internal LLVM reference behind the type
-        fn as_ctx_ref(&self) -> LLVMContextRef;
-    }
-
-    impl<'ctx> AsContextRef<'ctx> for &'ctx Context {
-        fn as_ctx_ref(&self) -> LLVMContextRef {
-            self.context.0
-        }
-    }
-
-    impl<'ctx> AsContextRef<'ctx> for ContextRef<'ctx> {
-        fn as_ctx_ref(&self) -> LLVMContextRef {
-            self.context.0
-        }
+unsafe impl<'ctx> AsContextRef<'ctx> for ContextRef<'ctx> {
+    /// Acquires the underlying raw pointer belonging to this `ContextRef` type.
+    fn as_ctx_ref(&self) -> LLVMContextRef {
+        self.context.0
     }
 }

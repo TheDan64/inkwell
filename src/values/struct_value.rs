@@ -59,7 +59,7 @@ impl<'ctx> StructValue<'ctx> {
     }
 }
 
-impl AsValueRef for StructValue<'_> {
+unsafe impl AsValueRef for StructValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.struct_value.value
     }

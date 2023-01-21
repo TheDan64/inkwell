@@ -403,7 +403,7 @@ impl<'ctx> StructType<'ctx> {
     }
 }
 
-impl AsTypeRef for StructType<'_> {
+unsafe impl AsTypeRef for StructType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
         self.struct_type.ty
     }

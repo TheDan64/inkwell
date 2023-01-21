@@ -172,7 +172,7 @@ impl<'ctx> FloatValue<'ctx> {
     }
 }
 
-impl AsValueRef for FloatValue<'_> {
+unsafe impl AsValueRef for FloatValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.float_value.value
     }

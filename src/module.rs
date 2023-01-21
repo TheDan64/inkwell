@@ -55,8 +55,6 @@ use crate::types::{AsTypeRef, BasicType, FunctionType, StructType};
 #[llvm_versions(7.0..=latest)]
 use crate::values::BasicValue;
 use crate::values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
-#[cfg(feature = "internal-getters")]
-use crate::LLVMReference;
 use crate::{AddressSpace, OptimizationLevel};
 
 #[llvm_enum(LLVMLinkage)]
@@ -184,6 +182,11 @@ impl<'ctx> Module<'ctx> {
             data_layout: RefCell::new(Some(Module::get_borrowed_data_layout(module))),
             _marker: PhantomData,
         }
+    }
+
+    /// Acquires the underlying raw pointer belonging to this `Module` type.
+    pub fn as_mut_ptr(&self) -> LLVMModuleRef {
+        self.module.get()
     }
 
     /// Creates a function given its `name` and `ty`, adds it to the `Module`
@@ -429,7 +432,7 @@ impl<'ctx> Module<'ctx> {
         // REVIEW: This isn't an owned LLVMString, is it? If so, need to deallocate.
         let target_str = unsafe { LLVMGetTarget(self.module.get()) };
 
-        TargetTriple::new(LLVMString::create_from_c_str(unsafe { CStr::from_ptr(target_str) }))
+        unsafe { TargetTriple::new(LLVMString::create_from_c_str(CStr::from_ptr(target_str))) }
     }
 
     /// Creates an `ExecutionEngine` from this `Module`.
@@ -712,7 +715,7 @@ impl<'ctx> Module<'ctx> {
     pub fn write_bitcode_to_memory(&self) -> MemoryBuffer {
         let memory_buffer = unsafe { LLVMWriteBitcodeToMemoryBuffer(self.module.get()) };
 
-        MemoryBuffer::new(memory_buffer)
+        unsafe { MemoryBuffer::new(memory_buffer) }
     }
 
     /// Ensures that the current `Module` is valid, and returns a `Result`
@@ -1319,7 +1322,7 @@ impl<'ctx> Module<'ctx> {
         let c_string = to_c_str(name);
         let comdat_ptr = unsafe { LLVMGetOrInsertComdat(self.module.get(), c_string.as_ptr()) };
 
-        Comdat::new(comdat_ptr)
+        unsafe { Comdat::new(comdat_ptr) }
     }
 
     /// Gets the `MetadataValue` flag associated with the key in this module, if any.
@@ -1518,13 +1521,6 @@ impl Drop for Module<'_> {
         }
 
         // Context & EE will drop naturally if they are unique references at this point
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMModuleRef> for Module<'_> {
-    unsafe fn get_ref(&self) -> LLVMModuleRef {
-        self.module.get()
     }
 }
 

@@ -8,8 +8,6 @@ use llvm_sys::object::{
     LLVMObjectFileRef, LLVMRelocationIteratorRef, LLVMSectionIteratorRef, LLVMSymbolIteratorRef,
 };
 
-#[cfg(feature = "internal-getters")]
-use crate::LLVMReference;
 use std::ffi::CStr;
 
 // REVIEW: Make sure SectionIterator's object_file ptr doesn't outlive ObjectFile
@@ -21,22 +19,26 @@ pub struct ObjectFile {
 }
 
 impl ObjectFile {
-    pub(crate) fn new(object_file: LLVMObjectFileRef) -> Self {
+    pub unsafe fn new(object_file: LLVMObjectFileRef) -> Self {
         assert!(!object_file.is_null());
 
         ObjectFile { object_file }
     }
 
+    pub fn as_mut_ptr(&self) -> LLVMObjectFileRef {
+        self.object_file
+    }
+
     pub fn get_sections(&self) -> SectionIterator {
         let section_iterator = unsafe { LLVMGetSections(self.object_file) };
 
-        SectionIterator::new(section_iterator, self.object_file)
+        unsafe { SectionIterator::new(section_iterator, self.object_file) }
     }
 
     pub fn get_symbols(&self) -> SymbolIterator {
         let symbol_iterator = unsafe { LLVMGetSymbols(self.object_file) };
 
-        SymbolIterator::new(symbol_iterator, self.object_file)
+        unsafe { SymbolIterator::new(symbol_iterator, self.object_file) }
     }
 }
 
@@ -54,14 +56,19 @@ pub struct SectionIterator {
 }
 
 impl SectionIterator {
-    fn new(section_iterator: LLVMSectionIteratorRef, object_file: LLVMObjectFileRef) -> Self {
+    pub unsafe fn new(section_iterator: LLVMSectionIteratorRef, object_file: LLVMObjectFileRef) -> Self {
         assert!(!section_iterator.is_null());
+        assert!(!object_file.is_null());
 
         SectionIterator {
             section_iterator,
             object_file,
             before_first: true,
         }
+    }
+
+    pub fn as_mut_ptr(&self) -> (LLVMSectionIteratorRef, LLVMObjectFileRef) {
+        (self.section_iterator, self.object_file)
     }
 }
 
@@ -83,9 +90,7 @@ impl Iterator for SectionIterator {
             return None;
         }
 
-        let section = Section::new(self.section_iterator, self.object_file);
-
-        Some(section)
+        Some(unsafe { Section::new(self.section_iterator, self.object_file) })
     }
 }
 
@@ -102,10 +107,15 @@ pub struct Section {
 }
 
 impl Section {
-    fn new(section: LLVMSectionIteratorRef, object_file: LLVMObjectFileRef) -> Self {
+    pub unsafe fn new(section: LLVMSectionIteratorRef, object_file: LLVMObjectFileRef) -> Self {
         assert!(!section.is_null());
+        assert!(!object_file.is_null());
 
         Section { section, object_file }
+    }
+
+    pub unsafe fn as_mut_ptr(&self) -> (LLVMSectionIteratorRef, LLVMObjectFileRef) {
+        (self.section, self.object_file)
     }
 
     pub fn get_name(&self) -> Option<&CStr> {
@@ -132,7 +142,7 @@ impl Section {
     pub fn get_relocations(&self) -> RelocationIterator {
         let relocation_iterator = unsafe { LLVMGetRelocations(self.section) };
 
-        RelocationIterator::new(relocation_iterator, self.section, self.object_file)
+        unsafe { RelocationIterator::new(relocation_iterator, self.section, self.object_file) }
     }
 }
 
@@ -145,12 +155,14 @@ pub struct RelocationIterator {
 }
 
 impl RelocationIterator {
-    fn new(
+    pub unsafe fn new(
         relocation_iterator: LLVMRelocationIteratorRef,
         section_iterator: LLVMSectionIteratorRef,
         object_file: LLVMObjectFileRef,
     ) -> Self {
         assert!(!relocation_iterator.is_null());
+        assert!(!section_iterator.is_null());
+        assert!(!object_file.is_null());
 
         RelocationIterator {
             relocation_iterator,
@@ -158,6 +170,10 @@ impl RelocationIterator {
             object_file,
             before_first: true,
         }
+    }
+
+    pub fn as_mut_ptr(&self) -> (LLVMRelocationIteratorRef, LLVMSectionIteratorRef, LLVMObjectFileRef) {
+        (self.relocation_iterator, self.section_iterator, self.object_file)
     }
 }
 
@@ -177,9 +193,7 @@ impl Iterator for RelocationIterator {
             return None;
         }
 
-        let relocation = Relocation::new(self.relocation_iterator, self.object_file);
-
-        Some(relocation)
+        Some(unsafe { Relocation::new(self.relocation_iterator, self.object_file) })
     }
 }
 
@@ -196,13 +210,18 @@ pub struct Relocation {
 }
 
 impl Relocation {
-    fn new(relocation: LLVMRelocationIteratorRef, object_file: LLVMObjectFileRef) -> Self {
+    pub unsafe fn new(relocation: LLVMRelocationIteratorRef, object_file: LLVMObjectFileRef) -> Self {
         assert!(!relocation.is_null());
+        assert!(!object_file.is_null());
 
         Relocation {
             relocation,
             object_file,
         }
+    }
+
+    pub fn as_mut_ptr(&self) -> (LLVMRelocationIteratorRef, LLVMObjectFileRef) {
+        (self.relocation, self.object_file)
     }
 
     pub fn get_offset(&self) -> u64 {
@@ -215,7 +234,7 @@ impl Relocation {
             LLVMGetRelocationSymbol(self.relocation)
         };
 
-        SymbolIterator::new(symbol_iterator, self.object_file)
+        unsafe { SymbolIterator::new(symbol_iterator, self.object_file) }
     }
 
     pub fn get_type(&self) -> (u64, &CStr) {
@@ -238,14 +257,19 @@ pub struct SymbolIterator {
 }
 
 impl SymbolIterator {
-    fn new(symbol_iterator: LLVMSymbolIteratorRef, object_file: LLVMObjectFileRef) -> Self {
+    pub unsafe fn new(symbol_iterator: LLVMSymbolIteratorRef, object_file: LLVMObjectFileRef) -> Self {
         assert!(!symbol_iterator.is_null());
+        assert!(!object_file.is_null());
 
         SymbolIterator {
             symbol_iterator,
             object_file,
             before_first: true,
         }
+    }
+
+    pub fn as_mut_ptr(&self) -> (LLVMSymbolIteratorRef, LLVMObjectFileRef) {
+        (self.symbol_iterator, self.object_file)
     }
 }
 
@@ -265,9 +289,7 @@ impl Iterator for SymbolIterator {
             return None;
         }
 
-        let symbol = Symbol::new(self.symbol_iterator);
-
-        Some(symbol)
+        Some(unsafe { Symbol::new(self.symbol_iterator) })
     }
 }
 
@@ -283,10 +305,14 @@ pub struct Symbol {
 }
 
 impl Symbol {
-    fn new(symbol: LLVMSymbolIteratorRef) -> Self {
+    pub unsafe fn new(symbol: LLVMSymbolIteratorRef) -> Self {
         assert!(!symbol.is_null());
 
         Symbol { symbol }
+    }
+
+    pub fn as_mut_ptr(&self) -> LLVMSymbolIteratorRef {
+        self.symbol
     }
 
     pub fn get_name(&self) -> Option<&CStr> {
@@ -304,33 +330,5 @@ impl Symbol {
 
     pub fn get_address(&self) -> u64 {
         unsafe { LLVMGetSymbolAddress(self.symbol) }
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMObjectFileRef> for ObjectFile {
-    unsafe fn get_ref(&self) -> LLVMObjectFileRef {
-        self.object_file
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMSymbolIteratorRef> for Symbol {
-    unsafe fn get_ref(&self) -> LLVMSymbolIteratorRef {
-        self.symbol
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMSectionIteratorRef> for Section {
-    unsafe fn get_ref(&self) -> LLVMSectionIteratorRef {
-        self.section
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMRelocationIteratorRef> for Relocation {
-    unsafe fn get_ref(&self) -> LLVMRelocationIteratorRef {
-        self.relocation
     }
 }

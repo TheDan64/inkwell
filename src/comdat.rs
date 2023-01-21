@@ -5,9 +5,6 @@
 use llvm_sys::comdat::{LLVMComdatSelectionKind, LLVMGetComdatSelectionKind, LLVMSetComdatSelectionKind};
 use llvm_sys::prelude::LLVMComdatRef;
 
-#[cfg(feature = "internal-getters")]
-use crate::LLVMReference;
-
 #[llvm_enum(LLVMComdatSelectionKind)]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 /// Determines how linker conflicts are to be resolved.
@@ -34,10 +31,16 @@ pub enum ComdatSelectionKind {
 pub struct Comdat(pub(crate) LLVMComdatRef);
 
 impl Comdat {
-    pub(crate) fn new(comdat: LLVMComdatRef) -> Self {
+    /// Creates a new `Comdat` type from a raw pointer.
+    pub unsafe fn new(comdat: LLVMComdatRef) -> Self {
         debug_assert!(!comdat.is_null());
 
         Comdat(comdat)
+    }
+
+    /// Acquires the underlying raw pointer belonging to this `Comdat` type.
+    pub fn as_mut_ptr(&self) -> LLVMComdatRef {
+        self.0
     }
 
     /// Gets what kind of `Comdat` this is.
@@ -50,12 +53,5 @@ impl Comdat {
     /// Sets what kind of `Comdat` this should be.
     pub fn set_selection_kind(self, kind: ComdatSelectionKind) {
         unsafe { LLVMSetComdatSelectionKind(self.0, kind.into()) }
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMComdatRef> for Comdat {
-    unsafe fn get_ref(&self) -> LLVMComdatRef {
-        self.0
     }
 }

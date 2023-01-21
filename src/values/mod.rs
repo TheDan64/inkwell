@@ -43,11 +43,9 @@ pub use crate::values::metadata_value::{MetadataValue, FIRST_CUSTOM_METADATA_KIN
 pub use crate::values::phi_value::PhiValue;
 pub use crate::values::ptr_value::PointerValue;
 pub use crate::values::struct_value::StructValue;
-pub(crate) use crate::values::traits::AsValueRef;
+pub use crate::values::traits::AsValueRef;
 pub use crate::values::traits::{AggregateValue, AnyValue, BasicValue, FloatMathValue, IntMathValue, PointerMathValue};
 pub use crate::values::vec_value::VectorValue;
-#[cfg(feature = "internal-getters")]
-use crate::LLVMReference;
 
 use llvm_sys::core::{
     LLVMDumpValue, LLVMGetFirstUse, LLVMGetSection, LLVMIsAInstruction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef,
@@ -229,15 +227,5 @@ impl fmt::Debug for Value<'_> {
             .field("llvm_value", &llvm_value)
             .field("llvm_type", &llvm_type)
             .finish()
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl<T> LLVMReference<LLVMValueRef> for T
-where
-    T: AsValueRef,
-{
-    unsafe fn get_ref(&self) -> LLVMValueRef {
-        self.as_value_ref()
     }
 }

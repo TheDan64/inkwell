@@ -274,7 +274,7 @@ impl<'ctx> FloatType<'ctx> {
     }
 }
 
-impl AsTypeRef for FloatType<'_> {
+unsafe impl AsTypeRef for FloatType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
         self.float_type.ty
     }

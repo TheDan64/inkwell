@@ -6,9 +6,6 @@ use llvm_sys::error_handling::{LLVMInstallFatalErrorHandler, LLVMResetFatalError
 use llvm_sys::prelude::LLVMDiagnosticInfoRef;
 use llvm_sys::LLVMDiagnosticSeverity;
 
-#[cfg(feature = "internal-getters")]
-use crate::LLVMReference;
-
 // REVIEW: Maybe it's possible to have a safe wrapper? If we can
 // wrap the provided function input ptr into a &CStr somehow
 // TODOC: Can be used like this:
@@ -36,8 +33,13 @@ pub(crate) struct DiagnosticInfo {
 }
 
 impl DiagnosticInfo {
-    pub(crate) fn new(diagnostic_info: LLVMDiagnosticInfoRef) -> Self {
+    pub unsafe fn new(diagnostic_info: LLVMDiagnosticInfoRef) -> Self {
         DiagnosticInfo { diagnostic_info }
+    }
+
+    /// Acquires the underlying raw pointer belonging to this `DiagnosticInfo` type.
+    pub fn as_mut_ptr(&self) -> LLVMDiagnosticInfoRef {
+        self.diagnostic_info
     }
 
     pub(crate) fn get_description(&self) -> *mut ::libc::c_char {
@@ -63,7 +65,7 @@ pub(crate) extern "C" fn get_error_str_diagnostic_handler(
     diagnostic_info: LLVMDiagnosticInfoRef,
     void_ptr: *mut c_void,
 ) {
-    let diagnostic_info = DiagnosticInfo::new(diagnostic_info);
+    let diagnostic_info = unsafe { DiagnosticInfo::new(diagnostic_info) };
 
     if diagnostic_info.severity_is_error() {
         let c_ptr_ptr = void_ptr as *mut *mut c_void as *mut *mut ::libc::c_char;
@@ -71,12 +73,5 @@ pub(crate) extern "C" fn get_error_str_diagnostic_handler(
         unsafe {
             *c_ptr_ptr = diagnostic_info.get_description();
         }
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMDiagnosticInfoRef> for DiagnosticInfo {
-    unsafe fn get_ref(&self) -> LLVMDiagnosticInfoRef {
-        self.diagnostic_info
     }
 }

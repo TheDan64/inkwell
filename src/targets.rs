@@ -27,8 +27,6 @@ use crate::passes::PassManager;
 use crate::support::{to_c_str, LLVMString};
 use crate::types::{AnyType, AsTypeRef, IntType, StructType};
 use crate::values::{AsValueRef, GlobalValue};
-#[cfg(feature = "internal-getters")]
-use crate::LLVMReference;
 use crate::{AddressSpace, OptimizationLevel};
 
 use std::default::Default;
@@ -101,7 +99,7 @@ pub struct TargetTriple {
 }
 
 impl TargetTriple {
-    pub(crate) fn new(triple: LLVMString) -> TargetTriple {
+    pub unsafe fn new(triple: LLVMString) -> TargetTriple {
         TargetTriple { triple }
     }
 
@@ -149,10 +147,15 @@ pub struct Target {
 }
 
 impl Target {
-    unsafe fn new(target: LLVMTargetRef) -> Self {
+    pub unsafe fn new(target: LLVMTargetRef) -> Self {
         assert!(!target.is_null());
 
         Target { target }
+    }
+
+    /// Acquires the underlying raw pointer belonging to this `Target` type.
+    pub fn as_mut_ptr(&self) -> LLVMTargetRef {
+        self.target
     }
 
     // REVIEW: Should this just initialize all? Is opt into each a good idea?
@@ -972,10 +975,15 @@ pub struct TargetMachine {
 }
 
 impl TargetMachine {
-    unsafe fn new(target_machine: LLVMTargetMachineRef) -> Self {
+    pub unsafe fn new(target_machine: LLVMTargetMachineRef) -> Self {
         assert!(!target_machine.is_null());
 
         TargetMachine { target_machine }
+    }
+
+    /// Acquires the underlying raw pointer belonging to this `TargetMachine` type.
+    pub fn as_mut_ptr(&self) -> LLVMTargetMachineRef {
+        self.target_machine
     }
 
     pub fn get_target(&self) -> Target {
@@ -985,7 +993,7 @@ impl TargetMachine {
     pub fn get_triple(&self) -> TargetTriple {
         let str = unsafe { LLVMString::new(LLVMGetTargetMachineTriple(self.target_machine)) };
 
-        TargetTriple::new(str)
+        unsafe { TargetTriple::new(str) }
     }
 
     /// Gets the default triple for the current system.
@@ -1002,7 +1010,7 @@ impl TargetMachine {
     pub fn get_default_triple() -> TargetTriple {
         let llvm_string = unsafe { LLVMString::new(LLVMGetDefaultTargetTriple()) };
 
-        TargetTriple::new(llvm_string)
+        unsafe { TargetTriple::new(llvm_string) }
     }
 
     #[llvm_versions(7.0..=latest)]
@@ -1011,7 +1019,7 @@ impl TargetMachine {
 
         let normalized = unsafe { LLVMString::new(LLVMNormalizeTargetTriple(triple.as_ptr())) };
 
-        TargetTriple::new(normalized)
+        unsafe { TargetTriple::new(normalized) }
     }
 
     /// Gets a string containing the host CPU's name (triple).
@@ -1117,7 +1125,7 @@ impl TargetMachine {
             }
         }
 
-        Ok(MemoryBuffer::new(memory_buffer))
+        unsafe { Ok(MemoryBuffer::new(memory_buffer)) }
     }
 
     /// Saves a `TargetMachine` to a file.
@@ -1204,10 +1212,15 @@ pub struct TargetData {
 }
 
 impl TargetData {
-    pub(crate) unsafe fn new(target_data: LLVMTargetDataRef) -> TargetData {
+    pub unsafe fn new(target_data: LLVMTargetDataRef) -> TargetData {
         assert!(!target_data.is_null());
 
         TargetData { target_data }
+    }
+
+    /// Acquires the underlying raw pointer belonging to this `TargetData` type.
+    pub fn as_mut_ptr(&self) -> LLVMTargetDataRef {
+        self.target_data
     }
 
     /// Gets the `IntType` representing a bit width of a pointer. It will be assigned the referenced context.
@@ -1321,12 +1334,5 @@ impl TargetData {
 impl Drop for TargetData {
     fn drop(&mut self) {
         unsafe { LLVMDisposeTargetData(self.target_data) }
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMTargetMachineRef> for TargetMachine {
-    unsafe fn get_ref(&self) -> LLVMTargetMachineRef {
-        self.target_machine
     }
 }

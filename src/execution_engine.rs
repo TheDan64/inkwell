@@ -19,9 +19,6 @@ use std::mem::{forget, size_of, transmute_copy, MaybeUninit};
 use std::ops::Deref;
 use std::rc::Rc;
 
-#[cfg(feature = "internal-getters")]
-use crate::LLVMReference;
-
 static EE_INNER_PANIC: &str = "ExecutionEngineInner should exist until Drop";
 
 #[derive(Debug, PartialEq, Eq)]
@@ -98,7 +95,7 @@ pub struct ExecutionEngine<'ctx> {
 }
 
 impl<'ctx> ExecutionEngine<'ctx> {
-    pub(crate) unsafe fn new(execution_engine: Rc<LLVMExecutionEngineRef>, jit_mode: bool) -> Self {
+    pub unsafe fn new(execution_engine: Rc<LLVMExecutionEngineRef>, jit_mode: bool) -> Self {
         assert!(!execution_engine.is_null());
 
         // REVIEW: Will we have to do this for LLVMGetExecutionEngineTargetMachine too?
@@ -109,6 +106,11 @@ impl<'ctx> ExecutionEngine<'ctx> {
             target_data: Some(TargetData::new(target_data)),
             jit_mode,
         }
+    }
+
+    /// Acquires the underlying raw pointer belonging to this `ExecutionEngine` type.
+    pub fn as_mut_ptr(&self) -> LLVMExecutionEngineRef {
+        self.execution_engine_inner()
     }
 
     pub(crate) fn execution_engine_rc(&self) -> &Rc<LLVMExecutionEngineRef> {
@@ -485,6 +487,24 @@ pub struct JitFunction<'ctx, F> {
     inner: F,
 }
 
+impl<'ctx, F: Copy> JitFunction<'ctx, F> {
+    /// Returns the raw function pointer, consuming self in the process.
+    /// This function is unsafe because the function pointer may dangle
+    /// if the ExecutionEngine it came from is dropped. The caller is
+    /// thus responsible for ensuring the ExecutionEngine remains valid.
+    pub fn into_raw(self) -> F {
+        self.inner
+    }
+
+    /// Returns the raw function pointer.
+    /// This function is unsafe because the function pointer may dangle
+    /// if the ExecutionEngine it came from is dropped. The caller is
+    /// thus responsible for ensuring the ExecutionEngine remains valid.
+    pub fn as_raw(&self) -> F {
+        self.inner
+    }
+}
+
 impl<F> Debug for JitFunction<'_, F> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         f.debug_tuple("JitFunction").field(&"<unnamed>").finish()
@@ -671,12 +691,5 @@ pub mod experimental {
 
         // REVIEW: This doesn't seem very mangled...
         assert_eq!(mangled_symbol.to_str().unwrap(), "MyStructName");
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMExecutionEngineRef> for ExecutionEngine<'_> {
-    unsafe fn get_ref(&self) -> LLVMExecutionEngineRef {
-        self.execution_engine_inner()
     }
 }

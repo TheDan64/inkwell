@@ -234,7 +234,7 @@ impl<'ctx> ArrayType<'ctx> {
     }
 }
 
-impl AsTypeRef for ArrayType<'_> {
+unsafe impl AsTypeRef for ArrayType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
         self.array_type.ty
     }

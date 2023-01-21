@@ -123,7 +123,7 @@ impl<'ctx> MetadataValue<'ctx> {
     }
 }
 
-impl AsValueRef for MetadataValue<'_> {
+unsafe impl AsValueRef for MetadataValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.metadata_value.value
     }

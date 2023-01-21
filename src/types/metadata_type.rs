@@ -67,7 +67,7 @@ impl<'ctx> MetadataType<'ctx> {
     }
 }
 
-impl AsTypeRef for MetadataType<'_> {
+unsafe impl AsTypeRef for MetadataType<'_> {
     #[llvm_versions(6.0..=latest)]
     fn as_type_ref(&self) -> LLVMTypeRef {
         self.metadata_type.ty

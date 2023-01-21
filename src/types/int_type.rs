@@ -385,7 +385,7 @@ impl<'ctx> IntType<'ctx> {
     }
 }
 
-impl AsTypeRef for IntType<'_> {
+unsafe impl AsTypeRef for IntType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
         self.int_type.ty
     }
