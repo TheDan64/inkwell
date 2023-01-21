@@ -12,8 +12,6 @@ use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 use crate::context::ContextRef;
 use crate::support::to_c_str;
 use crate::values::{AsValueRef, BasicValueUse, FunctionValue, InstructionValue, PointerValue};
-#[cfg(feature = "internal-getters")]
-use crate::LLVMReference;
 
 use std::ffi::CStr;
 use std::fmt;
@@ -45,6 +43,11 @@ impl<'ctx> BasicBlock<'ctx> {
             basic_block,
             _marker: PhantomData,
         })
+    }
+
+    /// Acquires the underlying raw pointer belonging to this `BasicBlock` type.
+    pub fn as_mut_ptr(&self) -> LLVMBasicBlockRef {
+        self.basic_block
     }
 
     /// Obtains the `FunctionValue` that this `BasicBlock` belongs to, if any.
@@ -557,12 +560,5 @@ impl fmt::Debug for BasicBlock<'_> {
             .field("llvm_value", &llvm_value)
             .field("llvm_type", &llvm_type)
             .finish()
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMBasicBlockRef> for BasicBlock<'_> {
-    unsafe fn get_ref(&self) -> LLVMBasicBlockRef {
-        self.basic_block
     }
 }

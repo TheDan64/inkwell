@@ -49,8 +49,6 @@ use crate::values::{
     PointerMathValue, PointerValue, StructValue, VectorValue,
 };
 
-#[cfg(feature = "internal-getters")]
-use crate::LLVMReference;
 use crate::{AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate};
 
 use std::marker::PhantomData;
@@ -65,13 +63,18 @@ pub struct Builder<'ctx> {
 use crate::context::Context;
 
 impl<'ctx> Builder<'ctx> {
-    pub(crate) unsafe fn new(builder: LLVMBuilderRef) -> Self {
+    pub unsafe fn new(builder: LLVMBuilderRef) -> Self {
         debug_assert!(!builder.is_null());
 
         Builder {
             builder,
             _marker: PhantomData,
         }
+    }
+
+    /// Acquires the underlying raw pointer belonging to this `Builder` type.
+    pub fn as_mut_ptr(&self) -> LLVMBuilderRef {
+        self.builder
     }
 
     // REVIEW: Would probably make this API a bit simpler by taking Into<Option<&BasicValue>>
@@ -2955,12 +2958,5 @@ impl Drop for Builder<'_> {
         unsafe {
             LLVMDisposeBuilder(self.builder);
         }
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMBuilderRef> for Builder<'_> {
-    unsafe fn get_ref(&self) -> LLVMBuilderRef {
-        self.builder
     }
 }

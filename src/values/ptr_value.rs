@@ -166,7 +166,7 @@ impl<'ctx> PointerValue<'ctx> {
     }
 }
 
-impl AsValueRef for PointerValue<'_> {
+unsafe impl AsValueRef for PointerValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.ptr_value.value
     }

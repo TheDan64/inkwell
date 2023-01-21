@@ -521,7 +521,7 @@ impl<'ctx> FunctionValue<'ctx> {
     }
 }
 
-impl AsValueRef for FunctionValue<'_> {
+unsafe impl AsValueRef for FunctionValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.fn_value.value
     }

@@ -676,7 +676,7 @@ impl Clone for InstructionValue<'_> {
     }
 }
 
-impl AsValueRef for InstructionValue<'_> {
+unsafe impl AsValueRef for InstructionValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.instruction_value.value
     }

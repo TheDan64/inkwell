@@ -163,7 +163,7 @@ impl<'ctx> VectorValue<'ctx> {
     }
 }
 
-impl AsValueRef for VectorValue<'_> {
+unsafe impl AsValueRef for VectorValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.vec_value.value
     }

@@ -23,7 +23,7 @@ macro_rules! enum_value_set {
             )*
         }
 
-        impl AsValueRef for $enum_name<'_> {
+        unsafe impl AsValueRef for $enum_name<'_> {
             fn as_value_ref(&self) -> LLVMValueRef {
                 match *self {
                     $(

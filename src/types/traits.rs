@@ -8,11 +8,8 @@ use crate::types::{ArrayType, FloatType, FunctionType, IntType, PointerType, Str
 use crate::values::{FloatMathValue, FloatValue, IntMathValue, IntValue, PointerMathValue, PointerValue, VectorValue};
 use crate::AddressSpace;
 
-// This is an ugly privacy hack so that Type can stay private to this module
-// and so that super traits using this trait will be not be implementable
-// outside this library
 /// Accessor to the inner LLVM type reference
-pub trait AsTypeRef {
+pub unsafe trait AsTypeRef {
     /// Returns the internal LLVM reference behind the type
     fn as_type_ref(&self) -> LLVMTypeRef;
 }
@@ -20,13 +17,13 @@ pub trait AsTypeRef {
 macro_rules! trait_type_set {
     ($trait_name:ident: $($args:ident),*) => (
         $(
-            impl<'ctx> $trait_name<'ctx> for $args<'ctx> {}
+            unsafe impl<'ctx> $trait_name<'ctx> for $args<'ctx> {}
         )*
     );
 }
 
 /// Represents any LLVM type.
-pub trait AnyType<'ctx>: AsTypeRef + Debug {
+pub unsafe trait AnyType<'ctx>: AsTypeRef + Debug {
     /// Returns an `AnyTypeEnum` that represents the current type.
     fn as_any_type_enum(&self) -> AnyTypeEnum<'ctx> {
         unsafe { AnyTypeEnum::new(self.as_type_ref()) }
@@ -39,7 +36,7 @@ pub trait AnyType<'ctx>: AsTypeRef + Debug {
 }
 
 /// Represents a basic LLVM type, that may be used in functions and struct definitions.
-pub trait BasicType<'ctx>: AnyType<'ctx> {
+pub unsafe trait BasicType<'ctx>: AnyType<'ctx> {
     /// Returns a `BasicTypeEnum` that represents the current type.
     fn as_basic_type_enum(&self) -> BasicTypeEnum<'ctx> {
         unsafe { BasicTypeEnum::new(self.as_type_ref()) }
@@ -135,7 +132,7 @@ pub trait BasicType<'ctx>: AnyType<'ctx> {
 }
 
 /// Represents an LLVM type that can have integer math operations applied to it.
-pub trait IntMathType<'ctx>: BasicType<'ctx> {
+pub unsafe trait IntMathType<'ctx>: BasicType<'ctx> {
     /// The value instance of an int or int vector type.
     type ValueType: IntMathValue<'ctx>;
     /// The type for int to float or int vector to float vector conversions.
@@ -145,7 +142,7 @@ pub trait IntMathType<'ctx>: BasicType<'ctx> {
 }
 
 /// Represents an LLVM type that can have floating point math operations applied to it.
-pub trait FloatMathType<'ctx>: BasicType<'ctx> {
+pub unsafe trait FloatMathType<'ctx>: BasicType<'ctx> {
     /// The value instance of a float or float vector type.
     type ValueType: FloatMathValue<'ctx>;
     /// The type for float to int or float vector to int vector conversions.
@@ -153,7 +150,7 @@ pub trait FloatMathType<'ctx>: BasicType<'ctx> {
 }
 
 /// Represents an LLVM type that can have pointer operations applied to it.
-pub trait PointerMathType<'ctx>: BasicType<'ctx> {
+pub unsafe trait PointerMathType<'ctx>: BasicType<'ctx> {
     /// The value instance of a pointer type.
     type ValueType: PointerMathValue<'ctx>;
     /// The type for pointer to int or pointer vector to int conversions.
@@ -163,34 +160,34 @@ pub trait PointerMathType<'ctx>: BasicType<'ctx> {
 trait_type_set! {AnyType: AnyTypeEnum, BasicTypeEnum, IntType, FunctionType, FloatType, PointerType, StructType, ArrayType, VoidType, VectorType}
 trait_type_set! {BasicType: BasicTypeEnum, IntType, FloatType, PointerType, StructType, ArrayType, VectorType}
 
-impl<'ctx> IntMathType<'ctx> for IntType<'ctx> {
+unsafe impl<'ctx> IntMathType<'ctx> for IntType<'ctx> {
     type ValueType = IntValue<'ctx>;
     type MathConvType = FloatType<'ctx>;
     type PtrConvType = PointerType<'ctx>;
 }
 
-impl<'ctx> IntMathType<'ctx> for VectorType<'ctx> {
+unsafe impl<'ctx> IntMathType<'ctx> for VectorType<'ctx> {
     type ValueType = VectorValue<'ctx>;
     type MathConvType = VectorType<'ctx>;
     type PtrConvType = VectorType<'ctx>;
 }
 
-impl<'ctx> FloatMathType<'ctx> for FloatType<'ctx> {
+unsafe impl<'ctx> FloatMathType<'ctx> for FloatType<'ctx> {
     type ValueType = FloatValue<'ctx>;
     type MathConvType = IntType<'ctx>;
 }
 
-impl<'ctx> FloatMathType<'ctx> for VectorType<'ctx> {
+unsafe impl<'ctx> FloatMathType<'ctx> for VectorType<'ctx> {
     type ValueType = VectorValue<'ctx>;
     type MathConvType = VectorType<'ctx>;
 }
 
-impl<'ctx> PointerMathType<'ctx> for PointerType<'ctx> {
+unsafe impl<'ctx> PointerMathType<'ctx> for PointerType<'ctx> {
     type ValueType = PointerValue<'ctx>;
     type PtrConvType = IntType<'ctx>;
 }
 
-impl<'ctx> PointerMathType<'ctx> for VectorType<'ctx> {
+unsafe impl<'ctx> PointerMathType<'ctx> for VectorType<'ctx> {
     type ValueType = VectorValue<'ctx>;
     type PtrConvType = VectorType<'ctx>;
 }

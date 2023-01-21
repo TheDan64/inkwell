@@ -351,7 +351,7 @@ impl<'ctx> IntValue<'ctx> {
     }
 }
 
-impl AsValueRef for IntValue<'_> {
+unsafe impl AsValueRef for IntValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.int_value.value
     }

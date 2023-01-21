@@ -292,7 +292,7 @@ impl<'ctx> PointerType<'ctx> {
     }
 }
 
-impl AsTypeRef for PointerType<'_> {
+unsafe impl AsTypeRef for PointerType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
         self.ptr_type.ty
     }

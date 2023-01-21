@@ -84,7 +84,7 @@ impl<'ctx> VoidType<'ctx> {
     }
 }
 
-impl AsTypeRef for VoidType<'_> {
+unsafe impl AsTypeRef for VoidType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
         self.void_type.ty
     }

@@ -534,7 +534,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     }
 }
 
-impl AsValueRef for CallSiteValue<'_> {
+unsafe impl AsValueRef for CallSiteValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.0.value
     }

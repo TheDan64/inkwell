@@ -12,8 +12,6 @@ use std::ffi::CStr;
 
 #[llvm_versions(12.0..=latest)]
 use crate::types::AnyTypeEnum;
-#[cfg(feature = "internal-getters")]
-use crate::LLVMReference;
 
 // SubTypes: Attribute<Enum>, Attribute<String>
 // REVIEW: Should Attributes have a 'ctx lifetime?
@@ -25,10 +23,16 @@ pub struct Attribute {
 }
 
 impl Attribute {
-    pub(crate) unsafe fn new(attribute: LLVMAttributeRef) -> Self {
+    /// Creates a new `Attribute` from a raw pointer.
+    pub unsafe fn new(attribute: LLVMAttributeRef) -> Self {
         debug_assert!(!attribute.is_null());
 
         Attribute { attribute }
+    }
+
+    /// Acquires the underlying raw pointer belonging to this `Attribute` type.
+    pub fn as_mut_ptr(&self) -> LLVMAttributeRef {
+        self.attribute
     }
 
     /// Determines whether or not an `Attribute` is an enum. This method will
@@ -303,12 +307,5 @@ impl AttributeLoc {
             },
             AttributeLoc::Function => u32::max_value(),
         }
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMAttributeRef> for Attribute {
-    unsafe fn get_ref(&self) -> LLVMAttributeRef {
-        self.attribute
     }
 }

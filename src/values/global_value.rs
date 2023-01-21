@@ -256,7 +256,7 @@ impl<'ctx> GlobalValue<'ctx> {
             return None;
         }
 
-        Some(Comdat::new(comdat_ptr))
+        unsafe { Some(Comdat::new(comdat_ptr)) }
     }
 
     /// Assigns a `Comdat` to this `GlobalValue`.
@@ -292,7 +292,7 @@ impl<'ctx> GlobalValue<'ctx> {
     }
 }
 
-impl AsValueRef for GlobalValue<'_> {
+unsafe impl AsValueRef for GlobalValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.global_value.value
     }

@@ -107,8 +107,6 @@ use crate::module::Module;
 use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, MetadataValue, PointerValue};
 use crate::AddressSpace;
 
-#[cfg(feature = "internal-getters")]
-use crate::LLVMReference;
 use llvm_sys::core::LLVMMetadataAsValue;
 #[llvm_versions(8.0..=latest)]
 use llvm_sys::debuginfo::LLVMDIBuilderCreateTypedef;
@@ -157,6 +155,13 @@ pub struct DebugInfoBuilder<'ctx> {
 pub struct DIScope<'ctx> {
     metadata_ref: LLVMMetadataRef,
     _marker: PhantomData<&'ctx Context>,
+}
+
+impl<'ctx> DIScope<'ctx> {
+    /// Acquires the underlying raw pointer belonging to this `DIScope` type.
+    pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
+        self.metadata_ref
+    }
 }
 
 /// Specific scopes (i.e. `DILexicalBlock`) can be turned into a `DIScope` with the
@@ -244,6 +249,11 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         );
 
         (builder, cu)
+    }
+
+    /// Acquires the underlying raw pointer belonging to this `DebugInfoBuilder` type.
+    pub fn as_mut_ptr(&self) -> LLVMDIBuilderRef {
+        self.builder
     }
 
     /// A DICompileUnit provides an anchor for all debugging information generated during this instance of compilation.
@@ -1028,6 +1038,13 @@ impl<'ctx> AsDIScope<'ctx> for DIFile<'ctx> {
     }
 }
 
+impl<'ctx> DIFile<'ctx> {
+    /// Acquires the underlying raw pointer belonging to this `DIFile` type.
+    pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
+        self.metadata_ref
+    }
+}
+
 /// Compilation unit scope for debug info
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct DICompileUnit<'ctx> {
@@ -1039,6 +1056,11 @@ pub struct DICompileUnit<'ctx> {
 impl<'ctx> DICompileUnit<'ctx> {
     pub fn get_file(&self) -> DIFile<'ctx> {
         self.file
+    }
+
+    /// Acquires the underlying raw pointer belonging to this `DICompileUnit` type.
+    pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
+        self.metadata_ref
     }
 }
 
@@ -1056,6 +1078,13 @@ impl<'ctx> AsDIScope<'ctx> for DICompileUnit<'ctx> {
 pub struct DINamespace<'ctx> {
     pub(crate) metadata_ref: LLVMMetadataRef,
     _marker: PhantomData<&'ctx Context>,
+}
+
+impl<'ctx> DINamespace<'ctx> {
+    /// Acquires the underlying raw pointer belonging to this `DINamespace` type.
+    pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
+        self.metadata_ref
+    }
 }
 
 impl<'ctx> AsDIScope<'ctx> for DINamespace<'ctx> {
@@ -1083,6 +1112,13 @@ impl<'ctx> AsDIScope<'ctx> for DISubprogram<'ctx> {
     }
 }
 
+impl<'ctx> DISubprogram<'ctx> {
+    /// Acquires the underlying raw pointer belonging to this `DISubprogram` type.
+    pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
+        self.metadata_ref
+    }
+}
+
 /// Any kind of debug info type
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct DIType<'ctx> {
@@ -1101,6 +1137,11 @@ impl<'ctx> DIType<'ctx> {
 
     pub fn get_offset_in_bits(&self) -> u64 {
         unsafe { LLVMDITypeGetOffsetInBits(self.metadata_ref) }
+    }
+
+    /// Acquires the underlying raw pointer belonging to this `DIType` type.
+    pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
+        self.metadata_ref
     }
 }
 
@@ -1129,6 +1170,12 @@ impl<'ctx> DIDerivedType<'ctx> {
     }
 }
 
+impl<'ctx> DIDerivedType<'ctx> {
+    pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
+        self.metadata_ref
+    }
+}
+
 impl<'ctx> AsDIScope<'ctx> for DIDerivedType<'ctx> {
     fn as_debug_info_scope(self) -> DIScope<'ctx> {
         DIScope {
@@ -1151,6 +1198,11 @@ impl<'ctx> DIBasicType<'ctx> {
             metadata_ref: self.metadata_ref,
             _marker: PhantomData,
         }
+    }
+
+    /// Acquires the underlying raw pointer belonging to this `DIBasicType` type.
+    pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
+        self.metadata_ref
     }
 }
 
@@ -1175,6 +1227,11 @@ impl<'ctx> DICompositeType<'ctx> {
             metadata_ref: self.metadata_ref,
             _marker: PhantomData,
         }
+    }
+
+    /// Acquires the underlying raw pointer belonging to this `DICompositType` type.
+    pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
+        self.metadata_ref
     }
 }
 
@@ -1210,6 +1267,13 @@ impl<'ctx> AsDIScope<'ctx> for DILexicalBlock<'ctx> {
     }
 }
 
+impl<'ctx> DILexicalBlock<'ctx> {
+    /// Acquires the underlying raw pointer belonging to this `DILexicalBlock` type.
+    pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
+        self.metadata_ref
+    }
+}
+
 /// A debug location within the source code. Contains the following information:
 ///
 /// - line, column
@@ -1239,6 +1303,11 @@ impl<'ctx> DILocation<'ctx> {
             _marker: PhantomData,
         }
     }
+
+    /// Acquires the underlying raw pointer belonging to this `DILocation` type.
+    pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
+        self.metadata_ref
+    }
 }
 
 /// Metadata representing a variable inside a scope
@@ -1246,6 +1315,13 @@ impl<'ctx> DILocation<'ctx> {
 pub struct DILocalVariable<'ctx> {
     pub(crate) metadata_ref: LLVMMetadataRef,
     _marker: PhantomData<&'ctx Context>,
+}
+
+impl<'ctx> DILocalVariable<'ctx> {
+    /// Acquires the underlying raw pointer belonging to this `DILocalVariable` type.
+    pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
+        self.metadata_ref
+    }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -1258,6 +1334,11 @@ impl<'ctx> DIGlobalVariableExpression<'ctx> {
     pub fn as_metadata_value(&self, context: impl AsContextRef<'ctx>) -> MetadataValue<'ctx> {
         unsafe { MetadataValue::new(LLVMMetadataAsValue(context.as_ctx_ref(), self.metadata_ref)) }
     }
+
+    /// Acquires the underlying raw pointer belonging to this `DIGlobalVariableExpression` type.
+    pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
+        self.metadata_ref
+    }
 }
 
 /// https://llvm.org/docs/LangRef.html#diexpression
@@ -1265,6 +1346,13 @@ impl<'ctx> DIGlobalVariableExpression<'ctx> {
 pub struct DIExpression<'ctx> {
     pub(crate) metadata_ref: LLVMMetadataRef,
     _marker: PhantomData<&'ctx Context>,
+}
+
+impl<'ctx> DIExpression<'ctx> {
+    /// Acquires the underlying raw pointer belonging to this `DIExpression` type.
+    pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
+        self.metadata_ref
+    }
 }
 
 pub use flags::*;
@@ -1463,19 +1551,5 @@ mod flags {
         GOOGLERenderScript,
         #[llvm_variant(LLVMDWARFSourceLanguageBORLAND_Delphi)]
         BORLANDDelphi,
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMMetadataRef> for DIType<'_> {
-    unsafe fn get_ref(&self) -> LLVMMetadataRef {
-        self.metadata_ref
-    }
-}
-
-#[cfg(feature = "internal-getters")]
-impl LLVMReference<LLVMDIBuilderRef> for DebugInfoBuilder<'_> {
-    unsafe fn get_ref(&self) -> LLVMDIBuilderRef {
-        self.builder
     }
 }
