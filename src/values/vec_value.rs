@@ -1,6 +1,6 @@
 use llvm_sys::core::{
-    LLVMConstExtractElement, LLVMConstInsertElement, LLVMConstSelect, LLVMConstShuffleVector, LLVMGetAsString,
-    LLVMGetElementAsConstant, LLVMIsAConstantDataVector, LLVMIsAConstantVector, LLVMIsConstantString,
+    LLVMConstExtractElement, LLVMConstInsertElement, LLVMConstSelect, LLVMConstShuffleVector,
+    LLVMGetElementAsConstant, LLVMIsAConstantDataVector, LLVMIsAConstantVector,
 };
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -101,37 +101,6 @@ impl<'ctx> VectorValue<'ctx> {
 
     pub fn replace_all_uses_with(self, other: VectorValue<'ctx>) {
         self.vec_value.replace_all_uses_with(other.as_value_ref())
-    }
-
-    /// Creates a const string which may be null terminated.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let string = context.const_string(b"my_string", false);
-    ///
-    /// assert!(string.is_const_string());
-    /// ```
-    // SubTypes: Impl only for VectorValue<IntValue<i8>>
-    pub fn is_const_string(self) -> bool {
-        unsafe { LLVMIsConstantString(self.as_value_ref()) == 1 }
-    }
-
-    // SubTypes: Impl only for VectorValue<IntValue<i8>>
-    pub fn get_string_constant(&self) -> &CStr {
-        // REVIEW: Maybe need to check is_const_string?
-
-        let mut len = 0;
-        let ptr = unsafe { LLVMGetAsString(self.as_value_ref(), &mut len) };
-
-        if ptr.is_null() {
-            panic!("FIXME: Need to retun an Option");
-        }
-
-        unsafe { CStr::from_ptr(ptr) }
     }
 
     // TODOC: Value seems to be zero initialized if index out of bounds

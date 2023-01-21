@@ -976,10 +976,8 @@ fn test_string_values() {
     let string = context.const_string(b"my_string", false);
     let string_null = context.const_string(b"my_string", true);
 
-    assert!(!string.is_constant_vector());
-    assert!(!string_null.is_constant_vector());
-    assert!(!string.is_constant_data_vector());
-    assert!(!string_null.is_constant_data_vector());
+    assert!(string.is_const());
+    assert!(string_null.is_const());
 
     assert_eq!(string.print_to_string().to_string(), "[9 x i8] c\"my_string\"");
     assert_eq!(
@@ -990,24 +988,34 @@ fn test_string_values() {
     assert!(string_null.is_const_string());
     assert_eq!(string.get_type().get_element_type().into_int_type(), i8_type);
     assert_eq!(string_null.get_type().get_element_type().into_int_type(), i8_type);
-    assert_eq!(string.get_string_constant().to_str(), Ok("my_string"));
-    assert_eq!(string_null.get_string_constant().to_str(), Ok("my_string"));
+
+    let string_const = string.get_string_constant();
+    let string_null_const = string_null.get_string_constant();
+
+    assert!(string_const.is_some());
+    assert!(string_null_const.is_some());
+    assert_eq!(string_const.unwrap().to_str(), Ok("my_string"));
+    assert_eq!(string_null_const.unwrap().to_str(), Ok("my_string"));
 
     let i8_val = i8_type.const_int(33, false);
     let i8_val2 = i8_type.const_int(43, false);
-    let non_string_vec_i8 = VectorType::const_vector(&[i8_val, i8_val2]);
+    let non_string_vec_i8 = i8_type.const_array(&[i8_val, i8_val2]);
+    let non_string_vec_i8_const = non_string_vec_i8.get_string_constant();
 
     // TODOC: Will still interpret vec as string even if not generated with const_string:
-    assert_eq!(non_string_vec_i8.get_string_constant().to_str(), Ok("!+"));
+    assert!(non_string_vec_i8_const.is_some());
+    assert_eq!(non_string_vec_i8_const.unwrap().to_str(), Ok("!+"));
 
     let i32_type = context.i32_type();
     let i32_val = i32_type.const_int(33, false);
     let i32_val2 = i32_type.const_int(43, false);
-    let non_string_vec_i32 = VectorType::const_vector(&[i32_val, i32_val2, i32_val2]);
+    let non_string_vec_i32 = i8_type.const_array(&[i32_val, i32_val2, i32_val2]);
+    let non_string_vec_i32_const = non_string_vec_i32.get_string_constant();
 
     // TODOC: Will still interpret vec with non i8 but in unexpected ways:
     // We may want to restrict this to VectorValue<IntValue<i8>>...
-    assert_eq!(non_string_vec_i32.get_string_constant().to_str(), Ok("!"));
+    assert!(non_string_vec_i32_const.is_some());
+    assert_eq!(non_string_vec_i32_const.unwrap().to_str(), Ok("!"));
 
     // TODO: Test get_string_constant on non const...
 }
@@ -1058,7 +1066,6 @@ fn test_consts() {
 
     assert_eq!(arbitrary_precision_int.print_to_string().to_str(), Ok("i64 1"));
 
-    assert!(!vec_val.is_const_string());
     assert!(!vec_val.is_constant_vector());
     assert!(vec_val.is_constant_data_vector());
 
