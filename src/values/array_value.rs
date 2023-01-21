@@ -100,7 +100,8 @@ impl<'ctx> ArrayValue<'ctx> {
         unsafe { LLVMIsConstantString(self.as_value_ref()) == 1 }
     }
 
-    /// Obtain the string from a constant array of `i8`s.
+    /// Obtain the string from the ArrayValue
+    /// if the value points to a constant string.
     /// 
     /// # Example
     /// 
@@ -112,20 +113,18 @@ impl<'ctx> ArrayValue<'ctx> {
     /// let string = context.const_string(b"hello!", true);
     /// 
     /// let result = CStr::from_bytes_with_nul(b"hello!\0").unwrap();
-    /// assert_eq!(string.get_string_constant(), result);
+    /// assert_eq!(string.get_string_constant(), Some(result));
     /// ```
     // SubTypes: Impl only for ArrayValue<IntValue<i8>>
-    pub fn get_string_constant(&self) -> &CStr {
-        // REVIEW: Maybe need to check is_const_string?
-
+    pub fn get_string_constant(&self) -> Option<&CStr> {
         let mut len = 0;
         let ptr = unsafe { LLVMGetAsString(self.as_value_ref(), &mut len) };
 
         if ptr.is_null() {
-            panic!("FIXME: Need to retun an Option");
+            None
+        } else {
+            unsafe { Some(CStr::from_ptr(ptr)) }
         }
-
-        unsafe { CStr::from_ptr(ptr) }
     }
 }
 
