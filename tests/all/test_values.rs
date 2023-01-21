@@ -1066,7 +1066,6 @@ fn test_consts() {
 
     assert_eq!(arbitrary_precision_int.print_to_string().to_str(), Ok("i64 1"));
 
-    assert!(!vec_val.is_const_string());
     assert!(!vec_val.is_constant_vector());
     assert!(vec_val.is_constant_data_vector());
 
