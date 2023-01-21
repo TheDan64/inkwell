@@ -1,6 +1,6 @@
 use llvm_sys::core::{
-    LLVMConstExtractElement, LLVMConstInsertElement, LLVMConstSelect, LLVMConstShuffleVector, LLVMGetAsString,
-    LLVMGetElementAsConstant, LLVMIsAConstantDataVector, LLVMIsAConstantVector, LLVMIsConstantString,
+    LLVMConstExtractElement, LLVMConstInsertElement, LLVMConstSelect, LLVMConstShuffleVector,
+    LLVMGetElementAsConstant, LLVMIsAConstantDataVector, LLVMIsAConstantVector,
 };
 use llvm_sys::prelude::LLVMValueRef;
 
