@@ -34,7 +34,7 @@ macro_rules! math_trait_value_set {
         $(
             unsafe impl<'ctx> $trait_name<'ctx> for $value_type<'ctx> {
                 type BaseType = $base_type<'ctx>;
-                fn new(value: LLVMValueRef) -> Self {
+                unsafe fn new(value: LLVMValueRef) -> $value_type<'ctx> {
                     unsafe {
                         $value_type::new(value)
                     }
@@ -118,18 +118,18 @@ pub unsafe trait BasicValue<'ctx>: AnyValue<'ctx> {
 /// Represents a value which is permitted in integer math operations
 pub unsafe trait IntMathValue<'ctx>: BasicValue<'ctx> {
     type BaseType: IntMathType<'ctx>;
-    fn new(value: LLVMValueRef) -> Self;
+    unsafe fn new(value: LLVMValueRef) -> Self;
 }
 
 /// Represents a value which is permitted in floating point math operations
 pub unsafe trait FloatMathValue<'ctx>: BasicValue<'ctx> {
     type BaseType: FloatMathType<'ctx>;
-    fn new(value: LLVMValueRef) -> Self;
+    unsafe fn new(value: LLVMValueRef) -> Self;
 }
 
 pub unsafe trait PointerMathValue<'ctx>: BasicValue<'ctx> {
     type BaseType: PointerMathType<'ctx>;
-    fn new(value: LLVMValueRef) -> Self;
+    unsafe fn new(value: LLVMValueRef) -> Self;
 }
 
 // REVIEW: print_to_string might be a good candidate to live here?
@@ -149,6 +149,6 @@ pub unsafe trait AnyValue<'ctx>: AsValueRef + Debug {
 trait_value_set! {AggregateValue: ArrayValue, AggregateValueEnum, StructValue}
 trait_value_set! {AnyValue: AnyValueEnum, BasicValueEnum, BasicMetadataValueEnum, AggregateValueEnum, ArrayValue, IntValue, FloatValue, GlobalValue, PhiValue, PointerValue, FunctionValue, StructValue, VectorValue, InstructionValue, CallSiteValue, MetadataValue}
 trait_value_set! {BasicValue: ArrayValue, BasicValueEnum, AggregateValueEnum, IntValue, FloatValue, GlobalValue, StructValue, PointerValue, VectorValue}
-math_trait_value_set! {IntMathValue: (IntValue => IntType), (VectorValue => VectorType)}
+math_trait_value_set! {IntMathValue: (IntValue => IntType), (VectorValue => VectorType), (PointerValue => IntType)}
 math_trait_value_set! {FloatMathValue: (FloatValue => FloatType), (VectorValue => VectorType)}
 math_trait_value_set! {PointerMathValue: (PointerValue => PointerType), (VectorValue => VectorType)}

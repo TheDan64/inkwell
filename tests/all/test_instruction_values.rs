@@ -229,7 +229,7 @@ fn test_instructions() {
     let store_instruction = builder.build_store(arg1, f32_val);
     let ptr_val = builder.build_ptr_to_int(arg1, i64_type, "ptr_val");
     let ptr = builder.build_int_to_ptr(ptr_val, f32_ptr_type, "ptr");
-    let icmp = builder.build_int_compare(IntPredicate::EQ, ptr_val, ptr_val, "icmp");
+    let icmp = builder.build_int_compare(IntPredicate::EQ, arg1, arg1, "icmp");
     let f32_sum = builder.build_float_add(arg2, f32_val, "f32_sum");
     let fcmp = builder.build_float_compare(FloatPredicate::OEQ, f32_sum, arg2, "fcmp");
     let free_instruction = builder.build_free(arg1);
