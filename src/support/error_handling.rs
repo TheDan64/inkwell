@@ -37,11 +37,6 @@ impl DiagnosticInfo {
         DiagnosticInfo { diagnostic_info }
     }
 
-    /// Acquires the underlying raw pointer belonging to this `DiagnosticInfo` type.
-    pub fn as_mut_ptr(&self) -> LLVMDiagnosticInfoRef {
-        self.diagnostic_info
-    }
-
     pub(crate) fn get_description(&self) -> *mut ::libc::c_char {
         unsafe { LLVMGetDiagInfoDescription(self.diagnostic_info) }
     }

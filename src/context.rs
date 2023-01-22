@@ -9,8 +9,6 @@ use llvm_sys::core::LLVMConstInlineAsm;
 use llvm_sys::core::LLVMCreateTypeAttribute;
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::core::LLVMGetInlineAsm;
-#[llvm_versions(4.0..=11.0)]
-use llvm_sys::core::LLVMGetTypeByName;
 #[llvm_versions(12.0..=latest)]
 use llvm_sys::core::LLVMGetTypeByName2;
 #[llvm_versions(6.0..=latest)]
@@ -44,8 +42,8 @@ use crate::types::AnyTypeEnum;
 use crate::types::MetadataType;
 use crate::types::{AsTypeRef, BasicTypeEnum, FloatType, FunctionType, IntType, StructType, VoidType};
 use crate::values::{
-    AsValueRef, BasicMetadataValueEnum, BasicValueEnum, FunctionValue, MetadataValue, PointerValue, StructValue,
-    ArrayValue,
+    ArrayValue, AsValueRef, BasicMetadataValueEnum, BasicValueEnum, FunctionValue, MetadataValue, PointerValue,
+    StructValue,
 };
 use crate::AddressSpace;
 
