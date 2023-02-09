@@ -6,7 +6,7 @@ use libc::c_char;
 use llvm_sys::core::LLVMGetVersion;
 use llvm_sys::core::{LLVMCreateMessage, LLVMDisposeMessage};
 use llvm_sys::error_handling::LLVMEnablePrettyStackTrace;
-use llvm_sys::support::{LLVMLoadLibraryPermanently, LLVMParseCommandLineOptions, LLVMSearchForAddressOfSymbol};
+use llvm_sys::support::{LLVMLoadLibraryPermanently, LLVMParseCommandLineOptions, LLVMPrintCommitIDTo, LLVMSearchForAddressOfSymbol};
 
 use std::borrow::Cow;
 use std::error::Error;
@@ -206,6 +206,15 @@ fn test_load_visible_symbols() {
     assert!(search_for_address_of_symbol("malloc").is_none());
     load_visible_symbols();
     assert!(search_for_address_of_symbol("malloc").is_some());
+}
+
+pub fn get_commit_id() -> LLVMString {
+    const COMMIT_HASH_LENGTH: usize = 40;
+
+    let mut buffer = vec![0u8; COMMIT_HASH_LENGTH + 1];
+
+    unsafe { LLVMPrintCommitIDTo(buffer.as_mut_ptr() as *mut ::libc::c_char) };
+    LLVMString::create_from_str(String::from_utf8_lossy(&buffer[..COMMIT_HASH_LENGTH + 1]).as_ref())
 }
 
 /// Determines whether or not LLVM has been configured to run in multithreaded mode. (Inkwell currently does
