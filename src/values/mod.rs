@@ -186,7 +186,14 @@ impl<'ctx> Value<'ctx> {
 
         // On MacOS we need to remove ',' before section name
         if cfg!(target_os = "macos") {
-            Some(unsafe { CStr::from_ptr(ptr.add(1)) })
+            let name = unsafe { CStr::from_ptr(ptr) };
+            let name_string = name.to_string_lossy();
+            let mut chars = name_string.chars();
+            if Some(',') == chars.next() {
+                Some(unsafe { CStr::from_ptr(ptr.add(1)) })
+            } else {
+                Some(name)
+            }
         } else {
             Some(unsafe { CStr::from_ptr(ptr) })
         }
@@ -195,7 +202,7 @@ impl<'ctx> Value<'ctx> {
     /// Sets the section of the global value
     fn set_section(self, section: Option<&str>) {
         #[cfg(target_os = "macos")]
-        let section = section.map(|s| format!(",{}", s));
+        let section = section.map(|s| if s.contains(",") { format!("{}", s) } else { format!(",{}", s) });
 
         let c_string = section.as_deref().map(to_c_str);
 
