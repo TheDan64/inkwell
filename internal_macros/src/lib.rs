@@ -12,9 +12,9 @@ use syn::{parenthesized, parse_macro_input, parse_quote};
 use syn::{Attribute, Field, Ident, Item, LitFloat, Token, Variant};
 
 // This array should match the LLVM features in the top level Cargo manifest
-const FEATURE_VERSIONS: [&str; 12] = [
+const FEATURE_VERSIONS: [&str; 13] = [
     "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0", "llvm10-0", "llvm11-0", "llvm12-0", "llvm13-0",
-    "llvm14-0", "llvm15-0",
+    "llvm14-0", "llvm15-0", "llvm16-0",
 ];
 
 /// Gets the index of the feature version that represents `latest`

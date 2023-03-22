@@ -53,6 +53,8 @@ extern crate llvm_sys_130 as llvm_sys;
 extern crate llvm_sys_140 as llvm_sys;
 #[cfg(feature = "llvm15-0")]
 extern crate llvm_sys_150 as llvm_sys;
+#[cfg(feature = "llvm16-0")]
+extern crate llvm_sys_160 as llvm_sys;
 #[cfg(feature = "llvm4-0")]
 extern crate llvm_sys_40 as llvm_sys;
 #[cfg(feature = "llvm5-0")]
@@ -105,7 +107,7 @@ macro_rules! assert_unique_used_features {
     }
 }
 
-assert_unique_used_features! {"llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0", "llvm10-0", "llvm11-0", "llvm12-0", "llvm13-0", "llvm14-0", "llvm15-0"}
+assert_unique_used_features! {"llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0", "llvm10-0", "llvm11-0", "llvm12-0", "llvm13-0", "llvm14-0", "llvm15-0", "llvm16-0"}
 
 /// Defines the address space in which a global will be inserted.
 ///
