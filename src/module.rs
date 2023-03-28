@@ -1100,6 +1100,11 @@ impl<'ctx> Module<'ctx> {
         unsafe { Some(GlobalValue::new(value)) }
     }
 
+    /// An iterator over the globals in this `Module`.
+    pub fn get_globals(&self) -> GlobalIterator<'ctx> {
+        GlobalIterator::from_module(self)
+    }
+
     /// Creates a new `Module` from a `MemoryBuffer` with bitcode.
     ///
     /// # Example
@@ -1595,6 +1600,54 @@ impl<'ctx> Iterator for FunctionIterator<'ctx> {
                 Some(first)
             },
             Previous(prev) => match prev.get_next_function() {
+                Some(current) => {
+                    self.0 = Previous(current);
+
+                    Some(current)
+                },
+                None => None,
+            },
+        }
+    }
+}
+
+/// Iterate over all `GlobalValue`s in an llvm module
+#[derive(Debug)]
+pub struct GlobalIterator<'ctx>(GlobalIteratorInner<'ctx>);
+
+/// Inner type so the variants are not publicly visible
+#[derive(Debug)]
+enum GlobalIteratorInner<'ctx> {
+    Empty,
+    Start(GlobalValue<'ctx>),
+    Previous(GlobalValue<'ctx>),
+}
+
+impl<'ctx> GlobalIterator<'ctx> {
+    fn from_module(module: &Module<'ctx>) -> Self {
+        use GlobalIteratorInner::*;
+
+        match module.get_first_global() {
+            None => Self(Empty),
+            Some(first) => Self(Start(first)),
+        }
+    }
+}
+
+impl<'ctx> Iterator for GlobalIterator<'ctx> {
+    type Item = GlobalValue<'ctx>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        use GlobalIteratorInner::*;
+
+        match self.0 {
+            Empty => None,
+            Start(first) => {
+                self.0 = Previous(first);
+
+                Some(first)
+            },
+            Previous(prev) => match prev.get_next_global() {
                 Some(current) => {
                     self.0 = Previous(current);
 
