@@ -64,7 +64,19 @@ fn test_operands() {
     assert!(free_instruction.set_operand(0, arg1));
 
     // Module is no longer valid because free takes an i8* not f32*
-    #[cfg(not(feature = "llvm15-0"))]
+    #[cfg(any(
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0",
+        feature = "llvm7-0",
+        feature = "llvm8-0",
+        feature = "llvm9-0",
+        feature = "llvm10-0",
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0"
+    ))]
     assert!(module.verify().is_err());
 
     assert!(free_instruction.set_operand(0, free_operand0));
@@ -420,9 +432,21 @@ fn test_mem_instructions() {
     let f32_val = f32_type.const_float(::std::f64::consts::PI);
 
     let store_instruction = builder.build_store(arg1, f32_val);
-    #[cfg(not(feature = "llvm15-0"))]
+    #[cfg(any(
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0",
+        feature = "llvm7-0",
+        feature = "llvm8-0",
+        feature = "llvm9-0",
+        feature = "llvm10-0",
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0"
+    ))]
     let load = builder.build_load(arg1, "");
-    #[cfg(feature = "llvm15-0")]
+    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
     let load = builder.build_load(f32_type, arg1, "");
     let load_instruction = load.as_instruction_value().unwrap();
 
@@ -486,9 +510,21 @@ fn test_atomic_ordering_mem_instructions() {
     let f32_val = f32_type.const_float(::std::f64::consts::PI);
 
     let store_instruction = builder.build_store(arg1, f32_val);
-    #[cfg(not(feature = "llvm15-0"))]
+    #[cfg(any(
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0",
+        feature = "llvm7-0",
+        feature = "llvm8-0",
+        feature = "llvm9-0",
+        feature = "llvm10-0",
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0"
+    ))]
     let load = builder.build_load(arg1, "");
-    #[cfg(feature = "llvm15-0")]
+    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
     let load = builder.build_load(f32_type, arg1, "");
     let load_instruction = load.as_instruction_value().unwrap();
 
