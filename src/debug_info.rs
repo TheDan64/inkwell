@@ -191,7 +191,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm12-0",
             feature = "llvm13-0",
             feature = "llvm14-0",
-            feature = "llvm15-0"
+            feature = "llvm15-0",
+            feature = "llvm16-0"
         ))]
         sysroot: &str,
         #[cfg(any(
@@ -199,7 +200,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm12-0",
             feature = "llvm13-0",
             feature = "llvm14-0",
-            feature = "llvm15-0"
+            feature = "llvm15-0",
+            feature = "llvm16-0"
         ))]
         sdk: &str,
     ) -> (Self, DICompileUnit<'ctx>) {
@@ -235,7 +237,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 feature = "llvm12-0",
                 feature = "llvm13-0",
                 feature = "llvm14-0",
-                feature = "llvm15-0"
+                feature = "llvm15-0",
+                feature = "llvm16-0"
             ))]
             sysroot,
             #[cfg(any(
@@ -243,7 +246,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 feature = "llvm12-0",
                 feature = "llvm13-0",
                 feature = "llvm14-0",
-                feature = "llvm15-0"
+                feature = "llvm15-0",
+                feature = "llvm16-0"
             ))]
             sdk,
         );
@@ -287,7 +291,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm12-0",
             feature = "llvm13-0",
             feature = "llvm14-0",
-            feature = "llvm15-0"
+            feature = "llvm15-0",
+            feature = "llvm16-0"
         ))]
         sysroot: &str,
         #[cfg(any(
@@ -295,7 +300,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm12-0",
             feature = "llvm13-0",
             feature = "llvm14-0",
-            feature = "llvm15-0"
+            feature = "llvm15-0",
+            feature = "llvm16-0"
         ))]
         sdk: &str,
     ) -> DICompileUnit<'ctx> {
@@ -334,7 +340,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 feature = "llvm12-0",
                 feature = "llvm13-0",
                 feature = "llvm14-0",
-                feature = "llvm15-0"
+                feature = "llvm15-0",
+                feature = "llvm16-0"
             ))]
             {
                 LLVMDIBuilderCreateCompileUnit(
@@ -1551,5 +1558,32 @@ mod flags {
         GOOGLERenderScript,
         #[llvm_variant(LLVMDWARFSourceLanguageBORLAND_Delphi)]
         BORLANDDelphi,
+        #[llvm_versions(16.0..=latest)]
+        #[llvm_variant(LLVMDWARFSourceLanguageKotlin)]
+        Kotlin,
+        #[llvm_versions(16.0..=latest)]
+        #[llvm_variant(LLVMDWARFSourceLanguageZig)]
+        Zig,
+        #[llvm_versions(16.0..=latest)]
+        #[llvm_variant(LLVMDWARFSourceLanguageCrystal)]
+        Crystal,
+        #[llvm_versions(16.0..=latest)]
+        #[llvm_variant(LLVMDWARFSourceLanguageC_plus_plus_17)]
+        CPlusPlus17,
+        #[llvm_versions(16.0..=latest)]
+        #[llvm_variant(LLVMDWARFSourceLanguageC_plus_plus_20)]
+        CPlusPlus20,
+        #[llvm_versions(16.0..=latest)]
+        #[llvm_variant(LLVMDWARFSourceLanguageC17)]
+        C17,
+        #[llvm_versions(16.0..=latest)]
+        #[llvm_variant(LLVMDWARFSourceLanguageFortran18)]
+        Fortran18,
+        #[llvm_versions(16.0..=latest)]
+        #[llvm_variant(LLVMDWARFSourceLanguageAda2005)]
+        Ada2005,
+        #[llvm_versions(16.0..=latest)]
+        #[llvm_variant(LLVMDWARFSourceLanguageAda2012)]
+        Ada2012,
     }
 }
