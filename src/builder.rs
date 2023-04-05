@@ -2753,7 +2753,7 @@ impl<'ctx> Builder<'ctx> {
             return Err("The bitwidth of value must be a power of 2 and greater than 8.");
         }
 
-        #[cfg(not(any(feature = "llvm15-0")))]
+        #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0")))]
         if ptr.get_type().get_element_type() != value.get_type().into() {
             return Err("Pointer's pointee type must match the value's type.");
         }
@@ -2813,7 +2813,7 @@ impl<'ctx> Builder<'ctx> {
             return Err("The values must have pointer or integer type.");
         }
 
-        #[cfg(not(any(feature = "llvm15-0")))]
+        #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0")))]
         if ptr.get_type().get_element_type().to_basic_type_enum() != cmp.get_type() {
             return Err("The pointer does not point to an element of the value type.");
         }
