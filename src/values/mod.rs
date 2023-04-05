@@ -20,10 +20,10 @@ mod struct_value;
 mod traits;
 mod vec_value;
 
-#[cfg(not(any(feature = "llvm15-0")))]
+#[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0")))]
 mod callable_value;
 
-#[cfg(not(any(feature = "llvm15-0")))]
+#[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0")))]
 pub use crate::values::callable_value::CallableValue;
 
 use crate::support::{to_c_str, LLVMString};
