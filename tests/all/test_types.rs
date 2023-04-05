@@ -314,7 +314,7 @@ fn test_const_zero() {
     );
 
     // handle opaque pointers
-    let ptr_type = if cfg!(any(feature = "llvm15-0")) {
+    let ptr_type = if cfg!(any(feature = "llvm15-0", feature = "llvm16-0")) {
         "ptr null"
     } else {
         "double* null"
@@ -355,7 +355,19 @@ fn test_ptr_type() {
 
     assert_eq!(ptr_type.get_address_space(), AddressSpace::default());
 
-    #[cfg(not(feature = "llvm15-0"))]
+    #[cfg(any(
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0",
+        feature = "llvm7-0",
+        feature = "llvm8-0",
+        feature = "llvm9-0",
+        feature = "llvm10-0",
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0"
+    ))]
     assert_eq!(ptr_type.get_element_type().into_int_type(), i8_type);
 
     // Fn ptr:
@@ -363,7 +375,19 @@ fn test_ptr_type() {
     let fn_type = void_type.fn_type(&[], false);
     let fn_ptr_type = fn_type.ptr_type(AddressSpace::default());
 
-    #[cfg(not(feature = "llvm15-0"))]
+    #[cfg(any(
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0",
+        feature = "llvm7-0",
+        feature = "llvm8-0",
+        feature = "llvm9-0",
+        feature = "llvm10-0",
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0"
+    ))]
     assert_eq!(fn_ptr_type.get_element_type().into_function_type(), fn_type);
 
     assert_eq!(fn_ptr_type.get_context(), context);
