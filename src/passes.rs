@@ -5,16 +5,20 @@ use llvm_sys::core::{
 };
 use llvm_sys::initialization::{
     LLVMInitializeAnalysis, LLVMInitializeCodeGen, LLVMInitializeCore, LLVMInitializeIPA, LLVMInitializeIPO,
-    LLVMInitializeInstCombine, LLVMInitializeInstrumentation, LLVMInitializeObjCARCOpts, LLVMInitializeScalarOpts,
-    LLVMInitializeTarget, LLVMInitializeTransformUtils, LLVMInitializeVectorization,
+    LLVMInitializeInstCombine, LLVMInitializeScalarOpts, LLVMInitializeTarget, LLVMInitializeTransformUtils,
+    LLVMInitializeVectorization,
 };
+#[llvm_versions(4.0..=15.0)]
+use llvm_sys::initialization::{LLVMInitializeInstrumentation, LLVMInitializeObjCARCOpts};
 use llvm_sys::prelude::{LLVMPassManagerRef, LLVMPassRegistryRef};
 #[llvm_versions(10.0..=latest)]
 use llvm_sys::transforms::ipo::LLVMAddMergeFunctionsPass;
+#[llvm_versions(4.0..=15.0)]
+use llvm_sys::transforms::ipo::LLVMAddPruneEHPass;
 use llvm_sys::transforms::ipo::{
     LLVMAddAlwaysInlinerPass, LLVMAddConstantMergePass, LLVMAddDeadArgEliminationPass, LLVMAddFunctionAttrsPass,
     LLVMAddFunctionInliningPass, LLVMAddGlobalDCEPass, LLVMAddGlobalOptimizerPass, LLVMAddIPSCCPPass,
-    LLVMAddInternalizePass, LLVMAddPruneEHPass, LLVMAddStripDeadPrototypesPass, LLVMAddStripSymbolsPass,
+    LLVMAddInternalizePass, LLVMAddStripDeadPrototypesPass, LLVMAddStripSymbolsPass,
 };
 use llvm_sys::transforms::pass_manager_builder::{
     LLVMPassManagerBuilderCreate, LLVMPassManagerBuilderDispose, LLVMPassManagerBuilderPopulateFunctionPassManager,
@@ -398,6 +402,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// call instructions if and only if the callee cannot throw
     /// an exception. It implements this as a bottom-up traversal
     /// of the call-graph.
+    #[llvm_versions(4.0..=15.0)]
     pub fn add_prune_eh_pass(&self) {
         unsafe { LLVMAddPruneEHPass(self.pass_manager) }
     }
@@ -1005,7 +1010,7 @@ impl<T: PassManagerSubType> PassManager<T> {
         unsafe { LLVMAddBasicAliasAnalysisPass(self.pass_manager) }
     }
 
-    #[llvm_versions(7.0..=latest)]
+    #[llvm_versions(7.0..=15.0)]
     pub fn add_aggressive_inst_combiner_pass(&self) {
         #[cfg(not(feature = "llvm7-0"))]
         use llvm_sys::transforms::aggressive_instcombine::LLVMAddAggressiveInstCombinerPass;
@@ -1092,6 +1097,7 @@ impl PassRegistry {
         unsafe { LLVMInitializeScalarOpts(self.pass_registry) }
     }
 
+    #[llvm_versions(4.0..=15.0)]
     pub fn initialize_obj_carc_opts(&self) {
         unsafe { LLVMInitializeObjCARCOpts(self.pass_registry) }
     }
@@ -1109,6 +1115,7 @@ impl PassRegistry {
         unsafe { LLVMInitializeIPO(self.pass_registry) }
     }
 
+    #[llvm_versions(4.0..=15.0)]
     pub fn initialize_instrumentation(&self) {
         unsafe { LLVMInitializeInstrumentation(self.pass_registry) }
     }
@@ -1129,7 +1136,7 @@ impl PassRegistry {
         unsafe { LLVMInitializeTarget(self.pass_registry) }
     }
 
-    #[llvm_versions(7.0..=latest)]
+    #[llvm_versions(7.0..=15.0)]
     pub fn initialize_aggressive_inst_combiner(&self) {
         use llvm_sys::initialization::LLVMInitializeAggressiveInstCombiner;
 
