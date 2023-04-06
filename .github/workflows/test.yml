@@ -4,8 +4,8 @@ on: [push, pull_request]
 
 env:
   CARGO_TERM_COLOR: always
-  DOC_LLVM_FEATURE: llvm15-0
-  DOC_LLVM_VERSION: '15.0'
+  DOC_LLVM_FEATURE: llvm16-0
+  DOC_LLVM_VERSION: '16.0'
   DOC_PATH: target/doc
 
 jobs:
@@ -28,6 +28,7 @@ jobs:
           - ["13.0", "13-0"]
           - ["14.0", "14-0"]
           - ["15.0", "15-0"]
+          - ["16.0", "16-0"]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
