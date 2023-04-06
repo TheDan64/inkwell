@@ -13,7 +13,19 @@ fn test_init_all_passes_for_module() {
     let module = context.create_module("my_module");
     let pass_manager = PassManager::create(());
 
-    #[cfg(not(feature = "llvm15-0"))]
+    #[cfg(any(
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0",
+        feature = "llvm7-0",
+        feature = "llvm8-0",
+        feature = "llvm9-0",
+        feature = "llvm10-0",
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0"
+    ))]
     pass_manager.add_argument_promotion_pass();
     pass_manager.add_constant_merge_pass();
     #[cfg(not(any(
@@ -35,9 +47,11 @@ fn test_init_all_passes_for_module() {
         feature = "llvm12-0",
         feature = "llvm13-0",
         feature = "llvm14-0",
-        feature = "llvm15-0"
+        feature = "llvm15-0",
+        feature = "llvm16-0"
     )))]
     pass_manager.add_ip_constant_propagation_pass();
+    #[cfg(not(feature = "llvm16-0"))]
     pass_manager.add_prune_eh_pass();
     pass_manager.add_ipsccp_pass();
     pass_manager.add_internalize_pass(true);
@@ -64,7 +78,19 @@ fn test_init_all_passes_for_module() {
     pass_manager.add_loop_rotate_pass();
     pass_manager.add_loop_reroll_pass();
     pass_manager.add_loop_unroll_pass();
-    #[cfg(not(feature = "llvm15-0"))]
+    #[cfg(any(
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0",
+        feature = "llvm7-0",
+        feature = "llvm8-0",
+        feature = "llvm9-0",
+        feature = "llvm10-0",
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0"
+    ))]
     pass_manager.add_loop_unswitch_pass();
     pass_manager.add_memcpy_optimize_pass();
     pass_manager.add_partially_inline_lib_calls_pass();
@@ -81,14 +107,16 @@ fn test_init_all_passes_for_module() {
         feature = "llvm12-0",
         feature = "llvm13-0",
         feature = "llvm14-0",
-        feature = "llvm15-0"
+        feature = "llvm15-0",
+        feature = "llvm16-0"
     )))]
     pass_manager.add_constant_propagation_pass();
     #[cfg(any(
         feature = "llvm12-0",
         feature = "llvm13-0",
         feature = "llvm14-0",
-        feature = "llvm15-0"
+        feature = "llvm15-0",
+        feature = "llvm16-0"
     ))]
     pass_manager.add_instruction_simplify_pass();
     pass_manager.add_demote_memory_to_register_pass();
@@ -102,18 +130,18 @@ fn test_init_all_passes_for_module() {
     pass_manager.add_early_cse_mem_ssa_pass();
     pass_manager.add_new_gvn_pass();
 
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm16-0")))]
+    pass_manager.add_aggressive_inst_combiner_pass();
     #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
-    {
-        pass_manager.add_aggressive_inst_combiner_pass();
-        pass_manager.add_loop_unroll_and_jam_pass();
-    }
+    pass_manager.add_loop_unroll_and_jam_pass();
 
     #[cfg(not(any(
         feature = "llvm4-0",
         feature = "llvm5-0",
         feature = "llvm6-0",
         feature = "llvm7-0",
-        feature = "llvm15-0"
+        feature = "llvm15-0",
+        feature = "llvm16-0"
     )))]
     {
         pass_manager.add_coroutine_early_pass();
@@ -165,7 +193,19 @@ fn test_pass_manager_builder() {
 
     pass_manager_builder.populate_module_pass_manager(&module_pass_manager);
 
-    #[cfg(not(feature = "llvm15-0"))]
+    #[cfg(any(
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0",
+        feature = "llvm7-0",
+        feature = "llvm8-0",
+        feature = "llvm9-0",
+        feature = "llvm10-0",
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0"
+    ))]
     {
         let module2 = module.clone();
 
@@ -188,16 +228,18 @@ fn test_pass_registry() {
     pass_registry.initialize_core();
     pass_registry.initialize_transform_utils();
     pass_registry.initialize_scalar_opts();
+    #[cfg(not(feature = "llvm16-0"))]
     pass_registry.initialize_obj_carc_opts();
     pass_registry.initialize_vectorization();
     pass_registry.initialize_inst_combine();
     pass_registry.initialize_ipo();
+    #[cfg(not(feature = "llvm16-0"))]
     pass_registry.initialize_instrumentation();
     pass_registry.initialize_analysis();
     pass_registry.initialize_ipa();
     pass_registry.initialize_codegen();
     pass_registry.initialize_target();
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm16-0")))]
     pass_registry.initialize_aggressive_inst_combiner();
 }
 
