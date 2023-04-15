@@ -8,7 +8,7 @@ use quote::quote;
 use syn::fold::Fold;
 use syn::parse::{Error, Parse, ParseStream, Result};
 use syn::spanned::Spanned;
-use syn::{parenthesized, parse_macro_input, parse_quote};
+use syn::{parse_macro_input, parse_quote};
 use syn::{Attribute, Field, Ident, Item, LitFloat, Token, Variant};
 
 // This array should match the LLVM features in the top level Cargo manifest
@@ -184,10 +184,7 @@ impl Parse for VersionType {
 struct ParenthesizedFeatureSet(FeatureSet);
 impl Parse for ParenthesizedFeatureSet {
     fn parse(input: ParseStream) -> Result<Self> {
-        let content;
-        let _ = parenthesized!(content in input);
-        let features = content.parse::<FeatureSet>()?;
-        Ok(Self(features))
+        input.parse::<FeatureSet>().map(Self)
     }
 }
 
@@ -240,12 +237,12 @@ impl FeatureSet {
         }
 
         // If this isn't an llvm_versions attribute, skip it
-        if !attr.path.is_ident("llvm_versions") {
+        if !attr.path().is_ident("llvm_versions") {
             return attr.clone();
         }
 
         // Expand from llvm_versions to raw cfg attribute
-        match syn::parse2::<ParenthesizedFeatureSet>(attr.tokens.clone()) {
+        match attr.parse_args() {
             Ok(ParenthesizedFeatureSet(features)) => {
                 parse_quote! {
                     #[cfg(any(#(feature = #features),*))]
@@ -382,7 +379,7 @@ impl EnumVariant {
         let rust_variant = variant.ident.clone();
         let llvm_variant = Ident::new(&format!("LLVM{}", rust_variant.to_string()), variant.span());
         let mut attrs = variant.attrs.clone();
-        attrs.retain(|attr| !attr.path.is_ident("llvm_variant"));
+        attrs.retain(|attr| !attr.path().is_ident("llvm_variant"));
         Self {
             llvm_variant,
             rust_variant,
@@ -394,7 +391,7 @@ impl EnumVariant {
         let rust_variant = variant.ident.clone();
         llvm_variant.set_span(rust_variant.span());
         let mut attrs = variant.attrs.clone();
-        attrs.retain(|attr| !attr.path.is_ident("llvm_variant"));
+        attrs.retain(|attr| !attr.path().is_ident("llvm_variant"));
         Self {
             llvm_variant,
             rust_variant,
@@ -436,27 +433,24 @@ impl EnumVariants {
 }
 impl Fold for EnumVariants {
     fn fold_variant(&mut self, mut variant: Variant) -> Variant {
-        use syn::{Meta, NestedMeta};
+        use syn::Meta;
 
         if self.has_error() {
             return variant;
         }
 
         // Check for llvm_variant
-        if let Some(attr) = variant.attrs.iter().find(|attr| attr.path.is_ident("llvm_variant")) {
+        if let Some(attr) = variant.attrs.iter().find(|attr| attr.path().is_ident("llvm_variant")) {
             // Extract attribute meta
-            if let Ok(Meta::List(meta)) = attr.parse_meta() {
+            if let Meta::List(meta) = &attr.meta {
                 // We should only have one element
-                if meta.nested.len() == 1 {
-                    let variant_meta = meta.nested.first().unwrap();
-                    // The element should be an identifier
-                    if let NestedMeta::Meta(Meta::Path(name)) = variant_meta {
-                        self.variants
-                            .push(EnumVariant::with_name(&variant, name.get_ident().unwrap().clone()));
-                        // Strip the llvm_variant attribute from the final AST
-                        variant.attrs.retain(|attr| !attr.path.is_ident("llvm_variant"));
-                        return variant;
-                    }
+
+                if let Ok(Meta::Path(name)) = meta.parse_args() {
+                    self.variants
+                        .push(EnumVariant::with_name(&variant, name.get_ident().unwrap().clone()));
+                    // Strip the llvm_variant attribute from the final AST
+                    variant.attrs.retain(|attr| !attr.path().is_ident("llvm_variant"));
+                    return variant;
                 }
             }
 
@@ -542,7 +536,7 @@ pub fn llvm_enum(attribute_args: TokenStream, attributee: TokenStream) -> TokenS
         let src_attrs: Vec<_> = variant
             .attrs
             .iter()
-            .filter(|&attr| !attr.parse_meta().unwrap().path().is_ident("doc"))
+            .filter(|&attr| !attr.meta.path().is_ident("doc"))
             .collect();
         let src_ty = llvm_ty.clone();
         let dst_variant = variant.rust_variant.clone();
@@ -569,7 +563,7 @@ pub fn llvm_enum(attribute_args: TokenStream, attributee: TokenStream) -> TokenS
         let src_attrs: Vec<_> = variant
             .attrs
             .iter()
-            .filter(|&attr| !attr.parse_meta().unwrap().path().is_ident("doc"))
+            .filter(|&attr| !attr.meta.path().is_ident("doc"))
             .collect();
         let src_ty = llvm_enum_type.name.clone();
         let dst_variant = variant.llvm_variant.clone();
