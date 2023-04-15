@@ -82,17 +82,21 @@ fn get_features(vt: VersionType) -> Result<Vec<&'static str>> {
             let end_feature = f64_to_feature_string(end);
             let start_index = get_feature_index(&features, start_feature, start_span)?;
             let end_index = get_feature_index(&features, end_feature, end_span)?;
-            if end_index == start_index {
-                let message = format!(
-                    "Invalid version range: {}..{} produces an empty feature set",
-                    start, end
-                );
-                Err(Error::new(start_span, message))
-            } else if end_index < start_index {
-                let message = format!("Invalid version range: {} must be greater than {}", start, end);
-                Err(Error::new(end_span, message))
-            } else {
-                Ok(features[start_index..end_index].to_vec())
+
+            match end_index.cmp(&start_index) {
+                std::cmp::Ordering::Equal => {
+                    let message = format!(
+                        "Invalid version range: {}..{} produces an empty feature set",
+                        start, end
+                    );
+                    Err(Error::new(start_span, message))
+                },
+                std::cmp::Ordering::Less => {
+                    let message = format!("Invalid version range: {} must be greater than {}", start, end);
+                    Err(Error::new(end_span, message))
+                },
+
+                std::cmp::Ordering::Greater => Ok(features[start_index..end_index].to_vec()),
             }
         },
     }
@@ -194,6 +198,7 @@ struct FeatureSet(std::vec::IntoIter<&'static str>, Option<Error>);
 impl Default for FeatureSet {
     fn default() -> Self {
         // Default to all versions
+        #[allow(clippy::unnecessary_to_owned)] // Falsely fires since array::IntoIter != vec::IntoIter
         Self(FEATURE_VERSIONS.to_vec().into_iter(), None)
     }
 }
@@ -377,7 +382,7 @@ struct EnumVariant {
 impl EnumVariant {
     fn new(variant: &Variant) -> Self {
         let rust_variant = variant.ident.clone();
-        let llvm_variant = Ident::new(&format!("LLVM{}", rust_variant.to_string()), variant.span());
+        let llvm_variant = Ident::new(&format!("LLVM{}", rust_variant), variant.span());
         let mut attrs = variant.attrs.clone();
         attrs.retain(|attr| !attr.path().is_ident("llvm_variant"));
         Self {
