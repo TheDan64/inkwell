@@ -76,7 +76,19 @@ impl<'ctx> ArrayType<'ctx> {
     /// let i8_array_type = i8_type.array_type(3);
     /// let i8_array_ptr_type = i8_array_type.ptr_type(AddressSpace::default());
     ///
-    /// #[cfg(not(feature = "llvm15-0"))]
+    /// #[cfg(any(
+    ///     feature = "llvm4-0",
+    ///     feature = "llvm5-0",
+    ///     feature = "llvm6-0",
+    ///     feature = "llvm7-0",
+    ///     feature = "llvm8-0",
+    ///     feature = "llvm9-0",
+    ///     feature = "llvm10-0",
+    ///     feature = "llvm11-0",
+    ///     feature = "llvm12-0",
+    ///     feature = "llvm13-0",
+    ///     feature = "llvm14-0"
+    /// ))]
     /// assert_eq!(i8_array_ptr_type.get_element_type().into_array_type(), i8_array_type);
     /// ```
     pub fn ptr_type(self, address_space: AddressSpace) -> PointerType<'ctx> {

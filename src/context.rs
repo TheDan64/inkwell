@@ -550,14 +550,26 @@ impl Context {
     /// );
     /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
     ///
-    /// #[cfg(not(any(feature = "llvm15-0")))]
+    /// #[cfg(any(
+    ///     feature = "llvm4-0",
+    ///     feature = "llvm5-0",
+    ///     feature = "llvm6-0",
+    ///     feature = "llvm7-0",
+    ///     feature = "llvm8-0",
+    ///     feature = "llvm9-0",
+    ///     feature = "llvm10-0",
+    ///     feature = "llvm11-0",
+    ///     feature = "llvm12-0",
+    ///     feature = "llvm13-0",
+    ///     feature = "llvm14-0"
+    /// ))]
     /// {
     ///     use inkwell::values::CallableValue;
     ///     let callable_value = CallableValue::try_from(asm).unwrap();
     ///     builder.build_call(callable_value, params, "exit");
     /// }
     ///
-    /// #[cfg(any(feature = "llvm15-0"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
     /// builder.build_indirect_call(asm_fn, asm, params, "exit");
     ///
     /// builder.build_return(None);
@@ -1386,14 +1398,26 @@ impl<'ctx> ContextRef<'ctx> {
     /// );
     /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
     ///
-    /// #[cfg(not(any(feature = "llvm15-0")))]
+    /// #[cfg(any(
+    ///     feature = "llvm4-0",
+    ///     feature = "llvm5-0",
+    ///     feature = "llvm6-0",
+    ///     feature = "llvm7-0",
+    ///     feature = "llvm8-0",
+    ///     feature = "llvm9-0",
+    ///     feature = "llvm10-0",
+    ///     feature = "llvm11-0",
+    ///     feature = "llvm12-0",
+    ///     feature = "llvm13-0",
+    ///     feature = "llvm14-0"
+    /// ))]
     /// {
     ///     use inkwell::values::CallableValue;
     ///     let callable_value = CallableValue::try_from(asm).unwrap();
     ///     builder.build_call(callable_value, params, "exit");
     /// }
     ///
-    /// #[cfg(any(feature = "llvm15-0"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
     /// builder.build_indirect_call(asm_fn, asm, params, "exit");
     ///
     /// builder.build_return(None);

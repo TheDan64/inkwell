@@ -1,5 +1,7 @@
+#[llvm_versions(4.0..=15.0)]
+use llvm_sys::core::LLVMConstFNeg;
 use llvm_sys::core::{
-    LLVMConstFCmp, LLVMConstFNeg, LLVMConstFPCast, LLVMConstFPExt, LLVMConstFPToSI, LLVMConstFPToUI, LLVMConstFPTrunc,
+    LLVMConstFCmp, LLVMConstFPCast, LLVMConstFPExt, LLVMConstFPToSI, LLVMConstFPToUI, LLVMConstFPTrunc,
     LLVMConstRealGetDouble,
 };
 use llvm_sys::prelude::LLVMValueRef;
@@ -60,6 +62,7 @@ impl<'ctx> FloatValue<'ctx> {
         self.float_value.as_instruction()
     }
 
+    #[llvm_versions(4.0..=15.0)]
     pub fn const_neg(self) -> Self {
         unsafe { FloatValue::new(LLVMConstFNeg(self.as_value_ref())) }
     }

@@ -556,29 +556,32 @@ fn test_floats() {
 
         let f64_one = f64_type.const_float(1.);
         let f64_two = f64_type.const_float(2.);
-        let neg_two = f64_two.const_neg();
+        #[cfg(not(feature = "llvm16-0"))]
+        {
+            let neg_two = f64_two.const_neg();
 
-        assert_eq!(neg_two.print_to_string().to_str(), Ok("double -2.000000e+00"));
+            assert_eq!(neg_two.print_to_string().to_str(), Ok("double -2.000000e+00"));
 
-        let neg_three = neg_two.const_sub(f64_one);
+            let neg_three = neg_two.const_sub(f64_one);
 
-        assert_eq!(neg_three.print_to_string().to_str(), Ok("double -3.000000e+00"));
+            assert_eq!(neg_three.print_to_string().to_str(), Ok("double -3.000000e+00"));
 
-        let pos_six = neg_three.const_mul(neg_two);
+            let pos_six = neg_three.const_mul(neg_two);
 
-        assert_eq!(pos_six.print_to_string().to_str(), Ok("double 6.000000e+00"));
+            assert_eq!(pos_six.print_to_string().to_str(), Ok("double 6.000000e+00"));
 
-        let pos_eight = pos_six.const_add(f64_two);
+            let pos_eight = pos_six.const_add(f64_two);
 
-        assert_eq!(pos_eight.print_to_string().to_str(), Ok("double 8.000000e+00"));
+            assert_eq!(pos_eight.print_to_string().to_str(), Ok("double 8.000000e+00"));
 
-        let pos_four = pos_eight.const_div(f64_two);
+            let pos_four = pos_eight.const_div(f64_two);
 
-        assert_eq!(pos_four.print_to_string().to_str(), Ok("double 4.000000e+00"));
+            assert_eq!(pos_four.print_to_string().to_str(), Ok("double 4.000000e+00"));
 
-        let rem = pos_six.const_remainder(pos_four);
+            let rem = pos_six.const_remainder(pos_four);
 
-        assert_eq!(rem.print_to_string().to_str(), Ok("double 2.000000e+00"));
+            assert_eq!(rem.print_to_string().to_str(), Ok("double 2.000000e+00"));
+        }
 
         assert!(f64_one.const_compare(FloatPredicate::PredicateFalse, f64_two).is_null());
         assert!(!f64_one.const_compare(FloatPredicate::PredicateTrue, f64_two).is_null());
@@ -922,7 +925,11 @@ fn test_allocations() {
     builder.position_at_end(entry_block);
 
     // handle opaque pointers
-    let ptr_type = if cfg!(any(feature = "llvm15-0")) { "ptr" } else { "i32*" };
+    let ptr_type = if cfg!(any(feature = "llvm15-0", feature = "llvm16-0")) {
+        "ptr"
+    } else {
+        "i32*"
+    };
 
     // REVIEW: Alloca (and possibly malloc) seem to be prone to segfaulting
     // when called with a builder that isn't positioned. I wonder if other
@@ -1155,13 +1162,25 @@ fn test_non_fn_ptr_called() {
     let i8_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
 
     builder.position_at_end(bb);
-    #[cfg(not(feature = "llvm15-0"))]
+    #[cfg(any(
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0",
+        feature = "llvm7-0",
+        feature = "llvm8-0",
+        feature = "llvm9-0",
+        feature = "llvm10-0",
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0"
+    ))]
     {
         use inkwell::values::CallableValue;
         let callable_value = CallableValue::try_from(i8_ptr_param).unwrap();
         builder.build_call(callable_value, &[], "call");
     }
-    #[cfg(feature = "llvm15-0")]
+    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
     builder.build_indirect_call(i8_ptr_type.fn_type(&[], false), i8_ptr_param, &[], "call");
     builder.build_return(None);
 
@@ -1209,9 +1228,21 @@ fn test_aggregate_returns() {
     let ptr_param2 = fn_value.get_nth_param(1).unwrap().into_pointer_value();
 
     builder.position_at_end(bb);
-    #[cfg(not(feature = "llvm15-0"))]
+    #[cfg(any(
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0",
+        feature = "llvm7-0",
+        feature = "llvm8-0",
+        feature = "llvm9-0",
+        feature = "llvm10-0",
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0"
+    ))]
     builder.build_ptr_diff(ptr_param1, ptr_param2, "diff");
-    #[cfg(feature = "llvm15-0")]
+    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
     builder.build_ptr_diff(i32_ptr_type, ptr_param1, ptr_param2, "diff");
     builder.build_aggregate_return(&[i32_three.into(), i32_seven.into()]);
 

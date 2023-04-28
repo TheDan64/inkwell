@@ -21,7 +21,7 @@ use inkwell::OptimizationLevel;
 
 use inkwell_internals::llvm_versions;
 
-#[cfg(not(any(feature = "llvm15-0")))]
+#[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0")))]
 mod implementation_typed_pointers;
 
 #[llvm_versions(4.0..=14.0)]
