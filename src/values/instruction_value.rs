@@ -160,7 +160,7 @@ impl<'ctx> InstructionValue<'ctx> {
         if ins_name.to_str() == Ok(name.as_ref()) {
             return Some(*self);
         }
-        None
+        return self.get_next_instruction()?.get_instruction_with_name(name);
     }
 
     /// Set name of the `InstructionValue`.
