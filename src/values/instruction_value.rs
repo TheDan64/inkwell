@@ -150,6 +150,19 @@ impl<'ctx> InstructionValue<'ctx> {
         }
     }
 
+    /// Get a instruction with it's name 
+    /// 
+    /// Compares against all instructions after self, and self.
+    pub fn get_instruction_with_name(&self, name:impl AsRef<str>) -> Option<InstructionValue<'ctx>> {
+        let Some(ins_name) = self.get_name() else {
+            return self.get_next_instruction()?.get_instruction_with_name(name);
+        };
+        if ins_name.to_str() == Ok(name.as_ref()) {
+            return Some(*self);
+        }
+        None
+    }
+
     /// Set name of the `InstructionValue`.
     pub fn set_name(&self, name: &str) -> Result<(), &'static str> {
         if self.get_type().is_void_type() {
