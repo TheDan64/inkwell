@@ -157,7 +157,6 @@ impl<'ctx> InstructionValue<'ctx> {
             if ins_name.to_str() == Ok(name) {
                 return Some(*self);
             }
-            return self.get_next_instruction()?.get_instruction_with_name(name);
         }
         return self.get_next_instruction()?.get_instruction_with_name(name);
     }
