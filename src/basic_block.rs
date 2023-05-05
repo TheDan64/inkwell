@@ -275,7 +275,7 @@ impl<'ctx> BasicBlock<'ctx> {
         unsafe { Some(InstructionValue::new(value)) }
     }
 
-    /// Obtains a instruction based on the name
+    /// Performs a linear lookup to obtain a instruction based on the name
     ///
     /// # Example
     /// ```rust
@@ -303,9 +303,9 @@ impl<'ctx> BasicBlock<'ctx> {
     /// let some_number = block.get_instruction_with_name("some_number");
     ///
     /// assert!(some_number.is_some());
-    /// assert_eq!( some_number.unwrap().get_name().unwrap().to_str(), Ok("some_number"))
+    /// assert_eq!(some_number.unwrap().get_name().unwrap().to_str(), Ok("some_number"))
     /// ```
-    pub fn get_instruction_with_name(self, name: impl AsRef<str>) -> Option<InstructionValue<'ctx>> {
+    pub fn get_instruction_with_name(self, name: &str) -> Option<InstructionValue<'ctx>> {
         let instruction = self.get_first_instruction()?;
         instruction.get_instruction_with_name(name)
     }
