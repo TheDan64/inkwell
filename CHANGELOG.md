@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### TODO
 - TODO
 
+## [0.2.0] - 2023-05-04
+- Added LLVM 16 support
+- Updated internal_macros syn dep to v2
+- Added Module::get_globals iterator
+
 ## [0.1.1] - 2023-02-11
 - Fixed set_section method on macOS
 

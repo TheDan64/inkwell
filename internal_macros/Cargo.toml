@@ -6,12 +6,12 @@ license = "Apache-2.0"
 name = "inkwell_internals"
 readme = "README.md"
 repository = "https://github.com/TheDan64/inkwell"
-version = "0.7.0"
+version = "0.8.0"
 
 [dependencies]
 proc-macro2 = "1.0"
 quote = "1.0"
-syn = {version = "2.0", features = ["full", "fold"]}
+syn = { version = "2.0", features = ["full", "fold"] }
 
 [lib]
 proc-macro = true
