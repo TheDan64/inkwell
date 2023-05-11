@@ -88,6 +88,18 @@ fn test_struct_type() {
     assert!(no_longer_opaque_struct.get_field_type_at_index(2).is_none());
     assert!(no_longer_opaque_struct.get_field_type_at_index(200).is_none());
     assert_eq!(no_longer_opaque_struct.get_field_types(), vec![field_1, field_2]);
+
+    no_longer_opaque_struct.set_body(&[float_array.into(), int_vector.into(), float_array.into()], false);
+    let fields_changed_struct = no_longer_opaque_struct;
+    // assert!(!fields_changed_struct.is_packed()); FIXME: This seems to be a bug in LLVM
+    assert!(!fields_changed_struct.is_opaque());
+    assert!(fields_changed_struct.is_sized());
+    assert_eq!(fields_changed_struct.count_fields(), 3);
+    assert_eq!(
+        fields_changed_struct.get_field_types(),
+        &[float_array.into(), int_vector.into(), float_array.into(),]
+    );
+    assert!(fields_changed_struct.get_field_type_at_index(3).is_none());
 }
 
 #[test]

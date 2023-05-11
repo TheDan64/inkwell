@@ -352,11 +352,11 @@ impl<'ctx> StructType<'ctx> {
         unsafe { StructValue::new(self.struct_type.get_undef()) }
     }
 
-    // REVIEW: SubTypes should allow this to only be implemented for StructType<Opaque> one day
-    // but would have to return StructType<Tys>. Maybe this is valid for non opaques, though
-    // it might just override types?
-    // REVIEW: What happens if called with &[] on an opaque? Should that still be opaque? Does the call break?
-    /// Defines the body of an opaue `StructType`.
+    /// Defines the body of a `StructType`.
+    ///
+    /// If the struct is an opaque type, it will no longer be after this call.
+    /// 
+    /// Resetting the `packed` state of a non-opaque struct type may not work.
     ///
     /// # Example
     ///
@@ -374,15 +374,13 @@ impl<'ctx> StructType<'ctx> {
     pub fn set_body(self, field_types: &[BasicTypeEnum<'ctx>], packed: bool) -> bool {
         let is_opaque = self.is_opaque();
         let mut field_types: Vec<LLVMTypeRef> = field_types.iter().map(|val| val.as_type_ref()).collect();
-        if is_opaque {
-            unsafe {
-                LLVMStructSetBody(
-                    self.as_type_ref(),
-                    field_types.as_mut_ptr(),
-                    field_types.len() as u32,
-                    packed as i32,
-                );
-            }
+        unsafe {
+            LLVMStructSetBody(
+                self.as_type_ref(),
+                field_types.as_mut_ptr(),
+                field_types.len() as u32,
+                packed as i32,
+            );
         }
 
         is_opaque
