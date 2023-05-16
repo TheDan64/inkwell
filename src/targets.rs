@@ -715,6 +715,45 @@ impl Target {
         }
     }
 
+    #[cfg(feature = "target-loongarch")]
+    #[llvm_versions(16.0..=latest)]
+    pub fn initialize_loongarch(config: &InitializationConfig) {
+        use llvm_sys::target::{
+            LLVMInitializeLoongArchAsmParser, LLVMInitializeLoongArchAsmPrinter, LLVMInitializeLoongArchDisassembler,
+            LLVMInitializeLoongArchTarget, LLVMInitializeLoongArchTargetInfo, LLVMInitializeLoongArchTargetMC,
+        };
+
+        if config.base {
+            let _guard = TARGET_LOCK.write();
+            unsafe { LLVMInitializeLoongArchTarget() };
+        }
+
+        if config.info {
+            let _guard = TARGET_LOCK.write();
+            unsafe { LLVMInitializeLoongArchTargetInfo() };
+        }
+
+        if config.asm_printer {
+            let _guard = TARGET_LOCK.write();
+            unsafe { LLVMInitializeLoongArchAsmPrinter() };
+        }
+
+        if config.asm_parser {
+            let _guard = TARGET_LOCK.write();
+            unsafe { LLVMInitializeLoongArchAsmParser() };
+        }
+
+        if config.disassembler {
+            let _guard = TARGET_LOCK.write();
+            unsafe { LLVMInitializeLoongArchDisassembler() };
+        }
+
+        if config.machine_code {
+            let _guard = TARGET_LOCK.write();
+            unsafe { LLVMInitializeLoongArchTargetMC() };
+        }
+    }
+
     #[cfg(feature = "target-webassembly")]
     #[llvm_versions(8.0..=latest)]
     pub fn initialize_webassembly(config: &InitializationConfig) {
