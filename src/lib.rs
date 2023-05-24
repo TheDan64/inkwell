@@ -79,6 +79,7 @@ use llvm_sys::{
 use llvm_sys::LLVMInlineAsmDialect;
 
 use std::convert::TryFrom;
+use serde::{Serialize, Deserialize};
 
 // Thanks to kennytm for coming up with assert_unique_features!
 // which ensures that the LLVM feature flags are mutually exclusive
@@ -382,7 +383,7 @@ pub enum AtomicRMWBinOp {
 /// # Remarks
 /// See also: https://llvm.org/doxygen/CodeGen_8h_source.html
 #[repr(u32)]
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Copy, Clone)]
 pub enum OptimizationLevel {
     None = 0,
     Less = 1,

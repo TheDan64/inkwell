@@ -147,6 +147,7 @@ llvm-sys-170 = { git = "https://github.com/matter-labs-forks/llvm-sys.rs", packa
 once_cell = "1.16"
 static-alloc = { version = "0.2", optional = true }
 thiserror = "1.0.48"
+serde = { version = "1.0", features = [ "derive" ] }
 
 [dev-dependencies]
 regex = "1"
