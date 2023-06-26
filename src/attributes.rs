@@ -17,9 +17,68 @@ use crate::types::AnyTypeEnum;
 // REVIEW: Should Attributes have a 'ctx lifetime?
 /// Functions, function parameters, and return types can have `Attribute`s to indicate
 /// how they should be treated by optimizations and code generation.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy)]
 pub struct Attribute {
     pub(crate) attribute: LLVMAttributeRef,
+}
+
+impl std::fmt::Debug for Attribute {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.is_string() {
+            return f
+                .debug_struct("Attribute::String")
+                .field("ptr", &self.attribute)
+                .field("kind_id", &self.get_string_kind_id())
+                .field("value", &self.get_string_value())
+                .finish();
+        }
+
+        if self.is_enum() {
+            return f
+                .debug_struct("Attribute::Enum")
+                .field("ptr", &self.attribute)
+                .field("kind_id", &self.get_enum_kind_id())
+                .field("value", &self.get_enum_value())
+                .finish();
+        }
+
+        if self.is_type() {
+            return f
+                .debug_struct("Attribute::Type")
+                .field("ptr", &self.attribute)
+                .field("kind_id", &self.get_enum_kind_id())
+                .field("value", &self.get_type_value())
+                .finish();
+        }
+
+        unreachable!(
+            "attribute at {:?} is not a string, enum or type attribute",
+            self.attribute
+        );
+    }
+}
+
+impl Eq for Attribute {}
+
+impl PartialEq<Self> for Attribute {
+    fn eq(&self, other: &Self) -> bool {
+        if self.is_enum() && other.is_enum() {
+            return self.get_enum_kind_id() == other.get_enum_kind_id()
+                && self.get_enum_value() == other.get_enum_value();
+        }
+
+        if self.is_string() && other.is_string() {
+            return self.get_string_kind_id() == other.get_string_kind_id()
+                && self.get_string_value() == other.get_string_value();
+        }
+
+        if self.is_type() && other.is_type() {
+            return self.get_enum_kind_id() == other.get_enum_kind_id()
+                && self.get_type_value() == other.get_type_value();
+        }
+
+        self.attribute == other.attribute
+    }
 }
 
 impl Attribute {
@@ -93,6 +152,12 @@ impl Attribute {
     #[llvm_versions(12.0..=latest)]
     pub fn is_type(self) -> bool {
         unsafe { LLVMIsTypeAttribute(self.attribute) == 1 }
+    }
+
+    // private function to make code elsewhere easier
+    #[llvm_versions(4.0..12.0)]
+    fn is_type(self) -> bool {
+        false
     }
 
     /// Gets the enum kind id associated with a builtin name.
@@ -279,6 +344,12 @@ impl Attribute {
         assert!(self.is_type()); // FIXME: SubTypes
 
         unsafe { AnyTypeEnum::new(LLVMGetTypeAttributeValue(self.attribute)) }
+    }
+
+    // private function to make code elsewhere easier
+    #[llvm_versions(4.0..12.0)]
+    fn get_type_value(&self) {
+        unreachable!("not implemented in this version")
     }
 }
 
