@@ -45,6 +45,38 @@ llvm13-0-no-llvm-linking = ["llvm13-0", "llvm-sys-130/no-llvm-linking"]
 llvm14-0-no-llvm-linking = ["llvm14-0", "llvm-sys-140/no-llvm-linking"]
 llvm15-0-no-llvm-linking = ["llvm15-0", "llvm-sys-150/no-llvm-linking"]
 llvm16-0-no-llvm-linking = ["llvm16-0", "llvm-sys-160/no-llvm-linking"]
+
+# Linking preference.
+# If none of these are enabled, it defaults to force static linking.
+#
+# Force dynamic linking against LLVM libraries. See llvm-sys for more details
+llvm12-0-force-dynamic = ["llvm12-0", "llvm-sys-120/force-dynamic"]
+llvm13-0-force-dynamic = ["llvm13-0", "llvm-sys-130/force-dynamic"]
+llvm14-0-force-dynamic = ["llvm14-0", "llvm-sys-140/force-dynamic"]
+llvm15-0-force-dynamic = ["llvm15-0", "llvm-sys-150/force-dynamic"]
+llvm16-0-force-dynamic = ["llvm16-0", "llvm-sys-160/force-dynamic"]
+
+# Prefer dynamic linking against LLVM libraries. See llvm-sys for more details
+llvm12-0-prefer-dynamic = ["llvm12-0", "llvm-sys-120/prefer-dynamic"]
+llvm13-0-prefer-dynamic = ["llvm13-0", "llvm-sys-130/prefer-dynamic"]
+llvm14-0-prefer-dynamic = ["llvm14-0", "llvm-sys-140/prefer-dynamic"]
+llvm15-0-prefer-dynamic = ["llvm15-0", "llvm-sys-150/prefer-dynamic"]
+llvm16-0-prefer-dynamic = ["llvm16-0", "llvm-sys-160/prefer-dynamic"]
+
+# Force static linking against LLVM libraries. See llvm-sys for more details
+llvm12-0-force-static = ["llvm12-0", "llvm-sys-120/force-static"]
+llvm13-0-force-static = ["llvm13-0", "llvm-sys-130/force-static"]
+llvm14-0-force-static = ["llvm14-0", "llvm-sys-140/force-static"]
+llvm15-0-force-static = ["llvm15-0", "llvm-sys-150/force-static"]
+llvm16-0-force-static = ["llvm16-0", "llvm-sys-160/force-static"]
+
+# Prefer static linking against LLVM libraries. See llvm-sys for more details
+llvm12-0-prefer-static = ["llvm12-0", "llvm-sys-120/prefer-static"]
+llvm13-0-prefer-static = ["llvm13-0", "llvm-sys-130/prefer-static"]
+llvm14-0-prefer-static = ["llvm14-0", "llvm-sys-140/prefer-static"]
+llvm15-0-prefer-static = ["llvm15-0", "llvm-sys-150/prefer-static"]
+llvm16-0-prefer-static = ["llvm16-0", "llvm-sys-160/prefer-static"]
+
 # Don't force linking to libffi on non-windows platforms. Without this feature
 # inkwell always links to libffi on non-windows platforms.
 no-libffi-linking = []
