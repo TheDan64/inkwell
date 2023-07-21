@@ -36,6 +36,8 @@ jobs:
         uses: KyleMayes/install-llvm-action@v1
         with:
           version: ${{ matrix.llvm-version[0] }}
+      - name: llvm-config
+        run: llvm-config --version --bindir --libdir
       - name: Build
         run: cargo build --release --features llvm${{ matrix.llvm-version[1] }} --verbose
       - name: Run tests
