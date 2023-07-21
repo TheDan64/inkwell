@@ -14,7 +14,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04]
         llvm-version:
           - ["4.0", "4-0"]
           - ["5.0", "5-0"]
@@ -29,6 +28,11 @@ jobs:
           - ["14.0", "14-0"]
           - ["15.0", "15-0"]
           - ["16.0", "16-0"]
+        # only use ubuntu-22.04 for llvm 16 and higher
+        include:
+          - os: ubuntu-20.04
+          - os: ubuntu-22.04
+            llvm-version: ["16.0", "16-0"]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
