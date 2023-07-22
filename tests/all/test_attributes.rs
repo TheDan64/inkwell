@@ -1,5 +1,7 @@
 use inkwell::attributes::{Attribute, AttributeLoc};
 use inkwell::context::Context;
+use inkwell::values::BasicValueEnum;
+use inkwell::AddressSpace;
 
 #[test]
 fn test_enum_attribute_kinds() {
@@ -78,17 +80,21 @@ fn test_attributes_on_function_values() {
     let context = Context::create();
     let builder = context.create_builder();
     let module = context.create_module("my_mod");
-    let void_type = context.void_type();
-    let i32_type = context.i32_type();
-    let fn_type = void_type.fn_type(&[i32_type.into()], false);
+    let i32_ptr_type = context.i32_type().ptr_type(AddressSpace::default());
+    let fn_type = i32_ptr_type.fn_type(&[i32_ptr_type.into()], false);
     let fn_value = module.add_function("my_fn", fn_type, None);
     let entry_bb = context.append_basic_block(fn_value, "entry");
     let string_attribute = context.create_string_attribute("my_key", "my_val");
-    let alignstack_attribute = Attribute::get_named_enum_kind_id("alignstack");
-    let enum_attribute = context.create_enum_attribute(alignstack_attribute, 1);
+
+    let alwaysinline_attribute = Attribute::get_named_enum_kind_id("alwaysinline");
+    let function_enum_attribute = context.create_enum_attribute(alwaysinline_attribute, 0);
+
+    let inreg_attribute = Attribute::get_named_enum_kind_id("noalias");
+    let return_enum_attribute = context.create_enum_attribute(inreg_attribute, 0);
 
     builder.position_at_end(entry_bb);
-    builder.build_return(None);
+    let null: BasicValueEnum = i32_ptr_type.const_null().into();
+    builder.build_return(Some(&null));
 
     assert_eq!(fn_value.count_attributes(AttributeLoc::Return), 0);
     assert_eq!(fn_value.count_attributes(AttributeLoc::Param(0)), 0);
@@ -96,17 +102,29 @@ fn test_attributes_on_function_values() {
     assert_eq!(fn_value.attributes(AttributeLoc::Param(0)), vec![]);
 
     fn_value.remove_string_attribute(AttributeLoc::Return, "my_key"); // Noop
-    fn_value.remove_enum_attribute(AttributeLoc::Return, alignstack_attribute); // Noop
+    fn_value.remove_enum_attribute(AttributeLoc::Return, inreg_attribute); // Noop
+    fn_value.remove_enum_attribute(AttributeLoc::Function, alwaysinline_attribute); // Noop
 
-    // define align 1 "my_key"="my_val" void @my_fn()
+    // ; Function Attrs: alwaysinline
+    // define inreg "my_key"="my_val" void @my_fn(i32 "my_key"="my_val" %0) #0 {
+    // entry:
+    //   ret void
+    // }
+    //
+    // attributes #0 = { alwaysinline }
     fn_value.add_attribute(AttributeLoc::Return, string_attribute);
     fn_value.add_attribute(AttributeLoc::Param(0), string_attribute); // Applied to 1st param
-    fn_value.add_attribute(AttributeLoc::Return, enum_attribute);
+    fn_value.add_attribute(AttributeLoc::Return, return_enum_attribute);
+    fn_value.add_attribute(AttributeLoc::Function, function_enum_attribute);
+
+    module.print_to_stderr();
+
+    module.verify().unwrap();
 
     assert_eq!(fn_value.count_attributes(AttributeLoc::Return), 2);
     assert_eq!(
-        fn_value.get_enum_attribute(AttributeLoc::Return, alignstack_attribute),
-        Some(enum_attribute)
+        fn_value.get_enum_attribute(AttributeLoc::Return, inreg_attribute),
+        Some(return_enum_attribute)
     );
     assert_eq!(
         fn_value.get_string_attribute(AttributeLoc::Return, "my_key"),
@@ -114,20 +132,26 @@ fn test_attributes_on_function_values() {
     );
     assert_eq!(
         fn_value.attributes(AttributeLoc::Return),
-        vec![enum_attribute, string_attribute]
+        vec![return_enum_attribute, string_attribute]
     );
 
     fn_value.remove_string_attribute(AttributeLoc::Return, "my_key");
 
     assert_eq!(fn_value.count_attributes(AttributeLoc::Return), 1);
-    assert_eq!(fn_value.attributes(AttributeLoc::Return), vec![enum_attribute]);
+    assert_eq!(fn_value.attributes(AttributeLoc::Return), vec![return_enum_attribute]);
+    fn_value.remove_enum_attribute(AttributeLoc::Return, inreg_attribute);
 
-    fn_value.remove_enum_attribute(AttributeLoc::Return, alignstack_attribute);
+    assert_eq!(fn_value.count_attributes(AttributeLoc::Function), 1);
+    assert_eq!(
+        fn_value.attributes(AttributeLoc::Function),
+        vec![function_enum_attribute]
+    );
+    fn_value.remove_enum_attribute(AttributeLoc::Function, alwaysinline_attribute);
 
     assert_eq!(fn_value.count_attributes(AttributeLoc::Function), 0);
     assert_eq!(fn_value.count_attributes(AttributeLoc::Return), 0);
     assert!(fn_value
-        .get_enum_attribute(AttributeLoc::Return, alignstack_attribute)
+        .get_enum_attribute(AttributeLoc::Return, inreg_attribute)
         .is_none());
     assert!(fn_value.get_string_attribute(AttributeLoc::Return, "my_key").is_none());
     assert_eq!(fn_value.attributes(AttributeLoc::Function), vec![]);
