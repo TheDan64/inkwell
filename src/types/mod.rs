@@ -36,8 +36,8 @@ pub use crate::types::void_type::VoidType;
 
 use llvm_sys::core::{
     LLVMAlignOf, LLVMArrayType, LLVMConstNull, LLVMConstPointerNull, LLVMFunctionType, LLVMGetElementType,
-    LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMSizeOf,
-    LLVMTypeIsSized, LLVMVectorType,
+    LLVMGetPoison, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString,
+    LLVMSizeOf, LLVMTypeIsSized, LLVMVectorType,
 };
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use llvm_sys::LLVMTypeKind;
@@ -132,6 +132,10 @@ impl<'ctx> Type<'ctx> {
 
     fn get_undef(self) -> LLVMValueRef {
         unsafe { LLVMGetUndef(self.ty) }
+    }
+
+    fn get_poison(&self) -> LLVMValueRef {
+        unsafe { LLVMGetPoison(self.ty) }
     }
 
     fn get_alignment(self) -> IntValue<'ctx> {

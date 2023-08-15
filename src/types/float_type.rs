@@ -255,6 +255,22 @@ impl<'ctx> FloatType<'ctx> {
         unsafe { FloatValue::new(self.float_type.get_undef()) }
     }
 
+    /// Creates a poison instance of a `FloatType`.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_poison = f32_type.get_poison();
+    ///
+    /// assert!(f32_poison.is_poison());
+    /// ```
+    pub fn get_poison(&self) -> FloatValue<'ctx> {
+        unsafe { FloatValue::new(self.float_type.get_poison()) }
+    }
+
     /// Creates a `GenericValue` for use with `ExecutionEngine`s.
     pub fn create_generic_value(self, value: f64) -> GenericValue<'ctx> {
         unsafe { GenericValue::new(LLVMCreateGenericValueOfFloat(self.as_type_ref(), value)) }

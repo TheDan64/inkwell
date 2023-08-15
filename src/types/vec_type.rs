@@ -149,6 +149,24 @@ impl<'ctx> VectorType<'ctx> {
         unsafe { VectorValue::new(self.vec_type.get_undef()) }
     }
 
+    /// Creates a poison instance of a `VectorType`.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::AddressSpace;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_vec_type = f32_type.vec_type(3);
+    /// let f32_vec_poison = f32_vec_type.get_undef();
+    ///
+    /// assert!(f32_vec_poison.is_undef());
+    /// ```
+    pub fn get_poison(self) -> VectorValue<'ctx> {
+        unsafe { VectorValue::new(self.vec_type.get_poison()) }
+    }
+
     // SubType: VectorType<BT> -> BT?
     /// Gets the element type of this `VectorType`.
     ///

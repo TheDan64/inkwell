@@ -54,6 +54,10 @@ impl<'ctx> FloatValue<'ctx> {
         self.float_value.is_undef()
     }
 
+    pub fn is_poison(self) -> bool {
+        self.float_value.is_poison()
+    }
+
     pub fn print_to_stderr(self) {
         self.float_value.print_to_stderr()
     }

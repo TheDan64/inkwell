@@ -48,8 +48,8 @@ pub use crate::values::traits::{AggregateValue, AnyValue, BasicValue, FloatMathV
 pub use crate::values::vec_value::VectorValue;
 
 use llvm_sys::core::{
-    LLVMDumpValue, LLVMGetFirstUse, LLVMGetSection, LLVMIsAInstruction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef,
-    LLVMPrintTypeToString, LLVMPrintValueToString, LLVMReplaceAllUsesWith, LLVMSetSection, LLVMTypeOf,
+    LLVMDumpValue, LLVMGetFirstUse, LLVMGetSection, LLVMIsAInstruction, LLVMIsConstant, LLVMIsNull, LLVMIsPoison,
+    LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMReplaceAllUsesWith, LLVMSetSection, LLVMTypeOf,
 };
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
@@ -145,6 +145,10 @@ impl<'ctx> Value<'ctx> {
         unsafe { LLVMIsUndef(self.value) == 1 }
     }
 
+    fn is_poison(self) -> bool {
+        unsafe { LLVMIsPoison(self.value) == 1 }
+    }
+
     fn get_type(self) -> LLVMTypeRef {
         unsafe { LLVMTypeOf(self.value) }
     }
@@ -224,6 +228,7 @@ impl fmt::Debug for Value<'_> {
         let is_const = self.is_const();
         let is_null = self.is_null();
         let is_undef = self.is_undef();
+        let is_poison = self.is_poison();
 
         f.debug_struct("Value")
             .field("name", &name)
@@ -231,6 +236,7 @@ impl fmt::Debug for Value<'_> {
             .field("is_const", &is_const)
             .field("is_null", &is_null)
             .field("is_undef", &is_undef)
+            .field("is_poison", &is_poison)
             .field("llvm_value", &llvm_value)
             .field("llvm_type", &llvm_type)
             .finish()
