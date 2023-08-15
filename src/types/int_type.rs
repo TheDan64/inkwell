@@ -366,6 +366,23 @@ impl<'ctx> IntType<'ctx> {
         unsafe { IntValue::new(self.int_type.get_undef()) }
     }
 
+    /// Creates a poison instance of an `IntType`.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::AddressSpace;
+    ///
+    /// let context = Context::create();
+    /// let i8_type = context.i8_type();
+    /// let i8_poison = i8_type.get_poison();
+    ///
+    /// assert!(i8_poison.is_poison());
+    /// ```
+    pub fn get_poison(self) -> IntValue<'ctx> {
+        unsafe { IntValue::new(self.int_type.get_poison()) }
+    }
+
     /// Creates a `GenericValue` for use with `ExecutionEngine`s.
     pub fn create_generic_value(self, value: u64, is_signed: bool) -> GenericValue<'ctx> {
         unsafe { GenericValue::new(LLVMCreateGenericValueOfInt(self.as_type_ref(), value, is_signed as i32)) }

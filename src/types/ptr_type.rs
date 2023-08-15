@@ -237,6 +237,24 @@ impl<'ctx> PointerType<'ctx> {
         unsafe { PointerValue::new(self.ptr_type.get_undef()) }
     }
 
+    /// Creates a poison instance of a `PointerType`.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::AddressSpace;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
+    /// let f32_ptr_undef = f32_ptr_type.get_poison();
+    ///
+    /// assert!(f32_ptr_undef.is_poison());
+    /// ```
+    pub fn get_poison(self) -> PointerValue<'ctx> {
+        unsafe { PointerValue::new(self.ptr_type.get_poison()) }
+    }
+
     /// Creates a `VectorType` with this `PointerType` for its element type.
     ///
     /// # Example

@@ -284,6 +284,89 @@ fn test_undef() {
 }
 
 #[test]
+fn test_poison() {
+    let context = Context::create();
+    let bool_type = context.bool_type();
+    let i8_type = context.i8_type();
+    let i16_type = context.i16_type();
+    let i32_type = context.i32_type();
+    let i64_type = context.i64_type();
+    let i128_type = context.i128_type();
+    let f16_type = context.f16_type();
+    let f32_type = context.f32_type();
+    let f64_type = context.f64_type();
+    let f128_type = context.f128_type();
+    let array_type = f64_type.array_type(42);
+    let ppc_f128_type = context.ppc_f128_type();
+
+    assert_eq!(array_type.get_element_type().into_float_type(), f64_type);
+
+    let bool_val = bool_type.const_int(0, false);
+    let i8_val = i8_type.const_int(0, false);
+    let i16_val = i16_type.const_int(0, false);
+    let i32_val = i32_type.const_int(0, false);
+    let i64_val = i64_type.const_int(0, false);
+    let i128_val = i128_type.const_int(0, false);
+    let f16_val = f16_type.const_float(0.0);
+    let f32_val = f32_type.const_float(0.0);
+    let f64_val = f64_type.const_float(0.0);
+    let f128_val = f128_type.const_float(0.0);
+    let ptr_val = bool_type.ptr_type(AddressSpace::default()).const_null();
+    let array_val = f64_type.const_array(&[f64_val]);
+    let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
+    let vec_val = VectorType::const_vector(&[i8_val]);
+    let ppc_f128_val = ppc_f128_type.const_float(0.0);
+
+    assert!(!bool_val.is_poison());
+    assert!(!i8_val.is_poison());
+    assert!(!i16_val.is_poison());
+    assert!(!i32_val.is_poison());
+    assert!(!i64_val.is_poison());
+    assert!(!i128_val.is_poison());
+    assert!(!f16_val.is_poison());
+    assert!(!f32_val.is_poison());
+    assert!(!f64_val.is_poison());
+    assert!(!f128_val.is_poison());
+    assert!(!ptr_val.is_poison());
+    assert!(!array_val.is_poison());
+    assert!(!struct_val.is_poison());
+    assert!(!vec_val.is_poison());
+    assert!(!ppc_f128_val.is_poison());
+
+    let bool_poison = bool_type.get_poison();
+    let i8_poison = i8_type.get_poison();
+    let i16_poison = i16_type.get_poison();
+    let i32_poison = i32_type.get_poison();
+    let i64_poison = i64_type.get_poison();
+    let i128_poison = i128_type.get_poison();
+    let f16_poison = f16_type.get_poison();
+    let f32_poison = f32_type.get_poison();
+    let f64_poison = f64_type.get_poison();
+    let f128_poison = f128_type.get_poison();
+    let ptr_poison = bool_type.ptr_type(AddressSpace::default()).get_poison();
+    let array_poison = array_type.get_poison();
+    let struct_poison = context.struct_type(&[bool_type.into()], false).get_poison();
+    let vec_poison = bool_type.vec_type(1).get_poison();
+    let ppc_f128_poison = ppc_f128_type.get_poison();
+
+    assert!(bool_poison.is_poison());
+    assert!(i8_poison.is_poison());
+    assert!(i16_poison.is_poison());
+    assert!(i32_poison.is_poison());
+    assert!(i64_poison.is_poison());
+    assert!(i128_poison.is_poison());
+    assert!(f16_poison.is_poison());
+    assert!(f32_poison.is_poison());
+    assert!(f64_poison.is_poison());
+    assert!(f128_poison.is_poison());
+    assert!(ptr_poison.is_poison());
+    assert!(array_poison.is_poison());
+    assert!(struct_poison.is_poison());
+    assert!(vec_poison.is_poison());
+    assert!(ppc_f128_poison.is_poison());
+}
+
+#[test]
 fn test_consecutive_fns() {
     let context = Context::create();
     let module = context.create_module("fns");

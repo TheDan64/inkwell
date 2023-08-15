@@ -1031,6 +1031,31 @@ fn test_insert_value() {
     assert!(module.verify().is_ok());
 }
 
+#[test]
+fn test_insert_element() {
+    let context = Context::create();
+    let module = context.create_module("vec");
+
+    let fn_type = context.void_type().fn_type(&[], false);
+    let fn_value = module.add_function("vec_fn", fn_type, None);
+    let builder = context.create_builder();
+    let entry = context.append_basic_block(fn_value, "entry");
+
+    builder.position_at_end(entry);
+
+    let i8_ty = context.i8_type();
+    let i32_ty = context.i32_type();
+    let mut v = i8_ty.vec_type(4).get_poison();
+    v = builder.build_insert_element(v, i8_ty.const_int(0, false), i32_ty.const_int(0, false), "v0");
+    v = builder.build_insert_element(v, i8_ty.const_int(1, false), i32_ty.const_int(1, false), "v1");
+    v = builder.build_insert_element(v, i8_ty.const_int(2, false), i32_ty.const_int(2, false), "v2");
+    v = builder.build_insert_element(v, i8_ty.const_int(3, false), i32_ty.const_int(3, false), "v3");
+
+    builder.build_return(None);
+
+    assert!(module.verify().is_ok());
+}
+
 fn is_alignment_ok(align: u32) -> bool {
     // This replicates the assertions LLVM runs.
     //

@@ -227,6 +227,23 @@ impl<'ctx> ArrayType<'ctx> {
         unsafe { ArrayValue::new(self.array_type.get_undef()) }
     }
 
+    /// Creates a poison instance of a `ArrayType`.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let i8_type = context.i8_type();
+    /// let i8_array_type = i8_type.array_type(3);
+    /// let i8_array_poison = i8_array_type.get_poison();
+    ///
+    /// assert!(i8_array_poison.is_poison());
+    /// ```
+    pub fn get_poison(self) -> ArrayValue<'ctx> {
+        unsafe { ArrayValue::new(self.array_type.get_poison()) }
+    }
+
     // SubType: ArrayType<BT> -> BT?
     /// Gets the element type of this `ArrayType`.
     ///
