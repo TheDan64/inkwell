@@ -56,10 +56,6 @@ impl<'ctx> IntValue<'ctx> {
         self.int_value.is_undef()
     }
 
-    pub fn is_poison(self) -> bool {
-        self.int_value.is_poison()
-    }
-
     pub fn print_to_stderr(self) {
         self.int_value.print_to_stderr()
     }

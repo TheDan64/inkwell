@@ -52,10 +52,6 @@ impl<'ctx> PointerValue<'ctx> {
         self.ptr_value.is_undef()
     }
 
-    pub fn is_poison(self) -> bool {
-        self.ptr_value.is_poison()
-    }
-
     /// Determines whether or not a `PointerValue` is a constant.
     ///
     /// # Example
