@@ -1033,6 +1033,9 @@ fn test_insert_value() {
 
 #[test]
 fn test_insert_element() {
+    use inkwell::types::IntType;
+    use inkwell::values::VectorValue;
+
     let context = Context::create();
     let module = context.create_module("vec");
 
@@ -1043,9 +1046,18 @@ fn test_insert_element() {
 
     builder.position_at_end(entry);
 
+    #[llvm_versions(12.0..=latest)]
+    fn get_empty_vector_of(ty: IntType<'_>) -> VectorValue<'_> {
+        ty.vec_type(4).get_poison()
+    }
+    #[llvm_versions(4.0..12.0)]
+    fn get_empty_vector_of(ty: IntType<'_>) -> VectorValue<'_> {
+        ty.vec_type(4).get_undef()
+    }
+
     let i8_ty = context.i8_type();
     let i32_ty = context.i32_type();
-    let mut v = i8_ty.vec_type(4).get_poison();
+    let mut v = get_empty_vector_of(i8_ty);
     v = builder.build_insert_element(v, i8_ty.const_int(0, false), i32_ty.const_int(0, false), "v0");
     v = builder.build_insert_element(v, i8_ty.const_int(1, false), i32_ty.const_int(1, false), "v1");
     v = builder.build_insert_element(v, i8_ty.const_int(2, false), i32_ty.const_int(2, false), "v2");

@@ -251,6 +251,7 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// assert!(f32_ptr_undef.is_poison());
     /// ```
+    #[llvm_versions(12.0..=latest)]
     pub fn get_poison(self) -> PointerValue<'ctx> {
         unsafe { PointerValue::new(self.ptr_type.get_poison()) }
     }
