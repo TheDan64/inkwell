@@ -34,9 +34,12 @@ pub use crate::types::traits::{AnyType, AsTypeRef, BasicType, FloatMathType, Int
 pub use crate::types::vec_type::VectorType;
 pub use crate::types::void_type::VoidType;
 
+#[llvm_versions(12.0..=latest)]
+use llvm_sys::core::LLVMGetPoison;
+
 use llvm_sys::core::{
     LLVMAlignOf, LLVMArrayType, LLVMConstNull, LLVMConstPointerNull, LLVMFunctionType, LLVMGetElementType,
-    LLVMGetPoison, LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString,
+    LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString,
     LLVMSizeOf, LLVMTypeIsSized, LLVMVectorType,
 };
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
@@ -134,6 +137,7 @@ impl<'ctx> Type<'ctx> {
         unsafe { LLVMGetUndef(self.ty) }
     }
 
+    #[llvm_versions(12.0..=latest)]
     fn get_poison(&self) -> LLVMValueRef {
         unsafe { LLVMGetPoison(self.ty) }
     }

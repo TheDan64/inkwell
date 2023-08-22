@@ -283,6 +283,7 @@ fn test_undef() {
     assert!(ppc_f128_undef.is_undef());
 }
 
+#[llvm_versions(12.0..=latest)]
 #[test]
 fn test_poison() {
     let context = Context::create();
