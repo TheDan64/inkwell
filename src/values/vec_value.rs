@@ -80,10 +80,6 @@ impl<'ctx> VectorValue<'ctx> {
         self.vec_value.is_undef()
     }
 
-    pub fn is_poison(self) -> bool {
-        self.vec_value.is_poison()
-    }
-
     pub fn as_instruction(self) -> Option<InstructionValue<'ctx>> {
         self.vec_value.as_instruction()
     }

@@ -49,11 +49,6 @@ impl<'ctx> ArrayValue<'ctx> {
         self.array_value.is_undef()
     }
 
-    /// Determines whether or not this value is poison.
-    pub fn is_poison(self) -> bool {
-        self.array_value.is_poison()
-    }
-
     /// Prints this `ArrayValue` to standard error.
     pub fn print_to_stderr(self) {
         self.array_value.print_to_stderr()

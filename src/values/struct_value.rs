@@ -46,10 +46,6 @@ impl<'ctx> StructValue<'ctx> {
         self.struct_value.is_undef()
     }
 
-    pub fn is_poison(self) -> bool {
-        self.struct_value.is_poison()
-    }
-
     pub fn print_to_stderr(self) {
         self.struct_value.print_to_stderr()
     }
