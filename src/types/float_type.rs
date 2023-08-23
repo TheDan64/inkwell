@@ -260,6 +260,7 @@ impl<'ctx> FloatType<'ctx> {
     /// # Example
     /// ```no_run
     /// use inkwell::context::Context;
+    /// use inkwell::values::AnyValue;
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();

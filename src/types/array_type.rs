@@ -232,6 +232,7 @@ impl<'ctx> ArrayType<'ctx> {
     /// # Example
     /// ```no_run
     /// use inkwell::context::Context;
+    /// use inkwell::values::AnyValue;
     ///
     /// let context = Context::create();
     /// let i8_type = context.i8_type();
