@@ -243,6 +243,7 @@ impl<'ctx> PointerType<'ctx> {
     /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::AddressSpace;
+    /// use inkwell::values::AnyValue;
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
