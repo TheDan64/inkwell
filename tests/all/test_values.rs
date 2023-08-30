@@ -38,7 +38,7 @@ fn test_call_site() {
     let fn_type = void_type.fn_type(&[], false);
 
     let function = module.add_function("do_nothing", fn_type, None);
-    
+
     let block = context.append_basic_block(function, "entry");
     builder.position_at_end(block);
 
@@ -1348,7 +1348,7 @@ fn test_constant_expression() {
     let fn_type = void_type.fn_type(&[], false);
 
     let function = module.add_function("", fn_type, None);
-    
+
     let block = context.append_basic_block(function, "entry");
     builder.position_at_end(block);
 

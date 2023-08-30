@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsConstantString, LLVMGetAsString};
+use llvm_sys::core::{LLVMGetAsString, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsConstantString};
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
@@ -102,16 +102,16 @@ impl<'ctx> ArrayValue<'ctx> {
 
     /// Obtain the string from the ArrayValue
     /// if the value points to a constant string.
-    /// 
+    ///
     /// # Example
-    /// 
+    ///
     /// ```no_run
     /// use inkwell::context::Context;
     /// use std::ffi::CStr;
-    /// 
+    ///
     /// let context = Context::create();
     /// let string = context.const_string(b"hello!", true);
-    /// 
+    ///
     /// let result = CStr::from_bytes_with_nul(b"hello!\0").unwrap();
     /// assert_eq!(string.get_string_constant(), Some(result));
     /// ```

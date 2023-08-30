@@ -51,8 +51,8 @@ pub use crate::values::vec_value::VectorValue;
 use llvm_sys::core::LLVMIsPoison;
 
 use llvm_sys::core::{
-    LLVMDumpValue, LLVMGetFirstUse, LLVMGetSection, LLVMIsAInstruction, LLVMIsConstant, LLVMIsNull,
-    LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMReplaceAllUsesWith, LLVMSetSection, LLVMTypeOf,
+    LLVMDumpValue, LLVMGetFirstUse, LLVMGetSection, LLVMIsAInstruction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef,
+    LLVMPrintTypeToString, LLVMPrintValueToString, LLVMReplaceAllUsesWith, LLVMSetSection, LLVMTypeOf,
 };
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
@@ -205,7 +205,13 @@ impl<'ctx> Value<'ctx> {
     /// Sets the section of the global value
     fn set_section(self, section: Option<&str>) {
         #[cfg(target_os = "macos")]
-        let section = section.map(|s| if s.contains(",") { format!("{}", s) } else { format!(",{}", s) });
+        let section = section.map(|s| {
+            if s.contains(",") {
+                format!("{}", s)
+            } else {
+                format!(",{}", s)
+            }
+        });
 
         let c_string = section.as_deref().map(to_c_str);
 
