@@ -39,8 +39,8 @@ use llvm_sys::core::LLVMGetPoison;
 
 use llvm_sys::core::{
     LLVMAlignOf, LLVMArrayType, LLVMConstNull, LLVMConstPointerNull, LLVMFunctionType, LLVMGetElementType,
-    LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString,
-    LLVMSizeOf, LLVMTypeIsSized, LLVMVectorType,
+    LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMSizeOf,
+    LLVMTypeIsSized, LLVMVectorType,
 };
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use llvm_sys::LLVMTypeKind;

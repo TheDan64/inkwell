@@ -376,7 +376,7 @@ impl<'ctx> StructType<'ctx> {
     /// Defines the body of a `StructType`.
     ///
     /// If the struct is an opaque type, it will no longer be after this call.
-    /// 
+    ///
     /// Resetting the `packed` state of a non-opaque struct type may not work.
     ///
     /// # Example
