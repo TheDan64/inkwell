@@ -38,6 +38,10 @@ fn test_call_site() {
     let fn_type = void_type.fn_type(&[], false);
 
     let function = module.add_function("do_nothing", fn_type, None);
+    
+    let block = context.append_basic_block(function, "entry");
+    builder.position_at_end(block);
+
     let call_site = builder.build_call(function, &[], "to_infinity_and_beyond");
 
     assert_eq!(call_site.count_arguments(), 0);
@@ -1344,6 +1348,10 @@ fn test_constant_expression() {
     let fn_type = void_type.fn_type(&[], false);
 
     let function = module.add_function("", fn_type, None);
+    
+    let block = context.append_basic_block(function, "entry");
+    builder.position_at_end(block);
+
     let expr = builder.build_ptr_to_int(function.as_global_value().as_pointer_value(), i32_type, "");
 
     assert!(expr.is_const());
