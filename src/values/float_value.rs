@@ -23,7 +23,7 @@ pub struct FloatValue<'ctx> {
 }
 
 impl<'ctx> FloatValue<'ctx> {
-    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
+    pub unsafe fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
         FloatValue {

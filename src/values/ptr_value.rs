@@ -21,7 +21,7 @@ pub struct PointerValue<'ctx> {
 }
 
 impl<'ctx> PointerValue<'ctx> {
-    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
+    pub unsafe fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
         PointerValue {

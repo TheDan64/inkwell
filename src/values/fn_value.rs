@@ -35,7 +35,7 @@ pub struct FunctionValue<'ctx> {
 }
 
 impl<'ctx> FunctionValue<'ctx> {
-    pub(crate) unsafe fn new(value: LLVMValueRef) -> Option<Self> {
+    pub unsafe fn new(value: LLVMValueRef) -> Option<Self> {
         if value.is_null() {
             return None;
         }

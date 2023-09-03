@@ -15,7 +15,7 @@ use crate::values::{AnyValueEnum, BasicValueEnum};
 pub struct BasicValueUse<'ctx>(LLVMUseRef, PhantomData<&'ctx ()>);
 
 impl<'ctx> BasicValueUse<'ctx> {
-    pub(crate) unsafe fn new(use_: LLVMUseRef) -> Self {
+    pub unsafe fn new(use_: LLVMUseRef) -> Self {
         debug_assert!(!use_.is_null());
 
         BasicValueUse(use_, PhantomData)
