@@ -2702,7 +2702,7 @@ impl<'ctx> Builder<'ctx> {
     /// Builds an extract value instruction which extracts a `BasicValueEnum`
     /// from a struct or array.
     /// 
-    /// Will return `Err(BuilderError::ExtractOutOfRange)` if the provided index is out of bounds of the aggregate value length.
+    /// Returns `Err(BuilderError::ExtractOutOfRange)` if the provided index is out of bounds of the aggregate value length.
     ///
     /// # Example
     ///
@@ -2785,7 +2785,7 @@ impl<'ctx> Builder<'ctx> {
     /// Builds an insert value instruction which inserts a `BasicValue` into a struct
     /// or array and returns the resulting aggregate value.
     /// 
-    /// Will return `Err(BuilderError::ExtractOutOfRange)` if the provided index is out of bounds of the aggregate value length.
+    /// Returns `Err(BuilderError::ExtractOutOfRange)` if the provided index is out of bounds of the aggregate value length.
     ///
     /// # Example
     ///
@@ -3214,8 +3214,9 @@ impl<'ctx> Builder<'ctx> {
 
     /// Builds an atomicrmw instruction. It allows you to atomically modify memory.
     ///
-    /// Will return `Err(BuilderError::BitwidthError)` if the bitwidth of the value is not a power of 2 and less than 8, and
-    /// `Err(BuilderError:PointeeTypeMismatch)` if the pointee type does not match the value's type.
+    /// May return of the following errors:
+    /// - `Err(BuilderError::BitwidthError)` if the bitwidth of the value is not a power of 2 and less than 8
+    /// - `Err(BuilderError:PointeeTypeMismatch)` if the pointee type does not match the value's type
     /// 
     /// # Example
     ///
@@ -3280,12 +3281,14 @@ impl<'ctx> Builder<'ctx> {
 
     /// Builds a cmpxchg instruction. It allows you to atomically compare and replace memory.
     /// 
-    /// Will return `Err(BuilderError::PointeeTypeMismatch)` if the pointer does not point to an element of the value type,
-    /// `Err(BuilderError::ValueTypeMismatch)` if the value to compare and the new values are not of the same type, or if
-    /// the value does not have a pointer or integer type, and `Err(BuilderError::OrderingError)` if the following conditions are not satisfied:
-    /// - Both success and failure orderings are not Monotonic or stronger
-    /// - The failure ordering is stronger than the success ordering
-    /// - The failure ordering is release or acquire release
+    /// May return one of the following errors:
+    /// - `Err(BuilderError::PointeeTypeMismatch)` if the pointer does not point to an element of the value type
+    /// - `Err(BuilderError::ValueTypeMismatch)` if the value to compare and the new values are not of the same type, or if
+    /// the value does not have a pointer or integer type
+    /// - `Err(BuilderError::OrderingError)` if the following conditions are not satisfied:
+    ///     - Both success and failure orderings are not Monotonic or stronger
+    ///     - The failure ordering is stronger than the success ordering
+    ///     - The failure ordering is release or acquire release
     ///
     /// # Example
     ///
