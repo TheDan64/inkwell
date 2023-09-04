@@ -94,7 +94,7 @@ pub unsafe trait BasicValue<'ctx>: AnyValue<'ctx> {
     }
 
     /// Most `BasicValue`s are the byproduct of an instruction
-    /// and so are convertable into an `InstructionValue`
+    /// and so are convertible into an `InstructionValue`
     fn as_instruction_value(&self) -> Option<InstructionValue<'ctx>> {
         let value = unsafe { Value::new(self.as_value_ref()) };
 

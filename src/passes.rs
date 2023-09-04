@@ -248,7 +248,7 @@ impl<'ctx> PassManagerSubType for FunctionValue<'ctx> {
 
 // SubTypes: PassManager<Module>, PassManager<FunctionValue>
 /// A manager for running optimization and simplification passes. Much of the
-/// documenation for specific passes is directly from the [LLVM
+/// documentation for specific passes is directly from the [LLVM
 /// documentation](https://llvm.org/docs/Passes.html).
 #[derive(Debug)]
 pub struct PassManager<T> {
@@ -527,7 +527,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// This pass performs global value numbering to eliminate
     /// fully and partially redundant instructions. It also
     /// performs redundant load elimination.
-    // REVIEW: Is `LLVMAddGVNPass` deprecated? Should we just seemlessly replace
+    // REVIEW: Is `LLVMAddGVNPass` deprecated? Should we just seamlessly replace
     // the old one with this one in 4.0+?
     #[llvm_versions(4.0..=latest)]
     pub fn add_new_gvn_pass(&self) {
@@ -595,7 +595,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     ///
     /// This is a simple worklist driven algorithm.
     ///
-    /// This pass guarantees that the following canonicalizations are performed
+    /// This pass guarantees that the following canonicalization are performed
     /// on the program:
     ///
     /// 1. If a binary operator has a constant operand, it is moved to the

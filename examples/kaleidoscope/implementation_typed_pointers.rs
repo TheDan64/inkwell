@@ -909,11 +909,11 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                 ref right,
             } => {
                 if op == '=' {
-                    // handle assignement
+                    // handle assignment
                     let var_name = match *left.borrow() {
                         Expr::Variable(ref var_name) => var_name,
                         _ => {
-                            return Err("Expected variable as left-hand operator of assignement.");
+                            return Err("Expected variable as left-hand operator of assignment.");
                         },
                     };
 
