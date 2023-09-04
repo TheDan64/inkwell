@@ -369,9 +369,9 @@ impl<'ctx> InstructionValue<'ctx> {
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
     /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
-    /// let store_instruction = builder.build_store(arg1, f32_val);
-    /// let free_instruction = builder.build_free(arg1);
-    /// let return_instruction = builder.build_return(None);
+    /// let store_instruction = builder.build_store(arg1, f32_val).unwrap();
+    /// let free_instruction = builder.build_free(arg1).unwrap();
+    /// let return_instruction = builder.build_return(None).unwrap();
     ///
     /// assert_eq!(store_instruction.get_num_operands(), 2);
     /// assert_eq!(free_instruction.get_num_operands(), 2);
@@ -429,9 +429,9 @@ impl<'ctx> InstructionValue<'ctx> {
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
     /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
-    /// let store_instruction = builder.build_store(arg1, f32_val);
-    /// let free_instruction = builder.build_free(arg1);
-    /// let return_instruction = builder.build_return(None);
+    /// let store_instruction = builder.build_store(arg1, f32_val).unwrap();
+    /// let free_instruction = builder.build_free(arg1).unwrap();
+    /// let return_instruction = builder.build_return(None).unwrap();
     ///
     /// assert!(store_instruction.get_operand(0).is_some());
     /// assert!(store_instruction.get_operand(1).is_some());
@@ -512,9 +512,9 @@ impl<'ctx> InstructionValue<'ctx> {
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
     /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
-    /// let store_instruction = builder.build_store(arg1, f32_val);
-    /// let free_instruction = builder.build_free(arg1);
-    /// let return_instruction = builder.build_return(None);
+    /// let store_instruction = builder.build_store(arg1, f32_val).unwrap();
+    /// let free_instruction = builder.build_free(arg1).unwrap();
+    /// let return_instruction = builder.build_return(None).unwrap();
     ///
     /// // This will produce invalid IR:
     /// free_instruction.set_operand(0, f32_val);
@@ -555,9 +555,9 @@ impl<'ctx> InstructionValue<'ctx> {
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
     /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
-    /// let store_instruction = builder.build_store(arg1, f32_val);
-    /// let free_instruction = builder.build_free(arg1);
-    /// let return_instruction = builder.build_return(None);
+    /// let store_instruction = builder.build_store(arg1, f32_val).unwrap();
+    /// let free_instruction = builder.build_free(arg1).unwrap();
+    /// let return_instruction = builder.build_return(None).unwrap();
     ///
     /// assert_eq!(store_instruction.get_operand_use(1), arg1.get_first_use());
     /// ```
@@ -601,9 +601,9 @@ impl<'ctx> InstructionValue<'ctx> {
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
     /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
-    /// let store_instruction = builder.build_store(arg1, f32_val);
-    /// let free_instruction = builder.build_free(arg1);
-    /// let return_instruction = builder.build_return(None);
+    /// let store_instruction = builder.build_store(arg1, f32_val).unwrap();
+    /// let free_instruction = builder.build_free(arg1).unwrap();
+    /// let return_instruction = builder.build_return(None).unwrap();
     ///
     /// assert!(arg1.get_first_use().is_some());
     /// ```

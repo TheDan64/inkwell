@@ -496,7 +496,7 @@ impl Context {
     /// let basic_block = context.append_basic_block(fn_val, "entry");
     ///
     /// builder.position_at_end(basic_block);
-    /// builder.build_return(None);
+    /// builder.build_return(None).unwrap();
     ///
     /// let memory_buffer = module.write_bitcode_to_memory();
     ///
@@ -566,13 +566,13 @@ impl Context {
     /// {
     ///     use inkwell::values::CallableValue;
     ///     let callable_value = CallableValue::try_from(asm).unwrap();
-    ///     builder.build_call(callable_value, params, "exit");
+    ///     builder.build_call(callable_value, params, "exit").unwrap();
     /// }
     ///
     /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
-    /// builder.build_indirect_call(asm_fn, asm, params, "exit");
+    /// builder.build_indirect_call(asm_fn, asm, params, "exit").unwrap();
     ///
-    /// builder.build_return(None);
+    /// builder.build_return(None).unwrap();
     /// ```
     #[inline]
     pub fn create_inline_asm<'ctx>(
@@ -1106,7 +1106,7 @@ impl Context {
     ///
     /// builder.position_at_end(entry_block);
     ///
-    /// let ret_instr = builder.build_return(None);
+    /// let ret_instr = builder.build_return(None).unwrap();
     ///
     /// assert!(md_node.is_node());
     ///
@@ -1140,7 +1140,7 @@ impl Context {
     ///
     /// builder.position_at_end(entry_block);
     ///
-    /// let ret_instr = builder.build_return(None);
+    /// let ret_instr = builder.build_return(None).unwrap();
     ///
     /// assert!(md_string.is_string());
     ///
@@ -1344,7 +1344,7 @@ impl<'ctx> ContextRef<'ctx> {
     /// let basic_block = context.append_basic_block(fn_val, "entry");
     ///
     /// builder.position_at_end(basic_block);
-    /// builder.build_return(None);
+    /// builder.build_return(None).unwrap();
     ///
     /// let memory_buffer = module.write_bitcode_to_memory();
     ///
@@ -1414,13 +1414,13 @@ impl<'ctx> ContextRef<'ctx> {
     /// {
     ///     use inkwell::values::CallableValue;
     ///     let callable_value = CallableValue::try_from(asm).unwrap();
-    ///     builder.build_call(callable_value, params, "exit");
+    ///     builder.build_call(callable_value, params, "exit").unwrap();
     /// }
     ///
     /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
-    /// builder.build_indirect_call(asm_fn, asm, params, "exit");
+    /// builder.build_indirect_call(asm_fn, asm, params, "exit").unwrap();
     ///
-    /// builder.build_return(None);
+    /// builder.build_return(None).unwrap();
     /// ```
     #[inline]
     pub fn create_inline_asm(
@@ -1954,7 +1954,7 @@ impl<'ctx> ContextRef<'ctx> {
     ///
     /// builder.position_at_end(entry_block);
     ///
-    /// let ret_instr = builder.build_return(None);
+    /// let ret_instr = builder.build_return(None).unwrap();
     ///
     /// assert!(md_node.is_node());
     ///
@@ -1988,7 +1988,7 @@ impl<'ctx> ContextRef<'ctx> {
     ///
     /// builder.position_at_end(entry_block);
     ///
-    /// let ret_instr = builder.build_return(None);
+    /// let ret_instr = builder.build_return(None).unwrap();
     ///
     /// assert!(md_string.is_string());
     ///

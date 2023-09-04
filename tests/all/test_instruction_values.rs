@@ -447,7 +447,7 @@ fn test_mem_instructions() {
     ))]
     let load = builder.build_load(arg1, "").unwrap();
     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
-    let load = builder.build_load(f32_type, arg1, "");
+    let load = builder.build_load(f32_type, arg1, "").unwrap();
     let load_instruction = load.as_instruction_value().unwrap();
 
     assert_eq!(store_instruction.get_volatile().unwrap(), false);
@@ -525,7 +525,7 @@ fn test_atomic_ordering_mem_instructions() {
     ))]
     let load = builder.build_load(arg1, "").unwrap();
     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
-    let load = builder.build_load(f32_type, arg1, "");
+    let load = builder.build_load(f32_type, arg1, "").unwrap();
     let load_instruction = load.as_instruction_value().unwrap();
 
     assert_eq!(

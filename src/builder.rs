@@ -79,6 +79,10 @@ pub enum BuilderError {
     ValueTypeMismatch(&'static str),
     #[error("Ordering error or mismatch")]
     OrderingError(&'static str),
+    #[error("GEP pointee is not a struct")]
+    GEPPointee,
+    #[error("GEP index out of range")]
+    GEPIndex,
 }
 
 #[derive(Debug)]
@@ -137,7 +141,7 @@ impl<'ctx> Builder<'ctx> {
     /// let i32_arg = fn_value.get_first_param().unwrap();
     ///
     /// builder.position_at_end(entry);
-    /// builder.build_return(Some(&i32_arg));
+    /// builder.build_return(Some(&i32_arg)).unwrap();
     /// ```
     pub fn build_return(&self, value: Option<&dyn BasicValue<'ctx>>) -> Result<InstructionValue<'ctx>, BuilderError> {
         if *self.positioned != PositionState::Set {
@@ -174,7 +178,7 @@ impl<'ctx> Builder<'ctx> {
     /// let entry = context.append_basic_block(fn_value, "entry");
     ///
     /// builder.position_at_end(entry);
-    /// builder.build_aggregate_return(&[i32_three.into(), i32_seven.into()]);
+    /// builder.build_aggregate_return(&[i32_three.into(), i32_seven.into()]).unwrap();
     /// ```
     pub fn build_aggregate_return(
         &self,
@@ -213,12 +217,12 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.position_at_end(entry);
     ///
-    /// let ret_val = builder.build_call(fn_value, &[i32_arg.into(), md_string.into()], "call")
+    /// let ret_val = builder.build_call(fn_value, &[i32_arg.into(), md_string.into()], "call").unwrap()
     ///     .try_as_basic_value()
     ///     .left()
     ///     .unwrap();
     ///
-    /// builder.build_return(Some(&ret_val));
+    /// builder.build_return(Some(&ret_val)).unwrap();
     /// ```
     #[llvm_versions(4.0..=14.0)]
     pub fn build_call<F>(
@@ -290,12 +294,12 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.position_at_end(entry);
     ///
-    /// let ret_val = builder.build_call(fn_value, &[i32_arg.into(), md_string.into()], "call")
+    /// let ret_val = builder.build_call(fn_value, &[i32_arg.into(), md_string.into()], "call").unwrap()
     ///     .try_as_basic_value()
     ///     .left()
     ///     .unwrap();
     ///
-    /// builder.build_return(Some(&ret_val));
+    /// builder.build_return(Some(&ret_val)).unwrap();
     /// ```
     #[llvm_versions(15.0..=latest)]
     pub fn build_direct_call(
@@ -332,12 +336,12 @@ impl<'ctx> Builder<'ctx> {
     /// builder.position_at_end(entry);
     ///
     /// let function_pointer = fn_value.as_global_value().as_pointer_value();
-    /// let ret_val = builder.build_indirect_call(fn_value.get_type(), function_pointer, &[i32_arg.into(), md_string.into()], "call")
+    /// let ret_val = builder.build_indirect_call(fn_value.get_type(), function_pointer, &[i32_arg.into(), md_string.into()], "call").unwrap()
     ///     .try_as_basic_value()
     ///     .left()
     ///     .unwrap();
     ///
-    /// builder.build_return(Some(&ret_val));
+    /// builder.build_return(Some(&ret_val)).unwrap();
     /// ```
     ///
     #[llvm_versions(15.0..=latest)]
@@ -347,7 +351,7 @@ impl<'ctx> Builder<'ctx> {
         function_pointer: PointerValue<'ctx>,
         args: &[BasicMetadataValueEnum<'ctx>],
         name: &str,
-    ) -> CallSiteValue<'ctx> {
+    ) -> Result<CallSiteValue<'ctx>, BuilderError> {
         if *self.positioned != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
@@ -361,7 +365,7 @@ impl<'ctx> Builder<'ctx> {
         fn_val_ref: LLVMValueRef,
         args: &[BasicMetadataValueEnum<'ctx>],
         name: &str,
-    ) -> CallSiteValue<'ctx> {
+    ) -> Result<CallSiteValue<'ctx>, BuilderError> {
         if *self.positioned != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
@@ -387,7 +391,7 @@ impl<'ctx> Builder<'ctx> {
             )
         };
 
-        unsafe { CallSiteValue::new(value) }
+        unsafe { Ok(CallSiteValue::new(value)) }
     }
 
     /// An invoke is similar to a normal function call, but used to
@@ -425,7 +429,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// let pi = f32_type.const_float(::std::f64::consts::PI);
     ///
-    /// builder.build_return(Some(&pi));
+    /// builder.build_return(Some(&pi)).unwrap();
     ///
     /// let function2 = module.add_function("wrapper", fn_type, None);
     /// let basic_block2 = context.append_basic_block(function2, "entry");
@@ -435,7 +439,7 @@ impl<'ctx> Builder<'ctx> {
     /// let then_block = context.append_basic_block(function2, "then_block");
     /// let catch_block = context.append_basic_block(function2, "catch_block");
     ///
-    /// let call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi");
+    /// let call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi").unwrap();
     ///
     /// {
     ///     builder.position_at_end(then_block);
@@ -443,7 +447,7 @@ impl<'ctx> Builder<'ctx> {
     ///     // in the then_block, the `call_site` value is defined and can be used
     ///     let result = call_site.try_as_basic_value().left().unwrap();
     ///
-    ///     builder.build_return(Some(&result));
+    ///     builder.build_return(Some(&result)).unwrap();
     /// }
     ///
     /// {
@@ -463,10 +467,10 @@ impl<'ctx> Builder<'ctx> {
     ///     let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
     ///
     ///     let null = i8_ptr_type.const_zero();
-    ///     let res = builder.build_landing_pad(exception_type, personality_function, &[null.into()], false, "res");
+    ///     let res = builder.build_landing_pad(exception_type, personality_function, &[null.into()], false, "res").unwrap();
     ///
     ///     // we handle the exception by returning a default value
-    ///     builder.build_return(Some(&f32_type.const_zero()));
+    ///     builder.build_return(Some(&f32_type.const_zero())).unwrap();
     /// }
     /// ```
     #[llvm_versions(4.0..=14.0)]
@@ -543,7 +547,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// let pi = f32_type.const_float(::std::f64::consts::PI);
     ///
-    /// builder.build_return(Some(&pi));
+    /// builder.build_return(Some(&pi)).unwrap();
     ///
     /// let function2 = module.add_function("wrapper", fn_type, None);
     /// let basic_block2 = context.append_basic_block(function2, "entry");
@@ -553,7 +557,7 @@ impl<'ctx> Builder<'ctx> {
     /// let then_block = context.append_basic_block(function2, "then_block");
     /// let catch_block = context.append_basic_block(function2, "catch_block");
     ///
-    /// let call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi");
+    /// let call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi").unwrap();
     ///
     /// {
     ///     builder.position_at_end(then_block);
@@ -561,7 +565,7 @@ impl<'ctx> Builder<'ctx> {
     ///     // in the then_block, the `call_site` value is defined and can be used
     ///     let result = call_site.try_as_basic_value().left().unwrap();
     ///
-    ///     builder.build_return(Some(&result));
+    ///     builder.build_return(Some(&result)).unwrap();
     /// }
     ///
     /// {
@@ -581,10 +585,10 @@ impl<'ctx> Builder<'ctx> {
     ///     let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
     ///
     ///     let null = i8_ptr_type.const_zero();
-    ///     let res = builder.build_landing_pad(exception_type, personality_function, &[null.into()], false, "res");
+    ///     let res = builder.build_landing_pad(exception_type, personality_function, &[null.into()], false, "res").unwrap();
     ///
     ///     // we handle the exception by returning a default value
-    ///     builder.build_return(Some(&f32_type.const_zero()));
+    ///     builder.build_return(Some(&f32_type.const_zero())).unwrap();
     /// }
     /// ```
     #[llvm_versions(15.0..=latest)]
@@ -595,7 +599,7 @@ impl<'ctx> Builder<'ctx> {
         then_block: BasicBlock<'ctx>,
         catch_block: BasicBlock<'ctx>,
         name: &str,
-    ) -> CallSiteValue<'ctx> {
+    ) -> Result<CallSiteValue<'ctx>, BuilderError> {
         if *self.positioned != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
@@ -610,7 +614,7 @@ impl<'ctx> Builder<'ctx> {
         then_block: BasicBlock<'ctx>,
         catch_block: BasicBlock<'ctx>,
         name: &str,
-    ) -> CallSiteValue<'ctx> {
+    ) -> Result<CallSiteValue<'ctx>, BuilderError> {
         if *self.positioned != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
@@ -633,7 +637,7 @@ impl<'ctx> Builder<'ctx> {
         then_block: BasicBlock<'ctx>,
         catch_block: BasicBlock<'ctx>,
         name: &str,
-    ) -> CallSiteValue<'ctx> {
+    ) -> Result<CallSiteValue<'ctx>, BuilderError> {
         if *self.positioned != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
@@ -656,7 +660,7 @@ impl<'ctx> Builder<'ctx> {
         then_block: BasicBlock<'ctx>,
         catch_block: BasicBlock<'ctx>,
         name: &str,
-    ) -> CallSiteValue<'ctx> {
+    ) -> Result<CallSiteValue<'ctx>, BuilderError> {
         if *self.positioned != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
@@ -681,7 +685,7 @@ impl<'ctx> Builder<'ctx> {
             )
         };
 
-        unsafe { CallSiteValue::new(value) }
+        unsafe { Ok(CallSiteValue::new(value)) }
     }
 
     /// Landing pads are places where control flow jumps to if a [`Builder::build_invoke`] triggered an exception.
@@ -720,7 +724,7 @@ impl<'ctx> Builder<'ctx> {
     /// };
     ///
     /// // make the cleanup landing pad
-    /// let res = builder.build_landing_pad( exception_type, personality_function, &[], true, "res");
+    /// let res = builder.build_landing_pad( exception_type, personality_function, &[], true, "res").unwrap();
     /// ```
     ///
     /// * **catch all**: An implementation of the C++ `catch(...)`, which catches all exceptions.
@@ -752,7 +756,7 @@ impl<'ctx> Builder<'ctx> {
     /// let null = i8_ptr_type.const_zero();
     ///
     /// // make the catch all landing pad
-    /// let res = builder.build_landing_pad(exception_type, personality_function, &[null.into()], false, "res");
+    /// let res = builder.build_landing_pad(exception_type, personality_function, &[null.into()], false, "res").unwrap();
     /// ```
     ///
     /// * **catch a type of exception**: Catch a specific type of exception. The example uses C++'s type info.
@@ -786,7 +790,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// // make the catch landing pad
     /// let clause = type_info_int.as_basic_value_enum();
-    /// let res = builder.build_landing_pad(exception_type, personality_function, &[clause], false, "res");
+    /// let res = builder.build_landing_pad(exception_type, personality_function, &[clause], false, "res").unwrap();
     /// ```
     ///
     /// * **filter**: A filter clause encodes that only some types of exceptions are valid at this
@@ -821,7 +825,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// // make the filter landing pad
     /// let filter_pattern = i8_ptr_type.const_array(&[type_info_int.as_any_value_enum().into_pointer_value()]);
-    /// let res = builder.build_landing_pad(exception_type, personality_function, &[filter_pattern.into()], false, "res");
+    /// let res = builder.build_landing_pad(exception_type, personality_function, &[filter_pattern.into()], false, "res").unwrap();
     /// ```
     pub fn build_landing_pad<T>(
         &self,
@@ -889,7 +893,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// let pi = f32_type.const_float(::std::f64::consts::PI);
     ///
-    /// builder.build_return(Some(&pi));
+    /// builder.build_return(Some(&pi)).unwrap();
     ///
     /// let function2 = module.add_function("wrapper", fn_type, None);
     /// let basic_block2 = context.append_basic_block(function2, "entry");
@@ -899,7 +903,7 @@ impl<'ctx> Builder<'ctx> {
     /// let then_block = context.append_basic_block(function2, "then_block");
     /// let catch_block = context.append_basic_block(function2, "catch_block");
     ///
-    /// let call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi");
+    /// let call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi").unwrap();
     ///
     /// {
     ///     builder.position_at_end(then_block);
@@ -907,7 +911,7 @@ impl<'ctx> Builder<'ctx> {
     ///     // in the then_block, the `call_site` value is defined and can be used
     ///     let result = call_site.try_as_basic_value().left().unwrap();
     ///
-    ///     builder.build_return(Some(&result));
+    ///     builder.build_return(Some(&result)).unwrap();
     /// }
     ///
     /// {
@@ -927,11 +931,11 @@ impl<'ctx> Builder<'ctx> {
     ///     let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
     ///
     ///     // make the landing pad; must give a concrete type to the slice
-    ///     let res = builder.build_landing_pad( exception_type, personality_function, &[], true, "res");
+    ///     let res = builder.build_landing_pad( exception_type, personality_function, &[], true, "res").unwrap();
     ///
     ///     // do cleanup ...
     ///
-    ///     builder.build_resume(res);
+    ///     builder.build_resume(res).unwrap();
     /// }
     /// ```
     pub fn build_resume<V: BasicValue<'ctx>>(&self, value: V) -> Result<InstructionValue<'ctx>, BuilderError> {
@@ -979,7 +983,7 @@ impl<'ctx> Builder<'ctx> {
         ptr: PointerValue<'ctx>,
         ordered_indexes: &[IntValue<'ctx>],
         name: &str,
-    ) -> PointerValue<'ctx> {
+    ) -> Result<PointerValue<'ctx>, BuilderError> {
         if *self.positioned != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
@@ -996,7 +1000,7 @@ impl<'ctx> Builder<'ctx> {
             c_string.as_ptr(),
         );
 
-        PointerValue::new(value)
+        Ok(PointerValue::new(value))
     }
 
     // REVIEW: Doesn't GEP work on array too?
@@ -1037,7 +1041,7 @@ impl<'ctx> Builder<'ctx> {
         ptr: PointerValue<'ctx>,
         ordered_indexes: &[IntValue<'ctx>],
         name: &str,
-    ) -> PointerValue<'ctx> {
+    ) -> Result<PointerValue<'ctx>, BuilderError> {
         if *self.positioned != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
@@ -1054,7 +1058,7 @@ impl<'ctx> Builder<'ctx> {
             c_string.as_ptr(),
         );
 
-        PointerValue::new(value)
+        Ok(PointerValue::new(value))
     }
 
     /// Builds a GEP instruction on a struct pointer. Returns `Err(())` if input `PointerValue` doesn't
@@ -1120,7 +1124,7 @@ impl<'ctx> Builder<'ctx> {
         unsafe { Ok(PointerValue::new(value)) }
     }
 
-    /// Builds a GEP instruction on a struct pointer. Returns `Err(())` if input `PointerValue` doesn't
+    /// Builds a GEP instruction on a struct pointer. Returns `Err` if input `PointerValue` doesn't
     /// point to a struct or if index is out of bounds.
     ///
     /// # Example
@@ -1160,20 +1164,20 @@ impl<'ctx> Builder<'ctx> {
         ptr: PointerValue<'ctx>,
         index: u32,
         name: &str,
-    ) -> Result<PointerValue<'ctx>, ()> {
+    ) -> Result<PointerValue<'ctx>, BuilderError> {
         if *self.positioned != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let pointee_ty = pointee_ty.as_any_type_enum();
 
         if !pointee_ty.is_struct_type() {
-            return Err(());
+            return Err(BuilderError::GEPPointee);
         }
 
         let struct_ty = pointee_ty.into_struct_type();
 
         if index >= struct_ty.count_fields() {
-            return Err(());
+            return Err(BuilderError::GEPIndex);
         }
 
         let c_string = to_c_str(name);
@@ -1213,8 +1217,8 @@ impl<'ctx> Builder<'ctx> {
     /// let i32_ptr_param2 = fn_value.get_nth_param(1).unwrap().into_pointer_value();
     ///
     /// builder.position_at_end(entry);
-    /// builder.build_ptr_diff(i32_ptr_param1, i32_ptr_param2, "diff");
-    /// builder.build_return(None);
+    /// builder.build_ptr_diff(i32_ptr_param1, i32_ptr_param2, "diff").unwrap();
+    /// builder.build_return(None).unwrap();
     /// ```
     #[llvm_versions(4.0..=14.0)]
     pub fn build_ptr_diff(
@@ -1261,8 +1265,8 @@ impl<'ctx> Builder<'ctx> {
     /// let i32_ptr_param2 = fn_value.get_nth_param(1).unwrap().into_pointer_value();
     ///
     /// builder.position_at_end(entry);
-    /// builder.build_ptr_diff(i32_ptr_type, i32_ptr_param1, i32_ptr_param2, "diff");
-    /// builder.build_return(None);
+    /// builder.build_ptr_diff(i32_ptr_type, i32_ptr_param1, i32_ptr_param2, "diff").unwrap();
+    /// builder.build_return(None).unwrap();
     /// ```
     #[llvm_versions(15.0..=latest)]
     pub fn build_ptr_diff<T: BasicType<'ctx>>(
@@ -1271,7 +1275,7 @@ impl<'ctx> Builder<'ctx> {
         lhs_ptr: PointerValue<'ctx>,
         rhs_ptr: PointerValue<'ctx>,
         name: &str,
-    ) -> IntValue<'ctx> {
+    ) -> Result<IntValue<'ctx>, BuilderError> {
         if *self.positioned != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
@@ -1287,7 +1291,7 @@ impl<'ctx> Builder<'ctx> {
             )
         };
 
-        unsafe { IntValue::new(value) }
+        unsafe { Ok(IntValue::new(value)) }
     }
 
     // SubTypes: Maybe this should return PhiValue<T>? That way we could force incoming values to be of T::Value?
@@ -1327,8 +1331,8 @@ impl<'ctx> Builder<'ctx> {
     /// let i32_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
     ///
     /// builder.position_at_end(entry);
-    /// builder.build_store(i32_ptr_param, i32_seven);
-    /// builder.build_return(None);
+    /// builder.build_store(i32_ptr_param, i32_seven).unwrap();
+    /// builder.build_return(None).unwrap();
     /// ```
     pub fn build_store<V: BasicValue<'ctx>>(
         &self,
@@ -1364,9 +1368,9 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.position_at_end(entry);
     ///
-    /// let pointee = builder.build_load(i32_ptr_param, "load");
+    /// let pointee = builder.build_load(i32_ptr_param, "load").unwrap();
     ///
-    /// builder.build_return(Some(&pointee));
+    /// builder.build_return(Some(&pointee)).unwrap();
     /// ```
     #[llvm_versions(4.0..=14.0)]
     pub fn build_load(&self, ptr: PointerValue<'ctx>, name: &str) -> Result<BasicValueEnum<'ctx>, BuilderError> {
@@ -1401,9 +1405,9 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.position_at_end(entry);
     ///
-    /// let pointee = builder.build_load(i32_type, i32_ptr_param, "load2");
+    /// let pointee = builder.build_load(i32_type, i32_ptr_param, "load2").unwrap();
     ///
-    /// builder.build_return(Some(&pointee));
+    /// builder.build_return(Some(&pointee)).unwrap();
     /// ```
     #[llvm_versions(15.0..=latest)]
     pub fn build_load<T: BasicType<'ctx>>(
@@ -1411,7 +1415,7 @@ impl<'ctx> Builder<'ctx> {
         pointee_ty: T,
         ptr: PointerValue<'ctx>,
         name: &str,
-    ) -> BasicValueEnum<'ctx> {
+    ) -> Result<BasicValueEnum<'ctx>, BuilderError> {
         if *self.positioned != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
@@ -1426,7 +1430,7 @@ impl<'ctx> Builder<'ctx> {
             )
         };
 
-        unsafe { BasicValueEnum::new(value) }
+        unsafe { Ok(BasicValueEnum::new(value)) }
     }
 
     // TODOC: Stack allocation
@@ -1791,8 +1795,8 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.position_at_end(entry);
     ///
-    /// builder.build_bitcast(i32_arg, f32_type, "i32tof32");
-    /// builder.build_return(None);
+    /// builder.build_bitcast(i32_arg, f32_type, "i32tof32").unwrap();
+    /// builder.build_return(None).unwrap();
     ///
     /// assert!(module.verify().is_ok());
     /// ```
@@ -2266,9 +2270,9 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.position_at_end(entry_block);
     ///
-    /// let shift = builder.build_left_shift(value, n, "left_shift"); // value << n
+    /// let shift = builder.build_left_shift(value, n, "left_shift").unwrap(); // value << n
     ///
-    /// builder.build_return(Some(&shift));
+    /// builder.build_return(Some(&shift)).unwrap();
     /// ```
     pub fn build_left_shift<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
         if *self.positioned != PositionState::Set {
@@ -2340,9 +2344,9 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// // Whether or not your right shift is sign extended (true) or logical (false) depends
     /// // on the boolean input parameter:
-    /// let shift = builder.build_right_shift(value, n, false, "right_shift"); // value >> n
+    /// let shift = builder.build_right_shift(value, n, false, "right_shift").unwrap(); // value >> n
     ///
-    /// builder.build_return(Some(&shift));
+    /// builder.build_return(Some(&shift)).unwrap();
     /// ```
     pub fn build_right_shift<T: IntMathValue<'ctx>>(
         &self,
@@ -2689,6 +2693,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
+    /// use inkwell::builder::BuilderError;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("av");
@@ -2704,7 +2709,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.position_at_end(entry);
     ///
-    /// let array_alloca = builder.build_alloca(array_type, "array_alloca");
+    /// let array_alloca = builder.build_alloca(array_type, "array_alloca").unwrap();
     ///
     /// #[cfg(any(
     ///     feature = "llvm4-0",
@@ -2719,23 +2724,23 @@ impl<'ctx> Builder<'ctx> {
     ///     feature = "llvm13-0",
     ///     feature = "llvm14-0"
     /// ))]
-    /// let array = builder.build_load(array_alloca, "array_load").into_array_value();
+    /// let array = builder.build_load(array_alloca, "array_load").unwrap().into_array_value();
     /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
-    /// let array = builder.build_load(i32_type, array_alloca, "array_load").into_array_value();
+    /// let array = builder.build_load(i32_type, array_alloca, "array_load").unwrap().into_array_value();
     ///
     /// let const_int1 = i32_type.const_int(2, false);
     /// let const_int2 = i32_type.const_int(5, false);
     /// let const_int3 = i32_type.const_int(6, false);
     ///
-    /// assert!(builder.build_insert_value(array, const_int1, 0, "insert").is_some());
-    /// assert!(builder.build_insert_value(array, const_int2, 1, "insert").is_some());
-    /// assert!(builder.build_insert_value(array, const_int3, 2, "insert").is_some());
-    /// assert!(builder.build_insert_value(array, const_int3, 3, "insert").is_none());
+    /// assert!(builder.build_insert_value(array, const_int1, 0, "insert").is_ok());
+    /// assert!(builder.build_insert_value(array, const_int2, 1, "insert").is_ok());
+    /// assert!(builder.build_insert_value(array, const_int3, 2, "insert").is_ok());
+    /// assert!(builder.build_insert_value(array, const_int3, 3, "insert").is_err_and(|e| e == BuilderError::ExtractOutOfRange));
     ///
     /// assert!(builder.build_extract_value(array, 0, "extract").unwrap().is_int_value());
     /// assert!(builder.build_extract_value(array, 1, "extract").unwrap().is_int_value());
     /// assert!(builder.build_extract_value(array, 2, "extract").unwrap().is_int_value());
-    /// assert!(builder.build_extract_value(array, 3, "extract").is_none());
+    /// assert!(builder.build_extract_value(array, 3, "extract").is_err_and(|e| e == BuilderError::ExtractOutOfRange));
     /// ```
     pub fn build_extract_value<AV: AggregateValue<'ctx>>(
         &self,
@@ -2769,6 +2774,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
+    /// use inkwell::builder::BuilderError;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("av");
@@ -2784,7 +2790,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.position_at_end(entry);
     ///
-    /// let array_alloca = builder.build_alloca(array_type, "array_alloca");
+    /// let array_alloca = builder.build_alloca(array_type, "array_alloca").unwrap();
     ///
     /// #[cfg(any(
     ///     feature = "llvm4-0",
@@ -2799,18 +2805,18 @@ impl<'ctx> Builder<'ctx> {
     ///     feature = "llvm13-0",
     ///     feature = "llvm14-0"
     /// ))]
-    /// let array = builder.build_load(array_alloca, "array_load").into_array_value();
+    /// let array = builder.build_load(array_alloca, "array_load").unwrap().into_array_value();
     /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
-    /// let array = builder.build_load(i32_type, array_alloca, "array_load").into_array_value();
+    /// let array = builder.build_load(i32_type, array_alloca, "array_load").unwrap().into_array_value();
     ///
     /// let const_int1 = i32_type.const_int(2, false);
     /// let const_int2 = i32_type.const_int(5, false);
     /// let const_int3 = i32_type.const_int(6, false);
     ///
-    /// assert!(builder.build_insert_value(array, const_int1, 0, "insert").is_some());
-    /// assert!(builder.build_insert_value(array, const_int2, 1, "insert").is_some());
-    /// assert!(builder.build_insert_value(array, const_int3, 2, "insert").is_some());
-    /// assert!(builder.build_insert_value(array, const_int3, 3, "insert").is_none());
+    /// assert!(builder.build_insert_value(array, const_int1, 0, "insert").is_ok());
+    /// assert!(builder.build_insert_value(array, const_int2, 1, "insert").is_ok());
+    /// assert!(builder.build_insert_value(array, const_int3, 2, "insert").is_ok());
+    /// assert!(builder.build_insert_value(array, const_int3, 3, "insert").is_err_and(|e| e == BuilderError::ExtractOutOfRange));
     /// ```
     pub fn build_insert_value<AV, BV>(
         &self,
@@ -2870,9 +2876,9 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.position_at_end(entry);
     ///
-    /// let extracted = builder.build_extract_element(vector_param, i32_zero, "insert");
+    /// let extracted = builder.build_extract_element(vector_param, i32_zero, "insert").unwrap();
     ///
-    /// builder.build_return(Some(&extracted));
+    /// builder.build_return(Some(&extracted)).unwrap();
     /// ```
     pub fn build_extract_element(
         &self,
@@ -2919,8 +2925,8 @@ impl<'ctx> Builder<'ctx> {
     /// let vector_param = fn_value.get_first_param().unwrap().into_vector_value();
     ///
     /// builder.position_at_end(entry);
-    /// builder.build_insert_element(vector_param, i32_seven, i32_zero, "insert");
-    /// builder.build_return(None);
+    /// builder.build_insert_element(vector_param, i32_seven, i32_zero, "insert").unwrap();
+    /// builder.build_return(None).unwrap();
     /// ```
     pub fn build_insert_element<V: BasicValue<'ctx>>(
         &self,
@@ -3208,8 +3214,8 @@ impl<'ctx> Builder<'ctx> {
     /// let i32_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
     /// let builder = context.create_builder();
     /// builder.position_at_end(entry);
-    /// builder.build_atomicrmw(AtomicRMWBinOp::Add, i32_ptr_param, i32_seven, AtomicOrdering::Unordered);
-    /// builder.build_return(None);
+    /// builder.build_atomicrmw(AtomicRMWBinOp::Add, i32_ptr_param, i32_seven, AtomicOrdering::Unordered).unwrap();
+    /// builder.build_return(None).unwrap();
     /// ```
     // https://llvm.org/docs/LangRef.html#atomicrmw-instruction
     pub fn build_atomicrmw(
@@ -3272,8 +3278,8 @@ impl<'ctx> Builder<'ctx> {
     /// let entry = context.append_basic_block(fn_value, "entry");
     /// let builder = context.create_builder();
     /// builder.position_at_end(entry);
-    /// builder.build_cmpxchg(i32_ptr_param, i32_seven, i32_eight, AtomicOrdering::AcquireRelease, AtomicOrdering::Monotonic);
-    /// builder.build_return(None);
+    /// builder.build_cmpxchg(i32_ptr_param, i32_seven, i32_eight, AtomicOrdering::AcquireRelease, AtomicOrdering::Monotonic).unwrap();
+    /// builder.build_return(None).unwrap();
     /// ```
     // https://llvm.org/docs/LangRef.html#cmpxchg-instruction
     pub fn build_cmpxchg<V: BasicValue<'ctx>>(

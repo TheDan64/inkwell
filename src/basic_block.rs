@@ -295,9 +295,9 @@ impl<'ctx> BasicBlock<'ctx> {
     /// let entry = context.append_basic_block(fn_value, "entry");
     /// builder.position_at_end(entry);
     ///
-    /// let var = builder.build_alloca(i32_type, "some_number");
-    /// builder.build_store(var, i32_type.const_int(1 as u64, false));
-    /// builder.build_return(None);
+    /// let var = builder.build_alloca(i32_type, "some_number").unwrap();
+    /// builder.build_store(var, i32_type.const_int(1 as u64, false)).unwrap();
+    /// builder.build_return(None).unwrap();
     ///
     /// let block = fn_value.get_first_basic_block().unwrap();
     /// let some_number = block.get_instruction_with_name("some_number");
@@ -494,7 +494,7 @@ impl<'ctx> BasicBlock<'ctx> {
     /// let bb1 = context.append_basic_block(fn_val, "bb1");
     /// let bb2 = context.append_basic_block(fn_val, "bb2");
     /// builder.position_at_end(entry);
-    /// let branch_inst = builder.build_unconditional_branch(bb1);
+    /// let branch_inst = builder.build_unconditional_branch(bb1).unwrap();
     ///
     /// bb1.replace_all_uses_with(&bb2);
     ///

@@ -378,7 +378,7 @@ fn test_null_checked_ptr_ops() {
     ))]
     let index1 = builder.build_load(new_ptr, "deref").unwrap();
     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
-    let index1 = builder.build_load(i8_ptr_type, new_ptr, "deref");
+    let index1 = builder.build_load(i8_ptr_type, new_ptr, "deref").unwrap();
 
     builder.build_return(Some(&index1)).unwrap();
 
@@ -430,7 +430,7 @@ fn test_null_checked_ptr_ops() {
     ))]
     let index1 = builder.build_load(new_ptr, "deref").unwrap();
     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
-    let index1 = builder.build_load(i8_ptr_type, new_ptr, "deref");
+    let index1 = builder.build_load(i8_ptr_type, new_ptr, "deref").unwrap();
 
     builder.build_return(Some(&index1)).unwrap();
 
@@ -954,7 +954,7 @@ fn test_insert_value() {
     let array = builder.build_load(array_alloca, "array_load").unwrap().into_array_value();
     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
     let array = builder
-        .build_load(array_type, array_alloca, "array_load")
+        .build_load(array_type, array_alloca, "array_load").unwrap()
         .into_array_value();
     let const_int1 = i32_type.const_int(2, false);
     let const_int2 = i32_type.const_int(5, false);
@@ -998,7 +998,7 @@ fn test_insert_value() {
     let struct_value = builder.build_load(struct_alloca, "struct_load").unwrap().into_struct_value();
     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
     let struct_value = builder
-        .build_load(struct_type, struct_alloca, "struct_load")
+        .build_load(struct_type, struct_alloca, "struct_load").unwrap()
         .into_struct_value();
 
     assert!(builder
@@ -1364,7 +1364,7 @@ fn run_memset_on<'ctx>(
     ))]
     let part_2 = unsafe { builder.build_in_bounds_gep(array_ptr, &[index], "index") }.unwrap();
     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
-    let part_2 = unsafe { builder.build_in_bounds_gep(element_type, array_ptr, &[index], "index") };
+    let part_2 = unsafe { builder.build_in_bounds_gep(element_type, array_ptr, &[index], "index").unwrap() };
     builder.build_memset(part_2, alignment, val, size_val)?;
     builder.build_return(Some(&array_ptr)).unwrap();
 
