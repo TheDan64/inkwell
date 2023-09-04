@@ -18,7 +18,7 @@ fn test_phi_conversion() {
     // test that conversion succeeds
     let bool_type = context.bool_type();
     let expect_phi_name = "phi_node";
-    let phi = builder.build_phi(bool_type, expect_phi_name);
+    let phi = builder.build_phi(bool_type, expect_phi_name).unwrap();
     let instruction = phi.as_instruction();
 
     let phi_from_instruction: PhiValue = instruction.try_into().unwrap();
@@ -26,7 +26,7 @@ fn test_phi_conversion() {
     assert_eq!(name, expect_phi_name);
 
     // test that conversion fails
-    let ret_instruction = builder.build_return(None);
+    let ret_instruction = builder.build_return(None).unwrap();
     let phi_from_instruction: Result<PhiValue, _> = ret_instruction.try_into();
     assert!(phi_from_instruction.is_err());
 }
@@ -48,7 +48,7 @@ fn test_conversion_to_int_value() {
     let int_arg = function.get_nth_param(0).unwrap().into_int_value();
     let int_const = i64_type.const_int(1, false);
     let int_instr = builder
-        .build_int_add(int_arg, int_const, "add")
+        .build_int_add(int_arg, int_const, "add").unwrap()
         .as_instruction()
         .unwrap();
 
@@ -80,7 +80,7 @@ fn test_conversion_to_float_value() {
     let float_arg = function.get_nth_param(0).unwrap().into_float_value();
     let float_const = f16_type.const_float(1.2);
     let float_instr = builder
-        .build_float_add(float_arg, float_const, "add")
+        .build_float_add(float_arg, float_const, "add").unwrap()
         .as_instruction()
         .unwrap();
 
@@ -110,7 +110,7 @@ fn test_conversion_to_pointer_value() {
     // Create a PointerType instruction
     let i64_type = context.i64_type();
     let i64_ptr_type = i64_type.ptr_type(AddressSpace::default());
-    let alloca_instr = builder.build_alloca(i64_ptr_type, "alloca").as_instruction().unwrap();
+    let alloca_instr = builder.build_alloca(i64_ptr_type, "alloca").unwrap().as_instruction().unwrap();
 
     // Test the instruction conversion to a FloatValue
     let ptr_conversion: Result<PointerValue, _> = alloca_instr.try_into();

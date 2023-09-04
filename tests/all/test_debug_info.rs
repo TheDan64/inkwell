@@ -76,7 +76,7 @@ fn test_smoke() {
 
     let basic_block = context.append_basic_block(fn_val, "entry");
     builder.position_at_end(basic_block);
-    builder.build_return(Some(&context.i64_type().const_zero()));
+    builder.build_return(Some(&context.i64_type().const_zero())).unwrap();
 
     let lexical_block = dibuilder.create_lexical_block(func_scope.as_debug_info_scope(), compile_unit.get_file(), 0, 0);
 

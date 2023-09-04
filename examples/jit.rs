@@ -32,10 +32,10 @@ impl<'ctx> CodeGen<'ctx> {
         let y = function.get_nth_param(1)?.into_int_value();
         let z = function.get_nth_param(2)?.into_int_value();
 
-        let sum = self.builder.build_int_add(x, y, "sum");
-        let sum = self.builder.build_int_add(sum, z, "sum");
+        let sum = self.builder.build_int_add(x, y, "sum").unwrap();
+        let sum = self.builder.build_int_add(sum, z, "sum").unwrap();
 
-        self.builder.build_return(Some(&sum));
+        self.builder.build_return(Some(&sum)).unwrap();
 
         unsafe { self.execution_engine.get_function("sum").ok() }
     }

@@ -21,9 +21,9 @@ fn test_operands() {
 
     let arg1 = function.get_first_param().unwrap().into_pointer_value();
     let f32_val = f32_type.const_float(::std::f64::consts::PI);
-    let store_instruction = builder.build_store(arg1, f32_val);
-    let free_instruction = builder.build_free(arg1);
-    let return_instruction = builder.build_return(None);
+    let store_instruction = builder.build_store(arg1, f32_val).unwrap();
+    let free_instruction = builder.build_free(arg1).unwrap();
+    let return_instruction = builder.build_return(None).unwrap();
 
     assert_eq!(store_instruction.get_opcode(), Store);
     assert_eq!(free_instruction.get_opcode(), Call);
@@ -167,7 +167,7 @@ fn test_basic_block_operand() {
 
     builder.position_at_end(basic_block);
 
-    let branch_instruction = builder.build_unconditional_branch(basic_block2);
+    let branch_instruction = builder.build_unconditional_branch(basic_block2).unwrap();
     let bb_operand = branch_instruction.get_operand(0).unwrap().right().unwrap();
 
     assert_eq!(bb_operand, basic_block2);
@@ -177,7 +177,7 @@ fn test_basic_block_operand() {
     assert_eq!(bb_operand_use.get_used_value().right().unwrap(), basic_block2);
 
     builder.position_at_end(basic_block2);
-    builder.build_return(None);
+    builder.build_return(None).unwrap();
 
     assert!(module.verify().is_ok());
 }
@@ -196,10 +196,10 @@ fn test_get_next_use() {
 
     let arg1 = function.get_first_param().unwrap().into_float_value();
     let f32_val = f32_type.const_float(::std::f64::consts::PI);
-    let add_pi0 = builder.build_float_add(arg1, f32_val, "add_pi");
-    let add_pi1 = builder.build_float_add(add_pi0, f32_val, "add_pi");
+    let add_pi0 = builder.build_float_add(arg1, f32_val, "add_pi").unwrap();
+    let add_pi1 = builder.build_float_add(add_pi0, f32_val, "add_pi").unwrap();
 
-    builder.build_return(Some(&add_pi1));
+    builder.build_return(Some(&add_pi1)).unwrap();
 
     // f32_val constant appears twice, so there are two uses (first, next)
     let first_use = f32_val.get_first_use().unwrap();
@@ -238,14 +238,14 @@ fn test_instructions() {
 
     let f32_val = f32_type.const_float(::std::f64::consts::PI);
 
-    let store_instruction = builder.build_store(arg1, f32_val);
-    let ptr_val = builder.build_ptr_to_int(arg1, i64_type, "ptr_val");
-    let ptr = builder.build_int_to_ptr(ptr_val, f32_ptr_type, "ptr");
-    let icmp = builder.build_int_compare(IntPredicate::EQ, arg1, arg1, "icmp");
-    let f32_sum = builder.build_float_add(arg2, f32_val, "f32_sum");
-    let fcmp = builder.build_float_compare(FloatPredicate::OEQ, f32_sum, arg2, "fcmp");
-    let free_instruction = builder.build_free(arg1);
-    let return_instruction = builder.build_return(None);
+    let store_instruction = builder.build_store(arg1, f32_val).unwrap();
+    let ptr_val = builder.build_ptr_to_int(arg1, i64_type, "ptr_val").unwrap();
+    let ptr = builder.build_int_to_ptr(ptr_val, f32_ptr_type, "ptr").unwrap();
+    let icmp = builder.build_int_compare(IntPredicate::EQ, arg1, arg1, "icmp").unwrap();
+    let f32_sum = builder.build_float_add(arg2, f32_val, "f32_sum").unwrap();
+    let fcmp = builder.build_float_compare(FloatPredicate::OEQ, f32_sum, arg2, "fcmp").unwrap();
+    let free_instruction = builder.build_free(arg1).unwrap();
+    let return_instruction = builder.build_return(None).unwrap();
 
     assert_eq!(store_instruction.get_opcode(), Store);
     assert_eq!(ptr_val.as_instruction().unwrap().get_opcode(), PtrToInt);
@@ -431,7 +431,7 @@ fn test_mem_instructions() {
 
     let f32_val = f32_type.const_float(::std::f64::consts::PI);
 
-    let store_instruction = builder.build_store(arg1, f32_val);
+    let store_instruction = builder.build_store(arg1, f32_val).unwrap();
     #[cfg(any(
         feature = "llvm4-0",
         feature = "llvm5-0",
@@ -445,7 +445,7 @@ fn test_mem_instructions() {
         feature = "llvm13-0",
         feature = "llvm14-0"
     ))]
-    let load = builder.build_load(arg1, "");
+    let load = builder.build_load(arg1, "").unwrap();
     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
     let load = builder.build_load(f32_type, arg1, "");
     let load_instruction = load.as_instruction_value().unwrap();
@@ -476,7 +476,7 @@ fn test_mem_instructions() {
     assert_eq!(store_instruction.get_alignment().unwrap(), 4);
 
     let fadd_instruction = builder
-        .build_float_add(load.into_float_value(), f32_val, "")
+        .build_float_add(load.into_float_value(), f32_val, "").unwrap()
         .as_instruction_value()
         .unwrap();
     assert!(fadd_instruction.get_volatile().is_err());
@@ -509,7 +509,7 @@ fn test_atomic_ordering_mem_instructions() {
 
     let f32_val = f32_type.const_float(::std::f64::consts::PI);
 
-    let store_instruction = builder.build_store(arg1, f32_val);
+    let store_instruction = builder.build_store(arg1, f32_val).unwrap();
     #[cfg(any(
         feature = "llvm4-0",
         feature = "llvm5-0",
@@ -523,7 +523,7 @@ fn test_atomic_ordering_mem_instructions() {
         feature = "llvm13-0",
         feature = "llvm14-0"
     ))]
-    let load = builder.build_load(arg1, "");
+    let load = builder.build_load(arg1, "").unwrap();
     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
     let load = builder.build_load(f32_type, arg1, "");
     let load_instruction = load.as_instruction_value().unwrap();
@@ -554,7 +554,7 @@ fn test_atomic_ordering_mem_instructions() {
     assert!(load_instruction.set_atomic_ordering(AtomicOrdering::Release).is_err());
 
     let fadd_instruction = builder
-        .build_float_add(load.into_float_value(), f32_val, "")
+        .build_float_add(load.into_float_value(), f32_val, "").unwrap()
         .as_instruction_value()
         .unwrap();
     assert!(fadd_instruction.get_atomic_ordering().is_err());
@@ -608,9 +608,9 @@ fn test_find_instruction_with_name() {
     let entry = context.append_basic_block(fn_value, "entry");
     builder.position_at_end(entry);
 
-    let var = builder.build_alloca(i32_type, "some_number");
-    builder.build_store(var, i32_type.const_int(1 as u64, false));
-    builder.build_return(None);
+    let var = builder.build_alloca(i32_type, "some_number").unwrap();
+    builder.build_store(var, i32_type.const_int(1 as u64, false)).unwrap();
+    builder.build_return(None).unwrap();
 
     let block = fn_value.get_first_basic_block().unwrap();
     let some_number = block.get_instruction_with_name("some_number");

@@ -94,7 +94,7 @@ fn test_attributes_on_function_values() {
 
     builder.position_at_end(entry_bb);
     let null: BasicValueEnum = i32_ptr_type.const_null().into();
-    builder.build_return(Some(&null));
+    builder.build_return(Some(&null)).unwrap();
 
     assert_eq!(fn_value.count_attributes(AttributeLoc::Return), 0);
     assert_eq!(fn_value.count_attributes(AttributeLoc::Param(0)), 0);
@@ -175,9 +175,9 @@ fn test_attributes_on_call_site_values() {
 
     builder.position_at_end(entry_bb);
 
-    let call_site_value = builder.build_call(fn_value, &[i32_type.const_int(1, false).into()], "my_fn");
+    let call_site_value = builder.build_call(fn_value, &[i32_type.const_int(1, false).into()], "my_fn").unwrap();
 
-    builder.build_return(None);
+    builder.build_return(None).unwrap();
 
     assert_eq!(call_site_value.count_arguments(), 1);
     assert_eq!(call_site_value.count_attributes(AttributeLoc::Return), 0);

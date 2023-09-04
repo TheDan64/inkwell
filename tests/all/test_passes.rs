@@ -178,7 +178,7 @@ fn test_pass_manager_builder() {
     let entry = context.append_basic_block(fn_value, "entry");
 
     builder.position_at_end(entry);
-    builder.build_return(None);
+    builder.build_return(None).unwrap();
 
     assert!(!fn_pass_manager.initialize());
 

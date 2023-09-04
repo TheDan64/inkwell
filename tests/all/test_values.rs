@@ -42,7 +42,7 @@ fn test_call_site() {
     let block = context.append_basic_block(function, "entry");
     builder.position_at_end(block);
 
-    let call_site = builder.build_call(function, &[], "to_infinity_and_beyond");
+    let call_site = builder.build_call(function, &[], "to_infinity_and_beyond").unwrap();
 
     assert_eq!(call_site.count_arguments(), 0);
     assert!(!call_site.is_tail_call());
@@ -175,7 +175,7 @@ fn test_set_get_name() {
     let array_param = function.get_nth_param(3).unwrap().into_array_value();
     let ptr_param = function.get_nth_param(4).unwrap().into_pointer_value();
     let vec_param = function.get_nth_param(5).unwrap().into_vector_value();
-    let phi_val = builder.build_phi(bool_type, "phi_node");
+    let phi_val = builder.build_phi(bool_type, "phi_node").unwrap();
 
     assert_eq!(int_param.get_name().to_str(), Ok(""));
     assert_eq!(float_param.get_name().to_str(), Ok(""));
@@ -411,7 +411,7 @@ fn test_verify_fn() {
     let basic_block = context.append_basic_block(function, "entry");
 
     builder.position_at_end(basic_block);
-    builder.build_return(None);
+    builder.build_return(None).unwrap();
 
     assert!(function.verify(false));
 
@@ -583,7 +583,7 @@ fn test_metadata() {
 
         builder.position_at_end(entry_block);
 
-        let ret_instr = builder.build_return(None);
+        let ret_instr = builder.build_return(None).unwrap();
         let ret_instr_md = context.metadata_node(&[md_string.into()]);
 
         assert!(ret_instr.set_metadata(ret_instr_md, 2).is_ok());
@@ -970,7 +970,7 @@ fn test_phi_values() {
 
     let false_val = bool_type.const_int(0, false);
     let true_val = bool_type.const_int(1, false);
-    let phi = builder.build_phi(bool_type, "if");
+    let phi = builder.build_phi(bool_type, "if").unwrap();
 
     assert!(!phi.is_null());
     assert!(!phi.is_undef());
@@ -1026,11 +1026,11 @@ fn test_allocations() {
     // methods on positioned variant if so. But leave positioning methods
     // on both?
 
-    let stack_ptr = builder.build_alloca(i32_type, "stack_ptr");
+    let stack_ptr = builder.build_alloca(i32_type, "stack_ptr").unwrap();
 
     assert_eq!(stack_ptr.get_type().print_to_string().to_str(), Ok(ptr_type));
 
-    let stack_array = builder.build_array_alloca(i32_type, i32_three, "stack_array");
+    let stack_array = builder.build_array_alloca(i32_type, i32_three, "stack_array").unwrap();
 
     assert_eq!(stack_array.get_type().print_to_string().to_str(), Ok(ptr_type));
 
@@ -1217,7 +1217,7 @@ fn test_function_value_to_global_to_pointer() {
     let bb = context.append_basic_block(fn_value, "entry");
 
     builder.position_at_end(bb);
-    builder.build_return(None);
+    builder.build_return(None).unwrap();
 
     assert!(!fn_global_value.is_declaration());
     assert_eq!(fn_global_value.get_dll_storage_class(), DLLStorageClass::Default);
@@ -1266,11 +1266,11 @@ fn test_non_fn_ptr_called() {
     {
         use inkwell::values::CallableValue;
         let callable_value = CallableValue::try_from(i8_ptr_param).unwrap();
-        builder.build_call(callable_value, &[], "call");
+        builder.build_call(callable_value, &[], "call").unwrap();
     }
     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
     builder.build_indirect_call(i8_ptr_type.fn_type(&[], false), i8_ptr_param, &[], "call");
-    builder.build_return(None);
+    builder.build_return(None).unwrap();
 
     assert!(module.verify().is_ok());
 }
@@ -1290,11 +1290,11 @@ fn test_vectors() {
     let vector_param = fn_value.get_first_param().unwrap().into_vector_value();
 
     builder.position_at_end(bb);
-    builder.build_insert_element(vector_param, i32_seven, i32_zero, "insert");
+    builder.build_insert_element(vector_param, i32_seven, i32_zero, "insert").unwrap();
 
-    let extracted = builder.build_extract_element(vector_param, i32_zero, "extract");
+    let extracted = builder.build_extract_element(vector_param, i32_zero, "extract").unwrap();
 
-    builder.build_return(Some(&extracted));
+    builder.build_return(Some(&extracted)).unwrap();
 
     assert!(module.verify().is_ok());
 }
@@ -1329,10 +1329,10 @@ fn test_aggregate_returns() {
         feature = "llvm13-0",
         feature = "llvm14-0"
     ))]
-    builder.build_ptr_diff(ptr_param1, ptr_param2, "diff");
+    builder.build_ptr_diff(ptr_param1, ptr_param2, "diff").unwrap();
     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
     builder.build_ptr_diff(i32_ptr_type, ptr_param1, ptr_param2, "diff");
-    builder.build_aggregate_return(&[i32_three.into(), i32_seven.into()]);
+    builder.build_aggregate_return(&[i32_three.into(), i32_seven.into()]).unwrap();
 
     assert!(module.verify().is_ok());
 }
@@ -1352,7 +1352,7 @@ fn test_constant_expression() {
     let block = context.append_basic_block(function, "entry");
     builder.position_at_end(block);
 
-    let expr = builder.build_ptr_to_int(function.as_global_value().as_pointer_value(), i32_type, "");
+    let expr = builder.build_ptr_to_int(function.as_global_value().as_pointer_value(), i32_type, "").unwrap();
 
     assert!(expr.is_const());
     assert!(!expr.is_constant_int());
