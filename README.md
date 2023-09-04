@@ -56,11 +56,12 @@ Documentation is automatically [deployed here](https://thedan64.github.io/inkwel
 ### Tari's [llvm-sys example](https://gitlab.com/taricorp/llvm-sys.rs/blob/6411edb2fed1a805b7ec5029afc9c3ae1cf6c842/examples/jit-function.rs) written in safe code<sup>1</sup> with Inkwell:
 
 ```rust
-use inkwell::OptimizationLevel;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::execution_engine::{ExecutionEngine, JitFunction};
 use inkwell::module::Module;
+use inkwell::OptimizationLevel;
+
 use std::error::Error;
 
 /// Convenience type alias for the `sum` function.
@@ -89,15 +90,14 @@ impl<'ctx> CodeGen<'ctx> {
         let y = function.get_nth_param(1)?.into_int_value();
         let z = function.get_nth_param(2)?.into_int_value();
 
-        let sum = self.builder.build_int_add(x, y, "sum");
-        let sum = self.builder.build_int_add(sum, z, "sum");
+        let sum = self.builder.build_int_add(x, y, "sum").unwrap();
+        let sum = self.builder.build_int_add(sum, z, "sum").unwrap();
 
-        self.builder.build_return(Some(&sum));
+        self.builder.build_return(Some(&sum)).unwrap();
 
         unsafe { self.execution_engine.get_function("sum").ok() }
     }
 }
-
 
 fn main() -> Result<(), Box<dyn Error>> {
     let context = Context::create();
