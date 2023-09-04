@@ -416,7 +416,7 @@ fn test_linking_modules() {
     builder.build_return(None).unwrap();
 
     // EE owned module links in unowned module which has
-    // another definition for the same funciton name, "f2"
+    // another definition for the same function name, "f2"
     assert_eq!(
         module.link_in_module(module5).unwrap_err().to_str(),
         Ok("Linking globals named \'f2\': symbol multiply defined!")

@@ -117,7 +117,7 @@ impl PartialEq for LLVMStringOrRaw {
     }
 }
 
-/// This function is very unsafe. Any reference to LLVM data after this function is called will likey segfault.
+/// This function is very unsafe. Any reference to LLVM data after this function is called will likely segfault.
 /// Probably only ever useful to call before your program ends. Might not even be absolutely necessary.
 pub unsafe fn shutdown_llvm() {
     use llvm_sys::core::LLVMShutdown;

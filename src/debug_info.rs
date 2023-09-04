@@ -1236,7 +1236,7 @@ impl<'ctx> DICompositeType<'ctx> {
         }
     }
 
-    /// Acquires the underlying raw pointer belonging to this `DICompositType` type.
+    /// Acquires the underlying raw pointer belonging to this `DICompositeType` type.
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref
     }

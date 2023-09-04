@@ -88,7 +88,7 @@ impl<'ctx> IntType<'ctx> {
         }
     }
 
-    /// Creates an `IntValue` repesenting a constant value of this `IntType`. It will be automatically assigned this `IntType`'s `Context`.
+    /// Creates an `IntValue` representing a constant value of this `IntType`. It will be automatically assigned this `IntType`'s `Context`.
     ///
     /// # Example
     /// ```no_run

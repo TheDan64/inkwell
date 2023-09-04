@@ -82,7 +82,7 @@ impl<'ctx> FloatType<'ctx> {
         self.float_type.vec_type(size)
     }
 
-    /// Creates a `FloatValue` repesenting a constant value of this `FloatType`.
+    /// Creates a `FloatValue` representing a constant value of this `FloatType`.
     /// It will be automatically assigned this `FloatType`'s `Context`.
     ///
     /// # Example

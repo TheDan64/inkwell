@@ -76,7 +76,7 @@ impl<'ctx> BasicBlock<'ctx> {
         unsafe { FunctionValue::new(LLVMGetBasicBlockParent(self.basic_block)) }
     }
 
-    /// Gets the `BasicBlock` preceeding the current one, in its own scope, if any.
+    /// Gets the `BasicBlock` preceding the current one, in its own scope, if any.
     ///
     /// # Example
     /// ```no_run

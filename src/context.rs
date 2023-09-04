@@ -917,7 +917,7 @@ impl Context {
         self.context.ppc_f128_type()
     }
 
-    /// Creates a `StructType` definiton from heterogeneous types in the current `Context`.
+    /// Creates a `StructType` definition from heterogeneous types in the current `Context`.
     ///
     /// # Example
     ///
@@ -1765,7 +1765,7 @@ impl<'ctx> ContextRef<'ctx> {
         self.context.ppc_f128_type()
     }
 
-    /// Creates a `StructType` definiton from heterogeneous types in the current `Context`.
+    /// Creates a `StructType` definition from heterogeneous types in the current `Context`.
     ///
     /// # Example
     ///

@@ -14,7 +14,7 @@ use std::str::from_utf8;
 // REVIEW: Inconsistently failing on different tries :(
 // #[test]
 // fn test_target() {
-//     // REVIEW: Some of the machine specific stuff may vary. Should allow multiple possibilites
+//     // REVIEW: Some of the machine specific stuff may vary. Should allow multiple possibilities
 //     assert!(Target::get_first().is_none());
 
 //     let mut config = InitializationConfig {

@@ -1,4 +1,4 @@
-//! A `Module` represets a single code compilation unit.
+//! A `Module` represents a single code compilation unit.
 
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyModule};
 #[allow(deprecated)]
@@ -59,7 +59,7 @@ use crate::{AddressSpace, OptimizationLevel};
 
 #[llvm_enum(LLVMLinkage)]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-/// This enum defines how to link a global variable or function in a module. The variant documenation is
+/// This enum defines how to link a global variable or function in a module. The variant documentation is
 /// mostly taken straight from LLVM's own documentation except for some minor clarification.
 ///
 /// It is illegal for a function declaration to have any linkage type other than external or extern_weak.
@@ -1536,7 +1536,7 @@ impl Drop for Module<'_> {
 #[llvm_versions(7.0..=latest)]
 #[llvm_enum(LLVMModuleFlagBehavior)]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-/// Defines the operational behavior for a module wide flag. This documenation comes directly
+/// Defines the operational behavior for a module wide flag. This documentation comes directly
 /// from the LLVM docs
 pub enum FlagBehavior {
     /// Emits an error if two values disagree, otherwise the resulting value is that of the operands.

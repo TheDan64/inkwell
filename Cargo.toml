@@ -27,7 +27,7 @@ llvm13-0 = ["llvm-sys-130"]
 llvm14-0 = ["llvm-sys-140"]
 llvm15-0 = ["llvm-sys-150"]
 llvm16-0 = ["llvm-sys-160"]
-# Don't link aganist LLVM libraries. This is useful if another dependency is
+# Don't link against LLVM libraries. This is useful if another dependency is
 # installing LLVM. See llvm-sys for more details. We can't enable a single
 # `no-llvm-linking` feature across the board of llvm versions, as it'll cause
 # cargo to try and download and compile them all. See

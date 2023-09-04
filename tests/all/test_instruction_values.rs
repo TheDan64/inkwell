@@ -47,7 +47,7 @@ fn test_operands() {
     let free_operand0 = free_instruction.get_operand(0).unwrap().left().unwrap();
     let free_operand1 = free_instruction.get_operand(1).unwrap().left().unwrap();
 
-    assert!(free_operand0.is_pointer_value()); // (implictly casted) i8* arg1
+    assert!(free_operand0.is_pointer_value()); // (implicitly casted) i8* arg1
     assert!(free_operand1.is_pointer_value()); // Free function ptr
     assert!(free_instruction.get_operand(2).is_none());
     assert!(free_instruction.get_operand(3).is_none());

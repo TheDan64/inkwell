@@ -900,7 +900,7 @@ fn test_vector_binary_ops() {
     let p1_vec = fn_value.get_first_param().unwrap().into_vector_value();
     let p2_vec = fn_value.get_nth_param(1).unwrap().into_vector_value();
     let p3_vec = fn_value.get_nth_param(2).unwrap().into_vector_value();
-    let multiplied_vec = builder.build_float_mul(p1_vec, p2_vec, "multipled_vec").unwrap();
+    let multiplied_vec = builder.build_float_mul(p1_vec, p2_vec, "multiplied_vec").unwrap();
     let divided_vec = builder.build_float_div(multiplied_vec, p3_vec, "divided_vec").unwrap();
     builder.build_return(Some(&divided_vec)).unwrap();
     assert!(fn_value.verify(true));
