@@ -87,6 +87,9 @@ pub enum BuilderError {
 }
 
 #[derive(Debug)]
+/// All `build_*` methods return a `Result<_, BuilderError>` type containing either the returned value or some error.
+/// Those methods all may return `BuilderError::UnsetPosition` if a `position_*` method has not yet been called, in addition
+/// to any other possibility.
 pub struct Builder<'ctx> {
     builder: LLVMBuilderRef,
     positioned: Cell<PositionState>,
@@ -1054,7 +1057,7 @@ impl<'ctx> Builder<'ctx> {
         Ok(PointerValue::new(value))
     }
 
-    /// Builds a GEP instruction on a struct pointer. Returns `Err(())` if input `PointerValue` doesn't
+    /// Builds a GEP instruction on a struct pointer. Returns `Err(BuilderError::GEPError)` if input `PointerValue` doesn't
     /// point to a struct or if index is out of bounds.
     ///
     /// # Example
@@ -1117,7 +1120,7 @@ impl<'ctx> Builder<'ctx> {
         unsafe { Ok(PointerValue::new(value)) }
     }
 
-    /// Builds a GEP instruction on a struct pointer. Returns `Err` if input `PointerValue` doesn't
+    /// Builds a GEP instruction on a struct pointer. Returns `Err` `BuilderError::GEPPointee` or `BuilderError::GEPIndex` if input `PointerValue` doesn't
     /// point to a struct or if index is out of bounds.
     ///
     /// # Example
@@ -1460,6 +1463,8 @@ impl<'ctx> Builder<'ctx> {
     /// both a power of 2 and under 2^64.
     ///
     /// The final argument should be a pointer-sized integer.
+    /// 
+    /// Returns an `Err(BuilderError::AlignmentError)` if the source or destination alignments are not a power of 2.
     ///
     /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
     #[llvm_versions(8.0..=latest)]
@@ -1506,6 +1511,8 @@ impl<'ctx> Builder<'ctx> {
     /// both a power of 2 and under 2^64.
     ///
     /// The final argument should be a pointer-sized integer.
+    /// 
+    /// Returns an `Err(BuilderError::AlignmentError)` if the source or destination alignments are not a power of 2 under 2^64.
     ///
     /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
     #[llvm_versions(8.0..=latest)]
@@ -1552,6 +1559,8 @@ impl<'ctx> Builder<'ctx> {
     /// both a power of 2 and under 2^64.
     ///
     /// The final argument should be a pointer-sized integer.
+    /// 
+    /// Returns an `Err(BuilderError::AlignmentError)` if the source alignment is not a power of 2 under 2^64.
     ///
     /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
     #[llvm_versions(8.0..=latest)]
@@ -1585,6 +1594,7 @@ impl<'ctx> Builder<'ctx> {
     }
 
     // TODOC: Heap allocation
+    /// Returns `Err(BuilderError::AlignmentError)` if the type is unsized.
     pub fn build_malloc<T: BasicType<'ctx>>(&self, ty: T, name: &str) -> Result<PointerValue<'ctx>, BuilderError> {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
@@ -1604,6 +1614,7 @@ impl<'ctx> Builder<'ctx> {
     }
 
     // TODOC: Heap allocation
+    /// Returns `Err(BuilderError::AlignmentError)` if the type is unsized.
     pub fn build_array_malloc<T: BasicType<'ctx>>(
         &self,
         ty: T,
@@ -2659,18 +2670,27 @@ impl<'ctx> Builder<'ctx> {
 
     // REVIEW: What if instruction and basic_block are completely unrelated?
     // It'd be great if we could get the BB from the instruction behind the scenes
+    /// Set the position of the builder to after an instruction.
+    /// 
+    /// Be sure to call one of the `position_*` methods or all `build_*` methods will return `Err(BuilderError::UnsetPosition)`.
     pub fn position_at(&self, basic_block: BasicBlock<'ctx>, instruction: &InstructionValue<'ctx>) {
         self.positioned.set(PositionState::Set);
 
         unsafe { LLVMPositionBuilder(self.builder, basic_block.basic_block, instruction.as_value_ref()) }
     }
 
+    /// Set the position of the builder to before an instruction.
+    /// 
+    /// Be sure to call one of the `position_*` methods or all `build_*` methods will return `Err(BuilderError::UnsetPosition)`.
     pub fn position_before(&self, instruction: &InstructionValue<'ctx>) {
         self.positioned.set(PositionState::Set);
 
         unsafe { LLVMPositionBuilderBefore(self.builder, instruction.as_value_ref()) }
     }
 
+    /// Set the position of the builder to the end of a basic block.
+    /// 
+    /// Be sure to call one of the `position_*` methods or all `build_*` methods will return `Err(BuilderError::UnsetPosition)`.
     pub fn position_at_end(&self, basic_block: BasicBlock<'ctx>) {
         self.positioned.set(PositionState::Set);
 
@@ -2681,6 +2701,8 @@ impl<'ctx> Builder<'ctx> {
 
     /// Builds an extract value instruction which extracts a `BasicValueEnum`
     /// from a struct or array.
+    /// 
+    /// Will return `Err(BuilderError::ExtractOutOfRange)` if the provided index is out of bounds of the aggregate value length.
     ///
     /// # Example
     ///
@@ -2762,6 +2784,8 @@ impl<'ctx> Builder<'ctx> {
 
     /// Builds an insert value instruction which inserts a `BasicValue` into a struct
     /// or array and returns the resulting aggregate value.
+    /// 
+    /// Will return `Err(BuilderError::ExtractOutOfRange)` if the provided index is out of bounds of the aggregate value length.
     ///
     /// # Example
     ///
@@ -3190,6 +3214,9 @@ impl<'ctx> Builder<'ctx> {
 
     /// Builds an atomicrmw instruction. It allows you to atomically modify memory.
     ///
+    /// Will return `Err(BuilderError::BitwidthError)` if the bitwidth of the value is not a power of 2 and less than 8, and
+    /// `Err(BuilderError:PointeeTypeMismatch)` if the pointee type does not match the value's type.
+    /// 
     /// # Example
     ///
     /// ```
@@ -3252,6 +3279,13 @@ impl<'ctx> Builder<'ctx> {
     }
 
     /// Builds a cmpxchg instruction. It allows you to atomically compare and replace memory.
+    /// 
+    /// Will return `Err(BuilderError::PointeeTypeMismatch)` if the pointer does not point to an element of the value type,
+    /// `Err(BuilderError::ValueTypeMismatch)` if the value to compare and the new values are not of the same type, or if
+    /// the value does not have a pointer or integer type, and `Err(BuilderError::OrderingError)` if the following conditions are not satisfied:
+    /// - Both success and failure orderings are not Monotonic or stronger
+    /// - The failure ordering is stronger than the success ordering
+    /// - The failure ordering is release or acquire release
     ///
     /// # Example
     ///
