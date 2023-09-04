@@ -9,9 +9,18 @@ env:
   DOC_PATH: target/doc
 
 jobs:
+  typos:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install typos
+      run: cargo install typos-cli
+    - name: Typos
+      run: typos .
+
   tests:
     name: "LLVM ${{ matrix.llvm-version[0] }}: ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
+    needs: typos
     strategy:
       matrix:
         llvm-version:
@@ -46,6 +55,7 @@ jobs:
         run: cargo build --release --features llvm${{ matrix.llvm-version[1] }} --verbose
       - name: Run tests
         run: cargo test --release --features llvm${{ matrix.llvm-version[1] }} --verbose
+
   doc:
     name: Documentation
     runs-on: ubuntu-latest
