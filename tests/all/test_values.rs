@@ -1290,9 +1290,13 @@ fn test_vectors() {
     let vector_param = fn_value.get_first_param().unwrap().into_vector_value();
 
     builder.position_at_end(bb);
-    builder.build_insert_element(vector_param, i32_seven, i32_zero, "insert").unwrap();
+    builder
+        .build_insert_element(vector_param, i32_seven, i32_zero, "insert")
+        .unwrap();
 
-    let extracted = builder.build_extract_element(vector_param, i32_zero, "extract").unwrap();
+    let extracted = builder
+        .build_extract_element(vector_param, i32_zero, "extract")
+        .unwrap();
 
     builder.build_return(Some(&extracted)).unwrap();
 
@@ -1332,7 +1336,9 @@ fn test_aggregate_returns() {
     builder.build_ptr_diff(ptr_param1, ptr_param2, "diff").unwrap();
     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
     builder.build_ptr_diff(i32_ptr_type, ptr_param1, ptr_param2, "diff");
-    builder.build_aggregate_return(&[i32_three.into(), i32_seven.into()]).unwrap();
+    builder
+        .build_aggregate_return(&[i32_three.into(), i32_seven.into()])
+        .unwrap();
 
     assert!(module.verify().is_ok());
 }
@@ -1352,7 +1358,9 @@ fn test_constant_expression() {
     let block = context.append_basic_block(function, "entry");
     builder.position_at_end(block);
 
-    let expr = builder.build_ptr_to_int(function.as_global_value().as_pointer_value(), i32_type, "").unwrap();
+    let expr = builder
+        .build_ptr_to_int(function.as_global_value().as_pointer_value(), i32_type, "")
+        .unwrap();
 
     assert!(expr.is_const());
     assert!(!expr.is_constant_int());
