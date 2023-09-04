@@ -34,7 +34,7 @@ fn test_get_function_address() {
     let basic_block = context.append_basic_block(fn_value, "entry");
 
     builder.position_at_end(basic_block);
-    builder.build_return(None);
+    builder.build_return(None).unwrap();
 
     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
@@ -73,22 +73,22 @@ fn test_jit_execution_engine() {
 
     // If anything goes wrong, jump to returning 1
     builder.position_at_end(error1);
-    builder.build_return(Some(&one_i32));
+    builder.build_return(Some(&one_i32)).unwrap();
 
     // If successful, jump to returning 42
     builder.position_at_end(success);
-    builder.build_return(Some(&fourtytwo_i32));
+    builder.build_return(Some(&fourtytwo_i32)).unwrap();
 
     // See if argc == 3
     builder.position_at_end(check_argc);
 
     let eq = IntPredicate::EQ;
-    let argc_check = builder.build_int_compare(eq, main_argc, three_i32, "argc_cmp");
+    let argc_check = builder.build_int_compare(eq, main_argc, three_i32, "argc_cmp").unwrap();
 
-    builder.build_conditional_branch(argc_check, check_arg3, error1);
+    builder.build_conditional_branch(argc_check, check_arg3, error1).unwrap();
 
     builder.position_at_end(check_arg3);
-    builder.build_unconditional_branch(success);
+    builder.build_unconditional_branch(success).unwrap();
 
     Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
 

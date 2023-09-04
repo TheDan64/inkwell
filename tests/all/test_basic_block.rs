@@ -123,7 +123,7 @@ fn test_get_terminator() {
     assert!(basic_block.get_first_instruction().is_none());
     assert!(basic_block.get_last_instruction().is_none());
 
-    builder.build_return(None);
+    builder.build_return(None).unwrap();
 
     assert_eq!(
         basic_block.get_terminator().unwrap().get_opcode(),
@@ -178,7 +178,7 @@ fn test_rauw() {
     let bb1 = context.append_basic_block(fn_val, "bb1");
     let bb2 = context.append_basic_block(fn_val, "bb2");
     builder.position_at_end(entry);
-    let branch_inst = builder.build_unconditional_branch(bb1);
+    let branch_inst = builder.build_unconditional_branch(bb1).unwrap();
 
     bb1.replace_all_uses_with(&bb1); // no-op
     bb1.replace_all_uses_with(&bb2);
@@ -198,7 +198,7 @@ fn test_get_first_use() {
     let bb1 = context.append_basic_block(fn_val, "bb1");
     let bb2 = context.append_basic_block(fn_val, "bb2");
     builder.position_at_end(entry);
-    let branch_inst = builder.build_unconditional_branch(bb1);
+    let branch_inst = builder.build_unconditional_branch(bb1).unwrap();
 
     assert!(bb2.get_first_use().is_none());
     assert!(bb1.get_first_use().is_some());

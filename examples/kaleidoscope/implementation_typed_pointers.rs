@@ -855,7 +855,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
             None => builder.position_at_end(entry),
         }
 
-        builder.build_alloca(self.context.f64_type(), name)
+        builder.build_alloca(self.context.f64_type(), name).unwrap()
     }
 
     /// Compiles the specified `Expr` into an LLVM `FloatValue`.
@@ -864,7 +864,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
             Expr::Number(nb) => Ok(self.context.f64_type().const_float(nb)),
 
             Expr::Variable(ref name) => match self.variables.get(name.as_str()) {
-                Some(var) => Ok(self.builder.build_load(*var, name.as_str()).into_float_value()),
+                Some(var) => Ok(self.builder.build_load(*var, name.as_str()).unwrap().into_float_value()),
                 None => Err("Could not find a matching variable."),
             },
 
@@ -884,7 +884,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
 
                     let alloca = self.create_entry_block_alloca(var_name);
 
-                    self.builder.build_store(alloca, initial_val);
+                    self.builder.build_store(alloca, initial_val).unwrap();
 
                     if let Some(old_binding) = self.variables.remove(var_name) {
                         old_bindings.push(old_binding);
@@ -920,7 +920,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                     let var_val = self.compile_expr(right)?;
                     let var = self.variables.get(var_name.as_str()).ok_or("Undefined variable.")?;
 
-                    self.builder.build_store(*var, var_val);
+                    self.builder.build_store(*var, var_val).unwrap();
 
                     Ok(var_val)
                 } else {
@@ -928,25 +928,25 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                     let rhs = self.compile_expr(right)?;
 
                     match op {
-                        '+' => Ok(self.builder.build_float_add(lhs, rhs, "tmpadd")),
-                        '-' => Ok(self.builder.build_float_sub(lhs, rhs, "tmpsub")),
-                        '*' => Ok(self.builder.build_float_mul(lhs, rhs, "tmpmul")),
-                        '/' => Ok(self.builder.build_float_div(lhs, rhs, "tmpdiv")),
+                        '+' => Ok(self.builder.build_float_add(lhs, rhs, "tmpadd").unwrap()),
+                        '-' => Ok(self.builder.build_float_sub(lhs, rhs, "tmpsub").unwrap()),
+                        '*' => Ok(self.builder.build_float_mul(lhs, rhs, "tmpmul").unwrap()),
+                        '/' => Ok(self.builder.build_float_div(lhs, rhs, "tmpdiv").unwrap()),
                         '<' => Ok({
                             let cmp = self
                                 .builder
-                                .build_float_compare(FloatPredicate::ULT, lhs, rhs, "tmpcmp");
+                                .build_float_compare(FloatPredicate::ULT, lhs, rhs, "tmpcmp").unwrap();
 
                             self.builder
-                                .build_unsigned_int_to_float(cmp, self.context.f64_type(), "tmpbool")
+                                .build_unsigned_int_to_float(cmp, self.context.f64_type(), "tmpbool").unwrap()
                         }),
                         '>' => Ok({
                             let cmp = self
                                 .builder
-                                .build_float_compare(FloatPredicate::ULT, rhs, lhs, "tmpcmp");
+                                .build_float_compare(FloatPredicate::ULT, rhs, lhs, "tmpcmp").unwrap();
 
                             self.builder
-                                .build_unsigned_int_to_float(cmp, self.context.f64_type(), "tmpbool")
+                                .build_unsigned_int_to_float(cmp, self.context.f64_type(), "tmpbool").unwrap()
                         }),
 
                         custom => {
@@ -958,7 +958,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                                 Some(fun) => {
                                     match self
                                         .builder
-                                        .build_call(fun, &[lhs.into(), rhs.into()], "tmpbin")
+                                        .build_call(fun, &[lhs.into(), rhs.into()], "tmpbin").unwrap()
                                         .try_as_basic_value()
                                         .left()
                                     {
@@ -987,7 +987,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
 
                     match self
                         .builder
-                        .build_call(fun, argsv.as_slice(), "tmp")
+                        .build_call(fun, argsv.as_slice(), "tmp").unwrap()
                         .try_as_basic_value()
                         .left()
                     {
@@ -1010,33 +1010,33 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                 let cond = self.compile_expr(cond)?;
                 let cond = self
                     .builder
-                    .build_float_compare(FloatPredicate::ONE, cond, zero_const, "ifcond");
+                    .build_float_compare(FloatPredicate::ONE, cond, zero_const, "ifcond").unwrap();
 
                 // build branch
                 let then_bb = self.context.append_basic_block(parent, "then");
                 let else_bb = self.context.append_basic_block(parent, "else");
                 let cont_bb = self.context.append_basic_block(parent, "ifcont");
 
-                self.builder.build_conditional_branch(cond, then_bb, else_bb);
+                self.builder.build_conditional_branch(cond, then_bb, else_bb).unwrap();
 
                 // build then block
                 self.builder.position_at_end(then_bb);
                 let then_val = self.compile_expr(consequence)?;
-                self.builder.build_unconditional_branch(cont_bb);
+                self.builder.build_unconditional_branch(cont_bb).unwrap();
 
                 let then_bb = self.builder.get_insert_block().unwrap();
 
                 // build else block
                 self.builder.position_at_end(else_bb);
                 let else_val = self.compile_expr(alternative)?;
-                self.builder.build_unconditional_branch(cont_bb);
+                self.builder.build_unconditional_branch(cont_bb).unwrap();
 
                 let else_bb = self.builder.get_insert_block().unwrap();
 
                 // emit merge block
                 self.builder.position_at_end(cont_bb);
 
-                let phi = self.builder.build_phi(self.context.f64_type(), "iftmp");
+                let phi = self.builder.build_phi(self.context.f64_type(), "iftmp").unwrap();
 
                 phi.add_incoming(&[(&then_val, then_bb), (&else_val, else_bb)]);
 
@@ -1055,12 +1055,12 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                 let start_alloca = self.create_entry_block_alloca(var_name);
                 let start = self.compile_expr(start)?;
 
-                self.builder.build_store(start_alloca, start);
+                self.builder.build_store(start_alloca, start).unwrap();
 
                 // go from current block to loop block
                 let loop_bb = self.context.append_basic_block(parent, "loop");
 
-                self.builder.build_unconditional_branch(loop_bb);
+                self.builder.build_unconditional_branch(loop_bb).unwrap();
                 self.builder.position_at_end(loop_bb);
 
                 let old_val = self.variables.remove(var_name.as_str());
@@ -1079,22 +1079,22 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                 // compile end condition
                 let end_cond = self.compile_expr(end)?;
 
-                let curr_var = self.builder.build_load(start_alloca, var_name);
+                let curr_var = self.builder.build_load(start_alloca, var_name).unwrap();
                 let next_var = self
                     .builder
-                    .build_float_add(curr_var.into_float_value(), step, "nextvar");
+                    .build_float_add(curr_var.into_float_value(), step, "nextvar").unwrap();
 
-                self.builder.build_store(start_alloca, next_var);
+                self.builder.build_store(start_alloca, next_var).unwrap();
 
                 let end_cond = self.builder.build_float_compare(
                     FloatPredicate::ONE,
                     end_cond,
                     self.context.f64_type().const_float(0.0),
                     "loopcond",
-                );
+                ).unwrap();
                 let after_bb = self.context.append_basic_block(parent, "afterloop");
 
-                self.builder.build_conditional_branch(end_cond, loop_bb, after_bb);
+                self.builder.build_conditional_branch(end_cond, loop_bb, after_bb).unwrap();
                 self.builder.position_at_end(after_bb);
 
                 self.variables.remove(var_name);
@@ -1153,7 +1153,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
             let arg_name = proto.args[i].as_str();
             let alloca = self.create_entry_block_alloca(arg_name);
 
-            self.builder.build_store(alloca, arg);
+            self.builder.build_store(alloca, arg).unwrap();
 
             self.variables.insert(proto.args[i].clone(), alloca);
         }
@@ -1161,7 +1161,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
         // compile body
         let body = self.compile_expr(self.function.body.as_ref().unwrap())?;
 
-        self.builder.build_return(Some(&body));
+        self.builder.build_return(Some(&body)).unwrap();
 
         // return the whole thing after verification and optimization
         if function.verify(true) {

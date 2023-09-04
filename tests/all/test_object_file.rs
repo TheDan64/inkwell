@@ -86,7 +86,7 @@ fn test_section_iterator() {
     let basic_block = context.append_basic_block(func, "entry");
     let builder = context.create_builder();
     builder.position_at_end(basic_block);
-    builder.build_return(None);
+    builder.build_return(None).unwrap();
 
     apply_target_to_module(&target_machine, &module);
 

@@ -127,7 +127,7 @@ fn test_write_and_load_memory_buffer() {
     let basic_block = context.append_basic_block(function, "entry");
 
     builder.position_at_end(basic_block);
-    builder.build_return(None);
+    builder.build_return(None).unwrap();
 
     let memory_buffer = module.write_bitcode_to_memory();
 
@@ -234,7 +234,7 @@ fn test_parse_from_buffer() {
     let builder = context.create_builder();
 
     builder.position_at_end(basic_block);
-    builder.build_return(None);
+    builder.build_return(None).unwrap();
 
     assert!(module.verify().is_ok());
 
@@ -275,7 +275,7 @@ fn test_parse_from_path() {
     let builder = context.create_builder();
 
     builder.position_at_end(basic_block);
-    builder.build_return(None);
+    builder.build_return(None).unwrap();
 
     assert!(module.verify().is_ok(), "3");
 
@@ -303,7 +303,7 @@ fn test_clone() {
     let builder = context.create_builder();
 
     builder.position_at_end(basic_block);
-    builder.build_return(None);
+    builder.build_return(None).unwrap();
 
     let module2 = module.clone();
 
@@ -322,7 +322,7 @@ fn test_print_to_file() {
     let builder = context.create_builder();
 
     builder.position_at_end(basic_block);
-    builder.build_return(None);
+    builder.build_return(None).unwrap();
 
     let bad_path = Path::new("/tmp/some/silly/path/that/sure/doesn't/exist");
 
@@ -377,7 +377,7 @@ fn test_linking_modules() {
     let basic_block = context.append_basic_block(fn_val, "entry");
 
     builder.position_at_end(basic_block);
-    builder.build_return(None);
+    builder.build_return(None).unwrap();
 
     let module2 = context.create_module("mod2");
 
@@ -391,7 +391,7 @@ fn test_linking_modules() {
     let basic_block2 = context.append_basic_block(fn_val2, "entry");
 
     builder.position_at_end(basic_block2);
-    builder.build_return(None);
+    builder.build_return(None).unwrap();
 
     // Unowned module links in unowned module
     assert!(module.link_in_module(module3).is_ok());
@@ -413,7 +413,7 @@ fn test_linking_modules() {
     let basic_block3 = context.append_basic_block(fn_val3, "entry");
 
     builder.position_at_end(basic_block3);
-    builder.build_return(None);
+    builder.build_return(None).unwrap();
 
     // EE owned module links in unowned module which has
     // another definition for the same funciton name, "f2"
@@ -427,7 +427,7 @@ fn test_linking_modules() {
     let basic_block4 = context.append_basic_block(fn_val4, "entry");
 
     builder.position_at_end(basic_block4);
-    builder.build_return(None);
+    builder.build_return(None).unwrap();
 
     let execution_engine2 = module6
         .create_jit_execution_engine(OptimizationLevel::None)
@@ -487,7 +487,7 @@ fn test_double_ee_from_same_module() {
     let basic_block = context.append_basic_block(fn_val, "entry");
 
     builder.position_at_end(basic_block);
-    builder.build_return(None);
+    builder.build_return(None).unwrap();
 
     module
         .create_execution_engine()
