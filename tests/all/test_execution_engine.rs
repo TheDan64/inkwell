@@ -85,7 +85,9 @@ fn test_jit_execution_engine() {
     let eq = IntPredicate::EQ;
     let argc_check = builder.build_int_compare(eq, main_argc, three_i32, "argc_cmp").unwrap();
 
-    builder.build_conditional_branch(argc_check, check_arg3, error1).unwrap();
+    builder
+        .build_conditional_branch(argc_check, check_arg3, error1)
+        .unwrap();
 
     builder.position_at_end(check_arg3);
     builder.build_unconditional_branch(success).unwrap();

@@ -935,18 +935,22 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                         '<' => Ok({
                             let cmp = self
                                 .builder
-                                .build_float_compare(FloatPredicate::ULT, lhs, rhs, "tmpcmp").unwrap();
+                                .build_float_compare(FloatPredicate::ULT, lhs, rhs, "tmpcmp")
+                                .unwrap();
 
                             self.builder
-                                .build_unsigned_int_to_float(cmp, self.context.f64_type(), "tmpbool").unwrap()
+                                .build_unsigned_int_to_float(cmp, self.context.f64_type(), "tmpbool")
+                                .unwrap()
                         }),
                         '>' => Ok({
                             let cmp = self
                                 .builder
-                                .build_float_compare(FloatPredicate::ULT, rhs, lhs, "tmpcmp").unwrap();
+                                .build_float_compare(FloatPredicate::ULT, rhs, lhs, "tmpcmp")
+                                .unwrap();
 
                             self.builder
-                                .build_unsigned_int_to_float(cmp, self.context.f64_type(), "tmpbool").unwrap()
+                                .build_unsigned_int_to_float(cmp, self.context.f64_type(), "tmpbool")
+                                .unwrap()
                         }),
 
                         custom => {
@@ -958,7 +962,8 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                                 Some(fun) => {
                                     match self
                                         .builder
-                                        .build_call(fun, &[lhs.into(), rhs.into()], "tmpbin").unwrap()
+                                        .build_call(fun, &[lhs.into(), rhs.into()], "tmpbin")
+                                        .unwrap()
                                         .try_as_basic_value()
                                         .left()
                                     {
@@ -987,7 +992,8 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
 
                     match self
                         .builder
-                        .build_call(fun, argsv.as_slice(), "tmp").unwrap()
+                        .build_call(fun, argsv.as_slice(), "tmp")
+                        .unwrap()
                         .try_as_basic_value()
                         .left()
                     {
@@ -1010,7 +1016,8 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                 let cond = self.compile_expr(cond)?;
                 let cond = self
                     .builder
-                    .build_float_compare(FloatPredicate::ONE, cond, zero_const, "ifcond").unwrap();
+                    .build_float_compare(FloatPredicate::ONE, cond, zero_const, "ifcond")
+                    .unwrap();
 
                 // build branch
                 let then_bb = self.context.append_basic_block(parent, "then");
@@ -1082,19 +1089,25 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                 let curr_var = self.builder.build_load(start_alloca, var_name).unwrap();
                 let next_var = self
                     .builder
-                    .build_float_add(curr_var.into_float_value(), step, "nextvar").unwrap();
+                    .build_float_add(curr_var.into_float_value(), step, "nextvar")
+                    .unwrap();
 
                 self.builder.build_store(start_alloca, next_var).unwrap();
 
-                let end_cond = self.builder.build_float_compare(
-                    FloatPredicate::ONE,
-                    end_cond,
-                    self.context.f64_type().const_float(0.0),
-                    "loopcond",
-                ).unwrap();
+                let end_cond = self
+                    .builder
+                    .build_float_compare(
+                        FloatPredicate::ONE,
+                        end_cond,
+                        self.context.f64_type().const_float(0.0),
+                        "loopcond",
+                    )
+                    .unwrap();
                 let after_bb = self.context.append_basic_block(parent, "afterloop");
 
-                self.builder.build_conditional_branch(end_cond, loop_bb, after_bb).unwrap();
+                self.builder
+                    .build_conditional_branch(end_cond, loop_bb, after_bb)
+                    .unwrap();
                 self.builder.position_at_end(after_bb);
 
                 self.variables.remove(var_name);

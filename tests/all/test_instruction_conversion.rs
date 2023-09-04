@@ -48,7 +48,8 @@ fn test_conversion_to_int_value() {
     let int_arg = function.get_nth_param(0).unwrap().into_int_value();
     let int_const = i64_type.const_int(1, false);
     let int_instr = builder
-        .build_int_add(int_arg, int_const, "add").unwrap()
+        .build_int_add(int_arg, int_const, "add")
+        .unwrap()
         .as_instruction()
         .unwrap();
 
@@ -80,7 +81,8 @@ fn test_conversion_to_float_value() {
     let float_arg = function.get_nth_param(0).unwrap().into_float_value();
     let float_const = f16_type.const_float(1.2);
     let float_instr = builder
-        .build_float_add(float_arg, float_const, "add").unwrap()
+        .build_float_add(float_arg, float_const, "add")
+        .unwrap()
         .as_instruction()
         .unwrap();
 
@@ -110,7 +112,11 @@ fn test_conversion_to_pointer_value() {
     // Create a PointerType instruction
     let i64_type = context.i64_type();
     let i64_ptr_type = i64_type.ptr_type(AddressSpace::default());
-    let alloca_instr = builder.build_alloca(i64_ptr_type, "alloca").unwrap().as_instruction().unwrap();
+    let alloca_instr = builder
+        .build_alloca(i64_ptr_type, "alloca")
+        .unwrap()
+        .as_instruction()
+        .unwrap();
 
     // Test the instruction conversion to a FloatValue
     let ptr_conversion: Result<PointerValue, _> = alloca_instr.try_into();

@@ -175,7 +175,9 @@ fn test_attributes_on_call_site_values() {
 
     builder.position_at_end(entry_bb);
 
-    let call_site_value = builder.build_call(fn_value, &[i32_type.const_int(1, false).into()], "my_fn").unwrap();
+    let call_site_value = builder
+        .build_call(fn_value, &[i32_type.const_int(1, false).into()], "my_fn")
+        .unwrap();
 
     builder.build_return(None).unwrap();
 

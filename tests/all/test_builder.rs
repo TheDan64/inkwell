@@ -71,7 +71,10 @@ fn test_build_call() {
     ))]
     let load = builder.build_load(alloca, "load").unwrap().into_pointer_value();
     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
-    let load = builder.build_load(fn_ptr_type, alloca, "load").unwrap().into_pointer_value();
+    let load = builder
+        .build_load(fn_ptr_type, alloca, "load")
+        .unwrap()
+        .into_pointer_value();
 
     #[cfg(any(
         feature = "llvm4-0",
@@ -125,7 +128,9 @@ fn test_build_invoke_cleanup_resume() {
     let then_block = context.append_basic_block(function2, "then_block");
     let catch_block = context.append_basic_block(function2, "catch_block");
 
-    let call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi").unwrap();
+    let call_site = builder
+        .build_invoke(function, &[], then_block, catch_block, "get_pi")
+        .unwrap();
 
     assert!(!call_site.is_tail_call());
 
@@ -156,7 +161,9 @@ fn test_build_invoke_cleanup_resume() {
         let i32_type = context.i32_type();
         let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
 
-        let res = builder.build_landing_pad(exception_type, personality_function, &[], true, "res").unwrap();
+        let res = builder
+            .build_landing_pad(exception_type, personality_function, &[], true, "res")
+            .unwrap();
 
         // do cleanup ...
 
@@ -192,7 +199,9 @@ fn test_build_invoke_catch_all() {
     let then_block = context.append_basic_block(function2, "then_block");
     let catch_block = context.append_basic_block(function2, "catch_block");
 
-    let pi2_call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi").unwrap();
+    let pi2_call_site = builder
+        .build_invoke(function, &[], then_block, catch_block, "get_pi")
+        .unwrap();
 
     assert!(!pi2_call_site.is_tail_call());
 
@@ -224,7 +233,9 @@ fn test_build_invoke_catch_all() {
         let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
 
         let null = i8_ptr_type.const_zero();
-        builder.build_landing_pad(exception_type, personality_function, &[null.into()], false, "res").unwrap();
+        builder
+            .build_landing_pad(exception_type, personality_function, &[null.into()], false, "res")
+            .unwrap();
 
         let fakepi = f32_type.const_zero();
 
@@ -263,7 +274,9 @@ fn landing_pad_filter() {
     let then_block = context.append_basic_block(function2, "then_block");
     let catch_block = context.append_basic_block(function2, "catch_block");
 
-    let pi2_call_site = builder.build_invoke(function, &[], then_block, catch_block, "get_pi").unwrap();
+    let pi2_call_site = builder
+        .build_invoke(function, &[], then_block, catch_block, "get_pi")
+        .unwrap();
 
     assert!(!pi2_call_site.is_tail_call());
 
@@ -300,13 +313,15 @@ fn landing_pad_filter() {
 
         // make the filter landing pad
         let filter_pattern = i8_ptr_type.const_array(&[type_info_int.as_any_value_enum().into_pointer_value()]);
-        builder.build_landing_pad(
-            exception_type,
-            personality_function,
-            &[filter_pattern.into()],
-            false,
-            "res",
-        ).unwrap();
+        builder
+            .build_landing_pad(
+                exception_type,
+                personality_function,
+                &[filter_pattern.into()],
+                false,
+                "res",
+            )
+            .unwrap();
 
         let fakepi = f32_type.const_zero();
 
@@ -362,7 +377,9 @@ fn test_null_checked_ptr_ops() {
     // be able to create pointer sized ints easily
     let ptr_as_int = builder.build_ptr_to_int(ptr, i64_type, "ptr_as_int").unwrap();
     let new_ptr_as_int = builder.build_int_add(ptr_as_int, one, "add").unwrap();
-    let new_ptr = builder.build_int_to_ptr(new_ptr_as_int, i8_ptr_type, "int_as_ptr").unwrap();
+    let new_ptr = builder
+        .build_int_to_ptr(new_ptr_as_int, i8_ptr_type, "int_as_ptr")
+        .unwrap();
     #[cfg(any(
         feature = "llvm4-0",
         feature = "llvm5-0",
@@ -414,7 +431,9 @@ fn test_null_checked_ptr_ops() {
     // be able to create pointer sized ints easily
     let ptr_as_int = builder.build_ptr_to_int(ptr, i64_type, "ptr_as_int").unwrap();
     let new_ptr_as_int = builder.build_int_add(ptr_as_int, one, "add").unwrap();
-    let new_ptr = builder.build_int_to_ptr(new_ptr_as_int, i8_ptr_type, "int_as_ptr").unwrap();
+    let new_ptr = builder
+        .build_int_to_ptr(new_ptr_as_int, i8_ptr_type, "int_as_ptr")
+        .unwrap();
     #[cfg(any(
         feature = "llvm4-0",
         feature = "llvm5-0",
@@ -572,7 +591,9 @@ fn test_switch() {
     let value = fn_value.get_first_param().unwrap().into_int_value();
 
     builder.position_at_end(entry);
-    builder.build_switch(value, else_, &[(i8_zero, check), (i8_42, elif)]).unwrap();
+    builder
+        .build_switch(value, else_, &[(i8_zero, check), (i8_42, elif)])
+        .unwrap();
 
     builder.position_at_end(check);
     builder.build_return(Some(&i8_one)).unwrap();
@@ -788,7 +809,9 @@ fn test_vector_convert_ops() {
 
     builder.position_at_end(entry);
     let in_vec = fn_value.get_first_param().unwrap().into_vector_value();
-    let casted_vec = builder.build_float_cast(in_vec, float16_vec_type, "casted_vec").unwrap();
+    let casted_vec = builder
+        .build_float_cast(in_vec, float16_vec_type, "casted_vec")
+        .unwrap();
     let _uncasted_vec = builder.build_float_cast(casted_vec, float32_vec_type, "uncasted_vec");
     builder.build_return(Some(&casted_vec)).unwrap();
     assert!(fn_value.verify(true));
@@ -801,7 +824,9 @@ fn test_vector_convert_ops() {
 
     builder.position_at_end(entry);
     let in_vec = fn_value.get_first_param().unwrap().into_vector_value();
-    let casted_vec = builder.build_float_to_signed_int(in_vec, int32_vec_type, "casted_vec").unwrap();
+    let casted_vec = builder
+        .build_float_to_signed_int(in_vec, int32_vec_type, "casted_vec")
+        .unwrap();
     let _uncasted_vec = builder.build_signed_int_to_float(casted_vec, float32_vec_type, "uncasted_vec");
     builder.build_return(Some(&casted_vec)).unwrap();
     assert!(fn_value.verify(true));
@@ -822,7 +847,9 @@ fn test_vector_convert_ops_respect_target_signedness() {
 
     builder.position_at_end(entry);
     let in_vec = fn_value.get_first_param().unwrap().into_vector_value();
-    let casted_vec = builder.build_int_cast_sign_flag(in_vec, int8_vec_type, true, "casted_vec").unwrap();
+    let casted_vec = builder
+        .build_int_cast_sign_flag(in_vec, int8_vec_type, true, "casted_vec")
+        .unwrap();
     let _uncasted_vec = builder.build_int_cast_sign_flag(casted_vec, int8_vec_type, true, "uncasted_vec");
     builder.build_return(Some(&casted_vec)).unwrap();
 
@@ -892,7 +919,9 @@ fn test_vector_binary_ops() {
     let p1_vec = fn_value.get_first_param().unwrap().into_vector_value();
     let p2_vec = fn_value.get_nth_param(1).unwrap().into_vector_value();
     let p3_vec = fn_value.get_nth_param(2).unwrap().into_vector_value();
-    let compared_vec = builder.build_float_compare(inkwell::FloatPredicate::OLT, p1_vec, p2_vec, "compared_vec").unwrap();
+    let compared_vec = builder
+        .build_float_compare(inkwell::FloatPredicate::OLT, p1_vec, p2_vec, "compared_vec")
+        .unwrap();
     let multiplied_vec = builder.build_int_mul(compared_vec, p3_vec, "multiplied_vec").unwrap();
     builder.build_return(Some(&multiplied_vec)).unwrap();
     assert!(fn_value.verify(true));
@@ -951,10 +980,14 @@ fn test_insert_value() {
         feature = "llvm13-0",
         feature = "llvm14-0"
     ))]
-    let array = builder.build_load(array_alloca, "array_load").unwrap().into_array_value();
+    let array = builder
+        .build_load(array_alloca, "array_load")
+        .unwrap()
+        .into_array_value();
     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
     let array = builder
-        .build_load(array_type, array_alloca, "array_load").unwrap()
+        .build_load(array_type, array_alloca, "array_load")
+        .unwrap()
         .into_array_value();
     let const_int1 = i32_type.const_int(2, false);
     let const_int2 = i32_type.const_int(5, false);
@@ -973,13 +1006,19 @@ fn test_insert_value() {
         .build_insert_value(array, const_int3, 2, "insert")
         .unwrap()
         .is_array_value());
-    assert!(builder.build_insert_value(array, const_int3, 3, "insert").is_err_and(|e| e == BuilderError::ExtractOutOfRange));
-    assert!(builder.build_insert_value(array, const_int3, 4, "insert").is_err_and(|e| e == BuilderError::ExtractOutOfRange));
+    assert!(builder
+        .build_insert_value(array, const_int3, 3, "insert")
+        .is_err_and(|e| e == BuilderError::ExtractOutOfRange));
+    assert!(builder
+        .build_insert_value(array, const_int3, 4, "insert")
+        .is_err_and(|e| e == BuilderError::ExtractOutOfRange));
 
     assert!(builder.build_extract_value(array, 0, "extract").unwrap().is_int_value());
     assert!(builder.build_extract_value(array, 1, "extract").unwrap().is_int_value());
     assert!(builder.build_extract_value(array, 2, "extract").unwrap().is_int_value());
-    assert!(builder.build_extract_value(array, 3, "extract").is_err_and(|e| e == BuilderError::ExtractOutOfRange));
+    assert!(builder
+        .build_extract_value(array, 3, "extract")
+        .is_err_and(|e| e == BuilderError::ExtractOutOfRange));
 
     let struct_alloca = builder.build_alloca(struct_type, "struct_alloca").unwrap();
     #[cfg(any(
@@ -995,10 +1034,14 @@ fn test_insert_value() {
         feature = "llvm13-0",
         feature = "llvm14-0"
     ))]
-    let struct_value = builder.build_load(struct_alloca, "struct_load").unwrap().into_struct_value();
+    let struct_value = builder
+        .build_load(struct_alloca, "struct_load")
+        .unwrap()
+        .into_struct_value();
     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
     let struct_value = builder
-        .build_load(struct_type, struct_alloca, "struct_load").unwrap()
+        .build_load(struct_type, struct_alloca, "struct_load")
+        .unwrap()
         .into_struct_value();
 
     assert!(builder
@@ -1024,8 +1067,12 @@ fn test_insert_value() {
         .build_extract_value(struct_value, 1, "extract")
         .unwrap()
         .is_float_value());
-    assert!(builder.build_extract_value(struct_value, 2, "extract").is_err_and(|e| e == BuilderError::ExtractOutOfRange));
-    assert!(builder.build_extract_value(struct_value, 3, "extract").is_err_and(|e| e == BuilderError::ExtractOutOfRange));
+    assert!(builder
+        .build_extract_value(struct_value, 2, "extract")
+        .is_err_and(|e| e == BuilderError::ExtractOutOfRange));
+    assert!(builder
+        .build_extract_value(struct_value, 3, "extract")
+        .is_err_and(|e| e == BuilderError::ExtractOutOfRange));
 
     builder.build_return(None).unwrap();
 
@@ -1059,10 +1106,18 @@ fn test_insert_element() {
     let i8_ty = context.i8_type();
     let i32_ty = context.i32_type();
     let mut v = get_empty_vector_of(i8_ty);
-    v = builder.build_insert_element(v, i8_ty.const_int(0, false), i32_ty.const_int(0, false), "v0").unwrap();
-    v = builder.build_insert_element(v, i8_ty.const_int(1, false), i32_ty.const_int(1, false), "v1").unwrap();
-    v = builder.build_insert_element(v, i8_ty.const_int(2, false), i32_ty.const_int(2, false), "v2").unwrap();
-    v = builder.build_insert_element(v, i8_ty.const_int(3, false), i32_ty.const_int(3, false), "v3").unwrap();
+    v = builder
+        .build_insert_element(v, i8_ty.const_int(0, false), i32_ty.const_int(0, false), "v0")
+        .unwrap();
+    v = builder
+        .build_insert_element(v, i8_ty.const_int(1, false), i32_ty.const_int(1, false), "v1")
+        .unwrap();
+    v = builder
+        .build_insert_element(v, i8_ty.const_int(2, false), i32_ty.const_int(2, false), "v2")
+        .unwrap();
+    v = builder
+        .build_insert_element(v, i8_ty.const_int(3, false), i32_ty.const_int(3, false), "v3")
+        .unwrap();
 
     builder.build_return(None).unwrap();
 
@@ -1153,7 +1208,11 @@ fn run_memcpy_on<'ctx>(
         ))]
         let elem_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") }.unwrap();
         #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
-        let elem_ptr = unsafe { builder.build_in_bounds_gep(element_type, array_ptr, &[index_val], "index").unwrap() };
+        let elem_ptr = unsafe {
+            builder
+                .build_in_bounds_gep(element_type, array_ptr, &[index_val], "index")
+                .unwrap()
+        };
         let int_val = i32_type.const_int(index + 1, false);
 
         builder.build_store(elem_ptr, int_val).unwrap();
@@ -1179,7 +1238,11 @@ fn run_memcpy_on<'ctx>(
     ))]
     let dest_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") }.unwrap();
     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
-    let dest_ptr = unsafe { builder.build_in_bounds_gep(element_type, array_ptr, &[index_val], "index").unwrap() };
+    let dest_ptr = unsafe {
+        builder
+            .build_in_bounds_gep(element_type, array_ptr, &[index_val], "index")
+            .unwrap()
+    };
 
     builder.build_memcpy(dest_ptr, alignment, array_ptr, alignment, size_val)?;
 
@@ -1255,7 +1318,11 @@ fn run_memmove_on<'ctx>(
         ))]
         let elem_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") }.unwrap();
         #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
-        let elem_ptr = unsafe { builder.build_in_bounds_gep(element_type, array_ptr, &[index_val], "index").unwrap() };
+        let elem_ptr = unsafe {
+            builder
+                .build_in_bounds_gep(element_type, array_ptr, &[index_val], "index")
+                .unwrap()
+        };
         let int_val = i32_type.const_int(index + 1, false);
 
         builder.build_store(elem_ptr, int_val).unwrap();
@@ -1281,7 +1348,11 @@ fn run_memmove_on<'ctx>(
     ))]
     let dest_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") }.unwrap();
     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
-    let dest_ptr = unsafe { builder.build_in_bounds_gep(element_type, array_ptr, &[index_val], "index").unwrap() };
+    let dest_ptr = unsafe {
+        builder
+            .build_in_bounds_gep(element_type, array_ptr, &[index_val], "index")
+            .unwrap()
+    };
 
     builder.build_memmove(dest_ptr, alignment, array_ptr, alignment, size_val)?;
 
@@ -1364,7 +1435,11 @@ fn run_memset_on<'ctx>(
     ))]
     let part_2 = unsafe { builder.build_in_bounds_gep(array_ptr, &[index], "index") }.unwrap();
     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
-    let part_2 = unsafe { builder.build_in_bounds_gep(element_type, array_ptr, &[index], "index").unwrap() };
+    let part_2 = unsafe {
+        builder
+            .build_in_bounds_gep(element_type, array_ptr, &[index], "index")
+            .unwrap()
+    };
     builder.build_memset(part_2, alignment, val, size_val)?;
     builder.build_return(Some(&array_ptr)).unwrap();
 

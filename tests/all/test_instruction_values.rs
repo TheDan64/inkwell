@@ -243,7 +243,9 @@ fn test_instructions() {
     let ptr = builder.build_int_to_ptr(ptr_val, f32_ptr_type, "ptr").unwrap();
     let icmp = builder.build_int_compare(IntPredicate::EQ, arg1, arg1, "icmp").unwrap();
     let f32_sum = builder.build_float_add(arg2, f32_val, "f32_sum").unwrap();
-    let fcmp = builder.build_float_compare(FloatPredicate::OEQ, f32_sum, arg2, "fcmp").unwrap();
+    let fcmp = builder
+        .build_float_compare(FloatPredicate::OEQ, f32_sum, arg2, "fcmp")
+        .unwrap();
     let free_instruction = builder.build_free(arg1).unwrap();
     let return_instruction = builder.build_return(None).unwrap();
 
@@ -397,7 +399,8 @@ fn test_mem_instructions() {
     assert_eq!(store_instruction.get_alignment().unwrap(), 0);
 
     let fadd_instruction = builder
-        .build_float_add(load.into_float_value(), f32_val, "").unwrap()
+        .build_float_add(load.into_float_value(), f32_val, "")
+        .unwrap()
         .as_instruction_value()
         .unwrap();
     assert!(fadd_instruction.get_volatile().is_err());
@@ -476,7 +479,8 @@ fn test_mem_instructions() {
     assert_eq!(store_instruction.get_alignment().unwrap(), 4);
 
     let fadd_instruction = builder
-        .build_float_add(load.into_float_value(), f32_val, "").unwrap()
+        .build_float_add(load.into_float_value(), f32_val, "")
+        .unwrap()
         .as_instruction_value()
         .unwrap();
     assert!(fadd_instruction.get_volatile().is_err());
@@ -554,7 +558,8 @@ fn test_atomic_ordering_mem_instructions() {
     assert!(load_instruction.set_atomic_ordering(AtomicOrdering::Release).is_err());
 
     let fadd_instruction = builder
-        .build_float_add(load.into_float_value(), f32_val, "").unwrap()
+        .build_float_add(load.into_float_value(), f32_val, "")
+        .unwrap()
         .as_instruction_value()
         .unwrap();
     assert!(fadd_instruction.get_atomic_ordering().is_err());
