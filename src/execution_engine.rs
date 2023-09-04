@@ -165,10 +165,10 @@ impl<'ctx> ExecutionEngine<'ctx> {
     /// let extf = module.add_function("sumf", ft.fn_type(&[ft.into(), ft.into()], false), None);
     ///
     /// let argf = ft.const_float(64.);
-    /// let call_site_value = builder.build_call(extf, &[argf.into(), argf.into()], "retv");
+    /// let call_site_value = builder.build_call(extf, &[argf.into(), argf.into()], "retv").unwrap();
     /// let retv = call_site_value.try_as_basic_value().left().unwrap().into_float_value();
     ///
-    /// builder.build_return(Some(&retv));
+    /// builder.build_return(Some(&retv)).unwrap();
     ///
     /// let mut ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     /// ee.add_global_mapping(&extf, sumf as usize);
@@ -279,7 +279,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
     ///
     /// // Insert a return statement
     /// let ret = double.const_float(64.0);
-    /// builder.build_return(Some(&ret));
+    /// builder.build_return(Some(&ret)).unwrap();
     ///
     /// // create the JIT engine
     /// let mut ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();

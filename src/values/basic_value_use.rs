@@ -45,9 +45,9 @@ impl<'ctx> BasicValueUse<'ctx> {
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
     /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
-    /// let store_instruction = builder.build_store(arg1, f32_val);
-    /// let free_instruction = builder.build_free(arg1);
-    /// let return_instruction = builder.build_return(None);
+    /// let store_instruction = builder.build_store(arg1, f32_val).unwrap();
+    /// let free_instruction = builder.build_free(arg1).unwrap();
+    /// let return_instruction = builder.build_return(None).unwrap();
     ///
     /// let arg1_first_use = arg1.get_first_use().unwrap();
     ///
@@ -106,9 +106,9 @@ impl<'ctx> BasicValueUse<'ctx> {
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
     /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
-    /// let store_instruction = builder.build_store(arg1, f32_val);
-    /// let free_instruction = builder.build_free(arg1);
-    /// let return_instruction = builder.build_return(None);
+    /// let store_instruction = builder.build_store(arg1, f32_val).unwrap();
+    /// let free_instruction = builder.build_free(arg1).unwrap();
+    /// let return_instruction = builder.build_return(None).unwrap();
     ///
     /// let store_operand_use0 = store_instruction.get_operand_use(0).unwrap();
     /// let store_operand_use1 = store_instruction.get_operand_use(1).unwrap();
@@ -142,9 +142,9 @@ impl<'ctx> BasicValueUse<'ctx> {
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
     /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
-    /// let store_instruction = builder.build_store(arg1, f32_val);
-    /// let free_instruction = builder.build_free(arg1);
-    /// let return_instruction = builder.build_return(None);
+    /// let store_instruction = builder.build_store(arg1, f32_val).unwrap();
+    /// let free_instruction = builder.build_free(arg1).unwrap();
+    /// let return_instruction = builder.build_return(None).unwrap();
     ///
     /// let free_operand0 = free_instruction.get_operand(0).unwrap().left().unwrap();
     /// let free_operand0_instruction = free_operand0.as_instruction_value().unwrap();

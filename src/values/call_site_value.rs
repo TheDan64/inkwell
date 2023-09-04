@@ -41,7 +41,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// builder.position_at_end(entry_bb);
     ///
-    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
+    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
     /// call_site_value.set_tail_call(true);
     /// ```
@@ -66,7 +66,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// builder.position_at_end(entry_bb);
     ///
-    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
+    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
     /// call_site_value.set_tail_call(true);
     ///
@@ -93,7 +93,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// builder.position_at_end(entry_bb);
     ///
-    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
+    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
     /// assert!(call_site_value.try_as_basic_value().is_right());
     /// ```
@@ -126,7 +126,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// builder.position_at_end(entry_bb);
     ///
-    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
+    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
     /// call_site_value.add_attribute(AttributeLoc::Return, string_attribute);
     /// call_site_value.add_attribute(AttributeLoc::Return, enum_attribute);
@@ -156,7 +156,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// builder.position_at_end(entry_bb);
     ///
-    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
+    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
     /// assert_eq!(call_site_value.get_called_fn_value(), fn_value);
     /// ```
@@ -186,7 +186,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// builder.position_at_end(entry_bb);
     ///
-    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
+    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
     /// call_site_value.add_attribute(AttributeLoc::Return, string_attribute);
     /// call_site_value.add_attribute(AttributeLoc::Return, enum_attribute);
@@ -219,7 +219,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// builder.position_at_end(entry_bb);
     ///
-    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
+    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
     /// call_site_value.add_attribute(AttributeLoc::Return, string_attribute);
     /// call_site_value.add_attribute(AttributeLoc::Return, enum_attribute);
@@ -277,7 +277,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// builder.position_at_end(entry_bb);
     ///
-    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
+    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
     /// call_site_value.add_attribute(AttributeLoc::Return, string_attribute);
     /// call_site_value.add_attribute(AttributeLoc::Return, enum_attribute);
@@ -317,7 +317,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// builder.position_at_end(entry_bb);
     ///
-    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
+    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
     /// call_site_value.add_attribute(AttributeLoc::Return, string_attribute);
     /// call_site_value.add_attribute(AttributeLoc::Return, enum_attribute);
@@ -364,7 +364,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// builder.position_at_end(entry_bb);
     ///
-    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
+    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
     /// call_site_value.add_attribute(AttributeLoc::Return, string_attribute);
     /// call_site_value.add_attribute(AttributeLoc::Return, enum_attribute);
@@ -398,7 +398,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// builder.position_at_end(entry_bb);
     ///
-    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
+    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
     /// call_site_value.add_attribute(AttributeLoc::Return, string_attribute);
     /// call_site_value.add_attribute(AttributeLoc::Return, enum_attribute);
@@ -439,7 +439,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// builder.position_at_end(entry_bb);
     ///
-    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
+    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
     /// assert_eq!(call_site_value.count_arguments(), 0);
     /// ```
@@ -466,7 +466,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// builder.position_at_end(entry_bb);
     ///
-    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
+    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
     /// assert_eq!(call_site_value.get_call_convention(), 0);
     /// ```
@@ -491,7 +491,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// builder.position_at_end(entry_bb);
     ///
-    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
+    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
     /// call_site_value.set_call_convention(2);
     ///
@@ -523,7 +523,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// builder.position_at_end(entry_bb);
     ///
-    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn");
+    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
     /// call_site_value.set_alignment_attribute(AttributeLoc::Param(0), 2);
     /// ```
