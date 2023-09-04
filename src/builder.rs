@@ -34,7 +34,6 @@ use llvm_sys::core::{LLVMBuildIntCast2, LLVMBuildMemCpy, LLVMBuildMemMove, LLVMB
 
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use thiserror::Error;
-use trc::Trc;
 
 use crate::basic_block::BasicBlock;
 #[llvm_versions(7.0..=8.0)]
@@ -53,9 +52,10 @@ use crate::values::{
 
 use crate::{AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate};
 
+use std::cell::Cell;
 use std::marker::PhantomData;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 enum PositionState {
     NotSet,
     Set,
@@ -89,7 +89,7 @@ pub enum BuilderError {
 #[derive(Debug)]
 pub struct Builder<'ctx> {
     builder: LLVMBuilderRef,
-    positioned: Trc<PositionState>,
+    positioned: Cell<PositionState>,
     _marker: PhantomData<&'ctx ()>,
 }
 
@@ -101,7 +101,7 @@ impl<'ctx> Builder<'ctx> {
         debug_assert!(!builder.is_null());
 
         Builder {
-            positioned: Trc::from(PositionState::NotSet),
+            positioned: Cell::from(PositionState::NotSet),
             builder,
             _marker: PhantomData,
         }
@@ -137,7 +137,7 @@ impl<'ctx> Builder<'ctx> {
     /// builder.build_return(Some(&i32_arg)).unwrap();
     /// ```
     pub fn build_return(&self, value: Option<&dyn BasicValue<'ctx>>) -> Result<InstructionValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let value = unsafe {
@@ -177,7 +177,7 @@ impl<'ctx> Builder<'ctx> {
         &self,
         values: &[BasicValueEnum<'ctx>],
     ) -> Result<InstructionValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let mut args: Vec<LLVMValueRef> = values.iter().map(|val| val.as_value_ref()).collect();
@@ -227,7 +227,7 @@ impl<'ctx> Builder<'ctx> {
     where
         F: Into<CallableValue<'ctx>>,
     {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let callable_value = function.into();
@@ -260,7 +260,7 @@ impl<'ctx> Builder<'ctx> {
         args: &[BasicMetadataValueEnum<'ctx>],
         name: &str,
     ) -> Result<CallSiteValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         self.build_direct_call(function, args, name)
@@ -301,7 +301,7 @@ impl<'ctx> Builder<'ctx> {
         args: &[BasicMetadataValueEnum<'ctx>],
         name: &str,
     ) -> Result<CallSiteValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         self.build_call_help(function.get_type(), function.as_value_ref(), args, name)
@@ -345,7 +345,7 @@ impl<'ctx> Builder<'ctx> {
         args: &[BasicMetadataValueEnum<'ctx>],
         name: &str,
     ) -> Result<CallSiteValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         self.build_call_help(function_type, function_pointer.as_value_ref(), args, name)
@@ -359,7 +359,7 @@ impl<'ctx> Builder<'ctx> {
         args: &[BasicMetadataValueEnum<'ctx>],
         name: &str,
     ) -> Result<CallSiteValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         // LLVM gets upset when void return calls are named because they don't return anything
@@ -478,7 +478,7 @@ impl<'ctx> Builder<'ctx> {
     where
         F: Into<CallableValue<'ctx>>,
     {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let callable_value: CallableValue<'ctx> = function.into();
@@ -593,7 +593,7 @@ impl<'ctx> Builder<'ctx> {
         catch_block: BasicBlock<'ctx>,
         name: &str,
     ) -> Result<CallSiteValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         self.build_direct_invoke(function, args, then_block, catch_block, name)
@@ -608,7 +608,7 @@ impl<'ctx> Builder<'ctx> {
         catch_block: BasicBlock<'ctx>,
         name: &str,
     ) -> Result<CallSiteValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         self.build_invoke_help(
@@ -631,7 +631,7 @@ impl<'ctx> Builder<'ctx> {
         catch_block: BasicBlock<'ctx>,
         name: &str,
     ) -> Result<CallSiteValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         self.build_invoke_help(
@@ -654,7 +654,7 @@ impl<'ctx> Builder<'ctx> {
         catch_block: BasicBlock<'ctx>,
         name: &str,
     ) -> Result<CallSiteValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let fn_ty_ref = fn_ty.as_type_ref();
@@ -831,7 +831,7 @@ impl<'ctx> Builder<'ctx> {
     where
         T: BasicType<'ctx>,
     {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -932,7 +932,7 @@ impl<'ctx> Builder<'ctx> {
     /// }
     /// ```
     pub fn build_resume<V: BasicValue<'ctx>>(&self, value: V) -> Result<InstructionValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let val = unsafe { LLVMBuildResume(self.builder, value.as_value_ref()) };
@@ -949,7 +949,7 @@ impl<'ctx> Builder<'ctx> {
         ordered_indexes: &[IntValue<'ctx>],
         name: &str,
     ) -> Result<PointerValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -977,7 +977,7 @@ impl<'ctx> Builder<'ctx> {
         ordered_indexes: &[IntValue<'ctx>],
         name: &str,
     ) -> Result<PointerValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1006,7 +1006,7 @@ impl<'ctx> Builder<'ctx> {
         ordered_indexes: &[IntValue<'ctx>],
         name: &str,
     ) -> Result<PointerValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1035,7 +1035,7 @@ impl<'ctx> Builder<'ctx> {
         ordered_indexes: &[IntValue<'ctx>],
         name: &str,
     ) -> Result<PointerValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1094,7 +1094,7 @@ impl<'ctx> Builder<'ctx> {
         index: u32,
         name: &str,
     ) -> Result<PointerValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let ptr_ty = ptr.get_type();
@@ -1158,7 +1158,7 @@ impl<'ctx> Builder<'ctx> {
         index: u32,
         name: &str,
     ) -> Result<PointerValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let pointee_ty = pointee_ty.as_any_type_enum();
@@ -1220,7 +1220,7 @@ impl<'ctx> Builder<'ctx> {
         rhs_ptr: PointerValue<'ctx>,
         name: &str,
     ) -> Result<IntValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1269,7 +1269,7 @@ impl<'ctx> Builder<'ctx> {
         rhs_ptr: PointerValue<'ctx>,
         name: &str,
     ) -> Result<IntValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1293,7 +1293,7 @@ impl<'ctx> Builder<'ctx> {
     // TODOC: Phi Instruction(s) must be first instruction(s) in a BasicBlock.
     // REVIEW: Not sure if we can enforce the above somehow via types.
     pub fn build_phi<T: BasicType<'ctx>>(&self, type_: T, name: &str) -> Result<PhiValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1332,7 +1332,7 @@ impl<'ctx> Builder<'ctx> {
         ptr: PointerValue<'ctx>,
         value: V,
     ) -> Result<InstructionValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let value = unsafe { LLVMBuildStore(self.builder, value.as_value_ref(), ptr.as_value_ref()) };
@@ -1367,7 +1367,7 @@ impl<'ctx> Builder<'ctx> {
     /// ```
     #[llvm_versions(4.0..=14.0)]
     pub fn build_load(&self, ptr: PointerValue<'ctx>, name: &str) -> Result<BasicValueEnum<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1409,7 +1409,7 @@ impl<'ctx> Builder<'ctx> {
         ptr: PointerValue<'ctx>,
         name: &str,
     ) -> Result<BasicValueEnum<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1428,7 +1428,7 @@ impl<'ctx> Builder<'ctx> {
 
     // TODOC: Stack allocation
     pub fn build_alloca<T: BasicType<'ctx>>(&self, ty: T, name: &str) -> Result<PointerValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1444,7 +1444,7 @@ impl<'ctx> Builder<'ctx> {
         size: IntValue<'ctx>,
         name: &str,
     ) -> Result<PointerValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1471,7 +1471,7 @@ impl<'ctx> Builder<'ctx> {
         src_align_bytes: u32,
         size: IntValue<'ctx>,
     ) -> Result<PointerValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         if !is_alignment_ok(src_align_bytes) {
@@ -1517,7 +1517,7 @@ impl<'ctx> Builder<'ctx> {
         src_align_bytes: u32,
         size: IntValue<'ctx>,
     ) -> Result<PointerValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         if !is_alignment_ok(src_align_bytes) {
@@ -1562,7 +1562,7 @@ impl<'ctx> Builder<'ctx> {
         val: IntValue<'ctx>,
         size: IntValue<'ctx>,
     ) -> Result<PointerValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         if !is_alignment_ok(dest_align_bytes) {
@@ -1586,7 +1586,7 @@ impl<'ctx> Builder<'ctx> {
 
     // TODOC: Heap allocation
     pub fn build_malloc<T: BasicType<'ctx>>(&self, ty: T, name: &str) -> Result<PointerValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         // LLVMBulidMalloc segfaults if ty is unsized
@@ -1610,7 +1610,7 @@ impl<'ctx> Builder<'ctx> {
         size: IntValue<'ctx>,
         name: &str,
     ) -> Result<PointerValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         // LLVMBulidArrayMalloc segfaults if ty is unsized
@@ -1630,7 +1630,7 @@ impl<'ctx> Builder<'ctx> {
 
     // SubType: <P>(&self, ptr: PointerValue<P>) -> InstructionValue {
     pub fn build_free(&self, ptr: PointerValue<'ctx>) -> Result<InstructionValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         unsafe { Ok(InstructionValue::new(LLVMBuildFree(self.builder, ptr.as_value_ref()))) }
@@ -1657,7 +1657,7 @@ impl<'ctx> Builder<'ctx> {
     // SubType: <I: IntSubType>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     //     if I::sign() == Unsigned { LLVMBuildUDiv() } else { LLVMBuildSDiv() }
     pub fn build_int_unsigned_div<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1669,7 +1669,7 @@ impl<'ctx> Builder<'ctx> {
     // TODO: Possibly make this generic over sign via struct metadata or subtypes
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_signed_div<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1686,7 +1686,7 @@ impl<'ctx> Builder<'ctx> {
         rhs: T,
         name: &str,
     ) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1699,7 +1699,7 @@ impl<'ctx> Builder<'ctx> {
     // TODO: Possibly make this generic over sign via struct metadata or subtypes
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_unsigned_rem<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1711,7 +1711,7 @@ impl<'ctx> Builder<'ctx> {
     // TODO: Possibly make this generic over sign via struct metadata or subtypes
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_signed_rem<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1726,7 +1726,7 @@ impl<'ctx> Builder<'ctx> {
         int_type: T::BaseType,
         name: &str,
     ) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1749,7 +1749,7 @@ impl<'ctx> Builder<'ctx> {
         ptr_type: PointerType<'ctx>,
         name: &str,
     ) -> Result<PointerValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1798,7 +1798,7 @@ impl<'ctx> Builder<'ctx> {
         T: BasicType<'ctx>,
         V: BasicValue<'ctx>,
     {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1813,7 +1813,7 @@ impl<'ctx> Builder<'ctx> {
         int_type: T::BaseType,
         name: &str,
     ) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1835,7 +1835,7 @@ impl<'ctx> Builder<'ctx> {
         int_type: T::BaseType,
         name: &str,
     ) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1857,7 +1857,7 @@ impl<'ctx> Builder<'ctx> {
         int_type: T::BaseType,
         name: &str,
     ) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1879,7 +1879,7 @@ impl<'ctx> Builder<'ctx> {
         int_type: T::BaseType,
         name: &str,
     ) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1902,7 +1902,7 @@ impl<'ctx> Builder<'ctx> {
         int_type: T::BaseType,
         name: &str,
     ) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1920,7 +1920,7 @@ impl<'ctx> Builder<'ctx> {
     }
 
     pub fn build_float_rem<T: FloatMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1937,7 +1937,7 @@ impl<'ctx> Builder<'ctx> {
         name: &str,
     ) -> Result<<<T::BaseType as FloatMathType<'ctx>>::MathConvType as IntMathType<'ctx>>::ValueType, BuilderError>
     {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1960,7 +1960,7 @@ impl<'ctx> Builder<'ctx> {
         name: &str,
     ) -> Result<<<T::BaseType as FloatMathType<'ctx>>::MathConvType as IntMathType<'ctx>>::ValueType, BuilderError>
     {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -1984,7 +1984,7 @@ impl<'ctx> Builder<'ctx> {
         name: &str,
     ) -> Result<<<T::BaseType as IntMathType<'ctx>>::MathConvType as FloatMathType<'ctx>>::ValueType, BuilderError>
     {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2007,7 +2007,7 @@ impl<'ctx> Builder<'ctx> {
         name: &str,
     ) -> Result<<<T::BaseType as IntMathType<'ctx>>::MathConvType as FloatMathType<'ctx>>::ValueType, BuilderError>
     {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2029,7 +2029,7 @@ impl<'ctx> Builder<'ctx> {
         float_type: T::BaseType,
         name: &str,
     ) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2051,7 +2051,7 @@ impl<'ctx> Builder<'ctx> {
         float_type: T::BaseType,
         name: &str,
     ) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2073,7 +2073,7 @@ impl<'ctx> Builder<'ctx> {
         float_type: T::BaseType,
         name: &str,
     ) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2096,7 +2096,7 @@ impl<'ctx> Builder<'ctx> {
         int_type: T::BaseType,
         name: &str,
     ) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2121,7 +2121,7 @@ impl<'ctx> Builder<'ctx> {
         is_signed: bool,
         name: &str,
     ) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2139,7 +2139,7 @@ impl<'ctx> Builder<'ctx> {
     }
 
     pub fn build_float_div<T: FloatMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2150,7 +2150,7 @@ impl<'ctx> Builder<'ctx> {
 
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_add<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2171,7 +2171,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Possibly incorperate into build_int_add via flag param
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_nuw_add<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2182,7 +2182,7 @@ impl<'ctx> Builder<'ctx> {
 
     // SubType: <F>(&self, lhs: &FloatValue<F>, rhs: &FloatValue<F>, name: &str) -> FloatValue<F> {
     pub fn build_float_add<T: FloatMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2193,7 +2193,7 @@ impl<'ctx> Builder<'ctx> {
 
     // SubType: (&self, lhs: &IntValue<bool>, rhs: &IntValue<bool>, name: &str) -> IntValue<bool> {
     pub fn build_xor<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2204,7 +2204,7 @@ impl<'ctx> Builder<'ctx> {
 
     // SubType: (&self, lhs: &IntValue<bool>, rhs: &IntValue<bool>, name: &str) -> IntValue<bool> {
     pub fn build_and<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2215,7 +2215,7 @@ impl<'ctx> Builder<'ctx> {
 
     // SubType: (&self, lhs: &IntValue<bool>, rhs: &IntValue<bool>, name: &str) -> IntValue<bool> {
     pub fn build_or<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2268,7 +2268,7 @@ impl<'ctx> Builder<'ctx> {
     /// builder.build_return(Some(&shift)).unwrap();
     /// ```
     pub fn build_left_shift<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2348,7 +2348,7 @@ impl<'ctx> Builder<'ctx> {
         sign_extend: bool,
         name: &str,
     ) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2365,7 +2365,7 @@ impl<'ctx> Builder<'ctx> {
 
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_sub<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2376,7 +2376,7 @@ impl<'ctx> Builder<'ctx> {
 
     // REVIEW: Possibly incorperate into build_int_sub via flag param
     pub fn build_int_nsw_sub<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2388,7 +2388,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Possibly incorperate into build_int_sub via flag param
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_nuw_sub<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2399,7 +2399,7 @@ impl<'ctx> Builder<'ctx> {
 
     // SubType: <F>(&self, lhs: &FloatValue<F>, rhs: &FloatValue<F>, name: &str) -> FloatValue<F> {
     pub fn build_float_sub<T: FloatMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2410,7 +2410,7 @@ impl<'ctx> Builder<'ctx> {
 
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_mul<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2422,7 +2422,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Possibly incorperate into build_int_mul via flag param
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_nsw_mul<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2434,7 +2434,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Possibly incorperate into build_int_mul via flag param
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_nuw_mul<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2445,7 +2445,7 @@ impl<'ctx> Builder<'ctx> {
 
     // SubType: <F>(&self, lhs: &FloatValue<F>, rhs: &FloatValue<F>, name: &str) -> FloatValue<F> {
     pub fn build_float_mul<T: FloatMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2461,7 +2461,7 @@ impl<'ctx> Builder<'ctx> {
         to_type: T,
         name: &str,
     ) -> Result<BasicValueEnum<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2485,7 +2485,7 @@ impl<'ctx> Builder<'ctx> {
         to: T::BaseType,
         name: &str,
     ) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2506,7 +2506,7 @@ impl<'ctx> Builder<'ctx> {
         rhs: T,
         name: &str,
     ) -> Result<<T::BaseType as IntMathType<'ctx>>::ValueType, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2533,7 +2533,7 @@ impl<'ctx> Builder<'ctx> {
         name: &str,
     ) -> Result<<<T::BaseType as FloatMathType<'ctx>>::MathConvType as IntMathType<'ctx>>::ValueType, BuilderError>
     {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2555,7 +2555,7 @@ impl<'ctx> Builder<'ctx> {
         &self,
         destination_block: BasicBlock<'ctx>,
     ) -> Result<InstructionValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let value = unsafe { LLVMBuildBr(self.builder, destination_block.basic_block) };
@@ -2569,7 +2569,7 @@ impl<'ctx> Builder<'ctx> {
         then_block: BasicBlock<'ctx>,
         else_block: BasicBlock<'ctx>,
     ) -> Result<InstructionValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let value = unsafe {
@@ -2589,7 +2589,7 @@ impl<'ctx> Builder<'ctx> {
         address: BV,
         destinations: &[BasicBlock<'ctx>],
     ) -> Result<InstructionValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let value = unsafe { LLVMBuildIndirectBr(self.builder, address.as_value_ref(), destinations.len() as u32) };
@@ -2603,7 +2603,7 @@ impl<'ctx> Builder<'ctx> {
 
     // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<I> {
     pub fn build_int_neg<T: IntMathValue<'ctx>>(&self, value: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2615,7 +2615,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Possibly incorperate into build_int_neg via flag and subtypes
     // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<I> {
     pub fn build_int_nsw_neg<T: IntMathValue<'ctx>>(&self, value: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2626,7 +2626,7 @@ impl<'ctx> Builder<'ctx> {
 
     // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<I> {
     pub fn build_int_nuw_neg<T: IntMathValue<'ctx>>(&self, value: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2637,7 +2637,7 @@ impl<'ctx> Builder<'ctx> {
 
     // SubType: <F>(&self, value: &FloatValue<F>, name) -> FloatValue<F> {
     pub fn build_float_neg<T: FloatMathValue<'ctx>>(&self, value: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2648,7 +2648,7 @@ impl<'ctx> Builder<'ctx> {
 
     // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<bool> { ?
     pub fn build_not<T: IntMathValue<'ctx>>(&self, value: T, name: &str) -> Result<T, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2660,19 +2660,19 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: What if instruction and basic_block are completely unrelated?
     // It'd be great if we could get the BB from the instruction behind the scenes
     pub fn position_at(&self, basic_block: BasicBlock<'ctx>, instruction: &InstructionValue<'ctx>) {
-        unsafe { *(Trc::as_ptr(&self.positioned) as *mut PositionState) = PositionState::Set }; //Safety: Safe because PositionState is !Send
+        self.positioned.set(PositionState::Set);
 
         unsafe { LLVMPositionBuilder(self.builder, basic_block.basic_block, instruction.as_value_ref()) }
     }
 
     pub fn position_before(&self, instruction: &InstructionValue<'ctx>) {
-        unsafe { *(Trc::as_ptr(&self.positioned) as *mut PositionState) = PositionState::Set }; //Safety: Safe because PositionState is !Send
+        self.positioned.set(PositionState::Set);
 
         unsafe { LLVMPositionBuilderBefore(self.builder, instruction.as_value_ref()) }
     }
 
     pub fn position_at_end(&self, basic_block: BasicBlock<'ctx>) {
-        unsafe { *(Trc::as_ptr(&self.positioned) as *mut PositionState) = PositionState::Set }; //Safety: Safe because PositionState is !Send
+        self.positioned.set(PositionState::Set);
 
         unsafe {
             LLVMPositionBuilderAtEnd(self.builder, basic_block.basic_block);
@@ -2741,7 +2741,7 @@ impl<'ctx> Builder<'ctx> {
         index: u32,
         name: &str,
     ) -> Result<BasicValueEnum<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let size = match agg.as_aggregate_value_enum() {
@@ -2822,7 +2822,7 @@ impl<'ctx> Builder<'ctx> {
         AV: AggregateValue<'ctx>,
         BV: BasicValue<'ctx>,
     {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let size = match agg.as_aggregate_value_enum() {
@@ -2879,7 +2879,7 @@ impl<'ctx> Builder<'ctx> {
         index: IntValue<'ctx>,
         name: &str,
     ) -> Result<BasicValueEnum<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2928,7 +2928,7 @@ impl<'ctx> Builder<'ctx> {
         index: IntValue<'ctx>,
         name: &str,
     ) -> Result<VectorValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2947,7 +2947,7 @@ impl<'ctx> Builder<'ctx> {
     }
 
     pub fn build_unreachable(&self) -> Result<InstructionValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let val = unsafe { LLVMBuildUnreachable(self.builder) };
@@ -2963,7 +2963,7 @@ impl<'ctx> Builder<'ctx> {
         num: i32,
         name: &str,
     ) -> Result<InstructionValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2980,7 +2980,7 @@ impl<'ctx> Builder<'ctx> {
         name: &str,
     ) -> Result<<<T::BaseType as PointerMathType<'ctx>>::PtrConvType as IntMathType<'ctx>>::ValueType, BuilderError>
     {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -2996,7 +2996,7 @@ impl<'ctx> Builder<'ctx> {
         name: &str,
     ) -> Result<<<T::BaseType as PointerMathType<'ctx>>::PtrConvType as IntMathType<'ctx>>::ValueType, BuilderError>
     {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -3013,7 +3013,7 @@ impl<'ctx> Builder<'ctx> {
         name: &str,
     ) -> Result<<<T::BaseType as IntMathType<'ctx>>::PtrConvType as PointerMathType<'ctx>>::ValueType, BuilderError>
     {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -3038,7 +3038,7 @@ impl<'ctx> Builder<'ctx> {
         name: &str,
     ) -> Result<<<T::BaseType as PointerMathType<'ctx>>::PtrConvType as IntMathType<'ctx>>::ValueType, BuilderError>
     {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -3068,7 +3068,7 @@ impl<'ctx> Builder<'ctx> {
         else_block: BasicBlock<'ctx>,
         cases: &[(IntValue<'ctx>, BasicBlock<'ctx>)],
     ) -> Result<InstructionValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let switch_value = unsafe {
@@ -3095,7 +3095,7 @@ impl<'ctx> Builder<'ctx> {
         else_: BV,
         name: &str,
     ) -> Result<BasicValueEnum<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -3114,7 +3114,7 @@ impl<'ctx> Builder<'ctx> {
 
     // The unsafety of this function should be fixable with subtypes. See GH #32
     pub unsafe fn build_global_string(&self, value: &str, name: &str) -> Result<GlobalValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string_value = to_c_str(value);
@@ -3127,7 +3127,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Does this similar fn have the same issue build_global_string does? If so, mark as unsafe
     // and fix with subtypes.
     pub fn build_global_string_ptr(&self, value: &str, name: &str) -> Result<GlobalValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string_value = to_c_str(value);
@@ -3145,7 +3145,7 @@ impl<'ctx> Builder<'ctx> {
         mask: VectorValue<'ctx>,
         name: &str,
     ) -> Result<VectorValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -3171,7 +3171,7 @@ impl<'ctx> Builder<'ctx> {
         type_: BT,
         name: &str,
     ) -> Result<BasicValueEnum<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let c_string = to_c_str(name);
@@ -3218,7 +3218,7 @@ impl<'ctx> Builder<'ctx> {
         value: IntValue<'ctx>,
         ordering: AtomicOrdering,
     ) -> Result<IntValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         // TODO: add support for fadd, fsub and xchg on floating point types in LLVM 9+.
@@ -3283,7 +3283,7 @@ impl<'ctx> Builder<'ctx> {
         success: AtomicOrdering,
         failure: AtomicOrdering,
     ) -> Result<StructValue<'ctx>, BuilderError> {
-        if *self.positioned != PositionState::Set {
+        if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::PositonError);
         }
         let cmp = cmp.as_basic_value_enum();
