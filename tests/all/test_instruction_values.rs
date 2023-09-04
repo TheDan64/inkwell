@@ -367,8 +367,8 @@ fn test_mem_instructions() {
 
     let f32_val = f32_type.const_float(::std::f64::consts::PI);
 
-    let store_instruction = builder.build_store(arg1, f32_val);
-    let load = builder.build_load(arg1, "");
+    let store_instruction = builder.build_store(arg1, f32_val).unwrap();
+    let load = builder.build_load(arg1, "").unwrap();
     let load_instruction = load.as_instruction_value().unwrap();
 
     assert_eq!(store_instruction.get_volatile().unwrap(), false);
@@ -397,7 +397,7 @@ fn test_mem_instructions() {
     assert_eq!(store_instruction.get_alignment().unwrap(), 0);
 
     let fadd_instruction = builder
-        .build_float_add(load.into_float_value(), f32_val, "")
+        .build_float_add(load.into_float_value(), f32_val, "").unwrap()
         .as_instruction_value()
         .unwrap();
     assert!(fadd_instruction.get_volatile().is_err());
