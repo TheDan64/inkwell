@@ -1,0 +1,9 @@
+[default]
+extend-ignore-identifiers-re = [
+    "OLT",
+    "toi",
+    "isplay",
+    "BVE",
+    "olt",
+    "TRE",
+]
