@@ -66,8 +66,6 @@ enum PositionState {
 pub enum BuilderError {
     #[error("Builder position is not set")]
     UnsetPosition,
-    #[error("GEP error: does not point to a struct or index is out of bounds")]
-    GEPError,
     #[error("Alignment error")]
     AlignmentError(&'static str),
     #[error("Aggregate extract index out of range")]
@@ -1104,13 +1102,13 @@ impl<'ctx> Builder<'ctx> {
         let pointee_ty = ptr_ty.get_element_type();
 
         if !pointee_ty.is_struct_type() {
-            return Err(BuilderError::GEPError);
+            return Err(BuilderError::GEPPointee);
         }
 
         let struct_ty = pointee_ty.into_struct_type();
 
         if index >= struct_ty.count_fields() {
-            return Err(BuilderError::GEPError);
+            return Err(BuilderError::GEPIndex);
         }
 
         let c_string = to_c_str(name);
