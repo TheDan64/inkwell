@@ -10,7 +10,7 @@ env:
 
 jobs:
   typos:
-    name: Documentation
+    name: Typos
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
