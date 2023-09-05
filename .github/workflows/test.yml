@@ -13,8 +13,6 @@ jobs:
     name: Typos
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v3
       - name: Install typos
         run: cargo install typos-cli
       - name: Run typos
