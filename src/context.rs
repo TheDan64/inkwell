@@ -27,7 +27,7 @@ use llvm_sys::ir_reader::LLVMParseIRInContext;
 use llvm_sys::prelude::{LLVMContextRef, LLVMDiagnosticInfoRef, LLVMTypeRef, LLVMValueRef};
 use llvm_sys::target::{LLVMIntPtrTypeForASInContext, LLVMIntPtrTypeInContext};
 use once_cell::sync::Lazy;
-use parking_lot::{Mutex, MutexGuard};
+use std::sync::{Mutex, MutexGuard};
 
 use crate::attributes::Attribute;
 use crate::basic_block::BasicBlock;
@@ -63,7 +63,7 @@ static GLOBAL_CTX: Lazy<Mutex<Context>> = Lazy::new(|| unsafe { Mutex::new(Conte
 
 thread_local! {
     pub(crate) static GLOBAL_CTX_LOCK: Lazy<MutexGuard<'static, Context>> = Lazy::new(|| {
-        GLOBAL_CTX.lock()
+        GLOBAL_CTX.lock().unwrap_or_else(|e| e.into_inner())
     });
 }
 
