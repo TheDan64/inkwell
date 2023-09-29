@@ -173,6 +173,14 @@ pub fn try_load_library_permanently(path: &Path) -> Result<(), LoadLibraryError>
     Ok(())
 }
 
+#[test]
+fn test_try_load_library_permanently() {
+    assert_eq!(
+        try_load_library_permanently(Path::new("missing.dll")),
+        Err(LoadLibraryError::LoadingError)
+    );
+}
+
 /// Determines whether or not LLVM has been configured to run in multithreaded mode. (Inkwell currently does
 /// not officially support multithreaded mode)
 pub fn is_multithreaded() -> bool {
