@@ -13,6 +13,7 @@ use std::error::Error;
 use std::ffi::{CStr, CString};
 use std::fmt::{self, Debug, Display, Formatter};
 use std::ops::Deref;
+use std::path::Path;
 
 /// An owned LLVM String. Also known as a LLVM Message
 #[derive(Eq)]
@@ -137,10 +138,39 @@ pub fn get_llvm_version() -> (u32, u32, u32) {
     return (major, minor, patch);
 }
 
+/// Permanently load the dynamic library with the given `filename`.
+///
+/// It is safe to call this function multiple times for the same library.
+///
+/// Returns `true` if there was an error while loading the library.
+#[deprecated(note = "Use `try_load_library_permanently` instead")]
 pub fn load_library_permanently(filename: &str) -> bool {
     let filename = to_c_str(filename);
 
     unsafe { LLVMLoadLibraryPermanently(filename.as_ptr()) == 1 }
+}
+
+/// Possible errors that can occur when loading a library
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum LoadLibraryError {
+    /// The given path could not be converted to a [`&str`]
+    UnicodeError,
+    /// The given path could not be loaded as a library
+    LoadingError,
+}
+
+/// Permanently load the dynamic library at the given `path`.
+///
+/// It is safe to call this function multiple times for the same library.
+pub fn try_load_library_permanently(path: &Path) -> Result<(), LoadLibraryError> {
+    let filename = to_c_str(path.to_str().ok_or(LoadLibraryError::UnicodeError)?);
+
+    let error = unsafe { LLVMLoadLibraryPermanently(filename.as_ptr()) == 1 };
+    if error {
+        return Err(LoadLibraryError::LoadingError);
+    }
+
+    Ok(())
 }
 
 /// Determines whether or not LLVM has been configured to run in multithreaded mode. (Inkwell currently does
