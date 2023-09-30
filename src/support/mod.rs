@@ -138,12 +138,16 @@ pub fn get_llvm_version() -> (u32, u32, u32) {
     return (major, minor, patch);
 }
 
+// TODO: remove this function
 /// Permanently load the dynamic library with the given `filename`.
 ///
 /// It is safe to call this function multiple times for the same library.
 ///
 /// Returns `true` if there was an error while loading the library.
-#[deprecated(note = "Use `try_load_library_permanently` instead")]
+#[deprecated(
+    since = "0.2.0",
+    note = "This function will change signature in the future versions. Use `try_load_library_permanently` instead."
+)]
 pub fn load_library_permanently(filename: &str) -> bool {
     let filename = to_c_str(filename);
 
