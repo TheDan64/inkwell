@@ -6,7 +6,7 @@ use libc::c_char;
 use llvm_sys::core::LLVMGetVersion;
 use llvm_sys::core::{LLVMCreateMessage, LLVMDisposeMessage};
 use llvm_sys::error_handling::LLVMEnablePrettyStackTrace;
-use llvm_sys::support::LLVMLoadLibraryPermanently;
+use llvm_sys::support::{LLVMLoadLibraryPermanently, LLVMSearchForAddressOfSymbol};
 
 use std::borrow::Cow;
 use std::error::Error;
@@ -169,6 +169,31 @@ fn test_load_library_permanently() {
         load_library_permanently(Path::new("missing.dll")),
         Err(LoadLibraryError::LoadingError)
     );
+}
+
+/// Permanently loads all the symbols visible inside the current program
+pub fn load_visible_symbols() {
+    unsafe { LLVMLoadLibraryPermanently(std::ptr::null()) };
+}
+
+/// Search through all previously loaded dynamic libraries for `symbol`.
+///
+/// Returns an address of the symbol, if found
+pub fn search_for_address_of_symbol(symbol: &str) -> Option<usize> {
+    let symbol = to_c_str(symbol);
+
+    let address = unsafe { LLVMSearchForAddressOfSymbol(symbol.as_ptr()) };
+    if address.is_null() {
+        return None;
+    }
+    return Some(address as usize);
+}
+
+#[test]
+fn test_load_visible_symbols() {
+    assert!(search_for_address_of_symbol("malloc").is_none());
+    load_visible_symbols();
+    assert!(search_for_address_of_symbol("malloc").is_some());
 }
 
 /// Determines whether or not LLVM has been configured to run in multithreaded mode. (Inkwell currently does
