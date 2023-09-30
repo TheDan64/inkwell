@@ -155,11 +155,13 @@ pub fn load_library_permanently(filename: &str) -> bool {
 }
 
 /// Possible errors that can occur when loading a library
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(thiserror::Error, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum LoadLibraryError {
     /// The given path could not be converted to a [`&str`]
+    #[error("The given path could not be converted to a `&str`")]
     UnicodeError,
     /// The given path could not be loaded as a library
+    #[error("The given path could not be loaded as a library")]
     LoadingError,
 }
 
