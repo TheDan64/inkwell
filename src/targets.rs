@@ -794,42 +794,42 @@ impl Target {
         }
     }
 
-    #[cfg(feature = "target-syncvm")]
-    pub fn initialize_syncvm(config: &InitializationConfig) {
+    #[cfg(feature = "target-eravm")]
+    pub fn initialize_eravm(config: &InitializationConfig) {
         use llvm_sys::target::{
-            LLVMInitializeSyncVMAsmParser, LLVMInitializeSyncVMAsmPrinter,
-            LLVMInitializeSyncVMDisassembler, LLVMInitializeSyncVMTarget,
-            LLVMInitializeSyncVMTargetInfo, LLVMInitializeSyncVMTargetMC,
+            LLVMInitializeEraVMAsmParser, LLVMInitializeEraVMAsmPrinter,
+            LLVMInitializeEraVMDisassembler, LLVMInitializeEraVMTarget,
+            LLVMInitializeEraVMTargetInfo, LLVMInitializeEraVMTargetMC,
         };
 
         if config.base {
             let _guard = TARGET_LOCK.write();
-            unsafe { LLVMInitializeSyncVMTarget() };
+            unsafe { LLVMInitializeEraVMTarget() };
         }
 
         if config.info {
             let _guard = TARGET_LOCK.write();
-            unsafe { LLVMInitializeSyncVMTargetInfo() };
+            unsafe { LLVMInitializeEraVMTargetInfo() };
         }
 
         if config.asm_printer {
             let _guard = TARGET_LOCK.write();
-            unsafe { LLVMInitializeSyncVMAsmPrinter() };
+            unsafe { LLVMInitializeEraVMAsmPrinter() };
         }
 
         if config.asm_parser {
             let _guard = TARGET_LOCK.write();
-            unsafe { LLVMInitializeSyncVMAsmParser() };
+            unsafe { LLVMInitializeEraVMAsmParser() };
         }
 
         if config.disassembler {
             let _guard = TARGET_LOCK.write();
-            unsafe { LLVMInitializeSyncVMDisassembler() };
+            unsafe { LLVMInitializeEraVMDisassembler() };
         }
 
         if config.machine_code {
             let _guard = TARGET_LOCK.write();
-            unsafe { LLVMInitializeSyncVMTargetMC() };
+            unsafe { LLVMInitializeEraVMTargetMC() };
         }
     }
 
