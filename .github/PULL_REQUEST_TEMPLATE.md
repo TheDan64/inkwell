@@ -1,31 +1,19 @@
-<!--- This version of the form is by no means final -->
-<!--- Provide a brief summary of your changes in the title above -->
+# What ❔
 
-## Description
+<!-- What are the changes this PR brings about? -->
+<!-- Example: This PR adds a PR template to the repo. -->
+<!-- (For bigger PRs adding more context is appreciated) -->
 
-<!--- Describe your changes in detail -->
+## Why ❔
 
-## Related Issue
-
-<!--- This project only accepts pull requests related to open issues -->
-<!--- If suggesting a new feature or change, please discuss it in an issue first -->
-<!--- If fixing a bug, there should be an issue describing it with steps to reproduce -->
-<!--- Please link to the issue here -->
-
-## How This Has Been Tested
-
-<!--- Please describe in detail how you tested your changes. -->
-<!--- Include details of your testing environment, and the tests you ran to -->
-<!--- see how your change affects other areas of the code, etc -->
-
-## Option\<Breaking Changes\>
-
-<!--- If any breaking changes were made, please explain why they are required -->
-<!--- If not, feel free to remove this section altogether -->
+<!-- Why are these changes done? What goal do they contribute to? What are the principles behind them? -->
+<!-- Example: PR templates ensure PR reviewers, observers, and future iterators are in context about the evolution of repos. -->
 
 ## Checklist
 
-<!--- Go over all the following points, and put an `x` in all the boxes that apply -->
-<!--- If you're unsure about any of these, don't hesitate to ask. We're here to help! -->
+<!-- Check your PR fulfills the following items. -->
+<!-- For draft PRs check the boxes as you complete them. -->
 
-- [ ] I have read the [Contributing Guide](https://github.com/TheDan64/inkwell/blob/master/.github/CONTRIBUTING.md)
+- [ ] PR title corresponds to the body of PR.
+- [ ] Tests for the changes have been added / updated.
+- [ ] Documentation comments have been added / updated.
