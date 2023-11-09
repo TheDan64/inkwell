@@ -2,7 +2,7 @@
 pub mod error_handling;
 
 use libc::c_char;
-#[llvm_versions(16.0)]
+#[llvm_versions(16.0..=latest)]
 use llvm_sys::core::LLVMGetVersion;
 use llvm_sys::core::{LLVMCreateMessage, LLVMDisposeMessage};
 use llvm_sys::error_handling::LLVMEnablePrettyStackTrace;
