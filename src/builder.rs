@@ -1461,7 +1461,7 @@ impl<'ctx> Builder<'ctx> {
     /// both a power of 2 and under 2^64.
     ///
     /// The final argument should be a pointer-sized integer.
-    /// 
+    ///
     /// Returns an `Err(BuilderError::AlignmentError)` if the source or destination alignments are not a power of 2.
     ///
     /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
@@ -1509,7 +1509,7 @@ impl<'ctx> Builder<'ctx> {
     /// both a power of 2 and under 2^64.
     ///
     /// The final argument should be a pointer-sized integer.
-    /// 
+    ///
     /// Returns an `Err(BuilderError::AlignmentError)` if the source or destination alignments are not a power of 2 under 2^64.
     ///
     /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
@@ -1557,7 +1557,7 @@ impl<'ctx> Builder<'ctx> {
     /// both a power of 2 and under 2^64.
     ///
     /// The final argument should be a pointer-sized integer.
-    /// 
+    ///
     /// Returns an `Err(BuilderError::AlignmentError)` if the source alignment is not a power of 2 under 2^64.
     ///
     /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
@@ -2669,7 +2669,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: What if instruction and basic_block are completely unrelated?
     // It'd be great if we could get the BB from the instruction behind the scenes
     /// Set the position of the builder to after an instruction.
-    /// 
+    ///
     /// Be sure to call one of the `position_*` methods or all `build_*` methods will return `Err(BuilderError::UnsetPosition)`.
     pub fn position_at(&self, basic_block: BasicBlock<'ctx>, instruction: &InstructionValue<'ctx>) {
         self.positioned.set(PositionState::Set);
@@ -2678,7 +2678,7 @@ impl<'ctx> Builder<'ctx> {
     }
 
     /// Set the position of the builder to before an instruction.
-    /// 
+    ///
     /// Be sure to call one of the `position_*` methods or all `build_*` methods will return `Err(BuilderError::UnsetPosition)`.
     pub fn position_before(&self, instruction: &InstructionValue<'ctx>) {
         self.positioned.set(PositionState::Set);
@@ -2687,7 +2687,7 @@ impl<'ctx> Builder<'ctx> {
     }
 
     /// Set the position of the builder to the end of a basic block.
-    /// 
+    ///
     /// Be sure to call one of the `position_*` methods or all `build_*` methods will return `Err(BuilderError::UnsetPosition)`.
     pub fn position_at_end(&self, basic_block: BasicBlock<'ctx>) {
         self.positioned.set(PositionState::Set);
@@ -2699,7 +2699,7 @@ impl<'ctx> Builder<'ctx> {
 
     /// Builds an extract value instruction which extracts a `BasicValueEnum`
     /// from a struct or array.
-    /// 
+    ///
     /// Returns `Err(BuilderError::ExtractOutOfRange)` if the provided index is out of bounds of the aggregate value length.
     ///
     /// # Example
@@ -2782,7 +2782,7 @@ impl<'ctx> Builder<'ctx> {
 
     /// Builds an insert value instruction which inserts a `BasicValue` into a struct
     /// or array and returns the resulting aggregate value.
-    /// 
+    ///
     /// Returns `Err(BuilderError::ExtractOutOfRange)` if the provided index is out of bounds of the aggregate value length.
     ///
     /// # Example
@@ -3215,7 +3215,7 @@ impl<'ctx> Builder<'ctx> {
     /// May return of the following errors:
     /// - `Err(BuilderError::BitwidthError)` if the bitwidth of the value is not a power of 2 and less than 8
     /// - `Err(BuilderError:PointeeTypeMismatch)` if the pointee type does not match the value's type
-    /// 
+    ///
     /// # Example
     ///
     /// ```
@@ -3256,7 +3256,7 @@ impl<'ctx> Builder<'ctx> {
             ));
         }
 
-        #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0")))]
+        #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
         if ptr.get_type().get_element_type() != value.get_type().into() {
             return Err(BuilderError::PointeeTypeMismatch(
                 "Pointer's pointee type must match the value's type.",
@@ -3278,7 +3278,7 @@ impl<'ctx> Builder<'ctx> {
     }
 
     /// Builds a cmpxchg instruction. It allows you to atomically compare and replace memory.
-    /// 
+    ///
     /// May return one of the following errors:
     /// - `Err(BuilderError::PointeeTypeMismatch)` if the pointer does not point to an element of the value type
     /// - `Err(BuilderError::ValueTypeMismatch)` if the value to compare and the new values are not of the same type, or if
@@ -3334,7 +3334,7 @@ impl<'ctx> Builder<'ctx> {
             ));
         }
 
-        #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0")))]
+        #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
         if ptr.get_type().get_element_type().to_basic_type_enum() != cmp.get_type() {
             return Err(BuilderError::PointeeTypeMismatch(
                 "The pointer does not point to an element of the value type.",
