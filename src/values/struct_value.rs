@@ -1,3 +1,5 @@
+use llvm_sys::core::{LLVMGetNumOperands, LLVMGetOperand, LLVMIsConstant};
+
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
@@ -7,7 +9,7 @@ use crate::types::StructType;
 use crate::values::traits::AsValueRef;
 use crate::values::{InstructionValue, Value};
 
-use super::AnyValue;
+use super::{AnyValue, BasicValueEnum};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct StructValue<'ctx> {
@@ -21,6 +23,56 @@ impl<'ctx> StructValue<'ctx> {
         StructValue {
             struct_value: Value::new(value),
         }
+    }
+
+    /// Gets the value of a field belonging to this `StructType`.
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let i32_type = context.i32_type();
+    /// let i8_type = context.i8_type();
+    /// let i8_val = i8_type.const_all_ones();
+    /// let i32_val = i32_type.const_all_ones();
+    /// let struct_type = context.struct_type(&[i8_type.into(), i32_type.into()], false);
+    /// let struct_val = struct_type.const_named_struct(&[i8_val.into(), i32_val.into()]);
+    ///
+    /// assert!(struct_val.get_field_at_index(0).is_some());
+    /// assert!(struct_val.get_field_at_index(1).is_some());
+    /// assert!(struct_val.get_field_at_index(3).is_none());
+    /// assert!(struct_val.get_field_at_index(0).unwrap().is_int_value());
+    /// ```
+    pub fn get_field_at_index(self, index: u32) -> Option<BasicValueEnum<'ctx>> {
+        if unsafe { LLVMIsConstant(self.as_value_ref()) } == 0 {
+            return None;
+        }
+        // OoB indexing seems to be unchecked and therefore is UB
+        if index >= self.count_fields() {
+            return None;
+        }
+
+        unsafe { Some(BasicValueEnum::new(LLVMGetOperand(self.as_value_ref(), index))) }
+    }
+
+    /// Counts the number of fields.
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let i32_type = context.i32_type();
+    /// let i8_type = context.i8_type();
+    /// let i8_val = i8_type.const_all_ones();
+    /// let i32_val = i32_type.const_all_ones();
+    /// let struct_type = context.struct_type(&[i8_type.into(), i32_type.into()], false);
+    /// let struct_val = struct_type.const_named_struct(&[i8_val.into(), i32_val.into()]);
+    ///
+    /// assert_eq!(struct_val.count_fields(), 2);
+    /// assert_eq!(struct_val.count_fields(), struct_type.count_fields());
+    /// ```
+    pub fn count_fields(self) -> u32 {
+        unsafe { LLVMGetNumOperands(self.as_value_ref()) as u32 }
     }
 
     /// Gets the name of a `StructValue`. If the value is a constant, this will
@@ -70,3 +122,4 @@ impl Display for StructValue<'_> {
         write!(f, "{}", self.print_to_string())
     }
 }
+

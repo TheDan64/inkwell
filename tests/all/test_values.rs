@@ -1184,6 +1184,34 @@ fn test_consts() {
     assert_eq!(f128_val.get_constant(), Some((7.8, false)));
     assert_eq!(ppc_f128_val.get_constant(), Some((9.0, false)));
 
+    //const struct member access
+    let struct_type = context.struct_type(&[i8_type.into(), i32_type.into()], false);
+    let struct_val = struct_type.const_named_struct(&[i8_val.into(), i32_val.into()]);
+
+    assert_eq!(struct_val.count_fields(), 2);
+    assert_eq!(struct_val.count_fields(), struct_type.count_fields());
+    assert!(struct_val.get_field_at_index(0).is_some());
+    assert!(struct_val.get_field_at_index(1).is_some());
+    assert!(struct_val.get_field_at_index(3).is_none());
+    assert!(struct_val.get_field_at_index(0).unwrap().is_int_value());
+    assert!(struct_val.get_field_at_index(1).unwrap().is_int_value());
+    assert_eq!(
+        struct_val
+            .get_field_at_index(0)
+            .unwrap()
+            .into_int_value()
+            .get_sign_extended_constant(),
+        Some(-1)
+    );
+    assert_eq!(
+        struct_val
+            .get_field_at_index(1)
+            .unwrap()
+            .into_int_value()
+            .get_sign_extended_constant(),
+        Some(-1)
+    );
+
     // Non const test
     let builder = context.create_builder();
     let module = context.create_module("fns");
@@ -1365,3 +1393,4 @@ fn test_constant_expression() {
     assert!(expr.is_const());
     assert!(!expr.is_constant_int());
 }
+
