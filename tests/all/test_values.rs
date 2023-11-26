@@ -3,8 +3,8 @@ use inkwell::attributes::AttributeLoc;
 use inkwell::comdat::ComdatSelectionKind;
 use inkwell::context::Context;
 use inkwell::module::Linkage::*;
-use inkwell::types::{StringRadix, VectorType};
-use inkwell::values::{AnyValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
+use inkwell::types::{BasicType, StringRadix, VectorType};
+use inkwell::values::{AnyValue, BasicValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
 use inkwell::{AddressSpace, DLLStorageClass, GlobalVisibility, ThreadLocalMode};
 
 use std::convert::TryFrom;
@@ -1185,16 +1185,21 @@ fn test_consts() {
     assert_eq!(ppc_f128_val.get_constant(), Some((9.0, false)));
 
     //const struct member access
-    let struct_type = context.struct_type(&[i8_type.into(), i32_type.into()], false);
-    let struct_val = struct_type.const_named_struct(&[i8_val.into(), i32_val.into()]);
+    let void_type = context.void_type();
+    let struct_type = context.struct_type(&[i8_type.into(), f32_type.into()], false);
+    let module = context.create_module("test");
+    let test_func = module.add_function("strut_test", void_type.fn_type(&[struct_type.into()], false), None);
+    let non_const_struct_val = test_func.get_nth_param(0).unwrap().into_struct_value();
+    assert_eq!(non_const_struct_val.count_fields(), 0);
 
+    let struct_val = struct_type.const_named_struct(&[i8_val.into(), f32_val.into()]);
     assert_eq!(struct_val.count_fields(), 2);
     assert_eq!(struct_val.count_fields(), struct_type.count_fields());
     assert!(struct_val.get_field_at_index(0).is_some());
     assert!(struct_val.get_field_at_index(1).is_some());
     assert!(struct_val.get_field_at_index(3).is_none());
     assert!(struct_val.get_field_at_index(0).unwrap().is_int_value());
-    assert!(struct_val.get_field_at_index(1).unwrap().is_int_value());
+    assert!(struct_val.get_field_at_index(1).unwrap().is_float_value());
     assert_eq!(
         struct_val
             .get_field_at_index(0)
@@ -1207,15 +1212,13 @@ fn test_consts() {
         struct_val
             .get_field_at_index(1)
             .unwrap()
-            .into_int_value()
-            .get_sign_extended_constant(),
-        Some(-1)
+            .into_float_value()
+            .get_constant(),
+        Some((3.4000000953674316, false))
     );
 
     // Non const test
     let builder = context.create_builder();
-    let module = context.create_module("fns");
-    let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[i32_type.into(), f32_type.into()], false);
     let function = module.add_function("fn", fn_type, None);
     let basic_block = context.append_basic_block(function, "entry");
@@ -1393,4 +1396,3 @@ fn test_constant_expression() {
     assert!(expr.is_const());
     assert!(!expr.is_constant_int());
 }
-
