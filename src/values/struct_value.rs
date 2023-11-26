@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMGetNumOperands, LLVMGetOperand, LLVMIsConstant};
+use llvm_sys::core::{LLVMGetNumOperands, LLVMGetOperand};
 
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -44,9 +44,6 @@ impl<'ctx> StructValue<'ctx> {
     /// assert!(struct_val.get_field_at_index(0).unwrap().is_int_value());
     /// ```
     pub fn get_field_at_index(self, index: u32) -> Option<BasicValueEnum<'ctx>> {
-        if unsafe { LLVMIsConstant(self.as_value_ref()) } == 0 {
-            return None;
-        }
         // OoB indexing seems to be unchecked and therefore is UB
         if index >= self.count_fields() {
             return None;
@@ -122,4 +119,3 @@ impl Display for StructValue<'_> {
         write!(f, "{}", self.print_to_string())
     }
 }
-
