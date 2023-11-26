@@ -25,7 +25,7 @@ impl<'ctx> StructValue<'ctx> {
         }
     }
 
-    /// Gets the value of a field belonging to this `StructType`.
+    /// Gets the value of a field belonging to this `StructValue`.
     ///
     /// ```no_run
     /// use inkwell::context::Context;
