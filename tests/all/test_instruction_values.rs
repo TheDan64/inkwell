@@ -249,6 +249,9 @@ fn test_instructions() {
         .unwrap();
     let free_instruction = builder.build_free(arg1).unwrap();
     let return_instruction = builder.build_return(None).unwrap();
+    let cond_br_instruction = builder
+        .build_conditional_branch(i64_type.const_zero(), basic_block, basic_block)
+        .unwrap();
 
     assert_eq!(
         alloca_val.as_instruction().unwrap().get_allocated_type(),
@@ -257,6 +260,9 @@ fn test_instructions() {
     assert!(store_instruction.get_allocated_type().is_err());
     assert!(!store_instruction.is_terminator());
     assert!(return_instruction.is_terminator());
+    assert!(!store_instruction.is_conditional());
+    assert!(!return_instruction.is_conditional());
+    assert!(cond_br_instruction.is_conditional());
     assert_eq!(store_instruction.get_opcode(), Store);
     assert_eq!(ptr_val.as_instruction().unwrap().get_opcode(), PtrToInt);
     assert_eq!(ptr.as_instruction().unwrap().get_opcode(), IntToPtr);
