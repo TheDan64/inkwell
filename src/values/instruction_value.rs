@@ -227,6 +227,16 @@ impl<'ctx> InstructionValue<'ctx> {
         unsafe { !LLVMIsATerminatorInst(self.as_value_ref()).is_null() }
     }
 
+    // SubTypes: Only apply to terminators
+    /// Returns whether a terminator is conditional or not
+    pub fn is_conditional(self) -> bool {
+        if self.is_terminator() {
+            unsafe { LLVMIsConditional(self.as_value_ref()) == 1 }
+        } else {
+            false
+        }
+    }
+
     pub fn is_tail_call(self) -> bool {
         // LLVMIsTailCall has UB if the value is not an llvm::CallInst*.
         if self.get_opcode() == InstructionOpcode::Call {
