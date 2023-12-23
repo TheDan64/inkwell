@@ -7,8 +7,8 @@ use llvm_sys::core::{
     LLVMGetInstructionParent, LLVMGetMetadata, LLVMGetNextInstruction, LLVMGetNumOperands, LLVMGetOperand,
     LLVMGetOperandUse, LLVMGetPreviousInstruction, LLVMGetVolatile, LLVMHasMetadata, LLVMInstructionClone,
     LLVMInstructionEraseFromParent, LLVMInstructionRemoveFromParent, LLVMIsAAllocaInst, LLVMIsABasicBlock,
-    LLVMIsALoadInst, LLVMIsAStoreInst, LLVMIsTailCall, LLVMSetAlignment, LLVMSetMetadata, LLVMSetOperand,
-    LLVMSetVolatile, LLVMValueAsBasicBlock,
+    LLVMIsALoadInst, LLVMIsAStoreInst, LLVMIsATerminatorInst, LLVMIsConditional, LLVMIsTailCall, LLVMSetAlignment,
+    LLVMSetMetadata, LLVMSetOperand, LLVMSetVolatile, LLVMValueAsBasicBlock,
 };
 use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
 #[llvm_versions(10.0..=latest)]
@@ -221,6 +221,10 @@ impl<'ctx> InstructionValue<'ctx> {
     // parent?
     pub fn get_parent(self) -> Option<BasicBlock<'ctx>> {
         unsafe { BasicBlock::new(LLVMGetInstructionParent(self.as_value_ref())) }
+    }
+
+    pub fn is_terminator(self) -> bool {
+        unsafe { !LLVMIsATerminatorInst(self.as_value_ref()).is_null() }
     }
 
     pub fn is_tail_call(self) -> bool {
