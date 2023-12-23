@@ -255,6 +255,8 @@ fn test_instructions() {
         Ok(i64_type.as_any_type_enum())
     );
     assert!(store_instruction.get_allocated_type().is_err());
+    assert!(!store_instruction.is_terminator());
+    assert!(return_instruction.is_terminator());
     assert_eq!(store_instruction.get_opcode(), Store);
     assert_eq!(ptr_val.as_instruction().unwrap().get_opcode(), PtrToInt);
     assert_eq!(ptr.as_instruction().unwrap().get_opcode(), IntToPtr);
