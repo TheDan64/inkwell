@@ -283,15 +283,6 @@ impl<'ctx> InstructionValue<'ctx> {
         Ok(())
     }
 
-    // SubTypes: Only apply to memory access and alloca instructions
-    /// Returns alignment on a memory access instruction or alloca.
-    pub fn get_alignment(self) -> Result<u32, &'static str> {
-        if !self.is_a_alloca_inst() && !self.is_a_load_inst() && !self.is_a_store_inst() {
-            return Err("Value is not an alloca, load or store.");
-        }
-        Ok(unsafe { LLVMGetAlignment(self.as_value_ref()) })
-    }
-
     // SubTypes: Only apply to alloca instruction
     /// Returns the type that is allocated by the alloca instruction.
     pub fn get_allocated_type(self) -> Result<AnyTypeEnum<'ctx>, &'static str> {
@@ -299,6 +290,15 @@ impl<'ctx> InstructionValue<'ctx> {
             return Err("Value is not an alloca.");
         }
         Ok(unsafe { AnyTypeEnum::new(LLVMGetAllocatedType(self.as_value_ref())) })
+    }
+
+    // SubTypes: Only apply to memory access and alloca instructions
+    /// Returns alignment on a memory access instruction or alloca.
+    pub fn get_alignment(self) -> Result<u32, &'static str> {
+        if !self.is_a_alloca_inst() && !self.is_a_load_inst() && !self.is_a_store_inst() {
+            return Err("Value is not an alloca, load or store.");
+        }
+        Ok(unsafe { LLVMGetAlignment(self.as_value_ref()) })
     }
 
     // SubTypes: Only apply to memory access and alloca instructions
