@@ -223,12 +223,13 @@ impl<'ctx> InstructionValue<'ctx> {
         unsafe { BasicBlock::new(LLVMGetInstructionParent(self.as_value_ref())) }
     }
 
+    /// Returns if the instruction is a terminator
     pub fn is_terminator(self) -> bool {
         unsafe { !LLVMIsATerminatorInst(self.as_value_ref()).is_null() }
     }
 
     // SubTypes: Only apply to terminators
-    /// Returns whether a terminator is conditional or not
+    /// Returns if a terminator is conditional or not
     pub fn is_conditional(self) -> bool {
         if self.is_terminator() {
             unsafe { LLVMIsConditional(self.as_value_ref()) == 1 }
