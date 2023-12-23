@@ -18,9 +18,9 @@ use llvm_sys::LLVMOpcode;
 
 use std::{ffi::CStr, fmt, fmt::Display};
 
-use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, MetadataValue, Value};
 use crate::{basic_block::BasicBlock, types::AnyTypeEnum};
+use crate::{types::BasicTypeEnum, values::traits::AsValueRef};
 use crate::{AtomicOrdering, FloatPredicate, IntPredicate};
 
 use super::AnyValue;
@@ -300,11 +300,11 @@ impl<'ctx> InstructionValue<'ctx> {
 
     // SubTypes: Only apply to alloca instruction
     /// Returns the type that is allocated by the alloca instruction.
-    pub fn get_allocated_type(self) -> Result<AnyTypeEnum<'ctx>, &'static str> {
+    pub fn get_allocated_type(self) -> Result<BasicTypeEnum<'ctx>, &'static str> {
         if !self.is_a_alloca_inst() {
             return Err("Value is not an alloca.");
         }
-        Ok(unsafe { AnyTypeEnum::new(LLVMGetAllocatedType(self.as_value_ref())) })
+        Ok(unsafe { BasicTypeEnum::new(LLVMGetAllocatedType(self.as_value_ref())) })
     }
 
     // SubTypes: Only apply to memory access and alloca instructions

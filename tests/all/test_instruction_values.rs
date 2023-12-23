@@ -1,5 +1,5 @@
 use inkwell::context::Context;
-use inkwell::types::{AnyType, AnyTypeEnum, AsTypeRef};
+use inkwell::types::{AnyTypeEnum, AsTypeRef, BasicType};
 use inkwell::values::{BasicValue, InstructionOpcode::*};
 use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate};
 
@@ -255,7 +255,7 @@ fn test_instructions() {
 
     assert_eq!(
         alloca_val.as_instruction().unwrap().get_allocated_type(),
-        Ok(i64_type.as_any_type_enum())
+        Ok(i64_type.as_basic_type_enum())
     );
     assert!(store_instruction.get_allocated_type().is_err());
     assert!(!store_instruction.is_terminator());
