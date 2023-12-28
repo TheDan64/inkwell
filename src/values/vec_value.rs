@@ -19,7 +19,7 @@ pub struct VectorValue<'ctx> {
 }
 
 impl<'ctx> VectorValue<'ctx> {
-    pub(crate) unsafe fn new(vector_value: LLVMValueRef) -> Self {
+    pub unsafe fn new(vector_value: LLVMValueRef) -> Self {
         assert!(!vector_value.is_null());
 
         VectorValue {

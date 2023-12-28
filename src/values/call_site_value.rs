@@ -20,7 +20,7 @@ use super::AnyValue;
 pub struct CallSiteValue<'ctx>(Value<'ctx>);
 
 impl<'ctx> CallSiteValue<'ctx> {
-    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
+    pub unsafe fn new(value: LLVMValueRef) -> Self {
         CallSiteValue(Value::new(value))
     }
 

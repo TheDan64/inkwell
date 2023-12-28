@@ -67,7 +67,7 @@ struct Value<'ctx> {
 }
 
 impl<'ctx> Value<'ctx> {
-    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
+    pub unsafe fn new(value: LLVMValueRef) -> Self {
         debug_assert!(
             !value.is_null(),
             "This should never happen since containing struct should check null ptrs"
