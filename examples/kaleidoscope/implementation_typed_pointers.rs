@@ -7,10 +7,11 @@ use std::str::Chars;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::module::Module;
-use inkwell::passes::PassManager;
 use inkwell::types::BasicMetadataTypeEnum;
-use inkwell::values::{BasicMetadataValueEnum, FloatValue, FunctionValue, PointerValue};
+use inkwell::values::{BasicMetadataValueEnum, BasicValueEnum, FloatValue, FunctionValue, PointerValue};
 use inkwell::FloatPredicate;
+
+use inkwell_internals::llvm_versions;
 
 use crate::Token::*;
 
@@ -823,7 +824,6 @@ impl<'a> Parser<'a> {
 pub struct Compiler<'a, 'ctx> {
     pub context: &'ctx Context,
     pub builder: &'a Builder<'ctx>,
-    pub fpm: &'a PassManager<FunctionValue<'ctx>>,
     pub module: &'a Module<'ctx>,
     pub function: &'a Function,
 
@@ -858,13 +858,23 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
         builder.build_alloca(self.context.f64_type(), name).unwrap()
     }
 
+    #[llvm_versions(4.0..=14.0)]
+    pub fn build_load(&self, ptr: PointerValue<'ctx>, name: &str) -> BasicValueEnum<'ctx> {
+        self.builder.build_load(ptr, name).unwrap()
+    }
+
+    #[llvm_versions(15.0..=latest)]
+    pub fn build_load(&self, ptr: PointerValue<'ctx>, name: &str) -> BasicValueEnum<'ctx> {
+        self.builder.build_load(self.context.f64_type(), ptr, name).unwrap()
+    }
+
     /// Compiles the specified `Expr` into an LLVM `FloatValue`.
     fn compile_expr(&mut self, expr: &Expr) -> Result<FloatValue<'ctx>, &'static str> {
         match *expr {
             Expr::Number(nb) => Ok(self.context.f64_type().const_float(nb)),
 
             Expr::Variable(ref name) => match self.variables.get(name.as_str()) {
-                Some(var) => Ok(self.builder.build_load(*var, name.as_str()).unwrap().into_float_value()),
+                Some(var) => Ok(self.build_load(*var, name.as_str()).into_float_value()),
                 None => Err("Could not find a matching variable."),
             },
 
@@ -1086,7 +1096,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                 // compile end condition
                 let end_cond = self.compile_expr(end)?;
 
-                let curr_var = self.builder.build_load(start_alloca, var_name).unwrap();
+                let curr_var = self.build_load(start_alloca, var_name);
                 let next_var = self
                     .builder
                     .build_float_add(curr_var.into_float_value(), step, "nextvar")
@@ -1178,8 +1188,6 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
 
         // return the whole thing after verification and optimization
         if function.verify(true) {
-            self.fpm.run_on(&function);
-
             Ok(function)
         } else {
             unsafe {
@@ -1190,18 +1198,16 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
         }
     }
 
-    /// Compiles the specified `Function` in the given `Context` and using the specified `Builder`, `PassManager`, and `Module`.
+    /// Compiles the specified `Function` in the given `Context` and using the specified `Builder` and `Module`.
     pub fn compile(
         context: &'ctx Context,
         builder: &'a Builder<'ctx>,
-        pass_manager: &'a PassManager<FunctionValue<'ctx>>,
         module: &'a Module<'ctx>,
         function: &Function,
     ) -> Result<FunctionValue<'ctx>, &'static str> {
         let mut compiler = Compiler {
             context,
             builder,
-            fpm: pass_manager,
             module,
             function,
             fn_value_opt: None,
