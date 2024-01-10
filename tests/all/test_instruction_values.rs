@@ -463,7 +463,7 @@ fn test_mem_instructions() {
         feature = "llvm14-0"
     ))]
     let load = builder.build_load(arg1, "").unwrap();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
+    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
     let load = builder.build_load(f32_type, arg1, "").unwrap();
     let load_instruction = load.as_instruction_value().unwrap();
 
@@ -542,7 +542,7 @@ fn test_atomic_ordering_mem_instructions() {
         feature = "llvm14-0"
     ))]
     let load = builder.build_load(arg1, "").unwrap();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
+    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
     let load = builder.build_load(f32_type, arg1, "").unwrap();
     let load_instruction = load.as_instruction_value().unwrap();
 

@@ -2738,7 +2738,7 @@ impl<'ctx> Builder<'ctx> {
     ///     feature = "llvm14-0"
     /// ))]
     /// let array = builder.build_load(array_alloca, "array_load").unwrap().into_array_value();
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
     /// let array = builder.build_load(i32_type, array_alloca, "array_load").unwrap().into_array_value();
     ///
     /// let const_int1 = i32_type.const_int(2, false);
@@ -2821,7 +2821,7 @@ impl<'ctx> Builder<'ctx> {
     ///     feature = "llvm14-0"
     /// ))]
     /// let array = builder.build_load(array_alloca, "array_load").unwrap().into_array_value();
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
     /// let array = builder.build_load(i32_type, array_alloca, "array_load").unwrap().into_array_value();
     ///
     /// let const_int1 = i32_type.const_int(2, false);
