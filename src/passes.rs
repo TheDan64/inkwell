@@ -14,7 +14,7 @@ use llvm_sys::initialization::{
 use llvm_sys::initialization::{LLVMInitializeInstrumentation, LLVMInitializeObjCARCOpts};
 use llvm_sys::prelude::LLVMPassManagerRef;
 #[llvm_versions(4.0..=16.0)]
-use llvm_sys::prelude::LLVMPassRegistry;
+use llvm_sys::prelude::LLVMPassRegistryRef;
 #[llvm_versions(10.0..=16.0)]
 use llvm_sys::transforms::ipo::LLVMAddMergeFunctionsPass;
 #[llvm_versions(4.0..=15.0)]
