@@ -19,13 +19,10 @@ use llvm_sys::core::{
     LLVMCreateStringAttribute, LLVMDoubleTypeInContext, LLVMFP128TypeInContext, LLVMFloatTypeInContext,
     LLVMGetGlobalContext, LLVMGetMDKindIDInContext, LLVMHalfTypeInContext, LLVMInsertBasicBlockInContext,
     LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext,
-    LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext,
-    LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMX86FP80TypeInContext,
+    LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMMDNodeInContext, LLVMMDStringInContext,
+    LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext, LLVMStructCreateNamed, LLVMStructTypeInContext,
+    LLVMVoidTypeInContext, LLVMX86FP80TypeInContext,
 };
-#[llvm_versions(4.0..=16.0)]
-use llvm_sys::core::{LLVMMDNodeInContext, LLVMMDStringInContext};
-#[llvm_versions(16.0..=latest)]
-use llvm_sys::core::{LLVMMDNodeInContext2, LLVMMDStringInContext2};
 use llvm_sys::ir_reader::LLVMParseIRInContext;
 use llvm_sys::prelude::{LLVMContextRef, LLVMDiagnosticInfoRef, LLVMTypeRef, LLVMValueRef};
 use llvm_sys::target::{LLVMIntPtrTypeForASInContext, LLVMIntPtrTypeInContext};
@@ -324,7 +321,6 @@ impl ContextImpl {
         }
     }
 
-    #[llvm_versions(4.0..=16.0)]
     fn metadata_node<'ctx>(&self, values: &[BasicMetadataValueEnum<'ctx>]) -> MetadataValue<'ctx> {
         let mut tuple_values: Vec<LLVMValueRef> = values.iter().map(|val| val.as_value_ref()).collect();
         unsafe {
@@ -336,41 +332,10 @@ impl ContextImpl {
         }
     }
 
-    #[llvm_versions(17.0..=latest)]
-    fn metadata_node<'ctx>(&self, values: &[BasicMetadataValueEnum<'ctx>]) -> MetadataValue<'ctx> {
-        use llvm_sys::{core::LLVMMetadataAsValue, prelude::LLVMMetadataRef};
-
-        let mut tuple_values: Vec<LLVMMetadataRef> = values
-            .iter()
-            .map(|val| val.into_metadata_value().as_metadata_ref())
-            .collect();
-        unsafe {
-            MetadataValue::new(LLVMMetadataAsValue(
-                self.0,
-                LLVMMDNodeInContext2(self.0, tuple_values.as_mut_ptr(), tuple_values.len()),
-            ))
-        }
-    }
-
-    #[llvm_versions(4.0..=16.0)]
     fn metadata_string<'ctx>(&self, string: &str) -> MetadataValue<'ctx> {
         let c_string = to_c_str(string);
 
         unsafe { MetadataValue::new(LLVMMDStringInContext(self.0, c_string.as_ptr(), string.len() as u32)) }
-    }
-
-    #[llvm_versions(17.0..=latest)]
-    fn metadata_string<'ctx>(&self, string: &str) -> MetadataValue<'ctx> {
-        use llvm_sys::core::LLVMMetadataAsValue;
-
-        let c_string = to_c_str(string);
-
-        unsafe {
-            MetadataValue::new(LLVMMetadataAsValue(
-                self.0,
-                LLVMMDStringInContext2(self.0, c_string.as_ptr(), string.len()),
-            ))
-        }
     }
 
     fn get_kind_id(&self, key: &str) -> u32 {
@@ -604,7 +569,7 @@ impl Context {
     ///     builder.build_call(callable_value, params, "exit").unwrap();
     /// }
     ///
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
     /// builder.build_indirect_call(asm_fn, asm, params, "exit").unwrap();
     ///
     /// builder.build_return(None).unwrap();
@@ -1452,7 +1417,7 @@ impl<'ctx> ContextRef<'ctx> {
     ///     builder.build_call(callable_value, params, "exit").unwrap();
     /// }
     ///
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
     /// builder.build_indirect_call(asm_fn, asm, params, "exit").unwrap();
     ///
     /// builder.build_return(None).unwrap();
