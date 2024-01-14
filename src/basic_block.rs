@@ -346,6 +346,11 @@ impl<'ctx> BasicBlock<'ctx> {
         unsafe { Some(InstructionValue::new(value)) }
     }
 
+    /// Get an instruction iterator
+    pub fn get_instructions(self) -> InstructionIter<'ctx> {
+        InstructionIter(self.get_first_instruction())
+    }
+
     /// Removes this `BasicBlock` from its parent `FunctionValue`.
     /// It returns `Err(())` when it has no parent to remove from.
     ///
@@ -595,5 +600,22 @@ impl fmt::Debug for BasicBlock<'_> {
             .field("llvm_value", &llvm_value)
             .field("llvm_type", &llvm_type)
             .finish()
+    }
+}
+
+/// Iterate over all `InstructionValue`s in a basic block.
+#[derive(Debug)]
+pub struct InstructionIter<'ctx>(Option<InstructionValue<'ctx>>);
+
+impl<'ctx> Iterator for InstructionIter<'ctx> {
+    type Item = InstructionValue<'ctx>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(instr) = self.0 {
+            self.0 = instr.get_next_instruction();
+            Some(instr)
+        } else {
+            None
+        }
     }
 }
