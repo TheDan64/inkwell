@@ -21,32 +21,33 @@ fn test_basic_block_ordering() {
     let basic_block2 = context.insert_basic_block_after(basic_block, "block2");
     let basic_block3 = context.prepend_basic_block(basic_block4, "block3");
 
-    let basic_blocks = function.get_basic_blocks();
-
-    assert_eq!(basic_blocks.len(), 4);
-    assert_eq!(basic_blocks[0], basic_block);
-    assert_eq!(basic_blocks[1], basic_block2);
-    assert_eq!(basic_blocks[2], basic_block3);
-    assert_eq!(basic_blocks[3], basic_block4);
+    for basic_blocks in [function.get_basic_blocks(), function.get_basic_block_iter().collect()] {
+        assert_eq!(basic_blocks.len(), 4);
+        assert_eq!(basic_blocks[0], basic_block);
+        assert_eq!(basic_blocks[1], basic_block2);
+        assert_eq!(basic_blocks[2], basic_block3);
+        assert_eq!(basic_blocks[3], basic_block4);
+    }
 
     assert!(basic_block3.move_before(basic_block2).is_ok());
     assert!(basic_block.move_after(basic_block4).is_ok());
 
     let basic_block5 = context.prepend_basic_block(basic_block, "block5");
-    let basic_blocks = function.get_basic_blocks();
 
-    assert_eq!(basic_blocks.len(), 5);
-    assert_eq!(basic_blocks[0], basic_block3);
-    assert_eq!(basic_blocks[1], basic_block2);
-    assert_eq!(basic_blocks[2], basic_block4);
-    assert_eq!(basic_blocks[3], basic_block5);
-    assert_eq!(basic_blocks[4], basic_block);
+    for basic_blocks in [function.get_basic_blocks(), function.get_basic_block_iter().collect()] {
+        assert_eq!(basic_blocks.len(), 5);
+        assert_eq!(basic_blocks[0], basic_block3);
+        assert_eq!(basic_blocks[1], basic_block2);
+        assert_eq!(basic_blocks[2], basic_block4);
+        assert_eq!(basic_blocks[3], basic_block5);
+        assert_eq!(basic_blocks[4], basic_block);
 
-    assert_ne!(basic_blocks[0], basic_block);
-    assert_ne!(basic_blocks[1], basic_block3);
-    assert_ne!(basic_blocks[2], basic_block2);
-    assert_ne!(basic_blocks[3], basic_block4);
-    assert_ne!(basic_blocks[4], basic_block5);
+        assert_ne!(basic_blocks[0], basic_block);
+        assert_ne!(basic_blocks[1], basic_block3);
+        assert_ne!(basic_blocks[2], basic_block2);
+        assert_ne!(basic_blocks[3], basic_block4);
+        assert_ne!(basic_blocks[4], basic_block5);
+    }
 
     context.append_basic_block(function, "block6");
 
@@ -89,6 +90,7 @@ fn test_get_basic_blocks() {
 
     assert!(function.get_last_basic_block().is_none());
     assert_eq!(function.get_basic_blocks().len(), 0);
+    assert_eq!(function.get_basic_block_iter().count(), 0);
 
     let basic_block = context.append_basic_block(function, "entry");
 
@@ -98,10 +100,10 @@ fn test_get_basic_blocks() {
 
     assert_eq!(last_basic_block, basic_block);
 
-    let basic_blocks = function.get_basic_blocks();
-
-    assert_eq!(basic_blocks.len(), 1);
-    assert_eq!(basic_blocks[0], basic_block);
+    for basic_blocks in [function.get_basic_blocks(), function.get_basic_block_iter().collect()] {
+        assert_eq!(basic_blocks.len(), 1);
+        assert_eq!(basic_blocks[0], basic_block);
+    }
 }
 
 #[test]

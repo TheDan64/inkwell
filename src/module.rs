@@ -1573,24 +1573,11 @@ pub enum FlagBehavior {
 
 /// Iterate over all `FunctionValue`s in an llvm module
 #[derive(Debug)]
-pub struct FunctionIterator<'ctx>(FunctionIteratorInner<'ctx>);
-
-/// Inner type so the variants are not publicly visible
-#[derive(Debug)]
-enum FunctionIteratorInner<'ctx> {
-    Empty,
-    Start(FunctionValue<'ctx>),
-    Previous(FunctionValue<'ctx>),
-}
+pub struct FunctionIterator<'ctx>(Option<FunctionValue<'ctx>>);
 
 impl<'ctx> FunctionIterator<'ctx> {
     fn from_module(module: &Module<'ctx>) -> Self {
-        use FunctionIteratorInner::*;
-
-        match module.get_first_function() {
-            None => Self(Empty),
-            Some(first) => Self(Start(first)),
-        }
+        Self(module.get_first_function())
     }
 }
 
@@ -1598,47 +1585,22 @@ impl<'ctx> Iterator for FunctionIterator<'ctx> {
     type Item = FunctionValue<'ctx>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        use FunctionIteratorInner::*;
-
-        match self.0 {
-            Empty => None,
-            Start(first) => {
-                self.0 = Previous(first);
-
-                Some(first)
-            },
-            Previous(prev) => match prev.get_next_function() {
-                Some(current) => {
-                    self.0 = Previous(current);
-
-                    Some(current)
-                },
-                None => None,
-            },
+        if let Some(func) = self.0 {
+            self.0 = func.get_next_function();
+            Some(func)
+        } else {
+            None
         }
     }
 }
 
 /// Iterate over all `GlobalValue`s in an llvm module
 #[derive(Debug)]
-pub struct GlobalIterator<'ctx>(GlobalIteratorInner<'ctx>);
-
-/// Inner type so the variants are not publicly visible
-#[derive(Debug)]
-enum GlobalIteratorInner<'ctx> {
-    Empty,
-    Start(GlobalValue<'ctx>),
-    Previous(GlobalValue<'ctx>),
-}
+pub struct GlobalIterator<'ctx>(Option<GlobalValue<'ctx>>);
 
 impl<'ctx> GlobalIterator<'ctx> {
     fn from_module(module: &Module<'ctx>) -> Self {
-        use GlobalIteratorInner::*;
-
-        match module.get_first_global() {
-            None => Self(Empty),
-            Some(first) => Self(Start(first)),
-        }
+        Self(module.get_first_global())
     }
 }
 
@@ -1646,23 +1608,11 @@ impl<'ctx> Iterator for GlobalIterator<'ctx> {
     type Item = GlobalValue<'ctx>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        use GlobalIteratorInner::*;
-
-        match self.0 {
-            Empty => None,
-            Start(first) => {
-                self.0 = Previous(first);
-
-                Some(first)
-            },
-            Previous(prev) => match prev.get_next_global() {
-                Some(current) => {
-                    self.0 = Previous(current);
-
-                    Some(current)
-                },
-                None => None,
-            },
+        if let Some(global) = self.0 {
+            self.0 = global.get_next_global();
+            Some(global)
+        } else {
+            None
         }
     }
 }
