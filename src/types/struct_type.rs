@@ -61,7 +61,16 @@ impl<'ctx> StructType<'ctx> {
             return None;
         }
 
-        unsafe { Some(BasicTypeEnum::new(LLVMStructGetTypeAtIndex(self.as_type_ref(), index))) }
+        Some(unsafe { self.get_field_type_at_index_unchecked(index) })
+    }
+
+    /// Gets the type of a field belonging to this `StructType`.
+    ///
+    /// # Safety
+    ///
+    /// The index must be less than [StructType::count_fields] and the struct must not be opaque.
+    pub unsafe fn get_field_type_at_index_unchecked(self, index: u32) -> BasicTypeEnum<'ctx> {
+        unsafe { BasicTypeEnum::new(LLVMStructGetTypeAtIndex(self.as_type_ref(), index)) }
     }
 
     /// Creates a `StructValue` based on this `StructType`'s definition.
@@ -328,6 +337,15 @@ impl<'ctx> StructType<'ctx> {
         raw_vec.iter().map(|val| unsafe { BasicTypeEnum::new(*val) }).collect()
     }
 
+    /// Get a struct field iterator.
+    pub fn get_field_types_iter(self) -> FieldTypesIter<'ctx> {
+        FieldTypesIter {
+            st: self,
+            i: 0,
+            count: if self.is_opaque() { 0 } else { self.count_fields() },
+        }
+    }
+
     /// Print the definition of a `StructType` to `LLVMString`.
     pub fn print_to_string(self) -> LLVMString {
         self.struct_type.print_to_string()
@@ -443,5 +461,27 @@ unsafe impl AsTypeRef for StructType<'_> {
 impl Display for StructType<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.print_to_string())
+    }
+}
+
+/// Iterate over all `BasicTypeEnum`s in a struct.
+#[derive(Debug)]
+pub struct FieldTypesIter<'ctx> {
+    st: StructType<'ctx>,
+    i: u32,
+    count: u32,
+}
+
+impl<'ctx> Iterator for FieldTypesIter<'ctx> {
+    type Item = BasicTypeEnum<'ctx>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i < self.count {
+            let result = unsafe { self.st.get_field_type_at_index_unchecked(self.i) };
+            self.i += 1;
+            Some(result)
+        } else {
+            None
+        }
     }
 }

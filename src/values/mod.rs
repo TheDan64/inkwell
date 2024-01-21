@@ -37,11 +37,13 @@ pub use crate::values::generic_value::GenericValue;
 pub use crate::values::global_value::GlobalValue;
 #[llvm_versions(7.0..=latest)]
 pub use crate::values::global_value::UnnamedAddress;
-pub use crate::values::instruction_value::{InstructionOpcode, InstructionValue};
+pub use crate::values::instruction_value::{InstructionOpcode, InstructionValue, OperandIter, OperandUseIter};
 pub use crate::values::int_value::IntValue;
 pub use crate::values::metadata_value::{MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID};
+pub use crate::values::phi_value::IncomingIter;
 pub use crate::values::phi_value::PhiValue;
 pub use crate::values::ptr_value::PointerValue;
+pub use crate::values::struct_value::FieldValueIter;
 pub use crate::values::struct_value::StructValue;
 pub use crate::values::traits::AsValueRef;
 pub use crate::values::traits::{AggregateValue, AnyValue, BasicValue, FloatMathValue, IntMathValue, PointerMathValue};
