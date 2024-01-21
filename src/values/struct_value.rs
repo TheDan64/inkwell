@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMGetNumOperands, LLVMGetOperand};
+use llvm_sys::core::{LLVMGetNumOperands, LLVMGetOperand, LLVMSetOperand};
 
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -7,7 +7,7 @@ use std::fmt::{self, Display};
 
 use crate::types::StructType;
 use crate::values::traits::AsValueRef;
-use crate::values::{InstructionValue, Value};
+use crate::values::{BasicValue, InstructionValue, Value};
 
 use super::{AnyValue, BasicValueEnum};
 
@@ -55,6 +55,22 @@ impl<'ctx> StructValue<'ctx> {
         }
 
         unsafe { Some(BasicValueEnum::new(LLVMGetOperand(self.as_value_ref(), index))) }
+    }
+
+    /// Sets the value of a field belonging to this `StructValue`.
+    pub fn set_field_at_index<BV: BasicValue<'ctx>>(self, index: u32, val: BV) -> bool {
+        if self
+            .get_type()
+            .get_field_type_at_index(index)
+            .map(|t| t == val.as_basic_value_enum().get_type())
+            != Some(true)
+        {
+            return false;
+        }
+
+        unsafe { LLVMSetOperand(self.as_value_ref(), index, val.as_value_ref()) }
+
+        true
     }
 
     /// Counts the number of fields.
