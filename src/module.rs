@@ -173,7 +173,12 @@ pub struct Module<'ctx> {
 }
 
 impl<'ctx> Module<'ctx> {
-    pub(crate) unsafe fn new(module: LLVMModuleRef) -> Self {
+    /// Get a module from an [LLVMModuleRef].
+    ///
+    /// # Safety
+    ///
+    /// The ref must be valid.
+    pub unsafe fn new(module: LLVMModuleRef) -> Self {
         debug_assert!(!module.is_null());
 
         Module {

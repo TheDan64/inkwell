@@ -15,7 +15,12 @@ pub struct ArrayValue<'ctx> {
 }
 
 impl<'ctx> ArrayValue<'ctx> {
-    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
+    /// Get a value from an [LLVMValueRef].
+    ///
+    /// # Safety
+    ///
+    /// The ref must be valid and of type array.
+    pub unsafe fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
         ArrayValue {

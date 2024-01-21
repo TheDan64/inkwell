@@ -130,7 +130,12 @@ impl<'ctx> InstructionValue<'ctx> {
         !unsafe { LLVMIsAAtomicCmpXchgInst(self.as_value_ref()) }.is_null()
     }
 
-    pub(crate) unsafe fn new(instruction_value: LLVMValueRef) -> Self {
+    /// Get a value from an [LLVMValueRef].
+    ///
+    /// # Safety
+    ///
+    /// The ref must be valid and of type instruction.
+    pub unsafe fn new(instruction_value: LLVMValueRef) -> Self {
         debug_assert!(!instruction_value.is_null());
 
         let value = Value::new(instruction_value);
