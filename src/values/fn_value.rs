@@ -35,7 +35,12 @@ pub struct FunctionValue<'ctx> {
 }
 
 impl<'ctx> FunctionValue<'ctx> {
-    pub(crate) unsafe fn new(value: LLVMValueRef) -> Option<Self> {
+    /// Get a value from an [LLVMValueRef].
+    ///
+    /// # Safety
+    ///
+    /// The ref must be valid and of type function.
+    pub unsafe fn new(value: LLVMValueRef) -> Option<Self> {
         if value.is_null() {
             return None;
         }

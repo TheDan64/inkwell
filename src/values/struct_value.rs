@@ -17,7 +17,12 @@ pub struct StructValue<'ctx> {
 }
 
 impl<'ctx> StructValue<'ctx> {
-    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
+    /// Get a value from an [LLVMValueRef].
+    ///
+    /// # Safety
+    ///
+    /// The ref must be valid and of type struct.
+    pub unsafe fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
         StructValue {

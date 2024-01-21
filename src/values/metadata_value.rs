@@ -45,7 +45,12 @@ pub struct MetadataValue<'ctx> {
 }
 
 impl<'ctx> MetadataValue<'ctx> {
-    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
+    /// Get a value from an [LLVMValueRef].
+    ///
+    /// # Safety
+    ///
+    /// The ref must be valid and of type metadata.
+    pub unsafe fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
         assert!(!LLVMIsAMDNode(value).is_null() || !LLVMIsAMDString(value).is_null());
 
