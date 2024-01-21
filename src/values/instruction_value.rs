@@ -503,6 +503,15 @@ impl<'ctx> InstructionValue<'ctx> {
             return None;
         }
 
+        unsafe { self.get_operand_unchecked(index) }
+    }
+
+    /// Get the operand of an `InstructionValue`.
+    ///
+    /// # Safety
+    ///
+    /// The index must be less than [InstructionValue::get_num_operands].
+    pub unsafe fn get_operand_unchecked(self, index: u32) -> Option<Either<BasicValueEnum<'ctx>, BasicBlock<'ctx>>> {
         let operand = unsafe { LLVMGetOperand(self.as_value_ref(), index) };
 
         if operand.is_null() {
@@ -517,6 +526,15 @@ impl<'ctx> InstructionValue<'ctx> {
             Some(Right(bb.expect("BasicBlock should always be valid")))
         } else {
             Some(Left(unsafe { BasicValueEnum::new(operand) }))
+        }
+    }
+
+    /// Get an instruction value operand iterator.
+    pub fn get_operands(self) -> OperandIter<'ctx> {
+        OperandIter {
+            iv: self,
+            i: 0,
+            count: self.get_num_operands(),
         }
     }
 
@@ -598,6 +616,15 @@ impl<'ctx> InstructionValue<'ctx> {
             return None;
         }
 
+        unsafe { self.get_operand_use_unchecked(index) }
+    }
+
+    /// Gets the use of an operand(`BasicValue`), if any.
+    ///
+    /// # Safety
+    ///
+    /// The index must be smaller than [InstructionValue::get_num_operands].
+    pub unsafe fn get_operand_use_unchecked(self, index: u32) -> Option<BasicValueUse<'ctx>> {
         let use_ = unsafe { LLVMGetOperandUse(self.as_value_ref(), index) };
 
         if use_.is_null() {
@@ -605,6 +632,15 @@ impl<'ctx> InstructionValue<'ctx> {
         }
 
         unsafe { Some(BasicValueUse::new(use_)) }
+    }
+
+    /// Get an instruction value operand use iterator.
+    pub fn get_operand_uses(self) -> OperandUseIter<'ctx> {
+        OperandUseIter {
+            iv: self,
+            i: 0,
+            count: self.get_num_operands(),
+        }
     }
 
     /// Gets the first use of an `InstructionValue` if any.
@@ -726,5 +762,49 @@ unsafe impl AsValueRef for InstructionValue<'_> {
 impl Display for InstructionValue<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.print_to_string())
+    }
+}
+
+/// Iterate over all the operands of an instruction value.
+#[derive(Debug)]
+pub struct OperandIter<'ctx> {
+    iv: InstructionValue<'ctx>,
+    i: u32,
+    count: u32,
+}
+
+impl<'ctx> Iterator for OperandIter<'ctx> {
+    type Item = Option<Either<BasicValueEnum<'ctx>, BasicBlock<'ctx>>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i < self.count {
+            let result = unsafe { self.iv.get_operand_unchecked(self.i) };
+            self.i += 1;
+            Some(result)
+        } else {
+            None
+        }
+    }
+}
+
+/// Iterate over all the operands of an instruction value.
+#[derive(Debug)]
+pub struct OperandUseIter<'ctx> {
+    iv: InstructionValue<'ctx>,
+    i: u32,
+    count: u32,
+}
+
+impl<'ctx> Iterator for OperandUseIter<'ctx> {
+    type Item = Option<BasicValueUse<'ctx>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i < self.count {
+            let result = unsafe { self.iv.get_operand_use_unchecked(self.i) };
+            self.i += 1;
+            Some(result)
+        } else {
+            None
+        }
     }
 }

@@ -54,7 +54,25 @@ impl<'ctx> StructValue<'ctx> {
             return None;
         }
 
-        unsafe { Some(BasicValueEnum::new(LLVMGetOperand(self.as_value_ref(), index))) }
+        Some(unsafe { self.get_field_at_index_unchecked(index) })
+    }
+
+    /// Gets the value of a field belonging to this `StructValue`.
+    ///
+    /// # Safety
+    ///
+    /// The index must be smaller than [StructValue::count_fields].
+    pub unsafe fn get_field_at_index_unchecked(self, index: u32) -> BasicValueEnum<'ctx> {
+        unsafe { BasicValueEnum::new(LLVMGetOperand(self.as_value_ref(), index)) }
+    }
+
+    /// Get a field value iterator.
+    pub fn get_fields(self) -> FieldValueIter<'ctx> {
+        FieldValueIter {
+            sv: self,
+            i: 0,
+            count: self.count_fields(),
+        }
     }
 
     /// Sets the value of a field belonging to this `StructValue`.
@@ -138,5 +156,27 @@ unsafe impl AsValueRef for StructValue<'_> {
 impl Display for StructValue<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.print_to_string())
+    }
+}
+
+/// Iterate over all the field values of this struct.
+#[derive(Debug)]
+pub struct FieldValueIter<'ctx> {
+    sv: StructValue<'ctx>,
+    i: u32,
+    count: u32,
+}
+
+impl<'ctx> Iterator for FieldValueIter<'ctx> {
+    type Item = BasicValueEnum<'ctx>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i < self.count {
+            let result = unsafe { self.sv.get_field_at_index_unchecked(self.i) };
+            self.i += 1;
+            Some(result)
+        } else {
+            None
+        }
     }
 }

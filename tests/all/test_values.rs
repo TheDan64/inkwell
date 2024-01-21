@@ -995,6 +995,16 @@ fn test_phi_values() {
     assert_eq!(then_bb, then_block);
     assert_eq!(else_bb, else_block);
     assert!(phi.get_incoming(2).is_none());
+
+    let mut incomings = phi.get_incomings();
+    let (then_val, then_bb) = incomings.next().unwrap();
+    let (else_val, else_bb) = incomings.next().unwrap();
+
+    assert_eq!(then_val.into_int_value(), false_val);
+    assert_eq!(else_val.into_int_value(), true_val);
+    assert_eq!(then_bb, then_block);
+    assert_eq!(else_bb, else_block);
+    assert!(incomings.next().is_none());
 }
 
 #[test]
@@ -1194,7 +1204,12 @@ fn test_consts() {
 
     let struct_val = struct_type.const_named_struct(&[i8_val.into(), f32_val.into()]);
     assert_eq!(struct_val.count_fields(), 2);
+    assert_eq!(struct_val.get_fields().count(), 2);
     assert_eq!(struct_val.count_fields(), struct_type.count_fields());
+    assert_eq!(
+        struct_val.get_fields().count(),
+        struct_type.get_field_types_iter().count()
+    );
     assert!(struct_val.get_field_at_index(0).is_some());
     assert!(struct_val.get_field_at_index(1).is_some());
     assert!(struct_val.get_field_at_index(3).is_none());
