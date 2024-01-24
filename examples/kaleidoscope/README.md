@@ -3,7 +3,14 @@
 This example shows how one can implement the [Kaleidoscope programming language](https://llvm.org/docs/tutorial/index.html) using Inkwell.  
 It implements every feature up to the [7th chapter](https://llvm.org/docs/tutorial/LangImpl07.html).
 
-When running this example (using the `cargo run --example kaleidoscope` command), a prompt will be displayed; for example:
+The [usage](../../README.md#usage) part doesn't fit the example as it shares the same `Cargo.toml` file with the whole project.
+
+To run the example, the LLVM version is required:
+```sh
+cargo run --example kaleidoscope --features llvm$(llvm-config  --version | sed 's/\./-/;s/\.[0-9]*//')
+```
+
+When running this command, a prompt will be displayed; for example:
 
 ```
 ?> 1 + 1
