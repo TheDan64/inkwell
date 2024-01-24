@@ -59,6 +59,8 @@ jobs:
         run: cargo build --release --features llvm${{ matrix.llvm-version[1] }} --verbose
       - name: Run tests
         run: cargo test --release --features llvm${{ matrix.llvm-version[1] }} --verbose
+      - name: Build example
+        run: cargo build --example kaleidoscope --features llvm${{ matrix.llvm-version[1] }} --verbose
   doc:
     name: Documentation
     runs-on: ubuntu-latest
