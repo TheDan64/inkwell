@@ -13,6 +13,8 @@ use llvm_sys::core::LLVMGetInlineAsm;
 use llvm_sys::core::LLVMGetTypeByName2;
 #[llvm_versions(6.0..=latest)]
 use llvm_sys::core::LLVMMetadataTypeInContext;
+#[llvm_versions(15.0..=latest)]
+use llvm_sys::core::LLVMPointerTypeInContext;
 use llvm_sys::core::{
     LLVMAppendBasicBlockInContext, LLVMConstStringInContext, LLVMConstStructInContext, LLVMContextCreate,
     LLVMContextDispose, LLVMContextSetDiagnosticHandler, LLVMCreateBuilderInContext, LLVMCreateEnumAttribute,
@@ -40,7 +42,7 @@ use crate::targets::TargetData;
 use crate::types::AnyTypeEnum;
 #[llvm_versions(6.0..=latest)]
 use crate::types::MetadataType;
-use crate::types::{AsTypeRef, BasicTypeEnum, FloatType, FunctionType, IntType, StructType, VoidType};
+use crate::types::{AsTypeRef, BasicTypeEnum, FloatType, FunctionType, IntType, PointerType, StructType, VoidType};
 use crate::values::{
     ArrayValue, AsValueRef, BasicMetadataValueEnum, BasicValueEnum, FunctionValue, MetadataValue, PointerValue,
     StructValue,
@@ -240,6 +242,11 @@ impl ContextImpl {
 
     fn ppc_f128_type<'ctx>(&self) -> FloatType<'ctx> {
         unsafe { FloatType::new(LLVMPPCFP128TypeInContext(self.0)) }
+    }
+
+    #[llvm_versions(15.0..=latest)]
+    fn ptr_type<'ctx>(&self, address_space: AddressSpace) -> PointerType<'ctx> {
+        unsafe { PointerType::new(LLVMPointerTypeInContext(self.0, address_space.0)) }
     }
 
     fn struct_type<'ctx>(&self, field_types: &[BasicTypeEnum], packed: bool) -> StructType<'ctx> {
@@ -915,6 +922,26 @@ impl Context {
     #[inline]
     pub fn ppc_f128_type(&self) -> FloatType {
         self.context.ppc_f128_type()
+    }
+
+    /// Gets the `PointerType`. It will be assigned the current context.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::AddressSpace;
+    ///
+    /// let context = Context::create();
+    /// let ptr_type = context.ptr_type(AddressSpace::default());
+    ///
+    /// assert_eq!(ptr_type.get_address_space(), AddressSpace::default());
+    /// assert_eq!(ptr_type.get_context(), context);
+    /// ```
+    #[llvm_versions(15.0..=latest)]
+    #[inline]
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
+        self.context.ptr_type(address_space)
     }
 
     /// Creates a `StructType` definition from heterogeneous types in the current `Context`.
@@ -1763,6 +1790,26 @@ impl<'ctx> ContextRef<'ctx> {
     #[inline]
     pub fn ppc_f128_type(&self) -> FloatType<'ctx> {
         self.context.ppc_f128_type()
+    }
+
+    /// Gets the `PointerType`. It will be assigned the current context.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::AddressSpace;
+    ///
+    /// let context = Context::create();
+    /// let ptr_type = context.ptr_type(AddressSpace::default());
+    ///
+    /// assert_eq!(ptr_type.get_address_space(), AddressSpace::default());
+    /// assert_eq!(ptr_type.get_context(), context);
+    /// ```
+    #[llvm_versions(15.0..=latest)]
+    #[inline]
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
+        self.context.ptr_type(address_space)
     }
 
     /// Creates a `StructType` definition from heterogeneous types in the current `Context`.

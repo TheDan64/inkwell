@@ -230,6 +230,12 @@ impl<'ctx> FloatType<'ctx> {
     /// ))]
     /// assert_eq!(f32_ptr_type.get_element_type().into_float_type(), f32_type);
     /// ```
+    #[cfg_attr(
+        any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0",),
+        deprecated(
+            note = "Starting from version 15.0, LLVM doesn't differentiate between pointer types. Use Context::ptr_type instead."
+        )
+    )]
     pub fn ptr_type(self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.float_type.ptr_type(address_space)
     }
