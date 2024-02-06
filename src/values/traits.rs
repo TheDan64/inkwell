@@ -3,6 +3,7 @@ use llvm_sys::prelude::LLVMValueRef;
 #[llvm_versions(12.0..=latest)]
 use llvm_sys::core::LLVMIsPoison;
 
+use std::ffi::CStr;
 use std::fmt::Debug;
 
 use crate::support::LLVMString;
@@ -107,6 +108,11 @@ pub unsafe trait BasicValue<'ctx>: AnyValue<'ctx> {
 
     fn get_first_use(&self) -> Option<BasicValueUse> {
         unsafe { Value::new(self.as_value_ref()).get_first_use() }
+    }
+
+    /// Get the name of a `BasicValue`.
+    fn get_name(&self) -> &CStr {
+        unsafe { Value::new(self.as_value_ref()).get_name() }
     }
 
     /// Sets the name of a `BasicValue`. If the value is a constant, this is a noop.
