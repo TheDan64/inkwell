@@ -1,11 +1,12 @@
 # Kaleidoscope
 
-This example shows how one can implement the [Kaleidoscope programming language](https://llvm.org/docs/tutorial/index.html) using Inkwell.  
-It implements every feature up to the [7th chapter](https://llvm.org/docs/tutorial/LangImpl07.html).
+This example shows how one can implement the [Kaleidoscope programming language](https://llvm.org/docs/tutorial/index.html) using Inkwell.
+It implements every feature up to the [7th chapter](https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl07.html).
 
 The [usage](../../README.md#usage) part doesn't fit the example as it shares the same `Cargo.toml` file with the whole project.
 
 To run the example, the LLVM version is required:
+
 ```sh
 cargo run --example kaleidoscope --features llvm$(llvm-config  --version | sed 's/\./-/;s/\.[0-9]*//')
 ```
@@ -28,11 +29,13 @@ When running this command, a prompt will be displayed; for example:
 ```
 
 Additional arguments can be passed to the produced executable:
+
 - `--dc`: **D**isplay **C**ompiler output
 - `--dp`: **D**isplay **P**arser output
 - `--dl`: **D**isplay **L**exer output
 
 For example, running with all three switches may lead to the following output:
+
 ```
 ?> 1 + 2 * 2
 -> Attempting to parse lexed input:
