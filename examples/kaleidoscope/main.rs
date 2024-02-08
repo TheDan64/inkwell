@@ -1,13 +1,16 @@
 //! This is an example of the [Kaleidoscope tutorial](https://llvm.org/docs/tutorial/)
 //! made in Rust, using Inkwell.
-//! Currently, all features up to the [7th chapter](https://llvm.org/docs/tutorial/LangImpl07.html)
+//! Currently, all features up to the
+//! [7th chapter](https://llvm.org/docs/tutorial/MyFirstLanguageFrontend/LangImpl07.html)
 //! are available.
 //! This example is supposed to be ran as a executable, which launches a REPL.
 //! The source code is in the following order:
-//! - Lexer,
-//! - Parser,
-//! - Compiler,
-//! - Program.
+//! - `implementation_typed_pointers.rs`:
+//!     Lexer,
+//!     Parser,
+//!     Compiler.
+//! - `main.rs`:
+//!     Program.
 //!
 //! Both the `Parser` and the `Compiler` may fail, in which case they would return
 //! an error represented by `Result<T, &'static str>`, for easier error reporting.
@@ -108,7 +111,6 @@ fn run_passes_on(module: &Module) {
 
 /// Entry point of the program; acts as a REPL.
 pub fn main() {
-    // use self::inkwell::support::add_symbol;
     let mut display_lexer_output = false;
     let mut display_parser_output = false;
     let mut display_compiler_output = false;
