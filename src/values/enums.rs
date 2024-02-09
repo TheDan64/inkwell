@@ -10,6 +10,7 @@ use crate::values::{
 };
 
 use std::convert::TryFrom;
+use std::ffi::CStr;
 use std::fmt::{self, Display};
 
 use super::AnyValue;
@@ -228,6 +229,18 @@ impl<'ctx> BasicValueEnum<'ctx> {
             LLVMTypeKind::LLVMArrayTypeKind => BasicValueEnum::ArrayValue(ArrayValue::new(value)),
             LLVMTypeKind::LLVMVectorTypeKind => BasicValueEnum::VectorValue(VectorValue::new(value)),
             _ => unreachable!("The given type is not a basic type."),
+        }
+    }
+
+    /// Get the name of the `BasicValueEnum`.
+    pub fn get_name(&self) -> &CStr {
+        match self {
+            BasicValueEnum::ArrayValue(v) => v.get_name(),
+            BasicValueEnum::IntValue(v) => v.get_name(),
+            BasicValueEnum::FloatValue(v) => v.get_name(),
+            BasicValueEnum::PointerValue(v) => v.get_name(),
+            BasicValueEnum::StructValue(v) => v.get_name(),
+            BasicValueEnum::VectorValue(v) => v.get_name(),
         }
     }
 
