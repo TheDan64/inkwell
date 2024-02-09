@@ -20,6 +20,11 @@ pub struct PhiValue<'ctx> {
 }
 
 impl<'ctx> PhiValue<'ctx> {
+    /// Get a value from an [LLVMValueRef].
+    ///
+    /// # Safety
+    ///
+    /// The ref must be valid and of type phi.
     pub unsafe fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
@@ -60,6 +65,26 @@ impl<'ctx> PhiValue<'ctx> {
         let value = unsafe { BasicValueEnum::new(LLVMGetIncomingValue(self.as_value_ref(), index)) };
 
         Some((value, basic_block))
+    }
+
+    /// # Safety
+    ///
+    /// The index must be smaller [PhiValue::count_incoming].
+    pub unsafe fn get_incoming_unchecked(self, index: u32) -> (BasicValueEnum<'ctx>, BasicBlock<'ctx>) {
+        let basic_block =
+            unsafe { BasicBlock::new(LLVMGetIncomingBlock(self.as_value_ref(), index)).expect("Invalid BasicBlock") };
+        let value = unsafe { BasicValueEnum::new(LLVMGetIncomingValue(self.as_value_ref(), index)) };
+
+        (value, basic_block)
+    }
+
+    /// Get an incoming edge iterator.
+    pub fn get_incomings(self) -> IncomingIter<'ctx> {
+        IncomingIter {
+            pv: self,
+            i: 0,
+            count: self.count_incoming(),
+        }
     }
 
     /// Gets the name of a `ArrayValue`. If the value is a constant, this will
@@ -117,6 +142,28 @@ impl<'ctx> TryFrom<InstructionValue<'ctx>> for PhiValue<'ctx> {
             unsafe { Ok(PhiValue::new(value.as_value_ref())) }
         } else {
             Err(())
+        }
+    }
+}
+
+/// Iterate over all the incoming edges of a phi value.
+#[derive(Debug)]
+pub struct IncomingIter<'ctx> {
+    pv: PhiValue<'ctx>,
+    i: u32,
+    count: u32,
+}
+
+impl<'ctx> Iterator for IncomingIter<'ctx> {
+    type Item = (BasicValueEnum<'ctx>, BasicBlock<'ctx>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i < self.count {
+            let result = unsafe { self.pv.get_incoming_unchecked(self.i) };
+            self.i += 1;
+            Some(result)
+        } else {
+            None
         }
     }
 }

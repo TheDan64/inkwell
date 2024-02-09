@@ -14,35 +14,19 @@ Inkwell aims to help you pen your own programming languages by safely wrapping l
 ## Requirements
 
 * Rust 1.56+ (Stable, Beta, or Nightly)
-* LLVM 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, or 16.0
+* One of LLVM 4-17
 
 ## Usage
 
-You'll need to point your Cargo.toml to an existing preview crate on crates.io or the master
-branch with a corresponding LLVM feature flag:
+You'll need to point your Cargo.toml to use a single LLVM version feature flag corresponding to your LLVM version as such:
 
 ```toml
 [dependencies]
-inkwell = { git = "https://github.com/TheDan64/inkwell", branch = "master", features = ["llvm12-0"] }
+inkwell = { version = "0.4.0", features = ["llvm17-0"] }
 ```
 
 Supported versions:
-
-| LLVM Version | Cargo Feature Flag |
-| :----------: | :-----------: |
-| 4.0.x        | llvm4-0       |
-| 5.0.x        | llvm5-0       |
-| 6.0.x        | llvm6-0       |
-| 7.0.x        | llvm7-0       |
-| 8.0.x        | llvm8-0       |
-| 9.0.x        | llvm9-0       |
-| 10.0.x       | llvm10-0      |
-| 11.0.x       | llvm11-0      |
-| 12.0.x       | llvm12-0      |
-| 13.0.x       | llvm13-0      |
-| 14.0.x       | llvm14-0      |
-| 15.0.x       | llvm15-0      |
-| 16.0.x       | llvm16-0      |
+LLVM 4-17 mapping to a cargo feature flag `llvmM-0` where `M` corresponds to the LLVM major version.
 
 Please be aware that we may make breaking changes on master from time to time since we are
 pre-v1.0.0, in compliance with semver. Please prefer a crates.io release whenever possible!

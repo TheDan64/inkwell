@@ -36,7 +36,7 @@ pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 30;
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 31;
 #[cfg(any(feature = "llvm15-0"))]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 36;
-#[cfg(any(feature = "llvm16-0"))]
+#[cfg(any(feature = "llvm16-0", feature = "llvm17-0"))]
 pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 39;
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
@@ -45,6 +45,11 @@ pub struct MetadataValue<'ctx> {
 }
 
 impl<'ctx> MetadataValue<'ctx> {
+    /// Get a value from an [LLVMValueRef].
+    ///
+    /// # Safety
+    ///
+    /// The ref must be valid and of type metadata.
     pub unsafe fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
         assert!(!LLVMIsAMDNode(value).is_null() || !LLVMIsAMDString(value).is_null());

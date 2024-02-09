@@ -47,6 +47,11 @@ pub struct GlobalValue<'ctx> {
 }
 
 impl<'ctx> GlobalValue<'ctx> {
+    /// Get a value from an [LLVMValueRef].
+    ///
+    /// # Safety
+    ///
+    /// The ref must be valid and of type global.
     pub unsafe fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 

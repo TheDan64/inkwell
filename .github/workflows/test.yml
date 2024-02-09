@@ -4,8 +4,8 @@ on: [push, pull_request]
 
 env:
   CARGO_TERM_COLOR: always
-  DOC_LLVM_FEATURE: llvm16-0
-  DOC_LLVM_VERSION: '16.0'
+  DOC_LLVM_FEATURE: llvm17-0
+  DOC_LLVM_VERSION: '17.0'
   DOC_PATH: target/doc
 
 jobs:
@@ -13,6 +13,8 @@ jobs:
     name: Typos
     runs-on: ubuntu-latest
     steps:
+      - name: Install Rust Stable
+        run: rustup toolchain install stable
       - name: Install typos
         run: cargo install typos-cli
       - name: Run typos
@@ -20,7 +22,6 @@ jobs:
   tests:
     name: "LLVM ${{ matrix.llvm-version[0] }}: ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
-    needs: typos
     strategy:
       matrix:
         llvm-version:
@@ -37,11 +38,14 @@ jobs:
           - ["14.0", "14-0"]
           - ["15.0", "15-0"]
           - ["16.0", "16-0"]
+          - ["17.0", "17-0"]
         # only use ubuntu-22.04 for llvm 16 and higher
         include:
           - os: ubuntu-20.04
           - os: ubuntu-22.04
             llvm-version: ["16.0", "16-0"]
+          - os: ubuntu-22.04
+            llvm-version: ["17.0", "17-0"]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -55,10 +59,12 @@ jobs:
         run: cargo build --release --features llvm${{ matrix.llvm-version[1] }} --verbose
       - name: Run tests
         run: cargo test --release --features llvm${{ matrix.llvm-version[1] }} --verbose
+      - name: Build example
+        run: cargo build --example kaleidoscope --features llvm${{ matrix.llvm-version[1] }} --verbose
   doc:
     name: Documentation
     runs-on: ubuntu-latest
-    needs: tests
+    needs: [typos, tests]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
     - uses: actions/checkout@v3

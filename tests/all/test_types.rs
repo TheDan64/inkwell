@@ -18,7 +18,9 @@ fn test_struct_type() {
     assert!(av_struct.get_name().is_none());
     assert_eq!(av_struct.get_context(), context);
     assert_eq!(av_struct.count_fields(), 2);
-    assert_eq!(av_struct.get_field_types(), &[int_vector.into(), float_array.into()]);
+    for types in [av_struct.get_field_types(), av_struct.get_field_types_iter().collect()] {
+        assert_eq!(types, &[int_vector.into(), float_array.into()]);
+    }
 
     let field_1 = av_struct.get_field_type_at_index(0).unwrap();
     let field_2 = av_struct.get_field_type_at_index(1).unwrap();
@@ -27,7 +29,9 @@ fn test_struct_type() {
     assert!(field_2.is_array_type());
     assert!(av_struct.get_field_type_at_index(2).is_none());
     assert!(av_struct.get_field_type_at_index(200).is_none());
-    assert_eq!(av_struct.get_field_types(), vec![field_1, field_2]);
+    for types in [av_struct.get_field_types(), av_struct.get_field_types_iter().collect()] {
+        assert_eq!(types, &[field_1, field_2]);
+    }
 
     let av_struct = context.struct_type(&[int_vector.into(), float_array.into()], true);
 
@@ -46,7 +50,9 @@ fn test_struct_type() {
     assert!(field_2.is_array_type());
     assert!(av_struct.get_field_type_at_index(2).is_none());
     assert!(av_struct.get_field_type_at_index(200).is_none());
-    assert_eq!(av_struct.get_field_types(), vec![field_1, field_2]);
+    for types in [av_struct.get_field_types(), av_struct.get_field_types_iter().collect()] {
+        assert_eq!(types, &[field_1, field_2]);
+    }
 
     let opaque_struct = context.opaque_struct_type("opaque_struct");
 
@@ -57,6 +63,7 @@ fn test_struct_type() {
     assert_eq!(opaque_struct.get_context(), context);
     assert_eq!(opaque_struct.count_fields(), 0);
     assert!(opaque_struct.get_field_types().is_empty());
+    assert_eq!(opaque_struct.get_field_types_iter().count(), 0);
     assert!(opaque_struct.get_field_type_at_index(0).is_none());
     assert!(opaque_struct.get_field_type_at_index(1).is_none());
     assert!(opaque_struct.get_field_type_at_index(2).is_none());
@@ -75,10 +82,12 @@ fn test_struct_type() {
     );
     assert_eq!(no_longer_opaque_struct.get_context(), context);
     assert_eq!(no_longer_opaque_struct.count_fields(), 2);
-    assert_eq!(
+    for types in [
         no_longer_opaque_struct.get_field_types(),
-        &[int_vector.into(), float_array.into()]
-    );
+        no_longer_opaque_struct.get_field_types_iter().collect(),
+    ] {
+        assert_eq!(types, &[int_vector.into(), float_array.into()]);
+    }
 
     let field_1 = no_longer_opaque_struct.get_field_type_at_index(0).unwrap();
     let field_2 = no_longer_opaque_struct.get_field_type_at_index(1).unwrap();
@@ -87,7 +96,12 @@ fn test_struct_type() {
     assert!(field_2.is_array_type());
     assert!(no_longer_opaque_struct.get_field_type_at_index(2).is_none());
     assert!(no_longer_opaque_struct.get_field_type_at_index(200).is_none());
-    assert_eq!(no_longer_opaque_struct.get_field_types(), vec![field_1, field_2]);
+    for types in [
+        no_longer_opaque_struct.get_field_types(),
+        no_longer_opaque_struct.get_field_types_iter().collect(),
+    ] {
+        assert_eq!(types, &[field_1, field_2]);
+    }
 
     no_longer_opaque_struct.set_body(&[float_array.into(), int_vector.into(), float_array.into()], false);
     let fields_changed_struct = no_longer_opaque_struct;
@@ -95,10 +109,12 @@ fn test_struct_type() {
     assert!(!fields_changed_struct.is_opaque());
     assert!(fields_changed_struct.is_sized());
     assert_eq!(fields_changed_struct.count_fields(), 3);
-    assert_eq!(
+    for types in [
         fields_changed_struct.get_field_types(),
-        &[float_array.into(), int_vector.into(), float_array.into(),]
-    );
+        fields_changed_struct.get_field_types_iter().collect(),
+    ] {
+        assert_eq!(types, &[float_array.into(), int_vector.into(), float_array.into(),]);
+    }
     assert!(fields_changed_struct.get_field_type_at_index(3).is_none());
 }
 
@@ -326,7 +342,7 @@ fn test_const_zero() {
     );
 
     // handle opaque pointers
-    let ptr_type = if cfg!(any(feature = "llvm15-0", feature = "llvm16-0")) {
+    let ptr_type = if cfg!(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")) {
         "ptr null"
     } else {
         "double* null"

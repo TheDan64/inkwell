@@ -35,6 +35,11 @@ pub struct FunctionValue<'ctx> {
 }
 
 impl<'ctx> FunctionValue<'ctx> {
+    /// Get a value from an [LLVMValueRef].
+    ///
+    /// # Safety
+    ///
+    /// The ref must be valid and of type function.
     pub unsafe fn new(value: LLVMValueRef) -> Option<Self> {
         if value.is_null() {
             return None;
@@ -129,6 +134,10 @@ impl<'ctx> FunctionValue<'ctx> {
 
     pub fn count_basic_blocks(self) -> u32 {
         unsafe { LLVMCountBasicBlocks(self.as_value_ref()) }
+    }
+
+    pub fn get_basic_block_iter(self) -> BasicBlockIter<'ctx> {
+        BasicBlockIter(self.get_first_basic_block())
     }
 
     pub fn get_basic_blocks(self) -> Vec<BasicBlock<'ctx>> {
@@ -549,6 +558,23 @@ impl fmt::Debug for FunctionValue<'_> {
             .field("llvm_value", &llvm_value)
             .field("llvm_type", &llvm_type.print_to_string())
             .finish()
+    }
+}
+
+/// Iterate over all `BasicBlock`s in a function.
+#[derive(Debug)]
+pub struct BasicBlockIter<'ctx>(Option<BasicBlock<'ctx>>);
+
+impl<'ctx> Iterator for BasicBlockIter<'ctx> {
+    type Item = BasicBlock<'ctx>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(bb) = self.0 {
+            self.0 = bb.get_next_basic_block();
+            Some(bb)
+        } else {
+            None
+        }
     }
 }
 

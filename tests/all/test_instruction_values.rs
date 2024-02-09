@@ -34,6 +34,8 @@ fn test_operands() {
     // Test operands
     assert_eq!(store_instruction.get_num_operands(), 2);
     assert_eq!(free_instruction.get_num_operands(), 2);
+    assert_eq!(store_instruction.get_operands().count(), 2);
+    assert_eq!(free_instruction.get_operands().count(), 2);
 
     let store_operand0 = store_instruction.get_operand(0).unwrap();
     let store_operand1 = store_instruction.get_operand(1).unwrap();
@@ -43,6 +45,14 @@ fn test_operands() {
     assert!(store_instruction.get_operand(2).is_none());
     assert!(store_instruction.get_operand(3).is_none());
     assert!(store_instruction.get_operand(4).is_none());
+
+    let mut store_operands = store_instruction.get_operands();
+    let store_operand0 = store_operands.next().unwrap().unwrap();
+    let store_operand1 = store_operands.next().unwrap().unwrap();
+
+    assert_eq!(store_operand0.left().unwrap(), f32_val); // f32 const
+    assert_eq!(store_operand1.left().unwrap(), arg1); // f32* arg1
+    assert!(store_operands.next().is_none());
 
     let free_operand0 = free_instruction.get_operand(0).unwrap().left().unwrap();
     let free_operand1 = free_instruction.get_operand(1).unwrap().left().unwrap();
@@ -89,6 +99,7 @@ fn test_operands() {
     assert!(module.verify().is_ok());
 
     assert_eq!(return_instruction.get_num_operands(), 0);
+    assert_eq!(return_instruction.get_operands().count(), 0);
     assert!(return_instruction.get_operand(0).is_none());
     assert!(return_instruction.get_operand(1).is_none());
     assert!(return_instruction.get_operand(2).is_none());
@@ -139,6 +150,27 @@ fn test_operands() {
     assert!(store_instruction.get_operand_use(4).is_none());
     assert!(store_instruction.get_operand_use(5).is_none());
     assert!(store_instruction.get_operand_use(6).is_none());
+
+    // However their operands are used
+    let mut store_operand_uses = store_instruction.get_operand_uses();
+    let store_operand_use0 = store_operand_uses.next().unwrap().unwrap();
+    let store_operand_use1 = store_operand_uses.next().unwrap().unwrap();
+
+    assert!(store_operand_use0.get_next_use().is_none());
+    assert!(store_operand_use1.get_next_use().is_none());
+    assert_eq!(store_operand_use1, arg1_second_use);
+
+    assert_eq!(
+        store_operand_use0.get_user().into_instruction_value(),
+        store_instruction
+    );
+    assert_eq!(
+        store_operand_use1.get_user().into_instruction_value(),
+        store_instruction
+    );
+    assert_eq!(store_operand_use0.get_used_value().left().unwrap(), f32_val);
+    assert_eq!(store_operand_use1.get_used_value().left().unwrap(), arg1);
+    assert!(store_operand_uses.next().is_none());
 
     let free_operand_use0 = free_instruction.get_operand_use(0).unwrap();
     let free_operand_use1 = free_instruction.get_operand_use(1).unwrap();
@@ -463,7 +495,7 @@ fn test_mem_instructions() {
         feature = "llvm14-0"
     ))]
     let load = builder.build_load(arg1, "").unwrap();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
+    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
     let load = builder.build_load(f32_type, arg1, "").unwrap();
     let load_instruction = load.as_instruction_value().unwrap();
 
@@ -542,7 +574,7 @@ fn test_atomic_ordering_mem_instructions() {
         feature = "llvm14-0"
     ))]
     let load = builder.build_load(arg1, "").unwrap();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0"))]
+    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
     let load = builder.build_load(f32_type, arg1, "").unwrap();
     let load_instruction = load.as_instruction_value().unwrap();
 

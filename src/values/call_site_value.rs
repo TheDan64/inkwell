@@ -20,6 +20,11 @@ use super::AnyValue;
 pub struct CallSiteValue<'ctx>(Value<'ctx>);
 
 impl<'ctx> CallSiteValue<'ctx> {
+    /// Get a value from an [LLVMValueRef].
+    ///
+    /// # Safety
+    ///
+    /// The ref must be valid and of type call site.
     pub unsafe fn new(value: LLVMValueRef) -> Self {
         CallSiteValue(Value::new(value))
     }

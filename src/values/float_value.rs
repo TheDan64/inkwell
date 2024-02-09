@@ -23,6 +23,11 @@ pub struct FloatValue<'ctx> {
 }
 
 impl<'ctx> FloatValue<'ctx> {
+    /// Get a value from an [LLVMValueRef].
+    ///
+    /// # Safety
+    ///
+    /// The ref must be valid and of type float.
     pub unsafe fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 

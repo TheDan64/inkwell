@@ -1,8 +1,10 @@
+#[llvm_versions(4.0..=16.0)]
+use llvm_sys::core::LLVMGetGlobalPassRegistry;
 use llvm_sys::core::{
     LLVMCreateFunctionPassManagerForModule, LLVMCreatePassManager, LLVMDisposePassManager,
-    LLVMFinalizeFunctionPassManager, LLVMGetGlobalPassRegistry, LLVMInitializeFunctionPassManager,
-    LLVMRunFunctionPassManager, LLVMRunPassManager,
+    LLVMFinalizeFunctionPassManager, LLVMInitializeFunctionPassManager, LLVMRunFunctionPassManager, LLVMRunPassManager,
 };
+#[llvm_versions(4.0..=16.0)]
 use llvm_sys::initialization::{
     LLVMInitializeAnalysis, LLVMInitializeCodeGen, LLVMInitializeCore, LLVMInitializeIPA, LLVMInitializeIPO,
     LLVMInitializeInstCombine, LLVMInitializeScalarOpts, LLVMInitializeTarget, LLVMInitializeTransformUtils,
@@ -10,16 +12,20 @@ use llvm_sys::initialization::{
 };
 #[llvm_versions(4.0..=15.0)]
 use llvm_sys::initialization::{LLVMInitializeInstrumentation, LLVMInitializeObjCARCOpts};
-use llvm_sys::prelude::{LLVMPassManagerRef, LLVMPassRegistryRef};
-#[llvm_versions(10.0..=latest)]
+use llvm_sys::prelude::LLVMPassManagerRef;
+#[llvm_versions(4.0..=16.0)]
+use llvm_sys::prelude::LLVMPassRegistryRef;
+#[llvm_versions(10.0..=16.0)]
 use llvm_sys::transforms::ipo::LLVMAddMergeFunctionsPass;
 #[llvm_versions(4.0..=15.0)]
 use llvm_sys::transforms::ipo::LLVMAddPruneEHPass;
+#[llvm_versions(4.0..=16.0)]
 use llvm_sys::transforms::ipo::{
     LLVMAddAlwaysInlinerPass, LLVMAddConstantMergePass, LLVMAddDeadArgEliminationPass, LLVMAddFunctionAttrsPass,
     LLVMAddFunctionInliningPass, LLVMAddGlobalDCEPass, LLVMAddGlobalOptimizerPass, LLVMAddIPSCCPPass,
     LLVMAddInternalizePass, LLVMAddStripDeadPrototypesPass, LLVMAddStripSymbolsPass,
 };
+#[llvm_versions(4.0..=16.0)]
 use llvm_sys::transforms::pass_manager_builder::{
     LLVMPassManagerBuilderCreate, LLVMPassManagerBuilderDispose, LLVMPassManagerBuilderPopulateFunctionPassManager,
     LLVMPassManagerBuilderPopulateModulePassManager, LLVMPassManagerBuilderRef,
@@ -27,6 +33,7 @@ use llvm_sys::transforms::pass_manager_builder::{
     LLVMPassManagerBuilderSetDisableUnrollLoops, LLVMPassManagerBuilderSetOptLevel, LLVMPassManagerBuilderSetSizeLevel,
     LLVMPassManagerBuilderUseInlinerWithThreshold,
 };
+#[llvm_versions(4.0..=16.0)]
 use llvm_sys::transforms::scalar::{
     LLVMAddAggressiveDCEPass, LLVMAddAlignmentFromAssumptionsPass, LLVMAddBasicAliasAnalysisPass,
     LLVMAddBitTrackingDCEPass, LLVMAddCFGSimplificationPass, LLVMAddCorrelatedValuePropagationPass,
@@ -39,6 +46,7 @@ use llvm_sys::transforms::scalar::{
     LLVMAddScopedNoAliasAAPass, LLVMAddSimplifyLibCallsPass, LLVMAddTailCallEliminationPass,
     LLVMAddTypeBasedAliasAnalysisPass, LLVMAddVerifierPass,
 };
+#[llvm_versions(4.0..=16.0)]
 use llvm_sys::transforms::vectorize::{LLVMAddLoopVectorizePass, LLVMAddSLPVectorizePass};
 
 // LLVM12 removes the ConstantPropagation pass
@@ -58,22 +66,25 @@ use llvm_sys::transforms::pass_builder::{
     LLVMPassBuilderOptionsSetMergeFunctions, LLVMPassBuilderOptionsSetSLPVectorization,
     LLVMPassBuilderOptionsSetVerifyEach,
 };
-#[llvm_versions(12.0..=latest)]
+#[llvm_versions(12.0..=16.0)]
 use llvm_sys::transforms::scalar::LLVMAddInstructionSimplifyPass;
 
 use crate::module::Module;
 use crate::values::{AsValueRef, FunctionValue};
+#[llvm_versions(4.0..=16.0)]
 use crate::OptimizationLevel;
 
 use std::borrow::Borrow;
 use std::marker::PhantomData;
 
 // REVIEW: Opt Level might be identical to targets::Option<CodeGenOptLevel>
+#[llvm_versions(4.0..=16.0)]
 #[derive(Debug)]
 pub struct PassManagerBuilder {
     pass_manager_builder: LLVMPassManagerBuilderRef,
 }
 
+#[llvm_versions(4.0..=16.0)]
 impl PassManagerBuilder {
     pub unsafe fn new(pass_manager_builder: LLVMPassManagerBuilderRef) -> Self {
         assert!(!pass_manager_builder.is_null());
@@ -202,6 +213,7 @@ impl PassManagerBuilder {
     }
 }
 
+#[llvm_versions(4.0..=16.0)]
 impl Drop for PassManagerBuilder {
     fn drop(&mut self) {
         unsafe { LLVMPassManagerBuilderDispose(self.pass_manager_builder) }
@@ -323,12 +335,13 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// shared. This is useful because some passes (i.e., TraceValues) insert a lot
     /// of string constants into the program, regardless of whether or not an existing
     /// string is available.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_constant_merge_pass(&self) {
         unsafe { LLVMAddConstantMergePass(self.pass_manager) }
     }
 
     /// Discovers identical functions and collapses them.
-    #[llvm_versions(10.0..=latest)]
+    #[llvm_versions(10.0..=16.0)]
     pub fn add_merge_functions_pass(&self) {
         unsafe { LLVMAddMergeFunctionsPass(self.pass_manager) }
     }
@@ -340,6 +353,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     ///
     /// This pass is often useful as a cleanup pass to run after aggressive
     /// interprocedural passes, which add possibly-dead arguments.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_dead_arg_elimination_pass(&self) {
         unsafe { LLVMAddDeadArgEliminationPass(self.pass_manager) }
     }
@@ -352,16 +366,19 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// less means that the pointer is only dereferenced, and not returned
     /// from the function or stored in a global. This pass is implemented
     /// as a bottom-up traversal of the call-graph.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_function_attrs_pass(&self) {
         unsafe { LLVMAddFunctionAttrsPass(self.pass_manager) }
     }
 
     /// Bottom-up inlining of functions into callees.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_function_inlining_pass(&self) {
         unsafe { LLVMAddFunctionInliningPass(self.pass_manager) }
     }
 
     /// A custom inliner that handles only functions that are marked as “always inline”.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_always_inliner_pass(&self) {
         unsafe { LLVMAddAlwaysInlinerPass(self.pass_manager) }
     }
@@ -372,6 +389,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// finds all of the globals which are needed, it deletes
     /// whatever is left over. This allows it to delete recursive
     /// chunks of the program which are unreachable.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_global_dce_pass(&self) {
         unsafe { LLVMAddGlobalDCEPass(self.pass_manager) }
     }
@@ -379,6 +397,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// This pass transforms simple global variables that never have
     /// their address taken. If obviously true, it marks read/write
     /// globals as constant, deletes variables only stored to, etc.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_global_optimizer_pass(&self) {
         unsafe { LLVMAddGlobalOptimizerPass(self.pass_manager) }
     }
@@ -409,6 +428,7 @@ impl<T: PassManagerSubType> PassManager<T> {
 
     /// An interprocedural variant of [Sparse Conditional Constant
     /// Propagation](https://llvm.org/docs/Passes.html#passes-sccp).
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_ipsccp_pass(&self) {
         unsafe { LLVMAddIPSCCPPass(self.pass_manager) }
     }
@@ -417,6 +437,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// looking for a main function. If a main function is found, all
     /// other functions and all global variables with initializers are
     /// marked as internal.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_internalize_pass(&self, all_but_main: bool) {
         unsafe { LLVMAddInternalizePass(self.pass_manager, all_but_main as u32) }
     }
@@ -425,6 +446,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// looking for dead declarations and removes them. Dead declarations
     /// are declarations of functions for which no implementation is available
     /// (i.e., declarations for unused library functions).
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_strip_dead_prototypes_pass(&self) {
         unsafe { LLVMAddStripDeadPrototypesPass(self.pass_manager) }
     }
@@ -439,6 +461,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// so it should only be used in situations where the strip utility
     /// would be used, such as reducing code size or making it harder
     /// to reverse engineer code.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_strip_symbol_pass(&self) {
         unsafe { LLVMAddStripSymbolsPass(self.pass_manager) }
     }
@@ -464,11 +487,13 @@ impl<T: PassManagerSubType> PassManager<T> {
     }
 
     /// No LLVM documentation is available at this time.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_loop_vectorize_pass(&self) {
         unsafe { LLVMAddLoopVectorizePass(self.pass_manager) }
     }
 
     /// No LLVM documentation is available at this time.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_slp_vectorize_pass(&self) {
         unsafe { LLVMAddSLPVectorizePass(self.pass_manager) }
     }
@@ -478,16 +503,19 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// assumes that values are dead until proven otherwise. This is
     /// similar to [SCCP](https://llvm.org/docs/Passes.html#passes-sccp),
     /// except applied to the liveness of values.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_aggressive_dce_pass(&self) {
         unsafe { LLVMAddAggressiveDCEPass(self.pass_manager) }
     }
 
     /// No LLVM documentation is available at this time.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_bit_tracking_dce_pass(&self) {
         unsafe { LLVMAddBitTrackingDCEPass(self.pass_manager) }
     }
 
     /// No LLVM documentation is available at this time.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_alignment_from_assumptions_pass(&self) {
         unsafe { LLVMAddAlignmentFromAssumptionsPass(self.pass_manager) }
     }
@@ -498,21 +526,25 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// * Merges a basic block into its predecessor if there is only one and the predecessor only has one successor.
     /// * Eliminates PHI nodes for basic blocks with a single predecessor.
     /// * Eliminates a basic block that only contains an unconditional branch.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_cfg_simplification_pass(&self) {
         unsafe { LLVMAddCFGSimplificationPass(self.pass_manager) }
     }
 
     /// A trivial dead store elimination that only considers basic-block local redundant stores.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_dead_store_elimination_pass(&self) {
         unsafe { LLVMAddDeadStoreEliminationPass(self.pass_manager) }
     }
 
     /// No LLVM documentation is available at this time.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_scalarizer_pass(&self) {
         unsafe { LLVMAddScalarizerPass(self.pass_manager) }
     }
 
     /// No LLVM documentation is available at this time.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_merged_load_store_motion_pass(&self) {
         unsafe { LLVMAddMergedLoadStoreMotionPass(self.pass_manager) }
     }
@@ -520,6 +552,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// This pass performs global value numbering to eliminate
     /// fully and partially redundant instructions. It also
     /// performs redundant load elimination.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_gvn_pass(&self) {
         unsafe { LLVMAddGVNPass(self.pass_manager) }
     }
@@ -529,7 +562,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// performs redundant load elimination.
     // REVIEW: Is `LLVMAddGVNPass` deprecated? Should we just seamlessly replace
     // the old one with this one in 4.0+?
-    #[llvm_versions(4.0..=latest)]
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_new_gvn_pass(&self) {
         use llvm_sys::transforms::scalar::LLVMAddNewGVNPass;
 
@@ -575,6 +608,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// the desired loop transformations have been performed. Additionally, on
     /// targets where it is profitable, the loop could be transformed to count
     /// down to zero (the "do loop" optimization).
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_ind_var_simplify_pass(&self) {
         unsafe { LLVMAddIndVarSimplifyPass(self.pass_manager) }
     }
@@ -619,6 +653,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// the main() function can be transformed into simply return 3. Whether or not library
     /// calls are simplified is controlled by the [-functionattrs](https://llvm.org/docs/Passes.html#passes-functionattrs)
     /// pass and LLVM’s knowledge of library calls on different targets.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_instruction_combining_pass(&self) {
         unsafe { LLVMAddInstructionCombiningPass(self.pass_manager) }
     }
@@ -642,6 +677,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     ///
     /// In this case, the unconditional branch at the end of the first
     /// if can be revectored to the false side of the second if.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_jump_threading_pass(&self) {
         unsafe { LLVMAddJumpThreadingPass(self.pass_manager) }
     }
@@ -678,6 +714,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// and stores in the loop of the pointer to use a temporary
     /// alloca'd variable. We then use the mem2reg functionality
     /// to construct the appropriate SSA form for the variable.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_licm_pass(&self) {
         unsafe { LLVMAddLICMPass(self.pass_manager) }
     }
@@ -687,21 +724,25 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// non-infinite computable trip counts that have no side
     /// effects or volatile instructions, and do not contribute
     /// to the computation of the function’s return value.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_loop_deletion_pass(&self) {
         unsafe { LLVMAddLoopDeletionPass(self.pass_manager) }
     }
 
     /// No LLVM documentation is available at this time.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_loop_idiom_pass(&self) {
         unsafe { LLVMAddLoopIdiomPass(self.pass_manager) }
     }
 
     /// A simple loop rotation transformation.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_loop_rotate_pass(&self) {
         unsafe { LLVMAddLoopRotatePass(self.pass_manager) }
     }
 
     /// No LLVM documentation is available at this time.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_loop_reroll_pass(&self) {
         unsafe { LLVMAddLoopRerollPass(self.pass_manager) }
     }
@@ -711,6 +752,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// by the [indvars](https://llvm.org/docs/Passes.html#passes-indvars)
     /// pass, allowing it to determine the trip counts
     /// of loops easily.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_loop_unroll_pass(&self) {
         unsafe { LLVMAddLoopUnrollPass(self.pass_manager) }
     }
@@ -747,12 +789,14 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// This pass performs various transformations related
     /// to eliminating memcpy calls, or transforming sets
     /// of stores into memsets.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_memcpy_optimize_pass(&self) {
         unsafe { LLVMAddMemCpyOptPass(self.pass_manager) }
     }
 
     /// This pass performs partial inlining, typically by inlining
     /// an if statement that surrounds the body of the function.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_partially_inline_lib_calls_pass(&self) {
         unsafe { LLVMAddPartiallyInlineLibCallsPass(self.pass_manager) }
     }
@@ -760,10 +804,11 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// Rewrites switch instructions with a sequence of branches,
     /// which allows targets to get away with not implementing the
     /// switch instruction until it is convenient.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_lower_switch_pass(&self) {
         #[llvm_versions(4.0..=6.0)]
         use llvm_sys::transforms::scalar::LLVMAddLowerSwitchPass;
-        #[llvm_versions(7.0..=latest)]
+        #[llvm_versions(7.0..=16.0)]
         use llvm_sys::transforms::util::LLVMAddLowerSwitchPass;
 
         unsafe { LLVMAddLowerSwitchPass(self.pass_manager) }
@@ -775,10 +820,11 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// to place phi nodes, then traversing the function in depth-first
     /// order to rewrite loads and stores as appropriate. This is just
     /// the standard SSA construction algorithm to construct "pruned" SSA form.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_promote_memory_to_register_pass(&self) {
         #[llvm_versions(4.0..=6.0)]
         use llvm_sys::transforms::scalar::LLVMAddPromoteMemoryToRegisterPass;
-        #[llvm_versions(7.0..=latest)]
+        #[llvm_versions(7.0..=16.0)]
         use llvm_sys::transforms::util::LLVMAddPromoteMemoryToRegisterPass;
 
         unsafe { LLVMAddPromoteMemoryToRegisterPass(self.pass_manager) }
@@ -794,6 +840,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// corresponding to the reverse post order traversal of current function
     /// (starting at 2), which effectively gives values in deep loops higher
     /// rank than values not in loops.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_reassociate_pass(&self) {
         unsafe { LLVMAddReassociatePass(self.pass_manager) }
     }
@@ -808,11 +855,13 @@ impl<T: PassManagerSubType> PassManager<T> {
     ///
     /// Note that this pass has a habit of making definitions be dead.
     /// It is a good idea to run a DCE pass sometime after running this pass.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_sccp_pass(&self) {
         unsafe { LLVMAddSCCPPass(self.pass_manager) }
     }
 
     /// No LLVM documentation is available at this time.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_scalar_repl_aggregates_pass(&self) {
         unsafe { LLVMAddScalarReplAggregatesPass(self.pass_manager) }
     }
@@ -822,16 +871,19 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// (structure or array) into individual alloca instructions for each
     /// member if possible. Then, if possible, it transforms the individual
     /// alloca instructions into nice clean scalar SSA form.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_scalar_repl_aggregates_pass_ssa(&self) {
         unsafe { LLVMAddScalarReplAggregatesPassSSA(self.pass_manager) }
     }
 
     /// No LLVM documentation is available at this time.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_scalar_repl_aggregates_pass_with_threshold(&self, threshold: i32) {
         unsafe { LLVMAddScalarReplAggregatesPassWithThreshold(self.pass_manager, threshold) }
     }
 
     /// No LLVM documentation is available at this time.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_simplify_lib_calls_pass(&self) {
         unsafe { LLVMAddSimplifyLibCallsPass(self.pass_manager) }
     }
@@ -856,6 +908,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     ///
     /// 4. If it can prove that callees do not access theier caller stack frame,
     /// they are marked as eligible for tail call elimination (by the code generator).
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_tail_call_elimination_pass(&self) {
         unsafe { LLVMAddTailCallEliminationPass(self.pass_manager) }
     }
@@ -900,7 +953,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     ///
     /// NOTE: this pass has a habit of making definitions be dead. It is a good idea to
     /// run a Dead Instruction Elimination pass sometime after running this pass.
-    #[llvm_versions(12.0..=latest)]
+    #[llvm_versions(12.0..=16.0)]
     pub fn add_instruction_simplify_pass(&self) {
         unsafe { LLVMAddInstructionSimplifyPass(self.pass_manager) }
     }
@@ -911,6 +964,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// place phi nodes, then traversing the function in depth-first order to
     /// rewrite loads and stores as appropriate. This is just the standard SSA
     /// construction algorithm to construct “pruned” SSA form.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_demote_memory_to_register_pass(&self) {
         unsafe { LLVMAddDemoteMemoryToRegisterPass(self.pass_manager) }
     }
@@ -966,21 +1020,24 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// 20. All other things that are tested by asserts spread about the code.
     ///
     /// Note that this does not provide full security verification (like Java), but instead just tries to ensure that code is well-formed.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_verifier_pass(&self) {
         unsafe { LLVMAddVerifierPass(self.pass_manager) }
     }
 
     /// No LLVM documentation is available at this time.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_correlated_value_propagation_pass(&self) {
         unsafe { LLVMAddCorrelatedValuePropagationPass(self.pass_manager) }
     }
 
     /// No LLVM documentation is available at this time.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_early_cse_pass(&self) {
         unsafe { LLVMAddEarlyCSEPass(self.pass_manager) }
     }
 
-    #[llvm_versions(4.0..=latest)]
+    #[llvm_versions(4.0..=16.0)]
     /// No LLVM documentation is available at this time.
     pub fn add_early_cse_mem_ssa_pass(&self) {
         use llvm_sys::transforms::scalar::LLVMAddEarlyCSEMemSSAPass;
@@ -989,16 +1046,19 @@ impl<T: PassManagerSubType> PassManager<T> {
     }
 
     /// No LLVM documentation is available at this time.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_lower_expect_intrinsic_pass(&self) {
         unsafe { LLVMAddLowerExpectIntrinsicPass(self.pass_manager) }
     }
 
     /// No LLVM documentation is available at this time.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_type_based_alias_analysis_pass(&self) {
         unsafe { LLVMAddTypeBasedAliasAnalysisPass(self.pass_manager) }
     }
 
     /// No LLVM documentation is available at this time.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_scoped_no_alias_aa_pass(&self) {
         unsafe { LLVMAddScopedNoAliasAAPass(self.pass_manager) }
     }
@@ -1006,6 +1066,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// A basic alias analysis pass that implements identities
     /// (two different globals cannot alias, etc), but does no
     /// stateful analysis.
+    #[llvm_versions(4.0..=16.0)]
     pub fn add_basic_alias_analysis_pass(&self) {
         unsafe { LLVMAddBasicAliasAnalysisPass(self.pass_manager) }
     }
@@ -1020,7 +1081,7 @@ impl<T: PassManagerSubType> PassManager<T> {
         unsafe { LLVMAddAggressiveInstCombinerPass(self.pass_manager) }
     }
 
-    #[llvm_versions(7.0..=latest)]
+    #[llvm_versions(7.0..=16.0)]
     pub fn add_loop_unroll_and_jam_pass(&self) {
         use llvm_sys::transforms::scalar::LLVMAddLoopUnrollAndJamPass;
 
@@ -1062,11 +1123,13 @@ impl<T> Drop for PassManager<T> {
     }
 }
 
+#[llvm_versions(4.0..=16.0)]
 #[derive(Debug)]
 pub struct PassRegistry {
     pass_registry: LLVMPassRegistryRef,
 }
 
+#[llvm_versions(4.0..=16.0)]
 impl PassRegistry {
     pub unsafe fn new(pass_registry: LLVMPassRegistryRef) -> PassRegistry {
         assert!(!pass_registry.is_null());

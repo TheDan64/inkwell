@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMGetNumOperands, LLVMGetOperand};
+use llvm_sys::core::{LLVMGetNumOperands, LLVMGetOperand, LLVMSetOperand};
 
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -7,7 +7,7 @@ use std::fmt::{self, Display};
 
 use crate::types::StructType;
 use crate::values::traits::AsValueRef;
-use crate::values::{InstructionValue, Value};
+use crate::values::{BasicValue, InstructionValue, Value};
 
 use super::{AnyValue, BasicValueEnum};
 
@@ -17,6 +17,11 @@ pub struct StructValue<'ctx> {
 }
 
 impl<'ctx> StructValue<'ctx> {
+    /// Get a value from an [LLVMValueRef].
+    ///
+    /// # Safety
+    ///
+    /// The ref must be valid and of type struct.
     pub unsafe fn new(value: LLVMValueRef) -> Self {
         assert!(!value.is_null());
 
@@ -49,7 +54,41 @@ impl<'ctx> StructValue<'ctx> {
             return None;
         }
 
-        unsafe { Some(BasicValueEnum::new(LLVMGetOperand(self.as_value_ref(), index))) }
+        Some(unsafe { self.get_field_at_index_unchecked(index) })
+    }
+
+    /// Gets the value of a field belonging to this `StructValue`.
+    ///
+    /// # Safety
+    ///
+    /// The index must be smaller than [StructValue::count_fields].
+    pub unsafe fn get_field_at_index_unchecked(self, index: u32) -> BasicValueEnum<'ctx> {
+        unsafe { BasicValueEnum::new(LLVMGetOperand(self.as_value_ref(), index)) }
+    }
+
+    /// Get a field value iterator.
+    pub fn get_fields(self) -> FieldValueIter<'ctx> {
+        FieldValueIter {
+            sv: self,
+            i: 0,
+            count: self.count_fields(),
+        }
+    }
+
+    /// Sets the value of a field belonging to this `StructValue`.
+    pub fn set_field_at_index<BV: BasicValue<'ctx>>(self, index: u32, val: BV) -> bool {
+        if self
+            .get_type()
+            .get_field_type_at_index(index)
+            .map(|t| t == val.as_basic_value_enum().get_type())
+            != Some(true)
+        {
+            return false;
+        }
+
+        unsafe { LLVMSetOperand(self.as_value_ref(), index, val.as_value_ref()) }
+
+        true
     }
 
     /// Counts the number of fields.
@@ -117,5 +156,27 @@ unsafe impl AsValueRef for StructValue<'_> {
 impl Display for StructValue<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.print_to_string())
+    }
+}
+
+/// Iterate over all the field values of this struct.
+#[derive(Debug)]
+pub struct FieldValueIter<'ctx> {
+    sv: StructValue<'ctx>,
+    i: u32,
+    count: u32,
+}
+
+impl<'ctx> Iterator for FieldValueIter<'ctx> {
+    type Item = BasicValueEnum<'ctx>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i < self.count {
+            let result = unsafe { self.sv.get_field_at_index_unchecked(self.i) };
+            self.i += 1;
+            Some(result)
+        } else {
+            None
+        }
     }
 }
