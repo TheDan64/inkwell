@@ -16,7 +16,7 @@ pub struct GenericValue<'ctx> {
 }
 
 impl<'ctx> GenericValue<'ctx> {
-    pub unsafe fn new(generic_value: LLVMGenericValueRef) -> Self {
+    pub(crate) unsafe fn new(generic_value: LLVMGenericValueRef) -> Self {
         assert!(!generic_value.is_null());
 
         GenericValue {
