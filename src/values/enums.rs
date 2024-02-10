@@ -73,6 +73,11 @@ enum_value_set! {BasicValueEnum: ArrayValue, IntValue, FloatValue, PointerValue,
 enum_value_set! {BasicMetadataValueEnum: ArrayValue, IntValue, FloatValue, PointerValue, StructValue, VectorValue, MetadataValue}
 
 impl<'ctx> AnyValueEnum<'ctx> {
+    /// Get a value from an [LLVMValueRef].
+    ///
+    /// # Safety
+    ///
+    /// The ref must be valid and of supported enum type options ([LLVMTypeKind]).
     pub unsafe fn new(value: LLVMValueRef) -> Self {
         match LLVMGetTypeKind(LLVMTypeOf(value)) {
             LLVMTypeKind::LLVMFloatTypeKind
@@ -215,6 +220,11 @@ impl<'ctx> AnyValueEnum<'ctx> {
 }
 
 impl<'ctx> BasicValueEnum<'ctx> {
+    /// Get a value from an [LLVMValueRef].
+    ///
+    /// # Safety
+    ///
+    /// The ref must be valid and of supported enum type options ([LLVMTypeKind]).
     pub unsafe fn new(value: LLVMValueRef) -> Self {
         match LLVMGetTypeKind(LLVMTypeOf(value)) {
             LLVMTypeKind::LLVMFloatTypeKind
@@ -334,6 +344,11 @@ impl<'ctx> BasicValueEnum<'ctx> {
 }
 
 impl<'ctx> AggregateValueEnum<'ctx> {
+    /// Get a value from an [LLVMValueRef].
+    ///
+    /// # Safety
+    ///
+    /// The ref must be valid and of supported aggregate type enum options ([LLVMTypeKind]).
     pub unsafe fn new(value: LLVMValueRef) -> Self {
         match LLVMGetTypeKind(LLVMTypeOf(value)) {
             LLVMTypeKind::LLVMArrayTypeKind => AggregateValueEnum::ArrayValue(ArrayValue::new(value)),
@@ -368,7 +383,7 @@ impl<'ctx> AggregateValueEnum<'ctx> {
 }
 
 impl<'ctx> BasicMetadataValueEnum<'ctx> {
-    pub unsafe fn new(value: LLVMValueRef) -> Self {
+    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
         match LLVMGetTypeKind(LLVMTypeOf(value)) {
             LLVMTypeKind::LLVMFloatTypeKind
             | LLVMTypeKind::LLVMFP128TypeKind
