@@ -45,6 +45,7 @@ use crate::data_layout::DataLayout;
 use crate::debug_info::{DICompileUnit, DWARFEmissionKind, DWARFSourceLanguage, DebugInfoBuilder};
 use crate::execution_engine::ExecutionEngine;
 use crate::memory_buffer::MemoryBuffer;
+use crate::orc2::LLJITExecutionEngine;
 #[llvm_versions(13.0..=latest)]
 use crate::passes::PassBuilderOptions;
 use crate::support::{to_c_str, LLVMString};
@@ -169,6 +170,7 @@ pub struct Module<'ctx> {
     data_layout: RefCell<Option<DataLayout>>,
     pub(crate) module: Cell<LLVMModuleRef>,
     pub(crate) owned_by_ee: RefCell<Option<ExecutionEngine<'ctx>>>,
+    pub(crate) owned_by_lljit : RefCell<Option<LLJITExecutionEngine<'ctx>>>,
     _marker: PhantomData<&'ctx Context>,
 }
 
@@ -184,6 +186,7 @@ impl<'ctx> Module<'ctx> {
         Module {
             module: Cell::new(module),
             owned_by_ee: RefCell::new(None),
+            owned_by_lljit : RefCell::new(None),
             data_layout: RefCell::new(Some(Module::get_borrowed_data_layout(module))),
             _marker: PhantomData,
         }
@@ -440,6 +443,30 @@ impl<'ctx> Module<'ctx> {
         unsafe { TargetTriple::new(LLVMString::create_from_c_str(CStr::from_ptr(target_str))) }
     }
 
+    /// Crates a [crate::orc2::LLJitExecutionEngine] from this `Module`
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::module::Module;
+    /// use inkwell::targets::{InitializationConfig, Target};
+    ///
+    /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    /// let lljit_engine = module.create_lljit_engine().unwrap();
+    ///
+    /// ```
+    pub fn create_lljit_engine(self) -> Result<crate::orc2::LLJITExecutionEngine<'ctx>, LLVMString>{
+        Target::initialize_native(&InitializationConfig::default()).map_err(|mut err_string| {
+            err_string.push('\0');
+
+            LLVMString::create_from_str(&err_string)
+        })?;
+
+        crate::orc2::LLJITBuilder::new().create()
+    }
+
     /// Creates an `ExecutionEngine` from this `Module`.
     ///
     /// # Example
@@ -466,6 +493,10 @@ impl<'ctx> Module<'ctx> {
 
         if self.owned_by_ee.borrow().is_some() {
             let string = "This module is already owned by an ExecutionEngine.\0";
+            return Err(LLVMString::create_from_str(string));
+        }
+        if self.owned_by_lljit.borrow().is_some() {
+            let string = "This module is already owned by an LLJITExecutionEngine\0";
             return Err(LLVMString::create_from_str(string));
         }
 

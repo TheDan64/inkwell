@@ -34,7 +34,9 @@ pub mod intrinsics;
 pub mod memory_buffer;
 #[deny(missing_docs)]
 pub mod module;
+#[deny(missing_docs)]
 pub mod object_file;
+pub mod orc2;
 pub mod passes;
 pub mod targets;
 pub mod types;
