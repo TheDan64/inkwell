@@ -464,7 +464,9 @@ impl<'ctx> Module<'ctx> {
             LLVMString::create_from_str(&err_string)
         })?;
 
-        crate::orc2::LLJITBuilder::new().create()
+        let engine = crate::orc2::LLJITBuilder::new().create()?;
+        engine.add_module(self)?;
+        Ok(engine)
     }
 
     /// Creates an `ExecutionEngine` from this `Module`.

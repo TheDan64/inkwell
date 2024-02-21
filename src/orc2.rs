@@ -9,10 +9,9 @@ use std::mem::MaybeUninit;
 use llvm_sys::error::LLVMGetErrorMessage;
 use llvm_sys::orc2::lljit::{LLVMOrcCreateLLJIT, LLVMOrcCreateLLJITBuilder, LLVMOrcDisposeLLJIT as DisposeLLJIT, LLVMOrcDisposeLLJITBuilder, LLVMOrcLLJITAddLLVMIRModule, LLVMOrcLLJITBuilderRef, LLVMOrcLLJITGetMainJITDylib, LLVMOrcLLJITLookup, LLVMOrcLLJITMangleAndIntern, LLVMOrcLLJITRef};
 use llvm_sys::orc2::{LLVMJITEvaluatedSymbol, LLVMJITSymbolFlags, LLVMOrcAbsoluteSymbols, LLVMOrcCSymbolMapPair, LLVMOrcCreateNewThreadSafeContext, LLVMOrcCreateNewThreadSafeModule, LLVMOrcJITDylibDefine, LLVMOrcJITDylibRef};
-use crate::context::Context;
 use crate::module::Module;
 use crate::support::{to_c_str,LLVMString};
-use crate::values::{AnyValue, AnyValueEnum, GlobalValue};
+use crate::values::GlobalValue;
 
 /// A light wrapper around llvm::orc::LLJit.
 /// Should be constructed from [crate::module::Module::crate_lljit_engine]
@@ -28,6 +27,60 @@ impl Drop for LLJITExecutionEngine<'_> {
 }
 
 impl<'ctx> LLJITExecutionEngine<'ctx> {
+    /// Try to load a function from the execution engine.
+    ///
+    /// The [`UnsafeFunctionPointer`] trait is designed so only `unsafe extern
+    /// "C"` functions can be retrieved via the `get_function()` method. If you
+    /// get funny type errors then it's probably because you have specified the
+    /// wrong calling convention or forgotten to specify the retrieved function
+    /// as `unsafe`.
+    ///
+    /// # Examples
+    ///
+    ///
+    /// ```rust,no_run
+    /// # use inkwell::targets::{InitializationConfig, Target};
+    /// # use inkwell::context::Context;
+    /// # use inkwell::OptimizationLevel;
+    /// # Target::initialize_native(&InitializationConfig::default()).unwrap();
+    /// let context = Context::create();
+    /// let module = context.create_module("test");
+    /// let builder = context.create_builder();
+    ///
+    /// // Set up the function signature
+    /// let double = context.f64_type();
+    /// let sig = double.fn_type(&[], false);
+    ///
+    /// // Add the function to our module
+    /// let f = module.add_function("test_fn", sig, None);
+    /// let b = context.append_basic_block(f, "entry");
+    /// builder.position_at_end(b);
+    ///
+    /// // Insert a return statement
+    /// let ret = double.const_float(64.0);
+    /// builder.build_return(Some(&ret)).unwrap();
+    ///
+    /// // create the JIT engine
+    /// let mut ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    ///
+    /// // fetch our JIT'd function and execute it
+    /// unsafe {
+    ///     let test_fn = ee.get_function::<unsafe extern "C" fn() -> f64>("test_fn").unwrap();
+    ///     let return_value = test_fn.call();
+    ///     assert_eq!(return_value, 64.0);
+    /// }
+    /// ```
+    ///
+    /// # Safety
+    ///
+    /// It is the caller's responsibility to ensure they call the function with
+    /// the correct signature and calling convention.
+    ///
+    /// The `JitFunction` wrapper ensures a function won't accidentally outlive the
+    /// execution engine it came from, but adding functions after calling this
+    /// method *may* invalidate the function pointer.
+    ///
+    /// [`UnsafeFunctionPointer`]: trait.UnsafeFunctionPointer.html
     pub unsafe fn get_function<F:crate::execution_engine::UnsafeFunctionPointer>(&self,name:impl AsRef<str>) -> Result<LLJITFunction<'ctx,F>,LLVMString> {
         let name = to_c_str(name.as_ref());
         let mut address = MaybeUninit::uninit();
@@ -82,8 +135,10 @@ impl<'ctx> LLJITExecutionEngine<'ctx> {
     /// let mut ee = module.create_lljit_engine().unwrap();
     /// ee.add_global_mapping("sumf", sumf as usize);
     ///
-    /// let fun = ee.get_function::<unsafe extern "C" fn()>("test_fn");
-    /// let result = fun();
+    /// let result = unsafe {
+    ///     let fun = ee.get_function::<unsafe extern "C" fn()>("test_fn");
+    ///     fun.call()
+    /// };
     ///
     /// assert_eq!(result, 128.);
     /// ```
@@ -92,7 +147,7 @@ impl<'ctx> LLJITExecutionEngine<'ctx> {
         self.add_global_mapping_impl(name, addr)
     }
 
-    /// A grouped version [Self::add_global_mapping]
+    /// A grouped version of [Self::add_global_mapping]
     pub fn add_global_mappings(&self, mappings:&[(&str,usize)]) -> Result<(),LLVMString> {
         self.add_global_mappings_impl(mappings.iter().map(|(name,addr)| (to_c_str(name),*addr)))
     }
