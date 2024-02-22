@@ -457,6 +457,7 @@ impl<'ctx> Module<'ctx> {
     /// let lljit_engine = module.create_lljit_engine().unwrap();
     ///
     /// ```
+    #[llvm_versions(11.0..=latest)]
     pub fn create_lljit_engine(self) -> Result<crate::orc2::LLJITExecutionEngine<'ctx>, LLVMString>{
         Target::initialize_native(&InitializationConfig::default()).map_err(|mut err_string| {
             err_string.push('\0');

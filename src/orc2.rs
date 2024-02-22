@@ -1,4 +1,4 @@
-
+///! everything related to llvm::orc::LLJIT
 use core::fmt;
 use std::borrow::Cow;
 use std::ffi::CStr;
@@ -278,6 +278,10 @@ impl<'ctx> LLJITExecutionEngine<'ctx> {
     }
 }
 
+
+/// A wrapper around a function pointer which ensures the function being pointed
+/// to doesn't accidentally outlive its execution engine.
+#[derive(Clone)]
 pub struct LLJITFunction<'ctx,F> {
     addr : u64,
     _f : PhantomData<&'ctx F>,
