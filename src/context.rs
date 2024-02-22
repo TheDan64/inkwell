@@ -68,7 +68,7 @@ thread_local! {
 }
 
 /// This struct allows us to share method impls across Context and ContextRef types
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub(crate) struct ContextImpl(pub(crate) LLVMContextRef);
 
 impl ContextImpl {
@@ -1284,7 +1284,7 @@ impl Drop for Context {
 }
 
 /// A `ContextRef` is a smart pointer allowing borrowed access to a type's `Context`.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct ContextRef<'ctx> {
     pub(crate) context: ContextImpl,
     _marker: PhantomData<&'ctx Context>,
