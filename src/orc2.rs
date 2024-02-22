@@ -183,6 +183,51 @@ impl<'ctx> LLJITExecutionEngine<'ctx> {
         }
     }
 
+
+    /// Maps a global value to an address
+    /// Restricted to [crate::values::GlobalValue] as that's all that is supported for remapping by the LLJIT engine.
+    /// # Example
+    /// ```no_run
+    /// # use inkwell::targets::{InitializationConfig, Target};
+    /// # use inkwell::context::Context;
+    /// # use inkwell::OptimizationLevel;
+    ///
+    /// Target::initialize_native(&InitializationConfig::default()).unwrap();
+    ///
+    /// extern fn sumf(a: f64, b: f64) -> f64 {
+    ///     a + b
+    /// }
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("test");
+    /// let builder = context.create_builder();
+    ///
+    /// let ft = context.f64_type();
+    /// let fnt = ft.fn_type(&[], false);
+    ///
+    /// let f = module.add_function("test_fn", fnt, None);
+    /// let b = context.append_basic_block(f, "entry");
+    ///
+    /// builder.position_at_end(b);
+    ///
+    /// let extf = module.add_function("sumf", ft.fn_type(&[ft.into(), ft.into()], false), None);
+    ///
+    /// let argf = ft.const_float(64.);
+    /// let call_site_value = builder.build_call(extf, &[argf.into(), argf.into()], "retv").unwrap();
+    /// let retv = call_site_value.try_as_basic_value().left().unwrap().into_float_value();
+    ///
+    /// builder.build_return(Some(&retv)).unwrap();
+    ///
+    /// let mut ee = module.create_lljit_engine().unwrap();
+    /// ee.add_global_mapping_by_value(&extf.as_global_value(), sumf as usize);
+    ///
+    /// let result = unsafe {
+    ///     let fun = ee.get_function::<unsafe extern "C" fn()>("test_fn");
+    ///     fun.call()
+    /// };
+    ///
+    /// assert_eq!(result, 128.);
+    /// ```
     pub fn add_global_mapping_by_value(&self,v:&GlobalValue<'ctx>, addr:usize) -> Result<(),LLVMString> {
         let name= v.get_name();
         self.add_global_mapping_impl(Cow::from(name), addr)
@@ -192,7 +237,31 @@ impl<'ctx> LLJITExecutionEngine<'ctx> {
         unsafe { LLVMOrcLLJITGetMainJITDylib(self.0) }
     }
 
-    
+    /// Adds a module to the engine.
+    /// It takes ownership as it is illegal to modify the module once it has been added.
+    /// # Example
+    /// ```
+    /// # use inkwell::targets::{InitializationConfig, Target};
+    /// # use inkwell::context::Context;
+    /// let ctx = Context::create();
+    /// let base_module = ctx.create_module("base");
+    /// let ee = base_module.create_lljit_engine().unwrap();
+    /// 
+    /// let new_module = ctx.create_module("new");
+    /// let fun_ty = ctx.i32_type().fn_type(&[],false);
+    /// let fun = new_module.add_function("fun",fun_ty,None);
+    /// let builder = ctx.create_builder();
+    /// let bb = ctx.append_basic_block(fun,"entry");
+    /// builder.position_at_end(bb);
+    /// let retv = ctx.i32_type().const_int(3,false);
+    /// builder.build_return(Some(&retv));
+    /// ee.add_module(new_module);
+    /// unsafe {
+    ///    let fun = ee.get_function::<unsafe extern "C" fn() -> i32>("fun").unwrap();
+    ///    let result = fun.call();
+    ///    assert_eq!(result,3);
+    /// }
+    /// ```
     pub fn add_module(&self, m : Module<'ctx>) -> Result<(),LLVMString> {
         unsafe {
             let tsc = LLVMOrcCreateNewThreadSafeContext();
