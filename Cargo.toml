@@ -104,6 +104,7 @@ target-webassembly = []
 target-riscv = []
 target-loongarch = []
 target-eravm = []
+target-evm = []
 target-all = [
     "target-x86",
     "target-arm",
@@ -123,6 +124,7 @@ target-all = [
     "target-riscv",
     "target-loongarch",
     "target-eravm",
+    "target-evm",
 ]
 experimental = ["static-alloc"]
 nightly = ["inkwell_internals/nightly"]
