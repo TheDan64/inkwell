@@ -78,6 +78,8 @@ use llvm_sys::{
 #[llvm_versions(7.0..=latest)]
 use llvm_sys::LLVMInlineAsmDialect;
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
 // Thanks to kennytm for coming up with assert_unique_features!
@@ -383,6 +385,7 @@ pub enum AtomicRMWBinOp {
 /// See also: https://llvm.org/doxygen/CodeGen_8h_source.html
 #[repr(u32)]
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum OptimizationLevel {
     None = 0,
     Less = 1,
@@ -399,6 +402,7 @@ impl Default for OptimizationLevel {
 
 #[llvm_enum(LLVMVisibility)]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum GlobalVisibility {
     #[llvm_variant(LLVMDefaultVisibility)]
     Default,
@@ -416,6 +420,7 @@ impl Default for GlobalVisibility {
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum ThreadLocalMode {
     GeneralDynamicTLSModel,
     LocalDynamicTLSModel,
@@ -447,6 +452,7 @@ impl ThreadLocalMode {
 
 #[llvm_enum(LLVMDLLStorageClass)]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum DLLStorageClass {
     #[llvm_variant(LLVMDefaultStorageClass)]
     Default,
@@ -466,6 +472,7 @@ impl Default for DLLStorageClass {
 #[llvm_versions(7.0..=latest)]
 #[llvm_enum(LLVMInlineAsmDialect)]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum InlineAsmDialect {
     #[llvm_variant(LLVMInlineAsmDialectATT)]
     ATT,
