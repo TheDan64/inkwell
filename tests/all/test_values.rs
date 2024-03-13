@@ -609,7 +609,7 @@ fn test_metadata() {
 
 #[test]
 fn test_floats() {
-    #[cfg(not(feature = "llvm15-0"))]
+    #[cfg(not(any(feature = "llvm15-0", feature = "llvm18-0")))]
     {
         use inkwell::FloatPredicate;
 
@@ -644,7 +644,7 @@ fn test_floats() {
 
         let f64_one = f64_type.const_float(1.);
         let f64_two = f64_type.const_float(2.);
-        #[cfg(not(any(feature = "llvm16-0", feature = "llvm17-0")))]
+        #[cfg(not(any(feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
         {
             let neg_two = f64_two.const_neg();
 
@@ -1023,7 +1023,12 @@ fn test_allocations() {
     builder.position_at_end(entry_block);
 
     // handle opaque pointers
-    let ptr_type = if cfg!(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")) {
+    let ptr_type = if cfg!(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )) {
         "ptr"
     } else {
         "i32*"
@@ -1314,7 +1319,12 @@ fn test_non_fn_ptr_called() {
         let callable_value = CallableValue::try_from(i8_ptr_param).unwrap();
         builder.build_call(callable_value, &[], "call").unwrap();
     }
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     builder.build_indirect_call(i8_ptr_type.fn_type(&[], false), i8_ptr_param, &[], "call");
     builder.build_return(None).unwrap();
 
@@ -1380,7 +1390,12 @@ fn test_aggregate_returns() {
         feature = "llvm14-0"
     ))]
     builder.build_ptr_diff(ptr_param1, ptr_param2, "diff").unwrap();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     builder.build_ptr_diff(i32_ptr_type, ptr_param1, ptr_param2, "diff");
     builder
         .build_aggregate_return(&[i32_three.into(), i32_seven.into()])
