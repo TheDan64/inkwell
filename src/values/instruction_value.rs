@@ -252,6 +252,15 @@ impl<'ctx> InstructionValue<'ctx> {
         }
     }
 
+    #[llvm_versions(18.0..=latest)]
+    pub fn get_tail_call_kind(self) -> Option<super::LLVMTailCallKind> {
+        if self.get_opcode() == InstructionOpcode::Call {
+            unsafe { llvm_sys::core::LLVMGetTailCallKind(self.as_value_ref()) }.into()
+        } else {
+            None
+        }
+    }
+
     pub fn replace_all_uses_with(self, other: &InstructionValue<'ctx>) {
         self.instruction_value.replace_all_uses_with(other.as_value_ref())
     }
