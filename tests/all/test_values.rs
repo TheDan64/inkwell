@@ -7,6 +7,11 @@ use inkwell::types::{BasicType, StringRadix, VectorType};
 use inkwell::values::{AnyValue, BasicValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
 use inkwell::{AddressSpace, DLLStorageClass, GlobalVisibility, ThreadLocalMode};
 
+#[llvm_versions(7.0..=latest)]
+use llvm_sys::LLVMTailCallKind::*;
+#[cfg(feature = "llvm18-0")]
+use llvm_sys_180 as llvm_sys;
+
 use std::convert::TryFrom;
 
 // TODO: Test GlobalValues used as PointerValues
@@ -62,6 +67,31 @@ fn test_call_site() {
     assert_eq!(call_site.get_call_convention(), 2);
 
     call_site.set_alignment_attribute(AttributeLoc::Return, 16);
+}
+
+#[test]
+#[cfg(feature = "llvm18-0")]
+fn test_call_site_tail_call_attributes() {
+    let context = Context::create();
+    let builder = context.create_builder();
+    let module = context.create_module("my_mod");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_value = module.add_function("my_fn", fn_type, None);
+    let entry_bb = context.append_basic_block(fn_value, "entry");
+
+    builder.position_at_end(entry_bb);
+
+    let call_site = builder.build_call(fn_value, &[], "my_fn").unwrap();
+
+    assert!(!call_site.is_tail_call());
+    assert_eq!(call_site.get_tail_call_kind(), LLVMTailCallKindNone);
+
+    call_site.set_tail_call_kind(LLVMTailCallKindTail);
+
+    // Setting the `LLVMTailCallKindTail` implies a tail call
+    assert_eq!(call_site.get_tail_call_kind(), LLVMTailCallKindTail);
+    assert!(call_site.is_tail_call());
 }
 
 #[test]
