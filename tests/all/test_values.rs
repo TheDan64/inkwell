@@ -7,8 +7,8 @@ use inkwell::types::{BasicType, StringRadix, VectorType};
 use inkwell::values::{AnyValue, BasicValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
 use inkwell::{AddressSpace, DLLStorageClass, GlobalVisibility, ThreadLocalMode};
 
-#[llvm_versions(7.0..=latest)]
-use llvm_sys::LLVMTailCallKind::*;
+#[llvm_versions(18.0..=latest)]
+pub use llvm_sys::LLVMTailCallKind::*;
 #[cfg(feature = "llvm18-0")]
 use llvm_sys_180 as llvm_sys;
 

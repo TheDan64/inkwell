@@ -8,8 +8,6 @@ use llvm_sys::core::{
 #[llvm_versions(18.0..=latest)]
 use llvm_sys::core::{LLVMGetTailCallKind, LLVMSetTailCallKind};
 use llvm_sys::prelude::LLVMValueRef;
-#[llvm_versions(18.0..=latest)]
-use llvm_sys::LLVMTailCallKind;
 use llvm_sys::LLVMTypeKind;
 
 use crate::attributes::{Attribute, AttributeLoc};
@@ -90,6 +88,8 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// # Example
     ///
     /// ```no_run
+    /// use inkwell::values::LLVMTailCallKind::*;
+    ///
     /// let context = inkwell::context::Context::create();
     /// let builder = context.create_builder();
     /// let module = context.create_module("my_mod");
@@ -102,10 +102,10 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// let call_site = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
-    /// assert_eq!(call_site.get_tail_call_kind(), llvm_sys::LLVMTailCallKind::LLVMTailCallKindNone);
+    /// assert_eq!(call_site.get_tail_call_kind(), LLVMTailCallKindNone);
     /// ```
     #[llvm_versions(18.0..=latest)]
-    pub fn get_tail_call_kind(self) -> LLVMTailCallKind {
+    pub fn get_tail_call_kind(self) -> super::LLVMTailCallKind {
         unsafe { LLVMGetTailCallKind(self.as_value_ref()) }
     }
 
@@ -114,6 +114,8 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// # Example
     ///
     /// ```no_run
+    /// use inkwell::values::LLVMTailCallKind::*;
+    ///
     /// let context = inkwell::context::Context::create();
     /// let builder = context.create_builder();
     /// let module = context.create_module("my_mod");
@@ -126,11 +128,11 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// let call_site = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
-    /// call_site.set_tail_call_kind(llvm_sys::LLVMTailCallKind::LLVMTailCallKindTail);
-    /// assert_eq!(call_site.get_tail_call_kind(), llvm_sys::LLVMTailCallKind::LLVMTailCallKindTail);
+    /// call_site.set_tail_call_kind(LLVMTailCallKindTail);
+    /// assert_eq!(call_site.get_tail_call_kind(), LLVMTailCallKindTail);
     /// ```
     #[llvm_versions(18.0..=latest)]
-    pub fn set_tail_call_kind(self, kind: LLVMTailCallKind) {
+    pub fn set_tail_call_kind(self, kind: super::LLVMTailCallKind) {
         unsafe { LLVMSetTailCallKind(self.as_value_ref(), kind) };
     }
 

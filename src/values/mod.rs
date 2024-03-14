@@ -59,6 +59,9 @@ pub use crate::values::traits::AsValueRef;
 pub use crate::values::traits::{AggregateValue, AnyValue, BasicValue, FloatMathValue, IntMathValue, PointerMathValue};
 pub use crate::values::vec_value::VectorValue;
 
+#[llvm_versions(18.0..=latest)]
+pub use llvm_sys::LLVMTailCallKind;
+
 use llvm_sys::core::{
     LLVMDumpValue, LLVMGetFirstUse, LLVMGetSection, LLVMIsAInstruction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef,
     LLVMPrintTypeToString, LLVMPrintValueToString, LLVMReplaceAllUsesWith, LLVMSetSection, LLVMTypeOf,
