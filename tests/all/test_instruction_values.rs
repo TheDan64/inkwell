@@ -679,3 +679,47 @@ fn test_find_instruction_with_name() {
     assert!(some_number.is_some());
     assert_eq!(some_number.unwrap().get_name().unwrap().to_str(), Ok("some_number"))
 }
+
+#[llvm_versions(18.0..=latest)]
+#[test]
+fn test_fast_math_flags() {
+    let context = Context::create();
+    let module = context.create_module("testing");
+
+    let void_type = context.void_type();
+    let i32_type = context.i32_type();
+    let f32_type = context.f32_type();
+    let fn_type = void_type.fn_type(&[i32_type.into(), f32_type.into()], false);
+
+    let builder = context.create_builder();
+    let function = module.add_function("fast_math", fn_type, None);
+    let basic_block = context.append_basic_block(function, "entry");
+
+    builder.position_at_end(basic_block);
+
+    let arg1 = function.get_first_param().unwrap().into_int_value();
+    let arg2 = function.get_nth_param(1).unwrap().into_float_value();
+
+    let i32_addition = builder
+        .build_int_add(arg1, i32_type.const_int(123, false), "i32_addition")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    assert!(!i32_addition.can_use_fast_math_flags());
+
+    i32_addition.set_fast_math_flags(1);
+    assert_eq!(i32_addition.get_fast_math_flags(), None);
+
+    let f32_addition = builder
+        .build_float_add(arg2, f32_type.const_float(123.0), "f32_addition")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    assert!(f32_addition.can_use_fast_math_flags());
+    assert_eq!(f32_addition.get_fast_math_flags(), Some(0));
+
+    f32_addition.set_fast_math_flags(1);
+    assert_eq!(f32_addition.get_fast_math_flags(), Some(1));
+}

@@ -261,6 +261,37 @@ impl<'ctx> InstructionValue<'ctx> {
         }
     }
 
+    /// Check whether this instructions supports [fast math flags][0].
+    ///
+    /// [0]: https://llvm.org/docs/LangRef.html#fast-math-flags
+    #[llvm_versions(18.0..=latest)]
+    pub fn can_use_fast_math_flags(self) -> bool {
+        unsafe { llvm_sys::core::LLVMCanValueUseFastMathFlags(self.as_value_ref()) == 1 }
+    }
+
+    /// Get [fast math flags][0] of supported instructions.
+    ///
+    /// Calling this on unsupported instructions is safe and returns `None`.
+    ///
+    /// [0]: https://llvm.org/docs/LangRef.html#fast-math-flags
+    #[llvm_versions(18.0..=latest)]
+    pub fn get_fast_math_flags(self) -> Option<u32> {
+        self.can_use_fast_math_flags()
+            .then(|| unsafe { llvm_sys::core::LLVMGetFastMathFlags(self.as_value_ref()) } as u32)
+    }
+
+    /// Set [fast math flags][0] on supported instructions.
+    ///
+    /// Calling this on unsupported instructions is safe and results in a no-op.
+    ///
+    /// [0]: https://llvm.org/docs/LangRef.html#fast-math-flags
+    #[llvm_versions(18.0..=latest)]
+    pub fn set_fast_math_flags(self, flags: u32) {
+        if self.can_use_fast_math_flags() {
+            unsafe { llvm_sys::core::LLVMSetFastMathFlags(self.as_value_ref(), flags) };
+        }
+    }
+
     pub fn replace_all_uses_with(self, other: &InstructionValue<'ctx>) {
         self.instruction_value.replace_all_uses_with(other.as_value_ref())
     }
