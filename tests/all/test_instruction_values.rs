@@ -723,3 +723,45 @@ fn test_fast_math_flags() {
     f32_addition.set_fast_math_flags(1);
     assert_eq!(f32_addition.get_fast_math_flags(), Some(1));
 }
+
+#[llvm_versions(18.0..=latest)]
+#[test]
+fn test_zext_non_negative_flag() {
+    let context = Context::create();
+    let module = context.create_module("testing");
+
+    let void_type = context.void_type();
+    let i32_type = context.i32_type();
+    let i64_type = context.i64_type();
+    let fn_type = void_type.fn_type(&[i32_type.into()], false);
+
+    let builder = context.create_builder();
+    let function = module.add_function("zext_nneg", fn_type, None);
+    let basic_block = context.append_basic_block(function, "entry");
+
+    builder.position_at_end(basic_block);
+
+    let arg1 = function.get_first_param().unwrap().into_int_value();
+
+    let i32_zext = builder
+        .build_int_z_extend(arg1, i64_type, "i32_zext")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    assert_eq!(i32_zext.get_non_negative_flag(), Some(false));
+
+    i32_zext.set_non_negative_flag(true);
+
+    assert_eq!(i32_zext.get_non_negative_flag(), Some(true));
+
+    let i32_sext = builder
+        .build_int_s_extend(arg1, i64_type, "i32_sext")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    i32_sext.set_non_negative_flag(true);
+
+    assert_eq!(i32_sext.get_non_negative_flag(), None);
+}

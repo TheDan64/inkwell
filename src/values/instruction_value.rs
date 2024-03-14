@@ -252,6 +252,9 @@ impl<'ctx> InstructionValue<'ctx> {
         }
     }
 
+    /// Returns the tail call kind on call instructions.
+    ///
+    /// Other instructions return `None`.
     #[llvm_versions(18.0..=latest)]
     pub fn get_tail_call_kind(self) -> Option<super::LLVMTailCallKind> {
         if self.get_opcode() == InstructionOpcode::Call {
@@ -289,6 +292,25 @@ impl<'ctx> InstructionValue<'ctx> {
     pub fn set_fast_math_flags(self, flags: u32) {
         if self.can_use_fast_math_flags() {
             unsafe { llvm_sys::core::LLVMSetFastMathFlags(self.as_value_ref(), flags) };
+        }
+    }
+
+    /// Check if a zext instruction has the non-negative flag set.
+    ///
+    /// Calling this function on other instructions is safe and returns `None`.
+    #[llvm_versions(18.0..=latest)]
+    pub fn get_non_negative_flag(self) -> Option<bool> {
+        (self.get_opcode() == InstructionOpcode::ZExt)
+            .then(|| unsafe { llvm_sys::core::LLVMGetNNeg(self.as_value_ref()) == 1 })
+    }
+
+    /// Set the non-negative flag on zext instructions.
+    ///
+    /// Calling this function on other instructions is safe and results in a no-op.
+    #[llvm_versions(18.0..=latest)]
+    pub fn set_non_negative_flag(self, flag: bool) {
+        if self.get_opcode() == InstructionOpcode::ZExt {
+            unsafe { llvm_sys::core::LLVMSetNNeg(self.as_value_ref(), flag as i32) };
         }
     }
 
