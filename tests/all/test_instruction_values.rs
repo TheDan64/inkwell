@@ -765,3 +765,46 @@ fn test_zext_non_negative_flag() {
 
     assert_eq!(i32_sext.get_non_negative_flag(), None);
 }
+
+#[llvm_versions(18.0..=latest)]
+#[test]
+fn test_or_disjoint_flag() {
+    let context = Context::create();
+    let module = context.create_module("testing");
+
+    let void_type = context.void_type();
+    let i32_type = context.i32_type();
+    let f32_type = context.f32_type();
+    let fn_type = void_type.fn_type(&[i32_type.into(), i32_type.into()], false);
+
+    let builder = context.create_builder();
+    let function = module.add_function("disjoint_or", fn_type, None);
+    let basic_block = context.append_basic_block(function, "entry");
+
+    builder.position_at_end(basic_block);
+
+    let arg1 = function.get_first_param().unwrap().into_int_value();
+    let arg2 = function.get_nth_param(1).unwrap().into_int_value();
+
+    let i32_or = builder
+        .build_or(arg1, arg2, "i32_or")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    assert_eq!(i32_or.get_disjoint_flag(), Some(false));
+
+    i32_or.set_disjoint_flag(true);
+
+    assert_eq!(i32_or.get_disjoint_flag(), Some(true));
+
+    let i32_and = builder
+        .build_and(arg1, arg2, "i32_and")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    i32_and.set_disjoint_flag(true);
+
+    assert_eq!(i32_and.get_disjoint_flag(), None);
+}
