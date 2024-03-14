@@ -72,6 +72,7 @@ pub extern crate llvm_sys_80 as llvm_sys;
 #[cfg(feature = "llvm9-0")]
 pub extern crate llvm_sys_90 as llvm_sys;
 
+use llvm_sys::target_machine::LLVMCodeGenOptLevel;
 use llvm_sys::{
     LLVMAtomicOrdering, LLVMAtomicRMWBinOp, LLVMDLLStorageClass, LLVMIntPredicate, LLVMRealPredicate,
     LLVMThreadLocalMode, LLVMVisibility,
@@ -400,6 +401,17 @@ impl Default for OptimizationLevel {
     /// Returns the default value for `OptimizationLevel`, namely `OptimizationLevel::Default`.
     fn default() -> Self {
         OptimizationLevel::Default
+    }
+}
+
+impl From<OptimizationLevel> for LLVMCodeGenOptLevel {
+    fn from(value: OptimizationLevel) -> Self {
+        match value {
+            OptimizationLevel::None => LLVMCodeGenOptLevel::LLVMCodeGenLevelNone,
+            OptimizationLevel::Less => LLVMCodeGenOptLevel::LLVMCodeGenLevelLess,
+            OptimizationLevel::Default => LLVMCodeGenOptLevel::LLVMCodeGenLevelDefault,
+            OptimizationLevel::Aggressive => LLVMCodeGenOptLevel::LLVMCodeGenLevelAggressive,
+        }
     }
 }
 
