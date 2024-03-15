@@ -18,9 +18,10 @@ use llvm_sys::target_machine::{
 };
 #[llvm_versions(18.0..=latest)]
 use llvm_sys::target_machine::{
-    LLVMCreateTargetMachineOptions, LLVMDisposeTargetMachineOptions, LLVMTargetMachineOptionsRef,
-    LLVMTargetMachineOptionsSetABI, LLVMTargetMachineOptionsSetCPU, LLVMTargetMachineOptionsSetCodeGenOptLevel,
-    LLVMTargetMachineOptionsSetCodeModel, LLVMTargetMachineOptionsSetFeatures, LLVMTargetMachineOptionsSetRelocMode,
+    LLVMCreateTargetMachineOptions, LLVMCreateTargetMachineWithOptions, LLVMDisposeTargetMachineOptions,
+    LLVMTargetMachineOptionsRef, LLVMTargetMachineOptionsSetABI, LLVMTargetMachineOptionsSetCPU,
+    LLVMTargetMachineOptionsSetCodeGenOptLevel, LLVMTargetMachineOptionsSetCodeModel,
+    LLVMTargetMachineOptionsSetFeatures, LLVMTargetMachineOptionsSetRelocMode,
 };
 use once_cell::sync::Lazy;
 use std::sync::RwLock;
@@ -940,6 +941,37 @@ impl Target {
         unsafe { Some(TargetMachine::new(target_machine)) }
     }
 
+    /// Create a target machine from given [TargetMachineOptions].
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::targets::{Target, TargetTriple, TargetMachineOptions};
+    ///
+    /// Target::initialize_x86(&InitializationConfig::default());
+    ///
+    /// let triple = TargetTriple::create("x86_64-pc-linux-gnu");
+    /// let target = Target::from_triple(&triple).unwrap();
+    /// let options = TargetMachineOptions::default()
+    ///     .set_cpu("x86-64")
+    ///     .set_features("+avx2")
+    ///     .set_abi("sysv")
+    ///     .set_level(OptimizationLevel::Aggressive);
+    ///
+    /// let target_machine = target.create_target_machine_from_options(&triple, options).unwrap();
+    ///
+    /// assert_eq!(target_machine.get_cpu().to_str(), Ok("x86-64"));
+    /// assert_eq!(target_machine.get_feature_string().to_str(), Ok("+avx2"));
+    /// ```
+    #[llvm_versions(18.0..=latest)]
+    pub fn create_target_machine_from_options(
+        &self,
+        triple: &TargetTriple,
+        options: TargetMachineOptions,
+    ) -> Option<TargetMachine> {
+        options.into_target_machine(self.target, triple)
+    }
+
     pub fn get_first() -> Option<Self> {
         let target = {
             let _guard = TARGET_LOCK.read().unwrap_or_else(|e| e.into_inner());
@@ -1389,12 +1421,17 @@ impl Drop for TargetData {
     }
 }
 
+/// LLVM target machine options provide another way to create target machines,
+/// used with [Target::create_target_machine_from_options].
+///
+/// The option structure exposes an additional setting (i.e., the target ABI)
+/// and provides default values for unspecified settings.
 #[llvm_versions(18.0..=latest)]
 #[derive(Default, Debug)]
-pub struct TargetMachineOptionsBuilder(pub(crate) Option<LLVMTargetMachineOptionsRef>);
+pub struct TargetMachineOptions(Option<LLVMTargetMachineOptionsRef>);
 
 #[llvm_versions(18.0..=latest)]
-impl TargetMachineOptionsBuilder {
+impl TargetMachineOptions {
     pub fn new() -> Self {
         Default::default()
     }
@@ -1438,15 +1475,28 @@ impl TargetMachineOptionsBuilder {
         self
     }
 
-    fn inner(&mut self) -> LLVMTargetMachineOptionsRef {
-        *self
-            .0
-            .get_or_insert_with(|| unsafe { LLVMCreateTargetMachineOptions() })
+    fn into_target_machine(mut self, target: LLVMTargetRef, triple: &TargetTriple) -> Option<TargetMachine> {
+        let target_machine = unsafe { LLVMCreateTargetMachineWithOptions(target, triple.as_ptr(), self.inner()) };
+
+        if target_machine.is_null() {
+            return None;
+        }
+
+        unsafe { Some(TargetMachine::new(target_machine)) }
+    }
+
+    /// SAFETY:
+    /// - The internal `LLVMCreateTargetMachineOptionsRef` structure leaks memory
+    /// if not disposed via `fn LLVMCreateTargetMachineWithOptions()`.
+    /// - The only way to access it is via this private method.
+    /// - Disposal is taken care of automatically in `Drop::drop`.
+    unsafe fn inner(&mut self) -> LLVMTargetMachineOptionsRef {
+        *self.0.get_or_insert_with(|| LLVMCreateTargetMachineOptions())
     }
 }
 
 #[llvm_versions(18.0..=latest)]
-impl Drop for TargetMachineOptionsBuilder {
+impl Drop for TargetMachineOptions {
     fn drop(&mut self) {
         if let Some(inner) = self.0 {
             unsafe { LLVMDisposeTargetMachineOptions(inner) };
