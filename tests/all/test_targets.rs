@@ -11,6 +11,28 @@ use std::fs::{remove_file, File};
 use std::io::Read;
 use std::str::from_utf8;
 
+fn write_target_machine_to_memory_buffer(target_machine: TargetMachine) {
+    let context = Context::create();
+    let module = context.create_module("my_module");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+
+    module.add_function("my_fn", fn_type, None);
+
+    let buffer = target_machine
+        .write_to_memory_buffer(&module, FileType::Assembly)
+        .unwrap();
+
+    assert!(!buffer.get_size() > 0);
+
+    let string = from_utf8(buffer.as_slice()).unwrap();
+
+    assert!(string.contains(".text"));
+    assert!(string.contains(".file"));
+    assert!(string.contains("my_module"));
+    assert!(string.contains(".section"));
+}
+
 // REVIEW: Inconsistently failing on different tries :(
 // #[test]
 // fn test_target() {
@@ -390,23 +412,45 @@ fn test_write_target_machine_to_memory_buffer() {
         )
         .unwrap();
 
-    let context = Context::create();
-    let module = context.create_module("my_module");
-    let void_type = context.void_type();
-    let fn_type = void_type.fn_type(&[], false);
+    write_target_machine_to_memory_buffer(target_machine);
+}
 
-    module.add_function("my_fn", fn_type, None);
+#[llvm_versions(18.0..=latest)]
+#[test]
+fn test_create_target_machine_from_default_options() {
+    Target::initialize_x86(&InitializationConfig::default());
 
-    let buffer = target_machine
-        .write_to_memory_buffer(&module, FileType::Assembly)
-        .unwrap();
+    let triple = TargetTriple::create("x86_64-pc-linux-gnu");
+    let target = Target::from_triple(&triple).unwrap();
+    let options = Default::default();
 
-    assert!(!buffer.get_size() > 0);
+    let target_machine = target.create_target_machine_from_options(&triple, options).unwrap();
 
-    let string = from_utf8(buffer.as_slice()).unwrap();
+    assert_eq!(target_machine.get_cpu().to_str(), Ok(""));
+    assert_eq!(target_machine.get_feature_string().to_str(), Ok(""));
 
-    assert!(string.contains(".text"));
-    assert!(string.contains(".file"));
-    assert!(string.contains("my_module"));
-    assert!(string.contains(".section"));
+    write_target_machine_to_memory_buffer(target_machine);
+}
+
+#[llvm_versions(18.0..=latest)]
+#[test]
+fn test_create_target_machine_from_options() {
+    Target::initialize_x86(&InitializationConfig::default());
+
+    let triple = TargetTriple::create("x86_64-pc-linux-gnu");
+    let target = Target::from_triple(&triple).unwrap();
+    let options = inkwell::targets::TargetMachineOptions::new()
+        .set_cpu("x86-64")
+        .set_features("+avx2")
+        .set_abi("sysv")
+        .set_level(OptimizationLevel::Aggressive)
+        .set_reloc_mode(RelocMode::PIC)
+        .set_code_model(CodeModel::JITDefault);
+
+    let target_machine = target.create_target_machine_from_options(&triple, options).unwrap();
+
+    assert_eq!(target_machine.get_cpu().to_str(), Ok("x86-64"));
+    assert_eq!(target_machine.get_feature_string().to_str(), Ok("+avx2"));
+
+    write_target_machine_to_memory_buffer(target_machine);
 }

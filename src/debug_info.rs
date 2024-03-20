@@ -193,7 +193,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm14-0",
             feature = "llvm15-0",
             feature = "llvm16-0",
-            feature = "llvm17-0"
+            feature = "llvm17-0",
+            feature = "llvm18-0"
         ))]
         sysroot: &str,
         #[cfg(any(
@@ -203,7 +204,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm14-0",
             feature = "llvm15-0",
             feature = "llvm16-0",
-            feature = "llvm17-0"
+            feature = "llvm17-0",
+            feature = "llvm18-0"
         ))]
         sdk: &str,
     ) -> (Self, DICompileUnit<'ctx>) {
@@ -241,7 +243,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 feature = "llvm14-0",
                 feature = "llvm15-0",
                 feature = "llvm16-0",
-                feature = "llvm17-0"
+                feature = "llvm17-0",
+                feature = "llvm18-0"
             ))]
             sysroot,
             #[cfg(any(
@@ -251,7 +254,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 feature = "llvm14-0",
                 feature = "llvm15-0",
                 feature = "llvm16-0",
-                feature = "llvm17-0"
+                feature = "llvm17-0",
+                feature = "llvm18-0"
             ))]
             sdk,
         );
@@ -297,7 +301,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm14-0",
             feature = "llvm15-0",
             feature = "llvm16-0",
-            feature = "llvm17-0"
+            feature = "llvm17-0",
+            feature = "llvm18-0"
         ))]
         sysroot: &str,
         #[cfg(any(
@@ -307,7 +312,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm14-0",
             feature = "llvm15-0",
             feature = "llvm16-0",
-            feature = "llvm17-0"
+            feature = "llvm17-0",
+            feature = "llvm18-0"
         ))]
         sdk: &str,
     ) -> DICompileUnit<'ctx> {
@@ -348,7 +354,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 feature = "llvm14-0",
                 feature = "llvm15-0",
                 feature = "llvm16-0",
-                feature = "llvm17-0"
+                feature = "llvm17-0",
+                feature = "llvm18-0"
             ))]
             {
                 LLVMDIBuilderCreateCompileUnit(

@@ -7,6 +7,11 @@ use inkwell::types::{BasicType, StringRadix, VectorType};
 use inkwell::values::{AnyValue, BasicValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
 use inkwell::{AddressSpace, DLLStorageClass, GlobalVisibility, ThreadLocalMode};
 
+#[llvm_versions(18.0..=latest)]
+pub use llvm_sys::LLVMTailCallKind::*;
+#[cfg(feature = "llvm18-0")]
+use llvm_sys_180 as llvm_sys;
+
 use std::convert::TryFrom;
 
 // TODO: Test GlobalValues used as PointerValues
@@ -62,6 +67,35 @@ fn test_call_site() {
     assert_eq!(call_site.get_call_convention(), 2);
 
     call_site.set_alignment_attribute(AttributeLoc::Return, 16);
+}
+
+#[test]
+#[cfg(feature = "llvm18-0")]
+fn test_call_site_tail_call_attributes() {
+    let context = Context::create();
+    let builder = context.create_builder();
+    let module = context.create_module("my_mod");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_value = module.add_function("my_fn", fn_type, None);
+    let entry_bb = context.append_basic_block(fn_value, "entry");
+
+    builder.position_at_end(entry_bb);
+
+    let call_site = builder.build_call(fn_value, &[], "my_fn").unwrap();
+
+    assert!(!call_site.is_tail_call());
+    assert_eq!(call_site.get_tail_call_kind(), LLVMTailCallKindNone);
+    assert_eq!(
+        call_site.try_as_basic_value().right().unwrap().get_tail_call_kind(),
+        Some(LLVMTailCallKindNone)
+    );
+
+    call_site.set_tail_call_kind(LLVMTailCallKindTail);
+
+    // Setting the `LLVMTailCallKindTail` implies a tail call
+    assert_eq!(call_site.get_tail_call_kind(), LLVMTailCallKindTail);
+    assert!(call_site.is_tail_call());
 }
 
 #[test]
@@ -609,7 +643,7 @@ fn test_metadata() {
 
 #[test]
 fn test_floats() {
-    #[cfg(not(feature = "llvm15-0"))]
+    #[cfg(not(any(feature = "llvm15-0", feature = "llvm18-0")))]
     {
         use inkwell::FloatPredicate;
 
@@ -644,7 +678,7 @@ fn test_floats() {
 
         let f64_one = f64_type.const_float(1.);
         let f64_two = f64_type.const_float(2.);
-        #[cfg(not(any(feature = "llvm16-0", feature = "llvm17-0")))]
+        #[cfg(not(any(feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
         {
             let neg_two = f64_two.const_neg();
 
@@ -1023,7 +1057,12 @@ fn test_allocations() {
     builder.position_at_end(entry_block);
 
     // handle opaque pointers
-    let ptr_type = if cfg!(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")) {
+    let ptr_type = if cfg!(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )) {
         "ptr"
     } else {
         "i32*"
@@ -1314,7 +1353,12 @@ fn test_non_fn_ptr_called() {
         let callable_value = CallableValue::try_from(i8_ptr_param).unwrap();
         builder.build_call(callable_value, &[], "call").unwrap();
     }
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     builder.build_indirect_call(i8_ptr_type.fn_type(&[], false), i8_ptr_param, &[], "call");
     builder.build_return(None).unwrap();
 
@@ -1380,7 +1424,12 @@ fn test_aggregate_returns() {
         feature = "llvm14-0"
     ))]
     builder.build_ptr_diff(ptr_param1, ptr_param2, "diff").unwrap();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     builder.build_ptr_diff(i32_ptr_type, ptr_param1, ptr_param2, "diff");
     builder
         .build_aggregate_return(&[i32_three.into(), i32_seven.into()])

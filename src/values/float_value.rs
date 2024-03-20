@@ -1,16 +1,17 @@
+#[llvm_versions(4.0..=17.0)]
+use crate::types::IntType;
 #[llvm_versions(4.0..=15.0)]
 use llvm_sys::core::LLVMConstFNeg;
-use llvm_sys::core::{
-    LLVMConstFCmp, LLVMConstFPCast, LLVMConstFPExt, LLVMConstFPToSI, LLVMConstFPToUI, LLVMConstFPTrunc,
-    LLVMConstRealGetDouble,
-};
+use llvm_sys::core::{LLVMConstFCmp, LLVMConstRealGetDouble};
+#[llvm_versions(4.0..=17.0)]
+use llvm_sys::core::{LLVMConstFPCast, LLVMConstFPExt, LLVMConstFPToSI, LLVMConstFPToUI, LLVMConstFPTrunc};
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::convert::TryFrom;
 use std::ffi::CStr;
 use std::fmt::{self, Display};
 
-use crate::types::{AsTypeRef, FloatType, IntType};
+use crate::types::{AsTypeRef, FloatType};
 use crate::values::traits::AsValueRef;
 use crate::values::{InstructionValue, IntValue, Value};
 use crate::FloatPredicate;
@@ -107,22 +108,27 @@ impl<'ctx> FloatValue<'ctx> {
         unsafe { FloatValue::new(LLVMConstFRem(self.as_value_ref(), rhs.as_value_ref())) }
     }
 
+    #[llvm_versions(4.0..=17.0)]
     pub fn const_cast(self, float_type: FloatType<'ctx>) -> Self {
         unsafe { FloatValue::new(LLVMConstFPCast(self.as_value_ref(), float_type.as_type_ref())) }
     }
 
+    #[llvm_versions(4.0..=17.0)]
     pub fn const_to_unsigned_int(self, int_type: IntType<'ctx>) -> IntValue<'ctx> {
         unsafe { IntValue::new(LLVMConstFPToUI(self.as_value_ref(), int_type.as_type_ref())) }
     }
 
+    #[llvm_versions(4.0..=17.0)]
     pub fn const_to_signed_int(self, int_type: IntType<'ctx>) -> IntValue<'ctx> {
         unsafe { IntValue::new(LLVMConstFPToSI(self.as_value_ref(), int_type.as_type_ref())) }
     }
 
+    #[llvm_versions(4.0..=17.0)]
     pub fn const_truncate(self, float_type: FloatType<'ctx>) -> FloatValue<'ctx> {
         unsafe { FloatValue::new(LLVMConstFPTrunc(self.as_value_ref(), float_type.as_type_ref())) }
     }
 
+    #[llvm_versions(4.0..=17.0)]
     pub fn const_extend(self, float_type: FloatType<'ctx>) -> FloatValue<'ctx> {
         unsafe { FloatValue::new(LLVMConstFPExt(self.as_value_ref(), float_type.as_type_ref())) }
     }

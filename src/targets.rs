@@ -16,6 +16,13 @@ use llvm_sys::target_machine::{
     LLVMTargetHasTargetMachine, LLVMTargetMachineEmitToFile, LLVMTargetMachineEmitToMemoryBuffer, LLVMTargetMachineRef,
     LLVMTargetRef,
 };
+#[llvm_versions(18.0..=latest)]
+use llvm_sys::target_machine::{
+    LLVMCreateTargetMachineOptions, LLVMCreateTargetMachineWithOptions, LLVMDisposeTargetMachineOptions,
+    LLVMTargetMachineOptionsRef, LLVMTargetMachineOptionsSetABI, LLVMTargetMachineOptionsSetCPU,
+    LLVMTargetMachineOptionsSetCodeGenOptLevel, LLVMTargetMachineOptionsSetCodeModel,
+    LLVMTargetMachineOptionsSetFeatures, LLVMTargetMachineOptionsSetRelocMode,
+};
 use once_cell::sync::Lazy;
 use std::sync::RwLock;
 
@@ -36,8 +43,9 @@ use std::mem::MaybeUninit;
 use std::path::Path;
 use std::ptr;
 
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Default, Debug, PartialEq, Eq, Copy, Clone)]
 pub enum CodeModel {
+    #[default]
     Default,
     JITDefault,
     Small,
@@ -46,12 +54,37 @@ pub enum CodeModel {
     Large,
 }
 
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+impl From<CodeModel> for LLVMCodeModel {
+    fn from(value: CodeModel) -> Self {
+        match value {
+            CodeModel::Default => LLVMCodeModel::LLVMCodeModelDefault,
+            CodeModel::JITDefault => LLVMCodeModel::LLVMCodeModelJITDefault,
+            CodeModel::Small => LLVMCodeModel::LLVMCodeModelSmall,
+            CodeModel::Kernel => LLVMCodeModel::LLVMCodeModelKernel,
+            CodeModel::Medium => LLVMCodeModel::LLVMCodeModelMedium,
+            CodeModel::Large => LLVMCodeModel::LLVMCodeModelLarge,
+        }
+    }
+}
+
+#[derive(Default, Debug, PartialEq, Eq, Copy, Clone)]
 pub enum RelocMode {
+    #[default]
     Default,
     Static,
     PIC,
     DynamicNoPic,
+}
+
+impl From<RelocMode> for LLVMRelocMode {
+    fn from(value: RelocMode) -> Self {
+        match value {
+            RelocMode::Default => LLVMRelocMode::LLVMRelocDefault,
+            RelocMode::Static => LLVMRelocMode::LLVMRelocStatic,
+            RelocMode::PIC => LLVMRelocMode::LLVMRelocPIC,
+            RelocMode::DynamicNoPic => LLVMRelocMode::LLVMRelocDynamicNoPic,
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -888,35 +921,16 @@ impl Target {
     ) -> Option<TargetMachine> {
         let cpu = to_c_str(cpu);
         let features = to_c_str(features);
-        let level = match level {
-            OptimizationLevel::None => LLVMCodeGenOptLevel::LLVMCodeGenLevelNone,
-            OptimizationLevel::Less => LLVMCodeGenOptLevel::LLVMCodeGenLevelLess,
-            OptimizationLevel::Default => LLVMCodeGenOptLevel::LLVMCodeGenLevelDefault,
-            OptimizationLevel::Aggressive => LLVMCodeGenOptLevel::LLVMCodeGenLevelAggressive,
-        };
-        let code_model = match code_model {
-            CodeModel::Default => LLVMCodeModel::LLVMCodeModelDefault,
-            CodeModel::JITDefault => LLVMCodeModel::LLVMCodeModelJITDefault,
-            CodeModel::Small => LLVMCodeModel::LLVMCodeModelSmall,
-            CodeModel::Kernel => LLVMCodeModel::LLVMCodeModelKernel,
-            CodeModel::Medium => LLVMCodeModel::LLVMCodeModelMedium,
-            CodeModel::Large => LLVMCodeModel::LLVMCodeModelLarge,
-        };
-        let reloc_mode = match reloc_mode {
-            RelocMode::Default => LLVMRelocMode::LLVMRelocDefault,
-            RelocMode::Static => LLVMRelocMode::LLVMRelocStatic,
-            RelocMode::PIC => LLVMRelocMode::LLVMRelocPIC,
-            RelocMode::DynamicNoPic => LLVMRelocMode::LLVMRelocDynamicNoPic,
-        };
+
         let target_machine = unsafe {
             LLVMCreateTargetMachine(
                 self.target,
                 triple.as_ptr(),
                 cpu.as_ptr(),
                 features.as_ptr(),
-                level,
-                reloc_mode,
-                code_model,
+                level.into(),
+                reloc_mode.into(),
+                code_model.into(),
             )
         };
 
@@ -925,6 +939,37 @@ impl Target {
         }
 
         unsafe { Some(TargetMachine::new(target_machine)) }
+    }
+
+    /// Create a target machine from given [TargetMachineOptions].
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::targets::{Target, TargetTriple, TargetMachineOptions};
+    ///
+    /// Target::initialize_x86(&InitializationConfig::default());
+    ///
+    /// let triple = TargetTriple::create("x86_64-pc-linux-gnu");
+    /// let target = Target::from_triple(&triple).unwrap();
+    /// let options = TargetMachineOptions::default()
+    ///     .set_cpu("x86-64")
+    ///     .set_features("+avx2")
+    ///     .set_abi("sysv")
+    ///     .set_level(OptimizationLevel::Aggressive);
+    ///
+    /// let target_machine = target.create_target_machine_from_options(&triple, options).unwrap();
+    ///
+    /// assert_eq!(target_machine.get_cpu().to_str(), Ok("x86-64"));
+    /// assert_eq!(target_machine.get_feature_string().to_str(), Ok("+avx2"));
+    /// ```
+    #[llvm_versions(18.0..=latest)]
+    pub fn create_target_machine_from_options(
+        &self,
+        triple: &TargetTriple,
+        options: TargetMachineOptions,
+    ) -> Option<TargetMachine> {
+        options.into_target_machine(self.target, triple)
     }
 
     pub fn get_first() -> Option<Self> {
@@ -1373,5 +1418,88 @@ impl TargetData {
 impl Drop for TargetData {
     fn drop(&mut self) {
         unsafe { LLVMDisposeTargetData(self.target_data) }
+    }
+}
+
+/// LLVM target machine options provide another way to create target machines,
+/// used with [Target::create_target_machine_from_options].
+///
+/// The option structure exposes an additional setting (i.e., the target ABI)
+/// and provides default values for unspecified settings.
+#[llvm_versions(18.0..=latest)]
+#[derive(Default, Debug)]
+pub struct TargetMachineOptions(Option<LLVMTargetMachineOptionsRef>);
+
+#[llvm_versions(18.0..=latest)]
+impl TargetMachineOptions {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    pub fn set_cpu(mut self, cpu: &str) -> Self {
+        let cpu = to_c_str(cpu);
+        unsafe { LLVMTargetMachineOptionsSetCPU(self.inner(), cpu.as_ptr()) };
+
+        self
+    }
+
+    pub fn set_features(mut self, features: &str) -> Self {
+        let features = to_c_str(features);
+        unsafe { LLVMTargetMachineOptionsSetFeatures(self.inner(), features.as_ptr()) };
+
+        self
+    }
+
+    pub fn set_abi(mut self, abi: &str) -> Self {
+        let abi = to_c_str(abi);
+        unsafe { LLVMTargetMachineOptionsSetABI(self.inner(), abi.as_ptr()) };
+
+        self
+    }
+
+    pub fn set_level(mut self, level: OptimizationLevel) -> Self {
+        unsafe { LLVMTargetMachineOptionsSetCodeGenOptLevel(self.inner(), level.into()) };
+
+        self
+    }
+
+    pub fn set_reloc_mode(mut self, reloc_mode: RelocMode) -> Self {
+        unsafe { LLVMTargetMachineOptionsSetRelocMode(self.inner(), reloc_mode.into()) }
+
+        self
+    }
+
+    pub fn set_code_model(mut self, code_model: CodeModel) -> Self {
+        unsafe { LLVMTargetMachineOptionsSetCodeModel(self.inner(), code_model.into()) };
+
+        self
+    }
+
+    fn into_target_machine(mut self, target: LLVMTargetRef, triple: &TargetTriple) -> Option<TargetMachine> {
+        let target_machine = unsafe { LLVMCreateTargetMachineWithOptions(target, triple.as_ptr(), self.inner()) };
+
+        if target_machine.is_null() {
+            return None;
+        }
+
+        unsafe { Some(TargetMachine::new(target_machine)) }
+    }
+
+    /// SAFETY:
+    /// - The internal `LLVMCreateTargetMachineOptionsRef` structure leaks memory
+    /// if not disposed via `fn LLVMCreateTargetMachineWithOptions()`.
+    /// - The only way to access it is via this private method.
+    /// - Disposal is taken care of automatically in `Drop::drop`.
+    unsafe fn inner(&mut self) -> LLVMTargetMachineOptionsRef {
+        *self.0.get_or_insert_with(|| LLVMCreateTargetMachineOptions())
+    }
+}
+
+#[llvm_versions(18.0..=latest)]
+impl Drop for TargetMachineOptions {
+    fn drop(&mut self) {
+        if let Some(inner) = self.0 {
+            unsafe { LLVMDisposeTargetMachineOptions(inner) };
+        }
     }
 }
