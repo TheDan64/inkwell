@@ -70,7 +70,12 @@ fn test_build_call() {
         feature = "llvm14-0"
     ))]
     let load = builder.build_load(alloca, "load").unwrap().into_pointer_value();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let load = builder
         .build_load(fn_ptr_type, alloca, "load")
         .unwrap()
@@ -94,7 +99,12 @@ fn test_build_call() {
         let callable_value = CallableValue::try_from(load).unwrap();
         builder.build_call(callable_value, &[], "call").unwrap();
     }
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     builder.build_indirect_call(fn_type2, load, &[], "call");
     builder.build_return(None).unwrap();
 
@@ -394,7 +404,12 @@ fn test_null_checked_ptr_ops() {
         feature = "llvm14-0"
     ))]
     let index1 = builder.build_load(new_ptr, "deref").unwrap();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let index1 = builder.build_load(i8_ptr_type, new_ptr, "deref").unwrap();
 
     builder.build_return(Some(&index1)).unwrap();
@@ -448,7 +463,12 @@ fn test_null_checked_ptr_ops() {
         feature = "llvm14-0"
     ))]
     let index1 = builder.build_load(new_ptr, "deref").unwrap();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let index1 = builder.build_load(i8_ptr_type, new_ptr, "deref").unwrap();
 
     builder.build_return(Some(&index1)).unwrap();
@@ -984,7 +1004,12 @@ fn test_insert_value() {
         .build_load(array_alloca, "array_load")
         .unwrap()
         .into_array_value();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let array = builder
         .build_load(array_type, array_alloca, "array_load")
         .unwrap()
@@ -1038,7 +1063,12 @@ fn test_insert_value() {
         .build_load(struct_alloca, "struct_load")
         .unwrap()
         .into_struct_value();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let struct_value = builder
         .build_load(struct_type, struct_alloca, "struct_load")
         .unwrap()
@@ -1207,7 +1237,12 @@ fn run_memcpy_on<'ctx>(
             feature = "llvm14-0"
         ))]
         let elem_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") }.unwrap();
-        #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+        #[cfg(any(
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-0"
+        ))]
         let elem_ptr = unsafe {
             builder
                 .build_in_bounds_gep(element_type, array_ptr, &[index_val], "index")
@@ -1237,7 +1272,12 @@ fn run_memcpy_on<'ctx>(
         feature = "llvm14-0"
     ))]
     let dest_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") }.unwrap();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let dest_ptr = unsafe {
         builder
             .build_in_bounds_gep(element_type, array_ptr, &[index_val], "index")
@@ -1317,7 +1357,12 @@ fn run_memmove_on<'ctx>(
             feature = "llvm14-0"
         ))]
         let elem_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") }.unwrap();
-        #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+        #[cfg(any(
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-0"
+        ))]
         let elem_ptr = unsafe {
             builder
                 .build_in_bounds_gep(element_type, array_ptr, &[index_val], "index")
@@ -1347,7 +1392,12 @@ fn run_memmove_on<'ctx>(
         feature = "llvm14-0"
     ))]
     let dest_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") }.unwrap();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let dest_ptr = unsafe {
         builder
             .build_in_bounds_gep(element_type, array_ptr, &[index_val], "index")
@@ -1434,7 +1484,12 @@ fn run_memset_on<'ctx>(
         feature = "llvm14-0"
     ))]
     let part_2 = unsafe { builder.build_in_bounds_gep(array_ptr, &[index], "index") }.unwrap();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let part_2 = unsafe {
         builder
             .build_in_bounds_gep(element_type, array_ptr, &[index], "index")
@@ -1798,7 +1853,12 @@ fn test_safe_struct_gep() {
         assert!(builder.build_struct_gep(struct_ptr, 1, "struct_gep").is_ok());
         assert!(builder.build_struct_gep(struct_ptr, 2, "struct_gep").is_err());
     }
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     {
         assert!(builder.build_struct_gep(i32_ty, i32_ptr, 0, "struct_gep").is_err());
         assert!(builder.build_struct_gep(i32_ty, i32_ptr, 10, "struct_gep").is_err());

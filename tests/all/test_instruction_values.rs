@@ -495,7 +495,12 @@ fn test_mem_instructions() {
         feature = "llvm14-0"
     ))]
     let load = builder.build_load(arg1, "").unwrap();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let load = builder.build_load(f32_type, arg1, "").unwrap();
     let load_instruction = load.as_instruction_value().unwrap();
 
@@ -574,7 +579,12 @@ fn test_atomic_ordering_mem_instructions() {
         feature = "llvm14-0"
     ))]
     let load = builder.build_load(arg1, "").unwrap();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let load = builder.build_load(f32_type, arg1, "").unwrap();
     let load_instruction = load.as_instruction_value().unwrap();
 
@@ -668,4 +678,133 @@ fn test_find_instruction_with_name() {
 
     assert!(some_number.is_some());
     assert_eq!(some_number.unwrap().get_name().unwrap().to_str(), Ok("some_number"))
+}
+
+#[llvm_versions(18.0..=latest)]
+#[test]
+fn test_fast_math_flags() {
+    let context = Context::create();
+    let module = context.create_module("testing");
+
+    let void_type = context.void_type();
+    let i32_type = context.i32_type();
+    let f32_type = context.f32_type();
+    let fn_type = void_type.fn_type(&[i32_type.into(), f32_type.into()], false);
+
+    let builder = context.create_builder();
+    let function = module.add_function("fast_math", fn_type, None);
+    let basic_block = context.append_basic_block(function, "entry");
+
+    builder.position_at_end(basic_block);
+
+    let arg1 = function.get_first_param().unwrap().into_int_value();
+    let arg2 = function.get_nth_param(1).unwrap().into_float_value();
+
+    let i32_addition = builder
+        .build_int_add(arg1, i32_type.const_int(123, false), "i32_addition")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    assert!(!i32_addition.can_use_fast_math_flags());
+
+    i32_addition.set_fast_math_flags(1);
+    assert_eq!(i32_addition.get_fast_math_flags(), None);
+
+    let f32_addition = builder
+        .build_float_add(arg2, f32_type.const_float(123.0), "f32_addition")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    assert!(f32_addition.can_use_fast_math_flags());
+    assert_eq!(f32_addition.get_fast_math_flags(), Some(0));
+
+    f32_addition.set_fast_math_flags(1);
+    assert_eq!(f32_addition.get_fast_math_flags(), Some(1));
+}
+
+#[llvm_versions(18.0..=latest)]
+#[test]
+fn test_zext_non_negative_flag() {
+    let context = Context::create();
+    let module = context.create_module("testing");
+
+    let void_type = context.void_type();
+    let i32_type = context.i32_type();
+    let i64_type = context.i64_type();
+    let fn_type = void_type.fn_type(&[i32_type.into()], false);
+
+    let builder = context.create_builder();
+    let function = module.add_function("zext_nneg", fn_type, None);
+    let basic_block = context.append_basic_block(function, "entry");
+
+    builder.position_at_end(basic_block);
+
+    let arg1 = function.get_first_param().unwrap().into_int_value();
+
+    let i32_zext = builder
+        .build_int_z_extend(arg1, i64_type, "i32_zext")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    assert_eq!(i32_zext.get_non_negative_flag(), Some(false));
+
+    i32_zext.set_non_negative_flag(true);
+
+    assert_eq!(i32_zext.get_non_negative_flag(), Some(true));
+
+    let i32_sext = builder
+        .build_int_s_extend(arg1, i64_type, "i32_sext")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    i32_sext.set_non_negative_flag(true);
+
+    assert_eq!(i32_sext.get_non_negative_flag(), None);
+}
+
+#[llvm_versions(18.0..=latest)]
+#[test]
+fn test_or_disjoint_flag() {
+    let context = Context::create();
+    let module = context.create_module("testing");
+
+    let void_type = context.void_type();
+    let i32_type = context.i32_type();
+    let f32_type = context.f32_type();
+    let fn_type = void_type.fn_type(&[i32_type.into(), i32_type.into()], false);
+
+    let builder = context.create_builder();
+    let function = module.add_function("disjoint_or", fn_type, None);
+    let basic_block = context.append_basic_block(function, "entry");
+
+    builder.position_at_end(basic_block);
+
+    let arg1 = function.get_first_param().unwrap().into_int_value();
+    let arg2 = function.get_nth_param(1).unwrap().into_int_value();
+
+    let i32_or = builder
+        .build_or(arg1, arg2, "i32_or")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    assert_eq!(i32_or.get_disjoint_flag(), Some(false));
+
+    i32_or.set_disjoint_flag(true);
+
+    assert_eq!(i32_or.get_disjoint_flag(), Some(true));
+
+    let i32_and = builder
+        .build_and(arg1, arg2, "i32_and")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    i32_and.set_disjoint_flag(true);
+
+    assert_eq!(i32_and.get_disjoint_flag(), None);
 }

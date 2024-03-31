@@ -20,10 +20,20 @@ mod struct_value;
 mod traits;
 mod vec_value;
 
-#[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+#[cfg(not(any(
+    feature = "llvm15-0",
+    feature = "llvm16-0",
+    feature = "llvm17-0",
+    feature = "llvm18-0"
+)))]
 mod callable_value;
 
-#[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+#[cfg(not(any(
+    feature = "llvm15-0",
+    feature = "llvm16-0",
+    feature = "llvm17-0",
+    feature = "llvm18-0"
+)))]
 pub use crate::values::callable_value::CallableValue;
 
 use crate::support::{to_c_str, LLVMString};
@@ -48,6 +58,9 @@ pub use crate::values::struct_value::StructValue;
 pub use crate::values::traits::AsValueRef;
 pub use crate::values::traits::{AggregateValue, AnyValue, BasicValue, FloatMathValue, IntMathValue, PointerMathValue};
 pub use crate::values::vec_value::VectorValue;
+
+#[llvm_versions(18.0..=latest)]
+pub use llvm_sys::LLVMTailCallKind;
 
 use llvm_sys::core::{
     LLVMDumpValue, LLVMGetFirstUse, LLVMGetSection, LLVMIsAInstruction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef,

@@ -5,6 +5,8 @@ use llvm_sys::core::{
     LLVMGetInstructionCallConv, LLVMGetTypeKind, LLVMIsTailCall, LLVMSetInstrParamAlignment,
     LLVMSetInstructionCallConv, LLVMSetTailCall, LLVMTypeOf,
 };
+#[llvm_versions(18.0..=latest)]
+use llvm_sys::core::{LLVMGetTailCallKind, LLVMSetTailCallKind};
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMTypeKind;
 
@@ -79,6 +81,59 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// ```
     pub fn is_tail_call(self) -> bool {
         unsafe { LLVMIsTailCall(self.as_value_ref()) == 1 }
+    }
+
+    /// Returns tail, musttail, and notail attributes.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::values::LLVMTailCallKind::*;
+    ///
+    /// let context = inkwell::context::Context::create();
+    /// let builder = context.create_builder();
+    /// let module = context.create_module("my_mod");
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let fn_value = module.add_function("my_fn", fn_type, None);
+    /// let entry_bb = context.append_basic_block(fn_value, "entry");
+    ///
+    /// builder.position_at_end(entry_bb);
+    ///
+    /// let call_site = builder.build_call(fn_value, &[], "my_fn").unwrap();
+    ///
+    /// assert_eq!(call_site.get_tail_call_kind(), LLVMTailCallKindNone);
+    /// ```
+    #[llvm_versions(18.0..=latest)]
+    pub fn get_tail_call_kind(self) -> super::LLVMTailCallKind {
+        unsafe { LLVMGetTailCallKind(self.as_value_ref()) }
+    }
+
+    /// Sets tail, musttail, and notail attributes.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::values::LLVMTailCallKind::*;
+    ///
+    /// let context = inkwell::context::Context::create();
+    /// let builder = context.create_builder();
+    /// let module = context.create_module("my_mod");
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let fn_value = module.add_function("my_fn", fn_type, None);
+    /// let entry_bb = context.append_basic_block(fn_value, "entry");
+    ///
+    /// builder.position_at_end(entry_bb);
+    ///
+    /// let call_site = builder.build_call(fn_value, &[], "my_fn").unwrap();
+    ///
+    /// call_site.set_tail_call_kind(LLVMTailCallKindTail);
+    /// assert_eq!(call_site.get_tail_call_kind(), LLVMTailCallKindTail);
+    /// ```
+    #[llvm_versions(18.0..=latest)]
+    pub fn set_tail_call_kind(self, kind: super::LLVMTailCallKind) {
+        unsafe { LLVMSetTailCallKind(self.as_value_ref(), kind) };
     }
 
     /// Try to convert this `CallSiteValue` to a `BasicValueEnum` if not a void return type.
