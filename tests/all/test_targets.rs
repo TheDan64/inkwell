@@ -183,16 +183,29 @@ fn test_default_triple() {
     let default_triple = TargetMachine::get_default_triple();
     let default_triple = default_triple.as_str().to_string_lossy();
 
-    // FIXME: arm arch
-    #[cfg(target_os = "linux")]
-    let cond = default_triple == "x86_64-pc-linux-gnu"
-        || default_triple == "x86_64-unknown-linux-gnu"
-        || default_triple == "x86_64-redhat-linux-gnu";
+    let archs = ["x86_64", "arm64"];
+    let has_known_arch = archs.iter().find(|arch| default_triple.starts_with(*arch)).is_some();
+    assert!(has_known_arch, "Target triple '{default_triple}' has unknown arch");
 
-    #[cfg(target_os = "macos")]
-    let cond = default_triple.starts_with("x86_64-apple-darwin");
+    let vendors = if cfg!(target_os = "linux") {
+        vec!["pc", "unknown", "redhat"]
+    } else if cfg!(target_os = "macos") {
+        vec!["apple"]
+    } else {
+        vec![]
+    };
 
-    assert!(cond, "Unexpected target triple: {}", default_triple);
+    let has_known_vendor = vendors.iter().find(|vendor| default_triple.contains(*vendor)).is_some();
+    assert!(has_known_vendor, "Target triple '{default_triple}' has unknown vendor");
+
+    let os = [
+        #[cfg(target_os = "linux")]
+        "linux",
+        #[cfg(target_os = "macos")]
+        "darwin",
+    ];
+    let has_known_os = os.iter().find(|os| default_triple.contains(*os)).is_some();
+    assert!(has_known_os, "Target triple '{default_triple}' has unknown OS");
 
     // TODO: CFG for other supported major OSes
 }
