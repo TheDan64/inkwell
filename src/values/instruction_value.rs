@@ -252,6 +252,87 @@ impl<'ctx> InstructionValue<'ctx> {
         }
     }
 
+    /// Returns the tail call kind on call instructions.
+    ///
+    /// Other instructions return `None`.
+    #[llvm_versions(18.0..=latest)]
+    pub fn get_tail_call_kind(self) -> Option<super::LLVMTailCallKind> {
+        if self.get_opcode() == InstructionOpcode::Call {
+            unsafe { llvm_sys::core::LLVMGetTailCallKind(self.as_value_ref()) }.into()
+        } else {
+            None
+        }
+    }
+
+    /// Check whether this instructions supports [fast math flags][0].
+    ///
+    /// [0]: https://llvm.org/docs/LangRef.html#fast-math-flags
+    #[llvm_versions(18.0..=latest)]
+    pub fn can_use_fast_math_flags(self) -> bool {
+        unsafe { llvm_sys::core::LLVMCanValueUseFastMathFlags(self.as_value_ref()) == 1 }
+    }
+
+    /// Get [fast math flags][0] of supported instructions.
+    ///
+    /// Calling this on unsupported instructions is safe and returns `None`.
+    ///
+    /// [0]: https://llvm.org/docs/LangRef.html#fast-math-flags
+    #[llvm_versions(18.0..=latest)]
+    pub fn get_fast_math_flags(self) -> Option<u32> {
+        self.can_use_fast_math_flags()
+            .then(|| unsafe { llvm_sys::core::LLVMGetFastMathFlags(self.as_value_ref()) } as u32)
+    }
+
+    /// Set [fast math flags][0] on supported instructions.
+    ///
+    /// Calling this on unsupported instructions is safe and results in a no-op.
+    ///
+    /// [0]: https://llvm.org/docs/LangRef.html#fast-math-flags
+    #[llvm_versions(18.0..=latest)]
+    pub fn set_fast_math_flags(self, flags: u32) {
+        if self.can_use_fast_math_flags() {
+            unsafe { llvm_sys::core::LLVMSetFastMathFlags(self.as_value_ref(), flags) };
+        }
+    }
+
+    /// Check if a `zext` instruction has the non-negative flag set.
+    ///
+    /// Calling this function on other instructions is safe and returns `None`.
+    #[llvm_versions(18.0..=latest)]
+    pub fn get_non_negative_flag(self) -> Option<bool> {
+        (self.get_opcode() == InstructionOpcode::ZExt)
+            .then(|| unsafe { llvm_sys::core::LLVMGetNNeg(self.as_value_ref()) == 1 })
+    }
+
+    /// Set the non-negative flag on `zext` instructions.
+    ///
+    /// Calling this function on other instructions is safe and results in a no-op.
+    #[llvm_versions(18.0..=latest)]
+    pub fn set_non_negative_flag(self, flag: bool) {
+        if self.get_opcode() == InstructionOpcode::ZExt {
+            unsafe { llvm_sys::core::LLVMSetNNeg(self.as_value_ref(), flag as i32) };
+        }
+    }
+
+    /// Checks if an `or` instruction has the `disjoint` flag set.
+    ///
+    /// Calling this function on other instructions is safe and returns `None`.
+    #[llvm_versions(18.0..=latest)]
+    pub fn get_disjoint_flag(self) -> Option<bool> {
+        (self.get_opcode() == InstructionOpcode::Or)
+            .then(|| unsafe { llvm_sys::core::LLVMGetIsDisjoint(self.as_value_ref()) == 1 })
+    }
+
+    /// Set the `disjoint` flag on `or` instructions.
+    ///
+    /// Calling this function on other instructions is safe and results in a no-op.
+    #[llvm_versions(18.0..=latest)]
+    pub fn set_disjoint_flag(self, flag: bool) {
+        if self.get_opcode() == InstructionOpcode::Or {
+            unsafe { llvm_sys::core::LLVMSetIsDisjoint(self.as_value_ref(), flag as i32) };
+        }
+    }
+
     pub fn replace_all_uses_with(self, other: &InstructionValue<'ctx>) {
         self.instruction_value.replace_all_uses_with(other.as_value_ref())
     }

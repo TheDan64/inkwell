@@ -57,6 +57,8 @@ pub extern crate llvm_sys_150 as llvm_sys;
 pub extern crate llvm_sys_160 as llvm_sys;
 #[cfg(feature = "llvm17-0")]
 pub extern crate llvm_sys_170 as llvm_sys;
+#[cfg(feature = "llvm18-0")]
+pub extern crate llvm_sys_180 as llvm_sys;
 #[cfg(feature = "llvm4-0")]
 pub extern crate llvm_sys_40 as llvm_sys;
 #[cfg(feature = "llvm5-0")]
@@ -70,6 +72,7 @@ pub extern crate llvm_sys_80 as llvm_sys;
 #[cfg(feature = "llvm9-0")]
 pub extern crate llvm_sys_90 as llvm_sys;
 
+use llvm_sys::target_machine::LLVMCodeGenOptLevel;
 use llvm_sys::{
     LLVMAtomicOrdering, LLVMAtomicRMWBinOp, LLVMDLLStorageClass, LLVMIntPredicate, LLVMRealPredicate,
     LLVMThreadLocalMode, LLVMVisibility,
@@ -125,7 +128,8 @@ assert_unique_used_features! {
     "llvm14-0",
     "llvm15-0",
     "llvm16-0",
-    "llvm17-0"
+    "llvm17-0",
+    "llvm18-0"
 }
 
 /// Defines the address space in which a global will be inserted.
@@ -397,6 +401,17 @@ impl Default for OptimizationLevel {
     /// Returns the default value for `OptimizationLevel`, namely `OptimizationLevel::Default`.
     fn default() -> Self {
         OptimizationLevel::Default
+    }
+}
+
+impl From<OptimizationLevel> for LLVMCodeGenOptLevel {
+    fn from(value: OptimizationLevel) -> Self {
+        match value {
+            OptimizationLevel::None => LLVMCodeGenOptLevel::LLVMCodeGenLevelNone,
+            OptimizationLevel::Less => LLVMCodeGenOptLevel::LLVMCodeGenLevelLess,
+            OptimizationLevel::Default => LLVMCodeGenOptLevel::LLVMCodeGenLevelDefault,
+            OptimizationLevel::Aggressive => LLVMCodeGenOptLevel::LLVMCodeGenLevelAggressive,
+        }
     }
 }
 

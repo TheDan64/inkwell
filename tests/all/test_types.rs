@@ -342,7 +342,12 @@ fn test_const_zero() {
     );
 
     // handle opaque pointers
-    let ptr_type = if cfg!(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")) {
+    let ptr_type = if cfg!(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )) {
         "ptr null"
     } else {
         "double* null"
