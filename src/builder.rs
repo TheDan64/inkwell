@@ -1797,12 +1797,12 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.position_at_end(entry);
     ///
-    /// builder.build_bitcast(i32_arg, f32_type, "i32tof32").unwrap();
+    /// builder.build_bit_cast(i32_arg, f32_type, "i32tof32").unwrap();
     /// builder.build_return(None).unwrap();
     ///
     /// assert!(module.verify().is_ok());
     /// ```
-    pub fn build_bitcast<T, V>(&self, val: V, ty: T, name: &str) -> Result<BasicValueEnum<'ctx>, BuilderError>
+    pub fn build_bit_cast<T, V>(&self, val: V, ty: T, name: &str) -> Result<BasicValueEnum<'ctx>, BuilderError>
     where
         T: BasicType<'ctx>,
         V: BasicValue<'ctx>,

@@ -1530,7 +1530,7 @@ fn test_memset() {
 }
 
 #[test]
-fn test_bitcast() {
+fn test_bit_cast() {
     use inkwell::values::BasicValue;
 
     let context = Context::create();
@@ -1562,11 +1562,11 @@ fn test_bitcast() {
 
     builder.position_at_end(entry);
 
-    let cast = builder.build_bitcast(i32_arg, f32_type, "i32tof32").unwrap();
+    let cast = builder.build_bit_cast(i32_arg, f32_type, "i32tof32").unwrap();
 
-    builder.build_bitcast(f32_arg, f32_type, "f32tof32").unwrap();
-    builder.build_bitcast(i32_vec_arg, i64_type, "2xi32toi64").unwrap();
-    builder.build_bitcast(i32_ptr_arg, i64_ptr_type, "i32*toi64*").unwrap();
+    builder.build_bit_cast(f32_arg, f32_type, "f32tof32").unwrap();
+    builder.build_bit_cast(i32_vec_arg, i64_type, "2xi32toi64").unwrap();
+    builder.build_bit_cast(i32_ptr_arg, i64_ptr_type, "i32*toi64*").unwrap();
 
     builder.build_return(None).unwrap();
 
@@ -1575,7 +1575,7 @@ fn test_bitcast() {
     let first_iv = cast.as_instruction_value().unwrap();
 
     builder.position_before(&first_iv);
-    builder.build_bitcast(f64_arg, i64_type, "f64toi64").unwrap();
+    builder.build_bit_cast(f64_arg, i64_type, "f64toi64").unwrap();
 
     assert!(module.verify().is_ok());
 }

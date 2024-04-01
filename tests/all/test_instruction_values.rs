@@ -105,7 +105,7 @@ fn test_operands() {
     assert!(return_instruction.get_operand(2).is_none());
 
     // Test Uses
-    let bitcast_use_value = free_operand0_instruction
+    let bit_cast_use_value = free_operand0_instruction
         .get_first_use()
         .unwrap()
         .get_used_value()
@@ -113,7 +113,7 @@ fn test_operands() {
         .unwrap();
     let free_call_param = free_instruction.get_operand(0).unwrap().left().unwrap();
 
-    assert_eq!(bitcast_use_value, free_call_param);
+    assert_eq!(bit_cast_use_value, free_call_param);
 
     // These instructions/calls don't return any ir value so they aren't used anywhere
     assert!(store_instruction.get_first_use().is_none());
