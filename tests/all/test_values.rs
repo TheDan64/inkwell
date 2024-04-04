@@ -883,6 +883,7 @@ fn test_globals() {
     assert_eq!(global.get_dll_storage_class(), DLLStorageClass::default());
     assert_eq!(global.get_visibility(), GlobalVisibility::default());
     assert_eq!(global.get_linkage(), External);
+    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0")))]
     assert_eq!(global.get_value_type(), AnyTypeEnum::IntType(i8_type));
     assert_eq!(module.get_first_global().unwrap(), global);
     assert_eq!(module.get_last_global().unwrap(), global);

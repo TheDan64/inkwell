@@ -297,6 +297,7 @@ impl<'ctx> GlobalValue<'ctx> {
         unsafe { LLVMSetLinkage(self.as_value_ref(), linkage.into()) }
     }
 
+    #[llvm_versions(8.0..=latest)]
     pub fn get_value_type(self) -> AnyTypeEnum<'ctx> {
         unsafe { AnyTypeEnum::new(llvm_sys::core::LLVMGlobalGetValueType(self.as_value_ref())) }
     }
