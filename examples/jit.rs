@@ -16,7 +16,7 @@ struct CodeGen<'ctx> {
     context: &'ctx Context,
     module: Module<'ctx>,
     builder: Builder<'ctx>,
-    execution_engine: ExecutionEngine<'ctx>,
+    execution_engine: ExecutionEngine,
 }
 
 impl<'ctx> CodeGen<'ctx> {
