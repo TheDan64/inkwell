@@ -484,8 +484,11 @@ impl Deref for ExecEngineInner {
 /// to doesn't accidentally outlive its execution engine.
 #[derive(Clone)]
 pub struct JitFunction<F> {
-    _execution_engine: ExecEngineInner,
     inner: F,
+    _execution_engine: ExecEngineInner,
+    // This needs some thread safe way to ensure the Context doesn't get dropped.
+    // The following doesn't work, and is just for demonstration purposes:
+    _context: Arc<Context>,
 }
 
 impl<F: Copy> JitFunction<F> {
