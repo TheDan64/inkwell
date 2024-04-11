@@ -160,7 +160,12 @@ fn sized_types(global_ctx: &Context) {
     let f80_type = global_ctx.x86_f80_type();
     let f128_type = global_ctx.f128_type();
     let ppc_f128_type = global_ctx.ppc_f128_type();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let ptr_type = global_ctx.ptr_type(AddressSpace::default());
     let struct_type = global_ctx.struct_type(&[i8_type.into(), f128_type.into()], false);
     let struct_type2 = global_ctx.struct_type(&[], false);
@@ -186,7 +191,12 @@ fn sized_types(global_ctx: &Context) {
     assert!(f80_type.is_sized());
     assert!(f128_type.is_sized());
     assert!(ppc_f128_type.is_sized());
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     assert!(ptr_type.is_sized());
     assert!(struct_type.is_sized());
     assert!(struct_type2.is_sized());
@@ -226,7 +236,12 @@ fn sized_types(global_ctx: &Context) {
     assert!(f80_type.array_type(42).is_sized());
     assert!(f128_type.array_type(42).is_sized());
     assert!(ppc_f128_type.array_type(42).is_sized());
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     assert!(ptr_type.array_type(42).is_sized());
     assert!(struct_type.array_type(0).is_sized());
     assert!(struct_type2.array_type(0).is_sized());
@@ -245,7 +260,12 @@ fn sized_types(global_ctx: &Context) {
     assert!(f80_type.vec_type(42).is_sized());
     assert!(f128_type.vec_type(42).is_sized());
     assert!(ppc_f128_type.vec_type(42).is_sized());
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     assert!(ptr_type.vec_type(42).is_sized());
 
     let opaque_struct_type = global_ctx.opaque_struct_type("opaque");
@@ -271,9 +291,19 @@ fn test_const_zero() {
     let f128_type = context.f128_type();
     let ppc_f128_type = context.ppc_f128_type();
     let struct_type = context.struct_type(&[i8_type.into(), f128_type.into()], false);
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let ptr_type = f64_type.ptr_type(AddressSpace::default());
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let ptr_type = context.ptr_type(AddressSpace::default());
     let vec_type = f64_type.vec_type(42);
     let array_type = f64_type.array_type(42);
@@ -395,9 +425,19 @@ fn test_type_copies() {
 fn test_ptr_type() {
     let context = Context::create();
     let i8_type = context.i8_type();
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let ptr_type = i8_type.ptr_type(AddressSpace::default());
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let ptr_type = context.ptr_type(AddressSpace::default());
 
     assert_eq!(ptr_type.get_address_space(), AddressSpace::default());
@@ -453,9 +493,19 @@ fn test_basic_type_enum() {
         &context.f64_type(),
         // derived types
         &int.array_type(0),
-        #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+        #[cfg(not(any(
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-0"
+        )))]
         &int.ptr_type(addr),
-        #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+        #[cfg(any(
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-0"
+        ))]
         &context.ptr_type(addr),
         &context.struct_type(&[int.as_basic_type_enum()], false),
         &int.vec_type(1),
@@ -487,9 +537,19 @@ fn test_ptr_address_space() {
     for index in spaces {
         let address_space = AddressSpace::try_from(index).unwrap();
 
-        #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+        #[cfg(not(any(
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-0"
+        )))]
         let ptr = context.i32_type().ptr_type(address_space);
-        #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+        #[cfg(any(
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-0"
+        ))]
         let ptr = context.ptr_type(address_space);
         assert_eq!(ptr.get_address_space(), address_space);
     }

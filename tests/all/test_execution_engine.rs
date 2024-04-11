@@ -55,11 +55,21 @@ fn test_jit_execution_engine() {
     let builder = context.create_builder();
     let i8_type = context.i8_type();
     let i32_type = context.i32_type();
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let i8_ptr_ptr_type = i8_type
         .ptr_type(AddressSpace::default())
         .ptr_type(AddressSpace::default());
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let i8_ptr_ptr_type = context.ptr_type(AddressSpace::default());
     let one_i32 = i32_type.const_int(1, false);
     let three_i32 = i32_type.const_int(3, false);

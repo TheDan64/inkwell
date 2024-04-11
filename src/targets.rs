@@ -946,7 +946,8 @@ impl Target {
     /// # Example
     ///
     /// ```no_run
-    /// use inkwell::targets::{Target, TargetTriple, TargetMachineOptions};
+    /// use inkwell::targets::{InitializationConfig, Target, TargetTriple, TargetMachineOptions};
+    /// use inkwell::OptimizationLevel;
     ///
     /// Target::initialize_x86(&InitializationConfig::default());
     ///

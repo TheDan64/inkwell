@@ -470,9 +470,9 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
@@ -533,9 +533,9 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
@@ -637,9 +637,9 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
@@ -683,9 +683,9 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
@@ -750,9 +750,9 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///

@@ -216,7 +216,12 @@ impl<'ctx> VectorType<'ctx> {
     /// assert_eq!(f32_vec_ptr_type.get_element_type().into_vector_type(), f32_vec_type);
     /// ```
     #[cfg_attr(
-        any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0",),
+        any(
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-0"
+        ),
         deprecated(
             note = "Starting from version 15.0, LLVM doesn't differentiate between pointer types. Use Context::ptr_type instead."
         )

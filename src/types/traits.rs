@@ -127,7 +127,12 @@ pub unsafe trait BasicType<'ctx>: AnyType<'ctx> {
     /// assert_eq!(int_basic_type.ptr_type(addr_space), int.ptr_type(addr_space));
     /// ```
     #[cfg_attr(
-        any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0",),
+        any(
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-0"
+        ),
         deprecated(
             note = "Starting from version 15.0, LLVM doesn't differentiate between pointer types. Use Context::ptr_type instead."
         )

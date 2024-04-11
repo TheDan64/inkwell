@@ -48,9 +48,19 @@ fn test_build_call() {
     let function3 = module.add_function("call_fn", fn_type2, None);
     let basic_block3 = context.append_basic_block(function3, "entry");
     let fn_ptr = function3.as_global_value().as_pointer_value();
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let fn_ptr_type = fn_ptr.get_type();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let fn_ptr_type = context.ptr_type(AddressSpace::default());
 
     builder.position_at_end(basic_block3);
@@ -170,9 +180,19 @@ fn test_build_invoke_cleanup_resume() {
         };
 
         // type of an exception in C++
-        #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+        #[cfg(not(any(
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-0"
+        )))]
         let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::default());
-        #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+        #[cfg(any(
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-0"
+        ))]
         let i8_ptr_type = context.ptr_type(AddressSpace::default());
         let i32_type = context.i32_type();
         let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
@@ -244,9 +264,19 @@ fn test_build_invoke_catch_all() {
         };
 
         // type of an exception in C++
-        #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+        #[cfg(not(any(
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-0"
+        )))]
         let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::default());
-        #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+        #[cfg(any(
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-0"
+        ))]
         let i8_ptr_type = context.ptr_type(AddressSpace::default());
         let i32_type = context.i32_type();
         let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
@@ -322,9 +352,19 @@ fn landing_pad_filter() {
         };
 
         // type of an exception in C++
-        #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+        #[cfg(not(any(
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-0"
+        )))]
         let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::default());
-        #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+        #[cfg(any(
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-0"
+        ))]
         let i8_ptr_type = context.ptr_type(AddressSpace::default());
         let i32_type = context.i32_type();
         let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
@@ -370,9 +410,19 @@ fn test_null_checked_ptr_ops() {
     // }
 
     let i8_type = context.i8_type();
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::default());
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let i8_ptr_type = context.ptr_type(AddressSpace::default());
     let i64_type = context.i64_type();
     let fn_type = i8_type.fn_type(&[i8_ptr_type.into()], false);
@@ -967,9 +1017,19 @@ fn test_vector_pointer_ops() {
     let context = Context::create();
     let module = context.create_module("test");
     let int32_vec_type = context.i32_type().vec_type(4);
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let i8_ptr_vec_type = context.i8_type().ptr_type(AddressSpace::default()).vec_type(4);
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let i8_ptr_vec_type = context.ptr_type(AddressSpace::default()).vec_type(4);
     let bool_vec_type = context.bool_type().vec_type(4);
 
@@ -1226,9 +1286,19 @@ fn run_memcpy_on<'ctx>(
     let i32_type = context.i32_type();
     let i64_type = context.i64_type();
     let array_len = 4;
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let fn_type = i32_type.ptr_type(AddressSpace::default()).fn_type(&[], false);
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let fn_type = context.ptr_type(AddressSpace::default()).fn_type(&[], false);
     let fn_value = module.add_function("test_fn", fn_type, None);
     let builder = context.create_builder();
@@ -1349,9 +1419,19 @@ fn run_memmove_on<'ctx>(
     let i32_type = context.i32_type();
     let i64_type = context.i64_type();
     let array_len = 4;
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let fn_type = i32_type.ptr_type(AddressSpace::default()).fn_type(&[], false);
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let fn_type = context.ptr_type(AddressSpace::default()).fn_type(&[], false);
     let fn_value = module.add_function("test_fn", fn_type, None);
     let builder = context.create_builder();
@@ -1473,9 +1553,19 @@ fn run_memset_on<'ctx>(
     let i32_type = context.i32_type();
     let i64_type = context.i64_type();
     let array_len = 4;
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let fn_type = i32_type.ptr_type(AddressSpace::default()).fn_type(&[], false);
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let fn_type = context.ptr_type(AddressSpace::default()).fn_type(&[], false);
     let fn_value = module.add_function("test_fn", fn_type, None);
     let builder = context.create_builder();
@@ -1567,13 +1657,33 @@ fn test_bit_cast() {
     let i32_type = context.i32_type();
     let f64_type = context.f64_type();
     let i64_type = context.i64_type();
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let i32_ptr_type = context.ptr_type(AddressSpace::default());
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let i64_ptr_type = i64_type.ptr_type(AddressSpace::default());
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let i64_ptr_type = context.ptr_type(AddressSpace::default());
     let i32_vec_type = i32_type.vec_type(2);
     let arg_types = [
@@ -1629,9 +1739,19 @@ fn test_atomicrmw() {
     let i31_type = context.custom_width_int_type(31);
     let i4_type = context.custom_width_int_type(4);
 
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let ptr_value = i32_type.ptr_type(AddressSpace::default()).get_undef();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let ptr_value = context.ptr_type(AddressSpace::default()).get_undef();
     let zero_value = i32_type.const_zero();
     let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Unordered);
@@ -1658,17 +1778,37 @@ fn test_atomicrmw() {
         assert!(result.is_err());
     }
 
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let ptr_value = i31_type.ptr_type(AddressSpace::default()).get_undef();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let ptr_value = context.ptr_type(AddressSpace::default()).get_undef();
     let zero_value = i31_type.const_zero();
     let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Unordered);
     assert!(result.is_err());
 
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let ptr_value = i4_type.ptr_type(AddressSpace::default()).get_undef();
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let ptr_value = context.ptr_type(AddressSpace::default()).get_undef();
     let zero_value = i4_type.const_zero();
     let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Unordered);
@@ -1689,13 +1829,33 @@ fn test_cmpxchg() {
 
     let i32_type = context.i32_type();
     let i64_type = context.i64_type();
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let i32_ptr_type = context.ptr_type(AddressSpace::default());
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let i32_ptr_ptr_type = i32_ptr_type.ptr_type(AddressSpace::default());
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let i32_ptr_ptr_type = context.ptr_type(AddressSpace::default());
 
     let ptr_value = i32_ptr_type.get_undef();
@@ -1868,15 +2028,35 @@ fn test_safe_struct_gep() {
     let module = context.create_module("struct_gep");
     let void_type = context.void_type();
     let i32_ty = context.i32_type();
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let i32_ptr_ty = i32_ty.ptr_type(AddressSpace::default());
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let i32_ptr_ty = context.ptr_type(AddressSpace::default());
     let field_types = &[i32_ty.into(), i32_ty.into()];
     let struct_ty = context.struct_type(field_types, false);
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0")))]
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let struct_ptr_ty = struct_ty.ptr_type(AddressSpace::default());
-    #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0"))]
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
     let struct_ptr_ty = context.ptr_type(AddressSpace::default());
     let fn_type = void_type.fn_type(&[i32_ptr_ty.into(), struct_ptr_ty.into()], false);
     let fn_value = module.add_function("", fn_type, None);
