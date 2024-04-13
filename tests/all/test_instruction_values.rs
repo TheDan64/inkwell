@@ -11,7 +11,20 @@ fn test_operands() {
     let builder = context.create_builder();
     let void_type = context.void_type();
     let f32_type = context.f32_type();
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let f32_ptr_type = context.ptr_type(AddressSpace::default());
     let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
 
     let function = module.add_function("take_f32_ptr", fn_type, None);
@@ -254,7 +267,20 @@ fn test_instructions() {
     let void_type = context.void_type();
     let i64_type = context.i64_type();
     let f32_type = context.f32_type();
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let f32_ptr_type = context.ptr_type(AddressSpace::default());
     let fn_type = void_type.fn_type(&[f32_ptr_type.into(), f32_type.into()], false);
 
     let function = module.add_function("free_f32", fn_type, None);
@@ -345,7 +371,20 @@ fn test_volatile_atomicrmw_cmpxchg() {
 
     let void_type = context.void_type();
     let i32_type = context.i32_type();
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let i32_ptr_type = context.ptr_type(AddressSpace::default());
     let fn_type = void_type.fn_type(&[i32_ptr_type.into(), i32_type.into()], false);
 
     let function = module.add_function("mem_inst", fn_type, None);
@@ -399,7 +438,20 @@ fn test_mem_instructions() {
 
     let void_type = context.void_type();
     let f32_type = context.f32_type();
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let f32_ptr_type = context.ptr_type(AddressSpace::default());
     let fn_type = void_type.fn_type(&[f32_ptr_type.into(), f32_type.into()], false);
 
     let function = module.add_function("mem_inst", fn_type, None);
@@ -464,7 +516,20 @@ fn test_mem_instructions() {
 
     let void_type = context.void_type();
     let f32_type = context.f32_type();
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let f32_ptr_type = context.ptr_type(AddressSpace::default());
     let fn_type = void_type.fn_type(&[f32_ptr_type.into(), f32_type.into()], false);
 
     let function = module.add_function("mem_inst", fn_type, None);
@@ -548,7 +613,20 @@ fn test_atomic_ordering_mem_instructions() {
 
     let void_type = context.void_type();
     let f32_type = context.f32_type();
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let f32_ptr_type = context.ptr_type(AddressSpace::default());
     let fn_type = void_type.fn_type(&[f32_ptr_type.into(), f32_type.into()], false);
 
     let function = module.add_function("mem_inst", fn_type, None);
@@ -628,7 +706,20 @@ fn test_metadata_kinds() {
 
     let i8_type = context.i8_type();
     let f32_type = context.f32_type();
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let ptr_type = i8_type.ptr_type(AddressSpace::default());
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let ptr_type = context.ptr_type(AddressSpace::default());
     let struct_type = context.struct_type(&[i8_type.into(), f32_type.into()], false);
     let vector_type = i8_type.vec_type(2);
 
@@ -662,7 +753,20 @@ fn test_find_instruction_with_name() {
 
     let void_type = context.void_type();
     let i32_type = context.i32_type();
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
     let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let i32_ptr_type = context.ptr_type(AddressSpace::default());
 
     let fn_type = void_type.fn_type(&[i32_ptr_type.into()], false);
     let fn_value = module.add_function("ret", fn_type, None);

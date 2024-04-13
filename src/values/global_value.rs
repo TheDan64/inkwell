@@ -31,6 +31,7 @@ use std::fmt::{self, Display};
 #[llvm_versions(7.0..=latest)]
 use crate::comdat::Comdat;
 use crate::module::Linkage;
+use crate::types::AnyTypeEnum;
 use crate::values::traits::AsValueRef;
 #[llvm_versions(8.0..=latest)]
 use crate::values::MetadataValue;
@@ -294,6 +295,11 @@ impl<'ctx> GlobalValue<'ctx> {
 
     pub fn set_linkage(self, linkage: Linkage) {
         unsafe { LLVMSetLinkage(self.as_value_ref(), linkage.into()) }
+    }
+
+    #[llvm_versions(8.0..=latest)]
+    pub fn get_value_type(self) -> AnyTypeEnum<'ctx> {
+        unsafe { AnyTypeEnum::new(llvm_sys::core::LLVMGlobalGetValueType(self.as_value_ref())) }
     }
 }
 
