@@ -121,7 +121,7 @@ impl Parse for LLVMEnumType {
         let name = decl.ident.clone();
 
         // Fold over variants and expand llvm_versions
-        let decl = crate::cfg::FeatureFolder::fold_any(Fold::fold_item_enum, decl)?;
+        let decl = crate::cfg::VersionFolder::fold_any(Fold::fold_item_enum, decl)?;
 
         let mut variants = EnumVariants::default();
         let decl = variants.fold_item_enum(decl);

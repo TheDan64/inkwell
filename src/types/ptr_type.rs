@@ -1,4 +1,4 @@
-#[llvm_versions(15.0..=latest)]
+#[llvm_versions(15..)]
 use llvm_sys::core::LLVMPointerTypeIsOpaque;
 use llvm_sys::core::{LLVMConstArray, LLVMGetPointerAddressSpace};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
@@ -6,7 +6,7 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
-#[llvm_versions(4.0..=14.0)]
+#[llvm_versions(..=14)]
 use crate::types::AnyTypeEnum;
 use crate::types::{ArrayType, FunctionType, Type, VectorType};
 use crate::values::{ArrayValue, AsValueRef, IntValue, PointerValue};
@@ -298,7 +298,7 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// assert!(f32_ptr_undef.is_poison());
     /// ```
-    #[llvm_versions(12.0..=latest)]
+    #[llvm_versions(12..)]
     pub fn get_poison(self) -> PointerValue<'ctx> {
         unsafe { PointerValue::new(self.ptr_type.get_poison()) }
     }
@@ -344,7 +344,7 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// assert_eq!(f32_ptr_type.get_element_type().into_float_type(), f32_type);
     /// ```
-    #[llvm_versions(4.0..=14.0)]
+    #[llvm_versions(..=14)]
     pub fn get_element_type(self) -> AnyTypeEnum<'ctx> {
         self.ptr_type.get_element_type()
     }
@@ -379,7 +379,7 @@ impl<'ctx> PointerType<'ctx> {
     }
 
     /// Determine whether this pointer is opaque.
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     pub fn is_opaque(self) -> bool {
         unsafe { LLVMPointerTypeIsOpaque(self.ptr_type.ty) != 0 }
     }

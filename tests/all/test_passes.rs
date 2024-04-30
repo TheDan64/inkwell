@@ -1,9 +1,9 @@
 use inkwell::context::Context;
 use inkwell::passes::{PassManager, PassManagerBuilder, PassRegistry};
 
-#[llvm_versions(13.0..=latest)]
+#[llvm_versions(13..)]
 use inkwell::passes::PassBuilderOptions;
-#[llvm_versions(13.0..=latest)]
+#[llvm_versions(13..)]
 use inkwell::targets::{CodeModel, InitializationConfig, RelocMode, Target, TargetMachine};
 use inkwell::OptimizationLevel;
 
@@ -243,7 +243,7 @@ fn test_pass_registry() {
     pass_registry.initialize_aggressive_inst_combiner();
 }
 
-#[llvm_versions(13.0..=latest)]
+#[llvm_versions(13..)]
 #[test]
 fn test_run_passes() {
     let pass_options = PassBuilderOptions::create();
@@ -280,7 +280,7 @@ fn test_run_passes() {
     module.run_passes("default<O2>", &machine, pass_options).unwrap();
 }
 
-#[llvm_versions(13.0..=latest)]
+#[llvm_versions(13..)]
 #[test]
 fn test_run_passes_invalid() {
     let pass_options = PassBuilderOptions::create();

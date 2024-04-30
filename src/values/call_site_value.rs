@@ -5,7 +5,7 @@ use llvm_sys::core::{
     LLVMGetInstructionCallConv, LLVMGetTypeKind, LLVMIsTailCall, LLVMSetInstrParamAlignment,
     LLVMSetInstructionCallConv, LLVMSetTailCall, LLVMTypeOf,
 };
-#[llvm_versions(18.0..=latest)]
+#[llvm_versions(18..)]
 use llvm_sys::core::{LLVMGetTailCallKind, LLVMSetTailCallKind};
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMTypeKind;
@@ -104,7 +104,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// assert_eq!(call_site.get_tail_call_kind(), LLVMTailCallKindNone);
     /// ```
-    #[llvm_versions(18.0..=latest)]
+    #[llvm_versions(18..)]
     pub fn get_tail_call_kind(self) -> super::LLVMTailCallKind {
         unsafe { LLVMGetTailCallKind(self.as_value_ref()) }
     }
@@ -131,7 +131,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// call_site.set_tail_call_kind(LLVMTailCallKindTail);
     /// assert_eq!(call_site.get_tail_call_kind(), LLVMTailCallKindTail);
     /// ```
-    #[llvm_versions(18.0..=latest)]
+    #[llvm_versions(18..)]
     pub fn set_tail_call_kind(self, kind: super::LLVMTailCallKind) {
         unsafe { LLVMSetTailCallKind(self.as_value_ref(), kind) };
     }

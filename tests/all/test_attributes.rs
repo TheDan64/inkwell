@@ -40,7 +40,7 @@ fn test_string_attributes() {
     assert_eq!(string_attribute.get_string_value().to_str(), Ok("my_val"));
 }
 
-#[llvm_versions(12.0..=latest)]
+#[llvm_versions(12..)]
 #[test]
 fn test_type_attribute() {
     use inkwell::types::{AnyType, BasicType};

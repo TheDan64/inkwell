@@ -4,13 +4,13 @@ use llvm_sys::core::{
     LLVMGetEnumAttributeKind, LLVMGetEnumAttributeKindForName, LLVMGetEnumAttributeValue, LLVMGetLastEnumAttributeKind,
     LLVMGetStringAttributeKind, LLVMGetStringAttributeValue, LLVMIsEnumAttribute, LLVMIsStringAttribute,
 };
-#[llvm_versions(12.0..=latest)]
+#[llvm_versions(12..)]
 use llvm_sys::core::{LLVMGetTypeAttributeValue, LLVMIsTypeAttribute};
 use llvm_sys::prelude::LLVMAttributeRef;
 
 use std::ffi::CStr;
 
-#[llvm_versions(12.0..=latest)]
+#[llvm_versions(12..)]
 use crate::types::AnyTypeEnum;
 
 // SubTypes: Attribute<Enum>, Attribute<String>
@@ -149,13 +149,13 @@ impl Attribute {
     ///
     /// assert!(type_attribute.is_type());
     /// ```
-    #[llvm_versions(12.0..=latest)]
+    #[llvm_versions(12..)]
     pub fn is_type(self) -> bool {
         unsafe { LLVMIsTypeAttribute(self.attribute) == 1 }
     }
 
     // private function to make code elsewhere easier
-    #[llvm_versions(4.0..12.0)]
+    #[llvm_versions(..12)]
     fn is_type(self) -> bool {
         false
     }
@@ -190,7 +190,7 @@ impl Attribute {
     ///
     /// assert_eq!(enum_attribute.get_enum_kind_id(), 0);
     /// ```
-    #[llvm_versions(4.0..=11.0)]
+    #[llvm_versions(..=11)]
     pub fn get_enum_kind_id(self) -> u32 {
         assert!(self.get_enum_kind_id_is_valid()); // FIXME: SubTypes
 
@@ -227,19 +227,19 @@ impl Attribute {
     ///
     /// assert_eq!(type_attribute.get_enum_kind_id(), kind_id);
     /// ```
-    #[llvm_versions(12.0..=latest)]
+    #[llvm_versions(12..)]
     pub fn get_enum_kind_id(self) -> u32 {
         assert!(self.get_enum_kind_id_is_valid()); // FIXME: SubTypes
 
         unsafe { LLVMGetEnumAttributeKind(self.attribute) }
     }
 
-    #[llvm_versions(4.0..=11.0)]
+    #[llvm_versions(..=11)]
     fn get_enum_kind_id_is_valid(self) -> bool {
         self.is_enum()
     }
 
-    #[llvm_versions(12.0..=latest)]
+    #[llvm_versions(12..)]
     fn get_enum_kind_id_is_valid(self) -> bool {
         self.is_enum() || self.is_type()
     }
@@ -339,7 +339,7 @@ impl Attribute {
     /// assert_eq!(type_attribute.get_type_value(), any_type);
     /// assert_ne!(type_attribute.get_type_value(), context.i64_type().as_any_type_enum());
     /// ```
-    #[llvm_versions(12.0..=latest)]
+    #[llvm_versions(12..)]
     pub fn get_type_value(&self) -> AnyTypeEnum {
         assert!(self.is_type()); // FIXME: SubTypes
 
@@ -347,7 +347,7 @@ impl Attribute {
     }
 
     // private function to make code elsewhere easier
-    #[llvm_versions(4.0..12.0)]
+    #[llvm_versions(..12)]
     fn get_type_value(&self) {
         unreachable!("not implemented in this version")
     }

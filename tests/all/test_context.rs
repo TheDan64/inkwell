@@ -81,7 +81,7 @@ fn test_values_get_context() {
     assert_eq!(struct_type.get_context(), context);
 }
 
-#[llvm_versions(12.0..=latest)]
+#[llvm_versions(12..)]
 #[test]
 fn test_get_struct_type() {
     let context = Context::create();
