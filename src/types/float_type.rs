@@ -1,13 +1,13 @@
-use llvm_sys::core::{LLVMConstArray, LLVMConstReal, LLVMConstRealOfStringAndSize};
+use llvm_sys::core::{LLVMConstReal, LLVMConstRealOfStringAndSize};
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfFloat;
-use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
+use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::traits::AsTypeRef;
 use crate::types::{ArrayType, FunctionType, PointerType, Type, VectorType};
-use crate::values::{ArrayValue, AsValueRef, FloatValue, GenericValue, IntValue};
+use crate::values::{ArrayValue, FloatValue, GenericValue, IntValue};
 use crate::AddressSpace;
 
 use std::fmt::{self, Display};
@@ -304,14 +304,7 @@ impl<'ctx> FloatType<'ctx> {
     /// assert!(f32_array.is_const());
     /// ```
     pub fn const_array(self, values: &[FloatValue<'ctx>]) -> ArrayValue<'ctx> {
-        let mut values: Vec<LLVMValueRef> = values.iter().map(|val| val.as_value_ref()).collect();
-        unsafe {
-            ArrayValue::new(LLVMConstArray(
-                self.as_type_ref(),
-                values.as_mut_ptr(),
-                values.len() as u32,
-            ))
-        }
+        unsafe { ArrayValue::new_const_array(&self, values) }
     }
 }
 

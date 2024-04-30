@@ -1,11 +1,11 @@
-use llvm_sys::core::{LLVMConstArray, LLVMConstVector, LLVMGetVectorSize};
+use llvm_sys::core::{LLVMConstVector, LLVMGetVectorSize};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::{traits::AsTypeRef, ArrayType, BasicTypeEnum, FunctionType, PointerType, Type};
-use crate::values::{ArrayValue, AsValueRef, BasicValue, IntValue, VectorValue};
+use crate::values::{ArrayValue, BasicValue, IntValue, VectorValue};
 use crate::AddressSpace;
 
 use std::fmt::{self, Display};
@@ -283,15 +283,7 @@ impl<'ctx> VectorType<'ctx> {
     /// assert!(f32_array.is_const());
     /// ```
     pub fn const_array(self, values: &[VectorValue<'ctx>]) -> ArrayValue<'ctx> {
-        let mut values: Vec<LLVMValueRef> = values.iter().map(|val| val.as_value_ref()).collect();
-
-        unsafe {
-            ArrayValue::new(LLVMConstArray(
-                self.as_type_ref(),
-                values.as_mut_ptr(),
-                values.len() as u32,
-            ))
-        }
+        unsafe { ArrayValue::new_const_array(&self, values) }
     }
 
     /// Gets a reference to the `Context` this `VectorType` was created in.

@@ -1,12 +1,13 @@
-use llvm_sys::core::{LLVMConstArray, LLVMGetArrayLength};
-use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
+#[allow(deprecated)]
+use llvm_sys::core::LLVMGetArrayLength;
+use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::traits::AsTypeRef;
 use crate::types::{BasicTypeEnum, FunctionType, PointerType, Type};
-use crate::values::{ArrayValue, AsValueRef, IntValue};
+use crate::values::{ArrayValue, IntValue};
 use crate::AddressSpace;
 
 use std::fmt::{self, Display};
@@ -158,7 +159,7 @@ impl<'ctx> ArrayType<'ctx> {
         self.array_type.array_type(size)
     }
 
-    /// Creates a constant `ArrayValue`.
+    /// Creates a constant `ArrayValue` of `ArrayValue`s.
     ///
     /// # Example
     /// ```no_run
@@ -173,14 +174,7 @@ impl<'ctx> ArrayType<'ctx> {
     /// assert!(f32_array_array.is_const());
     /// ```
     pub fn const_array(self, values: &[ArrayValue<'ctx>]) -> ArrayValue<'ctx> {
-        let mut values: Vec<LLVMValueRef> = values.iter().map(|val| val.as_value_ref()).collect();
-        unsafe {
-            ArrayValue::new(LLVMConstArray(
-                self.as_type_ref(),
-                values.as_mut_ptr(),
-                values.len() as u32,
-            ))
-        }
+        unsafe { ArrayValue::new_const_array(&self, values) }
     }
 
     /// Creates a constant zero value of this `ArrayType`.
@@ -213,7 +207,10 @@ impl<'ctx> ArrayType<'ctx> {
     /// assert_eq!(i8_array_type.len(), 3);
     /// ```
     pub fn len(self) -> u32 {
-        unsafe { LLVMGetArrayLength(self.as_type_ref()) }
+        #[allow(deprecated)]
+        unsafe {
+            LLVMGetArrayLength(self.as_type_ref())
+        }
     }
 
     /// Returns `true` if this `ArrayType` contains no elements.

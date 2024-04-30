@@ -1,7 +1,7 @@
+use llvm_sys::core::LLVMGetPointerAddressSpace;
 #[llvm_versions(15.0..=latest)]
 use llvm_sys::core::LLVMPointerTypeIsOpaque;
-use llvm_sys::core::{LLVMConstArray, LLVMGetPointerAddressSpace};
-use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
+use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::context::ContextRef;
 use crate::support::LLVMString;
@@ -9,7 +9,7 @@ use crate::types::traits::AsTypeRef;
 #[llvm_versions(4.0..=14.0)]
 use crate::types::AnyTypeEnum;
 use crate::types::{ArrayType, FunctionType, Type, VectorType};
-use crate::values::{ArrayValue, AsValueRef, IntValue, PointerValue};
+use crate::values::{ArrayValue, IntValue, PointerValue};
 use crate::AddressSpace;
 
 use crate::types::enums::BasicMetadataTypeEnum;
@@ -368,14 +368,7 @@ impl<'ctx> PointerType<'ctx> {
     /// assert!(f32_ptr_array.is_const());
     /// ```
     pub fn const_array(self, values: &[PointerValue<'ctx>]) -> ArrayValue<'ctx> {
-        let mut values: Vec<LLVMValueRef> = values.iter().map(|val| val.as_value_ref()).collect();
-        unsafe {
-            ArrayValue::new(LLVMConstArray(
-                self.as_type_ref(),
-                values.as_mut_ptr(),
-                values.len() as u32,
-            ))
-        }
+        unsafe { ArrayValue::new_const_array(&self, values) }
     }
 
     /// Determine whether this pointer is opaque.

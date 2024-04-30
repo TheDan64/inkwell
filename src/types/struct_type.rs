@@ -1,5 +1,5 @@
 use llvm_sys::core::{
-    LLVMConstArray, LLVMConstNamedStruct, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName,
+    LLVMConstNamedStruct, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName,
     LLVMIsOpaqueStruct, LLVMIsPackedStruct, LLVMStructGetTypeAtIndex, LLVMStructSetBody,
 };
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
@@ -452,14 +452,7 @@ impl<'ctx> StructType<'ctx> {
     /// assert!(struct_array.is_const());
     /// ```
     pub fn const_array(self, values: &[StructValue<'ctx>]) -> ArrayValue<'ctx> {
-        let mut values: Vec<LLVMValueRef> = values.iter().map(|val| val.as_value_ref()).collect();
-        unsafe {
-            ArrayValue::new(LLVMConstArray(
-                self.as_type_ref(),
-                values.as_mut_ptr(),
-                values.len() as u32,
-            ))
-        }
+        unsafe { ArrayValue::new_const_array(&self, values) }
     }
 }
 

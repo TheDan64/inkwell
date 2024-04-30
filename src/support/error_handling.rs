@@ -10,7 +10,7 @@ use llvm_sys::LLVMDiagnosticSeverity;
 // wrap the provided function input ptr into a &CStr somehow
 // TODOC: Can be used like this:
 // extern "C" fn print_before_exit(msg: *const i8) {
-//    let c_str = unsafe { ::std::ffi::CStr::from_ptr(msg) };
+//    let c_str = unsafe { std::ffi::CStr::from_ptr(msg) };
 //
 //    eprintln!("LLVM fatally errored: {:?}", c_str);
 // }
