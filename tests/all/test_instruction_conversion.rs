@@ -110,14 +110,13 @@ fn test_conversion_to_pointer_value() {
     builder.position_at_end(basic_block);
 
     // Create a PointerType instruction
-    let i64_type = context.i64_type();
     #[cfg(not(any(
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
         feature = "llvm18-0"
     )))]
-    let i64_ptr_type = i64_type.ptr_type(AddressSpace::default());
+    let i64_ptr_type = context.i64_type().ptr_type(AddressSpace::default());
     #[cfg(any(
         feature = "llvm15-0",
         feature = "llvm16-0",

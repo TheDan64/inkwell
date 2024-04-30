@@ -21,11 +21,11 @@ use std::fmt::{self, Display};
 use crate::types::FloatType;
 use crate::types::{AsTypeRef, IntType, PointerType};
 use crate::values::traits::AsValueRef;
-#[llvm_versions(4.0..=16.0)]
-use crate::values::BasicValueEnum;
 #[llvm_versions(4.0..=17.0)]
 use crate::values::FloatValue;
-use crate::values::{BasicValue, InstructionValue, PointerValue, Value};
+#[llvm_versions(4.0..=16.0)]
+use crate::values::{BasicValue, BasicValueEnum};
+use crate::values::{InstructionValue, PointerValue, Value};
 use crate::IntPredicate;
 
 use super::AnyValue;

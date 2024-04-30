@@ -1,5 +1,5 @@
 use inkwell::context::Context;
-use inkwell::types::{AnyTypeEnum, AsTypeRef, BasicType};
+use inkwell::types::{AnyTypeEnum, BasicType};
 use inkwell::values::{BasicValue, InstructionOpcode::*};
 use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate};
 

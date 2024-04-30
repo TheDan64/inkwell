@@ -3,8 +3,8 @@ use inkwell::attributes::AttributeLoc;
 use inkwell::comdat::ComdatSelectionKind;
 use inkwell::context::Context;
 use inkwell::module::Linkage::*;
-use inkwell::types::{AnyTypeEnum, BasicType, StringRadix, VectorType};
-use inkwell::values::{AnyValue, BasicValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
+use inkwell::types::{AnyTypeEnum, StringRadix, VectorType};
+use inkwell::values::{AnyValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
 use inkwell::{AddressSpace, DLLStorageClass, GlobalVisibility, ThreadLocalMode};
 
 #[llvm_versions(18.0..=latest)]
@@ -1478,7 +1478,9 @@ fn test_non_fn_ptr_called() {
         feature = "llvm17-0",
         feature = "llvm18-0"
     ))]
-    builder.build_indirect_call(i8_ptr_type.fn_type(&[], false), i8_ptr_param, &[], "call");
+    builder
+        .build_indirect_call(i8_ptr_type.fn_type(&[], false), i8_ptr_param, &[], "call")
+        .unwrap();
     builder.build_return(None).unwrap();
 
     assert!(module.verify().is_ok());
@@ -1562,7 +1564,9 @@ fn test_aggregate_returns() {
         feature = "llvm17-0",
         feature = "llvm18-0"
     ))]
-    builder.build_ptr_diff(i32_ptr_type, ptr_param1, ptr_param2, "diff");
+    builder
+        .build_ptr_diff(i32_ptr_type, ptr_param1, ptr_param2, "diff")
+        .unwrap();
     builder
         .build_aggregate_return(&[i32_three.into(), i32_seven.into()])
         .unwrap();

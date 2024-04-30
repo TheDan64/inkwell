@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use llvm_sys::object::{
     LLVMDisposeObjectFile, LLVMDisposeRelocationIterator, LLVMDisposeSectionIterator, LLVMDisposeSymbolIterator,
     LLVMGetRelocationOffset, LLVMGetRelocationSymbol, LLVMGetRelocationType, LLVMGetRelocationTypeName,
