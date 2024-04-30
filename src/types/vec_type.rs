@@ -184,7 +184,7 @@ impl<'ctx> VectorType<'ctx> {
     /// assert_eq!(f32_vector_type.get_element_type().into_float_type(), f32_type);
     /// ```
     pub fn get_element_type(self) -> BasicTypeEnum<'ctx> {
-        self.vec_type.get_element_type().to_basic_type_enum()
+        self.vec_type.get_element_type().as_basic_type_enum()
     }
 
     /// Creates a `PointerType` with this `VectorType` for its element type.

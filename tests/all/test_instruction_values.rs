@@ -33,7 +33,7 @@ fn test_operands() {
     builder.position_at_end(basic_block);
 
     let arg1 = function.get_first_param().unwrap().into_pointer_value();
-    let f32_val = f32_type.const_float(::std::f64::consts::PI);
+    let f32_val = f32_type.const_float(std::f64::consts::PI);
     let store_instruction = builder.build_store(arg1, f32_val).unwrap();
     let free_instruction = builder.build_free(arg1).unwrap();
     let return_instruction = builder.build_return(None).unwrap();
@@ -240,7 +240,7 @@ fn test_get_next_use() {
     builder.position_at_end(basic_block);
 
     let arg1 = function.get_first_param().unwrap().into_float_value();
-    let f32_val = f32_type.const_float(::std::f64::consts::PI);
+    let f32_val = f32_type.const_float(std::f64::consts::PI);
     let add_pi0 = builder.build_float_add(arg1, f32_val, "add_pi").unwrap();
     let add_pi1 = builder.build_float_add(add_pi0, f32_val, "add_pi").unwrap();
 
@@ -294,7 +294,7 @@ fn test_instructions() {
     assert!(arg1.get_first_use().is_none());
     assert!(arg2.get_first_use().is_none());
 
-    let f32_val = f32_type.const_float(::std::f64::consts::PI);
+    let f32_val = f32_type.const_float(std::f64::consts::PI);
 
     let store_instruction = builder.build_store(arg1, f32_val).unwrap();
     let alloca_val = builder.build_alloca(i64_type, "alloca").unwrap();
@@ -351,7 +351,7 @@ fn test_instructions() {
 
     // test instruction cloning
     #[allow(clippy::redundant_clone)]
-    let instruction_clone = return_instruction.clone();
+    let instruction_clone = return_instruction.explicit_clone();
 
     assert_eq!(instruction_clone.get_opcode(), return_instruction.get_opcode());
     assert_ne!(instruction_clone, return_instruction);
@@ -417,16 +417,16 @@ fn test_volatile_atomicrmw_cmpxchg() {
         .as_instruction_value()
         .unwrap();
 
-    assert_eq!(atomicrmw.get_volatile().unwrap(), false);
-    assert_eq!(cmpxchg.get_volatile().unwrap(), false);
+    assert!(!atomicrmw.get_volatile().unwrap());
+    assert!(!cmpxchg.get_volatile().unwrap());
     atomicrmw.set_volatile(true).unwrap();
     cmpxchg.set_volatile(true).unwrap();
-    assert_eq!(atomicrmw.get_volatile().unwrap(), true);
-    assert_eq!(cmpxchg.get_volatile().unwrap(), true);
+    assert!(atomicrmw.get_volatile().unwrap());
+    assert!(cmpxchg.get_volatile().unwrap());
     atomicrmw.set_volatile(false).unwrap();
     cmpxchg.set_volatile(false).unwrap();
-    assert_eq!(atomicrmw.get_volatile().unwrap(), false);
-    assert_eq!(cmpxchg.get_volatile().unwrap(), false);
+    assert!(!atomicrmw.get_volatile().unwrap());
+    assert!(!cmpxchg.get_volatile().unwrap());
 }
 
 #[llvm_versions(4.0..=10.0)]
@@ -465,7 +465,7 @@ fn test_mem_instructions() {
     assert!(arg1.get_first_use().is_none());
     assert!(arg2.get_first_use().is_none());
 
-    let f32_val = f32_type.const_float(::std::f64::consts::PI);
+    let f32_val = f32_type.const_float(std::f64::consts::PI);
 
     let store_instruction = builder.build_store(arg1, f32_val).unwrap();
     let load = builder.build_load(arg1, "").unwrap();
@@ -543,7 +543,7 @@ fn test_mem_instructions() {
     assert!(arg1.get_first_use().is_none());
     assert!(arg2.get_first_use().is_none());
 
-    let f32_val = f32_type.const_float(::std::f64::consts::PI);
+    let f32_val = f32_type.const_float(std::f64::consts::PI);
 
     let store_instruction = builder.build_store(arg1, f32_val).unwrap();
     #[cfg(any(
@@ -569,16 +569,16 @@ fn test_mem_instructions() {
     let load = builder.build_load(f32_type, arg1, "").unwrap();
     let load_instruction = load.as_instruction_value().unwrap();
 
-    assert_eq!(store_instruction.get_volatile().unwrap(), false);
-    assert_eq!(load_instruction.get_volatile().unwrap(), false);
+    assert!(!store_instruction.get_volatile().unwrap());
+    assert!(!load_instruction.get_volatile().unwrap());
     store_instruction.set_volatile(true).unwrap();
     load_instruction.set_volatile(true).unwrap();
-    assert_eq!(store_instruction.get_volatile().unwrap(), true);
-    assert_eq!(load_instruction.get_volatile().unwrap(), true);
+    assert!(store_instruction.get_volatile().unwrap());
+    assert!(load_instruction.get_volatile().unwrap());
     store_instruction.set_volatile(false).unwrap();
     load_instruction.set_volatile(false).unwrap();
-    assert_eq!(store_instruction.get_volatile().unwrap(), false);
-    assert_eq!(load_instruction.get_volatile().unwrap(), false);
+    assert!(!store_instruction.get_volatile().unwrap());
+    assert!(!load_instruction.get_volatile().unwrap());
 
     assert_eq!(store_instruction.get_alignment().unwrap(), 4);
     assert_eq!(load_instruction.get_alignment().unwrap(), 4);
@@ -640,7 +640,7 @@ fn test_atomic_ordering_mem_instructions() {
     assert!(arg1.get_first_use().is_none());
     assert!(arg2.get_first_use().is_none());
 
-    let f32_val = f32_type.const_float(::std::f64::consts::PI);
+    let f32_val = f32_type.const_float(std::f64::consts::PI);
 
     let store_instruction = builder.build_store(arg1, f32_val).unwrap();
     #[cfg(any(
@@ -774,7 +774,7 @@ fn test_find_instruction_with_name() {
     builder.position_at_end(entry);
 
     let var = builder.build_alloca(i32_type, "some_number").unwrap();
-    builder.build_store(var, i32_type.const_int(1 as u64, false)).unwrap();
+    builder.build_store(var, i32_type.const_int(1, false)).unwrap();
     builder.build_return(None).unwrap();
 
     let block = fn_value.get_first_basic_block().unwrap();
@@ -878,7 +878,6 @@ fn test_or_disjoint_flag() {
 
     let void_type = context.void_type();
     let i32_type = context.i32_type();
-    let f32_type = context.f32_type();
     let fn_type = void_type.fn_type(&[i32_type.into(), i32_type.into()], false);
 
     let builder = context.create_builder();

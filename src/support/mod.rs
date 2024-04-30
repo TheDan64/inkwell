@@ -31,6 +31,7 @@ impl LLVMString {
     /// as much as possible to save memory since it is allocated by
     /// LLVM. It's essentially a `CString` with a custom LLVM
     /// deallocator
+    #[allow(clippy::inherent_to_string_shadow_display)]
     pub fn to_string(&self) -> String {
         (*self).to_string_lossy().into_owned()
     }
@@ -135,7 +136,7 @@ pub fn get_llvm_version() -> (u32, u32, u32) {
 
     unsafe { LLVMGetVersion(&mut major, &mut minor, &mut patch) };
 
-    return (major, minor, patch);
+    (major, minor, patch)
 }
 
 /// Possible errors that can occur when loading a library
@@ -186,7 +187,7 @@ pub fn search_for_address_of_symbol(symbol: &str) -> Option<usize> {
     if address.is_null() {
         return None;
     }
-    return Some(address as usize);
+    Some(address as usize)
 }
 
 #[test]
@@ -213,7 +214,7 @@ pub fn enable_llvm_pretty_stack_trace() {
 /// A) Finds a terminating null byte in the Rust string and can reference it directly like a C string.
 ///
 /// B) Finds no null byte and allocates a new C string based on the input Rust string.
-pub(crate) fn to_c_str<'s>(mut s: &'s str) -> Cow<'s, CStr> {
+pub(crate) fn to_c_str(mut s: &str) -> Cow<'_, CStr> {
     if s.is_empty() {
         s = "\0";
     }

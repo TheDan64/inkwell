@@ -369,14 +369,10 @@ impl AttributeLoc {
         match self {
             AttributeLoc::Return => 0,
             AttributeLoc::Param(index) => {
-                assert!(
-                    index <= u32::max_value() - 2,
-                    "Param index must be <= u32::max_value() - 2"
-                );
-
+                assert!(index <= u32::MAX - 2, "Param index must be <= u32::MAX - 2");
                 index + 1
             },
-            AttributeLoc::Function => u32::max_value(),
+            AttributeLoc::Function => u32::MAX,
         }
     }
 }

@@ -265,7 +265,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
     }
 
     /// This will panic if type is a void or function type.
-    pub(crate) fn to_basic_type_enum(&self) -> BasicTypeEnum<'ctx> {
+    pub(crate) fn as_basic_type_enum(&self) -> BasicTypeEnum<'ctx> {
         unsafe { BasicTypeEnum::new(self.as_type_ref()) }
     }
 

@@ -58,14 +58,7 @@ impl StringRadix {
         }
 
         // and all digits must be in the radix' character set
-        let mut it = slice.chars();
-        match self {
-            StringRadix::Binary => it.all(|c| matches!(c, '0'..='1')),
-            StringRadix::Octal => it.all(|c| matches!(c, '0'..='7')),
-            StringRadix::Decimal => it.all(|c| matches!(c, '0'..='9')),
-            StringRadix::Hexadecimal => it.all(|c| matches!(c, '0'..='9' | 'a'..='f' | 'A'..='F')),
-            StringRadix::Alphanumeric => it.all(|c| matches!(c, '0'..='9' | 'a'..='z' | 'A'..='Z')),
-        }
+        slice.chars().all(|c| c.is_digit(*self as u32))
     }
 }
 

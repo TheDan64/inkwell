@@ -556,7 +556,7 @@ fn test_no_vector_zero() {
 fn test_ptr_address_space() {
     let context = Context::create();
 
-    let spaces = [0u32, 1, 2, 3, 4, 5, 6, 1 << 24 - 1];
+    let spaces = [0u32, 1, 2, 3, 4, 5, 6, (1 << 24) - 1];
 
     for index in spaces {
         let address_space = AddressSpace::try_from(index).unwrap();

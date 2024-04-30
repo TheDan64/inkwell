@@ -42,12 +42,11 @@ impl DiagnosticInfo {
     }
 
     pub(crate) fn severity_is_error(&self) -> bool {
-        unsafe {
-            match LLVMGetDiagInfoSeverity(self.diagnostic_info) {
-                LLVMDiagnosticSeverity::LLVMDSError => true,
-                _ => false,
-            }
-        }
+        self.severity() == LLVMDiagnosticSeverity::LLVMDSError
+    }
+
+    fn severity(&self) -> LLVMDiagnosticSeverity {
+        unsafe { LLVMGetDiagInfoSeverity(self.diagnostic_info) }
     }
 }
 

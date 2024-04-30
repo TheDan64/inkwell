@@ -11,7 +11,9 @@ use std::convert::TryFrom;
 use std::ffi::CStr;
 use std::fmt::{self, Display};
 
-use crate::types::{AsTypeRef, FloatType};
+#[llvm_versions(4.0..=17.0)]
+use crate::types::AsTypeRef;
+use crate::types::FloatType;
 use crate::values::traits::AsValueRef;
 use crate::values::{InstructionValue, IntValue, Value};
 use crate::FloatPredicate;

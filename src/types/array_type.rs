@@ -216,6 +216,11 @@ impl<'ctx> ArrayType<'ctx> {
         unsafe { LLVMGetArrayLength(self.as_type_ref()) }
     }
 
+    /// Returns `true` if this `ArrayType` contains no elements.
+    pub fn is_empty(self) -> bool {
+        self.len() == 0
+    }
+
     /// Print the definition of an `ArrayType` to `LLVMString`
     pub fn print_to_string(self) -> LLVMString {
         self.array_type.print_to_string()
@@ -272,7 +277,7 @@ impl<'ctx> ArrayType<'ctx> {
     /// assert_eq!(i8_array_type.get_element_type().into_int_type(), i8_type);
     /// ```
     pub fn get_element_type(self) -> BasicTypeEnum<'ctx> {
-        self.array_type.get_element_type().to_basic_type_enum()
+        self.array_type.get_element_type().as_basic_type_enum()
     }
 }
 

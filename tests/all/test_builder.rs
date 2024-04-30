@@ -18,7 +18,7 @@ fn test_build_call() {
 
     builder.position_at_end(basic_block);
 
-    let pi = f32_type.const_float(::std::f64::consts::PI);
+    let pi = f32_type.const_float(std::f64::consts::PI);
 
     builder.build_return(Some(&pi)).unwrap();
 
@@ -138,7 +138,7 @@ fn test_build_invoke_cleanup_resume() {
 
     builder.position_at_end(basic_block);
 
-    let pi = f32_type.const_float(::std::f64::consts::PI);
+    let pi = f32_type.const_float(std::f64::consts::PI);
 
     builder.build_return(Some(&pi)).unwrap();
 
@@ -222,7 +222,7 @@ fn test_build_invoke_catch_all() {
 
     builder.position_at_end(basic_block);
 
-    let pi = f32_type.const_float(::std::f64::consts::PI);
+    let pi = f32_type.const_float(std::f64::consts::PI);
 
     builder.build_return(Some(&pi)).unwrap();
 
@@ -310,7 +310,7 @@ fn landing_pad_filter() {
 
     builder.position_at_end(basic_block);
 
-    let pi = f32_type.const_float(::std::f64::consts::PI);
+    let pi = f32_type.const_float(std::f64::consts::PI);
 
     builder.build_return(Some(&pi)).unwrap();
 
@@ -1094,7 +1094,7 @@ fn test_insert_value() {
     let const_int1 = i32_type.const_int(2, false);
     let const_int2 = i32_type.const_int(5, false);
     let const_int3 = i32_type.const_int(6, false);
-    let const_float = f32_type.const_float(3.14);
+    let const_float = f32_type.const_float(2.0);
 
     assert!(builder
         .build_insert_value(array, const_int1, 0, "insert")
@@ -1274,7 +1274,7 @@ fn test_alignment_bytes() {
         verify_alignment(alignment);
     }
 
-    verify_alignment(u32::max_value());
+    verify_alignment(u32::MAX);
 }
 
 #[llvm_versions(8.0..=latest)]

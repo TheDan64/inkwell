@@ -106,7 +106,7 @@ pub enum InstructionOpcode {
     ZExt,
 }
 
-#[derive(Debug, PartialEq, Eq, Copy, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct InstructionValue<'ctx> {
     instruction_value: Value<'ctx>,
 }
@@ -145,6 +145,12 @@ impl<'ctx> InstructionValue<'ctx> {
         InstructionValue {
             instruction_value: value,
         }
+    }
+
+    /// Creates a clone of this `InstructionValue`, and returns it.
+    /// The clone will have no parent, and no name.
+    pub fn explicit_clone(&self) -> Self {
+        unsafe { Self::new(LLVMInstructionClone(self.as_value_ref())) }
     }
 
     /// Get name of the `InstructionValue`.
@@ -482,7 +488,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// builder.position_at_end(basic_block);
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
-    /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
+    /// let f32_val = f32_type.const_float(std::f64::consts::PI);
     /// let store_instruction = builder.build_store(arg1, f32_val).unwrap();
     /// let free_instruction = builder.build_free(arg1).unwrap();
     /// let return_instruction = builder.build_return(None).unwrap();
@@ -545,7 +551,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// builder.position_at_end(basic_block);
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
-    /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
+    /// let f32_val = f32_type.const_float(std::f64::consts::PI);
     /// let store_instruction = builder.build_store(arg1, f32_val).unwrap();
     /// let free_instruction = builder.build_free(arg1).unwrap();
     /// let return_instruction = builder.build_return(None).unwrap();
@@ -649,7 +655,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// builder.position_at_end(basic_block);
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
-    /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
+    /// let f32_val = f32_type.const_float(std::f64::consts::PI);
     /// let store_instruction = builder.build_store(arg1, f32_val).unwrap();
     /// let free_instruction = builder.build_free(arg1).unwrap();
     /// let return_instruction = builder.build_return(None).unwrap();
@@ -695,7 +701,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// builder.position_at_end(basic_block);
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
-    /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
+    /// let f32_val = f32_type.const_float(std::f64::consts::PI);
     /// let store_instruction = builder.build_store(arg1, f32_val).unwrap();
     /// let free_instruction = builder.build_free(arg1).unwrap();
     /// let return_instruction = builder.build_return(None).unwrap();
@@ -762,7 +768,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// builder.position_at_end(basic_block);
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
-    /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
+    /// let f32_val = f32_type.const_float(std::f64::consts::PI);
     /// let store_instruction = builder.build_store(arg1, f32_val).unwrap();
     /// let free_instruction = builder.build_free(arg1).unwrap();
     /// let return_instruction = builder.build_return(None).unwrap();
@@ -838,14 +844,6 @@ impl<'ctx> InstructionValue<'ctx> {
         }
 
         Ok(())
-    }
-}
-
-impl Clone for InstructionValue<'_> {
-    /// Creates a clone of this `InstructionValue`, and returns it.
-    /// The clone will have no parent, and no name.
-    fn clone(&self) -> Self {
-        unsafe { InstructionValue::new(LLVMInstructionClone(self.as_value_ref())) }
     }
 }
 

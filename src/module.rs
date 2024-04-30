@@ -849,6 +849,7 @@ impl<'ctx> Module<'ctx> {
     }
 
     /// Prints the content of the `Module` to a `String`.
+    #[allow(clippy::inherent_to_string)]
     pub fn to_string(&self) -> String {
         self.print_to_string().to_string()
     }
@@ -1507,7 +1508,7 @@ impl<'ctx> Module<'ctx> {
                 machine.target_machine,
                 options.options_ref,
             );
-            if error == std::ptr::null_mut() {
+            if error.is_null() {
                 Ok(())
             } else {
                 let message = LLVMGetErrorMessage(error);

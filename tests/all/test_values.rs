@@ -758,7 +758,7 @@ fn test_floats() {
         let f128_type = context.f128_type();
         let i64_type = context.i32_type();
 
-        let f64_pi = f64_type.const_float(::std::f64::consts::PI);
+        let f64_pi = f64_type.const_float(std::f64::consts::PI);
 
         let f32_pi = f64_pi.const_truncate(f32_type);
         let f128_pi = f64_pi.const_extend(f128_type);
@@ -1320,10 +1320,10 @@ fn test_consts() {
     assert!(vec_val.is_constant_data_vector());
 
     assert_eq!(bool_val.get_zero_extended_constant(), Some(1));
-    assert_eq!(i8_val.get_zero_extended_constant(), Some(u8::max_value() as u64));
-    assert_eq!(i16_val.get_zero_extended_constant(), Some(u16::max_value() as u64));
-    assert_eq!(i32_val.get_zero_extended_constant(), Some(u32::max_value() as u64));
-    assert_eq!(i64_val.get_zero_extended_constant(), Some(u64::max_value() as u64));
+    assert_eq!(i8_val.get_zero_extended_constant(), Some(u8::MAX as u64));
+    assert_eq!(i16_val.get_zero_extended_constant(), Some(u16::MAX as u64));
+    assert_eq!(i32_val.get_zero_extended_constant(), Some(u32::MAX as u64));
+    assert_eq!(i64_val.get_zero_extended_constant(), Some(u64::MAX));
     assert_eq!(i128_val.get_zero_extended_constant(), None);
 
     assert_eq!(bool_val.get_sign_extended_constant(), Some(-1));
