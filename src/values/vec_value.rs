@@ -1,4 +1,4 @@
-#[llvm_versions(4.0..=16.0)]
+#[llvm_versions(..=16)]
 use llvm_sys::core::LLVMConstSelect;
 use llvm_sys::core::{
     LLVMConstExtractElement, LLVMConstInsertElement, LLVMConstShuffleVector, LLVMGetElementAsConstant,
@@ -117,7 +117,7 @@ impl<'ctx> VectorValue<'ctx> {
     }
 
     // SubTypes: self can only be VectoValue<IntValue<bool>>
-    #[llvm_versions(4.0..=16.0)]
+    #[llvm_versions(..=16)]
     pub fn const_select<BV: BasicValue<'ctx>>(self, then: BV, else_: BV) -> BasicValueEnum<'ctx> {
         unsafe {
             BasicValueEnum::new(LLVMConstSelect(

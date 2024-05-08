@@ -917,7 +917,7 @@ fn test_vector_convert_ops() {
     assert!(fn_value.verify(true));
 }
 
-#[llvm_versions(8.0..=latest)]
+#[llvm_versions(8..)]
 #[test]
 fn test_vector_convert_ops_respect_target_signedness() {
     let context = Context::create();
@@ -1202,11 +1202,11 @@ fn test_insert_element() {
 
     builder.position_at_end(entry);
 
-    #[llvm_versions(12.0..=latest)]
+    #[llvm_versions(12..)]
     fn get_empty_vector_of(ty: IntType<'_>) -> VectorValue<'_> {
         ty.vec_type(4).get_poison()
     }
-    #[llvm_versions(4.0..12.0)]
+    #[llvm_versions(..12)]
     fn get_empty_vector_of(ty: IntType<'_>) -> VectorValue<'_> {
         ty.vec_type(4).get_undef()
     }
@@ -1239,7 +1239,7 @@ fn is_alignment_ok(align: u32) -> bool {
     align > 0 && align.is_power_of_two() && (align as f64).log2() < 64.0
 }
 
-#[llvm_versions(8.0..=latest)]
+#[llvm_versions(8..)]
 #[test]
 fn test_alignment_bytes() {
     let verify_alignment = |alignment: u32| {
@@ -1277,7 +1277,7 @@ fn test_alignment_bytes() {
     verify_alignment(u32::max_value());
 }
 
-#[llvm_versions(8.0..=latest)]
+#[llvm_versions(8..)]
 fn run_memcpy_on<'ctx>(
     context: &'ctx Context,
     module: &inkwell::module::Module<'ctx>,
@@ -1382,7 +1382,7 @@ fn run_memcpy_on<'ctx>(
     Ok(())
 }
 
-#[llvm_versions(8.0..=latest)]
+#[llvm_versions(8..)]
 #[test]
 fn test_memcpy() {
     // 1. Allocate an array with a few elements.
@@ -1410,7 +1410,7 @@ fn test_memcpy() {
     }
 }
 
-#[llvm_versions(8.0..=latest)]
+#[llvm_versions(8..)]
 fn run_memmove_on<'ctx>(
     context: &'ctx Context,
     module: &inkwell::module::Module<'ctx>,
@@ -1515,7 +1515,7 @@ fn run_memmove_on<'ctx>(
     Ok(())
 }
 
-#[llvm_versions(8.0..=latest)]
+#[llvm_versions(8..)]
 #[test]
 fn test_memmove() {
     // 1. Allocate an array with a few elements.
@@ -1543,7 +1543,7 @@ fn test_memmove() {
     }
 }
 
-#[llvm_versions(8.0..=latest)]
+#[llvm_versions(8..)]
 fn run_memset_on<'ctx>(
     context: &'ctx Context,
     module: &inkwell::module::Module<'ctx>,
@@ -1618,7 +1618,7 @@ fn run_memset_on<'ctx>(
     Ok(())
 }
 
-#[llvm_versions(8.0..=latest)]
+#[llvm_versions(8..)]
 #[test]
 fn test_memset() {
     // 1. Allocate an array with a few elements.

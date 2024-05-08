@@ -5,30 +5,32 @@ use inkwell::types::IntType;
 use inkwell::values::BasicValue;
 use inkwell::OptimizationLevel;
 
-#[llvm_versions(7.0..=latest)]
+#[llvm_versions(7..)]
 fn get_host_cpu_name() -> String {
     TargetMachine::get_host_cpu_name().to_string()
 }
-#[llvm_versions(7.0..=latest)]
+
+#[llvm_versions(7..)]
 fn get_host_cpu_features() -> String {
     TargetMachine::get_host_cpu_features().to_string()
 }
-#[llvm_versions(4.0..=latest)]
+
 fn ptr_sized_int_type<'ctx>(target_machine: &TargetMachine, context: &'ctx Context) -> IntType<'ctx> {
     let target_data = target_machine.get_target_data();
     context.ptr_sized_int_type(&target_data, None)
 }
-#[llvm_versions(4.0..=latest)]
+
 fn apply_target_to_module<'ctx>(target_machine: &TargetMachine, module: &Module) {
     module.set_triple(&target_machine.get_triple());
     module.set_data_layout(&target_machine.get_target_data().get_data_layout());
 }
 
-#[llvm_versions(4.0..7.0)]
+#[llvm_versions(..7)]
 fn get_host_cpu_name() -> String {
     "".to_string()
 }
-#[llvm_versions(4.0..7.0)]
+
+#[llvm_versions(..7)]
 fn get_host_cpu_features() -> String {
     "".to_string()
 }

@@ -78,7 +78,7 @@ use llvm_sys::{
     LLVMThreadLocalMode, LLVMVisibility,
 };
 
-#[llvm_versions(7.0..=latest)]
+#[llvm_versions(7..)]
 use llvm_sys::LLVMInlineAsmDialect;
 
 #[cfg(feature = "serde")]
@@ -361,24 +361,24 @@ pub enum AtomicRMWBinOp {
     /// Adds to the float-typed value in memory and returns the prior value.
     // Although this was added in LLVM 9, it wasn't exposed to the C API
     // until 10.0.
-    #[llvm_versions(10.0..=latest)]
+    #[llvm_versions(10..)]
     #[llvm_variant(LLVMAtomicRMWBinOpFAdd)]
     FAdd,
 
     /// Subtract a float-typed value off the value in memory and returns the prior value.
     // Although this was added in LLVM 9, it wasn't exposed to the C API
     // until 10.0.
-    #[llvm_versions(10.0..=latest)]
+    #[llvm_versions(10..)]
     #[llvm_variant(LLVMAtomicRMWBinOpFSub)]
     FSub,
 
     /// Sets memory to the greater of the two float-typed values, one provided and one from memory. Returns the value that was in memory.
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     #[llvm_variant(LLVMAtomicRMWBinOpFMax)]
     FMax,
 
     /// Sets memory to the lesser of the two float-typed values, one provided and one from memory. Returns the value that was in memory.
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     #[llvm_variant(LLVMAtomicRMWBinOpFMin)]
     FMin,
 }
@@ -484,7 +484,7 @@ impl Default for DLLStorageClass {
     }
 }
 
-#[llvm_versions(7.0..=latest)]
+#[llvm_versions(7..)]
 #[llvm_enum(LLVMInlineAsmDialect)]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

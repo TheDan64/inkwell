@@ -1,6 +1,6 @@
 use llvm_sys::prelude::LLVMValueRef;
 
-#[llvm_versions(12.0..=latest)]
+#[llvm_versions(12..)]
 use llvm_sys::core::LLVMIsPoison;
 
 use std::fmt::Debug;
@@ -57,7 +57,7 @@ pub unsafe trait AggregateValue<'ctx>: BasicValue<'ctx> {
     // REVIEW: How does LLVM treat out of bound index? Maybe we should return an Option?
     // or is that only in bounds GEP
     // REVIEW: Should this be AggregatePointerValue?
-    #[llvm_versions(4.0..=14.0)]
+    #[llvm_versions(..=14)]
     fn const_extract_value(&self, indexes: &mut [u32]) -> BasicValueEnum<'ctx> {
         use llvm_sys::core::LLVMConstExtractValue;
 
@@ -71,7 +71,7 @@ pub unsafe trait AggregateValue<'ctx>: BasicValue<'ctx> {
     }
 
     // SubTypes: value should really be T in self: VectorValue<T> I think
-    #[llvm_versions(4.0..=14.0)]
+    #[llvm_versions(..=14)]
     fn const_insert_value<BV: BasicValue<'ctx>>(&self, value: BV, indexes: &mut [u32]) -> BasicValueEnum<'ctx> {
         use llvm_sys::core::LLVMConstInsertValue;
 
@@ -149,7 +149,7 @@ pub unsafe trait AnyValue<'ctx>: AsValueRef + Debug {
     }
 
     /// Returns whether the value is `poison`
-    #[llvm_versions(12.0..=latest)]
+    #[llvm_versions(12..)]
     fn is_poison(&self) -> bool {
         unsafe { LLVMIsPoison(self.as_value_ref()) == 1 }
     }

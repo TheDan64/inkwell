@@ -1,19 +1,19 @@
 //! A `Context` is an opaque owner and manager of core global data.
 
-#[llvm_versions(7.0..=latest)]
+#[llvm_versions(7..)]
 use crate::InlineAsmDialect;
 use libc::c_void;
-#[llvm_versions(4.0..=6.0)]
+#[llvm_versions(..=6)]
 use llvm_sys::core::LLVMConstInlineAsm;
-#[llvm_versions(12.0..=latest)]
+#[llvm_versions(12..)]
 use llvm_sys::core::LLVMCreateTypeAttribute;
-#[llvm_versions(7.0..=latest)]
+#[llvm_versions(7..)]
 use llvm_sys::core::LLVMGetInlineAsm;
-#[llvm_versions(12.0..=latest)]
+#[llvm_versions(12..)]
 use llvm_sys::core::LLVMGetTypeByName2;
-#[llvm_versions(6.0..=latest)]
+#[llvm_versions(6..)]
 use llvm_sys::core::LLVMMetadataTypeInContext;
-#[llvm_versions(15.0..=latest)]
+#[llvm_versions(15..)]
 use llvm_sys::core::LLVMPointerTypeInContext;
 use llvm_sys::core::{
     LLVMAppendBasicBlockInContext, LLVMConstStringInContext, LLVMConstStructInContext, LLVMContextCreate,
@@ -38,9 +38,9 @@ use crate::memory_buffer::MemoryBuffer;
 use crate::module::Module;
 use crate::support::{to_c_str, LLVMString};
 use crate::targets::TargetData;
-#[llvm_versions(12.0..=latest)]
+#[llvm_versions(12..)]
 use crate::types::AnyTypeEnum;
-#[llvm_versions(6.0..=latest)]
+#[llvm_versions(6..)]
 use crate::types::MetadataType;
 use crate::types::{AsTypeRef, BasicTypeEnum, FloatType, FunctionType, IntType, PointerType, StructType, VoidType};
 use crate::values::{
@@ -204,7 +204,7 @@ impl ContextImpl {
         unsafe { IntType::new(LLVMIntTypeInContext(self.0, bits)) }
     }
 
-    #[llvm_versions(6.0..=latest)]
+    #[llvm_versions(6..)]
     fn metadata_type<'ctx>(&self) -> MetadataType<'ctx> {
         unsafe { MetadataType::new(LLVMMetadataTypeInContext(self.0)) }
     }
@@ -244,7 +244,7 @@ impl ContextImpl {
         unsafe { FloatType::new(LLVMPPCFP128TypeInContext(self.0)) }
     }
 
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     fn ptr_type<'ctx>(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         unsafe { PointerType::new(LLVMPointerTypeInContext(self.0, address_space.0)) }
     }
@@ -267,7 +267,7 @@ impl ContextImpl {
         unsafe { StructType::new(LLVMStructCreateNamed(self.0, c_string.as_ptr())) }
     }
 
-    #[llvm_versions(12.0..=latest)]
+    #[llvm_versions(12..)]
     fn get_struct_type<'ctx>(&self, name: &str) -> Option<StructType<'ctx>> {
         let c_string = to_c_str(name);
 
@@ -365,7 +365,7 @@ impl ContextImpl {
         }
     }
 
-    #[llvm_versions(12.0..=latest)]
+    #[llvm_versions(12..)]
     fn create_type_attribute(&self, kind_id: u32, type_ref: AnyTypeEnum) -> Attribute {
         unsafe { Attribute::new(LLVMCreateTypeAttribute(self.0, kind_id, type_ref.as_type_ref())) }
     }
@@ -785,7 +785,7 @@ impl Context {
     /// assert_eq!(md_type.get_context(), context);
     /// ```
     #[inline]
-    #[llvm_versions(6.0..=latest)]
+    #[llvm_versions(6..)]
     pub fn metadata_type(&self) -> MetadataType {
         self.context.metadata_type()
     }
@@ -938,7 +938,7 @@ impl Context {
     /// assert_eq!(ptr_type.get_address_space(), AddressSpace::default());
     /// assert_eq!(ptr_type.get_context(), context);
     /// ```
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     #[inline]
     pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
         self.context.ptr_type(address_space)
@@ -999,7 +999,7 @@ impl Context {
     /// assert_eq!(context.get_struct_type("foo").unwrap(), opaque);
     /// ```
     #[inline]
-    #[llvm_versions(12.0..=latest)]
+    #[llvm_versions(12..)]
     pub fn get_struct_type<'ctx>(&self, name: &str) -> Option<StructType<'ctx>> {
         self.context.get_struct_type(name)
     }
@@ -1267,7 +1267,7 @@ impl Context {
     /// assert_ne!(type_attribute.get_type_value(), context.i64_type().as_any_type_enum());
     /// ```
     #[inline]
-    #[llvm_versions(12.0..=latest)]
+    #[llvm_versions(12..)]
     pub fn create_type_attribute(&self, kind_id: u32, type_ref: AnyTypeEnum) -> Attribute {
         self.context.create_type_attribute(kind_id, type_ref)
     }
@@ -1653,7 +1653,7 @@ impl<'ctx> ContextRef<'ctx> {
     /// assert_eq!(md_type.get_context(), context);
     /// ```
     #[inline]
-    #[llvm_versions(6.0..=latest)]
+    #[llvm_versions(6..)]
     pub fn metadata_type(&self) -> MetadataType<'ctx> {
         self.context.metadata_type()
     }
@@ -1806,7 +1806,7 @@ impl<'ctx> ContextRef<'ctx> {
     /// assert_eq!(ptr_type.get_address_space(), AddressSpace::default());
     /// assert_eq!(ptr_type.get_context(), context);
     /// ```
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     #[inline]
     pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.context.ptr_type(address_space)
@@ -1867,7 +1867,7 @@ impl<'ctx> ContextRef<'ctx> {
     /// assert_eq!(context.get_struct_type("foo").unwrap(), opaque);
     /// ```
     #[inline]
-    #[llvm_versions(12.0..=latest)]
+    #[llvm_versions(12..)]
     pub fn get_struct_type(&self, name: &str) -> Option<StructType<'ctx>> {
         self.context.get_struct_type(name)
     }
@@ -2124,7 +2124,7 @@ impl<'ctx> ContextRef<'ctx> {
     /// assert_ne!(type_attribute.get_type_value(), context.i64_type().as_any_type_enum());
     /// ```
     #[inline]
-    #[llvm_versions(12.0..=latest)]
+    #[llvm_versions(12..)]
     pub fn create_type_attribute(&self, kind_id: u32, type_ref: AnyTypeEnum) -> Attribute {
         self.context.create_type_attribute(kind_id, type_ref)
     }
