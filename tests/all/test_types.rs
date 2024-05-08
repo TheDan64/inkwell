@@ -472,7 +472,7 @@ fn test_ptr_type() {
         feature = "llvm13-0",
         feature = "llvm14-0"
     ))]
-    assert_eq!(ptr_type.get_element_type().into_int_type(), i8_type);
+    assert_eq!(ptr_type.get_element_type().into_int_type(), context.i8_type());
 
     // Fn ptr:
     let void_type = context.void_type();
