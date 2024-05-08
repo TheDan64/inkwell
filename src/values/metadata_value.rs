@@ -3,9 +3,9 @@ use llvm_sys::core::{
 };
 use llvm_sys::prelude::LLVMValueRef;
 
-#[llvm_versions(7.0..=latest)]
+#[llvm_versions(7..)]
 use llvm_sys::core::LLVMValueAsMetadata;
-#[llvm_versions(7.0..=latest)]
+#[llvm_versions(7..)]
 use llvm_sys::prelude::LLVMMetadataRef;
 
 use crate::values::traits::AsValueRef;
@@ -64,7 +64,7 @@ impl<'ctx> MetadataValue<'ctx> {
         }
     }
 
-    #[llvm_versions(7.0..=latest)]
+    #[llvm_versions(7..)]
     pub(crate) fn as_metadata_ref(self) -> LLVMMetadataRef {
         unsafe { LLVMValueAsMetadata(self.as_value_ref()) }
     }

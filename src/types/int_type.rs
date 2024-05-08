@@ -383,7 +383,7 @@ impl<'ctx> IntType<'ctx> {
     ///
     /// assert!(i8_poison.is_poison());
     /// ```
-    #[llvm_versions(12.0..=latest)]
+    #[llvm_versions(12..)]
     pub fn get_poison(self) -> IntValue<'ctx> {
         unsafe { IntValue::new(self.int_type.get_poison()) }
     }

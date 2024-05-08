@@ -1,6 +1,6 @@
-#[llvm_versions(4.0..17.0)]
+#[llvm_versions(..17)]
 use llvm_sys::core::LLVMConstArray;
-#[llvm_versions(17.0..=latest)]
+#[llvm_versions(17..)]
 use llvm_sys::core::LLVMConstArray2 as LLVMConstArray;
 use llvm_sys::core::{LLVMGetAsString, LLVMIsAConstantArray, LLVMIsAConstantDataArray, LLVMIsConstantString};
 use llvm_sys::prelude::LLVMTypeRef;

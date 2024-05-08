@@ -279,7 +279,7 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// assert!(f32_poison.is_poison());
     /// ```
-    #[llvm_versions(12.0..=latest)]
+    #[llvm_versions(12..)]
     pub fn get_poison(&self) -> FloatValue<'ctx> {
         unsafe { FloatValue::new(self.float_type.get_poison()) }
     }

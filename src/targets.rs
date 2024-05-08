@@ -5,7 +5,6 @@ use llvm_sys::target::{
     LLVMPreferredAlignmentOfGlobal, LLVMPreferredAlignmentOfType, LLVMSizeOfTypeInBits, LLVMStoreSizeOfType,
     LLVMTargetDataRef,
 };
-#[llvm_versions(4.0..=latest)]
 use llvm_sys::target_machine::LLVMCreateTargetDataLayout;
 use llvm_sys::target_machine::{
     LLVMAddAnalysisPasses, LLVMCodeGenFileType, LLVMCodeModel, LLVMCreateTargetMachine, LLVMDisposeTargetMachine,
@@ -15,7 +14,7 @@ use llvm_sys::target_machine::{
     LLVMTargetHasAsmBackend, LLVMTargetHasJIT, LLVMTargetHasTargetMachine, LLVMTargetMachineEmitToFile,
     LLVMTargetMachineEmitToMemoryBuffer, LLVMTargetMachineRef, LLVMTargetRef,
 };
-#[llvm_versions(18.0..=latest)]
+#[llvm_versions(18..)]
 use llvm_sys::target_machine::{
     LLVMCreateTargetMachineOptions, LLVMCreateTargetMachineWithOptions, LLVMDisposeTargetMachineOptions,
     LLVMTargetMachineOptionsRef, LLVMTargetMachineOptionsSetABI, LLVMTargetMachineOptionsSetCPU,
@@ -344,7 +343,6 @@ impl Target {
     }
 
     #[cfg(feature = "target-amdgpu")]
-    #[llvm_versions(4.0..=latest)]
     pub fn initialize_amd_gpu(config: &InitializationConfig) {
         use llvm_sys::target::{
             LLVMInitializeAMDGPUAsmParser, LLVMInitializeAMDGPUAsmPrinter, LLVMInitializeAMDGPUTarget,
@@ -665,7 +663,6 @@ impl Target {
     }
 
     #[cfg(feature = "target-lanai")]
-    #[llvm_versions(4.0..=latest)]
     pub fn initialize_lanai(config: &InitializationConfig) {
         use llvm_sys::target::{
             LLVMInitializeLanaiAsmParser, LLVMInitializeLanaiAsmPrinter, LLVMInitializeLanaiDisassembler,
@@ -709,7 +706,7 @@ impl Target {
     // targets we're going to make this 9.0+ only. See
     // https://lists.llvm.org/pipermail/llvm-dev/2017-August/116347.html for more info.
     #[cfg(feature = "target-riscv")]
-    #[llvm_versions(9.0..=latest)]
+    #[llvm_versions(9..)]
     pub fn initialize_riscv(config: &InitializationConfig) {
         use llvm_sys::target::{
             LLVMInitializeRISCVAsmParser, LLVMInitializeRISCVAsmPrinter, LLVMInitializeRISCVDisassembler,
@@ -748,7 +745,7 @@ impl Target {
     }
 
     #[cfg(feature = "target-loongarch")]
-    #[llvm_versions(16.0..=latest)]
+    #[llvm_versions(16..)]
     pub fn initialize_loongarch(config: &InitializationConfig) {
         use llvm_sys::target::{
             LLVMInitializeLoongArchAsmParser, LLVMInitializeLoongArchAsmPrinter, LLVMInitializeLoongArchDisassembler,
@@ -787,7 +784,7 @@ impl Target {
     }
 
     #[cfg(feature = "target-webassembly")]
-    #[llvm_versions(8.0..=latest)]
+    #[llvm_versions(8..)]
     pub fn initialize_webassembly(config: &InitializationConfig) {
         use llvm_sys::target::{
             LLVMInitializeWebAssemblyAsmParser, LLVMInitializeWebAssemblyAsmPrinter,
@@ -963,7 +960,7 @@ impl Target {
     /// assert_eq!(target_machine.get_cpu().to_str(), Ok("x86-64"));
     /// assert_eq!(target_machine.get_feature_string().to_str(), Ok("+avx2"));
     /// ```
-    #[llvm_versions(18.0..=latest)]
+    #[llvm_versions(18..)]
     pub fn create_target_machine_from_options(
         &self,
         triple: &TargetTriple,
@@ -1097,7 +1094,7 @@ impl TargetMachine {
         unsafe { TargetTriple::new(llvm_string) }
     }
 
-    #[llvm_versions(7.0..=latest)]
+    #[llvm_versions(7..)]
     pub fn normalize_triple(triple: &TargetTriple) -> TargetTriple {
         use llvm_sys::target_machine::LLVMNormalizeTargetTriple;
 
@@ -1111,7 +1108,7 @@ impl TargetMachine {
     /// # Example Output
     ///
     /// `x86_64-pc-linux-gnu`
-    #[llvm_versions(7.0..=latest)]
+    #[llvm_versions(7..)]
     pub fn get_host_cpu_name() -> LLVMString {
         use llvm_sys::target_machine::LLVMGetHostCPUName;
 
@@ -1123,7 +1120,7 @@ impl TargetMachine {
     /// # Example Output
     ///
     /// `+sse2,+cx16,+sahf,-tbm`
-    #[llvm_versions(7.0..=latest)]
+    #[llvm_versions(7..)]
     pub fn get_host_cpu_features() -> LLVMString {
         use llvm_sys::target_machine::LLVMGetHostCPUFeatures;
 
@@ -1139,7 +1136,6 @@ impl TargetMachine {
     }
 
     /// Create TargetData from this target machine
-    #[llvm_versions(4.0..=latest)]
     pub fn get_target_data(&self) -> TargetData {
         unsafe { TargetData::new(LLVMCreateTargetDataLayout(self.target_machine)) }
     }
@@ -1426,11 +1422,11 @@ impl Drop for TargetData {
 ///
 /// The option structure exposes an additional setting (i.e., the target ABI)
 /// and provides default values for unspecified settings.
-#[llvm_versions(18.0..=latest)]
+#[llvm_versions(18..)]
 #[derive(Default, Debug)]
 pub struct TargetMachineOptions(Option<LLVMTargetMachineOptionsRef>);
 
-#[llvm_versions(18.0..=latest)]
+#[llvm_versions(18..)]
 impl TargetMachineOptions {
     pub fn new() -> Self {
         Default::default()
@@ -1495,7 +1491,7 @@ impl TargetMachineOptions {
     }
 }
 
-#[llvm_versions(18.0..=latest)]
+#[llvm_versions(18..)]
 impl Drop for TargetMachineOptions {
     fn drop(&mut self) {
         if let Some(inner) = self.0 {

@@ -11,7 +11,7 @@ use llvm_sys::core::{
     LLVMSetMetadata, LLVMSetOperand, LLVMSetVolatile, LLVMValueAsBasicBlock,
 };
 use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
-#[llvm_versions(10.0..=latest)]
+#[llvm_versions(10..)]
 use llvm_sys::core::{LLVMIsAAtomicCmpXchgInst, LLVMIsAAtomicRMWInst};
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMOpcode;
@@ -42,7 +42,7 @@ pub enum InstructionOpcode {
     BitCast,
     Br,
     Call,
-    #[llvm_versions(9.0..=latest)]
+    #[llvm_versions(9..)]
     CallBr,
     CatchPad,
     CatchRet,
@@ -51,7 +51,7 @@ pub enum InstructionOpcode {
     CleanupRet,
     ExtractElement,
     ExtractValue,
-    #[llvm_versions(8.0..=latest)]
+    #[llvm_versions(8..)]
     FNeg,
     FAdd,
     FCmp,
@@ -62,7 +62,7 @@ pub enum InstructionOpcode {
     FPToSI,
     FPToUI,
     FPTrunc,
-    #[llvm_versions(10.0..=latest)]
+    #[llvm_versions(10..)]
     Freeze,
     FRem,
     FSub,
@@ -121,11 +121,11 @@ impl<'ctx> InstructionValue<'ctx> {
     fn is_a_alloca_inst(self) -> bool {
         !unsafe { LLVMIsAAllocaInst(self.as_value_ref()) }.is_null()
     }
-    #[llvm_versions(10.0..=latest)]
+    #[llvm_versions(10..)]
     fn is_a_atomicrmw_inst(self) -> bool {
         !unsafe { LLVMIsAAtomicRMWInst(self.as_value_ref()) }.is_null()
     }
-    #[llvm_versions(10.0..=latest)]
+    #[llvm_versions(10..)]
     fn is_a_cmpxchg_inst(self) -> bool {
         !unsafe { LLVMIsAAtomicCmpXchgInst(self.as_value_ref()) }.is_null()
     }
@@ -220,7 +220,6 @@ impl<'ctx> InstructionValue<'ctx> {
     }
 
     // REVIEW: Potentially unsafe if parent BB or grandparent fn were removed?
-    #[llvm_versions(4.0..=latest)]
     pub fn remove_from_basic_block(self) {
         unsafe { LLVMInstructionRemoveFromParent(self.as_value_ref()) }
     }
@@ -261,7 +260,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// Returns the tail call kind on call instructions.
     ///
     /// Other instructions return `None`.
-    #[llvm_versions(18.0..=latest)]
+    #[llvm_versions(18..)]
     pub fn get_tail_call_kind(self) -> Option<super::LLVMTailCallKind> {
         if self.get_opcode() == InstructionOpcode::Call {
             unsafe { llvm_sys::core::LLVMGetTailCallKind(self.as_value_ref()) }.into()
@@ -273,7 +272,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// Check whether this instructions supports [fast math flags][0].
     ///
     /// [0]: https://llvm.org/docs/LangRef.html#fast-math-flags
-    #[llvm_versions(18.0..=latest)]
+    #[llvm_versions(18..)]
     pub fn can_use_fast_math_flags(self) -> bool {
         unsafe { llvm_sys::core::LLVMCanValueUseFastMathFlags(self.as_value_ref()) == 1 }
     }
@@ -283,7 +282,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// Calling this on unsupported instructions is safe and returns `None`.
     ///
     /// [0]: https://llvm.org/docs/LangRef.html#fast-math-flags
-    #[llvm_versions(18.0..=latest)]
+    #[llvm_versions(18..)]
     pub fn get_fast_math_flags(self) -> Option<u32> {
         self.can_use_fast_math_flags()
             .then(|| unsafe { llvm_sys::core::LLVMGetFastMathFlags(self.as_value_ref()) } as u32)
@@ -294,7 +293,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// Calling this on unsupported instructions is safe and results in a no-op.
     ///
     /// [0]: https://llvm.org/docs/LangRef.html#fast-math-flags
-    #[llvm_versions(18.0..=latest)]
+    #[llvm_versions(18..)]
     pub fn set_fast_math_flags(self, flags: u32) {
         if self.can_use_fast_math_flags() {
             unsafe { llvm_sys::core::LLVMSetFastMathFlags(self.as_value_ref(), flags) };
@@ -304,7 +303,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// Check if a `zext` instruction has the non-negative flag set.
     ///
     /// Calling this function on other instructions is safe and returns `None`.
-    #[llvm_versions(18.0..=latest)]
+    #[llvm_versions(18..)]
     pub fn get_non_negative_flag(self) -> Option<bool> {
         (self.get_opcode() == InstructionOpcode::ZExt)
             .then(|| unsafe { llvm_sys::core::LLVMGetNNeg(self.as_value_ref()) == 1 })
@@ -313,7 +312,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// Set the non-negative flag on `zext` instructions.
     ///
     /// Calling this function on other instructions is safe and results in a no-op.
-    #[llvm_versions(18.0..=latest)]
+    #[llvm_versions(18..)]
     pub fn set_non_negative_flag(self, flag: bool) {
         if self.get_opcode() == InstructionOpcode::ZExt {
             unsafe { llvm_sys::core::LLVMSetNNeg(self.as_value_ref(), flag as i32) };
@@ -323,7 +322,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// Checks if an `or` instruction has the `disjoint` flag set.
     ///
     /// Calling this function on other instructions is safe and returns `None`.
-    #[llvm_versions(18.0..=latest)]
+    #[llvm_versions(18..)]
     pub fn get_disjoint_flag(self) -> Option<bool> {
         (self.get_opcode() == InstructionOpcode::Or)
             .then(|| unsafe { llvm_sys::core::LLVMGetIsDisjoint(self.as_value_ref()) == 1 })
@@ -332,7 +331,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// Set the `disjoint` flag on `or` instructions.
     ///
     /// Calling this function on other instructions is safe and results in a no-op.
-    #[llvm_versions(18.0..=latest)]
+    #[llvm_versions(18..)]
     pub fn set_disjoint_flag(self, flag: bool) {
         if self.get_opcode() == InstructionOpcode::Or {
             unsafe { llvm_sys::core::LLVMSetIsDisjoint(self.as_value_ref(), flag as i32) };
@@ -345,7 +344,7 @@ impl<'ctx> InstructionValue<'ctx> {
 
     // SubTypes: Only apply to memory access instructions
     /// Returns whether or not a memory access instruction is volatile.
-    #[llvm_versions(4.0..=9.0)]
+    #[llvm_versions(..=9)]
     pub fn get_volatile(self) -> Result<bool, &'static str> {
         // Although cmpxchg and atomicrmw can have volatile, LLVM's C API
         // does not export that functionality until 10.0.
@@ -357,7 +356,7 @@ impl<'ctx> InstructionValue<'ctx> {
 
     // SubTypes: Only apply to memory access instructions
     /// Returns whether or not a memory access instruction is volatile.
-    #[llvm_versions(10.0..=latest)]
+    #[llvm_versions(10..)]
     pub fn get_volatile(self) -> Result<bool, &'static str> {
         if !self.is_a_load_inst() && !self.is_a_store_inst() && !self.is_a_atomicrmw_inst() && !self.is_a_cmpxchg_inst()
         {
@@ -368,7 +367,7 @@ impl<'ctx> InstructionValue<'ctx> {
 
     // SubTypes: Only apply to memory access instructions
     /// Sets whether or not a memory access instruction is volatile.
-    #[llvm_versions(4.0..=9.0)]
+    #[llvm_versions(..=9)]
     pub fn set_volatile(self, volatile: bool) -> Result<(), &'static str> {
         // Although cmpxchg and atomicrmw can have volatile, LLVM's C API
         // does not export that functionality until 10.0.
@@ -380,7 +379,7 @@ impl<'ctx> InstructionValue<'ctx> {
 
     // SubTypes: Only apply to memory access instructions
     /// Sets whether or not a memory access instruction is volatile.
-    #[llvm_versions(10.0..=latest)]
+    #[llvm_versions(10..)]
     pub fn set_volatile(self, volatile: bool) -> Result<(), &'static str> {
         if !self.is_a_load_inst() && !self.is_a_store_inst() && !self.is_a_atomicrmw_inst() && !self.is_a_cmpxchg_inst()
         {

@@ -581,7 +581,7 @@ fn test_ptr_address_space() {
     assert!(AddressSpace::try_from(1u32 << 24).is_err());
 }
 
-#[llvm_versions(15.0..=latest)]
+#[llvm_versions(15..)]
 #[test]
 #[allow(deprecated)]
 fn test_ptr_is_opaque() {

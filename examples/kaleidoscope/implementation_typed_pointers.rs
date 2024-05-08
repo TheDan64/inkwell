@@ -856,12 +856,12 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
         builder.build_alloca(self.context.f64_type(), name).unwrap()
     }
 
-    #[llvm_versions(4.0..=14.0)]
+    #[llvm_versions(..=14)]
     pub fn build_load(&self, ptr: PointerValue<'ctx>, name: &str) -> BasicValueEnum<'ctx> {
         self.builder.build_load(ptr, name).unwrap()
     }
 
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     pub fn build_load(&self, ptr: PointerValue<'ctx>, name: &str) -> BasicValueEnum<'ctx> {
         self.builder.build_load(self.context.f64_type(), ptr, name).unwrap()
     }

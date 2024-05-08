@@ -163,7 +163,7 @@ impl<'ctx> VectorType<'ctx> {
     ///
     /// assert!(f32_vec_poison.is_undef());
     /// ```
-    #[llvm_versions(12.0..=latest)]
+    #[llvm_versions(12..)]
     pub fn get_poison(self) -> VectorValue<'ctx> {
         unsafe { VectorValue::new(self.vec_type.get_poison()) }
     }

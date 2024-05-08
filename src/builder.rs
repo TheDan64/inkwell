@@ -19,30 +19,30 @@ use llvm_sys::core::{
     LLVMInsertIntoBuilderWithName, LLVMPositionBuilder, LLVMPositionBuilderAtEnd, LLVMPositionBuilderBefore,
     LLVMSetCleanup,
 };
-#[llvm_versions(4.0..=14.0)]
+#[llvm_versions(..=14)]
 use llvm_sys::core::{
     LLVMBuildCall, LLVMBuildGEP, LLVMBuildInBoundsGEP, LLVMBuildInvoke, LLVMBuildLoad, LLVMBuildPtrDiff,
     LLVMBuildStructGEP,
 };
-#[llvm_versions(15.0..=latest)]
+#[llvm_versions(15..)]
 use llvm_sys::core::{
     LLVMBuildCall2, LLVMBuildGEP2, LLVMBuildInBoundsGEP2, LLVMBuildInvoke2, LLVMBuildLoad2, LLVMBuildPtrDiff2,
     LLVMBuildStructGEP2,
 };
-#[llvm_versions(8.0..=latest)]
+#[llvm_versions(8..)]
 use llvm_sys::core::{LLVMBuildIntCast2, LLVMBuildMemCpy, LLVMBuildMemMove, LLVMBuildMemSet};
 
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use thiserror::Error;
 
 use crate::basic_block::BasicBlock;
-#[llvm_versions(7.0..=8.0)]
+#[llvm_versions(7..=8)]
 use crate::context::AsContextRef;
-#[llvm_versions(7.0..=latest)]
+#[llvm_versions(7..)]
 use crate::debug_info::DILocation;
 use crate::support::to_c_str;
 use crate::types::{AsTypeRef, BasicType, FloatMathType, FunctionType, IntMathType, PointerMathType, PointerType};
-#[llvm_versions(4.0..=14.0)]
+#[llvm_versions(..=14)]
 use crate::values::CallableValue;
 use crate::values::{
     AggregateValue, AggregateValueEnum, AsValueRef, BasicMetadataValueEnum, BasicValue, BasicValueEnum, CallSiteValue,
@@ -218,7 +218,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.build_return(Some(&ret_val)).unwrap();
     /// ```
-    #[llvm_versions(4.0..=14.0)]
+    #[llvm_versions(..=14)]
     pub fn build_call<F>(
         &self,
         function: F,
@@ -254,7 +254,7 @@ impl<'ctx> Builder<'ctx> {
     }
 
     /// Builds a function call instruction. Alias for [Builder::build_direct_call].
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     pub fn build_call(
         &self,
         function: FunctionValue<'ctx>,
@@ -295,7 +295,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.build_return(Some(&ret_val)).unwrap();
     /// ```
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     pub fn build_direct_call(
         &self,
         function: FunctionValue<'ctx>,
@@ -338,7 +338,7 @@ impl<'ctx> Builder<'ctx> {
     /// builder.build_return(Some(&ret_val)).unwrap();
     /// ```
     ///
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     pub fn build_indirect_call(
         &self,
         function_type: FunctionType<'ctx>,
@@ -352,7 +352,7 @@ impl<'ctx> Builder<'ctx> {
         self.build_call_help(function_type, function_pointer.as_value_ref(), args, name)
     }
 
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     fn build_call_help(
         &self,
         function_type: FunctionType<'ctx>,
@@ -470,7 +470,7 @@ impl<'ctx> Builder<'ctx> {
     ///     builder.build_return(Some(&f32_type.const_zero())).unwrap();
     /// }
     /// ```
-    #[llvm_versions(4.0..=14.0)]
+    #[llvm_versions(..=14)]
     pub fn build_invoke<F>(
         &self,
         function: F,
@@ -588,7 +588,7 @@ impl<'ctx> Builder<'ctx> {
     ///     builder.build_return(Some(&f32_type.const_zero())).unwrap();
     /// }
     /// ```
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     pub fn build_invoke(
         &self,
         function: FunctionValue<'ctx>,
@@ -603,7 +603,7 @@ impl<'ctx> Builder<'ctx> {
         self.build_direct_invoke(function, args, then_block, catch_block, name)
     }
 
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     pub fn build_direct_invoke(
         &self,
         function: FunctionValue<'ctx>,
@@ -625,7 +625,7 @@ impl<'ctx> Builder<'ctx> {
         )
     }
 
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     pub fn build_indirect_invoke(
         &self,
         function_type: FunctionType<'ctx>,
@@ -648,7 +648,7 @@ impl<'ctx> Builder<'ctx> {
         )
     }
 
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     fn build_invoke_help(
         &self,
         fn_ty: FunctionType<'ctx>,
@@ -961,7 +961,7 @@ impl<'ctx> Builder<'ctx> {
 
     // REVIEW: Doesn't GEP work on array too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    #[llvm_versions(4.0..=14.0)]
+    #[llvm_versions(..=14)]
     pub unsafe fn build_gep(
         &self,
         ptr: PointerValue<'ctx>,
@@ -988,7 +988,7 @@ impl<'ctx> Builder<'ctx> {
 
     // REVIEW: Doesn't GEP work on array too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     pub unsafe fn build_gep<T: BasicType<'ctx>>(
         &self,
         pointee_ty: T,
@@ -1018,7 +1018,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Doesn't GEP work on array too?
     // REVIEW: This could be merge in with build_gep via a in_bounds: bool param
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    #[llvm_versions(4.0..=14.0)]
+    #[llvm_versions(..=14)]
     pub unsafe fn build_in_bounds_gep(
         &self,
         ptr: PointerValue<'ctx>,
@@ -1046,7 +1046,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Doesn't GEP work on array too?
     // REVIEW: This could be merge in with build_gep via a in_bounds: bool param
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     pub unsafe fn build_in_bounds_gep<T: BasicType<'ctx>>(
         &self,
         pointee_ty: T,
@@ -1109,7 +1109,7 @@ impl<'ctx> Builder<'ctx> {
     /// assert!(builder.build_struct_gep(struct_ptr, 1, "struct_gep").is_ok());
     /// assert!(builder.build_struct_gep(struct_ptr, 2, "struct_gep").is_err());
     /// ```
-    #[llvm_versions(4.0..=14.0)]
+    #[llvm_versions(..=14)]
     pub fn build_struct_gep(
         &self,
         ptr: PointerValue<'ctx>,
@@ -1175,7 +1175,7 @@ impl<'ctx> Builder<'ctx> {
     /// assert!(builder.build_struct_gep(struct_ty, struct_ptr, 1, "struct_gep").is_ok());
     /// assert!(builder.build_struct_gep(struct_ty, struct_ptr, 2, "struct_gep").is_err());
     /// ```
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     pub fn build_struct_gep<T: BasicType<'ctx>>(
         &self,
         pointee_ty: T,
@@ -1241,7 +1241,7 @@ impl<'ctx> Builder<'ctx> {
     /// builder.build_ptr_diff(i32_ptr_param1, i32_ptr_param2, "diff").unwrap();
     /// builder.build_return(None).unwrap();
     /// ```
-    #[llvm_versions(4.0..=14.0)]
+    #[llvm_versions(..=14)]
     pub fn build_ptr_diff(
         &self,
         lhs_ptr: PointerValue<'ctx>,
@@ -1292,7 +1292,7 @@ impl<'ctx> Builder<'ctx> {
     /// builder.build_ptr_diff(i32_ptr_type, i32_ptr_param1, i32_ptr_param2, "diff").unwrap();
     /// builder.build_return(None).unwrap();
     /// ```
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     pub fn build_ptr_diff<T: BasicType<'ctx>>(
         &self,
         pointee_ty: T,
@@ -1402,7 +1402,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.build_return(Some(&pointee)).unwrap();
     /// ```
-    #[llvm_versions(4.0..=14.0)]
+    #[llvm_versions(..=14)]
     pub fn build_load(&self, ptr: PointerValue<'ctx>, name: &str) -> Result<BasicValueEnum<'ctx>, BuilderError> {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
@@ -1442,7 +1442,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.build_return(Some(&pointee)).unwrap();
     /// ```
-    #[llvm_versions(15.0..=latest)]
+    #[llvm_versions(15..)]
     pub fn build_load<T: BasicType<'ctx>>(
         &self,
         pointee_ty: T,
@@ -1504,7 +1504,7 @@ impl<'ctx> Builder<'ctx> {
     /// Returns an `Err(BuilderError::AlignmentError)` if the source or destination alignments are not a power of 2.
     ///
     /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
-    #[llvm_versions(8.0..=latest)]
+    #[llvm_versions(8..)]
     pub fn build_memcpy(
         &self,
         dest: PointerValue<'ctx>,
@@ -1552,7 +1552,7 @@ impl<'ctx> Builder<'ctx> {
     /// Returns an `Err(BuilderError::AlignmentError)` if the source or destination alignments are not a power of 2 under 2^64.
     ///
     /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
-    #[llvm_versions(8.0..=latest)]
+    #[llvm_versions(8..)]
     pub fn build_memmove(
         &self,
         dest: PointerValue<'ctx>,
@@ -1600,7 +1600,7 @@ impl<'ctx> Builder<'ctx> {
     /// Returns an `Err(BuilderError::AlignmentError)` if the source alignment is not a power of 2 under 2^64.
     ///
     /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
-    #[llvm_versions(8.0..=latest)]
+    #[llvm_versions(8..)]
     pub fn build_memset(
         &self,
         dest: PointerValue<'ctx>,
@@ -2161,7 +2161,7 @@ impl<'ctx> Builder<'ctx> {
     }
 
     /// Like `build_int_cast`, but respects the signedness of the type being cast to.
-    #[llvm_versions(8.0..=latest)]
+    #[llvm_versions(8..)]
     pub fn build_int_cast_sign_flag<T: IntMathValue<'ctx>>(
         &self,
         int: T,
@@ -3429,7 +3429,7 @@ impl<'ctx> Builder<'ctx> {
     }
 
     /// Set the debug info source location of the instruction currently pointed at by the builder
-    #[llvm_versions(7.0..=8.0)]
+    #[llvm_versions(7..=8)]
     pub fn set_current_debug_location(&self, context: impl AsContextRef<'ctx>, location: DILocation<'ctx>) {
         use llvm_sys::core::LLVMMetadataAsValue;
         use llvm_sys::core::LLVMSetCurrentDebugLocation;
@@ -3442,7 +3442,7 @@ impl<'ctx> Builder<'ctx> {
     }
 
     /// Set the debug info source location of the instruction currently pointed at by the builder
-    #[llvm_versions(9.0..=latest)]
+    #[llvm_versions(9..)]
     pub fn set_current_debug_location(&self, location: DILocation<'ctx>) {
         use llvm_sys::core::LLVMSetCurrentDebugLocation2;
         unsafe {
@@ -3452,7 +3452,7 @@ impl<'ctx> Builder<'ctx> {
 
     /// Get the debug info source location of the instruction currently pointed at by the builder,
     /// if available.
-    #[llvm_versions(7.0..=latest)]
+    #[llvm_versions(7..)]
     pub fn get_current_debug_location(&self) -> Option<DILocation<'ctx>> {
         use llvm_sys::core::LLVMGetCurrentDebugLocation;
         use llvm_sys::core::LLVMValueAsMetadata;
@@ -3468,7 +3468,7 @@ impl<'ctx> Builder<'ctx> {
 
     /// Unset the debug info source location of the instruction currently pointed at by the
     /// builder. If there isn't any debug info, this is a no-op.
-    #[llvm_versions(7.0..=8.0)]
+    #[llvm_versions(7..=8)]
     pub fn unset_current_debug_location(&self) {
         use llvm_sys::core::LLVMSetCurrentDebugLocation;
         unsafe {
@@ -3478,7 +3478,7 @@ impl<'ctx> Builder<'ctx> {
 
     /// Unset the debug info source location of the instruction currently pointed at by the
     /// builder. If there isn't any debug info, this is a no-op.
-    #[llvm_versions(9.0..=latest)]
+    #[llvm_versions(9..)]
     pub fn unset_current_debug_location(&self) {
         use llvm_sys::core::LLVMSetCurrentDebugLocation2;
         unsafe {
@@ -3488,7 +3488,7 @@ impl<'ctx> Builder<'ctx> {
 }
 
 /// Used by build_memcpy and build_memmove
-#[llvm_versions(8.0..=latest)]
+#[llvm_versions(8..)]
 fn is_alignment_ok(align: u32) -> bool {
     // This replicates the assertions LLVM runs.
     //

@@ -362,7 +362,7 @@ fn test_instructions() {
     assert_eq!(instruction_clone, instruction_clone_copy);
 }
 
-#[llvm_versions(10.0..=latest)]
+#[llvm_versions(10..)]
 #[test]
 fn test_volatile_atomicrmw_cmpxchg() {
     let context = Context::create();
@@ -429,7 +429,7 @@ fn test_volatile_atomicrmw_cmpxchg() {
     assert!(!cmpxchg.get_volatile().unwrap());
 }
 
-#[llvm_versions(4.0..=10.0)]
+#[llvm_versions(..=10)]
 #[test]
 fn test_mem_instructions() {
     let context = Context::create();
@@ -507,7 +507,7 @@ fn test_mem_instructions() {
     assert!(fadd_instruction.set_alignment(16).is_err());
 }
 
-#[llvm_versions(11.0..=latest)]
+#[llvm_versions(11..)]
 #[test]
 fn test_mem_instructions() {
     let context = Context::create();
@@ -784,7 +784,7 @@ fn test_find_instruction_with_name() {
     assert_eq!(some_number.unwrap().get_name().unwrap().to_str(), Ok("some_number"))
 }
 
-#[llvm_versions(18.0..=latest)]
+#[llvm_versions(18..)]
 #[test]
 fn test_fast_math_flags() {
     let context = Context::create();
@@ -828,7 +828,7 @@ fn test_fast_math_flags() {
     assert_eq!(f32_addition.get_fast_math_flags(), Some(1));
 }
 
-#[llvm_versions(18.0..=latest)]
+#[llvm_versions(18..)]
 #[test]
 fn test_zext_non_negative_flag() {
     let context = Context::create();
@@ -870,7 +870,7 @@ fn test_zext_non_negative_flag() {
     assert_eq!(i32_sext.get_non_negative_flag(), None);
 }
 
-#[llvm_versions(18.0..=latest)]
+#[llvm_versions(18..)]
 #[test]
 fn test_or_disjoint_flag() {
     let context = Context::create();

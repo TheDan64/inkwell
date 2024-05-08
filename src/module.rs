@@ -4,7 +4,7 @@ use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyModule};
 #[allow(deprecated)]
 use llvm_sys::bit_reader::LLVMParseBitcodeInContext;
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
-#[llvm_versions(4.0..=14.0)]
+#[llvm_versions(..=14)]
 use llvm_sys::core::LLVMGetTypeByName;
 
 use llvm_sys::core::{
@@ -14,18 +14,18 @@ use llvm_sys::core::{
     LLVMGetNamedMetadataNumOperands, LLVMGetNamedMetadataOperands, LLVMGetTarget, LLVMPrintModuleToFile,
     LLVMPrintModuleToString, LLVMSetDataLayout, LLVMSetModuleIdentifier, LLVMSetTarget,
 };
-#[llvm_versions(7.0..=latest)]
+#[llvm_versions(7..)]
 use llvm_sys::core::{LLVMAddModuleFlag, LLVMGetModuleFlag};
-#[llvm_versions(13.0..=latest)]
+#[llvm_versions(13..)]
 use llvm_sys::error::LLVMGetErrorMessage;
 use llvm_sys::execution_engine::{
     LLVMCreateExecutionEngineForModule, LLVMCreateInterpreterForModule, LLVMCreateJITCompilerForModule,
 };
 use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
-#[llvm_versions(13.0..=latest)]
+#[llvm_versions(13..)]
 use llvm_sys::transforms::pass_builder::LLVMRunPasses;
 use llvm_sys::LLVMLinkage;
-#[llvm_versions(7.0..=latest)]
+#[llvm_versions(7..)]
 use llvm_sys::LLVMModuleFlagBehavior;
 
 use std::cell::{Cell, Ref, RefCell};
@@ -37,22 +37,22 @@ use std::path::Path;
 use std::ptr;
 use std::rc::Rc;
 
-#[llvm_versions(7.0..=latest)]
+#[llvm_versions(7..)]
 use crate::comdat::Comdat;
 use crate::context::{AsContextRef, Context, ContextRef};
 use crate::data_layout::DataLayout;
-#[llvm_versions(7.0..=latest)]
+#[llvm_versions(7..)]
 use crate::debug_info::{DICompileUnit, DWARFEmissionKind, DWARFSourceLanguage, DebugInfoBuilder};
 use crate::execution_engine::ExecutionEngine;
 use crate::memory_buffer::MemoryBuffer;
-#[llvm_versions(13.0..=latest)]
+#[llvm_versions(13..)]
 use crate::passes::PassBuilderOptions;
 use crate::support::{to_c_str, LLVMString};
-#[llvm_versions(13.0..=latest)]
+#[llvm_versions(13..)]
 use crate::targets::TargetMachine;
 use crate::targets::{InitializationConfig, Target, TargetTriple};
 use crate::types::{AsTypeRef, BasicType, FunctionType, StructType};
-#[llvm_versions(7.0..=latest)]
+#[llvm_versions(7..)]
 use crate::values::BasicValue;
 use crate::values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
 use crate::{AddressSpace, OptimizationLevel};
@@ -356,7 +356,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_struct_type("foo").unwrap(), opaque);
     /// ```
     ///
-    #[llvm_versions(4.0..=11.0)]
+    #[llvm_versions(..=11)]
     pub fn get_struct_type(&self, name: &str) -> Option<StructType<'ctx>> {
         let c_string = to_c_str(name);
 
@@ -385,7 +385,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(module.get_struct_type("foo").unwrap(), opaque);
     /// ```
-    #[llvm_versions(12.0..=latest)]
+    #[llvm_versions(12..)]
     pub fn get_struct_type(&self, name: &str) -> Option<StructType<'ctx>> {
         self.get_context().get_struct_type(name)
     }
@@ -1239,7 +1239,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_name().to_str(), Ok("my_mod"));
     /// assert_eq!(module.get_source_file_name().to_str(), Ok("my_mod.rs"));
     /// ```
-    #[llvm_versions(7.0..=latest)]
+    #[llvm_versions(7..)]
     pub fn get_source_file_name(&self) -> &CStr {
         use llvm_sys::core::LLVMGetSourceFileName;
 
@@ -1266,7 +1266,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_name().to_str(), Ok("my_mod"));
     /// assert_eq!(module.get_source_file_name().to_str(), Ok("my_mod.rs"));
     /// ```
-    #[llvm_versions(7.0..=latest)]
+    #[llvm_versions(7..)]
     pub fn set_source_file_name(&self, file_name: &str) {
         use llvm_sys::core::LLVMSetSourceFileName;
 
@@ -1326,7 +1326,7 @@ impl<'ctx> Module<'ctx> {
 
     /// Gets the `Comdat` associated with a particular name. If it does not exist, it will be created.
     /// A new `Comdat` defaults to a kind of `ComdatSelectionKind::Any`.
-    #[llvm_versions(7.0..=latest)]
+    #[llvm_versions(7..)]
     pub fn get_or_insert_comdat(&self, name: &str) -> Comdat {
         use llvm_sys::comdat::LLVMGetOrInsertComdat;
 
@@ -1340,7 +1340,7 @@ impl<'ctx> Module<'ctx> {
     /// If a `BasicValue` was used to create this flag, it will be wrapped in a `MetadataValue`
     /// when returned from this function.
     // SubTypes: Might need to return Option<BVE, MV<Enum>, or MV<String>>
-    #[llvm_versions(7.0..=latest)]
+    #[llvm_versions(7..)]
     pub fn get_flag(&self, key: &str) -> Option<MetadataValue<'ctx>> {
         use llvm_sys::core::LLVMMetadataAsValue;
 
@@ -1357,7 +1357,7 @@ impl<'ctx> Module<'ctx> {
 
     /// Append a `MetadataValue` as a module wide flag. Note that using the same key twice
     /// will likely invalidate the module.
-    #[llvm_versions(7.0..=latest)]
+    #[llvm_versions(7..)]
     pub fn add_metadata_flag(&self, key: &str, behavior: FlagBehavior, flag: MetadataValue<'ctx>) {
         let md = flag.as_metadata_ref();
 
@@ -1375,7 +1375,7 @@ impl<'ctx> Module<'ctx> {
     /// Append a `BasicValue` as a module wide flag. Note that using the same key twice
     /// will likely invalidate the module.
     // REVIEW: What happens if value is not const?
-    #[llvm_versions(7.0..=latest)]
+    #[llvm_versions(7..)]
     pub fn add_basic_value_flag<BV: BasicValue<'ctx>>(&self, key: &str, behavior: FlagBehavior, flag: BV) {
         use llvm_sys::core::LLVMValueAsMetadata;
 
@@ -1393,7 +1393,7 @@ impl<'ctx> Module<'ctx> {
     }
 
     /// Strips and debug info from the module, if it exists.
-    #[llvm_versions(6.0..=latest)]
+    #[llvm_versions(6..)]
     pub fn strip_debug_info(&self) -> bool {
         use llvm_sys::debuginfo::LLVMStripModuleDebugInfo;
 
@@ -1401,7 +1401,7 @@ impl<'ctx> Module<'ctx> {
     }
 
     /// Gets the version of debug metadata contained in this `Module`.
-    #[llvm_versions(6.0..=latest)]
+    #[llvm_versions(6..)]
     pub fn get_debug_metadata_version(&self) -> libc::c_uint {
         use llvm_sys::debuginfo::LLVMGetModuleDebugMetadataVersion;
 
@@ -1409,7 +1409,7 @@ impl<'ctx> Module<'ctx> {
     }
 
     /// Creates a `DebugInfoBuilder` for this `Module`.
-    #[llvm_versions(7.0..=latest)]
+    #[llvm_versions(7..)]
     pub fn create_debug_info_builder(
         &self,
         allow_unresolved: bool,
@@ -1494,7 +1494,7 @@ impl<'ctx> Module<'ctx> {
     /// Individual passes may be specified, separated by commas.
     /// Full pipelines may also be invoked using default<O3> and friends.
     /// See opt for full reference of the Passes format.
-    #[llvm_versions(13.0..=latest)]
+    #[llvm_versions(13..)]
     pub fn run_passes(
         &self,
         passes: &str,
@@ -1547,7 +1547,7 @@ impl Drop for Module<'_> {
     }
 }
 
-#[llvm_versions(7.0..=latest)]
+#[llvm_versions(7..)]
 #[llvm_enum(LLVMModuleFlagBehavior)]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 /// Defines the operational behavior for a module wide flag. This documentation comes directly

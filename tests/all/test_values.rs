@@ -1,5 +1,5 @@
 use inkwell::attributes::AttributeLoc;
-#[llvm_versions(7.0..=latest)]
+#[llvm_versions(7..)]
 use inkwell::comdat::ComdatSelectionKind;
 use inkwell::context::Context;
 use inkwell::module::Linkage::*;
@@ -7,7 +7,7 @@ use inkwell::types::{AnyTypeEnum, StringRadix, VectorType};
 use inkwell::values::{AnyValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
 use inkwell::{AddressSpace, DLLStorageClass, GlobalVisibility, ThreadLocalMode};
 
-#[llvm_versions(18.0..=latest)]
+#[llvm_versions(18..)]
 pub use llvm_sys::LLVMTailCallKind::*;
 #[cfg(feature = "llvm18-0")]
 use llvm_sys_180 as llvm_sys;
@@ -387,7 +387,7 @@ fn test_undef() {
     assert!(ppc_f128_undef.is_undef());
 }
 
-#[llvm_versions(12.0..=latest)]
+#[llvm_versions(12..)]
 #[test]
 fn test_poison() {
     let context = Context::create();
@@ -928,7 +928,7 @@ fn test_global_byte_array() {
 
 #[test]
 fn test_globals() {
-    #[llvm_versions(7.0..=latest)]
+    #[llvm_versions(7..)]
     use inkwell::values::UnnamedAddress;
 
     let context = Context::create();

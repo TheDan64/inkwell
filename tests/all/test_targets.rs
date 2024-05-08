@@ -428,7 +428,7 @@ fn test_write_target_machine_to_memory_buffer() {
     write_target_machine_to_memory_buffer(target_machine);
 }
 
-#[llvm_versions(18.0..=latest)]
+#[llvm_versions(18..)]
 #[test]
 fn test_create_target_machine_from_default_options() {
     Target::initialize_x86(&InitializationConfig::default());
@@ -445,7 +445,7 @@ fn test_create_target_machine_from_default_options() {
     write_target_machine_to_memory_buffer(target_machine);
 }
 
-#[llvm_versions(18.0..=latest)]
+#[llvm_versions(18..)]
 #[test]
 fn test_create_target_machine_from_options() {
     Target::initialize_x86(&InitializationConfig::default());

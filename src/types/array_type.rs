@@ -254,7 +254,7 @@ impl<'ctx> ArrayType<'ctx> {
     ///
     /// assert!(i8_array_poison.is_poison());
     /// ```
-    #[llvm_versions(12.0..=latest)]
+    #[llvm_versions(12..)]
     pub fn get_poison(self) -> ArrayValue<'ctx> {
         unsafe { ArrayValue::new(self.array_type.get_poison()) }
     }

@@ -20,10 +20,10 @@ use std::io::{self, Write};
 
 use inkwell::context::Context;
 use inkwell::module::Module;
-#[llvm_versions(4.0..=15.0)]
+#[llvm_versions(..=15)]
 use inkwell::passes::PassManager;
 use inkwell::OptimizationLevel;
-#[llvm_versions(16.0..=latest)]
+#[llvm_versions(16..)]
 use inkwell::{
     passes::PassBuilderOptions,
     targets::{CodeModel, InitializationConfig, RelocMode, Target, TargetMachine},
@@ -64,7 +64,7 @@ pub extern "C" fn printd(x: f64) -> f64 {
 #[used]
 static EXTERNAL_FNS: [extern "C" fn(f64) -> f64; 2] = [putchard, printd];
 
-#[llvm_versions(4.0..=15.0)]
+#[llvm_versions(..=15)]
 fn run_passes_on(module: &Module) {
     let fpm = PassManager::create(());
 
@@ -78,7 +78,7 @@ fn run_passes_on(module: &Module) {
     fpm.run_on(module);
 }
 
-#[llvm_versions(16.0..=latest)]
+#[llvm_versions(16..)]
 fn run_passes_on(module: &Module) {
     Target::initialize_all(&InitializationConfig::default());
     let target_triple = TargetMachine::get_default_triple();
