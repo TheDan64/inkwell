@@ -16,30 +16,33 @@ use super::AnyValue;
 use std::ffi::CStr;
 use std::fmt::{self, Display};
 
-// FIXME: use #[doc(cfg(...))] for this rustdoc comment when it's stabilized:
-// https://github.com/rust-lang/rust/issues/43781
 /// Value returned by [`Context::get_kind_id()`](crate::context::Context::get_kind_id)
-/// for the first input string that isn't known. Each LLVM version has a different set of pre-defined metadata kinds.
-#[cfg(feature = "llvm4-0")]
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 22;
-#[cfg(feature = "llvm5-0")]
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 23;
-#[cfg(any(feature = "llvm6-0", feature = "llvm7-0"))]
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 25;
-#[cfg(feature = "llvm8-0")]
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 26;
-#[cfg(feature = "llvm9-0")]
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 28;
-#[cfg(any(feature = "llvm10-0", feature = "llvm11-0"))]
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 30;
-#[cfg(any(feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0",))]
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 31;
-#[cfg(any(feature = "llvm15-0"))]
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 36;
-#[cfg(any(feature = "llvm16-0", feature = "llvm17-0"))]
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 39;
-#[cfg(any(feature = "llvm18-0"))]
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = 40;
+/// for the first input string that isn't known.
+///
+/// Each LLVM version has a different set of pre-defined metadata kinds.
+pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = if cfg!(feature = "llvm4-0") {
+    22
+} else if cfg!(feature = "llvm5-0") {
+    23
+} else if cfg!(any(feature = "llvm6-0", feature = "llvm7-0")) {
+    25
+} else if cfg!(feature = "llvm8-0") {
+    26
+} else if cfg!(feature = "llvm9-0") {
+    28
+} else if cfg!(any(feature = "llvm10-0", feature = "llvm11-0")) {
+    30
+} else if cfg!(any(feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0",)) {
+    31
+} else if cfg!(feature = "llvm15-0") {
+    36
+} else if cfg!(any(feature = "llvm16-0", feature = "llvm17-0")) {
+    39
+} else if cfg!(feature = "llvm18-0") {
+    40
+} else {
+    panic!("Unhandled LLVM version")
+};
 
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct MetadataValue<'ctx> {

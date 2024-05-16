@@ -38,10 +38,11 @@ pub use crate::types::void_type::VoidType;
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMGetPoison;
 
+#[allow(deprecated)]
+use llvm_sys::core::LLVMArrayType;
 use llvm_sys::core::{
-    LLVMAlignOf, LLVMArrayType, LLVMConstNull, LLVMConstPointerNull, LLVMFunctionType, LLVMGetElementType,
-    LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMSizeOf,
-    LLVMTypeIsSized, LLVMVectorType,
+    LLVMAlignOf, LLVMConstNull, LLVMConstPointerNull, LLVMFunctionType, LLVMGetElementType, LLVMGetTypeContext,
+    LLVMGetTypeKind, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMSizeOf, LLVMTypeIsSized, LLVMVectorType,
 };
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use llvm_sys::LLVMTypeKind;
@@ -130,6 +131,7 @@ impl<'ctx> Type<'ctx> {
         }
     }
 
+    #[allow(deprecated)]
     fn array_type(self, size: u32) -> ArrayType<'ctx> {
         unsafe { ArrayType::new(LLVMArrayType(self.ty, size)) }
     }

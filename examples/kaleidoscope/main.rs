@@ -32,8 +32,7 @@ use inkwell::{
 use inkwell_internals::llvm_versions;
 
 mod implementation_typed_pointers;
-
-use crate::implementation_typed_pointers::*;
+pub use implementation_typed_pointers::*;
 
 // ======================================================================================
 // PROGRAM ==============================================================================

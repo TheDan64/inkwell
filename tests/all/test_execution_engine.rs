@@ -53,7 +53,6 @@ fn test_jit_execution_engine() {
     let context = Context::create();
     let module = context.create_module("main_module");
     let builder = context.create_builder();
-    let i8_type = context.i8_type();
     let i32_type = context.i32_type();
     #[cfg(not(any(
         feature = "llvm15-0",
@@ -61,7 +60,8 @@ fn test_jit_execution_engine() {
         feature = "llvm17-0",
         feature = "llvm18-0"
     )))]
-    let i8_ptr_ptr_type = i8_type
+    let i8_ptr_ptr_type = context
+        .i8_type()
         .ptr_type(AddressSpace::default())
         .ptr_type(AddressSpace::default());
     #[cfg(any(

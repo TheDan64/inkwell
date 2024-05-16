@@ -225,7 +225,7 @@ impl<'ctx> Value<'ctx> {
             }
         });
 
-        let c_string = section.as_deref().map(to_c_str);
+        let c_string = section.map(to_c_str);
 
         unsafe {
             LLVMSetSection(

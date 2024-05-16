@@ -51,12 +51,10 @@ pub struct LexError {
 }
 
 impl LexError {
-    #[allow(unused)]
     pub fn new(msg: &'static str) -> LexError {
         LexError { error: msg, index: 0 }
     }
 
-    #[allow(unused)]
     pub fn with_index(msg: &'static str, index: usize) -> LexError {
         LexError { error: msg, index }
     }
@@ -884,7 +882,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
             } => {
                 let mut old_bindings = Vec::new();
 
-                for &(ref var_name, ref initializer) in variables {
+                for (var_name, initializer) in variables {
                     let var_name = var_name.as_str();
 
                     let initial_val = match *initializer {

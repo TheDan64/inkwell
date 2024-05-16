@@ -3,8 +3,8 @@ use inkwell::attributes::AttributeLoc;
 use inkwell::comdat::ComdatSelectionKind;
 use inkwell::context::Context;
 use inkwell::module::Linkage::*;
-use inkwell::types::{AnyTypeEnum, BasicType, StringRadix, VectorType};
-use inkwell::values::{AnyValue, BasicValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
+use inkwell::types::{AnyTypeEnum, StringRadix, VectorType};
+use inkwell::values::{AnyValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
 use inkwell::{AddressSpace, DLLStorageClass, GlobalVisibility, ThreadLocalMode};
 
 #[llvm_versions(18..)]
@@ -758,7 +758,7 @@ fn test_floats() {
         let f128_type = context.f128_type();
         let i64_type = context.i32_type();
 
-        let f64_pi = f64_type.const_float(::std::f64::consts::PI);
+        let f64_pi = f64_type.const_float(std::f64::consts::PI);
 
         let f32_pi = f64_pi.const_truncate(f32_type);
         let f128_pi = f64_pi.const_extend(f128_type);
@@ -1320,10 +1320,10 @@ fn test_consts() {
     assert!(vec_val.is_constant_data_vector());
 
     assert_eq!(bool_val.get_zero_extended_constant(), Some(1));
-    assert_eq!(i8_val.get_zero_extended_constant(), Some(u8::max_value() as u64));
-    assert_eq!(i16_val.get_zero_extended_constant(), Some(u16::max_value() as u64));
-    assert_eq!(i32_val.get_zero_extended_constant(), Some(u32::max_value() as u64));
-    assert_eq!(i64_val.get_zero_extended_constant(), Some(u64::max_value() as u64));
+    assert_eq!(i8_val.get_zero_extended_constant(), Some(u8::MAX as u64));
+    assert_eq!(i16_val.get_zero_extended_constant(), Some(u16::MAX as u64));
+    assert_eq!(i32_val.get_zero_extended_constant(), Some(u32::MAX as u64));
+    assert_eq!(i64_val.get_zero_extended_constant(), Some(u64::MAX));
     assert_eq!(i128_val.get_zero_extended_constant(), None);
 
     assert_eq!(bool_val.get_sign_extended_constant(), Some(-1));
@@ -1478,7 +1478,9 @@ fn test_non_fn_ptr_called() {
         feature = "llvm17-0",
         feature = "llvm18-0"
     ))]
-    builder.build_indirect_call(i8_ptr_type.fn_type(&[], false), i8_ptr_param, &[], "call");
+    builder
+        .build_indirect_call(i8_ptr_type.fn_type(&[], false), i8_ptr_param, &[], "call")
+        .unwrap();
     builder.build_return(None).unwrap();
 
     assert!(module.verify().is_ok());
@@ -1562,7 +1564,9 @@ fn test_aggregate_returns() {
         feature = "llvm17-0",
         feature = "llvm18-0"
     ))]
-    builder.build_ptr_diff(i32_ptr_type, ptr_param1, ptr_param2, "diff");
+    builder
+        .build_ptr_diff(i32_ptr_type, ptr_param1, ptr_param2, "diff")
+        .unwrap();
     builder
         .build_aggregate_return(&[i32_three.into(), i32_seven.into()])
         .unwrap();

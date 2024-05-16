@@ -52,7 +52,7 @@ impl<'ctx> BasicValueUse<'ctx> {
     /// builder.position_at_end(basic_block);
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
-    /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
+    /// let f32_val = f32_type.const_float(std::f64::consts::PI);
     /// let store_instruction = builder.build_store(arg1, f32_val).unwrap();
     /// let free_instruction = builder.build_free(arg1).unwrap();
     /// let return_instruction = builder.build_return(None).unwrap();
@@ -116,7 +116,7 @@ impl<'ctx> BasicValueUse<'ctx> {
     /// builder.position_at_end(basic_block);
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
-    /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
+    /// let f32_val = f32_type.const_float(std::f64::consts::PI);
     /// let store_instruction = builder.build_store(arg1, f32_val).unwrap();
     /// let free_instruction = builder.build_free(arg1).unwrap();
     /// let return_instruction = builder.build_return(None).unwrap();
@@ -155,7 +155,7 @@ impl<'ctx> BasicValueUse<'ctx> {
     /// builder.position_at_end(basic_block);
     ///
     /// let arg1 = function.get_first_param().unwrap().into_pointer_value();
-    /// let f32_val = f32_type.const_float(::std::f64::consts::PI);
+    /// let f32_val = f32_type.const_float(std::f64::consts::PI);
     /// let store_instruction = builder.build_store(arg1, f32_val).unwrap();
     /// let free_instruction = builder.build_free(arg1).unwrap();
     /// let return_instruction = builder.build_return(None).unwrap();

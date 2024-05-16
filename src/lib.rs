@@ -9,6 +9,7 @@
 //! * Most functions which take a string slice as input may possibly panic in the unlikely event that a c style string cannot be created based on it. (IE if your slice already has a null byte in it)
 
 #![deny(missing_debug_implementations)]
+#![allow(clippy::missing_safety_doc, clippy::too_many_arguments, clippy::result_unit_err)]
 #![cfg_attr(feature = "nightly", feature(doc_cfg))]
 
 #[macro_use]
@@ -147,14 +148,8 @@ assert_unique_used_features! {
 ///
 /// # Remarks
 /// See also: https://llvm.org/doxygen/NVPTXBaseInfo_8h_source.html
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Default)]
 pub struct AddressSpace(u32);
-
-impl Default for AddressSpace {
-    fn default() -> Self {
-        AddressSpace(0)
-    }
-}
 
 impl From<u16> for AddressSpace {
     fn from(val: u16) -> Self {

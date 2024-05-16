@@ -20,7 +20,7 @@ fn ptr_sized_int_type<'ctx>(target_machine: &TargetMachine, context: &'ctx Conte
     context.ptr_sized_int_type(&target_data, None)
 }
 
-fn apply_target_to_module<'ctx>(target_machine: &TargetMachine, module: &Module) {
+fn apply_target_to_module(target_machine: &TargetMachine, module: &Module) {
     module.set_triple(&target_machine.get_triple());
     module.set_data_layout(&target_machine.get_target_data().get_data_layout());
 }
@@ -56,7 +56,7 @@ fn test_section_iterator() {
     let target_machine = get_native_target_machine();
 
     let context = Context::create();
-    let mut module = context.create_module("test_section_iterator");
+    let module = context.create_module("test_section_iterator");
 
     let gv_a = module.add_global(context.i8_type(), None, "a");
     gv_a.set_initializer(&context.i8_type().const_zero().as_basic_value_enum());
@@ -93,7 +93,7 @@ fn test_section_iterator() {
     apply_target_to_module(&target_machine, &module);
 
     let memory_buffer = target_machine
-        .write_to_memory_buffer(&mut module, FileType::Object)
+        .write_to_memory_buffer(&module, FileType::Object)
         .unwrap();
     let object_file = memory_buffer.create_object_file().unwrap();
 
@@ -140,7 +140,7 @@ fn test_symbol_iterator() {
     let target_machine = get_native_target_machine();
 
     let context = Context::create();
-    let mut module = context.create_module("test_symbol_iterator");
+    let module = context.create_module("test_symbol_iterator");
     module
         .add_global(context.i8_type(), None, "a")
         .set_initializer(&context.i8_type().const_zero().as_basic_value_enum());
@@ -153,7 +153,7 @@ fn test_symbol_iterator() {
     apply_target_to_module(&target_machine, &module);
 
     let memory_buffer = target_machine
-        .write_to_memory_buffer(&mut module, FileType::Object)
+        .write_to_memory_buffer(&module, FileType::Object)
         .unwrap();
     let object_file = memory_buffer.create_object_file().unwrap();
 
@@ -195,7 +195,7 @@ fn test_reloc_iterator() {
     let context = Context::create();
     let intptr_t = ptr_sized_int_type(&target_machine, &context);
 
-    let mut module = context.create_module("test_reloc_iterator");
+    let module = context.create_module("test_reloc_iterator");
     let x_ptr = module.add_global(context.i8_type(), None, "x").as_pointer_value();
     let x_plus_4 = x_ptr.const_to_int(intptr_t).const_add(intptr_t.const_int(4, false));
     module.add_global(intptr_t, None, "a").set_initializer(&x_plus_4);
@@ -203,7 +203,7 @@ fn test_reloc_iterator() {
     apply_target_to_module(&target_machine, &module);
 
     let memory_buffer = target_machine
-        .write_to_memory_buffer(&mut module, FileType::Object)
+        .write_to_memory_buffer(&module, FileType::Object)
         .unwrap();
     let object_file = memory_buffer.create_object_file().unwrap();
 
@@ -222,7 +222,7 @@ fn test_section_contains_nul() {
     let target_machine = get_native_target_machine();
 
     let context = Context::create();
-    let mut module = context.create_module("test_section_iterator");
+    let module = context.create_module("test_section_iterator");
 
     let gv = module.add_global(context.i32_type(), None, "gv");
     gv.set_initializer(&context.i32_type().const_int(0xff0000ff, false).as_basic_value_enum());
@@ -231,7 +231,7 @@ fn test_section_contains_nul() {
     apply_target_to_module(&target_machine, &module);
 
     let memory_buffer = target_machine
-        .write_to_memory_buffer(&mut module, FileType::Object)
+        .write_to_memory_buffer(&module, FileType::Object)
         .unwrap();
     let object_file = memory_buffer.create_object_file().unwrap();
 

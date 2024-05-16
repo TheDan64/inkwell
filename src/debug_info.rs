@@ -167,6 +167,7 @@ impl<'ctx> DIScope<'ctx> {
 /// Specific scopes (i.e. `DILexicalBlock`) can be turned into a `DIScope` with the
 /// `AsDIScope::as_debug_info_scope` trait method.
 pub trait AsDIScope<'ctx> {
+    #[allow(clippy::wrong_self_convention)]
     fn as_debug_info_scope(self) -> DIScope<'ctx>;
 }
 

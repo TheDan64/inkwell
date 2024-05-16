@@ -2,7 +2,6 @@ use inkwell::builder::BuilderError;
 use inkwell::context::Context;
 use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, OptimizationLevel};
 
-use std::convert::TryFrom;
 use std::ptr::null;
 
 #[test]
@@ -19,7 +18,7 @@ fn test_build_call() {
 
     builder.position_at_end(basic_block);
 
-    let pi = f32_type.const_float(::std::f64::consts::PI);
+    let pi = f32_type.const_float(std::f64::consts::PI);
 
     builder.build_return(Some(&pi)).unwrap();
 
@@ -118,7 +117,7 @@ fn test_build_call() {
         feature = "llvm17-0",
         feature = "llvm18-0"
     ))]
-    builder.build_indirect_call(fn_type2, load, &[], "call");
+    builder.build_indirect_call(fn_type2, load, &[], "call").unwrap();
     builder.build_return(None).unwrap();
 
     assert!(module.verify().is_ok());
@@ -139,7 +138,7 @@ fn test_build_invoke_cleanup_resume() {
 
     builder.position_at_end(basic_block);
 
-    let pi = f32_type.const_float(::std::f64::consts::PI);
+    let pi = f32_type.const_float(std::f64::consts::PI);
 
     builder.build_return(Some(&pi)).unwrap();
 
@@ -223,7 +222,7 @@ fn test_build_invoke_catch_all() {
 
     builder.position_at_end(basic_block);
 
-    let pi = f32_type.const_float(::std::f64::consts::PI);
+    let pi = f32_type.const_float(std::f64::consts::PI);
 
     builder.build_return(Some(&pi)).unwrap();
 
@@ -311,7 +310,7 @@ fn landing_pad_filter() {
 
     builder.position_at_end(basic_block);
 
-    let pi = f32_type.const_float(::std::f64::consts::PI);
+    let pi = f32_type.const_float(std::f64::consts::PI);
 
     builder.build_return(Some(&pi)).unwrap();
 
@@ -1095,7 +1094,7 @@ fn test_insert_value() {
     let const_int1 = i32_type.const_int(2, false);
     let const_int2 = i32_type.const_int(5, false);
     let const_int3 = i32_type.const_int(6, false);
-    let const_float = f32_type.const_float(3.14);
+    let const_float = f32_type.const_float(2.0);
 
     assert!(builder
         .build_insert_value(array, const_int1, 0, "insert")
@@ -1226,6 +1225,7 @@ fn test_insert_element() {
     v = builder
         .build_insert_element(v, i8_ty.const_int(3, false), i32_ty.const_int(3, false), "v3")
         .unwrap();
+    let _ = v;
 
     builder.build_return(None).unwrap();
 
@@ -1274,7 +1274,7 @@ fn test_alignment_bytes() {
         verify_alignment(alignment);
     }
 
-    verify_alignment(u32::max_value());
+    verify_alignment(u32::MAX);
 }
 
 #[llvm_versions(8..)]
@@ -1308,7 +1308,6 @@ fn run_memcpy_on<'ctx>(
 
     let len_value = i64_type.const_int(array_len as u64, false);
     let element_type = i32_type;
-    let array_type = element_type.array_type(array_len as u32);
     let array_ptr = builder.build_array_malloc(i32_type, len_value, "array_ptr").unwrap();
 
     // Initialize the array with the values [1, 2, 3, 4]
@@ -1441,7 +1440,6 @@ fn run_memmove_on<'ctx>(
 
     let len_value = i64_type.const_int(array_len as u64, false);
     let element_type = i32_type;
-    let array_type = element_type.array_type(array_len as u32);
     let array_ptr = builder.build_array_malloc(i32_type, len_value, "array_ptr").unwrap();
 
     // Initialize the array with the values [1, 2, 3, 4]
@@ -1575,7 +1573,6 @@ fn run_memset_on<'ctx>(
 
     let len_value = i64_type.const_int(array_len as u64, false);
     let element_type = i32_type;
-    let array_type = element_type.array_type(array_len as u32);
     let array_ptr = builder.build_array_malloc(i32_type, len_value, "array_ptr").unwrap();
 
     let elems_to_copy = 2;

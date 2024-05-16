@@ -3,6 +3,7 @@ use llvm_sys::core::{
     LLVMCreateMemoryBufferWithMemoryRangeCopy, LLVMCreateMemoryBufferWithSTDIN, LLVMDisposeMemoryBuffer,
     LLVMGetBufferSize, LLVMGetBufferStart,
 };
+#[allow(deprecated)]
 use llvm_sys::object::LLVMCreateObjectFile;
 use llvm_sys::prelude::LLVMMemoryBufferRef;
 
@@ -123,6 +124,7 @@ impl MemoryBuffer {
     /// Convert this `MemoryBuffer` into an `ObjectFile`. LLVM does not currently
     /// provide any way to determine the cause of error if conversion fails.
     pub fn create_object_file(self) -> Result<ObjectFile, ()> {
+        #[allow(deprecated)]
         let object_file = unsafe { LLVMCreateObjectFile(self.memory_buffer) };
 
         forget(self);

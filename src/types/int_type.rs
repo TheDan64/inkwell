@@ -1,15 +1,14 @@
 use llvm_sys::core::{
-    LLVMConstAllOnes, LLVMConstArray, LLVMConstInt, LLVMConstIntOfArbitraryPrecision, LLVMConstIntOfStringAndSize,
-    LLVMGetIntTypeWidth,
+    LLVMConstAllOnes, LLVMConstInt, LLVMConstIntOfArbitraryPrecision, LLVMConstIntOfStringAndSize, LLVMGetIntTypeWidth,
 };
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfInt;
-use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
+use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
 use crate::types::{ArrayType, FunctionType, PointerType, Type, VectorType};
-use crate::values::{ArrayValue, AsValueRef, GenericValue, IntValue};
+use crate::values::{ArrayValue, GenericValue, IntValue};
 use crate::AddressSpace;
 
 use crate::types::enums::BasicMetadataTypeEnum;
@@ -58,14 +57,7 @@ impl StringRadix {
         }
 
         // and all digits must be in the radix' character set
-        let mut it = slice.chars();
-        match self {
-            StringRadix::Binary => it.all(|c| matches!(c, '0'..='1')),
-            StringRadix::Octal => it.all(|c| matches!(c, '0'..='7')),
-            StringRadix::Decimal => it.all(|c| matches!(c, '0'..='9')),
-            StringRadix::Hexadecimal => it.all(|c| matches!(c, '0'..='9' | 'a'..='f' | 'A'..='F')),
-            StringRadix::Alphanumeric => it.all(|c| matches!(c, '0'..='9' | 'a'..='z' | 'A'..='Z')),
-        }
+        slice.chars().all(|c| c.is_digit(*self as u32))
     }
 }
 
@@ -416,14 +408,7 @@ impl<'ctx> IntType<'ctx> {
     /// assert!(i8_array.is_const());
     /// ```
     pub fn const_array(self, values: &[IntValue<'ctx>]) -> ArrayValue<'ctx> {
-        let mut values: Vec<LLVMValueRef> = values.iter().map(|val| val.as_value_ref()).collect();
-        unsafe {
-            ArrayValue::new(LLVMConstArray(
-                self.as_type_ref(),
-                values.as_mut_ptr(),
-                values.len() as u32,
-            ))
-        }
+        unsafe { ArrayValue::new_const_array(&self, values) }
     }
 }
 

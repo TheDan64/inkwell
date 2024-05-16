@@ -7,13 +7,12 @@ use llvm_sys::target::{
 };
 use llvm_sys::target_machine::LLVMCreateTargetDataLayout;
 use llvm_sys::target_machine::{
-    LLVMAddAnalysisPasses, LLVMCodeGenFileType, LLVMCodeGenOptLevel, LLVMCodeModel, LLVMCreateTargetMachine,
-    LLVMDisposeTargetMachine, LLVMGetDefaultTargetTriple, LLVMGetFirstTarget, LLVMGetNextTarget,
-    LLVMGetTargetDescription, LLVMGetTargetFromName, LLVMGetTargetFromTriple, LLVMGetTargetMachineCPU,
-    LLVMGetTargetMachineFeatureString, LLVMGetTargetMachineTarget, LLVMGetTargetMachineTriple, LLVMGetTargetName,
-    LLVMRelocMode, LLVMSetTargetMachineAsmVerbosity, LLVMTargetHasAsmBackend, LLVMTargetHasJIT,
-    LLVMTargetHasTargetMachine, LLVMTargetMachineEmitToFile, LLVMTargetMachineEmitToMemoryBuffer, LLVMTargetMachineRef,
-    LLVMTargetRef,
+    LLVMAddAnalysisPasses, LLVMCodeGenFileType, LLVMCodeModel, LLVMCreateTargetMachine, LLVMDisposeTargetMachine,
+    LLVMGetDefaultTargetTriple, LLVMGetFirstTarget, LLVMGetNextTarget, LLVMGetTargetDescription, LLVMGetTargetFromName,
+    LLVMGetTargetFromTriple, LLVMGetTargetMachineCPU, LLVMGetTargetMachineFeatureString, LLVMGetTargetMachineTarget,
+    LLVMGetTargetMachineTriple, LLVMGetTargetName, LLVMRelocMode, LLVMSetTargetMachineAsmVerbosity,
+    LLVMTargetHasAsmBackend, LLVMTargetHasJIT, LLVMTargetHasTargetMachine, LLVMTargetMachineEmitToFile,
+    LLVMTargetMachineEmitToMemoryBuffer, LLVMTargetMachineRef, LLVMTargetRef,
 };
 #[llvm_versions(18..)]
 use llvm_sys::target_machine::{

@@ -184,7 +184,7 @@ fn test_default_triple() {
     let default_triple = default_triple.as_str().to_string_lossy();
 
     let archs = ["x86_64", "arm64"];
-    let has_known_arch = archs.iter().find(|arch| default_triple.starts_with(*arch)).is_some();
+    let has_known_arch = archs.iter().any(|arch| default_triple.starts_with(*arch));
     assert!(has_known_arch, "Target triple '{default_triple}' has unknown arch");
 
     let vendors = if cfg!(target_os = "linux") {
@@ -195,7 +195,7 @@ fn test_default_triple() {
         vec![]
     };
 
-    let has_known_vendor = vendors.iter().find(|vendor| default_triple.contains(*vendor)).is_some();
+    let has_known_vendor = vendors.iter().any(|vendor| default_triple.contains(*vendor));
     assert!(has_known_vendor, "Target triple '{default_triple}' has unknown vendor");
 
     let os = [
@@ -204,7 +204,7 @@ fn test_default_triple() {
         #[cfg(target_os = "macos")]
         "darwin",
     ];
-    let has_known_os = os.iter().find(|os| default_triple.contains(*os)).is_some();
+    let has_known_os = os.iter().any(|os| default_triple.contains(*os));
     assert!(has_known_os, "Target triple '{default_triple}' has unknown OS");
 
     // TODO: CFG for other supported major OSes
@@ -310,7 +310,7 @@ fn test_target_data() {
     assert_eq!(target_data.element_at_offset(&struct_type, 16), 2);
     assert_eq!(target_data.element_at_offset(&struct_type, 24), 3);
     assert_eq!(target_data.element_at_offset(&struct_type, 32), 3); // OoB
-    assert_eq!(target_data.element_at_offset(&struct_type, ::std::u64::MAX), 3); // OoB; Odd as it seems to cap at max element number
+    assert_eq!(target_data.element_at_offset(&struct_type, u64::MAX), 3); // OoB; Odd as it seems to cap at max element number
 
     assert_eq!(target_data.offset_of_element(&struct_type2, 0), Some(0));
     assert_eq!(target_data.offset_of_element(&struct_type2, 1), Some(4));
@@ -325,7 +325,7 @@ fn test_target_data() {
     assert_eq!(target_data.element_at_offset(&struct_type2, 8), 2);
     assert_eq!(target_data.element_at_offset(&struct_type2, 16), 3);
     assert_eq!(target_data.element_at_offset(&struct_type2, 32), 3); // OoB
-    assert_eq!(target_data.element_at_offset(&struct_type2, ::std::u64::MAX), 3); // OoB; TODOC: Odd but seems to cap at max element number
+    assert_eq!(target_data.element_at_offset(&struct_type2, u64::MAX), 3); // OoB; TODOC: Odd but seems to cap at max element number
 
     TargetData::create("e-m:e-i64:64-f80:128-n8:16:32:64-S128");
 }

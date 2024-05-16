@@ -1,8 +1,10 @@
 #[llvm_versions(..=16)]
 use llvm_sys::core::LLVMConstSelect;
+#[allow(deprecated)]
+use llvm_sys::core::LLVMGetElementAsConstant;
 use llvm_sys::core::{
-    LLVMConstExtractElement, LLVMConstInsertElement, LLVMConstShuffleVector, LLVMGetElementAsConstant,
-    LLVMIsAConstantDataVector, LLVMIsAConstantVector,
+    LLVMConstExtractElement, LLVMConstInsertElement, LLVMConstShuffleVector, LLVMIsAConstantDataVector,
+    LLVMIsAConstantVector,
 };
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -112,6 +114,7 @@ impl<'ctx> VectorValue<'ctx> {
 
     // TODOC: Value seems to be zero initialized if index out of bounds
     // SubType: VectorValue<BV> -> BV
+    #[allow(deprecated)]
     pub fn get_element_as_constant(self, index: u32) -> BasicValueEnum<'ctx> {
         unsafe { BasicValueEnum::new(LLVMGetElementAsConstant(self.as_value_ref(), index)) }
     }

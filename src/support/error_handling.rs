@@ -10,7 +10,7 @@ use llvm_sys::LLVMDiagnosticSeverity;
 // wrap the provided function input ptr into a &CStr somehow
 // TODOC: Can be used like this:
 // extern "C" fn print_before_exit(msg: *const i8) {
-//    let c_str = unsafe { ::std::ffi::CStr::from_ptr(msg) };
+//    let c_str = unsafe { std::ffi::CStr::from_ptr(msg) };
 //
 //    eprintln!("LLVM fatally errored: {:?}", c_str);
 // }
@@ -42,12 +42,11 @@ impl DiagnosticInfo {
     }
 
     pub(crate) fn severity_is_error(&self) -> bool {
-        unsafe {
-            match LLVMGetDiagInfoSeverity(self.diagnostic_info) {
-                LLVMDiagnosticSeverity::LLVMDSError => true,
-                _ => false,
-            }
-        }
+        self.severity() == LLVMDiagnosticSeverity::LLVMDSError
+    }
+
+    fn severity(&self) -> LLVMDiagnosticSeverity {
+        unsafe { LLVMGetDiagInfoSeverity(self.diagnostic_info) }
     }
 }
 

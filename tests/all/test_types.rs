@@ -207,22 +207,30 @@ fn sized_types(global_ctx: &Context) {
     assert!(!fn_type3.is_sized());
     assert!(!fn_type4.is_sized());
 
-    assert!(bool_type.ptr_type(AddressSpace::default()).is_sized());
-    assert!(i8_type.ptr_type(AddressSpace::default()).is_sized());
-    assert!(i16_type.ptr_type(AddressSpace::default()).is_sized());
-    assert!(i32_type.ptr_type(AddressSpace::default()).is_sized());
-    assert!(i64_type.ptr_type(AddressSpace::default()).is_sized());
-    assert!(i128_type.ptr_type(AddressSpace::default()).is_sized());
-    assert!(f16_type.ptr_type(AddressSpace::default()).is_sized());
-    assert!(f32_type.ptr_type(AddressSpace::default()).is_sized());
-    assert!(f64_type.ptr_type(AddressSpace::default()).is_sized());
-    assert!(f80_type.ptr_type(AddressSpace::default()).is_sized());
-    assert!(f128_type.ptr_type(AddressSpace::default()).is_sized());
-    assert!(ppc_f128_type.ptr_type(AddressSpace::default()).is_sized());
-    assert!(struct_type.ptr_type(AddressSpace::default()).is_sized());
-    assert!(struct_type2.ptr_type(AddressSpace::default()).is_sized());
-    assert!(struct_type3.ptr_type(AddressSpace::default()).is_sized());
-    assert!(struct_type4.ptr_type(AddressSpace::default()).is_sized());
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
+    {
+        assert!(bool_type.ptr_type(AddressSpace::default()).is_sized());
+        assert!(i8_type.ptr_type(AddressSpace::default()).is_sized());
+        assert!(i16_type.ptr_type(AddressSpace::default()).is_sized());
+        assert!(i32_type.ptr_type(AddressSpace::default()).is_sized());
+        assert!(i64_type.ptr_type(AddressSpace::default()).is_sized());
+        assert!(i128_type.ptr_type(AddressSpace::default()).is_sized());
+        assert!(f16_type.ptr_type(AddressSpace::default()).is_sized());
+        assert!(f32_type.ptr_type(AddressSpace::default()).is_sized());
+        assert!(f64_type.ptr_type(AddressSpace::default()).is_sized());
+        assert!(f80_type.ptr_type(AddressSpace::default()).is_sized());
+        assert!(f128_type.ptr_type(AddressSpace::default()).is_sized());
+        assert!(ppc_f128_type.ptr_type(AddressSpace::default()).is_sized());
+        assert!(struct_type.ptr_type(AddressSpace::default()).is_sized());
+        assert!(struct_type2.ptr_type(AddressSpace::default()).is_sized());
+        assert!(struct_type3.ptr_type(AddressSpace::default()).is_sized());
+        assert!(struct_type4.ptr_type(AddressSpace::default()).is_sized());
+    }
 
     assert!(bool_type.array_type(42).is_sized());
     assert!(i8_type.array_type(42).is_sized());
@@ -271,8 +279,18 @@ fn sized_types(global_ctx: &Context) {
     let opaque_struct_type = global_ctx.opaque_struct_type("opaque");
 
     assert!(!opaque_struct_type.is_sized());
-    assert!(opaque_struct_type.ptr_type(AddressSpace::default()).is_sized());
     assert!(!opaque_struct_type.array_type(0).is_sized());
+
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
+    {
+        let opaque_struct_ptr_type = opaque_struct_type.ptr_type(AddressSpace::default());
+        assert!(opaque_struct_ptr_type.is_sized());
+    }
 }
 
 #[test]
@@ -424,14 +442,13 @@ fn test_type_copies() {
 #[test]
 fn test_ptr_type() {
     let context = Context::create();
-    let i8_type = context.i8_type();
     #[cfg(not(any(
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
         feature = "llvm18-0"
     )))]
-    let ptr_type = i8_type.ptr_type(AddressSpace::default());
+    let ptr_type = context.i8_type().ptr_type(AddressSpace::default());
     #[cfg(any(
         feature = "llvm15-0",
         feature = "llvm16-0",
@@ -455,11 +472,12 @@ fn test_ptr_type() {
         feature = "llvm13-0",
         feature = "llvm14-0"
     ))]
-    assert_eq!(ptr_type.get_element_type().into_int_type(), i8_type);
+    assert_eq!(ptr_type.get_element_type().into_int_type(), context.i8_type());
 
     // Fn ptr:
     let void_type = context.void_type();
     let fn_type = void_type.fn_type(&[], false);
+    #[allow(deprecated)]
     let fn_ptr_type = fn_type.ptr_type(AddressSpace::default());
 
     #[cfg(any(
@@ -511,6 +529,12 @@ fn test_basic_type_enum() {
         &int.vec_type(1),
     ];
     for basic_type in types {
+        #[cfg(not(any(
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-0"
+        )))]
         assert_eq!(
             basic_type.as_basic_type_enum().ptr_type(addr),
             basic_type.ptr_type(addr)
@@ -532,7 +556,7 @@ fn test_no_vector_zero() {
 fn test_ptr_address_space() {
     let context = Context::create();
 
-    let spaces = [0u32, 1, 2, 3, 4, 5, 6, 1 << 24 - 1];
+    let spaces = [0u32, 1, 2, 3, 4, 5, 6, (1 << 24) - 1];
 
     for index in spaces {
         let address_space = AddressSpace::try_from(index).unwrap();
@@ -559,12 +583,13 @@ fn test_ptr_address_space() {
 
 #[llvm_versions(15..)]
 #[test]
+#[allow(deprecated)]
 fn test_ptr_is_opaque() {
     let context = Context::create();
 
     let i32_ptr_type = context.i32_type().ptr_type(AddressSpace::default());
-    let ptr_type = context.ptr_type(AddressSpace::default());
-
     assert!(i32_ptr_type.is_opaque());
+
+    let ptr_type = context.ptr_type(AddressSpace::default());
     assert!(ptr_type.is_opaque());
 }

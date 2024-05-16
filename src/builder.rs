@@ -421,7 +421,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.position_at_end(basic_block);
     ///
-    /// let pi = f32_type.const_float(::std::f64::consts::PI);
+    /// let pi = f32_type.const_float(std::f64::consts::PI);
     ///
     /// builder.build_return(Some(&pi)).unwrap();
     ///
@@ -542,7 +542,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.position_at_end(basic_block);
     ///
-    /// let pi = f32_type.const_float(::std::f64::consts::PI);
+    /// let pi = f32_type.const_float(std::f64::consts::PI);
     ///
     /// builder.build_return(Some(&pi)).unwrap();
     ///
@@ -900,7 +900,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.position_at_end(basic_block);
     ///
-    /// let pi = f32_type.const_float(::std::f64::consts::PI);
+    /// let pi = f32_type.const_float(std::f64::consts::PI);
     ///
     /// builder.build_return(Some(&pi)).unwrap();
     ///
@@ -3390,7 +3390,7 @@ impl<'ctx> Builder<'ctx> {
             feature = "llvm17-0",
             feature = "llvm18-0"
         )))]
-        if ptr.get_type().get_element_type().to_basic_type_enum() != cmp.get_type() {
+        if ptr.get_type().get_element_type().as_basic_type_enum() != cmp.get_type() {
             return Err(BuilderError::PointeeTypeMismatch(
                 "The pointer does not point to an element of the value type.",
             ));

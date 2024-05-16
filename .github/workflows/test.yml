@@ -5,7 +5,7 @@ on: [push, pull_request]
 env:
   CARGO_TERM_COLOR: always
   DOC_LLVM_FEATURE: llvm17-0
-  DOC_LLVM_VERSION: '17.0'
+  DOC_LLVM_VERSION: "17.0"
   DOC_PATH: target/doc
 
 jobs:
@@ -14,9 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install Rust Stable
-        run: rustup toolchain install stable
+        uses: dtolnay/rust-toolchain@stable
       - name: Install typos
-        run: cargo install typos-cli
+        uses: taiki-e/install-action@typos
       - name: Run typos
         run: typos .
   tests:
@@ -39,22 +39,24 @@ jobs:
           - ["15.0", "15-0"]
           - ["16.0", "16-0"]
           - ["17.0", "17-0"]
-        # only use ubuntu-22.04 for llvm 16 and higher
         include:
           - os: ubuntu-20.04
+          # only use ubuntu-22.04 for llvm 16 and higher
           - os: ubuntu-22.04
             llvm-version: ["16.0", "16-0"]
           - os: ubuntu-22.04
             llvm-version: ["17.0", "17-0"]
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v1
         with:
           version: ${{ matrix.llvm-version[0] }}
       - name: llvm-config
         run: llvm-config --version --bindir --libdir
+      - name: Install Rust Stable
+        uses: dtolnay/rust-toolchain@stable
       - name: Build
         run: cargo build --release --features llvm${{ matrix.llvm-version[1] }} --verbose
       - name: Run tests
@@ -67,19 +69,19 @@ jobs:
     needs: [typos, tests]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
-    - uses: actions/checkout@v3
-    - uses: KyleMayes/install-llvm-action@v1
-      with:
-        version: ${{ env.DOC_LLVM_VERSION }}
-    - name: Install Rust Nightly
-      run: rustup toolchain install nightly
-    - name: Build Documentation
-      run: cargo +nightly doc --features ${{ env.DOC_LLVM_FEATURE }},nightly --verbose
-    - name: Doc Index Page Redirection
-      run: echo '<meta http-equiv="refresh" content="1; url=inkwell/index.html">' > ${{ env.DOC_PATH }}/index.html
-    - name: Deploy Documentation
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ${{ env.DOC_PATH }}
-        force_orphan: true
+      - uses: actions/checkout@v4
+      - uses: KyleMayes/install-llvm-action@v1
+        with:
+          version: ${{ env.DOC_LLVM_VERSION }}
+      - name: Install Rust Nightly
+        uses: dtolnay/rust-toolchain@nightly
+      - name: Build Documentation
+        run: cargo +nightly doc --features ${{ env.DOC_LLVM_FEATURE }},nightly --verbose
+      - name: Doc Index Page Redirection
+        run: echo '<meta http-equiv="refresh" content="1; url=inkwell/index.html">' > ${{ env.DOC_PATH }}/index.html
+      - name: Deploy Documentation
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ${{ env.DOC_PATH }}
+          force_orphan: true
