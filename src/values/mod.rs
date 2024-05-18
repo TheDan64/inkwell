@@ -217,13 +217,15 @@ impl<'ctx> Value<'ctx> {
     /// Sets the section of the global value
     fn set_section(self, section: Option<&str>) {
         #[cfg(target_os = "macos")]
-        let section = section.map(|s| {
+        let mapped_section = section.map(|s| {
             if s.contains(",") {
                 format!("{}", s)
             } else {
                 format!(",{}", s)
             }
         });
+        #[cfg(target_os = "macos")]
+        let section = mapped_section.as_deref();
 
         let c_string = section.map(to_c_str);
 
