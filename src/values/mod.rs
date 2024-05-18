@@ -219,11 +219,11 @@ impl<'ctx> Value<'ctx> {
         #[cfg(target_os = "macos")]
         let section = section.map(|s| {
             if s.contains(",") {
-                format!("{}", s).as_str()
+                format!("{}", s)
             } else {
-                format!(",{}", s).as_str()
+                format!(",{}", s)
             }
-        });
+        }).as_deref();
 
         let c_string = section.map(to_c_str);
 
