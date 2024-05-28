@@ -23,12 +23,12 @@ pub mod attributes;
 pub mod basic_block;
 pub mod builder;
 #[deny(missing_docs)]
-#[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+#[llvm_versions(7..)]
 pub mod comdat;
 #[deny(missing_docs)]
 pub mod context;
 pub mod data_layout;
-#[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+#[llvm_versions(7..)]
 pub mod debug_info;
 pub mod execution_engine;
 pub mod intrinsics;

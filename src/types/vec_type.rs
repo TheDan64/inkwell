@@ -200,19 +200,7 @@ impl<'ctx> VectorType<'ctx> {
     /// let f32_vec_type = f32_type.vec_type(3);
     /// let f32_vec_ptr_type = f32_vec_type.ptr_type(AddressSpace::default());
     ///
-    /// #[cfg(any(
-    ///     feature = "llvm4-0",
-    ///     feature = "llvm5-0",
-    ///     feature = "llvm6-0",
-    ///     feature = "llvm7-0",
-    ///     feature = "llvm8-0",
-    ///     feature = "llvm9-0",
-    ///     feature = "llvm10-0",
-    ///     feature = "llvm11-0",
-    ///     feature = "llvm12-0",
-    ///     feature = "llvm13-0",
-    ///     feature = "llvm14-0"
-    /// ))]
+    /// #[llvm_versions(..15)]
     /// assert_eq!(f32_vec_ptr_type.get_element_type().into_vector_type(), f32_vec_type);
     /// ```
     #[cfg_attr(

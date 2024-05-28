@@ -45,19 +45,7 @@ impl<'ctx> FunctionType<'ctx> {
     /// let fn_type = f32_type.fn_type(&[], false);
     /// let fn_ptr_type = fn_type.ptr_type(AddressSpace::default());
     ///
-    /// #[cfg(any(
-    ///     feature = "llvm4-0",
-    ///     feature = "llvm5-0",
-    ///     feature = "llvm6-0",
-    ///     feature = "llvm7-0",
-    ///     feature = "llvm8-0",
-    ///     feature = "llvm9-0",
-    ///     feature = "llvm10-0",
-    ///     feature = "llvm11-0",
-    ///     feature = "llvm12-0",
-    ///     feature = "llvm13-0",
-    ///     feature = "llvm14-0"
-    /// ))]
+    /// #[llvm_versions(..15)]
     /// assert_eq!(fn_ptr_type.get_element_type().into_function_type(), fn_type);
     /// ```
     #[cfg_attr(

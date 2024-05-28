@@ -410,7 +410,7 @@ impl<'ctx> InstructionValue<'ctx> {
     // SubTypes: Only apply to memory access and alloca instructions
     /// Sets alignment on a memory access instruction or alloca.
     pub fn set_alignment(self, alignment: u32) -> Result<(), &'static str> {
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0"))]
+        #[llvm_versions(11..13)]
         {
             if alignment == 0 {
                 return Err("Alignment cannot be 0");
@@ -475,9 +475,9 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[llvm_versions(..15)]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[llvm_versions(15..)]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
@@ -538,9 +538,9 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[llvm_versions(..15)]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[llvm_versions(15..)]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
@@ -642,9 +642,9 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[llvm_versions(..15)]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[llvm_versions(15..)]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
@@ -688,9 +688,9 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[llvm_versions(..15)]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[llvm_versions(15..)]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
@@ -755,9 +755,9 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[llvm_versions(..15)]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[llvm_versions(15..)]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///

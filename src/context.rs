@@ -115,23 +115,10 @@ impl ContextImpl {
         mut constraints: String,
         sideeffects: bool,
         alignstack: bool,
-        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))] dialect: Option<
-            InlineAsmDialect,
-        >,
-        #[cfg(not(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0"
-        )))]
-        can_throw: bool,
+        #[llvm_versions(7..)] dialect: Option<InlineAsmDialect>,
+        #[llvm_versions(13..)] can_throw: bool,
     ) -> PointerValue<'ctx> {
-        #[cfg(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
+        #[llvm_versions(..7)]
         let value = unsafe {
             LLVMConstInlineAsm(
                 ty.as_type_ref(),
@@ -141,7 +128,7 @@ impl ContextImpl {
                 alignstack as i32,
             )
         };
-        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+        #[llvm_versions(7..)]
         let value = unsafe {
             LLVMGetInlineAsm(
                 ty.as_type_ref(),
@@ -152,17 +139,7 @@ impl ContextImpl {
                 sideeffects as i32,
                 alignstack as i32,
                 dialect.unwrap_or(InlineAsmDialect::ATT).into(),
-                #[cfg(not(any(
-                    feature = "llvm4-0",
-                    feature = "llvm5-0",
-                    feature = "llvm6-0",
-                    feature = "llvm7-0",
-                    feature = "llvm8-0",
-                    feature = "llvm9-0",
-                    feature = "llvm10-0",
-                    feature = "llvm11-0",
-                    feature = "llvm12-0"
-                )))]
+                #[llvm_versions(13..)]
                 {
                     can_throw as i32
                 },
@@ -544,42 +521,20 @@ impl Context {
     ///     "=r,{rax},{rdi}".to_string(),
     ///     true,
     ///     false,
-    ///     #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))] None,
-    ///     #[cfg(not(any(
-    ///         feature = "llvm4-0",
-    ///         feature = "llvm5-0",
-    ///         feature = "llvm6-0",
-    ///         feature = "llvm7-0",
-    ///         feature = "llvm8-0",
-    ///         feature = "llvm9-0",
-    ///         feature = "llvm10-0",
-    ///         feature = "llvm11-0",
-    ///         feature = "llvm12-0"
-    ///     )))]
+    ///     #[llvm_versions(7..)] None,
+    ///     #[llvm_versions(13..)]
     ///     false,
     /// );
     /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
     ///
-    /// #[cfg(any(
-    ///     feature = "llvm4-0",
-    ///     feature = "llvm5-0",
-    ///     feature = "llvm6-0",
-    ///     feature = "llvm7-0",
-    ///     feature = "llvm8-0",
-    ///     feature = "llvm9-0",
-    ///     feature = "llvm10-0",
-    ///     feature = "llvm11-0",
-    ///     feature = "llvm12-0",
-    ///     feature = "llvm13-0",
-    ///     feature = "llvm14-0"
-    /// ))]
+    /// #[llvm_versions(..15)]
     /// {
     ///     use inkwell::values::CallableValue;
     ///     let callable_value = CallableValue::try_from(asm).unwrap();
     ///     builder.build_call(callable_value, params, "exit").unwrap();
     /// }
     ///
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[llvm_versions(15..)]
     /// builder.build_indirect_call(asm_fn, asm, params, "exit").unwrap();
     ///
     /// builder.build_return(None).unwrap();
@@ -592,21 +547,8 @@ impl Context {
         constraints: String,
         sideeffects: bool,
         alignstack: bool,
-        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))] dialect: Option<
-            InlineAsmDialect,
-        >,
-        #[cfg(not(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0"
-        )))]
-        can_throw: bool,
+        #[llvm_versions(7..)] dialect: Option<InlineAsmDialect>,
+        #[llvm_versions(13..)] can_throw: bool,
     ) -> PointerValue<'ctx> {
         self.context.create_inline_asm(
             ty,
@@ -614,19 +556,9 @@ impl Context {
             constraints,
             sideeffects,
             alignstack,
-            #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+            #[llvm_versions(7..)]
             dialect,
-            #[cfg(not(any(
-                feature = "llvm4-0",
-                feature = "llvm5-0",
-                feature = "llvm6-0",
-                feature = "llvm7-0",
-                feature = "llvm8-0",
-                feature = "llvm9-0",
-                feature = "llvm10-0",
-                feature = "llvm11-0",
-                feature = "llvm12-0"
-            )))]
+            #[llvm_versions(13..)]
             can_throw,
         )
     }
@@ -1412,42 +1344,20 @@ impl<'ctx> ContextRef<'ctx> {
     ///     "=r,{rax},{rdi}".to_string(),
     ///     true,
     ///     false,
-    ///     #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))] None,
-    ///     #[cfg(not(any(
-    ///         feature = "llvm4-0",
-    ///         feature = "llvm5-0",
-    ///         feature = "llvm6-0",
-    ///         feature = "llvm7-0",
-    ///         feature = "llvm8-0",
-    ///         feature = "llvm9-0",
-    ///         feature = "llvm10-0",
-    ///         feature = "llvm11-0",
-    ///         feature = "llvm12-0"
-    ///     )))]
+    ///     #[llvm_versions(7..)] None,
+    ///     #[llvm_versions(13..)]
     ///     false,
     /// );
     /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
     ///
-    /// #[cfg(any(
-    ///     feature = "llvm4-0",
-    ///     feature = "llvm5-0",
-    ///     feature = "llvm6-0",
-    ///     feature = "llvm7-0",
-    ///     feature = "llvm8-0",
-    ///     feature = "llvm9-0",
-    ///     feature = "llvm10-0",
-    ///     feature = "llvm11-0",
-    ///     feature = "llvm12-0",
-    ///     feature = "llvm13-0",
-    ///     feature = "llvm14-0"
-    /// ))]
+    /// #[llvm_versions(..15)]
     /// {
     ///     use inkwell::values::CallableValue;
     ///     let callable_value = CallableValue::try_from(asm).unwrap();
     ///     builder.build_call(callable_value, params, "exit").unwrap();
     /// }
     ///
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[llvm_versions(15..)]
     /// builder.build_indirect_call(asm_fn, asm, params, "exit").unwrap();
     ///
     /// builder.build_return(None).unwrap();
@@ -1460,21 +1370,8 @@ impl<'ctx> ContextRef<'ctx> {
         constraints: String,
         sideeffects: bool,
         alignstack: bool,
-        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))] dialect: Option<
-            InlineAsmDialect,
-        >,
-        #[cfg(not(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0"
-        )))]
-        can_throw: bool,
+        #[llvm_versions(7..)] dialect: Option<InlineAsmDialect>,
+        #[llvm_versions(13..)] can_throw: bool,
     ) -> PointerValue<'ctx> {
         self.context.create_inline_asm(
             ty,
@@ -1482,19 +1379,9 @@ impl<'ctx> ContextRef<'ctx> {
             constraints,
             sideeffects,
             alignstack,
-            #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+            #[llvm_versions(7..)]
             dialect,
-            #[cfg(not(any(
-                feature = "llvm4-0",
-                feature = "llvm5-0",
-                feature = "llvm6-0",
-                feature = "llvm7-0",
-                feature = "llvm8-0",
-                feature = "llvm9-0",
-                feature = "llvm10-0",
-                feature = "llvm11-0",
-                feature = "llvm12-0"
-            )))]
+            #[llvm_versions(13..)]
             can_throw,
         )
     }

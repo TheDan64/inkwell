@@ -187,28 +187,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         dwo_id: libc::c_uint,
         split_debug_inlining: bool,
         debug_info_for_profiling: bool,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
-        sysroot: &str,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
-        sdk: &str,
+        #[llvm_versions(11..)] sysroot: &str,
+        #[llvm_versions(11..)] sdk: &str,
     ) -> (Self, DICompileUnit<'ctx>) {
         let builder = unsafe {
             if allow_unresolved {
@@ -237,27 +217,9 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             dwo_id,
             split_debug_inlining,
             debug_info_for_profiling,
-            #[cfg(any(
-                feature = "llvm11-0",
-                feature = "llvm12-0",
-                feature = "llvm13-0",
-                feature = "llvm14-0",
-                feature = "llvm15-0",
-                feature = "llvm16-0",
-                feature = "llvm17-0",
-                feature = "llvm18-0"
-            ))]
+            #[llvm_versions(11..)]
             sysroot,
-            #[cfg(any(
-                feature = "llvm11-0",
-                feature = "llvm12-0",
-                feature = "llvm13-0",
-                feature = "llvm14-0",
-                feature = "llvm15-0",
-                feature = "llvm16-0",
-                feature = "llvm17-0",
-                feature = "llvm18-0"
-            ))]
+            #[llvm_versions(11..)]
             sdk,
         );
 
@@ -295,39 +257,11 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         dwo_id: libc::c_uint,
         split_debug_inlining: bool,
         debug_info_for_profiling: bool,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
-        sysroot: &str,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
-        sdk: &str,
+        #[llvm_versions(11..)] sysroot: &str,
+        #[llvm_versions(11..)] sdk: &str,
     ) -> DICompileUnit<'ctx> {
         let metadata_ref = unsafe {
-            #[cfg(any(
-                feature = "llvm4-0",
-                feature = "llvm5-0",
-                feature = "llvm6-0",
-                feature = "llvm7-0",
-                feature = "llvm8-0",
-                feature = "llvm9-0",
-                feature = "llvm10-0"
-            ))]
+            #[llvm_versions(..11)]
             {
                 LLVMDIBuilderCreateCompileUnit(
                     self.builder,
@@ -348,16 +282,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 )
             }
 
-            #[cfg(any(
-                feature = "llvm11-0",
-                feature = "llvm12-0",
-                feature = "llvm13-0",
-                feature = "llvm14-0",
-                feature = "llvm15-0",
-                feature = "llvm16-0",
-                feature = "llvm17-0",
-                feature = "llvm18-0"
-            ))]
+            #[llvm_versions(11..)]
             {
                 LLVMDIBuilderCreateCompileUnit(
                     self.builder,
@@ -550,7 +475,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         file: DIFile<'ctx>,
         line_no: u32,
         scope: DIScope<'ctx>,
-        #[cfg(not(any(feature = "llvm8-0", feature = "llvm9-0")))] align_in_bits: u32,
+        #[llvm_versions(..)] align_in_bits: u32,
     ) -> DIDerivedType<'ctx> {
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateTypedef(
@@ -561,7 +486,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 file.metadata_ref,
                 line_no,
                 scope.metadata_ref,
-                #[cfg(not(any(feature = "llvm8-0", feature = "llvm9-0")))]
+                #[llvm_versions(..)]
                 align_in_bits,
             )
         };

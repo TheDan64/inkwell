@@ -856,7 +856,7 @@ impl<'ctx> Module<'ctx> {
 
     /// Sets the inline assembly for the `Module`.
     pub fn set_inline_assembly(&self, asm: &str) {
-        #[cfg(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
+        #[llvm_versions(..7)]
         {
             use llvm_sys::core::LLVMSetModuleInlineAsm;
 
@@ -864,7 +864,7 @@ impl<'ctx> Module<'ctx> {
 
             unsafe { LLVMSetModuleInlineAsm(self.module.get(), c_string.as_ptr()) }
         }
-        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+        #[llvm_versions(7..)]
         {
             use llvm_sys::core::LLVMSetModuleInlineAsm2;
 
@@ -1425,28 +1425,8 @@ impl<'ctx> Module<'ctx> {
         dwo_id: libc::c_uint,
         split_debug_inlining: bool,
         debug_info_for_profiling: bool,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
-        sysroot: &str,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
-        sdk: &str,
+        #[llvm_versions(11..)] sysroot: &str,
+        #[llvm_versions(11..)] sdk: &str,
     ) -> (DebugInfoBuilder<'ctx>, DICompileUnit<'ctx>) {
         DebugInfoBuilder::new(
             self,
@@ -1463,27 +1443,9 @@ impl<'ctx> Module<'ctx> {
             dwo_id,
             split_debug_inlining,
             debug_info_for_profiling,
-            #[cfg(any(
-                feature = "llvm11-0",
-                feature = "llvm12-0",
-                feature = "llvm13-0",
-                feature = "llvm14-0",
-                feature = "llvm15-0",
-                feature = "llvm16-0",
-                feature = "llvm17-0",
-                feature = "llvm18-0"
-            ))]
+            #[llvm_versions(11..)]
             sysroot,
-            #[cfg(any(
-                feature = "llvm11-0",
-                feature = "llvm12-0",
-                feature = "llvm13-0",
-                feature = "llvm14-0",
-                feature = "llvm15-0",
-                feature = "llvm16-0",
-                feature = "llvm17-0",
-                feature = "llvm18-0"
-            ))]
+            #[llvm_versions(11..)]
             sdk,
         )
     }
