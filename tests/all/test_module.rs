@@ -346,7 +346,7 @@ fn test_get_set_target() {
     assert_eq!(module.get_name().to_str(), Ok("mod"));
     assert_eq!(module.get_triple(), TargetTriple::create(""));
 
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[llvm_versions(7..)]
     assert_eq!(module.get_source_file_name().to_str(), Ok("mod"));
 
     module.set_name("mod2");
@@ -355,7 +355,7 @@ fn test_get_set_target() {
     assert_eq!(module.get_name().to_str(), Ok("mod2"));
     assert_eq!(module.get_triple(), triple);
 
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[llvm_versions(7..)]
     {
         module.set_source_file_name("foo.rs");
 
@@ -438,7 +438,7 @@ fn test_linking_modules() {
 
 #[test]
 fn test_metadata_flags() {
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[llvm_versions(7..)]
     {
         let context = Context::create();
         let module = context.create_module("my_module");

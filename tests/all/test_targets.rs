@@ -97,12 +97,12 @@ fn test_target_and_target_machine() {
 
     let bad_target2 = Target::from_triple(&TargetTriple::create("sadas"));
 
-    #[cfg(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0"))]
+    #[llvm_versions(..8)]
     assert_eq!(
         bad_target2.unwrap_err().to_string(),
         "No available targets are compatible with this triple."
     );
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0")))]
+    #[llvm_versions(8..)]
     assert_eq!(
         bad_target2.unwrap_err().to_string(),
         "No available targets are compatible with triple \"sadas\""
@@ -165,7 +165,7 @@ fn test_target_and_target_machine() {
     assert_eq!(target_machine.get_cpu().to_str(), Ok("x86-64"));
     assert_eq!(target_machine.get_feature_string().to_str(), Ok("+avx2"));
 
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[llvm_versions(7..)]
     {
         // TODO: Try and find a triple that actually gets normalized..
         assert_eq!(

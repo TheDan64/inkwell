@@ -111,12 +111,7 @@ fn test_set_get_name() {
     let f32_type = context.f32_type();
     let f64_type = context.f64_type();
     let f128_type = context.f128_type();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    ))]
+    #[llvm_versions(15..)]
     let ptr_type = context.ptr_type(AddressSpace::default());
     let array_type = f64_type.array_type(42);
     let ppc_f128_type = context.ppc_f128_type();
@@ -131,19 +126,9 @@ fn test_set_get_name() {
     let f32_val = f32_type.const_float(0.0);
     let f64_val = f64_type.const_float(0.0);
     let f128_val = f128_type.const_float(0.0);
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    )))]
+    #[llvm_versions(..15)]
     let ptr_val = bool_type.ptr_type(AddressSpace::default()).const_null();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    ))]
+    #[llvm_versions(15..)]
     let ptr_val = ptr_type.const_null();
     let array_val = f64_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
@@ -200,19 +185,9 @@ fn test_set_get_name() {
     assert_eq!(ppc_f128_val.get_name().to_str(), Ok(""));
 
     let void_type = context.void_type();
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    )))]
+    #[llvm_versions(..15)]
     let ptr_type = bool_type.ptr_type(AddressSpace::default());
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    ))]
+    #[llvm_versions(15..)]
     let ptr_type = context.ptr_type(AddressSpace::default());
     let struct_type = context.struct_type(&[bool_type.into()], false);
     let vec_type = bool_type.vec_type(1);
@@ -284,12 +259,7 @@ fn test_undef() {
     let f32_type = context.f32_type();
     let f64_type = context.f64_type();
     let f128_type = context.f128_type();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    ))]
+    #[llvm_versions(15..)]
     let ptr_type = context.ptr_type(AddressSpace::default());
     let array_type = f64_type.array_type(42);
     let ppc_f128_type = context.ppc_f128_type();
@@ -306,19 +276,9 @@ fn test_undef() {
     let f32_val = f32_type.const_float(0.0);
     let f64_val = f64_type.const_float(0.0);
     let f128_val = f128_type.const_float(0.0);
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    )))]
+    #[llvm_versions(..15)]
     let ptr_val = bool_type.ptr_type(AddressSpace::default()).const_null();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    ))]
+    #[llvm_versions(15..)]
     let ptr_val = ptr_type.const_null();
     let array_val = f64_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
@@ -351,19 +311,9 @@ fn test_undef() {
     let f32_undef = f32_type.get_undef();
     let f64_undef = f64_type.get_undef();
     let f128_undef = f128_type.get_undef();
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    )))]
+    #[llvm_versions(..15)]
     let ptr_undef = bool_type.ptr_type(AddressSpace::default()).get_undef();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    ))]
+    #[llvm_versions(15..)]
     let ptr_undef = ptr_type.get_undef();
     let array_undef = array_type.get_undef();
     let struct_undef = context.struct_type(&[bool_type.into()], false).get_undef();
@@ -401,12 +351,7 @@ fn test_poison() {
     let f32_type = context.f32_type();
     let f64_type = context.f64_type();
     let f128_type = context.f128_type();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    ))]
+    #[llvm_versions(15..)]
     let ptr_type = context.ptr_type(AddressSpace::default());
     let array_type = f64_type.array_type(42);
     let ppc_f128_type = context.ppc_f128_type();
@@ -423,19 +368,9 @@ fn test_poison() {
     let f32_val = f32_type.const_float(0.0);
     let f64_val = f64_type.const_float(0.0);
     let f128_val = f128_type.const_float(0.0);
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    )))]
+    #[llvm_versions(..15)]
     let ptr_val = bool_type.ptr_type(AddressSpace::default()).const_null();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    ))]
+    #[llvm_versions(15..)]
     let ptr_val = ptr_type.const_null();
     let array_val = f64_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
@@ -468,19 +403,9 @@ fn test_poison() {
     let f32_poison = f32_type.get_poison();
     let f64_poison = f64_type.get_poison();
     let f128_poison = f128_type.get_poison();
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    )))]
+    #[llvm_versions(..15)]
     let ptr_poison = bool_type.ptr_type(AddressSpace::default()).get_poison();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    ))]
+    #[llvm_versions(15..)]
     let ptr_poison = ptr_type.get_poison();
     let array_poison = array_type.get_poison();
     let struct_poison = context.struct_type(&[bool_type.into()], false).get_poison();
@@ -594,13 +519,13 @@ fn test_metadata() {
         assert_eq!(context.get_kind_id("associated"), 22);
     }
 
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0")))]
+    #[llvm_versions(6..)]
     {
         assert_eq!(context.get_kind_id("callees"), 23);
         assert_eq!(context.get_kind_id("irr_loop"), 24);
     }
 
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[llvm_versions(7..)]
     {
         assert_eq!(module.get_global_metadata_size("my_string_md"), 0);
         assert_eq!(module.get_global_metadata("my_string_md").len(), 0);
@@ -624,7 +549,7 @@ fn test_metadata() {
         let f32_type = context.f32_type();
         // let f64_type = context.f64_type();
         // let f128_type = context.f128_type();
-        // #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+        // #[llvm_versions(15..)]
         // let ptr_type = context.ptr_type(AddressSpace::default());
         // let array_type = f64_type.array_type(42);
         // let ppc_f128_type = context.ppc_f128_type();
@@ -641,9 +566,9 @@ fn test_metadata() {
         // let f64_val = f64_type.const_float(0.0);
         // let f128_val = f128_type.const_float(0.0);
         // let ppc_f128_val = ppc_f128_type.const_float(0.0);
-        // #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+        // #[llvm_versions(..15)]
         // let ptr_val = bool_type.ptr_type(AddressSpace::default()).const_null();
-        // #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+        // #[llvm_versions(15..)]
         // let ptr_val = ptr_type.const_null();
         // let array_val = f64_type.const_array(&[f64_val]);
         // let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
@@ -747,7 +672,7 @@ fn test_metadata() {
 
 #[test]
 fn test_floats() {
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm18-0")))]
+    #[llvm_versions(..18)]
     {
         use inkwell::FloatPredicate;
 
@@ -782,7 +707,7 @@ fn test_floats() {
 
         let f64_one = f64_type.const_float(1.);
         let f64_two = f64_type.const_float(2.);
-        #[cfg(not(any(feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+        #[llvm_versions(..16)]
         {
             let neg_two = f64_two.const_neg();
 
@@ -942,7 +867,7 @@ fn test_globals() {
 
     let global = module.add_global(i8_type, None, "my_global");
 
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[llvm_versions(7..)]
     assert_eq!(global.get_unnamed_address(), UnnamedAddress::None);
     assert!(global.get_previous_global().is_none());
     assert!(global.get_next_global().is_none());
@@ -958,7 +883,7 @@ fn test_globals() {
     assert_eq!(global.get_dll_storage_class(), DLLStorageClass::default());
     assert_eq!(global.get_visibility(), GlobalVisibility::default());
     assert_eq!(global.get_linkage(), External);
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0")))]
+    #[llvm_versions(8..)]
     assert_eq!(global.get_value_type(), AnyTypeEnum::IntType(i8_type));
     assert_eq!(module.get_first_global().unwrap(), global);
     assert_eq!(module.get_last_global().unwrap(), global);
@@ -970,7 +895,7 @@ fn test_globals() {
     assert!(module.get_global("my_global").is_none());
     assert_eq!(module.get_global("glob").unwrap(), global);
 
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[llvm_versions(7..)]
     global.set_unnamed_address(UnnamedAddress::Local);
     global.set_dll_storage_class(DLLStorageClass::Import);
     global.set_initializer(&i8_zero);
@@ -981,7 +906,7 @@ fn test_globals() {
     global.set_section(Some("not sure what goes here"));
 
     // REVIEW: Not sure why this is Global when we set it to Local
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[llvm_versions(7..)]
     assert_eq!(global.get_unnamed_address(), UnnamedAddress::Global);
     assert_eq!(global.get_dll_storage_class(), DLLStorageClass::Import);
     assert_eq!(global.get_initializer().unwrap().into_int_value(), i8_zero);
@@ -1006,14 +931,14 @@ fn test_globals() {
 
     assert_eq!(global.get_linkage(), Private);
 
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[llvm_versions(7..)]
     global.set_unnamed_address(UnnamedAddress::Global);
     global.set_dll_storage_class(DLLStorageClass::Export);
     global.set_thread_local(false);
     global.set_linkage(External);
     global.set_visibility(GlobalVisibility::Protected);
 
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[llvm_versions(7..)]
     assert_eq!(global.get_unnamed_address(), UnnamedAddress::Global);
     assert!(!global.is_thread_local());
     assert_eq!(global.get_visibility(), GlobalVisibility::Protected);
@@ -1065,7 +990,7 @@ fn test_globals() {
     // REVIEW: This doesn't seem to work. LLVM bug?
     assert!(global2.is_externally_initialized());
 
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+    #[llvm_versions(7..)]
     {
         assert!(global.get_comdat().is_none());
 
@@ -1434,19 +1359,9 @@ fn test_non_fn_ptr_called() {
     let builder = context.create_builder();
     let module = context.create_module("my_mod");
     let i8_type = context.i8_type();
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    )))]
+    #[llvm_versions(..15)]
     let i8_ptr_type = i8_type.ptr_type(AddressSpace::default());
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    ))]
+    #[llvm_versions(15..)]
     let i8_ptr_type = context.ptr_type(AddressSpace::default());
     let fn_type = i8_type.fn_type(&[i8_ptr_type.into()], false);
     let fn_value = module.add_function("my_func", fn_type, None);
@@ -1454,30 +1369,13 @@ fn test_non_fn_ptr_called() {
     let i8_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
 
     builder.position_at_end(bb);
-    #[cfg(any(
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
+    #[llvm_versions(..15)]
     {
         use inkwell::values::CallableValue;
         let callable_value = CallableValue::try_from(i8_ptr_param).unwrap();
         builder.build_call(callable_value, &[], "call").unwrap();
     }
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    ))]
+    #[llvm_versions(15..)]
     builder
         .build_indirect_call(i8_ptr_type.fn_type(&[], false), i8_ptr_param, &[], "call")
         .unwrap();
@@ -1520,19 +1418,9 @@ fn test_aggregate_returns() {
     let builder = context.create_builder();
     let module = context.create_module("my_mod");
     let i32_type = context.i32_type();
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    )))]
+    #[llvm_versions(..15)]
     let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    ))]
+    #[llvm_versions(15..)]
     let i32_ptr_type = context.ptr_type(AddressSpace::default());
     let i32_three = i32_type.const_int(3, false);
     let i32_seven = i32_type.const_int(7, false);
@@ -1544,26 +1432,9 @@ fn test_aggregate_returns() {
     let ptr_param2 = fn_value.get_nth_param(1).unwrap().into_pointer_value();
 
     builder.position_at_end(bb);
-    #[cfg(any(
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
+    #[llvm_versions(..15)]
     builder.build_ptr_diff(ptr_param1, ptr_param2, "diff").unwrap();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    ))]
+    #[llvm_versions(15..)]
     builder
         .build_ptr_diff(i32_ptr_type, ptr_param1, ptr_param2, "diff")
         .unwrap();

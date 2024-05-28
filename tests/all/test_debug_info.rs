@@ -25,27 +25,9 @@ fn test_smoke() {
         0,
         false,
         false,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
+        #[llvm_versions(11..)]
         "",
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
+        #[llvm_versions(11..)]
         "",
     );
 
@@ -86,9 +68,9 @@ fn test_smoke() {
 
     let loc = dibuilder.create_debug_location(&context, 0, 0, lexical_block.as_debug_info_scope(), None);
 
-    #[cfg(any(feature = "llvm7-0", feature = "llvm8-0",))]
+    #[llvm_versions(7..9)]
     builder.set_current_debug_location(&context, loc);
-    #[cfg(not(any(feature = "llvm7-0", feature = "llvm8-0",)))]
+    #[llvm_versions(..)]
     builder.set_current_debug_location(loc);
 
     dibuilder.finalize();
@@ -115,27 +97,9 @@ fn test_struct_with_placeholders() {
         0,
         false,
         false,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
+        #[llvm_versions(11..)]
         "",
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
+        #[llvm_versions(11..)]
         "",
     );
 
@@ -247,27 +211,9 @@ fn test_no_explicit_finalize() {
         0,
         false,
         false,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
+        #[llvm_versions(11..)]
         "",
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
+        #[llvm_versions(11..)]
         "",
     );
 
@@ -296,27 +242,9 @@ fn test_replacing_placeholder_with_placeholder() {
         0,
         false,
         false,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
+        #[llvm_versions(11..)]
         "",
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
+        #[llvm_versions(11..)]
         "",
     );
 
@@ -327,7 +255,7 @@ fn test_replacing_placeholder_with_placeholder() {
         compile_unit.get_file(),
         0,
         compile_unit.get_file().as_debug_info_scope(),
-        #[cfg(not(any(feature = "llvm8-0", feature = "llvm9-0")))]
+        #[llvm_versions(..)]
         32,
     );
 
@@ -359,27 +287,9 @@ fn test_anonymous_basic_type() {
         0,
         false,
         false,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
+        #[llvm_versions(11..)]
         "",
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
+        #[llvm_versions(11..)]
         "",
     );
 
@@ -415,27 +325,9 @@ fn test_global_expressions() {
         0,
         false,
         false,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
+        #[llvm_versions(11..)]
         "",
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
+        #[llvm_versions(11..)]
         "",
     );
 
@@ -489,27 +381,9 @@ fn test_pointer_types() {
         0,
         false,
         false,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
+        #[llvm_versions(11..)]
         "",
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
+        #[llvm_versions(11..)]
         "",
     );
 
@@ -547,27 +421,9 @@ fn test_reference_types() {
         0,
         false,
         false,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
+        #[llvm_versions(11..)]
         "",
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
+        #[llvm_versions(11..)]
         "",
     );
 
@@ -606,27 +462,9 @@ fn test_array_type() {
         0,
         false,
         false,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
+        #[llvm_versions(11..)]
         "",
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        ))]
+        #[llvm_versions(11..)]
         "",
     );
 
