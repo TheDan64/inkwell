@@ -22,7 +22,14 @@ You'll need to point your Cargo.toml to use a single LLVM version feature flag c
 
 ```toml
 [dependencies]
-inkwell = { version = "0.4.0", features = ["llvm18-0"] }
+inkwell = { version = "0.4.0", features = ["llvm17-0"] }
+```
+
+Since support for LLVM 18 is unreleased yet, you'd have to specify the crate as git dependency in your Cargo.toml:
+
+```toml
+[dependencies]
+inkwell = { git = "https://github.com/TheDan64/inkwell", features = ["llvm18-0"] }
 ```
 
 Supported versions:
