@@ -310,17 +310,25 @@ fn test_instructions() {
     let cond_br_instruction = builder
         .build_conditional_branch(i64_type.const_zero(), basic_block, basic_block)
         .unwrap();
-    let gep_instr = unsafe { builder.build_gep(i64_type, alloca_val, &vec![], "gep").unwrap() };
 
-    assert_eq!(
-        gep_instr
-            .as_instruction_value()
-            .unwrap()
-            .get_gep_source_element_type()
-            .unwrap()
-            .as_any_type_enum(),
-        i64_type.as_any_type_enum()
-    );
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    {
+        let gep_instr = unsafe { builder.build_gep(i64_type, alloca_val, &vec![], "gep").unwrap() };
+        assert_eq!(
+            gep_instr
+                .as_instruction_value()
+                .unwrap()
+                .get_gep_source_element_type()
+                .unwrap()
+                .as_any_type_enum(),
+            i64_type.as_any_type_enum()
+        );
+    }
     assert_eq!(
         alloca_val.as_instruction().unwrap().get_allocated_type(),
         Ok(i64_type.as_basic_type_enum())
