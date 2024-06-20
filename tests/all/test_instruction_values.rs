@@ -340,6 +340,8 @@ fn test_instructions() {
     assert!(!store_instruction.is_conditional());
     assert!(!return_instruction.is_conditional());
     assert!(cond_br_instruction.is_conditional());
+    assert!(TryInto::<CallSiteValue>::try_into(free_instruction).is_ok());
+    assert!(TryInto::<CallSiteValue>::try_into(return_instruction).is_err());
     assert_eq!(store_instruction.get_opcode(), Store);
     assert_eq!(ptr_val.as_instruction().unwrap().get_opcode(), PtrToInt);
     assert_eq!(ptr.as_instruction().unwrap().get_opcode(), IntToPtr);
