@@ -610,7 +610,6 @@ impl<'ctx> TryFrom<InstructionValue<'ctx>> for CallSiteValue<'ctx> {
     type Error = ();
 
     fn try_from(value: InstructionValue<'ctx>) -> Result<Self, Self::Error> {
-        
         if value.get_opcode() == InstructionOpcode::Call {
             unsafe { Ok(CallSiteValue::new(value.as_value_ref())) }
         } else {

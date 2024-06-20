@@ -2,14 +2,15 @@ use either::{
     Either,
     Either::{Left, Right},
 };
+#[llvm_versions(14..)]
+use llvm_sys::core::LLVMGetGEPSourceElementType;
 use llvm_sys::core::{
-    LLVMGetAlignment, LLVMGetAllocatedType, LLVMGetFCmpPredicate, LLVMGetGEPSourceElementType, LLVMGetICmpPredicate,
-    LLVMGetInstructionOpcode, LLVMGetInstructionParent, LLVMGetMetadata, LLVMGetNextInstruction, LLVMGetNumOperands,
-    LLVMGetOperand, LLVMGetOperandUse, LLVMGetPreviousInstruction, LLVMGetVolatile, LLVMHasMetadata,
-    LLVMInstructionClone, LLVMInstructionEraseFromParent, LLVMInstructionRemoveFromParent, LLVMIsAAllocaInst,
-    LLVMIsABasicBlock, LLVMIsAGetElementPtrInst, LLVMIsALoadInst, LLVMIsAStoreInst, LLVMIsATerminatorInst,
-    LLVMIsConditional, LLVMIsTailCall, LLVMSetAlignment, LLVMSetMetadata, LLVMSetOperand, LLVMSetVolatile,
-    LLVMValueAsBasicBlock,
+    LLVMGetAlignment, LLVMGetAllocatedType, LLVMGetFCmpPredicate, LLVMGetICmpPredicate, LLVMGetInstructionOpcode,
+    LLVMGetInstructionParent, LLVMGetMetadata, LLVMGetNextInstruction, LLVMGetNumOperands, LLVMGetOperand,
+    LLVMGetOperandUse, LLVMGetPreviousInstruction, LLVMGetVolatile, LLVMHasMetadata, LLVMInstructionClone,
+    LLVMInstructionEraseFromParent, LLVMInstructionRemoveFromParent, LLVMIsAAllocaInst, LLVMIsABasicBlock,
+    LLVMIsAGetElementPtrInst, LLVMIsALoadInst, LLVMIsAStoreInst, LLVMIsATerminatorInst, LLVMIsConditional,
+    LLVMIsTailCall, LLVMSetAlignment, LLVMSetMetadata, LLVMSetOperand, LLVMSetVolatile, LLVMValueAsBasicBlock,
 };
 use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
 #[llvm_versions(10..)]
@@ -404,6 +405,7 @@ impl<'ctx> InstructionValue<'ctx> {
 
     // SubTypes: Only apply to GetElementPtr instruction
     /// Returns the source element type of the given GEP.
+    #[llvm_versions(14..)]
     pub fn get_gep_source_element_type(self) -> Result<BasicTypeEnum<'ctx>, &'static str> {
         if !self.is_a_getelementptr_inst() {
             return Err("Value is not a GEP.");
