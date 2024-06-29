@@ -3,6 +3,7 @@ use llvm_sys::core::{
     LLVMCreateMemoryBufferWithMemoryRangeCopy, LLVMCreateMemoryBufferWithSTDIN, LLVMDisposeMemoryBuffer,
     LLVMGetBufferSize, LLVMGetBufferStart,
 };
+use llvm_sys::linker::LLVMLinkModuleEraVM;
 use llvm_sys::object::LLVMCreateObjectFile;
 use llvm_sys::prelude::LLVMMemoryBufferRef;
 
@@ -132,6 +133,25 @@ impl MemoryBuffer {
         }
 
         unsafe { Ok(ObjectFile::new(object_file)) }
+    }
+
+    /// Links an EraVM module.
+    #[cfg(all(feature = "target-eravm", feature = "llvm17-0"))]
+    pub fn link_module_eravm(input_buffer: &Self) -> Result<Self, ()> {
+        let mut output_buffer = ptr::null_mut();
+
+        let status = unsafe {
+            LLVMLinkModuleEraVM(
+                &input_buffer.memory_buffer,
+                &mut output_buffer,
+            )
+        };
+
+        if status == 0 {
+            return Err(());
+        }
+
+        Ok(unsafe { Self::new(output_buffer) })
     }
 }
 

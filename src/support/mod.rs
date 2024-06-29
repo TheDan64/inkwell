@@ -138,12 +138,14 @@ pub fn get_llvm_version() -> (u32, u32, u32) {
     return (major, minor, patch);
 }
 
-pub fn parse_command_line_options(argc: i32, argv: &[&str], overview: &str) {
-    let argv: Vec<String> = argv
+pub fn parse_command_line_options(args: &[&str], overview: &str) {
+    let argc = args.len() as i32;
+
+    let args: Vec<String> = args
         .into_iter()
         .map(|arg| to_null_terminated_owned(*arg))
         .collect();
-    let argv: Vec<*const ::libc::c_char> = argv
+    let args: Vec<*const ::libc::c_char> = args
         .iter()
         .map(|arg| {
             to_c_str(arg.as_str()).as_ptr()
@@ -154,7 +156,7 @@ pub fn parse_command_line_options(argc: i32, argv: &[&str], overview: &str) {
     let overview = to_c_str(overview.as_str());
 
     unsafe {
-        LLVMParseCommandLineOptions(argc, argv.as_ptr(), overview.as_ptr());
+        LLVMParseCommandLineOptions(argc, args.as_ptr(), overview.as_ptr());
     }
 }
 
