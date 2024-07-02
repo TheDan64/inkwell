@@ -39,6 +39,7 @@ jobs:
           - ["15.0", "15-0"]
           - ["16.0", "16-0"]
           - ["17.0", "17-0"]
+          - ["18.0", "18-0"]
         include:
           - os: ubuntu-20.04
           # only use ubuntu-22.04 for llvm 16 and higher
@@ -46,6 +47,8 @@ jobs:
             llvm-version: ["16.0", "16-0"]
           - os: ubuntu-22.04
             llvm-version: ["17.0", "17-0"]
+          - os: ubuntu-22.04
+            llvm-version: ["18.0", "17-0"]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
