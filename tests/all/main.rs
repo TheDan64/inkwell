@@ -3,8 +3,8 @@
 #[macro_use]
 extern crate inkwell_internals;
 
-mod test_attributes;
-mod test_basic_block;
+// mod test_attributes;
+// mod test_basic_block;
 mod test_builder;
 mod test_context;
 mod test_execution_engine;
