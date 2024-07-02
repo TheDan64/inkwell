@@ -23,6 +23,7 @@ jobs:
     name: "LLVM ${{ matrix.llvm-version[0] }}: ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         llvm-version:
           - ["4.0", "4-0"]
