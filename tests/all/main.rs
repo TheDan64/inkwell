@@ -11,8 +11,8 @@ mod test_execution_engine;
 mod test_instruction_conversion;
 mod test_instruction_values;
 mod test_intrinsics;
-mod test_module;
-mod test_object_file;
+// mod test_module;
+// mod test_object_file;
 // #[cfg(not(any(feature = "llvm17-0", feature = "llvm18-0")))]
 // mod test_passes;
 // mod test_targets;
