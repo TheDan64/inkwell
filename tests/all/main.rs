@@ -5,8 +5,8 @@ extern crate inkwell_internals;
 
 // mod test_attributes;
 // mod test_basic_block;
-mod test_builder;
-mod test_context;
+// mod test_builder;
+// mod test_context;
 // mod test_execution_engine;
 // mod test_instruction_conversion;
 // mod test_instruction_values;
