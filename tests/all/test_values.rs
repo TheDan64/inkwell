@@ -16,376 +16,376 @@ use std::convert::TryFrom;
 
 // TODO: Test GlobalValues used as PointerValues
 
-// #[test]
-// fn test_linkage() {
-//     let context = Context::create();
-//     let module = context.create_module("testing");
+#[test]
+fn test_linkage() {
+    let context = Context::create();
+    let module = context.create_module("testing");
 
-//     let void_type = context.void_type();
-//     let fn_type = void_type.fn_type(&[], false);
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
 
-//     let function = module.add_function("free_f32", fn_type, None);
+    let function = module.add_function("free_f32", fn_type, None);
 
-//     assert_eq!(function.get_type(), fn_type);
-//     assert!(function.get_type().get_return_type().is_none());
-//     assert!(fn_type.get_return_type().is_none());
+    assert_eq!(function.get_type(), fn_type);
+    assert!(function.get_type().get_return_type().is_none());
+    assert!(fn_type.get_return_type().is_none());
 
-//     assert_eq!(function.get_linkage(), External);
-// }
+    assert_eq!(function.get_linkage(), External);
+}
 
-// #[test]
-// fn test_call_site() {
-//     let context = Context::create();
-//     let module = context.create_module("testing");
-//     let builder = context.create_builder();
+#[test]
+fn test_call_site() {
+    let context = Context::create();
+    let module = context.create_module("testing");
+    let builder = context.create_builder();
 
-//     let void_type = context.void_type();
-//     let fn_type = void_type.fn_type(&[], false);
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
 
-//     let function = module.add_function("do_nothing", fn_type, None);
+    let function = module.add_function("do_nothing", fn_type, None);
 
-//     let block = context.append_basic_block(function, "entry");
-//     builder.position_at_end(block);
+    let block = context.append_basic_block(function, "entry");
+    builder.position_at_end(block);
 
-//     let call_site = builder.build_call(function, &[], "to_infinity_and_beyond").unwrap();
+    let call_site = builder.build_call(function, &[], "to_infinity_and_beyond").unwrap();
 
-//     assert_eq!(call_site.count_arguments(), 0);
-//     assert!(!call_site.is_tail_call());
+    assert_eq!(call_site.count_arguments(), 0);
+    assert!(!call_site.is_tail_call());
 
-//     call_site.set_tail_call(true);
+    call_site.set_tail_call(true);
 
-//     assert!(call_site.is_tail_call());
+    assert!(call_site.is_tail_call());
 
-//     call_site.set_tail_call(false);
+    call_site.set_tail_call(false);
 
-//     assert!(!call_site.is_tail_call());
+    assert!(!call_site.is_tail_call());
 
-//     assert_eq!(call_site.get_call_convention(), 0);
+    assert_eq!(call_site.get_call_convention(), 0);
 
-//     call_site.set_call_convention(2);
+    call_site.set_call_convention(2);
 
-//     assert_eq!(call_site.get_call_convention(), 2);
+    assert_eq!(call_site.get_call_convention(), 2);
 
-//     call_site.set_alignment_attribute(AttributeLoc::Return, 16);
-// }
+    call_site.set_alignment_attribute(AttributeLoc::Return, 16);
+}
 
-// #[test]
-// #[cfg(feature = "llvm18-0")]
-// fn test_call_site_tail_call_attributes() {
-//     let context = Context::create();
-//     let builder = context.create_builder();
-//     let module = context.create_module("my_mod");
-//     let void_type = context.void_type();
-//     let fn_type = void_type.fn_type(&[], false);
-//     let fn_value = module.add_function("my_fn", fn_type, None);
-//     let entry_bb = context.append_basic_block(fn_value, "entry");
+#[test]
+#[cfg(feature = "llvm18-0")]
+fn test_call_site_tail_call_attributes() {
+    let context = Context::create();
+    let builder = context.create_builder();
+    let module = context.create_module("my_mod");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_value = module.add_function("my_fn", fn_type, None);
+    let entry_bb = context.append_basic_block(fn_value, "entry");
 
-//     builder.position_at_end(entry_bb);
+    builder.position_at_end(entry_bb);
 
-//     let call_site = builder.build_call(fn_value, &[], "my_fn").unwrap();
+    let call_site = builder.build_call(fn_value, &[], "my_fn").unwrap();
 
-//     assert!(!call_site.is_tail_call());
-//     assert_eq!(call_site.get_tail_call_kind(), LLVMTailCallKindNone);
-//     assert_eq!(
-//         call_site.try_as_basic_value().right().unwrap().get_tail_call_kind(),
-//         Some(LLVMTailCallKindNone)
-//     );
+    assert!(!call_site.is_tail_call());
+    assert_eq!(call_site.get_tail_call_kind(), LLVMTailCallKindNone);
+    assert_eq!(
+        call_site.try_as_basic_value().right().unwrap().get_tail_call_kind(),
+        Some(LLVMTailCallKindNone)
+    );
 
-//     call_site.set_tail_call_kind(LLVMTailCallKindTail);
+    call_site.set_tail_call_kind(LLVMTailCallKindTail);
 
-//     // Setting the `LLVMTailCallKindTail` implies a tail call
-//     assert_eq!(call_site.get_tail_call_kind(), LLVMTailCallKindTail);
-//     assert!(call_site.is_tail_call());
-// }
+    // Setting the `LLVMTailCallKindTail` implies a tail call
+    assert_eq!(call_site.get_tail_call_kind(), LLVMTailCallKindTail);
+    assert!(call_site.is_tail_call());
+}
 
-// #[test]
-// fn test_set_get_name() {
-//     let context = Context::create();
-//     let bool_type = context.bool_type();
-//     let i8_type = context.i8_type();
-//     let i16_type = context.i16_type();
-//     let i32_type = context.i32_type();
-//     let i64_type = context.i64_type();
-//     let i128_type = context.i128_type();
-//     let f16_type = context.f16_type();
-//     let f32_type = context.f32_type();
-//     let f64_type = context.f64_type();
-//     let f128_type = context.f128_type();
-//     #[cfg(any(
-//         feature = "llvm15-0",
-//         feature = "llvm16-0",
-//         feature = "llvm17-0",
-//         feature = "llvm18-0"
-//     ))]
-//     let ptr_type = context.ptr_type(AddressSpace::default());
-//     let array_type = f64_type.array_type(42);
-//     let ppc_f128_type = context.ppc_f128_type();
+#[test]
+fn test_set_get_name() {
+    let context = Context::create();
+    let bool_type = context.bool_type();
+    let i8_type = context.i8_type();
+    let i16_type = context.i16_type();
+    let i32_type = context.i32_type();
+    let i64_type = context.i64_type();
+    let i128_type = context.i128_type();
+    let f16_type = context.f16_type();
+    let f32_type = context.f32_type();
+    let f64_type = context.f64_type();
+    let f128_type = context.f128_type();
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let ptr_type = context.ptr_type(AddressSpace::default());
+    let array_type = f64_type.array_type(42);
+    let ppc_f128_type = context.ppc_f128_type();
 
-//     let bool_val = bool_type.const_int(0, false);
-//     let i8_val = i8_type.const_int(0, false);
-//     let i16_val = i16_type.const_int(0, false);
-//     let i32_val = i32_type.const_int(0, false);
-//     let i64_val = i64_type.const_int(0, false);
-//     let i128_val = i128_type.const_int(0, false);
-//     let f16_val = f16_type.const_float(0.0);
-//     let f32_val = f32_type.const_float(0.0);
-//     let f64_val = f64_type.const_float(0.0);
-//     let f128_val = f128_type.const_float(0.0);
-//     #[cfg(not(any(
-//         feature = "llvm15-0",
-//         feature = "llvm16-0",
-//         feature = "llvm17-0",
-//         feature = "llvm18-0"
-//     )))]
-//     let ptr_val = bool_type.ptr_type(AddressSpace::default()).const_null();
-//     #[cfg(any(
-//         feature = "llvm15-0",
-//         feature = "llvm16-0",
-//         feature = "llvm17-0",
-//         feature = "llvm18-0"
-//     ))]
-//     let ptr_val = ptr_type.const_null();
-//     let array_val = f64_type.const_array(&[f64_val]);
-//     let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
-//     let vec_val = VectorType::const_vector(&[i8_val]);
-//     let ppc_f128_val = ppc_f128_type.const_float(0.0);
+    let bool_val = bool_type.const_int(0, false);
+    let i8_val = i8_type.const_int(0, false);
+    let i16_val = i16_type.const_int(0, false);
+    let i32_val = i32_type.const_int(0, false);
+    let i64_val = i64_type.const_int(0, false);
+    let i128_val = i128_type.const_int(0, false);
+    let f16_val = f16_type.const_float(0.0);
+    let f32_val = f32_type.const_float(0.0);
+    let f64_val = f64_type.const_float(0.0);
+    let f128_val = f128_type.const_float(0.0);
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
+    let ptr_val = bool_type.ptr_type(AddressSpace::default()).const_null();
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let ptr_val = ptr_type.const_null();
+    let array_val = f64_type.const_array(&[f64_val]);
+    let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
+    let vec_val = VectorType::const_vector(&[i8_val]);
+    let ppc_f128_val = ppc_f128_type.const_float(0.0);
 
-//     assert_eq!(bool_val.get_name().to_str(), Ok(""));
-//     assert_eq!(i8_val.get_name().to_str(), Ok(""));
-//     assert_eq!(i16_val.get_name().to_str(), Ok(""));
-//     assert_eq!(i32_val.get_name().to_str(), Ok(""));
-//     assert_eq!(i64_val.get_name().to_str(), Ok(""));
-//     assert_eq!(i128_val.get_name().to_str(), Ok(""));
-//     assert_eq!(f16_val.get_name().to_str(), Ok(""));
-//     assert_eq!(f32_val.get_name().to_str(), Ok(""));
-//     assert_eq!(f64_val.get_name().to_str(), Ok(""));
-//     assert_eq!(f128_val.get_name().to_str(), Ok(""));
-//     assert_eq!(ptr_val.get_name().to_str(), Ok(""));
-//     assert_eq!(array_val.get_name().to_str(), Ok(""));
-//     assert_eq!(struct_val.get_name().to_str(), Ok(""));
-//     assert_eq!(vec_val.get_name().to_str(), Ok(""));
-//     assert_eq!(ppc_f128_val.get_name().to_str(), Ok(""));
+    assert_eq!(bool_val.get_name().to_str(), Ok(""));
+    assert_eq!(i8_val.get_name().to_str(), Ok(""));
+    assert_eq!(i16_val.get_name().to_str(), Ok(""));
+    assert_eq!(i32_val.get_name().to_str(), Ok(""));
+    assert_eq!(i64_val.get_name().to_str(), Ok(""));
+    assert_eq!(i128_val.get_name().to_str(), Ok(""));
+    assert_eq!(f16_val.get_name().to_str(), Ok(""));
+    assert_eq!(f32_val.get_name().to_str(), Ok(""));
+    assert_eq!(f64_val.get_name().to_str(), Ok(""));
+    assert_eq!(f128_val.get_name().to_str(), Ok(""));
+    assert_eq!(ptr_val.get_name().to_str(), Ok(""));
+    assert_eq!(array_val.get_name().to_str(), Ok(""));
+    assert_eq!(struct_val.get_name().to_str(), Ok(""));
+    assert_eq!(vec_val.get_name().to_str(), Ok(""));
+    assert_eq!(ppc_f128_val.get_name().to_str(), Ok(""));
 
-//     // LLVM Gem: You can't set names on constant values, so this doesn't do anything:
-//     bool_val.set_name("my_val");
-//     i8_val.set_name("my_val2");
-//     i16_val.set_name("my_val3");
-//     i32_val.set_name("my_val4");
-//     i64_val.set_name("my_val5");
-//     i128_val.set_name("my_val6");
-//     f16_val.set_name("my_val7");
-//     f32_val.set_name("my_val8");
-//     f64_val.set_name("my_val9");
-//     f128_val.set_name("my_val10");
-//     ptr_val.set_name("my_val11");
-//     array_val.set_name("my_val12");
-//     struct_val.set_name("my_val13");
-//     vec_val.set_name("my_val14");
-//     ppc_f128_val.set_name("my_val14");
+    // LLVM Gem: You can't set names on constant values, so this doesn't do anything:
+    bool_val.set_name("my_val");
+    i8_val.set_name("my_val2");
+    i16_val.set_name("my_val3");
+    i32_val.set_name("my_val4");
+    i64_val.set_name("my_val5");
+    i128_val.set_name("my_val6");
+    f16_val.set_name("my_val7");
+    f32_val.set_name("my_val8");
+    f64_val.set_name("my_val9");
+    f128_val.set_name("my_val10");
+    ptr_val.set_name("my_val11");
+    array_val.set_name("my_val12");
+    struct_val.set_name("my_val13");
+    vec_val.set_name("my_val14");
+    ppc_f128_val.set_name("my_val14");
 
-//     assert_eq!(bool_val.get_name().to_str(), Ok(""));
-//     assert_eq!(i8_val.get_name().to_str(), Ok(""));
-//     assert_eq!(i16_val.get_name().to_str(), Ok(""));
-//     assert_eq!(i32_val.get_name().to_str(), Ok(""));
-//     assert_eq!(i64_val.get_name().to_str(), Ok(""));
-//     assert_eq!(i128_val.get_name().to_str(), Ok(""));
-//     assert_eq!(f16_val.get_name().to_str(), Ok(""));
-//     assert_eq!(f32_val.get_name().to_str(), Ok(""));
-//     assert_eq!(f64_val.get_name().to_str(), Ok(""));
-//     assert_eq!(f128_val.get_name().to_str(), Ok(""));
-//     assert_eq!(ptr_val.get_name().to_str(), Ok(""));
-//     assert_eq!(array_val.get_name().to_str(), Ok(""));
-//     assert_eq!(struct_val.get_name().to_str(), Ok(""));
-//     assert_eq!(vec_val.get_name().to_str(), Ok(""));
-//     assert_eq!(ppc_f128_val.get_name().to_str(), Ok(""));
+    assert_eq!(bool_val.get_name().to_str(), Ok(""));
+    assert_eq!(i8_val.get_name().to_str(), Ok(""));
+    assert_eq!(i16_val.get_name().to_str(), Ok(""));
+    assert_eq!(i32_val.get_name().to_str(), Ok(""));
+    assert_eq!(i64_val.get_name().to_str(), Ok(""));
+    assert_eq!(i128_val.get_name().to_str(), Ok(""));
+    assert_eq!(f16_val.get_name().to_str(), Ok(""));
+    assert_eq!(f32_val.get_name().to_str(), Ok(""));
+    assert_eq!(f64_val.get_name().to_str(), Ok(""));
+    assert_eq!(f128_val.get_name().to_str(), Ok(""));
+    assert_eq!(ptr_val.get_name().to_str(), Ok(""));
+    assert_eq!(array_val.get_name().to_str(), Ok(""));
+    assert_eq!(struct_val.get_name().to_str(), Ok(""));
+    assert_eq!(vec_val.get_name().to_str(), Ok(""));
+    assert_eq!(ppc_f128_val.get_name().to_str(), Ok(""));
 
-//     let void_type = context.void_type();
-//     #[cfg(not(any(
-//         feature = "llvm15-0",
-//         feature = "llvm16-0",
-//         feature = "llvm17-0",
-//         feature = "llvm18-0"
-//     )))]
-//     let ptr_type = bool_type.ptr_type(AddressSpace::default());
-//     #[cfg(any(
-//         feature = "llvm15-0",
-//         feature = "llvm16-0",
-//         feature = "llvm17-0",
-//         feature = "llvm18-0"
-//     ))]
-//     let ptr_type = context.ptr_type(AddressSpace::default());
-//     let struct_type = context.struct_type(&[bool_type.into()], false);
-//     let vec_type = bool_type.vec_type(1);
+    let void_type = context.void_type();
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
+    let ptr_type = bool_type.ptr_type(AddressSpace::default());
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let ptr_type = context.ptr_type(AddressSpace::default());
+    let struct_type = context.struct_type(&[bool_type.into()], false);
+    let vec_type = bool_type.vec_type(1);
 
-//     let module = context.create_module("types");
-//     let builder = context.create_builder();
+    let module = context.create_module("types");
+    let builder = context.create_builder();
 
-//     // You can set names on variables, though:
-//     let fn_type_params = [
-//         bool_type.into(),
-//         f32_type.into(),
-//         struct_type.into(),
-//         array_type.into(),
-//         ptr_type.into(),
-//         vec_type.into(),
-//     ];
-//     let fn_type = void_type.fn_type(&fn_type_params, false);
+    // You can set names on variables, though:
+    let fn_type_params = [
+        bool_type.into(),
+        f32_type.into(),
+        struct_type.into(),
+        array_type.into(),
+        ptr_type.into(),
+        vec_type.into(),
+    ];
+    let fn_type = void_type.fn_type(&fn_type_params, false);
 
-//     let function = module.add_function("do_stuff", fn_type, None);
-//     let basic_block = context.append_basic_block(function, "entry");
+    let function = module.add_function("do_stuff", fn_type, None);
+    let basic_block = context.append_basic_block(function, "entry");
 
-//     builder.position_at_end(basic_block);
+    builder.position_at_end(basic_block);
 
-//     let int_param = function.get_nth_param(0).unwrap().into_int_value();
-//     let float_param = function.get_nth_param(1).unwrap().into_float_value();
-//     let struct_param = function.get_nth_param(2).unwrap().into_struct_value();
-//     let array_param = function.get_nth_param(3).unwrap().into_array_value();
-//     let ptr_param = function.get_nth_param(4).unwrap().into_pointer_value();
-//     let vec_param = function.get_nth_param(5).unwrap().into_vector_value();
-//     let phi_val = builder.build_phi(bool_type, "phi_node").unwrap();
+    let int_param = function.get_nth_param(0).unwrap().into_int_value();
+    let float_param = function.get_nth_param(1).unwrap().into_float_value();
+    let struct_param = function.get_nth_param(2).unwrap().into_struct_value();
+    let array_param = function.get_nth_param(3).unwrap().into_array_value();
+    let ptr_param = function.get_nth_param(4).unwrap().into_pointer_value();
+    let vec_param = function.get_nth_param(5).unwrap().into_vector_value();
+    let phi_val = builder.build_phi(bool_type, "phi_node").unwrap();
 
-//     assert_eq!(int_param.get_name().to_str(), Ok(""));
-//     assert_eq!(float_param.get_name().to_str(), Ok(""));
-//     assert_eq!(struct_param.get_name().to_str(), Ok(""));
-//     assert_eq!(array_param.get_name().to_str(), Ok(""));
-//     assert_eq!(ptr_param.get_name().to_str(), Ok(""));
-//     assert_eq!(vec_param.get_name().to_str(), Ok(""));
-//     assert_eq!(phi_val.get_name().to_str(), Ok("phi_node"));
+    assert_eq!(int_param.get_name().to_str(), Ok(""));
+    assert_eq!(float_param.get_name().to_str(), Ok(""));
+    assert_eq!(struct_param.get_name().to_str(), Ok(""));
+    assert_eq!(array_param.get_name().to_str(), Ok(""));
+    assert_eq!(ptr_param.get_name().to_str(), Ok(""));
+    assert_eq!(vec_param.get_name().to_str(), Ok(""));
+    assert_eq!(phi_val.get_name().to_str(), Ok("phi_node"));
 
-//     int_param.set_name("my_val");
-//     float_param.set_name("my_val2");
-//     ptr_param.set_name("my_val3");
-//     array_param.set_name("my_val4");
-//     struct_param.set_name("my_val5");
-//     vec_param.set_name("my_val6");
-//     phi_val.set_name("phi");
+    int_param.set_name("my_val");
+    float_param.set_name("my_val2");
+    ptr_param.set_name("my_val3");
+    array_param.set_name("my_val4");
+    struct_param.set_name("my_val5");
+    vec_param.set_name("my_val6");
+    phi_val.set_name("phi");
 
-//     assert_eq!(int_param.get_name().to_str(), Ok("my_val"));
-//     assert_eq!(float_param.get_name().to_str(), Ok("my_val2"));
-//     assert_eq!(ptr_param.get_name().to_str(), Ok("my_val3"));
-//     assert_eq!(array_param.get_name().to_str(), Ok("my_val4"));
-//     assert_eq!(struct_param.get_name().to_str(), Ok("my_val5"));
-//     assert_eq!(vec_param.get_name().to_str(), Ok("my_val6"));
-//     assert_eq!(phi_val.get_name().to_str(), Ok("phi"));
+    assert_eq!(int_param.get_name().to_str(), Ok("my_val"));
+    assert_eq!(float_param.get_name().to_str(), Ok("my_val2"));
+    assert_eq!(ptr_param.get_name().to_str(), Ok("my_val3"));
+    assert_eq!(array_param.get_name().to_str(), Ok("my_val4"));
+    assert_eq!(struct_param.get_name().to_str(), Ok("my_val5"));
+    assert_eq!(vec_param.get_name().to_str(), Ok("my_val6"));
+    assert_eq!(phi_val.get_name().to_str(), Ok("phi"));
 
-//     // TODO: Test globals, supposedly constant globals work?
-// }
+    // TODO: Test globals, supposedly constant globals work?
+}
 
-// #[test]
-// fn test_undef() {
-//     let context = Context::create();
-//     let bool_type = context.bool_type();
-//     let i8_type = context.i8_type();
-//     let i16_type = context.i16_type();
-//     let i32_type = context.i32_type();
-//     let i64_type = context.i64_type();
-//     let i128_type = context.i128_type();
-//     let f16_type = context.f16_type();
-//     let f32_type = context.f32_type();
-//     let f64_type = context.f64_type();
-//     let f128_type = context.f128_type();
-//     #[cfg(any(
-//         feature = "llvm15-0",
-//         feature = "llvm16-0",
-//         feature = "llvm17-0",
-//         feature = "llvm18-0"
-//     ))]
-//     let ptr_type = context.ptr_type(AddressSpace::default());
-//     let array_type = f64_type.array_type(42);
-//     let ppc_f128_type = context.ppc_f128_type();
+#[test]
+fn test_undef() {
+    let context = Context::create();
+    let bool_type = context.bool_type();
+    let i8_type = context.i8_type();
+    let i16_type = context.i16_type();
+    let i32_type = context.i32_type();
+    let i64_type = context.i64_type();
+    let i128_type = context.i128_type();
+    let f16_type = context.f16_type();
+    let f32_type = context.f32_type();
+    let f64_type = context.f64_type();
+    let f128_type = context.f128_type();
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let ptr_type = context.ptr_type(AddressSpace::default());
+    let array_type = f64_type.array_type(42);
+    let ppc_f128_type = context.ppc_f128_type();
 
-//     assert_eq!(array_type.get_element_type().into_float_type(), f64_type);
+    assert_eq!(array_type.get_element_type().into_float_type(), f64_type);
 
-//     let bool_val = bool_type.const_int(0, false);
-//     let i8_val = i8_type.const_int(0, false);
-//     let i16_val = i16_type.const_int(0, false);
-//     let i32_val = i32_type.const_int(0, false);
-//     let i64_val = i64_type.const_int(0, false);
-//     let i128_val = i128_type.const_int(0, false);
-//     let f16_val = f16_type.const_float(0.0);
-//     let f32_val = f32_type.const_float(0.0);
-//     let f64_val = f64_type.const_float(0.0);
-//     let f128_val = f128_type.const_float(0.0);
-//     #[cfg(not(any(
-//         feature = "llvm15-0",
-//         feature = "llvm16-0",
-//         feature = "llvm17-0",
-//         feature = "llvm18-0"
-//     )))]
-//     let ptr_val = bool_type.ptr_type(AddressSpace::default()).const_null();
-//     #[cfg(any(
-//         feature = "llvm15-0",
-//         feature = "llvm16-0",
-//         feature = "llvm17-0",
-//         feature = "llvm18-0"
-//     ))]
-//     let ptr_val = ptr_type.const_null();
-//     let array_val = f64_type.const_array(&[f64_val]);
-//     let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
-//     let vec_val = VectorType::const_vector(&[i8_val]);
-//     let ppc_f128_val = ppc_f128_type.const_float(0.0);
+    let bool_val = bool_type.const_int(0, false);
+    let i8_val = i8_type.const_int(0, false);
+    let i16_val = i16_type.const_int(0, false);
+    let i32_val = i32_type.const_int(0, false);
+    let i64_val = i64_type.const_int(0, false);
+    let i128_val = i128_type.const_int(0, false);
+    let f16_val = f16_type.const_float(0.0);
+    let f32_val = f32_type.const_float(0.0);
+    let f64_val = f64_type.const_float(0.0);
+    let f128_val = f128_type.const_float(0.0);
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
+    let ptr_val = bool_type.ptr_type(AddressSpace::default()).const_null();
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let ptr_val = ptr_type.const_null();
+    let array_val = f64_type.const_array(&[f64_val]);
+    let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
+    let vec_val = VectorType::const_vector(&[i8_val]);
+    let ppc_f128_val = ppc_f128_type.const_float(0.0);
 
-//     assert!(!bool_val.is_undef());
-//     assert!(!i8_val.is_undef());
-//     assert!(!i16_val.is_undef());
-//     assert!(!i32_val.is_undef());
-//     assert!(!i64_val.is_undef());
-//     assert!(!i128_val.is_undef());
-//     assert!(!f16_val.is_undef());
-//     assert!(!f32_val.is_undef());
-//     assert!(!f64_val.is_undef());
-//     assert!(!f128_val.is_undef());
-//     assert!(!ptr_val.is_undef());
-//     assert!(!array_val.is_undef());
-//     assert!(!struct_val.is_undef());
-//     assert!(!vec_val.is_undef());
-//     assert!(!ppc_f128_val.is_undef());
+    assert!(!bool_val.is_undef());
+    assert!(!i8_val.is_undef());
+    assert!(!i16_val.is_undef());
+    assert!(!i32_val.is_undef());
+    assert!(!i64_val.is_undef());
+    assert!(!i128_val.is_undef());
+    assert!(!f16_val.is_undef());
+    assert!(!f32_val.is_undef());
+    assert!(!f64_val.is_undef());
+    assert!(!f128_val.is_undef());
+    assert!(!ptr_val.is_undef());
+    assert!(!array_val.is_undef());
+    assert!(!struct_val.is_undef());
+    assert!(!vec_val.is_undef());
+    assert!(!ppc_f128_val.is_undef());
 
-//     let bool_undef = bool_type.get_undef();
-//     let i8_undef = i8_type.get_undef();
-//     let i16_undef = i16_type.get_undef();
-//     let i32_undef = i32_type.get_undef();
-//     let i64_undef = i64_type.get_undef();
-//     let i128_undef = i128_type.get_undef();
-//     let f16_undef = f16_type.get_undef();
-//     let f32_undef = f32_type.get_undef();
-//     let f64_undef = f64_type.get_undef();
-//     let f128_undef = f128_type.get_undef();
-//     #[cfg(not(any(
-//         feature = "llvm15-0",
-//         feature = "llvm16-0",
-//         feature = "llvm17-0",
-//         feature = "llvm18-0"
-//     )))]
-//     let ptr_undef = bool_type.ptr_type(AddressSpace::default()).get_undef();
-//     #[cfg(any(
-//         feature = "llvm15-0",
-//         feature = "llvm16-0",
-//         feature = "llvm17-0",
-//         feature = "llvm18-0"
-//     ))]
-//     let ptr_undef = ptr_type.get_undef();
-//     let array_undef = array_type.get_undef();
-//     let struct_undef = context.struct_type(&[bool_type.into()], false).get_undef();
-//     let vec_undef = bool_type.vec_type(1).get_undef();
-//     let ppc_f128_undef = ppc_f128_type.get_undef();
+    let bool_undef = bool_type.get_undef();
+    let i8_undef = i8_type.get_undef();
+    let i16_undef = i16_type.get_undef();
+    let i32_undef = i32_type.get_undef();
+    let i64_undef = i64_type.get_undef();
+    let i128_undef = i128_type.get_undef();
+    let f16_undef = f16_type.get_undef();
+    let f32_undef = f32_type.get_undef();
+    let f64_undef = f64_type.get_undef();
+    let f128_undef = f128_type.get_undef();
+    #[cfg(not(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    )))]
+    let ptr_undef = bool_type.ptr_type(AddressSpace::default()).get_undef();
+    #[cfg(any(
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let ptr_undef = ptr_type.get_undef();
+    let array_undef = array_type.get_undef();
+    let struct_undef = context.struct_type(&[bool_type.into()], false).get_undef();
+    let vec_undef = bool_type.vec_type(1).get_undef();
+    let ppc_f128_undef = ppc_f128_type.get_undef();
 
-//     assert!(bool_undef.is_undef());
-//     assert!(i8_undef.is_undef());
-//     assert!(i16_undef.is_undef());
-//     assert!(i32_undef.is_undef());
-//     assert!(i64_undef.is_undef());
-//     assert!(i128_undef.is_undef());
-//     assert!(f16_undef.is_undef());
-//     assert!(f32_undef.is_undef());
-//     assert!(f64_undef.is_undef());
-//     assert!(f128_undef.is_undef());
-//     assert!(ptr_undef.is_undef());
-//     assert!(array_undef.is_undef());
-//     assert!(struct_undef.is_undef());
-//     assert!(vec_undef.is_undef());
-//     assert!(ppc_f128_undef.is_undef());
-// }
+    assert!(bool_undef.is_undef());
+    assert!(i8_undef.is_undef());
+    assert!(i16_undef.is_undef());
+    assert!(i32_undef.is_undef());
+    assert!(i64_undef.is_undef());
+    assert!(i128_undef.is_undef());
+    assert!(f16_undef.is_undef());
+    assert!(f32_undef.is_undef());
+    assert!(f64_undef.is_undef());
+    assert!(f128_undef.is_undef());
+    assert!(ptr_undef.is_undef());
+    assert!(array_undef.is_undef());
+    assert!(struct_undef.is_undef());
+    assert!(vec_undef.is_undef());
+    assert!(ppc_f128_undef.is_undef());
+}
 
 #[llvm_versions(12..)]
 #[test]
