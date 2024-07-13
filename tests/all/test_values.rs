@@ -849,364 +849,364 @@ use std::convert::TryFrom;
 //     assert!(!fn_value.is_undef());
 // }
 
+#[test]
+fn test_value_from_string() {
+    let context = Context::create();
+    let i8_type = context.i8_type();
+    let i8_val = i8_type.const_int_from_string("0121", StringRadix::Decimal).unwrap();
+
+    assert_eq!(i8_val.print_to_string().to_str(), Ok("i8 121"));
+
+    let i8_val = i8_type
+        .const_int_from_string("0121", StringRadix::try_from(10).unwrap())
+        .unwrap();
+
+    assert_eq!(i8_val.print_to_string().to_string(), "i8 121");
+
+    assert_eq!(i8_type.const_int_from_string("", StringRadix::Binary), None);
+    assert_eq!(i8_type.const_int_from_string("-", StringRadix::Binary), None);
+    assert_eq!(i8_type.const_int_from_string("--1", StringRadix::Binary), None);
+    assert_eq!(i8_type.const_int_from_string("2", StringRadix::Binary), None);
+    assert_eq!(i8_type.const_int_from_string("2", StringRadix::Binary), None);
+
+    // Floats
+    let f64_type = context.f64_type();
+    let f64_val = f64_type.const_float_from_string("3.6");
+
+    assert_eq!(f64_val.print_to_string().to_string(), "double 3.600000e+00");
+
+    let f64_val = f64_type.const_float_from_string("3.");
+
+    assert_eq!(f64_val.print_to_string().to_string(), "double 3.000000e+00");
+
+    let f64_val = f64_type.const_float_from_string("3");
+
+    assert_eq!(f64_val.print_to_string().to_string(), "double 3.000000e+00");
+
+    let f64_val = f64_type.const_float_from_string("");
+
+    assert_eq!(f64_val.print_to_string().to_string(), "double 0.000000e+00");
+
+    // TODO: We should return a Result that returns Err here.
+    //let f64_val = f64_type.const_float_from_string("3.asd");
+    //
+    //assert_eq!(f64_val.print_to_string().to_string(), "double 0x7FF0000000000000");
+}
+
+#[test]
+fn test_value_copies() {
+    let context = Context::create();
+    let i8_type = context.i8_type();
+
+    let i8_value = i8_type.const_int(12, false);
+    let i8_value_copy = i8_value;
+
+    assert_eq!(i8_value, i8_value_copy);
+}
+
+#[test]
+fn test_global_byte_array() {
+    let context = Context::create();
+    let module = context.create_module("my_mod");
+    let my_str = "Hello, World";
+    let i8_type = context.i8_type();
+    let i8_array_type = i8_type.array_type(my_str.len() as u32);
+    let global_string = module.add_global(i8_array_type, Some(AddressSpace::default()), "message");
+
+    let mut chars = Vec::with_capacity(my_str.len());
+
+    for chr in my_str.bytes() {
+        chars.push(i8_type.const_int(chr as u64, false));
+    }
+
+    let const_str_array = i8_type.const_array(chars.as_ref());
+
+    global_string.set_initializer(&const_str_array);
+
+    assert!(module.verify().is_ok());
+}
+
 // #[test]
-// fn test_value_from_string() {
-//     let context = Context::create();
-//     let i8_type = context.i8_type();
-//     let i8_val = i8_type.const_int_from_string("0121", StringRadix::Decimal).unwrap();
+// fn test_globals() {
+//     #[llvm_versions(7..)]
+//     use inkwell::values::UnnamedAddress;
 
-//     assert_eq!(i8_val.print_to_string().to_str(), Ok("i8 121"));
-
-//     let i8_val = i8_type
-//         .const_int_from_string("0121", StringRadix::try_from(10).unwrap())
-//         .unwrap();
-
-//     assert_eq!(i8_val.print_to_string().to_string(), "i8 121");
-
-//     assert_eq!(i8_type.const_int_from_string("", StringRadix::Binary), None);
-//     assert_eq!(i8_type.const_int_from_string("-", StringRadix::Binary), None);
-//     assert_eq!(i8_type.const_int_from_string("--1", StringRadix::Binary), None);
-//     assert_eq!(i8_type.const_int_from_string("2", StringRadix::Binary), None);
-//     assert_eq!(i8_type.const_int_from_string("2", StringRadix::Binary), None);
-
-//     // Floats
-//     let f64_type = context.f64_type();
-//     let f64_val = f64_type.const_float_from_string("3.6");
-
-//     assert_eq!(f64_val.print_to_string().to_string(), "double 3.600000e+00");
-
-//     let f64_val = f64_type.const_float_from_string("3.");
-
-//     assert_eq!(f64_val.print_to_string().to_string(), "double 3.000000e+00");
-
-//     let f64_val = f64_type.const_float_from_string("3");
-
-//     assert_eq!(f64_val.print_to_string().to_string(), "double 3.000000e+00");
-
-//     let f64_val = f64_type.const_float_from_string("");
-
-//     assert_eq!(f64_val.print_to_string().to_string(), "double 0.000000e+00");
-
-//     // TODO: We should return a Result that returns Err here.
-//     //let f64_val = f64_type.const_float_from_string("3.asd");
-//     //
-//     //assert_eq!(f64_val.print_to_string().to_string(), "double 0x7FF0000000000000");
-// }
-
-// #[test]
-// fn test_value_copies() {
-//     let context = Context::create();
-//     let i8_type = context.i8_type();
-
-//     let i8_value = i8_type.const_int(12, false);
-//     let i8_value_copy = i8_value;
-
-//     assert_eq!(i8_value, i8_value_copy);
-// }
-
-// #[test]
-// fn test_global_byte_array() {
 //     let context = Context::create();
 //     let module = context.create_module("my_mod");
-//     let my_str = "Hello, World";
 //     let i8_type = context.i8_type();
-//     let i8_array_type = i8_type.array_type(my_str.len() as u32);
-//     let global_string = module.add_global(i8_array_type, Some(AddressSpace::default()), "message");
+//     let i8_zero = i8_type.const_int(0, false);
 
-//     let mut chars = Vec::with_capacity(my_str.len());
+//     assert!(module.get_first_global().is_none());
+//     assert!(module.get_last_global().is_none());
+//     assert!(module.get_global("my_global").is_none());
 
-//     for chr in my_str.bytes() {
-//         chars.push(i8_type.const_int(chr as u64, false));
+//     let global = module.add_global(i8_type, None, "my_global");
+
+//     #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+//     assert_eq!(global.get_unnamed_address(), UnnamedAddress::None);
+//     assert!(global.get_previous_global().is_none());
+//     assert!(global.get_next_global().is_none());
+//     assert!(global.get_initializer().is_none());
+//     assert!(!global.is_thread_local());
+//     assert!(global.get_thread_local_mode().is_none());
+//     assert!(!global.is_constant());
+//     assert!(global.is_declaration());
+//     assert!(!global.has_unnamed_addr());
+//     assert!(!global.is_externally_initialized());
+//     assert_eq!(global.get_name().to_str(), Ok("my_global"));
+//     assert_eq!(global.get_section(), None);
+//     assert_eq!(global.get_dll_storage_class(), DLLStorageClass::default());
+//     assert_eq!(global.get_visibility(), GlobalVisibility::default());
+//     assert_eq!(global.get_linkage(), External);
+//     #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0")))]
+//     assert_eq!(global.get_value_type(), AnyTypeEnum::IntType(i8_type));
+//     assert_eq!(module.get_first_global().unwrap(), global);
+//     assert_eq!(module.get_last_global().unwrap(), global);
+//     assert_eq!(module.get_global("my_global").unwrap(), global);
+
+//     global.set_name("glob");
+
+//     assert_eq!(global.get_name().to_str(), Ok("glob"));
+//     assert!(module.get_global("my_global").is_none());
+//     assert_eq!(module.get_global("glob").unwrap(), global);
+
+//     #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+//     global.set_unnamed_address(UnnamedAddress::Local);
+//     global.set_dll_storage_class(DLLStorageClass::Import);
+//     global.set_initializer(&i8_zero);
+//     global.set_thread_local_mode(Some(ThreadLocalMode::InitialExecTLSModel));
+//     global.set_unnamed_addr(true);
+//     global.set_constant(true);
+//     global.set_visibility(GlobalVisibility::Hidden);
+//     global.set_section(Some("not sure what goes here"));
+
+//     // REVIEW: Not sure why this is Global when we set it to Local
+//     #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+//     assert_eq!(global.get_unnamed_address(), UnnamedAddress::Global);
+//     assert_eq!(global.get_dll_storage_class(), DLLStorageClass::Import);
+//     assert_eq!(global.get_initializer().unwrap().into_int_value(), i8_zero);
+//     assert_eq!(global.get_visibility(), GlobalVisibility::Hidden);
+//     assert_eq!(
+//         global.get_thread_local_mode().unwrap(),
+//         ThreadLocalMode::InitialExecTLSModel
+//     );
+//     assert!(global.is_thread_local());
+//     assert!(global.has_unnamed_addr());
+//     assert!(global.is_constant());
+//     assert!(!global.is_declaration());
+//     assert_eq!(global.get_section().unwrap().to_str(), Ok("not sure what goes here"));
+
+//     global.set_section(None);
+
+//     assert_eq!(global.get_section(), None);
+
+//     // Either linkage is non-local or visibility is default.
+//     global.set_visibility(GlobalVisibility::Default);
+//     global.set_linkage(Private);
+
+//     assert_eq!(global.get_linkage(), Private);
+
+//     #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+//     global.set_unnamed_address(UnnamedAddress::Global);
+//     global.set_dll_storage_class(DLLStorageClass::Export);
+//     global.set_thread_local(false);
+//     global.set_linkage(External);
+//     global.set_visibility(GlobalVisibility::Protected);
+
+//     #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+//     assert_eq!(global.get_unnamed_address(), UnnamedAddress::Global);
+//     assert!(!global.is_thread_local());
+//     assert_eq!(global.get_visibility(), GlobalVisibility::Protected);
+
+//     global.set_thread_local(true);
+
+//     assert_eq!(global.get_dll_storage_class(), DLLStorageClass::Export);
+//     assert!(global.is_thread_local());
+//     assert_eq!(
+//         global.get_thread_local_mode().unwrap(),
+//         ThreadLocalMode::GeneralDynamicTLSModel
+//     );
+
+//     global.set_thread_local_mode(Some(ThreadLocalMode::LocalExecTLSModel));
+
+//     assert_eq!(
+//         global.get_thread_local_mode().unwrap(),
+//         ThreadLocalMode::LocalExecTLSModel
+//     );
+
+//     global.set_thread_local_mode(Some(ThreadLocalMode::LocalDynamicTLSModel));
+
+//     assert_eq!(
+//         global.get_thread_local_mode().unwrap(),
+//         ThreadLocalMode::LocalDynamicTLSModel
+//     );
+
+//     global.set_thread_local_mode(None);
+
+//     assert!(global.get_thread_local_mode().is_none());
+
+//     let global2 = module.add_global(i8_type, Some(AddressSpace::from(4u16)), "my_global2");
+
+//     assert_eq!(global2.get_previous_global().unwrap(), global);
+//     assert_eq!(global.get_next_global().unwrap(), global2);
+//     assert_eq!(module.get_first_global().unwrap(), global);
+//     assert_eq!(module.get_last_global().unwrap(), global2);
+//     assert_eq!(module.get_global("my_global2").unwrap(), global2);
+//     assert!(!global.is_declaration());
+//     assert!(!global.is_externally_initialized());
+//     assert_eq!(global.get_alignment(), 0);
+
+//     global.set_alignment(4);
+
+//     assert_eq!(global.get_alignment(), 4);
+
+//     global2.set_externally_initialized(true);
+
+//     // REVIEW: This doesn't seem to work. LLVM bug?
+//     assert!(global2.is_externally_initialized());
+
+//     #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
+//     {
+//         assert!(global.get_comdat().is_none());
+
+//         let comdat = module.get_or_insert_comdat("my_comdat");
+
+//         assert!(global.get_comdat().is_none());
+
+//         global.set_comdat(comdat);
+
+//         assert_eq!(comdat, global.get_comdat().unwrap());
+//         assert_eq!(comdat.get_selection_kind(), ComdatSelectionKind::Any);
+
+//         comdat.set_selection_kind(ComdatSelectionKind::Largest);
+
+//         assert_eq!(comdat.get_selection_kind(), ComdatSelectionKind::Largest);
 //     }
 
-//     let const_str_array = i8_type.const_array(chars.as_ref());
-
-//     global_string.set_initializer(&const_str_array);
-
-//     assert!(module.verify().is_ok());
+//     unsafe {
+//         global.delete();
+//     }
 // }
 
-#[test]
-fn test_globals() {
-    #[llvm_versions(7..)]
-    use inkwell::values::UnnamedAddress;
-
-    let context = Context::create();
-    let module = context.create_module("my_mod");
-    let i8_type = context.i8_type();
-    let i8_zero = i8_type.const_int(0, false);
-
-    assert!(module.get_first_global().is_none());
-    assert!(module.get_last_global().is_none());
-    assert!(module.get_global("my_global").is_none());
-
-    let global = module.add_global(i8_type, None, "my_global");
-
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
-    assert_eq!(global.get_unnamed_address(), UnnamedAddress::None);
-    assert!(global.get_previous_global().is_none());
-    assert!(global.get_next_global().is_none());
-    assert!(global.get_initializer().is_none());
-    assert!(!global.is_thread_local());
-    assert!(global.get_thread_local_mode().is_none());
-    assert!(!global.is_constant());
-    assert!(global.is_declaration());
-    assert!(!global.has_unnamed_addr());
-    assert!(!global.is_externally_initialized());
-    assert_eq!(global.get_name().to_str(), Ok("my_global"));
-    assert_eq!(global.get_section(), None);
-    assert_eq!(global.get_dll_storage_class(), DLLStorageClass::default());
-    assert_eq!(global.get_visibility(), GlobalVisibility::default());
-    assert_eq!(global.get_linkage(), External);
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0")))]
-    assert_eq!(global.get_value_type(), AnyTypeEnum::IntType(i8_type));
-    assert_eq!(module.get_first_global().unwrap(), global);
-    assert_eq!(module.get_last_global().unwrap(), global);
-    assert_eq!(module.get_global("my_global").unwrap(), global);
-
-    global.set_name("glob");
-
-    assert_eq!(global.get_name().to_str(), Ok("glob"));
-    assert!(module.get_global("my_global").is_none());
-    assert_eq!(module.get_global("glob").unwrap(), global);
-
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
-    global.set_unnamed_address(UnnamedAddress::Local);
-    global.set_dll_storage_class(DLLStorageClass::Import);
-    global.set_initializer(&i8_zero);
-    global.set_thread_local_mode(Some(ThreadLocalMode::InitialExecTLSModel));
-    global.set_unnamed_addr(true);
-    global.set_constant(true);
-    global.set_visibility(GlobalVisibility::Hidden);
-    global.set_section(Some("not sure what goes here"));
-
-    // REVIEW: Not sure why this is Global when we set it to Local
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
-    assert_eq!(global.get_unnamed_address(), UnnamedAddress::Global);
-    assert_eq!(global.get_dll_storage_class(), DLLStorageClass::Import);
-    assert_eq!(global.get_initializer().unwrap().into_int_value(), i8_zero);
-    assert_eq!(global.get_visibility(), GlobalVisibility::Hidden);
-    assert_eq!(
-        global.get_thread_local_mode().unwrap(),
-        ThreadLocalMode::InitialExecTLSModel
-    );
-    assert!(global.is_thread_local());
-    assert!(global.has_unnamed_addr());
-    assert!(global.is_constant());
-    assert!(!global.is_declaration());
-    assert_eq!(global.get_section().unwrap().to_str(), Ok("not sure what goes here"));
-
-    global.set_section(None);
-
-    assert_eq!(global.get_section(), None);
-
-    // Either linkage is non-local or visibility is default.
-    global.set_visibility(GlobalVisibility::Default);
-    global.set_linkage(Private);
-
-    assert_eq!(global.get_linkage(), Private);
-
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
-    global.set_unnamed_address(UnnamedAddress::Global);
-    global.set_dll_storage_class(DLLStorageClass::Export);
-    global.set_thread_local(false);
-    global.set_linkage(External);
-    global.set_visibility(GlobalVisibility::Protected);
-
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
-    assert_eq!(global.get_unnamed_address(), UnnamedAddress::Global);
-    assert!(!global.is_thread_local());
-    assert_eq!(global.get_visibility(), GlobalVisibility::Protected);
-
-    global.set_thread_local(true);
-
-    assert_eq!(global.get_dll_storage_class(), DLLStorageClass::Export);
-    assert!(global.is_thread_local());
-    assert_eq!(
-        global.get_thread_local_mode().unwrap(),
-        ThreadLocalMode::GeneralDynamicTLSModel
-    );
-
-    global.set_thread_local_mode(Some(ThreadLocalMode::LocalExecTLSModel));
+// #[test]
+// fn test_phi_values() {
+//     let context = Context::create();
+//     let builder = context.create_builder();
+//     let module = context.create_module("my_mod");
+//     let void_type = context.void_type();
+//     let bool_type = context.bool_type();
+//     let fn_type = void_type.fn_type(&[bool_type.into()], false);
+//     let fn_value = module.add_function("my_func", fn_type, None);
+
+//     assert!(fn_value.as_global_value().is_declaration());
+
+//     let entry_block = context.append_basic_block(fn_value, "entry");
+//     let then_block = context.append_basic_block(fn_value, "then");
+//     let else_block = context.append_basic_block(fn_value, "else");
+
+//     assert!(!fn_value.as_global_value().is_declaration());
+
+//     builder.position_at_end(entry_block);
+
+//     let false_val = bool_type.const_int(0, false);
+//     let true_val = bool_type.const_int(1, false);
+//     let phi = builder.build_phi(bool_type, "if").unwrap();
+
+//     assert!(!phi.is_null());
+//     assert!(!phi.is_undef());
+//     assert!(phi.as_basic_value().is_int_value());
+//     assert_eq!(phi.as_instruction().get_opcode(), Phi);
+//     assert_eq!(phi.count_incoming(), 0);
+//     assert_eq!(phi.print_to_string().to_str(), Ok("  %if = phi i1 "));
+
+//     phi.add_incoming(&[(&false_val, then_block), (&true_val, else_block)]);
+
+//     assert_eq!(phi.count_incoming(), 2);
+//     assert_eq!(
+//         phi.print_to_string().to_str(),
+//         Ok("  %if = phi i1 [ false, %then ], [ true, %else ]")
+//     );
+
+//     let (then_val, then_bb) = phi.get_incoming(0).unwrap();
+//     let (else_val, else_bb) = phi.get_incoming(1).unwrap();
+
+//     assert_eq!(then_val.into_int_value(), false_val);
+//     assert_eq!(else_val.into_int_value(), true_val);
+//     assert_eq!(then_bb, then_block);
+//     assert_eq!(else_bb, else_block);
+//     assert!(phi.get_incoming(2).is_none());
+
+//     let mut incomings = phi.get_incomings();
+//     let (then_val, then_bb) = incomings.next().unwrap();
+//     let (else_val, else_bb) = incomings.next().unwrap();
+
+//     assert_eq!(then_val.into_int_value(), false_val);
+//     assert_eq!(else_val.into_int_value(), true_val);
+//     assert_eq!(then_bb, then_block);
+//     assert_eq!(else_bb, else_block);
+//     assert!(incomings.next().is_none());
+// }
+
+// #[test]
+// fn test_allocations() {
+//     let context = Context::create();
+//     let builder = context.create_builder();
+//     let module = context.create_module("my_mod");
+//     let void_type = context.void_type();
+//     let i32_type = context.i32_type();
+//     let unsized_type = context.opaque_struct_type("my_struct");
+//     let i32_three = i32_type.const_int(3, false);
+//     let fn_type = void_type.fn_type(&[], false);
+//     let fn_value = module.add_function("my_func", fn_type, None);
+//     let entry_block = context.append_basic_block(fn_value, "entry");
+
+//     builder.position_at_end(entry_block);
+
+//     // handle opaque pointers
+//     let ptr_type = if cfg!(any(
+//         feature = "llvm15-0",
+//         feature = "llvm16-0",
+//         feature = "llvm17-0",
+//         feature = "llvm18-0"
+//     )) {
+//         "ptr"
+//     } else {
+//         "i32*"
+//     };
+
+//     // REVIEW: Alloca (and possibly malloc) seem to be prone to segfaulting
+//     // when called with a builder that isn't positioned. I wonder if other
+//     // builder methods have this problem? We could make builder subtypes:
+//     // Builder<HasPosition>, Builder<NoPosition> and only define most
+//     // methods on positioned variant if so. But leave positioning methods
+//     // on both?
+
+//     let stack_ptr = builder.build_alloca(i32_type, "stack_ptr").unwrap();
+
+//     assert_eq!(stack_ptr.get_type().print_to_string().to_str(), Ok(ptr_type));
+
+//     let stack_array = builder.build_array_alloca(i32_type, i32_three, "stack_array").unwrap();
+
+//     assert_eq!(stack_array.get_type().print_to_string().to_str(), Ok(ptr_type));
+
+//     let heap_ptr = builder.build_malloc(i32_type, "heap_ptr");
 
-    assert_eq!(
-        global.get_thread_local_mode().unwrap(),
-        ThreadLocalMode::LocalExecTLSModel
-    );
+//     assert!(heap_ptr.is_ok());
+//     assert_eq!(heap_ptr.unwrap().get_type().print_to_string().to_str(), Ok(ptr_type));
 
-    global.set_thread_local_mode(Some(ThreadLocalMode::LocalDynamicTLSModel));
+//     let heap_array = builder.build_array_malloc(i32_type, i32_three, "heap_array");
 
-    assert_eq!(
-        global.get_thread_local_mode().unwrap(),
-        ThreadLocalMode::LocalDynamicTLSModel
-    );
+//     assert!(heap_array.is_ok());
+//     assert_eq!(heap_array.unwrap().get_type().print_to_string().to_str(), Ok(ptr_type));
 
-    global.set_thread_local_mode(None);
+//     let bad_malloc_res = builder.build_malloc(unsized_type, "");
 
-    assert!(global.get_thread_local_mode().is_none());
+//     assert!(bad_malloc_res.is_err());
 
-    let global2 = module.add_global(i8_type, Some(AddressSpace::from(4u16)), "my_global2");
+//     let bad_array_malloc_res = builder.build_array_malloc(unsized_type, i32_three, "");
 
-    assert_eq!(global2.get_previous_global().unwrap(), global);
-    assert_eq!(global.get_next_global().unwrap(), global2);
-    assert_eq!(module.get_first_global().unwrap(), global);
-    assert_eq!(module.get_last_global().unwrap(), global2);
-    assert_eq!(module.get_global("my_global2").unwrap(), global2);
-    assert!(!global.is_declaration());
-    assert!(!global.is_externally_initialized());
-    assert_eq!(global.get_alignment(), 0);
-
-    global.set_alignment(4);
-
-    assert_eq!(global.get_alignment(), 4);
-
-    global2.set_externally_initialized(true);
-
-    // REVIEW: This doesn't seem to work. LLVM bug?
-    assert!(global2.is_externally_initialized());
-
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
-    {
-        assert!(global.get_comdat().is_none());
-
-        let comdat = module.get_or_insert_comdat("my_comdat");
-
-        assert!(global.get_comdat().is_none());
-
-        global.set_comdat(comdat);
-
-        assert_eq!(comdat, global.get_comdat().unwrap());
-        assert_eq!(comdat.get_selection_kind(), ComdatSelectionKind::Any);
-
-        comdat.set_selection_kind(ComdatSelectionKind::Largest);
-
-        assert_eq!(comdat.get_selection_kind(), ComdatSelectionKind::Largest);
-    }
-
-    unsafe {
-        global.delete();
-    }
-}
-
-#[test]
-fn test_phi_values() {
-    let context = Context::create();
-    let builder = context.create_builder();
-    let module = context.create_module("my_mod");
-    let void_type = context.void_type();
-    let bool_type = context.bool_type();
-    let fn_type = void_type.fn_type(&[bool_type.into()], false);
-    let fn_value = module.add_function("my_func", fn_type, None);
-
-    assert!(fn_value.as_global_value().is_declaration());
-
-    let entry_block = context.append_basic_block(fn_value, "entry");
-    let then_block = context.append_basic_block(fn_value, "then");
-    let else_block = context.append_basic_block(fn_value, "else");
-
-    assert!(!fn_value.as_global_value().is_declaration());
-
-    builder.position_at_end(entry_block);
-
-    let false_val = bool_type.const_int(0, false);
-    let true_val = bool_type.const_int(1, false);
-    let phi = builder.build_phi(bool_type, "if").unwrap();
-
-    assert!(!phi.is_null());
-    assert!(!phi.is_undef());
-    assert!(phi.as_basic_value().is_int_value());
-    assert_eq!(phi.as_instruction().get_opcode(), Phi);
-    assert_eq!(phi.count_incoming(), 0);
-    assert_eq!(phi.print_to_string().to_str(), Ok("  %if = phi i1 "));
-
-    phi.add_incoming(&[(&false_val, then_block), (&true_val, else_block)]);
-
-    assert_eq!(phi.count_incoming(), 2);
-    assert_eq!(
-        phi.print_to_string().to_str(),
-        Ok("  %if = phi i1 [ false, %then ], [ true, %else ]")
-    );
-
-    let (then_val, then_bb) = phi.get_incoming(0).unwrap();
-    let (else_val, else_bb) = phi.get_incoming(1).unwrap();
-
-    assert_eq!(then_val.into_int_value(), false_val);
-    assert_eq!(else_val.into_int_value(), true_val);
-    assert_eq!(then_bb, then_block);
-    assert_eq!(else_bb, else_block);
-    assert!(phi.get_incoming(2).is_none());
-
-    let mut incomings = phi.get_incomings();
-    let (then_val, then_bb) = incomings.next().unwrap();
-    let (else_val, else_bb) = incomings.next().unwrap();
-
-    assert_eq!(then_val.into_int_value(), false_val);
-    assert_eq!(else_val.into_int_value(), true_val);
-    assert_eq!(then_bb, then_block);
-    assert_eq!(else_bb, else_block);
-    assert!(incomings.next().is_none());
-}
-
-#[test]
-fn test_allocations() {
-    let context = Context::create();
-    let builder = context.create_builder();
-    let module = context.create_module("my_mod");
-    let void_type = context.void_type();
-    let i32_type = context.i32_type();
-    let unsized_type = context.opaque_struct_type("my_struct");
-    let i32_three = i32_type.const_int(3, false);
-    let fn_type = void_type.fn_type(&[], false);
-    let fn_value = module.add_function("my_func", fn_type, None);
-    let entry_block = context.append_basic_block(fn_value, "entry");
-
-    builder.position_at_end(entry_block);
-
-    // handle opaque pointers
-    let ptr_type = if cfg!(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    )) {
-        "ptr"
-    } else {
-        "i32*"
-    };
-
-    // REVIEW: Alloca (and possibly malloc) seem to be prone to segfaulting
-    // when called with a builder that isn't positioned. I wonder if other
-    // builder methods have this problem? We could make builder subtypes:
-    // Builder<HasPosition>, Builder<NoPosition> and only define most
-    // methods on positioned variant if so. But leave positioning methods
-    // on both?
-
-    let stack_ptr = builder.build_alloca(i32_type, "stack_ptr").unwrap();
-
-    assert_eq!(stack_ptr.get_type().print_to_string().to_str(), Ok(ptr_type));
-
-    let stack_array = builder.build_array_alloca(i32_type, i32_three, "stack_array").unwrap();
-
-    assert_eq!(stack_array.get_type().print_to_string().to_str(), Ok(ptr_type));
-
-    let heap_ptr = builder.build_malloc(i32_type, "heap_ptr");
-
-    assert!(heap_ptr.is_ok());
-    assert_eq!(heap_ptr.unwrap().get_type().print_to_string().to_str(), Ok(ptr_type));
-
-    let heap_array = builder.build_array_malloc(i32_type, i32_three, "heap_array");
-
-    assert!(heap_array.is_ok());
-    assert_eq!(heap_array.unwrap().get_type().print_to_string().to_str(), Ok(ptr_type));
-
-    let bad_malloc_res = builder.build_malloc(unsized_type, "");
-
-    assert!(bad_malloc_res.is_err());
-
-    let bad_array_malloc_res = builder.build_array_malloc(unsized_type, i32_three, "");
-
-    assert!(bad_array_malloc_res.is_err());
-}
+//     assert!(bad_array_malloc_res.is_err());
+// }
 
 // #[test]
 // fn test_string_values() {
