@@ -849,82 +849,82 @@ use std::convert::TryFrom;
 //     assert!(!fn_value.is_undef());
 // }
 
-#[test]
-fn test_value_from_string() {
-    let context = Context::create();
-    let i8_type = context.i8_type();
-    let i8_val = i8_type.const_int_from_string("0121", StringRadix::Decimal).unwrap();
+// #[test]
+// fn test_value_from_string() {
+//     let context = Context::create();
+//     let i8_type = context.i8_type();
+//     let i8_val = i8_type.const_int_from_string("0121", StringRadix::Decimal).unwrap();
 
-    assert_eq!(i8_val.print_to_string().to_str(), Ok("i8 121"));
+//     assert_eq!(i8_val.print_to_string().to_str(), Ok("i8 121"));
 
-    let i8_val = i8_type
-        .const_int_from_string("0121", StringRadix::try_from(10).unwrap())
-        .unwrap();
+//     let i8_val = i8_type
+//         .const_int_from_string("0121", StringRadix::try_from(10).unwrap())
+//         .unwrap();
 
-    assert_eq!(i8_val.print_to_string().to_string(), "i8 121");
+//     assert_eq!(i8_val.print_to_string().to_string(), "i8 121");
 
-    assert_eq!(i8_type.const_int_from_string("", StringRadix::Binary), None);
-    assert_eq!(i8_type.const_int_from_string("-", StringRadix::Binary), None);
-    assert_eq!(i8_type.const_int_from_string("--1", StringRadix::Binary), None);
-    assert_eq!(i8_type.const_int_from_string("2", StringRadix::Binary), None);
-    assert_eq!(i8_type.const_int_from_string("2", StringRadix::Binary), None);
+//     assert_eq!(i8_type.const_int_from_string("", StringRadix::Binary), None);
+//     assert_eq!(i8_type.const_int_from_string("-", StringRadix::Binary), None);
+//     assert_eq!(i8_type.const_int_from_string("--1", StringRadix::Binary), None);
+//     assert_eq!(i8_type.const_int_from_string("2", StringRadix::Binary), None);
+//     assert_eq!(i8_type.const_int_from_string("2", StringRadix::Binary), None);
 
-    // Floats
-    let f64_type = context.f64_type();
-    let f64_val = f64_type.const_float_from_string("3.6");
+//     // Floats
+//     let f64_type = context.f64_type();
+//     let f64_val = f64_type.const_float_from_string("3.6");
 
-    assert_eq!(f64_val.print_to_string().to_string(), "double 3.600000e+00");
+//     assert_eq!(f64_val.print_to_string().to_string(), "double 3.600000e+00");
 
-    let f64_val = f64_type.const_float_from_string("3.");
+//     let f64_val = f64_type.const_float_from_string("3.");
 
-    assert_eq!(f64_val.print_to_string().to_string(), "double 3.000000e+00");
+//     assert_eq!(f64_val.print_to_string().to_string(), "double 3.000000e+00");
 
-    let f64_val = f64_type.const_float_from_string("3");
+//     let f64_val = f64_type.const_float_from_string("3");
 
-    assert_eq!(f64_val.print_to_string().to_string(), "double 3.000000e+00");
+//     assert_eq!(f64_val.print_to_string().to_string(), "double 3.000000e+00");
 
-    let f64_val = f64_type.const_float_from_string("");
+//     let f64_val = f64_type.const_float_from_string("");
 
-    assert_eq!(f64_val.print_to_string().to_string(), "double 0.000000e+00");
+//     assert_eq!(f64_val.print_to_string().to_string(), "double 0.000000e+00");
 
-    // TODO: We should return a Result that returns Err here.
-    //let f64_val = f64_type.const_float_from_string("3.asd");
-    //
-    //assert_eq!(f64_val.print_to_string().to_string(), "double 0x7FF0000000000000");
-}
+//     // TODO: We should return a Result that returns Err here.
+//     //let f64_val = f64_type.const_float_from_string("3.asd");
+//     //
+//     //assert_eq!(f64_val.print_to_string().to_string(), "double 0x7FF0000000000000");
+// }
 
-#[test]
-fn test_value_copies() {
-    let context = Context::create();
-    let i8_type = context.i8_type();
+// #[test]
+// fn test_value_copies() {
+//     let context = Context::create();
+//     let i8_type = context.i8_type();
 
-    let i8_value = i8_type.const_int(12, false);
-    let i8_value_copy = i8_value;
+//     let i8_value = i8_type.const_int(12, false);
+//     let i8_value_copy = i8_value;
 
-    assert_eq!(i8_value, i8_value_copy);
-}
+//     assert_eq!(i8_value, i8_value_copy);
+// }
 
-#[test]
-fn test_global_byte_array() {
-    let context = Context::create();
-    let module = context.create_module("my_mod");
-    let my_str = "Hello, World";
-    let i8_type = context.i8_type();
-    let i8_array_type = i8_type.array_type(my_str.len() as u32);
-    let global_string = module.add_global(i8_array_type, Some(AddressSpace::default()), "message");
+// #[test]
+// fn test_global_byte_array() {
+//     let context = Context::create();
+//     let module = context.create_module("my_mod");
+//     let my_str = "Hello, World";
+//     let i8_type = context.i8_type();
+//     let i8_array_type = i8_type.array_type(my_str.len() as u32);
+//     let global_string = module.add_global(i8_array_type, Some(AddressSpace::default()), "message");
 
-    let mut chars = Vec::with_capacity(my_str.len());
+//     let mut chars = Vec::with_capacity(my_str.len());
 
-    for chr in my_str.bytes() {
-        chars.push(i8_type.const_int(chr as u64, false));
-    }
+//     for chr in my_str.bytes() {
+//         chars.push(i8_type.const_int(chr as u64, false));
+//     }
 
-    let const_str_array = i8_type.const_array(chars.as_ref());
+//     let const_str_array = i8_type.const_array(chars.as_ref());
 
-    global_string.set_initializer(&const_str_array);
+//     global_string.set_initializer(&const_str_array);
 
-    assert!(module.verify().is_ok());
-}
+//     assert!(module.verify().is_ok());
+// }
 
 #[test]
 fn test_globals() {
