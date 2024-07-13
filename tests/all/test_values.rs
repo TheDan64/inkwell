@@ -870,8 +870,8 @@ fn test_value_from_string() {
     assert_eq!(i8_type.const_int_from_string("2", StringRadix::Binary), None);
 
     // Floats
-    // let f64_type = context.f64_type();
-    // let f64_val = f64_type.const_float_from_string("3.6");
+    let f64_type = context.f64_type();
+    let f64_val = f64_type.const_float_from_string("3.6");
 
     // assert_eq!(f64_val.print_to_string().to_string(), "double 3.600000e+00");
 
