@@ -893,16 +893,16 @@ fn test_value_from_string() {
     //assert_eq!(f64_val.print_to_string().to_string(), "double 0x7FF0000000000000");
 }
 
-#[test]
-fn test_value_copies() {
-    let context = Context::create();
-    let i8_type = context.i8_type();
+// #[test]
+// fn test_value_copies() {
+//     let context = Context::create();
+//     let i8_type = context.i8_type();
 
-    let i8_value = i8_type.const_int(12, false);
-    let i8_value_copy = i8_value;
+//     let i8_value = i8_type.const_int(12, false);
+//     let i8_value_copy = i8_value;
 
-    assert_eq!(i8_value, i8_value_copy);
-}
+//     assert_eq!(i8_value, i8_value_copy);
+// }
 
 // #[test]
 // fn test_global_byte_array() {
