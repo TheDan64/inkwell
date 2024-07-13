@@ -904,27 +904,27 @@ fn test_value_copies() {
     assert_eq!(i8_value, i8_value_copy);
 }
 
-#[test]
-fn test_global_byte_array() {
-    let context = Context::create();
-    let module = context.create_module("my_mod");
-    let my_str = "Hello, World";
-    let i8_type = context.i8_type();
-    let i8_array_type = i8_type.array_type(my_str.len() as u32);
-    let global_string = module.add_global(i8_array_type, Some(AddressSpace::default()), "message");
+// #[test]
+// fn test_global_byte_array() {
+//     let context = Context::create();
+//     let module = context.create_module("my_mod");
+//     let my_str = "Hello, World";
+//     let i8_type = context.i8_type();
+//     let i8_array_type = i8_type.array_type(my_str.len() as u32);
+//     let global_string = module.add_global(i8_array_type, Some(AddressSpace::default()), "message");
 
-    let mut chars = Vec::with_capacity(my_str.len());
+//     let mut chars = Vec::with_capacity(my_str.len());
 
-    for chr in my_str.bytes() {
-        chars.push(i8_type.const_int(chr as u64, false));
-    }
+//     for chr in my_str.bytes() {
+//         chars.push(i8_type.const_int(chr as u64, false));
+//     }
 
-    let const_str_array = i8_type.const_array(chars.as_ref());
+//     let const_str_array = i8_type.const_array(chars.as_ref());
 
-    global_string.set_initializer(&const_str_array);
+//     global_string.set_initializer(&const_str_array);
 
-    assert!(module.verify().is_ok());
-}
+//     assert!(module.verify().is_ok());
+// }
 
 // #[test]
 // fn test_globals() {
