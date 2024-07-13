@@ -504,34 +504,9 @@ use std::convert::TryFrom;
 //     assert!(ppc_f128_poison.is_poison());
 // }
 
-// #[test]
-// fn test_consecutive_fns() {
-//     let context = Context::create();
-//     let module = context.create_module("fns");
-
-//     let void_type = context.void_type();
-//     let fn_type = void_type.fn_type(&[], false);
-
-//     let function = module.add_function("fn", fn_type, None);
-
-//     assert!(function.get_previous_function().is_none());
-//     assert!(function.get_next_function().is_none());
-
-//     let function2 = module.add_function("fn2", fn_type, None);
-
-//     assert_ne!(function, function2);
-
-//     assert!(function.get_previous_function().is_none());
-//     assert_eq!(function.get_next_function().unwrap(), function2);
-
-//     assert_eq!(function2.get_previous_function().unwrap(), function);
-//     assert!(function2.get_next_function().is_none());
-// }
-
 #[test]
-fn test_verify_fn() {
+fn test_consecutive_fns() {
     let context = Context::create();
-    let builder = context.create_builder();
     let module = context.create_module("fns");
 
     let void_type = context.void_type();
@@ -539,17 +514,42 @@ fn test_verify_fn() {
 
     let function = module.add_function("fn", fn_type, None);
 
-    assert!(function.verify(false));
+    assert!(function.get_previous_function().is_none());
+    assert!(function.get_next_function().is_none());
 
-    let basic_block = context.append_basic_block(function, "entry");
+    let function2 = module.add_function("fn2", fn_type, None);
 
-    builder.position_at_end(basic_block);
-    builder.build_return(None).unwrap();
+    assert_ne!(function, function2);
 
-    assert!(function.verify(false));
+    assert!(function.get_previous_function().is_none());
+    assert_eq!(function.get_next_function().unwrap(), function2);
 
-    // TODO: Verify other verify modes
+    assert_eq!(function2.get_previous_function().unwrap(), function);
+    assert!(function2.get_next_function().is_none());
 }
+
+// #[test]
+// fn test_verify_fn() {
+//     let context = Context::create();
+//     let builder = context.create_builder();
+//     let module = context.create_module("fns");
+
+//     let void_type = context.void_type();
+//     let fn_type = void_type.fn_type(&[], false);
+
+//     let function = module.add_function("fn", fn_type, None);
+
+//     assert!(function.verify(false));
+
+//     let basic_block = context.append_basic_block(function, "entry");
+
+//     builder.position_at_end(basic_block);
+//     builder.build_return(None).unwrap();
+
+//     assert!(function.verify(false));
+
+//     // TODO: Verify other verify modes
+// }
 
 // #[test]
 // fn test_metadata() {
