@@ -419,11 +419,9 @@ unsafe impl Send for Context {}
 impl Context {
     /// Get raw [`LLVMContextRef`].
     ///
-    /// # Safety
-    ///
     /// This function is exposed only for interoperability with other LLVM IR libraries.
-    /// It's not intended to be used by most users, hence marked as unsafe.
-    pub unsafe fn raw(&self) -> LLVMContextRef {
+    /// It's not intended to be used by most users.
+    pub fn raw(&self) -> LLVMContextRef {
         self.context.0
     }
 
@@ -1340,11 +1338,9 @@ pub struct ContextRef<'ctx> {
 impl<'ctx> ContextRef<'ctx> {
     /// Get raw [`LLVMContextRef`].
     ///
-    /// # Safety
-    ///
     /// This function is exposed only for interoperability with other LLVM IR libraries.
-    /// It's not intended to be used by most users, hence marked as unsafe.
-    pub unsafe fn raw(&self) -> LLVMContextRef {
+    /// It's not intended to be used by most users.
+    pub fn raw(&self) -> LLVMContextRef {
         self.context.0
     }
 
