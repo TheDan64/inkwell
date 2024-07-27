@@ -871,26 +871,24 @@ fn test_value_from_string() {
 
     // Floats
     let f64_type = context.f64_type();
-    let f64_val = f64_type.const_float_from_string("3.6");
+    let f64_val = unsafe { f64_type.const_float_from_string("3.6") };
 
     assert_eq!(f64_val.print_to_string().to_string(), "double 3.600000e+00");
 
-    let f64_val = f64_type.const_float_from_string("3.");
+    let f64_val = unsafe { f64_type.const_float_from_string("3.") };
 
     assert_eq!(f64_val.print_to_string().to_string(), "double 3.000000e+00");
 
-    let f64_val = f64_type.const_float_from_string("3");
+    let f64_val = unsafe { f64_type.const_float_from_string("3") };
 
     assert_eq!(f64_val.print_to_string().to_string(), "double 3.000000e+00");
 
-    let f64_val = f64_type.const_float_from_string("");
-
-    assert_eq!(f64_val.print_to_string().to_string(), "double 0.000000e+00");
-
-    // TODO: We should return a Result that returns Err here.
-    //let f64_val = f64_type.const_float_from_string("3.asd");
+    // TODO: We should return a Result that returns Err here. This would require
+    // us to implement manual validation of the input to assert it matched LLVM's
+    // expected format.
+    // let f64_val = f64_type.const_float_from_string("3.asd");
     //
-    //assert_eq!(f64_val.print_to_string().to_string(), "double 0x7FF0000000000000");
+    // assert_eq!(f64_val.print_to_string().to_string(), "double 0x7FF0000000000000");
 }
 
 #[test]
