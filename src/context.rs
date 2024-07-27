@@ -417,7 +417,22 @@ pub struct Context {
 unsafe impl Send for Context {}
 
 impl Context {
-    pub(crate) unsafe fn new(context: LLVMContextRef) -> Self {
+    /// Get raw [`LLVMContextRef`].
+    ///
+    /// This function is exposed only for interoperability with other LLVM IR libraries.
+    /// It's not intended to be used by most users.
+    pub fn raw(&self) -> LLVMContextRef {
+        self.context.0
+    }
+
+    /// Creates a new `Context` from [`LLVMContextRef`].
+    ///
+    /// # Safety
+    ///
+    /// This function is exposed only for interoperability with other LLVM IR libraries.
+    /// It's not intended to be used by most users, hence marked as unsafe.
+    /// Use [`Context::create`] instead.
+    pub unsafe fn new(context: LLVMContextRef) -> Self {
         Context {
             context: ContextImpl::new(context),
         }
@@ -1321,7 +1336,21 @@ pub struct ContextRef<'ctx> {
 }
 
 impl<'ctx> ContextRef<'ctx> {
-    pub(crate) unsafe fn new(context: LLVMContextRef) -> Self {
+    /// Get raw [`LLVMContextRef`].
+    ///
+    /// This function is exposed only for interoperability with other LLVM IR libraries.
+    /// It's not intended to be used by most users.
+    pub fn raw(&self) -> LLVMContextRef {
+        self.context.0
+    }
+
+    /// Creates a new `ContextRef` from [`LLVMContextRef`].
+    ///
+    /// # Safety
+    ///
+    /// This function is exposed only for interoperability with other LLVM IR libraries.
+    /// It's not intended to be used by most users, hence marked as unsafe.
+    pub unsafe fn new(context: LLVMContextRef) -> Self {
         ContextRef {
             context: ContextImpl::new(context),
             _marker: PhantomData,
