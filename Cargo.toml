@@ -1,6 +1,6 @@
 [package]
 name = "inkwell"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Daniel Kolsoi <thadan64@gmail.com>"]
 description = "Inkwell aims to help you pen your own programming languages by safely wrapping llvm-sys."
 documentation = "https://thedan64.github.io/inkwell/"
@@ -135,7 +135,7 @@ experimental = ["static-alloc"]
 nightly = ["inkwell_internals/nightly"]
 
 [dependencies]
-inkwell_internals = { path = "./internal_macros", version = "0.9.0" }
+inkwell_internals = { path = "./internal_macros", version = "0.10.0" }
 
 llvm-sys-40 = { package = "llvm-sys", version = "40.4", optional = true }
 llvm-sys-50 = { package = "llvm-sys", version = "50.4", optional = true }
