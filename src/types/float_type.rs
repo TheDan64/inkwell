@@ -98,8 +98,10 @@ impl<'ctx> FloatType<'ctx> {
         unsafe { FloatValue::new(LLVMConstReal(self.float_type.ty, value)) }
     }
 
-    /// Create a `FloatValue` from a string. LLVM provides no error handling here,
-    /// so this may produce unexpected results and should not be relied upon for validation.
+    // We could make this safe again by doing the validation for users.
+    /// Create a `FloatValue` from a string. This function is marked unsafe because LLVM
+    /// provides no error handling here, so this may produce undefined behavior if an invalid
+    /// string is used.
     ///
     /// # Example
     ///
@@ -109,28 +111,26 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// let context = Context::create();
     /// let f64_type = context.f64_type();
-    /// let f64_val = f64_type.const_float_from_string("3.6");
+    /// let f64_val = unsafe { f64_type.const_float_from_string("3.6") };
     ///
     /// assert_eq!(f64_val.print_to_string().to_string(), "double 3.600000e+00");
     ///
-    /// let f64_val = f64_type.const_float_from_string("3.");
+    /// let f64_val = unsafe { f64_type.const_float_from_string("3.") };
     ///
     /// assert_eq!(f64_val.print_to_string().to_string(), "double 3.000000e+00");
     ///
-    /// let f64_val = f64_type.const_float_from_string("3");
+    /// let f64_val = unsafe { f64_type.const_float_from_string("3") };
     ///
     /// assert_eq!(f64_val.print_to_string().to_string(), "double 3.000000e+00");
     ///
-    /// let f64_val = f64_type.const_float_from_string("");
-    ///
-    /// assert_eq!(f64_val.print_to_string().to_string(), "double 0.000000e+00");
-    ///
-    /// let f64_val = f64_type.const_float_from_string("3.asd");
+    /// let f64_val = unsafe { f64_type.const_float_from_string("3.asd") };
     ///
     /// assert_eq!(f64_val.print_to_string().to_string(), "double 0x7FF0000000000000");
     /// ```
-    pub fn const_float_from_string(self, slice: &str) -> FloatValue<'ctx> {
-        unsafe {
+    pub unsafe fn const_float_from_string(self, slice: &str) -> FloatValue<'ctx> {
+    	assert!(!slice.is_empty());
+
+    	unsafe {
             FloatValue::new(LLVMConstRealOfStringAndSize(
                 self.as_type_ref(),
                 slice.as_ptr() as *const ::libc::c_char,
