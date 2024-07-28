@@ -312,7 +312,6 @@ fn test_instructions() {
         .unwrap();
 
     #[cfg(any(
-        feature = "llvm14-0",
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
