@@ -145,6 +145,24 @@ impl<'ctx> StructValue<'ctx> {
     pub fn replace_all_uses_with(self, other: StructValue<'ctx>) {
         self.struct_value.replace_all_uses_with(other.as_value_ref())
     }
+
+    /// Determines whether or not a `StructValue` is a constant.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::{context::Context, values::BasicValue};
+    ///
+    /// let context = Context::create();
+    /// let i64_type = context.i64_type();
+    /// let i64_val = i64_type.const_int(23, false).as_basic_value_enum();
+    /// let struct_val = context.const_struct(&[i64_val, i64_val], false);
+    ///
+    /// assert!(struct_val.is_const());
+    /// ```
+    pub fn is_const(self) -> bool {
+        self.struct_value.is_const()
+    }
 }
 
 unsafe impl AsValueRef for StructValue<'_> {

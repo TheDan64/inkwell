@@ -13,7 +13,7 @@ use llvm_sys::LLVMTypeKind;
 use crate::attributes::{Attribute, AttributeLoc};
 use crate::values::{AsValueRef, BasicValueEnum, FunctionValue, InstructionValue, Value};
 
-use super::AnyValue;
+use super::{AnyValue, InstructionOpcode};
 
 /// A value resulting from a function call. It may have function attributes applied to it.
 ///
@@ -603,5 +603,17 @@ unsafe impl AsValueRef for CallSiteValue<'_> {
 impl Display for CallSiteValue<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.print_to_string())
+    }
+}
+
+impl<'ctx> TryFrom<InstructionValue<'ctx>> for CallSiteValue<'ctx> {
+    type Error = ();
+
+    fn try_from(value: InstructionValue<'ctx>) -> Result<Self, Self::Error> {
+        if value.get_opcode() == InstructionOpcode::Call {
+            unsafe { Ok(CallSiteValue::new(value.as_value_ref())) }
+        } else {
+            Err(())
+        }
     }
 }

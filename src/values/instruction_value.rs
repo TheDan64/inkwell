@@ -2,13 +2,15 @@ use either::{
     Either,
     Either::{Left, Right},
 };
+#[llvm_versions(14..)]
+use llvm_sys::core::LLVMGetGEPSourceElementType;
 use llvm_sys::core::{
     LLVMGetAlignment, LLVMGetAllocatedType, LLVMGetFCmpPredicate, LLVMGetICmpPredicate, LLVMGetInstructionOpcode,
     LLVMGetInstructionParent, LLVMGetMetadata, LLVMGetNextInstruction, LLVMGetNumOperands, LLVMGetOperand,
     LLVMGetOperandUse, LLVMGetPreviousInstruction, LLVMGetVolatile, LLVMHasMetadata, LLVMInstructionClone,
     LLVMInstructionEraseFromParent, LLVMInstructionRemoveFromParent, LLVMIsAAllocaInst, LLVMIsABasicBlock,
-    LLVMIsALoadInst, LLVMIsAStoreInst, LLVMIsATerminatorInst, LLVMIsConditional, LLVMIsTailCall, LLVMSetAlignment,
-    LLVMSetMetadata, LLVMSetOperand, LLVMSetVolatile, LLVMValueAsBasicBlock,
+    LLVMIsAGetElementPtrInst, LLVMIsALoadInst, LLVMIsAStoreInst, LLVMIsATerminatorInst, LLVMIsConditional,
+    LLVMIsTailCall, LLVMSetAlignment, LLVMSetMetadata, LLVMSetOperand, LLVMSetVolatile, LLVMValueAsBasicBlock,
 };
 use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
 #[llvm_versions(10..)]
@@ -120,6 +122,9 @@ impl<'ctx> InstructionValue<'ctx> {
     }
     fn is_a_alloca_inst(self) -> bool {
         !unsafe { LLVMIsAAllocaInst(self.as_value_ref()) }.is_null()
+    }
+    fn is_a_getelementptr_inst(self) -> bool {
+        !unsafe { LLVMIsAGetElementPtrInst(self.as_value_ref()) }.is_null()
     }
     #[llvm_versions(10..)]
     fn is_a_atomicrmw_inst(self) -> bool {
@@ -396,6 +401,16 @@ impl<'ctx> InstructionValue<'ctx> {
             return Err("Value is not an alloca.");
         }
         Ok(unsafe { BasicTypeEnum::new(LLVMGetAllocatedType(self.as_value_ref())) })
+    }
+
+    // SubTypes: Only apply to GetElementPtr instruction
+    /// Returns the source element type of the given GEP.
+    #[llvm_versions(14..)]
+    pub fn get_gep_source_element_type(self) -> Result<BasicTypeEnum<'ctx>, &'static str> {
+        if !self.is_a_getelementptr_inst() {
+            return Err("Value is not a GEP.");
+        }
+        Ok(unsafe { BasicTypeEnum::new(LLVMGetGEPSourceElementType(self.as_value_ref())) })
     }
 
     // SubTypes: Only apply to memory access and alloca instructions
