@@ -20,6 +20,9 @@ mod struct_value;
 mod traits;
 mod vec_value;
 
+#[cfg(feature = "llvm18-0")]
+pub(crate) mod operand_bundle;
+
 #[cfg(not(any(
     feature = "llvm15-0",
     feature = "llvm16-0",
@@ -35,6 +38,9 @@ mod callable_value;
     feature = "llvm18-0"
 )))]
 pub use crate::values::callable_value::CallableValue;
+
+#[llvm_versions(18..)]
+pub use crate::values::operand_bundle::OperandBundle;
 
 use crate::support::{to_c_str, LLVMString};
 pub use crate::values::array_value::ArrayValue;
