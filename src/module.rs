@@ -648,16 +648,16 @@ impl<'ctx> Module<'ctx> {
         unsafe { GlobalValue::new(value) }
     }
 
-    /// Writes a `Module` to a `Path`.
+    /// Writes a `Module` to a file.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - path to write the module's bitcode to. Must be valid Unicode.
     ///
     /// # Example
     ///
     /// ```no_run
     /// use inkwell::context::Context;
-    ///
-    /// use std::path::Path;
-    ///
-    /// let mut path = Path::new("module.bc");
     ///
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
@@ -665,10 +665,13 @@ impl<'ctx> Module<'ctx> {
     /// let fn_type = void_type.fn_type(&[], false);
     ///
     /// module.add_function("my_fn", fn_type, None);
-    /// module.write_bitcode_to_path(&path);
+    /// module.write_bitcode_to_path("module.bc");
     /// ```
-    pub fn write_bitcode_to_path(&self, path: &Path) -> bool {
-        let path_str = path.to_str().expect("Did not find a valid Unicode path string");
+    pub fn write_bitcode_to_path(&self, path: impl AsRef<Path>) -> bool {
+        let path_str = path
+            .as_ref()
+            .to_str()
+            .expect("Did not find a valid Unicode path string");
         let c_string = to_c_str(path_str);
 
         unsafe { LLVMWriteBitcodeToFile(self.module.get(), c_string.as_ptr()) == 0 }
