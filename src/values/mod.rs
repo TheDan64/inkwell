@@ -132,7 +132,7 @@ impl<'ctx> Value<'ctx> {
         {
             use llvm_sys::core::LLVMSetValueName2;
 
-            unsafe { LLVMSetValueName2(self.value, c_string.as_ptr(), name.len()) }
+            unsafe { LLVMSetValueName2(self.value, c_string.as_ptr(), c_string.to_bytes().len()) }
         }
     }
 
