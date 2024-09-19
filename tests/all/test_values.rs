@@ -4,6 +4,8 @@ use inkwell::comdat::ComdatSelectionKind;
 use inkwell::context::Context;
 use inkwell::module::Linkage::*;
 use inkwell::types::{AnyTypeEnum, StringRadix, VectorType};
+#[llvm_versions(18..)]
+use inkwell::values::OperandBundle;
 use inkwell::values::{AnyValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
 use inkwell::{AddressSpace, DLLStorageClass, GlobalVisibility, ThreadLocalMode};
 
@@ -96,6 +98,53 @@ fn test_call_site_tail_call_attributes() {
     // Setting the `LLVMTailCallKindTail` implies a tail call
     assert_eq!(call_site.get_tail_call_kind(), LLVMTailCallKindTail);
     assert!(call_site.is_tail_call());
+}
+
+#[llvm_versions(18..)]
+#[test]
+fn test_call_site_operand_bundles() {
+    let context = Context::create();
+    let module = context.create_module("my_mod");
+    let builder = context.create_builder();
+
+    let void_type = context.void_type();
+    let i32_type = context.i32_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_value = module.add_function("my_fn", fn_type, None);
+    let entry_bb = context.append_basic_block(fn_value, "entry");
+
+    builder.position_at_end(entry_bb);
+    let call_site = builder
+        .build_direct_call_with_operand_bundles(
+            fn_value,
+            &[],
+            &[
+                OperandBundle::create("tag0", &[i32_type.const_zero().into(), i32_type.const_zero().into()]),
+                OperandBundle::create("tag1", &[]),
+            ],
+            "call",
+        )
+        .unwrap();
+    builder.build_return(None).unwrap();
+
+    assert!(module.verify().is_ok());
+
+    let mut op_bundle_iter = call_site.get_operand_bundles();
+    assert_eq!(op_bundle_iter.len(), 2);
+
+    let op_bundle0 = op_bundle_iter.next().unwrap();
+    let op_bundle1 = op_bundle_iter.next().unwrap();
+    assert!(op_bundle_iter.next().is_none());
+
+    assert_eq!(op_bundle0.get_tag().unwrap(), "tag0");
+    assert_eq!(op_bundle1.get_tag().unwrap(), "tag1");
+
+    assert_eq!(op_bundle1.get_args().len(), 0);
+    assert!(op_bundle1.get_args().next().is_none());
+
+    let args_iter = op_bundle0.get_args();
+    assert_eq!(args_iter.len(), 2);
+    args_iter.for_each(|arg| assert!(arg.into_int_value().is_const()));
 }
 
 #[test]
