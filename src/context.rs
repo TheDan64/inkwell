@@ -345,7 +345,7 @@ impl ContextImpl {
     fn metadata_string<'ctx>(&self, string: &str) -> MetadataValue<'ctx> {
         let c_string = to_c_str(string);
 
-        unsafe { MetadataValue::new(LLVMMDStringInContext(self.0, c_string.as_ptr(), string.len() as u32)) }
+        unsafe { MetadataValue::new(LLVMMDStringInContext(self.0, c_string.as_ptr(), c_string.to_bytes().len() as u32)) }
     }
 
     fn get_kind_id(&self, key: &str) -> u32 {
