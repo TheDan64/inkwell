@@ -2622,7 +2622,7 @@ impl<'ctx> Builder<'ctx> {
         unsafe { Ok(T::new(value)) }
     }
 
-    pub fn build_binop<T: BasicValue<'ctx>>(&self, op: InstructionOpcode, lhs: T, rhs: T, name: &str) -> Result<BasicValueEnum, BuilderError> {
+    pub fn build_binop<T: BasicValue<'ctx>>(&self, op: InstructionOpcode, lhs: T, rhs: T, name: &str) -> Result<BasicValueEnum<'ctx>, BuilderError> {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
         }
