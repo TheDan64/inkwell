@@ -430,6 +430,16 @@ fn test_vec_type() {
     assert_eq!(vec_type.get_size(), 42);
 }
 
+#[llvm_versions(11..)]
+#[test]
+fn test_scalable_vec_type() {
+    let context = Context::create();
+    let int = context.i8_type();
+    let vec_type = int.scalable_vec_type(42);
+
+    assert_eq!(vec_type.get_size(), 42);
+}
+
 #[test]
 fn test_type_copies() {
     let context = Context::create();
@@ -550,6 +560,15 @@ fn test_no_vector_zero() {
     let context = Context::create();
     let int = context.i32_type();
     int.vec_type(0);
+}
+
+#[llvm_versions(11..)]
+#[test]
+#[should_panic]
+fn test_no_scalable_vector_zero() {
+    let context = Context::create();
+    let int = context.i32_type();
+    int.scalable_vec_type(0);
 }
 
 #[test]
