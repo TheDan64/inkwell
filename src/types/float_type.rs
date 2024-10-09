@@ -82,6 +82,25 @@ impl<'ctx> FloatType<'ctx> {
         self.float_type.vec_type(size)
     }
 
+    /// Creates a scalable `VectorType` with this `FloatType` for its element type.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// let f32_vector_type = f32_type.scalable_vec_type(3);
+    ///
+    /// assert_eq!(f32_vector_type.get_size(), 3);
+    /// assert_eq!(f32_vector_type.get_element_type().into_float_type(), f32_type);
+    /// ```
+    #[llvm_versions(11..)]
+    pub fn scalable_vec_type(self, size: u32) -> VectorType<'ctx> {
+        self.float_type.scalable_vec_type(size)
+    }
+
     /// Creates a `FloatValue` representing a constant value of this `FloatType`.
     /// It will be automatically assigned this `FloatType`'s `Context`.
     ///

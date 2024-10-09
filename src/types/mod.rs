@@ -35,6 +35,9 @@ pub use crate::types::traits::{AnyType, AsTypeRef, BasicType, FloatMathType, Int
 pub use crate::types::vec_type::VectorType;
 pub use crate::types::void_type::VoidType;
 
+#[llvm_versions(11..)]
+use llvm_sys::core::LLVMScalableVectorType;
+
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMGetPoison;
 
@@ -93,6 +96,14 @@ impl<'ctx> Type<'ctx> {
         // -- https://llvm.org/docs/LangRef.html#vector-type
 
         unsafe { VectorType::new(LLVMVectorType(self.ty, size)) }
+    }
+
+    #[llvm_versions(11..)]
+    fn scalable_vec_type(self, size: u32) -> VectorType<'ctx> {
+        assert!(size != 0, "Vectors of size zero are not allowed.");
+        // -- https://llvm.org/docs/LangRef.html#vector-type
+
+        unsafe { VectorType::new(LLVMScalableVectorType(self.ty, size)) }
     }
 
     #[cfg(not(feature = "experimental"))]
