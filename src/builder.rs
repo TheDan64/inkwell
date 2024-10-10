@@ -5,7 +5,7 @@ use llvm_sys::core::LLVMBuildCallWithOperandBundles;
 use llvm_sys::core::{
     LLVMAddCase, LLVMAddClause, LLVMAddDestination, LLVMBuildAShr, LLVMBuildAdd, LLVMBuildAddrSpaceCast,
     LLVMBuildAggregateRet, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc,
-    LLVMBuildAtomicCmpXchg, LLVMBuildAtomicRMW, LLVMBuildBitCast, LLVMBuildBr, LLVMBuildCast, LLVMBuildCondBr,
+    LLVMBuildAtomicCmpXchg, LLVMBuildAtomicRMW, LLVMBuildBinOp, LLVMBuildBitCast, LLVMBuildBr, LLVMBuildCast, LLVMBuildCondBr,
     LLVMBuildExactSDiv, LLVMBuildExtractElement, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp, LLVMBuildFDiv,
     LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFPCast, LLVMBuildFPExt, LLVMBuildFPToSI, LLVMBuildFPToUI, LLVMBuildFPTrunc,
     LLVMBuildFRem, LLVMBuildFSub, LLVMBuildFence, LLVMBuildFree, LLVMBuildGlobalString, LLVMBuildGlobalStringPtr,
@@ -2620,6 +2620,16 @@ impl<'ctx> Builder<'ctx> {
         let value = unsafe { LLVMBuildFMul(self.builder, lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr()) };
 
         unsafe { Ok(T::new(value)) }
+    }
+
+    pub fn build_binop<T: BasicValue<'ctx>>(&self, op: InstructionOpcode, lhs: T, rhs: T, name: &str) -> Result<BasicValueEnum<'ctx>, BuilderError> {
+        if self.positioned.get() != PositionState::Set {
+            return Err(BuilderError::UnsetPosition);
+        }
+        let c_string = to_c_str(name);
+        let value = unsafe { LLVMBuildBinOp(self.builder, op.into(), lhs.as_value_ref(), rhs.as_value_ref(), c_string.as_ptr()) };
+
+        unsafe { Ok(BasicValueEnum::new(value)) }
     }
 
     pub fn build_cast<T: BasicType<'ctx>, V: BasicValue<'ctx>>(
