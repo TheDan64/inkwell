@@ -2581,7 +2581,7 @@ impl<'ctx> Builder<'ctx> {
     /// Creates float multiplication
     /// given `lhs` and `rhs` as FloatValue. It returns either an `FloatValue` or `BuilderError`
     /// ```rust,no_run
-    /// fn float_subtraction(lhs: f16, rhs: f16) -> f16{
+    /// fn float_subtraction(lhs: f16, rhs: f16) -> f16 {
     ///     lhs*rhs
     /// }
     /// ```
