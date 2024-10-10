@@ -527,7 +527,7 @@ fn test_mem_instructions() {
     assert!(fadd_instruction.set_alignment(16).is_err());
 }
 
-#[llvm_versions(11..)]
+#[llvm_versions(12..)]
 #[test]
 fn test_mem_instructions() {
     let context = Context::create();

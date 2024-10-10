@@ -197,6 +197,16 @@ fn test_set_get_name() {
     let array_val = f64_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
     let vec_val = VectorType::const_vector(&[i8_val]);
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let scalable_vec_val = f64_type.scalable_vec_type(42).const_zero();
     let ppc_f128_val = ppc_f128_type.const_float(0.0);
 
     assert_eq!(bool_val.get_name().to_str(), Ok(""));
@@ -213,6 +223,16 @@ fn test_set_get_name() {
     assert_eq!(array_val.get_name().to_str(), Ok(""));
     assert_eq!(struct_val.get_name().to_str(), Ok(""));
     assert_eq!(vec_val.get_name().to_str(), Ok(""));
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    assert_eq!(scalable_vec_val.get_name().to_str(), Ok(""));
     assert_eq!(ppc_f128_val.get_name().to_str(), Ok(""));
 
     // LLVM Gem: You can't set names on constant values, so this doesn't do anything:
@@ -230,7 +250,17 @@ fn test_set_get_name() {
     array_val.set_name("my_val12");
     struct_val.set_name("my_val13");
     vec_val.set_name("my_val14");
-    ppc_f128_val.set_name("my_val14");
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    scalable_vec_val.set_name("my_val15");
+    ppc_f128_val.set_name("my_val16");
 
     assert_eq!(bool_val.get_name().to_str(), Ok(""));
     assert_eq!(i8_val.get_name().to_str(), Ok(""));
@@ -246,6 +276,16 @@ fn test_set_get_name() {
     assert_eq!(array_val.get_name().to_str(), Ok(""));
     assert_eq!(struct_val.get_name().to_str(), Ok(""));
     assert_eq!(vec_val.get_name().to_str(), Ok(""));
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    assert_eq!(scalable_vec_val.get_name().to_str(), Ok(""));
     assert_eq!(ppc_f128_val.get_name().to_str(), Ok(""));
 
     let void_type = context.void_type();
@@ -265,6 +305,16 @@ fn test_set_get_name() {
     let ptr_type = context.ptr_type(AddressSpace::default());
     let struct_type = context.struct_type(&[bool_type.into()], false);
     let vec_type = bool_type.vec_type(1);
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let scalable_vec_type = bool_type.scalable_vec_type(1);
 
     let module = context.create_module("types");
     let builder = context.create_builder();
@@ -277,6 +327,16 @@ fn test_set_get_name() {
         array_type.into(),
         ptr_type.into(),
         vec_type.into(),
+        #[cfg(any(
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+            feature = "llvm14-0",
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-0"
+        ))]
+        scalable_vec_type.into(),
     ];
     let fn_type = void_type.fn_type(&fn_type_params, false);
 
@@ -291,6 +351,16 @@ fn test_set_get_name() {
     let array_param = function.get_nth_param(3).unwrap().into_array_value();
     let ptr_param = function.get_nth_param(4).unwrap().into_pointer_value();
     let vec_param = function.get_nth_param(5).unwrap().into_vector_value();
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let scalable_vec_param = function.get_nth_param(6).unwrap().into_scalable_vector_value();
     let phi_val = builder.build_phi(bool_type, "phi_node").unwrap();
 
     assert_eq!(int_param.get_name().to_str(), Ok(""));
@@ -299,6 +369,16 @@ fn test_set_get_name() {
     assert_eq!(array_param.get_name().to_str(), Ok(""));
     assert_eq!(ptr_param.get_name().to_str(), Ok(""));
     assert_eq!(vec_param.get_name().to_str(), Ok(""));
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    assert_eq!(scalable_vec_param.get_name().to_str(), Ok(""));
     assert_eq!(phi_val.get_name().to_str(), Ok("phi_node"));
 
     int_param.set_name("my_val");
@@ -307,6 +387,16 @@ fn test_set_get_name() {
     array_param.set_name("my_val4");
     struct_param.set_name("my_val5");
     vec_param.set_name("my_val6");
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    scalable_vec_param.set_name("my_val7");
     phi_val.set_name("phi");
 
     assert_eq!(int_param.get_name().to_str(), Ok("my_val"));
@@ -315,6 +405,16 @@ fn test_set_get_name() {
     assert_eq!(array_param.get_name().to_str(), Ok("my_val4"));
     assert_eq!(struct_param.get_name().to_str(), Ok("my_val5"));
     assert_eq!(vec_param.get_name().to_str(), Ok("my_val6"));
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    assert_eq!(scalable_vec_param.get_name().to_str(), Ok("my_val7"));
     assert_eq!(phi_val.get_name().to_str(), Ok("phi"));
 
     // TODO: Test globals, supposedly constant globals work?
@@ -372,6 +472,16 @@ fn test_undef() {
     let array_val = f64_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
     let vec_val = VectorType::const_vector(&[i8_val]);
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let scalable_vec_val = f64_type.scalable_vec_type(42).const_zero();
     let ppc_f128_val = ppc_f128_type.const_float(0.0);
 
     assert!(!bool_val.is_undef());
@@ -388,6 +498,16 @@ fn test_undef() {
     assert!(!array_val.is_undef());
     assert!(!struct_val.is_undef());
     assert!(!vec_val.is_undef());
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    assert!(!scalable_vec_val.is_undef());
     assert!(!ppc_f128_val.is_undef());
 
     let bool_undef = bool_type.get_undef();
@@ -417,6 +537,16 @@ fn test_undef() {
     let array_undef = array_type.get_undef();
     let struct_undef = context.struct_type(&[bool_type.into()], false).get_undef();
     let vec_undef = bool_type.vec_type(1).get_undef();
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let scalable_vec_undef = bool_type.scalable_vec_type(1).get_undef();
     let ppc_f128_undef = ppc_f128_type.get_undef();
 
     assert!(bool_undef.is_undef());
@@ -433,6 +563,16 @@ fn test_undef() {
     assert!(array_undef.is_undef());
     assert!(struct_undef.is_undef());
     assert!(vec_undef.is_undef());
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    assert!(scalable_vec_undef.is_undef());
     assert!(ppc_f128_undef.is_undef());
 }
 
@@ -458,6 +598,16 @@ fn test_poison() {
     ))]
     let ptr_type = context.ptr_type(AddressSpace::default());
     let array_type = f64_type.array_type(42);
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let scalable_vec_type = f64_type.scalable_vec_type(42);
     let ppc_f128_type = context.ppc_f128_type();
 
     assert_eq!(array_type.get_element_type().into_float_type(), f64_type);
@@ -489,6 +639,16 @@ fn test_poison() {
     let array_val = f64_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
     let vec_val = VectorType::const_vector(&[i8_val]);
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let scalable_vec_val = scalable_vec_type.const_zero();
     let ppc_f128_val = ppc_f128_type.const_float(0.0);
 
     assert!(!bool_val.is_poison());
@@ -505,6 +665,16 @@ fn test_poison() {
     assert!(!array_val.is_poison());
     assert!(!struct_val.is_poison());
     assert!(!vec_val.is_poison());
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    assert!(!scalable_vec_val.is_poison());
     assert!(!ppc_f128_val.is_poison());
 
     let bool_poison = bool_type.get_poison();
@@ -534,6 +704,16 @@ fn test_poison() {
     let array_poison = array_type.get_poison();
     let struct_poison = context.struct_type(&[bool_type.into()], false).get_poison();
     let vec_poison = bool_type.vec_type(1).get_poison();
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let scalable_vec_poison = scalable_vec_type.get_poison();
     let ppc_f128_poison = ppc_f128_type.get_poison();
 
     assert!(bool_poison.is_poison());
@@ -550,6 +730,16 @@ fn test_poison() {
     assert!(array_poison.is_poison());
     assert!(struct_poison.is_poison());
     assert!(vec_poison.is_poison());
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    assert!(scalable_vec_poison.is_poison());
     assert!(ppc_f128_poison.is_poison());
 }
 
@@ -1343,6 +1533,16 @@ fn test_consts() {
     let f128_val = f128_type.const_float(7.8);
     let ppc_f128_val = ppc_f128_type.const_float(9.0);
     let vec_val = VectorType::const_vector(&[i8_val]);
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    let scalable_vec_val = f64_type.scalable_vec_type(42).const_zero();
     let array_val = i8_type.const_array(&[i8_val]);
     let arbitrary_precision_int = i64_type.const_int_arbitrary_precision(&[1, 2]);
 
@@ -1358,6 +1558,16 @@ fn test_consts() {
     assert!(f128_val.is_const());
     assert!(ppc_f128_val.is_const());
     assert!(vec_val.is_const());
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-0"
+    ))]
+    assert!(scalable_vec_val.is_const());
     assert!(array_val.is_const());
     assert!(arbitrary_precision_int.is_const());
 
@@ -1554,6 +1764,35 @@ fn test_vectors() {
 
     let extracted = builder
         .build_extract_element(vector_param, i32_zero, "extract")
+        .unwrap();
+
+    builder.build_return(Some(&extracted)).unwrap();
+
+    assert!(module.verify().is_ok());
+}
+
+#[llvm_versions(12..)]
+#[test]
+fn test_scalable_vectors() {
+    let context = Context::create();
+    let builder = context.create_builder();
+    let module = context.create_module("my_mod");
+    let i32_type = context.i32_type();
+    let i32_zero = i32_type.const_int(0, false);
+    let i32_seven = i32_type.const_int(7, false);
+    let scalable_vec_type = i32_type.scalable_vec_type(2);
+    let fn_type = i32_type.fn_type(&[scalable_vec_type.into()], false);
+    let fn_value = module.add_function("my_func", fn_type, None);
+    let bb = context.append_basic_block(fn_value, "entry");
+    let scalable_vector_param = fn_value.get_first_param().unwrap().into_scalable_vector_value();
+
+    builder.position_at_end(bb);
+    builder
+        .build_insert_element(scalable_vector_param, i32_seven, i32_zero, "insert")
+        .unwrap();
+
+    let extracted = builder
+        .build_extract_element(scalable_vector_param, i32_zero, "extract")
         .unwrap();
 
     builder.build_return(Some(&extracted)).unwrap();
