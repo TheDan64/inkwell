@@ -11,6 +11,8 @@ use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMTypeKind;
 
 use crate::attributes::{Attribute, AttributeLoc};
+#[llvm_versions(18..)]
+use crate::values::operand_bundle::OperandBundleIter;
 use crate::values::{AsValueRef, BasicValueEnum, FunctionValue, InstructionValue, Value};
 
 use super::{AnyValue, InstructionOpcode};
@@ -591,6 +593,47 @@ impl<'ctx> CallSiteValue<'ctx> {
         assert_eq!(alignment.count_ones(), 1, "Alignment must be a power of two.");
 
         unsafe { LLVMSetInstrParamAlignment(self.as_value_ref(), loc.get_index(), alignment) }
+    }
+
+    /// Iterate over operand bundles.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use inkwell::context::Context;
+    /// use inkwell::values::OperandBundle;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("op_bundles");
+    /// let builder = context.create_builder();
+    ///
+    /// let void_type = context.void_type();
+    /// let i32_type = context.i32_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let fn_value = module.add_function("func", fn_type, None);
+    ///
+    /// let basic_block = context.append_basic_block(fn_value, "entry");
+    /// builder.position_at_end(basic_block);
+    ///
+    /// // Recursive call
+    /// let callinst = builder.build_direct_call_with_operand_bundles(
+    ///   fn_value,
+    ///   &[],
+    ///   &[OperandBundle::create("tag0", &[i32_type.const_zero().into()]), OperandBundle::create("tag1", &[])],
+    ///   "call"
+    /// ).unwrap();
+    ///
+    /// builder.build_return(None).unwrap();
+    /// # module.verify().unwrap();
+    ///
+    /// let mut op_bundles_iter = callinst.get_operand_bundles();
+    /// assert_eq!(op_bundles_iter.len(), 2);
+    /// let tags: Vec<String> = op_bundles_iter.map(|ob| ob.get_tag().unwrap().into()).collect();
+    /// assert_eq!(tags, vec!["tag0", "tag1"]);
+    /// ```
+    #[llvm_versions(18..)]
+    pub fn get_operand_bundles(&self) -> OperandBundleIter<'_, 'ctx> {
+        OperandBundleIter::new(self)
     }
 }
 
