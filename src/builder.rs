@@ -2719,7 +2719,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// // Function Definition
     /// let function = module.add_function("float_subtraction", fn_type, None);
-    /// let value = function.get_first_param().unwrap().into_float_value();
+    /// let value1 = function.get_first_param().unwrap().into_float_value();
     /// let value2 = function.get_nth_param(1).unwrap().into_float_value();
     /// let entry_block = context.append_basic_block(function, "entry");
     ///
