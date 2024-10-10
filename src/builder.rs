@@ -2578,37 +2578,37 @@ impl<'ctx> Builder<'ctx> {
 
         unsafe { Ok(T::new(value)) }
     }
-    ///Creates float multiplication
+    /// Creates float multiplication
     /// given `lhs` and `rhs` as FloatValue. It returns either an `FloatValue` or `BuilderError`
-    ///```rust,no_run
-    ///fn float_subtraction(lhs: f16, rhs: f16) -> f16{
-    ///    lhs*rhs
+    /// ```rust,no_run
+    /// fn float_subtraction(lhs: f16, rhs: f16) -> f16{
+    ///     lhs*rhs
     /// }
     /// ```
     /// # Example in inkwell:
-    ///The rust code above demonstrates how the example below could have been written if it was rust:
-    ///```rust,no_run
-    ///use inkwell::context::Context;
+    /// The rust code above demonstrates how the example below could have been written if it was rust:
+    /// ```rust,no_run
+    /// use inkwell::context::Context;
     ///
     /// // Setup
-    ///let context = Context::create();
-    ///let module = context.create_module("my_module");
-    ///let builder = context.create_builder();
-    ///let f16_type = context.f16_type();
-    ///let fn_type = f16_type.fn_type(&[f16_type.into(), f16_type.into()], false);
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    /// let builder = context.create_builder();
+    /// let f16_type = context.f16_type();
+    /// let fn_type = f16_type.fn_type(&[f16_type.into(), f16_type.into()], false);
     ///
     /// // Function Definition
-    ///let function = module.add_function("float_subtraction", fn_type, None);
-    ///let value = function.get_first_param().unwrap().into_float_value();
-    ///let value2 = function.get_nth_param(1).unwrap().into_float_value();
-    ///let entry_block = context.append_basic_block(function, "entry");
+    /// let function = module.add_function("float_subtraction", fn_type, None);
+    /// let value = function.get_first_param().unwrap().into_float_value();
+    /// let value2 = function.get_nth_param(1).unwrap().into_float_value();
+    /// let entry_block = context.append_basic_block(function, "entry");
     ///
-    ///builder.position_at_end(entry_block);
+    /// builder.position_at_end(entry_block);
     ///
-    ///let sub = builder.build_float_mul(value1, value2, "float_mul").unwrap();
+    /// let sub = builder.build_float_mul(value1, value2, "float_mul").unwrap();
     ///
-    ///builder.build_return(Some(&sub)).unwrap();
-    ///```
+    /// builder.build_return(Some(&sub)).unwrap();
+    /// ```
     // SubType: <F>(&self, lhs: &FloatValue<F>, rhs: &FloatValue<F>, name: &str) -> FloatValue<F> {
     pub fn build_float_mul<T: FloatMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
         if self.positioned.get() != PositionState::Set {
