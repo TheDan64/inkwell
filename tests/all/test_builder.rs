@@ -926,7 +926,7 @@ fn test_scalable_vector_convert_ops() {
     let float32_vec_type = context.f32_type().scalable_vec_type(3);
     let float16_vec_type = context.f16_type().scalable_vec_type(3);
 
-    // Here we're building a function that takes in a <vscale x 3 x i8> and returns it casted to 
+    // Here we're building a function that takes in a <vscale x 3 x i8> and returns it casted to
     // and from a <vscale x 3 x i32>
     // Casting to and from means we can ensure the cast build functions return a vector when one is provided.
     let fn_type = int32_vec_type.fn_type(&[int8_vec_type.into()], false);
@@ -1003,7 +1003,7 @@ fn test_scalable_vector_convert_ops_respect_target_signedness() {
     let module = context.create_module("test");
     let int8_vec_type = context.i8_type().scalable_vec_type(3);
 
-    // Here we're building a function that takes in a <vscale x 3 x i8> (signed) and returns it 
+    // Here we're building a function that takes in a <vscale x 3 x i8> (signed) and returns it
     // casted to and from a <vscale x 3 x i8> (unsigned)
     let fn_type = int8_vec_type.fn_type(&[int8_vec_type.into()], false);
     let fn_value = module.add_function("test_int_vec_cast", fn_type, None);
@@ -1101,7 +1101,7 @@ fn test_scalable_vector_binary_ops() {
     let float32_vec_type = context.f32_type().scalable_vec_type(2);
     let bool_vec_type = context.bool_type().scalable_vec_type(2);
 
-    // Here we're building a function that takes in three <vscale x 2 x i32>s and returns them 
+    // Here we're building a function that takes in three <vscale x 2 x i32>s and returns them
     // added together as a <vscale x 2 x i32>
     let fn_type = int32_vec_type.fn_type(
         &[int32_vec_type.into(), int32_vec_type.into(), int32_vec_type.into()],
@@ -1981,8 +1981,20 @@ fn test_bit_cast() {
     {
         let i64_scalable_vec_type = i64_type.scalable_vec_type(1);
         let f32_scalable_vec_type = f32_type.scalable_vec_type(2);
-        builder.build_bit_cast(i32_scalable_vec_arg, i64_scalable_vec_type, "vscalex2xi32tovscalex1xi64").unwrap();
-        builder.build_bit_cast(i32_scalable_vec_arg, f32_scalable_vec_type, "vscalex2xi32tovscalex2xf32").unwrap();
+        builder
+            .build_bit_cast(
+                i32_scalable_vec_arg,
+                i64_scalable_vec_type,
+                "vscalex2xi32tovscalex1xi64",
+            )
+            .unwrap();
+        builder
+            .build_bit_cast(
+                i32_scalable_vec_arg,
+                f32_scalable_vec_type,
+                "vscalex2xi32tovscalex2xf32",
+            )
+            .unwrap();
     }
     builder.build_bit_cast(i32_ptr_arg, i64_ptr_type, "i32*toi64*").unwrap();
 

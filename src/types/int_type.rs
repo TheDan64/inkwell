@@ -244,7 +244,7 @@ impl<'ctx> IntType<'ctx> {
         self.int_type.vec_type(size)
     }
 
-    /// Creates a scalable `VectorType` with this `IntType` for its element type.
+    /// Creates a `ScalableVectorType` with this `IntType` for its element type.
     ///
     /// # Example
     ///
@@ -253,10 +253,10 @@ impl<'ctx> IntType<'ctx> {
     ///
     /// let context = Context::create();
     /// let i8_type = context.i8_type();
-    /// let i8_vector_type = i8_type.scalable_vec_type(3);
+    /// let i8_scalable_vector_type = i8_type.scalable_vec_type(3);
     ///
-    /// assert_eq!(i8_vector_type.get_size(), 3);
-    /// assert_eq!(i8_vector_type.get_element_type().into_int_type(), i8_type);
+    /// assert_eq!(i8_scalable_vector_type.get_size(), 3);
+    /// assert_eq!(i8_scalable_vector_type.get_element_type().into_int_type(), i8_type);
     /// ```
     #[llvm_versions(12..)]
     pub fn scalable_vec_type(self, size: u32) -> ScalableVectorType<'ctx> {

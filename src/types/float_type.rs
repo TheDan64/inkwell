@@ -6,7 +6,7 @@ use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::traits::AsTypeRef;
-use crate::types::{ArrayType, FunctionType, PointerType, Type, VectorType, ScalableVectorType};
+use crate::types::{ArrayType, FunctionType, PointerType, ScalableVectorType, Type, VectorType};
 use crate::values::{ArrayValue, FloatValue, GenericValue, IntValue};
 use crate::AddressSpace;
 
@@ -64,7 +64,7 @@ impl<'ctx> FloatType<'ctx> {
         self.float_type.array_type(size)
     }
 
-    /// Creates a `VectorType` with this `FloatType` for its element type.
+    /// Creates a `ScalableVectorType` with this `FloatType` for its element type.
     ///
     /// # Example
     ///
@@ -73,10 +73,10 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// let f32_vector_type = f32_type.vec_type(3);
+    /// let f32_scalable_vector_type = f32_type.vec_type(3);
     ///
-    /// assert_eq!(f32_vector_type.get_size(), 3);
-    /// assert_eq!(f32_vector_type.get_element_type().into_float_type(), f32_type);
+    /// assert_eq!(f32_scalable_vector_type.get_size(), 3);
+    /// assert_eq!(f32_scalable_vector_type.get_element_type().into_float_type(), f32_type);
     /// ```
     pub fn vec_type(self, size: u32) -> VectorType<'ctx> {
         self.float_type.vec_type(size)
@@ -147,9 +147,9 @@ impl<'ctx> FloatType<'ctx> {
     /// assert_eq!(f64_val.print_to_string().to_string(), "double 0x7FF0000000000000");
     /// ```
     pub unsafe fn const_float_from_string(self, slice: &str) -> FloatValue<'ctx> {
-    	assert!(!slice.is_empty());
+        assert!(!slice.is_empty());
 
-    	unsafe {
+        unsafe {
             FloatValue::new(LLVMConstRealOfStringAndSize(
                 self.as_type_ref(),
                 slice.as_ptr() as *const ::libc::c_char,

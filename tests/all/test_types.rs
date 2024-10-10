@@ -632,7 +632,6 @@ fn test_basic_type_enum() {
         &context.struct_type(&[int.as_basic_type_enum()], false),
         &int.vec_type(1),
         #[cfg(any(
-            feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
             feature = "llvm14-0",

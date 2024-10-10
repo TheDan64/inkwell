@@ -328,7 +328,6 @@ fn test_set_get_name() {
         ptr_type.into(),
         vec_type.into(),
         #[cfg(any(
-            feature = "llvm11-0",
             feature = "llvm12-0",
             feature = "llvm13-0",
             feature = "llvm14-0",
@@ -1576,20 +1575,6 @@ fn test_consts() {
 
     assert!(!vec_val.is_constant_vector());
     assert!(vec_val.is_constant_data_vector());
-
-    #[cfg(any(
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0",
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    ))]
-    {
-        assert!(!scalable_vec_val.is_constant_vector());
-        assert!(!scalable_vec_val.is_constant_data_vector());
-    }
 
     assert_eq!(bool_val.get_zero_extended_constant(), Some(1));
     assert_eq!(i8_val.get_zero_extended_constant(), Some(u8::MAX as u64));

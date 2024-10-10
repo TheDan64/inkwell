@@ -4,8 +4,14 @@ use std::fmt::Debug;
 
 use crate::support::LLVMString;
 use crate::types::enums::{AnyTypeEnum, BasicMetadataTypeEnum, BasicTypeEnum};
-use crate::types::{ArrayType, FloatType, FunctionType, IntType, PointerType, StructType, Type, VectorType, ScalableVectorType, VoidType};
-use crate::values::{FloatMathValue, FloatValue, IntMathValue, IntValue, PointerMathValue, PointerValue, VectorValue, ScalableVectorValue};
+use crate::types::{
+    ArrayType, FloatType, FunctionType, IntType, PointerType, ScalableVectorType, StructType, Type, VectorType,
+    VoidType,
+};
+use crate::values::{
+    FloatMathValue, FloatValue, IntMathValue, IntValue, PointerMathValue, PointerValue, ScalableVectorValue,
+    VectorValue,
+};
 use crate::AddressSpace;
 
 /// Accessor to the inner LLVM type reference

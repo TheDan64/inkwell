@@ -462,7 +462,9 @@ impl<'ctx> BasicTypeEnum<'ctx> {
                 feature = "llvm17-0",
                 feature = "llvm18-0"
             ))]
-            LLVMTypeKind::LLVMScalableVectorTypeKind => BasicTypeEnum::ScalableVectorType(ScalableVectorType::new(type_)),
+            LLVMTypeKind::LLVMScalableVectorTypeKind => {
+                BasicTypeEnum::ScalableVectorType(ScalableVectorType::new(type_))
+            },
             LLVMTypeKind::LLVMMetadataTypeKind => panic!("Unsupported basic type: Metadata"),
             // see https://llvm.org/docs/LangRef.html#x86-mmx-type
             LLVMTypeKind::LLVMX86_MMXTypeKind => panic!("Unsupported basic type: MMX"),
@@ -533,7 +535,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
             panic!("Found {:?} but expected the VectorType variant", self);
         }
     }
-    
+
     pub fn into_scalable_vector_type(self) -> ScalableVectorType<'ctx> {
         if let BasicTypeEnum::ScalableVectorType(t) = self {
             t

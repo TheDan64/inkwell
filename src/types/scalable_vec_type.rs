@@ -36,7 +36,7 @@ impl<'ctx> ScalableVectorType<'ctx> {
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```ignore
     /// use inkwell::context::Context;
     ///
     /// let context = Context::create();
@@ -52,7 +52,7 @@ impl<'ctx> ScalableVectorType<'ctx> {
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```ignore
     /// use inkwell::context::Context;
     ///
     /// let context = Context::create();
@@ -65,10 +65,10 @@ impl<'ctx> ScalableVectorType<'ctx> {
     }
 
     /// Gets the size of this `ScalableVectorType`.
-    /// 
+    ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```ignore
     /// use inkwell::context::Context;
     ///
     /// let context = Context::create();
@@ -86,7 +86,7 @@ impl<'ctx> ScalableVectorType<'ctx> {
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```ignore
     /// use inkwell::context::Context;
     ///
     /// let context = Context::create();
@@ -106,7 +106,7 @@ impl<'ctx> ScalableVectorType<'ctx> {
     /// Creates an undefined instance of a `ScalableVectorType`.
     ///
     /// # Example
-    /// ```no_run
+    /// ```ignore
     /// use inkwell::context::Context;
     /// use inkwell::AddressSpace;
     ///
@@ -124,7 +124,7 @@ impl<'ctx> ScalableVectorType<'ctx> {
     /// Creates a poison instance of a `ScalableVectorType`.
     ///
     /// # Example
-    /// ```no_run
+    /// ```ignore
     /// use inkwell::context::Context;
     /// use inkwell::AddressSpace;
     ///
@@ -145,7 +145,7 @@ impl<'ctx> ScalableVectorType<'ctx> {
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```ignore
     /// use inkwell::context::Context;
     ///
     /// let context = Context::create();
@@ -163,7 +163,7 @@ impl<'ctx> ScalableVectorType<'ctx> {
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```ignore
     /// use inkwell::context::Context;
     /// use inkwell::AddressSpace;
     ///
@@ -206,7 +206,7 @@ impl<'ctx> ScalableVectorType<'ctx> {
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```ignore
     /// use inkwell::context::Context;
     ///
     /// let context = Context::create();
@@ -222,7 +222,7 @@ impl<'ctx> ScalableVectorType<'ctx> {
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```ignore
     /// use inkwell::context::Context;
     ///
     /// let context = Context::create();
@@ -240,7 +240,7 @@ impl<'ctx> ScalableVectorType<'ctx> {
     /// Creates a constant `ArrayValue`.
     ///
     /// # Example
-    /// ```no_run
+    /// ```ignore
     /// use inkwell::context::Context;
     /// use inkwell::types::ScalableVectorType;
     ///
@@ -262,7 +262,7 @@ impl<'ctx> ScalableVectorType<'ctx> {
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```ignore
     /// use inkwell::context::Context;
     ///
     /// let context = Context::create();

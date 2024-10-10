@@ -8,7 +8,7 @@ use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
 #[llvm_versions(..=14)]
 use crate::types::AnyTypeEnum;
-use crate::types::{ArrayType, FunctionType, Type, VectorType, ScalableVectorType};
+use crate::types::{ArrayType, FunctionType, ScalableVectorType, Type, VectorType};
 use crate::values::{ArrayValue, IntValue, PointerValue};
 use crate::AddressSpace;
 
@@ -326,7 +326,7 @@ impl<'ctx> PointerType<'ctx> {
         self.ptr_type.vec_type(size)
     }
 
-    /// Creates a scalable `VectorType` with this `PointerType` for its element type.
+    /// Creates a `ScalableVectorType` with this `PointerType` for its element type.
     ///
     /// # Example
     ///
@@ -340,10 +340,10 @@ impl<'ctx> PointerType<'ctx> {
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
     /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
-    /// let f32_ptr_vec_type = f32_ptr_type.scalable_vec_type(3);
+    /// let f32_ptr_scalable_vec_type = f32_ptr_type.scalable_vec_type(3);
     ///
-    /// assert_eq!(f32_ptr_vec_type.get_size(), 3);
-    /// assert_eq!(f32_ptr_vec_type.get_element_type().into_pointer_type(), f32_ptr_type);
+    /// assert_eq!(f32_ptr_scalable_vec_type.get_size(), 3);
+    /// assert_eq!(f32_ptr_scalable_vec_type.get_element_type().into_pointer_type(), f32_ptr_type);
     /// ```
     #[llvm_versions(12..)]
     pub fn scalable_vec_type(self, size: u32) -> ScalableVectorType<'ctx> {

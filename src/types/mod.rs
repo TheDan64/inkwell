@@ -14,13 +14,13 @@ mod metadata_type;
 #[deny(missing_docs)]
 mod ptr_type;
 #[deny(missing_docs)]
+mod scalable_vec_type;
+#[deny(missing_docs)]
 mod struct_type;
 #[deny(missing_docs)]
 mod traits;
 #[deny(missing_docs)]
 mod vec_type;
-#[deny(missing_docs)]
-mod scalable_vec_type;
 #[deny(missing_docs)]
 mod void_type;
 
@@ -31,11 +31,11 @@ pub use crate::types::fn_type::FunctionType;
 pub use crate::types::int_type::{IntType, StringRadix};
 pub use crate::types::metadata_type::MetadataType;
 pub use crate::types::ptr_type::PointerType;
+pub use crate::types::scalable_vec_type::ScalableVectorType;
 pub use crate::types::struct_type::FieldTypesIter;
 pub use crate::types::struct_type::StructType;
 pub use crate::types::traits::{AnyType, AsTypeRef, BasicType, FloatMathType, IntMathType, PointerMathType};
 pub use crate::types::vec_type::VectorType;
-pub use crate::types::scalable_vec_type::ScalableVectorType;
 pub use crate::types::void_type::VoidType;
 
 #[llvm_versions(12..)]

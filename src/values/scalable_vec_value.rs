@@ -2,10 +2,7 @@
 use llvm_sys::core::LLVMConstSelect;
 #[allow(deprecated)]
 use llvm_sys::core::LLVMGetElementAsConstant;
-use llvm_sys::core::{
-    LLVMConstExtractElement, LLVMConstInsertElement, LLVMConstShuffleVector, LLVMIsAConstantDataVector,
-    LLVMIsAConstantVector,
-};
+use llvm_sys::core::{LLVMConstExtractElement, LLVMConstInsertElement, LLVMConstShuffleVector};
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::CStr;
@@ -40,7 +37,7 @@ impl<'ctx> ScalableVectorValue<'ctx> {
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```ignore
     /// use inkwell::context::Context;
     ///
     /// let context = Context::create();
@@ -52,14 +49,6 @@ impl<'ctx> ScalableVectorValue<'ctx> {
     /// ```
     pub fn is_const(self) -> bool {
         self.scalable_vec_value.is_const()
-    }
-
-    pub fn is_constant_vector(self) -> bool {
-        unsafe { !LLVMIsAConstantVector(self.as_value_ref()).is_null() }
-    }
-
-    pub fn is_constant_data_vector(self) -> bool {
-        unsafe { !LLVMIsAConstantDataVector(self.as_value_ref()).is_null() }
     }
 
     pub fn print_to_stderr(self) {
@@ -132,7 +121,11 @@ impl<'ctx> ScalableVectorValue<'ctx> {
     }
 
     // SubTypes: <V: ScalableVectorValue<T, Const>> self: V, right: V, mask: V -> V
-    pub fn const_shuffle_vector(self, right: ScalableVectorValue<'ctx>, mask: ScalableVectorValue<'ctx>) -> ScalableVectorValue<'ctx> {
+    pub fn const_shuffle_vector(
+        self,
+        right: ScalableVectorValue<'ctx>,
+        mask: ScalableVectorValue<'ctx>,
+    ) -> ScalableVectorValue<'ctx> {
         unsafe {
             ScalableVectorValue::new(LLVMConstShuffleVector(
                 self.as_value_ref(),

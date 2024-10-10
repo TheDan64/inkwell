@@ -94,6 +94,16 @@ impl<'ctx> AnyValueEnum<'ctx> {
             },
             LLVMTypeKind::LLVMArrayTypeKind => AnyValueEnum::ArrayValue(ArrayValue::new(value)),
             LLVMTypeKind::LLVMVectorTypeKind => AnyValueEnum::VectorValue(VectorValue::new(value)),
+            #[cfg(any(
+                feature = "llvm11-0",
+                feature = "llvm12-0",
+                feature = "llvm13-0",
+                feature = "llvm14-0",
+                feature = "llvm15-0",
+                feature = "llvm16-0",
+                feature = "llvm17-0",
+                feature = "llvm18-0"
+            ))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => {
                 AnyValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))
             },
@@ -253,6 +263,16 @@ impl<'ctx> BasicValueEnum<'ctx> {
             LLVMTypeKind::LLVMPointerTypeKind => BasicValueEnum::PointerValue(PointerValue::new(value)),
             LLVMTypeKind::LLVMArrayTypeKind => BasicValueEnum::ArrayValue(ArrayValue::new(value)),
             LLVMTypeKind::LLVMVectorTypeKind => BasicValueEnum::VectorValue(VectorValue::new(value)),
+            #[cfg(any(
+                feature = "llvm11-0",
+                feature = "llvm12-0",
+                feature = "llvm13-0",
+                feature = "llvm14-0",
+                feature = "llvm15-0",
+                feature = "llvm16-0",
+                feature = "llvm17-0",
+                feature = "llvm18-0"
+            ))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => {
                 BasicValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))
             },
@@ -428,6 +448,16 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
             LLVMTypeKind::LLVMPointerTypeKind => BasicMetadataValueEnum::PointerValue(PointerValue::new(value)),
             LLVMTypeKind::LLVMArrayTypeKind => BasicMetadataValueEnum::ArrayValue(ArrayValue::new(value)),
             LLVMTypeKind::LLVMVectorTypeKind => BasicMetadataValueEnum::VectorValue(VectorValue::new(value)),
+            #[cfg(any(
+                feature = "llvm11-0",
+                feature = "llvm12-0",
+                feature = "llvm13-0",
+                feature = "llvm14-0",
+                feature = "llvm15-0",
+                feature = "llvm16-0",
+                feature = "llvm17-0",
+                feature = "llvm18-0"
+            ))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => {
                 BasicMetadataValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))
             },
