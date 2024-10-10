@@ -2410,36 +2410,36 @@ impl<'ctx> Builder<'ctx> {
 
         unsafe { Ok(T::new(value)) }
     }
-    ///Creates integer subtraction given `lhs` and `rhs`. It returns either an `IntValue` or `BuilderError`
-    ///```rust,no_run
-    ///fn int_subtraction(lhs: i8, rhs: i8) -> i8 {
-    ///    lhs-rhs
-    ///}
+    /// Creates integer subtraction given `lhs` and `rhs`. It returns either an `IntValue` or `BuilderError`
+    /// ```rust,no_run
+    /// fn int_subtraction(lhs: i8, rhs: i8) -> i8 {
+    ///     lhs-rhs
+    /// }
     /// ```
     /// # Example in inkwell:
-    ///The rust code above demonstrates how the example below could have been written if it was rust:
-    ///```rust,no_run
-    ///use inkwell::context::Context;
+    /// The rust code above demonstrates how the example below could have been written if it was rust:
+    /// ```rust,no_run
+    /// use inkwell::context::Context;
     ///
     /// // Setup
-    ///let context = Context::create();
-    ///let module = context.create_module("my_module");
-    ///let builder = context.create_builder();
-    ///let i8_type = context.i8_type();
-    ///let fn_type = i8_type.fn_type(&[i8_type.into(), i8_type.into()], false);
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    /// let builder = context.create_builder();
+    /// let i8_type = context.i8_type();
+    /// let fn_type = i8_type.fn_type(&[i8_type.into(), i8_type.into()], false);
     ///
     /// // Function Definition
-    ///let function = module.add_function("int_subtraction", fn_type, None);
-    ///let value1 = function.get_first_param().unwrap().into_int_value();
-    ///let value2 = function.get_nth_param(1).unwrap().into_int_value();
-    ///let entry_block = context.append_basic_block(function, "entry");
+    /// let function = module.add_function("int_subtraction", fn_type, None);
+    /// let value1 = function.get_first_param().unwrap().into_int_value();
+    /// let value2 = function.get_nth_param(1).unwrap().into_int_value();
+    /// let entry_block = context.append_basic_block(function, "entry");
     ///
-    ///builder.position_at_end(entry_block);
+    /// builder.position_at_end(entry_block);
     ///
-    ///let sub = builder.build_int_sub(value1, value2, "int_subtract").unwrap();
+    /// let sub = builder.build_int_sub(value1, value2, "int_subtract").unwrap();
     ///
-    ///builder.build_return(Some(&sub)).unwrap();
-    ///```
+    /// builder.build_return(Some(&sub)).unwrap();
+    /// ```
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_sub<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
         if self.positioned.get() != PositionState::Set {
@@ -2473,36 +2473,36 @@ impl<'ctx> Builder<'ctx> {
 
         unsafe { Ok(T::new(value)) }
     }
-    ///Creates float subtraction given `lhs` and `rhs` as FloatValue. It returns either an `FloatValue` or `BuilderError`
-    ///```rust,no_run
-    ///fn float_subtraction(lhs: f16, rhs: f16) -> f16 {
-    ///    lhs-rhs
-    ///}
+    /// Creates float subtraction given `lhs` and `rhs` as FloatValue. It returns either an `FloatValue` or `BuilderError`
+    /// ```rust,no_run
+    /// fn float_subtraction(lhs: f16, rhs: f16) -> f16 {
+    ///     lhs-rhs
+    /// }
     /// ```
     /// # Example in inkwell:
-    ///The rust code above demonstrates how the example below could have been written if it was rust:
-    ///```rust,no_run
-    ///use inkwell::context::Context;
+    /// The rust code above demonstrates how the example below could have been written if it was rust:
+    /// ```rust,no_run
+    /// use inkwell::context::Context;
     ///
     /// // Setup
-    ///let context = Context::create();
-    ///let module = context.create_module("my_module");
-    ///let builder = context.create_builder();
-    ///let f16_type = context.f16_type();
-    ///let fn_type = f16_type.fn_type(&[f16_type.into(), f16_type.into()], false);
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    /// let builder = context.create_builder();
+    /// let f16_type = context.f16_type();
+    /// let fn_type = f16_type.fn_type(&[f16_type.into(), f16_type.into()], false);
     ///
     /// // Function Definition
-    ///let function = module.add_function("float_subtraction", fn_type, None);
-    ///let value = function.get_first_param().unwrap().into_float_value();
-    ///let value2 = function.get_nth_param(1).unwrap().into_float_value();
-    ///let entry_block = context.append_basic_block(function, "entry");
+    /// let function = module.add_function("float_subtraction", fn_type, None);
+    /// let value = function.get_first_param().unwrap().into_float_value();
+    /// let value2 = function.get_nth_param(1).unwrap().into_float_value();
+    /// let entry_block = context.append_basic_block(function, "entry");
     ///
-    ///builder.position_at_end(entry_block);
+    /// builder.position_at_end(entry_block);
     ///
-    ///let sub = builder.build_float_sub(value1, value2, "float_subtract").unwrap();
+    /// let sub = builder.build_float_sub(value1, value2, "float_subtract").unwrap();
     ///
-    ///builder.build_return(Some(&sub)).unwrap();
-    ///```
+    /// builder.build_return(Some(&sub)).unwrap();
+    /// ```
     // SubType: <F>(&self, lhs: &FloatValue<F>, rhs: &FloatValue<F>, name: &str) -> FloatValue<F> {
     pub fn build_float_sub<T: FloatMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
         if self.positioned.get() != PositionState::Set {
@@ -2513,37 +2513,37 @@ impl<'ctx> Builder<'ctx> {
 
         unsafe { Ok(T::new(value)) }
     }
-    ///Creates int  multiplication given `lhs` and `rhs` as IntValue. It returns either an
-    ///`IntValue` or `BuilderError`
-    ///```rust,no_run
-    ///fn int_mul(lhs: i8, rhs: i8) -> i8 {
-    ///    lhs*rhs
-    ///}
+    /// Creates int  multiplication given `lhs` and `rhs` as IntValue. It returns either an
+    /// `IntValue` or `BuilderError`
+    /// ```rust,no_run
+    /// fn int_mul(lhs: i8, rhs: i8) -> i8 {
+    ///     lhs*rhs
+    /// }
     /// ```
     /// # Example in inkwell:
-    ///The rust code above demonstrates how the example below could have been written if it was rust:
-    ///```rust,no_run
-    ///use inkwell::context::Context;
+    /// The rust code above demonstrates how the example below could have been written if it was rust:
+    /// ```rust,no_run
+    /// use inkwell::context::Context;
     ///
     /// // Setup
-    ///let context = Context::create();
-    ///let module = context.create_module("my_module");
-    ///let builder = context.create_builder();
-    ///let i8_type = context.i8_type();
-    ///let fn_type = i8_type.fn_type(&[i8_type.into(), i8_type.into()], false);
+    /// let context = Context::create();
+    /// let module = context.create_module("my_module");
+    /// let builder = context.create_builder();
+    /// let i8_type = context.i8_type();
+    /// let fn_type = i8_type.fn_type(&[i8_type.into(), i8_type.into()], false);
     ///
     /// // Function Definition
-    ///let function = module.add_function("float_subtraction", fn_type, None);
-    ///let value = function.get_first_param().unwrap().into_int_value();
-    ///let value2 = function.get_nth_param(1).unwrap().into_int_value();
-    ///let entry_block = context.append_basic_block(function, "entry");
+    /// let function = module.add_function("float_subtraction", fn_type, None);
+    /// let value = function.get_first_param().unwrap().into_int_value();
+    /// let value2 = function.get_nth_param(1).unwrap().into_int_value();
+    /// let entry_block = context.append_basic_block(function, "entry");
     ///
-    ///builder.position_at_end(entry_block);
+    /// builder.position_at_end(entry_block);
     ///
-    ///let mul = builder.build_int_mul(value1, value2, "int_multiplication").unwrap();
+    /// let mul = builder.build_int_mul(value1, value2, "int_multiplication").unwrap();
     ///
-    ///builder.build_return(Some(&mul)).unwrap();
-    ///```
+    /// builder.build_return(Some(&mul)).unwrap();
+    /// ```
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_mul<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
         if self.positioned.get() != PositionState::Set {
