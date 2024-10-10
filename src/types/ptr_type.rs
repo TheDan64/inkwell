@@ -8,7 +8,7 @@ use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
 #[llvm_versions(..=14)]
 use crate::types::AnyTypeEnum;
-use crate::types::{ArrayType, FunctionType, Type, VectorType};
+use crate::types::{ArrayType, FunctionType, Type, VectorType, ScalableVectorType};
 use crate::values::{ArrayValue, IntValue, PointerValue};
 use crate::AddressSpace;
 
@@ -345,8 +345,8 @@ impl<'ctx> PointerType<'ctx> {
     /// assert_eq!(f32_ptr_vec_type.get_size(), 3);
     /// assert_eq!(f32_ptr_vec_type.get_element_type().into_pointer_type(), f32_ptr_type);
     /// ```
-    #[llvm_versions(11..)]
-    pub fn scalable_vec_type(self, size: u32) -> VectorType<'ctx> {
+    #[llvm_versions(12..)]
+    pub fn scalable_vec_type(self, size: u32) -> ScalableVectorType<'ctx> {
         self.ptr_type.scalable_vec_type(size)
     }
 

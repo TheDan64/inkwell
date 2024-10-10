@@ -7,7 +7,7 @@ use llvm_sys::prelude::LLVMTypeRef;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
-use crate::types::{ArrayType, FunctionType, PointerType, Type, VectorType};
+use crate::types::{ArrayType, FunctionType, PointerType, ScalableVectorType, Type, VectorType};
 use crate::values::{ArrayValue, GenericValue, IntValue};
 use crate::AddressSpace;
 
@@ -258,8 +258,8 @@ impl<'ctx> IntType<'ctx> {
     /// assert_eq!(i8_vector_type.get_size(), 3);
     /// assert_eq!(i8_vector_type.get_element_type().into_int_type(), i8_type);
     /// ```
-    #[llvm_versions(11..)]
-    pub fn scalable_vec_type(self, size: u32) -> VectorType<'ctx> {
+    #[llvm_versions(12..)]
+    pub fn scalable_vec_type(self, size: u32) -> ScalableVectorType<'ctx> {
         self.int_type.scalable_vec_type(size)
     }
 

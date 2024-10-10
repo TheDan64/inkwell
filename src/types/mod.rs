@@ -20,6 +20,8 @@ mod traits;
 #[deny(missing_docs)]
 mod vec_type;
 #[deny(missing_docs)]
+mod scalable_vec_type;
+#[deny(missing_docs)]
 mod void_type;
 
 pub use crate::types::array_type::ArrayType;
@@ -33,9 +35,10 @@ pub use crate::types::struct_type::FieldTypesIter;
 pub use crate::types::struct_type::StructType;
 pub use crate::types::traits::{AnyType, AsTypeRef, BasicType, FloatMathType, IntMathType, PointerMathType};
 pub use crate::types::vec_type::VectorType;
+pub use crate::types::scalable_vec_type::ScalableVectorType;
 pub use crate::types::void_type::VoidType;
 
-#[llvm_versions(11..)]
+#[llvm_versions(12..)]
 use llvm_sys::core::LLVMScalableVectorType;
 
 #[llvm_versions(12..)]
@@ -98,12 +101,12 @@ impl<'ctx> Type<'ctx> {
         unsafe { VectorType::new(LLVMVectorType(self.ty, size)) }
     }
 
-    #[llvm_versions(11..)]
-    fn scalable_vec_type(self, size: u32) -> VectorType<'ctx> {
+    #[llvm_versions(12..)]
+    fn scalable_vec_type(self, size: u32) -> ScalableVectorType<'ctx> {
         assert!(size != 0, "Vectors of size zero are not allowed.");
         // -- https://llvm.org/docs/LangRef.html#vector-type
 
-        unsafe { VectorType::new(LLVMScalableVectorType(self.ty, size)) }
+        unsafe { ScalableVectorType::new(LLVMScalableVectorType(self.ty, size)) }
     }
 
     #[cfg(not(feature = "experimental"))]
