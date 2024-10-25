@@ -1,0 +1,548 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A `Context` is a container for all LLVM entities including `Module`s."><title>Context in inkwell::context - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-4ee5002b.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="inkwell" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (a93c1718c 2024-10-24)" data-channel="nightly" data-search-js="search-c5a66128.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc struct"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../inkwell/index.html">inkwell</a><span class="version">0.5.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Context</a></h2><h3><a href="#implementations">Methods</a></h3><ul class="block method"><li><a href="#method.append_basic_block" title="append_basic_block">append_basic_block</a></li><li><a href="#method.bool_type" title="bool_type">bool_type</a></li><li><a href="#method.const_string" title="const_string">const_string</a></li><li><a href="#method.const_struct" title="const_struct">const_struct</a></li><li><a href="#method.create" title="create">create</a></li><li><a href="#method.create_builder" title="create_builder">create_builder</a></li><li><a href="#method.create_enum_attribute" title="create_enum_attribute">create_enum_attribute</a></li><li><a href="#method.create_inline_asm" title="create_inline_asm">create_inline_asm</a></li><li><a href="#method.create_module" title="create_module">create_module</a></li><li><a href="#method.create_module_from_ir" title="create_module_from_ir">create_module_from_ir</a></li><li><a href="#method.create_string_attribute" title="create_string_attribute">create_string_attribute</a></li><li><a href="#method.create_type_attribute" title="create_type_attribute">create_type_attribute</a></li><li><a href="#method.custom_width_int_type" title="custom_width_int_type">custom_width_int_type</a></li><li><a href="#method.f128_type" title="f128_type">f128_type</a></li><li><a href="#method.f16_type" title="f16_type">f16_type</a></li><li><a href="#method.f32_type" title="f32_type">f32_type</a></li><li><a href="#method.f64_type" title="f64_type">f64_type</a></li><li><a href="#method.get_global" title="get_global">get_global</a></li><li><a href="#method.get_kind_id" title="get_kind_id">get_kind_id</a></li><li><a href="#method.get_struct_type" title="get_struct_type">get_struct_type</a></li><li><a href="#method.i128_type" title="i128_type">i128_type</a></li><li><a href="#method.i16_type" title="i16_type">i16_type</a></li><li><a href="#method.i32_type" title="i32_type">i32_type</a></li><li><a href="#method.i64_type" title="i64_type">i64_type</a></li><li><a href="#method.i8_type" title="i8_type">i8_type</a></li><li><a href="#method.insert_basic_block_after" title="insert_basic_block_after">insert_basic_block_after</a></li><li><a href="#method.metadata_node" title="metadata_node">metadata_node</a></li><li><a href="#method.metadata_string" title="metadata_string">metadata_string</a></li><li><a href="#method.metadata_type" title="metadata_type">metadata_type</a></li><li><a href="#method.new" title="new">new</a></li><li><a href="#method.opaque_struct_type" title="opaque_struct_type">opaque_struct_type</a></li><li><a href="#method.ppc_f128_type" title="ppc_f128_type">ppc_f128_type</a></li><li><a href="#method.prepend_basic_block" title="prepend_basic_block">prepend_basic_block</a></li><li><a href="#method.ptr_sized_int_type" title="ptr_sized_int_type">ptr_sized_int_type</a></li><li><a href="#method.ptr_type" title="ptr_type">ptr_type</a></li><li><a href="#method.raw" title="raw">raw</a></li><li><a href="#method.struct_type" title="struct_type">struct_type</a></li><li><a href="#method.void_type" title="void_type">void_type</a></li><li><a href="#method.x86_f80_type" title="x86_f80_type">x86_f80_type</a></li></ul><h3><a href="#trait-implementations">Trait Implementations</a></h3><ul class="block trait-implementation"><li><a href="#impl-AsContextRef%3C'ctx%3E-for-%26Context" title="AsContextRef&#60;&#39;ctx&#62;">AsContextRef&#60;&#39;ctx&#62;</a></li><li><a href="#impl-Debug-for-Context" title="Debug">Debug</a></li><li><a href="#impl-Drop-for-Context" title="Drop">Drop</a></li><li><a href="#impl-Eq-for-Context" title="Eq">Eq</a></li><li><a href="#impl-PartialEq-for-Context" title="PartialEq">PartialEq</a></li><li><a href="#impl-PartialEq%3CContext%3E-for-ContextRef%3C'_%3E" title="PartialEq&#60;Context&#62;">PartialEq&#60;Context&#62;</a></li><li><a href="#impl-PartialEq%3CContextRef%3C'_%3E%3E-for-Context" title="PartialEq&#60;ContextRef&#60;&#39;_&#62;&#62;">PartialEq&#60;ContextRef&#60;&#39;_&#62;&#62;</a></li><li><a href="#impl-Send-for-Context" title="Send">Send</a></li><li><a href="#impl-StructuralPartialEq-for-Context" title="StructuralPartialEq">StructuralPartialEq</a></li></ul><h3><a href="#synthetic-implementations">Auto Trait Implementations</a></h3><ul class="block synthetic-implementation"><li><a href="#impl-Sync-for-Context" title="!Sync">!Sync</a></li><li><a href="#impl-Freeze-for-Context" title="Freeze">Freeze</a></li><li><a href="#impl-RefUnwindSafe-for-Context" title="RefUnwindSafe">RefUnwindSafe</a></li><li><a href="#impl-Unpin-for-Context" title="Unpin">Unpin</a></li><li><a href="#impl-UnwindSafe-for-Context" title="UnwindSafe">UnwindSafe</a></li></ul><h3><a href="#blanket-implementations">Blanket Implementations</a></h3><ul class="block blanket-implementation"><li><a href="#impl-Any-for-T" title="Any">Any</a></li><li><a href="#impl-Borrow%3CT%3E-for-T" title="Borrow&#60;T&#62;">Borrow&#60;T&#62;</a></li><li><a href="#impl-BorrowMut%3CT%3E-for-T" title="BorrowMut&#60;T&#62;">BorrowMut&#60;T&#62;</a></li><li><a href="#impl-From%3CT%3E-for-T" title="From&#60;T&#62;">From&#60;T&#62;</a></li><li><a href="#impl-Into%3CU%3E-for-T" title="Into&#60;U&#62;">Into&#60;U&#62;</a></li><li><a href="#impl-IntoEither-for-T" title="IntoEither">IntoEither</a></li><li><a href="#impl-TryFrom%3CU%3E-for-T" title="TryFrom&#60;U&#62;">TryFrom&#60;U&#62;</a></li><li><a href="#impl-TryInto%3CU%3E-for-T" title="TryInto&#60;U&#62;">TryInto&#60;U&#62;</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="index.html">In inkwell::<wbr>context</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><span class="rustdoc-breadcrumbs"><a href="../index.html">inkwell</a>::<wbr><a href="index.html">context</a></span><h1>Struct <span class="struct">Context</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/inkwell/context.rs.html#413-415">Source</a> </span></div><pre class="rust item-decl"><code>pub struct Context { <span class="comment">/* private fields */</span> }</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A <code>Context</code> is a container for all LLVM entities including <code>Module</code>s.</p>
+<p>A <code>Context</code> is not thread safe and cannot be shared across threads. Multiple <code>Context</code>s
+can, however, execute on different threads simultaneously according to the LLVM docs.</p>
+</div></details><h2 id="implementations" class="section-header">Implementations<a href="#implementations" class="anchor">§</a></h2><div id="implementations-list"><details class="toggle implementors-toggle" open><summary><section id="impl-Context" class="impl"><a class="src rightside" href="../../src/inkwell/context.rs.html#419-1321">Source</a><a href="#impl-Context" class="anchor">§</a><h3 class="code-header">impl <a class="struct" href="struct.Context.html" title="struct inkwell::context::Context">Context</a></h3></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.raw" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#424-426">Source</a><h4 class="code-header">pub fn <a href="#method.raw" class="fn">raw</a>(&amp;self) -&gt; <a class="type" href="../../llvm_sys/prelude/type.LLVMContextRef.html" title="type llvm_sys::prelude::LLVMContextRef">LLVMContextRef</a></h4></section></summary><div class="docblock"><p>Get raw <a href="../../llvm_sys/prelude/type.LLVMContextRef.html" title="type llvm_sys::prelude::LLVMContextRef"><code>LLVMContextRef</code></a>.</p>
+<p>This function is exposed only for interoperability with other LLVM IR libraries.
+It’s not intended to be used by most users.</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.new" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#435-439">Source</a><h4 class="code-header">pub unsafe fn <a href="#method.new" class="fn">new</a>(context: <a class="type" href="../../llvm_sys/prelude/type.LLVMContextRef.html" title="type llvm_sys::prelude::LLVMContextRef">LLVMContextRef</a>) -&gt; Self</h4></section></summary><div class="docblock"><p>Creates a new <code>Context</code> from <a href="../../llvm_sys/prelude/type.LLVMContextRef.html" title="type llvm_sys::prelude::LLVMContextRef"><code>LLVMContextRef</code></a>.</p>
+<h5 id="safety"><a class="doc-anchor" href="#safety">§</a>Safety</h5>
+<p>This function is exposed only for interoperability with other LLVM IR libraries.
+It’s not intended to be used by most users, hence marked as unsafe.
+Use <a href="struct.Context.html#method.create" title="associated function inkwell::context::Context::create"><code>Context::create</code></a> instead.</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.create" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#450-452">Source</a><h4 class="code-header">pub fn <a href="#method.create" class="fn">create</a>() -&gt; Self</h4></section></summary><div class="docblock"><p>Creates a new <code>Context</code>.</p>
+<h5 id="example"><a class="doc-anchor" href="#example">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.get_global" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#471-476">Source</a><h4 class="code-header">pub unsafe fn <a href="#method.get_global" class="fn">get_global</a>&lt;F, R&gt;(func: F) -&gt; R<div class="where">where
+    F: <a class="trait" href="https://doc.rust-lang.org/nightly/core/ops/function/trait.FnOnce.html" title="trait core::ops::function::FnOnce">FnOnce</a>(&amp;<a class="struct" href="struct.Context.html" title="struct inkwell::context::Context">Context</a>) -&gt; R,</div></h4></section></summary><div class="docblock"><p>Gets a <code>Mutex&lt;Context&gt;</code> which points to the global context singleton.
+This function is marked unsafe because another program within the same
+process could easily gain access to the same LLVM context pointer and bypass
+our <code>Mutex</code>. Therefore, using <code>Context::create()</code> is the preferred context
+creation function when you do not specifically need the global context.</p>
+<h5 id="example-1"><a class="doc-anchor" href="#example-1">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = <span class="kw">unsafe </span>{
+    Context::get_global(|_global_context| {
+        <span class="comment">// do stuff
+    </span>})
+};</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.create_builder" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#489-491">Source</a><h4 class="code-header">pub fn <a href="#method.create_builder" class="fn">create_builder</a>(&amp;self) -&gt; <a class="struct" href="../builder/struct.Builder.html" title="struct inkwell::builder::Builder">Builder</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Creates a new <code>Builder</code> for a <code>Context</code>.</p>
+<h5 id="example-2"><a class="doc-anchor" href="#example-2">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>builder = context.create_builder();</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.create_module" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#504-506">Source</a><h4 class="code-header">pub fn <a href="#method.create_module" class="fn">create_module</a>(&amp;self, name: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>) -&gt; <a class="struct" href="../module/struct.Module.html" title="struct inkwell::module::Module">Module</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Creates a new <code>Module</code> for a <code>Context</code>.</p>
+<h5 id="example-3"><a class="doc-anchor" href="#example-3">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>module = context.create_module(<span class="string">"my_module"</span>);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.create_module_from_ir" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#535-537">Source</a><h4 class="code-header">pub fn <a href="#method.create_module_from_ir" class="fn">create_module_from_ir</a>(
+    &amp;self,
+    memory_buffer: <a class="struct" href="../memory_buffer/struct.MemoryBuffer.html" title="struct inkwell::memory_buffer::MemoryBuffer">MemoryBuffer</a>,
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="../module/struct.Module.html" title="struct inkwell::module::Module">Module</a>&lt;'_&gt;, <a class="struct" href="../support/struct.LLVMString.html" title="struct inkwell::support::LLVMString">LLVMString</a>&gt;</h4></section></summary><div class="docblock"><p>Creates a new <code>Module</code> for the current <code>Context</code> from a <code>MemoryBuffer</code>.</p>
+<h5 id="example-4"><a class="doc-anchor" href="#example-4">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>module = context.create_module(<span class="string">"my_module"</span>);
+<span class="kw">let </span>builder = context.create_builder();
+<span class="kw">let </span>void_type = context.void_type();
+<span class="kw">let </span>fn_type = void_type.fn_type(<span class="kw-2">&amp;</span>[], <span class="bool-val">false</span>);
+<span class="kw">let </span>fn_val = module.add_function(<span class="string">"my_fn"</span>, fn_type, <span class="prelude-val">None</span>);
+<span class="kw">let </span>basic_block = context.append_basic_block(fn_val, <span class="string">"entry"</span>);
+
+builder.position_at_end(basic_block);
+builder.build_return(<span class="prelude-val">None</span>).unwrap();
+
+<span class="kw">let </span>memory_buffer = module.write_bitcode_to_memory();
+
+<span class="kw">let </span>module2 = context.create_module_from_ir(memory_buffer).unwrap();</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.create_inline_asm" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#603-647">Source</a><h4 class="code-header">pub fn <a href="#method.create_inline_asm" class="fn">create_inline_asm</a>&lt;'ctx&gt;(
+    &amp;'ctx self,
+    ty: <a class="struct" href="../types/struct.FunctionType.html" title="struct inkwell::types::FunctionType">FunctionType</a>&lt;'ctx&gt;,
+    assembly: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>,
+    constraints: <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>,
+    sideeffects: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>,
+    alignstack: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>,
+    dialect: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="enum" href="../enum.InlineAsmDialect.html" title="enum inkwell::InlineAsmDialect">InlineAsmDialect</a>&gt;,
+    can_throw: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>,
+) -&gt; <a class="struct" href="../values/struct.PointerValue.html" title="struct inkwell::values::PointerValue">PointerValue</a>&lt;'ctx&gt;</h4></section></summary><div class="docblock"><p>Creates a inline asm function pointer.</p>
+<h5 id="example-5"><a class="doc-anchor" href="#example-5">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::convert::TryFrom;
+<span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>module = context.create_module(<span class="string">"my_module"</span>);
+<span class="kw">let </span>builder = context.create_builder();
+<span class="kw">let </span>void_type = context.void_type();
+<span class="kw">let </span>fn_type = void_type.fn_type(<span class="kw-2">&amp;</span>[], <span class="bool-val">false</span>);
+<span class="kw">let </span>fn_val = module.add_function(<span class="string">"my_fn"</span>, fn_type, <span class="prelude-val">None</span>);
+<span class="kw">let </span>basic_block = context.append_basic_block(fn_val, <span class="string">"entry"</span>);
+
+builder.position_at_end(basic_block);
+<span class="kw">let </span>asm_fn = context.i64_type().fn_type(<span class="kw-2">&amp;</span>[context.i64_type().into(), context.i64_type().into()], <span class="bool-val">false</span>);
+<span class="kw">let </span>asm = context.create_inline_asm(
+    asm_fn,
+    <span class="string">"syscall"</span>.to_string(),
+    <span class="string">"=r,{rax},{rdi}"</span>.to_string(),
+    <span class="bool-val">true</span>,
+    <span class="bool-val">false</span>,
+    <span class="attr">#[cfg(not(any(feature = <span class="string">"llvm4-0"</span>, feature = <span class="string">"llvm5-0"</span>, feature = <span class="string">"llvm6-0"</span>)))] </span><span class="prelude-val">None</span>,
+    <span class="attr">#[cfg(not(any(
+        feature = <span class="string">"llvm4-0"</span>,
+        feature = <span class="string">"llvm5-0"</span>,
+        feature = <span class="string">"llvm6-0"</span>,
+        feature = <span class="string">"llvm7-0"</span>,
+        feature = <span class="string">"llvm8-0"</span>,
+        feature = <span class="string">"llvm9-0"</span>,
+        feature = <span class="string">"llvm10-0"</span>,
+        feature = <span class="string">"llvm11-0"</span>,
+        feature = <span class="string">"llvm12-0"
+    </span>)))]
+    </span><span class="bool-val">false</span>,
+);
+<span class="kw">let </span>params = <span class="kw-2">&amp;</span>[context.i64_type().const_int(<span class="number">60</span>, <span class="bool-val">false</span>).into(), context.i64_type().const_int(<span class="number">1</span>, <span class="bool-val">false</span>).into()];
+
+<span class="attr">#[cfg(any(
+    feature = <span class="string">"llvm4-0"</span>,
+    feature = <span class="string">"llvm5-0"</span>,
+    feature = <span class="string">"llvm6-0"</span>,
+    feature = <span class="string">"llvm7-0"</span>,
+    feature = <span class="string">"llvm8-0"</span>,
+    feature = <span class="string">"llvm9-0"</span>,
+    feature = <span class="string">"llvm10-0"</span>,
+    feature = <span class="string">"llvm11-0"</span>,
+    feature = <span class="string">"llvm12-0"</span>,
+    feature = <span class="string">"llvm13-0"</span>,
+    feature = <span class="string">"llvm14-0"
+</span>))]
+</span>{
+    <span class="kw">use </span>inkwell::values::CallableValue;
+    <span class="kw">let </span>callable_value = CallableValue::try_from(asm).unwrap();
+    builder.build_call(callable_value, params, <span class="string">"exit"</span>).unwrap();
+}
+
+<span class="attr">#[cfg(any(feature = <span class="string">"llvm15-0"</span>, feature = <span class="string">"llvm16-0"</span>, feature = <span class="string">"llvm17-0"</span>, feature = <span class="string">"llvm18-0"</span>))]
+</span>builder.build_indirect_call(asm_fn, asm, params, <span class="string">"exit"</span>).unwrap();
+
+builder.build_return(<span class="prelude-val">None</span>).unwrap();</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.void_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#662-664">Source</a><h4 class="code-header">pub fn <a href="#method.void_type" class="fn">void_type</a>(&amp;self) -&gt; <a class="struct" href="../types/struct.VoidType.html" title="struct inkwell::types::VoidType">VoidType</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Gets the <code>VoidType</code>. It will be assigned the current context.</p>
+<h5 id="example-6"><a class="doc-anchor" href="#example-6">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>void_type = context.void_type();
+
+<span class="macro">assert_eq!</span>(void_type.get_context(), context);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.bool_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#680-682">Source</a><h4 class="code-header">pub fn <a href="#method.bool_type" class="fn">bool_type</a>(&amp;self) -&gt; <a class="struct" href="../types/struct.IntType.html" title="struct inkwell::types::IntType">IntType</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Gets the <code>IntType</code> representing 1 bit width. It will be assigned the current context.</p>
+<h5 id="example-7"><a class="doc-anchor" href="#example-7">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>bool_type = context.bool_type();
+
+<span class="macro">assert_eq!</span>(bool_type.get_bit_width(), <span class="number">1</span>);
+<span class="macro">assert_eq!</span>(bool_type.get_context(), context);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.i8_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#698-700">Source</a><h4 class="code-header">pub fn <a href="#method.i8_type" class="fn">i8_type</a>(&amp;self) -&gt; <a class="struct" href="../types/struct.IntType.html" title="struct inkwell::types::IntType">IntType</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Gets the <code>IntType</code> representing 8 bit width. It will be assigned the current context.</p>
+<h5 id="example-8"><a class="doc-anchor" href="#example-8">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>i8_type = context.i8_type();
+
+<span class="macro">assert_eq!</span>(i8_type.get_bit_width(), <span class="number">8</span>);
+<span class="macro">assert_eq!</span>(i8_type.get_context(), context);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.i16_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#716-718">Source</a><h4 class="code-header">pub fn <a href="#method.i16_type" class="fn">i16_type</a>(&amp;self) -&gt; <a class="struct" href="../types/struct.IntType.html" title="struct inkwell::types::IntType">IntType</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Gets the <code>IntType</code> representing 16 bit width. It will be assigned the current context.</p>
+<h5 id="example-9"><a class="doc-anchor" href="#example-9">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>i16_type = context.i16_type();
+
+<span class="macro">assert_eq!</span>(i16_type.get_bit_width(), <span class="number">16</span>);
+<span class="macro">assert_eq!</span>(i16_type.get_context(), context);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.i32_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#734-736">Source</a><h4 class="code-header">pub fn <a href="#method.i32_type" class="fn">i32_type</a>(&amp;self) -&gt; <a class="struct" href="../types/struct.IntType.html" title="struct inkwell::types::IntType">IntType</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Gets the <code>IntType</code> representing 32 bit width. It will be assigned the current context.</p>
+<h5 id="example-10"><a class="doc-anchor" href="#example-10">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>i32_type = context.i32_type();
+
+<span class="macro">assert_eq!</span>(i32_type.get_bit_width(), <span class="number">32</span>);
+<span class="macro">assert_eq!</span>(i32_type.get_context(), context);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.i64_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#752-754">Source</a><h4 class="code-header">pub fn <a href="#method.i64_type" class="fn">i64_type</a>(&amp;self) -&gt; <a class="struct" href="../types/struct.IntType.html" title="struct inkwell::types::IntType">IntType</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Gets the <code>IntType</code> representing 64 bit width. It will be assigned the current context.</p>
+<h5 id="example-11"><a class="doc-anchor" href="#example-11">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>i64_type = context.i64_type();
+
+<span class="macro">assert_eq!</span>(i64_type.get_bit_width(), <span class="number">64</span>);
+<span class="macro">assert_eq!</span>(i64_type.get_context(), context);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.i128_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#770-772">Source</a><h4 class="code-header">pub fn <a href="#method.i128_type" class="fn">i128_type</a>(&amp;self) -&gt; <a class="struct" href="../types/struct.IntType.html" title="struct inkwell::types::IntType">IntType</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Gets the <code>IntType</code> representing 128 bit width. It will be assigned the current context.</p>
+<h5 id="example-12"><a class="doc-anchor" href="#example-12">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>i128_type = context.i128_type();
+
+<span class="macro">assert_eq!</span>(i128_type.get_bit_width(), <span class="number">128</span>);
+<span class="macro">assert_eq!</span>(i128_type.get_context(), context);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.custom_width_int_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#788-790">Source</a><h4 class="code-header">pub fn <a href="#method.custom_width_int_type" class="fn">custom_width_int_type</a>(&amp;self, bits: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>) -&gt; <a class="struct" href="../types/struct.IntType.html" title="struct inkwell::types::IntType">IntType</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Gets the <code>IntType</code> representing a custom bit width. It will be assigned the current context.</p>
+<h5 id="example-13"><a class="doc-anchor" href="#example-13">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>i42_type = context.custom_width_int_type(<span class="number">42</span>);
+
+<span class="macro">assert_eq!</span>(i42_type.get_bit_width(), <span class="number">42</span>);
+<span class="macro">assert_eq!</span>(i42_type.get_context(), context);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.metadata_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#807-809">Source</a><h4 class="code-header">pub fn <a href="#method.metadata_type" class="fn">metadata_type</a>(&amp;self) -&gt; <a class="struct" href="../types/struct.MetadataType.html" title="struct inkwell::types::MetadataType">MetadataType</a>&lt;'_&gt;</h4></section><span class="item-info"><div class="stab portability">Available on <strong>crate features <code>llvm6-0</code> or <code>llvm7-0</code> or <code>llvm8-0</code> or <code>llvm9-0</code> or <code>llvm10-0</code> or <code>llvm11-0</code> or <code>llvm12-0</code> or <code>llvm13-0</code> or <code>llvm14-0</code> or <code>llvm15-0</code> or <code>llvm16-0</code> or <code>llvm17-0</code> or <code>llvm18-0</code></strong> only.</div></span></summary><div class="docblock"><p>Gets the <code>MetadataType</code> representing 128 bit width. It will be assigned the current context.</p>
+<h5 id="example-14"><a class="doc-anchor" href="#example-14">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+<span class="kw">use </span>inkwell::values::IntValue;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>md_type = context.metadata_type();
+
+<span class="macro">assert_eq!</span>(md_type.get_context(), context);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.ptr_sized_int_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#829-831">Source</a><h4 class="code-header">pub fn <a href="#method.ptr_sized_int_type" class="fn">ptr_sized_int_type</a>(
+    &amp;self,
+    target_data: &amp;<a class="struct" href="../targets/struct.TargetData.html" title="struct inkwell::targets::TargetData">TargetData</a>,
+    address_space: <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../struct.AddressSpace.html" title="struct inkwell::AddressSpace">AddressSpace</a>&gt;,
+) -&gt; <a class="struct" href="../types/struct.IntType.html" title="struct inkwell::types::IntType">IntType</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Gets the <code>IntType</code> representing a bit width of a pointer. It will be assigned the referenced context.</p>
+<h5 id="example-15"><a class="doc-anchor" href="#example-15">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::OptimizationLevel;
+<span class="kw">use </span>inkwell::context::Context;
+<span class="kw">use </span>inkwell::targets::{InitializationConfig, Target};
+
+Target::initialize_native(<span class="kw-2">&amp;</span>InitializationConfig::default()).expect(<span class="string">"Failed to initialize native target"</span>);
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>module = context.create_module(<span class="string">"sum"</span>);
+<span class="kw">let </span>execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+<span class="kw">let </span>target_data = execution_engine.get_target_data();
+<span class="kw">let </span>int_type = context.ptr_sized_int_type(<span class="kw-2">&amp;</span>target_data, <span class="prelude-val">None</span>);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.f16_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#847-849">Source</a><h4 class="code-header">pub fn <a href="#method.f16_type" class="fn">f16_type</a>(&amp;self) -&gt; <a class="struct" href="../types/struct.FloatType.html" title="struct inkwell::types::FloatType">FloatType</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Gets the <code>FloatType</code> representing a 16 bit width. It will be assigned the current context.</p>
+<h5 id="example-16"><a class="doc-anchor" href="#example-16">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+
+<span class="kw">let </span>f16_type = context.f16_type();
+
+<span class="macro">assert_eq!</span>(f16_type.get_context(), context);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.f32_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#865-867">Source</a><h4 class="code-header">pub fn <a href="#method.f32_type" class="fn">f32_type</a>(&amp;self) -&gt; <a class="struct" href="../types/struct.FloatType.html" title="struct inkwell::types::FloatType">FloatType</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Gets the <code>FloatType</code> representing a 32 bit width. It will be assigned the current context.</p>
+<h5 id="example-17"><a class="doc-anchor" href="#example-17">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+
+<span class="kw">let </span>f32_type = context.f32_type();
+
+<span class="macro">assert_eq!</span>(f32_type.get_context(), context);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.f64_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#883-885">Source</a><h4 class="code-header">pub fn <a href="#method.f64_type" class="fn">f64_type</a>(&amp;self) -&gt; <a class="struct" href="../types/struct.FloatType.html" title="struct inkwell::types::FloatType">FloatType</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Gets the <code>FloatType</code> representing a 64 bit width. It will be assigned the current context.</p>
+<h5 id="example-18"><a class="doc-anchor" href="#example-18">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+
+<span class="kw">let </span>f64_type = context.f64_type();
+
+<span class="macro">assert_eq!</span>(f64_type.get_context(), context);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.x86_f80_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#901-903">Source</a><h4 class="code-header">pub fn <a href="#method.x86_f80_type" class="fn">x86_f80_type</a>(&amp;self) -&gt; <a class="struct" href="../types/struct.FloatType.html" title="struct inkwell::types::FloatType">FloatType</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Gets the <code>FloatType</code> representing a 80 bit width. It will be assigned the current context.</p>
+<h5 id="example-19"><a class="doc-anchor" href="#example-19">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+
+<span class="kw">let </span>x86_f80_type = context.x86_f80_type();
+
+<span class="macro">assert_eq!</span>(x86_f80_type.get_context(), context);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.f128_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#920-922">Source</a><h4 class="code-header">pub fn <a href="#method.f128_type" class="fn">f128_type</a>(&amp;self) -&gt; <a class="struct" href="../types/struct.FloatType.html" title="struct inkwell::types::FloatType">FloatType</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Gets the <code>FloatType</code> representing a 128 bit width. It will be assigned the current context.</p>
+<h5 id="example-20"><a class="doc-anchor" href="#example-20">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+
+<span class="kw">let </span>f128_type = context.f128_type();
+
+<span class="macro">assert_eq!</span>(f128_type.get_context(), context);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.ppc_f128_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#941-943">Source</a><h4 class="code-header">pub fn <a href="#method.ppc_f128_type" class="fn">ppc_f128_type</a>(&amp;self) -&gt; <a class="struct" href="../types/struct.FloatType.html" title="struct inkwell::types::FloatType">FloatType</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Gets the <code>FloatType</code> representing a 128 bit width. It will be assigned the current context.</p>
+<p>PPC is two 64 bits side by side rather than one single 128 bit float.</p>
+<h5 id="example-21"><a class="doc-anchor" href="#example-21">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+
+<span class="kw">let </span>f128_type = context.ppc_f128_type();
+
+<span class="macro">assert_eq!</span>(f128_type.get_context(), context);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.ptr_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#961-963">Source</a><h4 class="code-header">pub fn <a href="#method.ptr_type" class="fn">ptr_type</a>(&amp;self, address_space: <a class="struct" href="../struct.AddressSpace.html" title="struct inkwell::AddressSpace">AddressSpace</a>) -&gt; <a class="struct" href="../types/struct.PointerType.html" title="struct inkwell::types::PointerType">PointerType</a>&lt;'_&gt;</h4></section><span class="item-info"><div class="stab portability">Available on <strong>crate features <code>llvm15-0</code> or <code>llvm16-0</code> or <code>llvm17-0</code> or <code>llvm18-0</code></strong> only.</div></span></summary><div class="docblock"><p>Gets the <code>PointerType</code>. It will be assigned the current context.</p>
+<h5 id="example-22"><a class="doc-anchor" href="#example-22">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+<span class="kw">use </span>inkwell::AddressSpace;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>ptr_type = context.ptr_type(AddressSpace::default());
+
+<span class="macro">assert_eq!</span>(ptr_type.get_address_space(), AddressSpace::default());
+<span class="macro">assert_eq!</span>(ptr_type.get_context(), context);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.struct_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#981-983">Source</a><h4 class="code-header">pub fn <a href="#method.struct_type" class="fn">struct_type</a>(
+    &amp;self,
+    field_types: &amp;[<a class="enum" href="../types/enum.BasicTypeEnum.html" title="enum inkwell::types::BasicTypeEnum">BasicTypeEnum</a>&lt;'_&gt;],
+    packed: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>,
+) -&gt; <a class="struct" href="../types/struct.StructType.html" title="struct inkwell::types::StructType">StructType</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Creates a <code>StructType</code> definition from heterogeneous types in the current <code>Context</code>.</p>
+<h5 id="example-23"><a class="doc-anchor" href="#example-23">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>f32_type = context.f32_type();
+<span class="kw">let </span>i16_type = context.i16_type();
+<span class="kw">let </span>struct_type = context.struct_type(<span class="kw-2">&amp;</span>[i16_type.into(), f32_type.into()], <span class="bool-val">false</span>);
+
+<span class="macro">assert_eq!</span>(struct_type.get_field_types(), <span class="kw-2">&amp;</span>[i16_type.into(), f32_type.into()]);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.opaque_struct_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#1000-1002">Source</a><h4 class="code-header">pub fn <a href="#method.opaque_struct_type" class="fn">opaque_struct_type</a>(&amp;self, name: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>) -&gt; <a class="struct" href="../types/struct.StructType.html" title="struct inkwell::types::StructType">StructType</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Creates an opaque <code>StructType</code> with no type definition yet defined.</p>
+<h5 id="example-24"><a class="doc-anchor" href="#example-24">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>f32_type = context.f32_type();
+<span class="kw">let </span>i16_type = context.i16_type();
+<span class="kw">let </span>struct_type = context.opaque_struct_type(<span class="string">"my_struct"</span>);
+
+<span class="macro">assert_eq!</span>(struct_type.get_field_types(), <span class="kw-2">&amp;</span>[]);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.get_struct_type" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#1021-1023">Source</a><h4 class="code-header">pub fn <a href="#method.get_struct_type" class="fn">get_struct_type</a>&lt;'ctx&gt;(&amp;self, name: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;<a class="struct" href="../types/struct.StructType.html" title="struct inkwell::types::StructType">StructType</a>&lt;'ctx&gt;&gt;</h4></section><span class="item-info"><div class="stab portability">Available on <strong>crate features <code>llvm12-0</code> or <code>llvm13-0</code> or <code>llvm14-0</code> or <code>llvm15-0</code> or <code>llvm16-0</code> or <code>llvm17-0</code> or <code>llvm18-0</code></strong> only.</div></span></summary><div class="docblock"><p>Gets a named <a href="../types/struct.StructType.html" title="struct inkwell::types::StructType"><code>StructType</code></a> from this <code>Context</code>.</p>
+<h5 id="example-25"><a class="doc-anchor" href="#example-25">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+
+<span class="macro">assert!</span>(context.get_struct_type(<span class="string">"foo"</span>).is_none());
+
+<span class="kw">let </span>opaque = context.opaque_struct_type(<span class="string">"foo"</span>);
+
+<span class="macro">assert_eq!</span>(context.get_struct_type(<span class="string">"foo"</span>).unwrap(), opaque);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.const_struct" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#1042-1044">Source</a><h4 class="code-header">pub fn <a href="#method.const_struct" class="fn">const_struct</a>(
+    &amp;self,
+    values: &amp;[<a class="enum" href="../values/enum.BasicValueEnum.html" title="enum inkwell::values::BasicValueEnum">BasicValueEnum</a>&lt;'_&gt;],
+    packed: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>,
+) -&gt; <a class="struct" href="../values/struct.StructValue.html" title="struct inkwell::values::StructValue">StructValue</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Creates a constant <code>StructValue</code> from constant values.</p>
+<h5 id="example-26"><a class="doc-anchor" href="#example-26">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>f32_type = context.f32_type();
+<span class="kw">let </span>i16_type = context.i16_type();
+<span class="kw">let </span>f32_one = f32_type.const_float(<span class="number">1.</span>);
+<span class="kw">let </span>i16_two = i16_type.const_int(<span class="number">2</span>, <span class="bool-val">false</span>);
+<span class="kw">let </span>const_struct = context.const_struct(<span class="kw-2">&amp;</span>[i16_two.into(), f32_one.into()], <span class="bool-val">false</span>);
+
+<span class="macro">assert_eq!</span>(const_struct.get_type().get_field_types(), <span class="kw-2">&amp;</span>[i16_type.into(), f32_type.into()]);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.append_basic_block" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#1069-1071">Source</a><h4 class="code-header">pub fn <a href="#method.append_basic_block" class="fn">append_basic_block</a>&lt;'ctx&gt;(
+    &amp;'ctx self,
+    function: <a class="struct" href="../values/struct.FunctionValue.html" title="struct inkwell::values::FunctionValue">FunctionValue</a>&lt;'ctx&gt;,
+    name: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>,
+) -&gt; <a class="struct" href="../basic_block/struct.BasicBlock.html" title="struct inkwell::basic_block::BasicBlock">BasicBlock</a>&lt;'ctx&gt;</h4></section></summary><div class="docblock"><p>Append a named <code>BasicBlock</code> at the end of the referenced <code>FunctionValue</code>.</p>
+<h5 id="example-27"><a class="doc-anchor" href="#example-27">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>module = context.create_module(<span class="string">"my_mod"</span>);
+<span class="kw">let </span>void_type = context.void_type();
+<span class="kw">let </span>fn_type = void_type.fn_type(<span class="kw-2">&amp;</span>[], <span class="bool-val">false</span>);
+<span class="kw">let </span>fn_value = module.add_function(<span class="string">"my_fn"</span>, fn_type, <span class="prelude-val">None</span>);
+<span class="kw">let </span>entry_basic_block = context.append_basic_block(fn_value, <span class="string">"entry"</span>);
+
+<span class="macro">assert_eq!</span>(fn_value.count_basic_blocks(), <span class="number">1</span>);
+
+<span class="kw">let </span>last_basic_block = context.append_basic_block(fn_value, <span class="string">"last"</span>);
+
+<span class="macro">assert_eq!</span>(fn_value.count_basic_blocks(), <span class="number">2</span>);
+<span class="macro">assert_eq!</span>(fn_value.get_first_basic_block().unwrap(), entry_basic_block);
+<span class="macro">assert_eq!</span>(fn_value.get_last_basic_block().unwrap(), last_basic_block);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.insert_basic_block_after" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#1099-1101">Source</a><h4 class="code-header">pub fn <a href="#method.insert_basic_block_after" class="fn">insert_basic_block_after</a>&lt;'ctx&gt;(
+    &amp;'ctx self,
+    basic_block: <a class="struct" href="../basic_block/struct.BasicBlock.html" title="struct inkwell::basic_block::BasicBlock">BasicBlock</a>&lt;'ctx&gt;,
+    name: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>,
+) -&gt; <a class="struct" href="../basic_block/struct.BasicBlock.html" title="struct inkwell::basic_block::BasicBlock">BasicBlock</a>&lt;'ctx&gt;</h4></section></summary><div class="docblock"><p>Append a named <code>BasicBlock</code> after the referenced <code>BasicBlock</code>.</p>
+<h5 id="example-28"><a class="doc-anchor" href="#example-28">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>module = context.create_module(<span class="string">"my_mod"</span>);
+<span class="kw">let </span>void_type = context.void_type();
+<span class="kw">let </span>fn_type = void_type.fn_type(<span class="kw-2">&amp;</span>[], <span class="bool-val">false</span>);
+<span class="kw">let </span>fn_value = module.add_function(<span class="string">"my_fn"</span>, fn_type, <span class="prelude-val">None</span>);
+<span class="kw">let </span>entry_basic_block = context.append_basic_block(fn_value, <span class="string">"entry"</span>);
+
+<span class="macro">assert_eq!</span>(fn_value.count_basic_blocks(), <span class="number">1</span>);
+
+<span class="kw">let </span>last_basic_block = context.insert_basic_block_after(entry_basic_block, <span class="string">"last"</span>);
+
+<span class="macro">assert_eq!</span>(fn_value.count_basic_blocks(), <span class="number">2</span>);
+<span class="macro">assert_eq!</span>(fn_value.get_first_basic_block().unwrap(), entry_basic_block);
+<span class="macro">assert_eq!</span>(fn_value.get_last_basic_block().unwrap(), last_basic_block);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.prepend_basic_block" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#1126-1128">Source</a><h4 class="code-header">pub fn <a href="#method.prepend_basic_block" class="fn">prepend_basic_block</a>&lt;'ctx&gt;(
+    &amp;'ctx self,
+    basic_block: <a class="struct" href="../basic_block/struct.BasicBlock.html" title="struct inkwell::basic_block::BasicBlock">BasicBlock</a>&lt;'ctx&gt;,
+    name: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>,
+) -&gt; <a class="struct" href="../basic_block/struct.BasicBlock.html" title="struct inkwell::basic_block::BasicBlock">BasicBlock</a>&lt;'ctx&gt;</h4></section></summary><div class="docblock"><p>Prepend a named <code>BasicBlock</code> before the referenced <code>BasicBlock</code>.</p>
+<h5 id="example-29"><a class="doc-anchor" href="#example-29">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>module = context.create_module(<span class="string">"my_mod"</span>);
+<span class="kw">let </span>void_type = context.void_type();
+<span class="kw">let </span>fn_type = void_type.fn_type(<span class="kw-2">&amp;</span>[], <span class="bool-val">false</span>);
+<span class="kw">let </span>fn_value = module.add_function(<span class="string">"my_fn"</span>, fn_type, <span class="prelude-val">None</span>);
+<span class="kw">let </span>entry_basic_block = context.append_basic_block(fn_value, <span class="string">"entry"</span>);
+
+<span class="macro">assert_eq!</span>(fn_value.count_basic_blocks(), <span class="number">1</span>);
+
+<span class="kw">let </span>first_basic_block = context.prepend_basic_block(entry_basic_block, <span class="string">"first"</span>);
+
+<span class="macro">assert_eq!</span>(fn_value.count_basic_blocks(), <span class="number">2</span>);
+<span class="macro">assert_eq!</span>(fn_value.get_first_basic_block().unwrap(), first_basic_block);
+<span class="macro">assert_eq!</span>(fn_value.get_last_basic_block().unwrap(), entry_basic_block);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.metadata_node" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#1163-1165">Source</a><h4 class="code-header">pub fn <a href="#method.metadata_node" class="fn">metadata_node</a>&lt;'ctx&gt;(
+    &amp;'ctx self,
+    values: &amp;[<a class="enum" href="../values/enum.BasicMetadataValueEnum.html" title="enum inkwell::values::BasicMetadataValueEnum">BasicMetadataValueEnum</a>&lt;'ctx&gt;],
+) -&gt; <a class="struct" href="../values/struct.MetadataValue.html" title="struct inkwell::values::MetadataValue">MetadataValue</a>&lt;'ctx&gt;</h4></section></summary><div class="docblock"><p>Creates a <code>MetadataValue</code> tuple of heterogeneous types (a “Node”) for the current context. It can be assigned to a value.</p>
+<h5 id="example-30"><a class="doc-anchor" href="#example-30">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>i8_type = context.i8_type();
+<span class="kw">let </span>i8_two = i8_type.const_int(<span class="number">2</span>, <span class="bool-val">false</span>);
+<span class="kw">let </span>f32_type = context.f32_type();
+<span class="kw">let </span>f32_zero = f32_type.const_float(<span class="number">0.</span>);
+<span class="kw">let </span>md_node = context.metadata_node(<span class="kw-2">&amp;</span>[i8_two.into(), f32_zero.into()]);
+<span class="kw">let </span>f32_one = f32_type.const_float(<span class="number">1.</span>);
+<span class="kw">let </span>void_type = context.void_type();
+
+<span class="kw">let </span>builder = context.create_builder();
+<span class="kw">let </span>module = context.create_module(<span class="string">"my_mod"</span>);
+<span class="kw">let </span>fn_type = void_type.fn_type(<span class="kw-2">&amp;</span>[f32_type.into()], <span class="bool-val">false</span>);
+<span class="kw">let </span>fn_value = module.add_function(<span class="string">"my_func"</span>, fn_type, <span class="prelude-val">None</span>);
+<span class="kw">let </span>entry_block = context.append_basic_block(fn_value, <span class="string">"entry"</span>);
+
+builder.position_at_end(entry_block);
+
+<span class="kw">let </span>ret_instr = builder.build_return(<span class="prelude-val">None</span>).unwrap();
+
+<span class="macro">assert!</span>(md_node.is_node());
+
+ret_instr.set_metadata(md_node, <span class="number">0</span>);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.metadata_string" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#1196-1198">Source</a><h4 class="code-header">pub fn <a href="#method.metadata_string" class="fn">metadata_string</a>(&amp;self, string: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>) -&gt; <a class="struct" href="../values/struct.MetadataValue.html" title="struct inkwell::values::MetadataValue">MetadataValue</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Creates a <code>MetadataValue</code> string for the current context. It can be assigned to a value.</p>
+<h5 id="example-31"><a class="doc-anchor" href="#example-31">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>md_string = context.metadata_string(<span class="string">"Floats are awesome!"</span>);
+<span class="kw">let </span>f32_type = context.f32_type();
+<span class="kw">let </span>f32_one = f32_type.const_float(<span class="number">1.</span>);
+<span class="kw">let </span>void_type = context.void_type();
+
+<span class="kw">let </span>builder = context.create_builder();
+<span class="kw">let </span>module = context.create_module(<span class="string">"my_mod"</span>);
+<span class="kw">let </span>fn_type = void_type.fn_type(<span class="kw-2">&amp;</span>[f32_type.into()], <span class="bool-val">false</span>);
+<span class="kw">let </span>fn_value = module.add_function(<span class="string">"my_func"</span>, fn_type, <span class="prelude-val">None</span>);
+<span class="kw">let </span>entry_block = context.append_basic_block(fn_value, <span class="string">"entry"</span>);
+
+builder.position_at_end(entry_block);
+
+<span class="kw">let </span>ret_instr = builder.build_return(<span class="prelude-val">None</span>).unwrap();
+
+<span class="macro">assert!</span>(md_string.is_string());
+
+ret_instr.set_metadata(md_string, <span class="number">0</span>);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.get_kind_id" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#1218-1220">Source</a><h4 class="code-header">pub fn <a href="#method.get_kind_id" class="fn">get_kind_id</a>(&amp;self, key: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a></h4></section></summary><div class="docblock"><p>Obtains the index of a metadata kind id. If the string doesn’t exist, LLVM will add it at index <code>FIRST_CUSTOM_METADATA_KIND_ID</code> onward.</p>
+<h5 id="example-32"><a class="doc-anchor" href="#example-32">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+<span class="kw">use </span>inkwell::values::FIRST_CUSTOM_METADATA_KIND_ID;
+
+<span class="kw">let </span>context = Context::create();
+
+<span class="macro">assert_eq!</span>(context.get_kind_id(<span class="string">"dbg"</span>), <span class="number">0</span>);
+<span class="macro">assert_eq!</span>(context.get_kind_id(<span class="string">"tbaa"</span>), <span class="number">1</span>);
+<span class="macro">assert_eq!</span>(context.get_kind_id(<span class="string">"prof"</span>), <span class="number">2</span>);
+
+<span class="comment">// Custom kind id doesn't exist in LLVM until now:
+</span><span class="macro">assert_eq!</span>(context.get_kind_id(<span class="string">"foo"</span>), FIRST_CUSTOM_METADATA_KIND_ID);</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.create_enum_attribute" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#1246-1248">Source</a><h4 class="code-header">pub fn <a href="#method.create_enum_attribute" class="fn">create_enum_attribute</a>(&amp;self, kind_id: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>, val: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u64.html">u64</a>) -&gt; <a class="struct" href="../attributes/struct.Attribute.html" title="struct inkwell::attributes::Attribute">Attribute</a></h4></section></summary><div class="docblock"><p>Creates an enum <code>Attribute</code> in this <code>Context</code>.</p>
+<h5 id="example-33"><a class="doc-anchor" href="#example-33">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>enum_attribute = context.create_enum_attribute(<span class="number">0</span>, <span class="number">10</span>);
+
+<span class="macro">assert!</span>(enum_attribute.is_enum());</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.create_string_attribute" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#1263-1265">Source</a><h4 class="code-header">pub fn <a href="#method.create_string_attribute" class="fn">create_string_attribute</a>(&amp;self, key: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>, val: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>) -&gt; <a class="struct" href="../attributes/struct.Attribute.html" title="struct inkwell::attributes::Attribute">Attribute</a></h4></section></summary><div class="docblock"><p>Creates a string <code>Attribute</code> in this <code>Context</code>.</p>
+<h5 id="example-34"><a class="doc-anchor" href="#example-34">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>string_attribute = context.create_string_attribute(<span class="string">"my_key_123"</span>, <span class="string">"my_val"</span>);
+
+<span class="macro">assert!</span>(string_attribute.is_string());</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.create_type_attribute" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#1289-1291">Source</a><h4 class="code-header">pub fn <a href="#method.create_type_attribute" class="fn">create_type_attribute</a>(
+    &amp;self,
+    kind_id: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>,
+    type_ref: <a class="enum" href="../types/enum.AnyTypeEnum.html" title="enum inkwell::types::AnyTypeEnum">AnyTypeEnum</a>&lt;'_&gt;,
+) -&gt; <a class="struct" href="../attributes/struct.Attribute.html" title="struct inkwell::attributes::Attribute">Attribute</a></h4></section><span class="item-info"><div class="stab portability">Available on <strong>crate features <code>llvm12-0</code> or <code>llvm13-0</code> or <code>llvm14-0</code> or <code>llvm15-0</code> or <code>llvm16-0</code> or <code>llvm17-0</code> or <code>llvm18-0</code></strong> only.</div></span></summary><div class="docblock"><p>Create an enum <code>Attribute</code> with an <code>AnyTypeEnum</code> attached to it.</p>
+<h5 id="example-35"><a class="doc-anchor" href="#example-35">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+<span class="kw">use </span>inkwell::attributes::Attribute;
+<span class="kw">use </span>inkwell::types::AnyType;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>kind_id = Attribute::get_named_enum_kind_id(<span class="string">"sret"</span>);
+<span class="kw">let </span>any_type = context.i32_type().as_any_type_enum();
+<span class="kw">let </span>type_attribute = context.create_type_attribute(
+    kind_id,
+    any_type,
+);
+
+<span class="macro">assert!</span>(type_attribute.is_type());
+<span class="macro">assert_eq!</span>(type_attribute.get_type_value(), any_type);
+<span class="macro">assert_ne!</span>(type_attribute.get_type_value(), context.i64_type().as_any_type_enum());</code></pre></div>
+</div></details><details class="toggle method-toggle" open><summary><section id="method.const_string" class="method"><a class="src rightside" href="../../src/inkwell/context.rs.html#1308-1310">Source</a><h4 class="code-header">pub fn <a href="#method.const_string" class="fn">const_string</a>(
+    &amp;self,
+    string: &amp;[<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>],
+    null_terminated: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>,
+) -&gt; <a class="struct" href="../values/struct.ArrayValue.html" title="struct inkwell::values::ArrayValue">ArrayValue</a>&lt;'_&gt;</h4></section></summary><div class="docblock"><p>Creates a const string which may be null terminated.</p>
+<h5 id="example-36"><a class="doc-anchor" href="#example-36">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>inkwell::context::Context;
+<span class="kw">use </span>inkwell::values::AnyValue;
+
+<span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>string = context.const_string(<span class="string">b"my_string"</span>, <span class="bool-val">false</span>);
+
+<span class="macro">assert_eq!</span>(string.print_to_string().to_string(), <span class="string">"[9 x i8] c\"my_string\""</span>);</code></pre></div>
+</div></details></div></details></div><h2 id="trait-implementations" class="section-header">Trait Implementations<a href="#trait-implementations" class="anchor">§</a></h2><div id="trait-implementations-list"><details class="toggle implementors-toggle" open><summary><section id="impl-AsContextRef%3C'ctx%3E-for-%26Context" class="impl"><a class="src rightside" href="../../src/inkwell/context.rs.html#2199-2204">Source</a><a href="#impl-AsContextRef%3C'ctx%3E-for-%26Context" class="anchor">§</a><h3 class="code-header">impl&lt;'ctx&gt; <a class="trait" href="trait.AsContextRef.html" title="trait inkwell::context::AsContextRef">AsContextRef</a>&lt;'ctx&gt; for &amp;'ctx <a class="struct" href="struct.Context.html" title="struct inkwell::context::Context">Context</a></h3></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.as_ctx_ref" class="method trait-impl"><a class="src rightside" href="../../src/inkwell/context.rs.html#2201-2203">Source</a><a href="#method.as_ctx_ref" class="anchor">§</a><h4 class="code-header">fn <a href="trait.AsContextRef.html#tymethod.as_ctx_ref" class="fn">as_ctx_ref</a>(&amp;self) -&gt; <a class="type" href="../../llvm_sys/prelude/type.LLVMContextRef.html" title="type llvm_sys::prelude::LLVMContextRef">LLVMContextRef</a></h4></section></summary><div class="docblock"><p>Acquires the underlying raw pointer belonging to this <code>Context</code> type.</p>
+</div></details></div></details><details class="toggle implementors-toggle" open><summary><section id="impl-Debug-for-Context" class="impl"><a class="src rightside" href="../../src/inkwell/context.rs.html#412">Source</a><a href="#impl-Debug-for-Context" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug">Debug</a> for <a class="struct" href="struct.Context.html" title="struct inkwell::context::Context">Context</a></h3></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.fmt" class="method trait-impl"><a class="src rightside" href="../../src/inkwell/context.rs.html#412">Source</a><a href="#method.fmt" class="anchor">§</a><h4 class="code-header">fn <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt" class="fn">fmt</a>(&amp;self, f: &amp;mut <a class="struct" href="https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html" title="struct core::fmt::Formatter">Formatter</a>&lt;'_&gt;) -&gt; <a class="type" href="https://doc.rust-lang.org/nightly/core/fmt/type.Result.html" title="type core::fmt::Result">Result</a></h4></section></summary><div class='docblock'>Formats the value using the given formatter. <a href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#tymethod.fmt">Read more</a></div></details></div></details><details class="toggle implementors-toggle" open><summary><section id="impl-Drop-for-Context" class="impl"><a class="src rightside" href="../../src/inkwell/context.rs.html#1323-1329">Source</a><a href="#impl-Drop-for-Context" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html" title="trait core::ops::drop::Drop">Drop</a> for <a class="struct" href="struct.Context.html" title="struct inkwell::context::Context">Context</a></h3></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.drop" class="method trait-impl"><a class="src rightside" href="../../src/inkwell/context.rs.html#1324-1328">Source</a><a href="#method.drop" class="anchor">§</a><h4 class="code-header">fn <a href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop" class="fn">drop</a>(&amp;mut self)</h4></section></summary><div class='docblock'>Executes the destructor for this type. <a href="https://doc.rust-lang.org/nightly/core/ops/drop/trait.Drop.html#tymethod.drop">Read more</a></div></details></div></details><details class="toggle implementors-toggle" open><summary><section id="impl-PartialEq%3CContext%3E-for-ContextRef%3C'_%3E" class="impl"><a class="src rightside" href="../../src/inkwell/context.rs.html#396-400">Source</a><a href="#impl-PartialEq%3CContext%3E-for-ContextRef%3C'_%3E" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html" title="trait core::cmp::PartialEq">PartialEq</a>&lt;<a class="struct" href="struct.Context.html" title="struct inkwell::context::Context">Context</a>&gt; for <a class="struct" href="struct.ContextRef.html" title="struct inkwell::context::ContextRef">ContextRef</a>&lt;'_&gt;</h3></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.eq" class="method trait-impl"><a class="src rightside" href="../../src/inkwell/context.rs.html#397-399">Source</a><a href="#method.eq" class="anchor">§</a><h4 class="code-header">fn <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq" class="fn">eq</a>(&amp;self, other: &amp;<a class="struct" href="struct.Context.html" title="struct inkwell::context::Context">Context</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></h4></section></summary><div class='docblock'>Tests for <code>self</code> and <code>other</code> values to be equal, and is used by <code>==</code>.</div></details><details class="toggle method-toggle" open><summary><section id="method.ne" class="method trait-impl"><span class="rightside"><span class="since" title="Stable since Rust version 1.0.0">1.0.0</span> · <a class="src" href="https://doc.rust-lang.org/nightly/src/core/cmp.rs.html#261">Source</a></span><a href="#method.ne" class="anchor">§</a><h4 class="code-header">fn <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne" class="fn">ne</a>(&amp;self, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;Rhs</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></h4></section></summary><div class='docblock'>Tests for <code>!=</code>. The default implementation is almost always sufficient,
+and should not be overridden without very good reason.</div></details></div></details><details class="toggle implementors-toggle" open><summary><section id="impl-PartialEq%3CContextRef%3C'_%3E%3E-for-Context" class="impl"><a class="src rightside" href="../../src/inkwell/context.rs.html#402-406">Source</a><a href="#impl-PartialEq%3CContextRef%3C'_%3E%3E-for-Context" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html" title="trait core::cmp::PartialEq">PartialEq</a>&lt;<a class="struct" href="struct.ContextRef.html" title="struct inkwell::context::ContextRef">ContextRef</a>&lt;'_&gt;&gt; for <a class="struct" href="struct.Context.html" title="struct inkwell::context::Context">Context</a></h3></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.eq-1" class="method trait-impl"><a class="src rightside" href="../../src/inkwell/context.rs.html#403-405">Source</a><a href="#method.eq-1" class="anchor">§</a><h4 class="code-header">fn <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq" class="fn">eq</a>(&amp;self, other: &amp;<a class="struct" href="struct.ContextRef.html" title="struct inkwell::context::ContextRef">ContextRef</a>&lt;'_&gt;) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></h4></section></summary><div class='docblock'>Tests for <code>self</code> and <code>other</code> values to be equal, and is used by <code>==</code>.</div></details><details class="toggle method-toggle" open><summary><section id="method.ne-1" class="method trait-impl"><span class="rightside"><span class="since" title="Stable since Rust version 1.0.0">1.0.0</span> · <a class="src" href="https://doc.rust-lang.org/nightly/src/core/cmp.rs.html#261">Source</a></span><a href="#method.ne-1" class="anchor">§</a><h4 class="code-header">fn <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne" class="fn">ne</a>(&amp;self, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;Rhs</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></h4></section></summary><div class='docblock'>Tests for <code>!=</code>. The default implementation is almost always sufficient,
+and should not be overridden without very good reason.</div></details></div></details><details class="toggle implementors-toggle" open><summary><section id="impl-PartialEq-for-Context" class="impl"><a class="src rightside" href="../../src/inkwell/context.rs.html#412">Source</a><a href="#impl-PartialEq-for-Context" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html" title="trait core::cmp::PartialEq">PartialEq</a> for <a class="struct" href="struct.Context.html" title="struct inkwell::context::Context">Context</a></h3></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.eq-2" class="method trait-impl"><a class="src rightside" href="../../src/inkwell/context.rs.html#412">Source</a><a href="#method.eq-2" class="anchor">§</a><h4 class="code-header">fn <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#tymethod.eq" class="fn">eq</a>(&amp;self, other: &amp;<a class="struct" href="struct.Context.html" title="struct inkwell::context::Context">Context</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></h4></section></summary><div class='docblock'>Tests for <code>self</code> and <code>other</code> values to be equal, and is used by <code>==</code>.</div></details><details class="toggle method-toggle" open><summary><section id="method.ne-2" class="method trait-impl"><span class="rightside"><span class="since" title="Stable since Rust version 1.0.0">1.0.0</span> · <a class="src" href="https://doc.rust-lang.org/nightly/src/core/cmp.rs.html#261">Source</a></span><a href="#method.ne-2" class="anchor">§</a><h4 class="code-header">fn <a href="https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne" class="fn">ne</a>(&amp;self, other: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;Rhs</a>) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a></h4></section></summary><div class='docblock'>Tests for <code>!=</code>. The default implementation is almost always sufficient,
+and should not be overridden without very good reason.</div></details></div></details><section id="impl-Eq-for-Context" class="impl"><a class="src rightside" href="../../src/inkwell/context.rs.html#412">Source</a><a href="#impl-Eq-for-Context" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/cmp/trait.Eq.html" title="trait core::cmp::Eq">Eq</a> for <a class="struct" href="struct.Context.html" title="struct inkwell::context::Context">Context</a></h3></section><section id="impl-Send-for-Context" class="impl"><a class="src rightside" href="../../src/inkwell/context.rs.html#417">Source</a><a href="#impl-Send-for-Context" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> for <a class="struct" href="struct.Context.html" title="struct inkwell::context::Context">Context</a></h3></section><section id="impl-StructuralPartialEq-for-Context" class="impl"><a class="src rightside" href="../../src/inkwell/context.rs.html#412">Source</a><a href="#impl-StructuralPartialEq-for-Context" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.StructuralPartialEq.html" title="trait core::marker::StructuralPartialEq">StructuralPartialEq</a> for <a class="struct" href="struct.Context.html" title="struct inkwell::context::Context">Context</a></h3></section></div><h2 id="synthetic-implementations" class="section-header">Auto Trait Implementations<a href="#synthetic-implementations" class="anchor">§</a></h2><div id="synthetic-implementations-list"><section id="impl-Freeze-for-Context" class="impl"><a href="#impl-Freeze-for-Context" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Freeze.html" title="trait core::marker::Freeze">Freeze</a> for <a class="struct" href="struct.Context.html" title="struct inkwell::context::Context">Context</a></h3></section><section id="impl-RefUnwindSafe-for-Context" class="impl"><a href="#impl-RefUnwindSafe-for-Context" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/panic/unwind_safe/trait.RefUnwindSafe.html" title="trait core::panic::unwind_safe::RefUnwindSafe">RefUnwindSafe</a> for <a class="struct" href="struct.Context.html" title="struct inkwell::context::Context">Context</a></h3></section><section id="impl-Sync-for-Context" class="impl"><a href="#impl-Sync-for-Context" class="anchor">§</a><h3 class="code-header">impl !<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html" title="trait core::marker::Sync">Sync</a> for <a class="struct" href="struct.Context.html" title="struct inkwell::context::Context">Context</a></h3></section><section id="impl-Unpin-for-Context" class="impl"><a href="#impl-Unpin-for-Context" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Unpin.html" title="trait core::marker::Unpin">Unpin</a> for <a class="struct" href="struct.Context.html" title="struct inkwell::context::Context">Context</a></h3></section><section id="impl-UnwindSafe-for-Context" class="impl"><a href="#impl-UnwindSafe-for-Context" class="anchor">§</a><h3 class="code-header">impl <a class="trait" href="https://doc.rust-lang.org/nightly/core/panic/unwind_safe/trait.UnwindSafe.html" title="trait core::panic::unwind_safe::UnwindSafe">UnwindSafe</a> for <a class="struct" href="struct.Context.html" title="struct inkwell::context::Context">Context</a></h3></section></div><h2 id="blanket-implementations" class="section-header">Blanket Implementations<a href="#blanket-implementations" class="anchor">§</a></h2><div id="blanket-implementations-list"><details class="toggle implementors-toggle"><summary><section id="impl-Any-for-T" class="impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/any.rs.html#138">Source</a><a href="#impl-Any-for-T" class="anchor">§</a><h3 class="code-header">impl&lt;T&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/any/trait.Any.html" title="trait core::any::Any">Any</a> for T<div class="where">where
+    T: 'static + ?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>,</div></h3></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.type_id" class="method trait-impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/any.rs.html#139">Source</a><a href="#method.type_id" class="anchor">§</a><h4 class="code-header">fn <a href="https://doc.rust-lang.org/nightly/core/any/trait.Any.html#tymethod.type_id" class="fn">type_id</a>(&amp;self) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/core/any/struct.TypeId.html" title="struct core::any::TypeId">TypeId</a></h4></section></summary><div class='docblock'>Gets the <code>TypeId</code> of <code>self</code>. <a href="https://doc.rust-lang.org/nightly/core/any/trait.Any.html#tymethod.type_id">Read more</a></div></details></div></details><details class="toggle implementors-toggle"><summary><section id="impl-Borrow%3CT%3E-for-T" class="impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/borrow.rs.html#209">Source</a><a href="#impl-Borrow%3CT%3E-for-T" class="anchor">§</a><h3 class="code-header">impl&lt;T&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/borrow/trait.Borrow.html" title="trait core::borrow::Borrow">Borrow</a>&lt;T&gt; for T<div class="where">where
+    T: ?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>,</div></h3></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.borrow" class="method trait-impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/borrow.rs.html#211">Source</a><a href="#method.borrow" class="anchor">§</a><h4 class="code-header">fn <a href="https://doc.rust-lang.org/nightly/core/borrow/trait.Borrow.html#tymethod.borrow" class="fn">borrow</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;T</a></h4></section></summary><div class='docblock'>Immutably borrows from an owned value. <a href="https://doc.rust-lang.org/nightly/core/borrow/trait.Borrow.html#tymethod.borrow">Read more</a></div></details></div></details><details class="toggle implementors-toggle"><summary><section id="impl-BorrowMut%3CT%3E-for-T" class="impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/borrow.rs.html#217">Source</a><a href="#impl-BorrowMut%3CT%3E-for-T" class="anchor">§</a><h3 class="code-header">impl&lt;T&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/borrow/trait.BorrowMut.html" title="trait core::borrow::BorrowMut">BorrowMut</a>&lt;T&gt; for T<div class="where">where
+    T: ?<a class="trait" href="https://doc.rust-lang.org/nightly/core/marker/trait.Sized.html" title="trait core::marker::Sized">Sized</a>,</div></h3></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.borrow_mut" class="method trait-impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/borrow.rs.html#218">Source</a><a href="#method.borrow_mut" class="anchor">§</a><h4 class="code-header">fn <a href="https://doc.rust-lang.org/nightly/core/borrow/trait.BorrowMut.html#tymethod.borrow_mut" class="fn">borrow_mut</a>(&amp;mut self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;mut T</a></h4></section></summary><div class='docblock'>Mutably borrows from an owned value. <a href="https://doc.rust-lang.org/nightly/core/borrow/trait.BorrowMut.html#tymethod.borrow_mut">Read more</a></div></details></div></details><details class="toggle implementors-toggle"><summary><section id="impl-From%3CT%3E-for-T" class="impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/convert/mod.rs.html#765">Source</a><a href="#impl-From%3CT%3E-for-T" class="anchor">§</a><h3 class="code-header">impl&lt;T&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.From.html" title="trait core::convert::From">From</a>&lt;T&gt; for T</h3></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.from" class="method trait-impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/convert/mod.rs.html#768">Source</a><a href="#method.from" class="anchor">§</a><h4 class="code-header">fn <a href="https://doc.rust-lang.org/nightly/core/convert/trait.From.html#tymethod.from" class="fn">from</a>(t: T) -&gt; T</h4></section></summary><div class="docblock"><p>Returns the argument unchanged.</p>
+</div></details></div></details><details class="toggle implementors-toggle"><summary><section id="impl-Into%3CU%3E-for-T" class="impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/convert/mod.rs.html#748-750">Source</a><a href="#impl-Into%3CU%3E-for-T" class="anchor">§</a><h3 class="code-header">impl&lt;T, U&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.Into.html" title="trait core::convert::Into">Into</a>&lt;U&gt; for T<div class="where">where
+    U: <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.From.html" title="trait core::convert::From">From</a>&lt;T&gt;,</div></h3></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.into" class="method trait-impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/convert/mod.rs.html#758">Source</a><a href="#method.into" class="anchor">§</a><h4 class="code-header">fn <a href="https://doc.rust-lang.org/nightly/core/convert/trait.Into.html#tymethod.into" class="fn">into</a>(self) -&gt; U</h4></section></summary><div class="docblock"><p>Calls <code>U::from(self)</code>.</p>
+<p>That is, this conversion is whatever the implementation of
+<code><a href="https://doc.rust-lang.org/nightly/core/convert/trait.From.html" title="trait core::convert::From">From</a>&lt;T&gt; for U</code> chooses to do.</p>
+</div></details></div></details><details class="toggle implementors-toggle"><summary><section id="impl-IntoEither-for-T" class="impl"><a class="src rightside" href="../../src/either/into_either.rs.html#64">Source</a><a href="#impl-IntoEither-for-T" class="anchor">§</a><h3 class="code-header">impl&lt;T&gt; <a class="trait" href="../../either/into_either/trait.IntoEither.html" title="trait either::into_either::IntoEither">IntoEither</a> for T</h3></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.into_either" class="method trait-impl"><a class="src rightside" href="../../src/either/into_either.rs.html#29">Source</a><a href="#method.into_either" class="anchor">§</a><h4 class="code-header">fn <a href="../../either/into_either/trait.IntoEither.html#method.into_either" class="fn">into_either</a>(self, into_left: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>) -&gt; <a class="enum" href="../../either/enum.Either.html" title="enum either::Either">Either</a>&lt;Self, Self&gt;</h4></section></summary><div class='docblock'>Converts <code>self</code> into a <a href="../../either/enum.Either.html#variant.Left" title="variant either::Either::Left"><code>Left</code></a> variant of <a href="../../either/enum.Either.html" title="enum either::Either"><code>Either&lt;Self, Self&gt;</code></a>
+if <code>into_left</code> is <code>true</code>.
+Converts <code>self</code> into a <a href="../../either/enum.Either.html#variant.Right" title="variant either::Either::Right"><code>Right</code></a> variant of <a href="../../either/enum.Either.html" title="enum either::Either"><code>Either&lt;Self, Self&gt;</code></a>
+otherwise. <a href="../../either/into_either/trait.IntoEither.html#method.into_either">Read more</a></div></details><details class="toggle method-toggle" open><summary><section id="method.into_either_with" class="method trait-impl"><a class="src rightside" href="../../src/either/into_either.rs.html#55-57">Source</a><a href="#method.into_either_with" class="anchor">§</a><h4 class="code-header">fn <a href="../../either/into_either/trait.IntoEither.html#method.into_either_with" class="fn">into_either_with</a>&lt;F&gt;(self, into_left: F) -&gt; <a class="enum" href="../../either/enum.Either.html" title="enum either::Either">Either</a>&lt;Self, Self&gt;<div class="where">where
+    F: <a class="trait" href="https://doc.rust-lang.org/nightly/core/ops/function/trait.FnOnce.html" title="trait core::ops::function::FnOnce">FnOnce</a>(&amp;Self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>,</div></h4></section></summary><div class='docblock'>Converts <code>self</code> into a <a href="../../either/enum.Either.html#variant.Left" title="variant either::Either::Left"><code>Left</code></a> variant of <a href="../../either/enum.Either.html" title="enum either::Either"><code>Either&lt;Self, Self&gt;</code></a>
+if <code>into_left(&amp;self)</code> returns <code>true</code>.
+Converts <code>self</code> into a <a href="../../either/enum.Either.html#variant.Right" title="variant either::Either::Right"><code>Right</code></a> variant of <a href="../../either/enum.Either.html" title="enum either::Either"><code>Either&lt;Self, Self&gt;</code></a>
+otherwise. <a href="../../either/into_either/trait.IntoEither.html#method.into_either_with">Read more</a></div></details></div></details><details class="toggle implementors-toggle"><summary><section id="impl-TryFrom%3CU%3E-for-T" class="impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/convert/mod.rs.html#805-807">Source</a><a href="#impl-TryFrom%3CU%3E-for-T" class="anchor">§</a><h3 class="code-header">impl&lt;T, U&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html" title="trait core::convert::TryFrom">TryFrom</a>&lt;U&gt; for T<div class="where">where
+    U: <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.Into.html" title="trait core::convert::Into">Into</a>&lt;T&gt;,</div></h3></section></summary><div class="impl-items"><details class="toggle" open><summary><section id="associatedtype.Error-1" class="associatedtype trait-impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/convert/mod.rs.html#809">Source</a><a href="#associatedtype.Error-1" class="anchor">§</a><h4 class="code-header">type <a href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html#associatedtype.Error" class="associatedtype">Error</a> = <a class="enum" href="https://doc.rust-lang.org/nightly/core/convert/enum.Infallible.html" title="enum core::convert::Infallible">Infallible</a></h4></section></summary><div class='docblock'>The type returned in the event of a conversion error.</div></details><details class="toggle method-toggle" open><summary><section id="method.try_from" class="method trait-impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/convert/mod.rs.html#812">Source</a><a href="#method.try_from" class="anchor">§</a><h4 class="code-header">fn <a href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html#tymethod.try_from" class="fn">try_from</a>(value: U) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;T, &lt;T as <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html" title="trait core::convert::TryFrom">TryFrom</a>&lt;U&gt;&gt;::<a class="associatedtype" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html#associatedtype.Error" title="type core::convert::TryFrom::Error">Error</a>&gt;</h4></section></summary><div class='docblock'>Performs the conversion.</div></details></div></details><details class="toggle implementors-toggle"><summary><section id="impl-TryInto%3CU%3E-for-T" class="impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/convert/mod.rs.html#790-792">Source</a><a href="#impl-TryInto%3CU%3E-for-T" class="anchor">§</a><h3 class="code-header">impl&lt;T, U&gt; <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryInto.html" title="trait core::convert::TryInto">TryInto</a>&lt;U&gt; for T<div class="where">where
+    U: <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html" title="trait core::convert::TryFrom">TryFrom</a>&lt;T&gt;,</div></h3></section></summary><div class="impl-items"><details class="toggle" open><summary><section id="associatedtype.Error" class="associatedtype trait-impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/convert/mod.rs.html#794">Source</a><a href="#associatedtype.Error" class="anchor">§</a><h4 class="code-header">type <a href="https://doc.rust-lang.org/nightly/core/convert/trait.TryInto.html#associatedtype.Error" class="associatedtype">Error</a> = &lt;U as <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html" title="trait core::convert::TryFrom">TryFrom</a>&lt;T&gt;&gt;::<a class="associatedtype" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html#associatedtype.Error" title="type core::convert::TryFrom::Error">Error</a></h4></section></summary><div class='docblock'>The type returned in the event of a conversion error.</div></details><details class="toggle method-toggle" open><summary><section id="method.try_into" class="method trait-impl"><a class="src rightside" href="https://doc.rust-lang.org/nightly/src/core/convert/mod.rs.html#797">Source</a><a href="#method.try_into" class="anchor">§</a><h4 class="code-header">fn <a href="https://doc.rust-lang.org/nightly/core/convert/trait.TryInto.html#tymethod.try_into" class="fn">try_into</a>(self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;U, &lt;U as <a class="trait" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html" title="trait core::convert::TryFrom">TryFrom</a>&lt;T&gt;&gt;::<a class="associatedtype" href="https://doc.rust-lang.org/nightly/core/convert/trait.TryFrom.html#associatedtype.Error" title="type core::convert::TryFrom::Error">Error</a>&gt;</h4></section></summary><div class='docblock'>Performs the conversion.</div></details></div></details></div></section></div></main></body></html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Debug symbols - `DebugInfoBuilder` interface"><title>inkwell::debug_info - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-4ee5002b.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="inkwell" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (a93c1718c 2024-10-24)" data-channel="nightly" data-search-js="search-c5a66128.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../inkwell/index.html">inkwell</a><span class="version">0.5.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module debug_<wbr>info</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#example-usage" title="Example usage">Example usage</a><ul><li><a href="#setting-up-the-module-for-holding-debug-info" title="Setting up the module for holding debug info:">Setting up the module for holding debug info:</a></li><li><a href="#creating-function-debug-info" title="Creating function debug info">Creating function debug info</a></li><li><a href="#setting-debug-locations" title="Setting debug locations">Setting debug locations</a></li><li><a href="#finalize-debug-info" title="Finalize debug info">Finalize debug info</a></li></ul></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#traits" title="Traits">Traits</a></li><li><a href="#functions" title="Functions">Functions</a></li><li><a href="#types" title="Type Aliases">Type Aliases</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate inkwell</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><span class="rustdoc-breadcrumbs"><a href="../index.html">inkwell</a></span><h1>Module <span>debug_info</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/inkwell/debug_info.rs.html#1-1607">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Debug symbols - <code>DebugInfoBuilder</code> interface</p>
+<h2 id="example-usage"><a class="doc-anchor" href="#example-usage">§</a>Example usage</h2><h3 id="setting-up-the-module-for-holding-debug-info"><a class="doc-anchor" href="#setting-up-the-module-for-holding-debug-info">§</a>Setting up the module for holding debug info:</h3>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">let </span>context = Context::create();
+<span class="kw">let </span>module = context.create_module(<span class="string">"bin"</span>);
+
+<span class="kw">let </span>debug_metadata_version = context.i32_type().const_int(<span class="number">3</span>, <span class="bool-val">false</span>);
+module.add_basic_value_flag(
+    <span class="string">"Debug Info Version"</span>,
+    inkwell::module::FlagBehavior::Warning,
+    debug_metadata_version,
+);
+<span class="kw">let </span>builder = context.create_builder();
+<span class="kw">let </span>(dibuilder, compile_unit) = module.create_debug_info_builder(
+    <span class="bool-val">true</span>,
+    <span class="comment">/* language */ </span>inkwell::debug_info::DWARFSourceLanguage::C,
+    <span class="comment">/* filename */ </span><span class="string">"source_file"</span>,
+    <span class="comment">/* directory */ </span><span class="string">"."</span>,
+    <span class="comment">/* producer */ </span><span class="string">"my llvm compiler frontend"</span>,
+    <span class="comment">/* is_optimized */ </span><span class="bool-val">false</span>,
+    <span class="comment">/* compiler command line flags */ </span><span class="string">""</span>,
+    <span class="comment">/* runtime_ver */ </span><span class="number">0</span>,
+    <span class="comment">/* split_name */ </span><span class="string">""</span>,
+    <span class="comment">/* kind */ </span>inkwell::debug_info::DWARFEmissionKind::Full,
+    <span class="comment">/* dwo_id */ </span><span class="number">0</span>,
+    <span class="comment">/* split_debug_inling */ </span><span class="bool-val">false</span>,
+    <span class="comment">/* debug_info_for_profiling */ </span><span class="bool-val">false</span>,
+);</code></pre></div>
+<h3 id="creating-function-debug-info"><a class="doc-anchor" href="#creating-function-debug-info">§</a>Creating function debug info</h3>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code> <span class="kw">let </span>ditype = dibuilder.create_basic_type(
+     <span class="string">"type_name"</span>,
+     <span class="number">0_u64</span>,
+     <span class="number">0x00</span>,
+     inkwell::debug_info::DIFlags::Public,
+ ).unwrap();
+ <span class="kw">let </span>subroutine_type = dibuilder.create_subroutine_type(
+     compile_unit.get_file(),
+     <span class="comment">/* return type */ </span><span class="prelude-val">Some</span>(ditype.as_type()),
+     <span class="comment">/* parameter types */ </span><span class="kw-2">&amp;</span>[],
+     inkwell::debug_info::DIFlags::Public,
+ );
+ <span class="kw">let </span>func_scope: DISubprogram&lt;<span class="lifetime">'_</span>&gt; = dibuilder.create_function(
+     <span class="comment">/* scope */ </span>compile_unit.as_debug_info_scope(),
+     <span class="comment">/* func name */ </span><span class="string">"main"</span>,
+     <span class="comment">/* linkage_name */ </span><span class="prelude-val">None</span>,
+     <span class="comment">/* file */ </span>compile_unit.get_file(),
+     <span class="comment">/* line_no */ </span><span class="number">0</span>,
+     <span class="comment">/* DIType */ </span>subroutine_type,
+     <span class="comment">/* is_local_to_unit */ </span><span class="bool-val">true</span>,
+     <span class="comment">/* is_definition */ </span><span class="bool-val">true</span>,
+     <span class="comment">/* scope_line */ </span><span class="number">0</span>,
+     <span class="comment">/* flags */ </span>inkwell::debug_info::DIFlags::Public,
+     <span class="comment">/* is_optimized */ </span><span class="bool-val">false</span>,
+ );</code></pre></div>
+<p>The <code>DISubprogram</code> value must be attached to the generated <code>FunctionValue</code>:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="comment">/* after creating function: */
+    </span><span class="kw">let </span>fn_val = module.add_function(fn_name_str, fn_type, <span class="prelude-val">None</span>);
+    fn_val.set_subprogram(func_scope);</code></pre></div>
+<h3 id="setting-debug-locations"><a class="doc-anchor" href="#setting-debug-locations">§</a>Setting debug locations</h3>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">let </span>lexical_block = dibuilder.create_lexical_block(
+        <span class="comment">/* scope */ </span>func_scope.as_debug_info_scope(),
+        <span class="comment">/* file */ </span>compile_unit.get_file(),
+        <span class="comment">/* line_no */ </span><span class="number">0</span>,
+        <span class="comment">/* column_no */ </span><span class="number">0</span>);
+
+<span class="kw">let </span>loc = dibuilder
+    .create_debug_location(<span class="kw-2">&amp;</span>context, <span class="comment">/* line */ </span><span class="number">0</span>, <span class="comment">/* column */ </span><span class="number">0</span>,
+    <span class="comment">/* current_scope */ </span>lexical_block.as_debug_info_scope(),
+    <span class="comment">/* inlined_at */ </span><span class="prelude-val">None</span>);
+builder.set_current_debug_location(<span class="kw-2">&amp;</span>context, loc);
+
+<span class="comment">// Create global variable
+</span><span class="kw">let </span>gv = module.add_global(context.i64_type(), <span class="prelude-val">Some</span>(inkwell::AddressSpace::Global), <span class="string">"gv"</span>);
+
+
+<span class="kw">let </span>const_v = di.create_constant_expression(<span class="number">10</span>);
+
+<span class="kw">let </span>gv_debug = di.create_global_variable_expression(cu.get_file().as_debug_info_scope(), <span class="string">"gv"</span>, <span class="string">""</span>, cu.get_file(), <span class="number">1</span>, ditype.as_type(), <span class="bool-val">true</span>, <span class="prelude-val">Some</span>(const_v), <span class="prelude-val">None</span>, <span class="number">8</span>);
+
+<span class="kw">let </span>meta_value: inkwell::values::BasicMetadataValueEnum = gv_debug.as_metadata_value(<span class="kw-2">&amp;</span>context).into();
+<span class="kw">let </span>metadata = context.metadata_node(<span class="kw-2">&amp;</span>[meta_value]);
+gv.set_metadata(metadata, <span class="number">0</span>);<span class="comment">//dbg
+</span></code></pre></div>
+<h3 id="finalize-debug-info"><a class="doc-anchor" href="#finalize-debug-info">§</a>Finalize debug info</h3>
+<p>Before any kind of code generation (including verification passes; they generate code and
+validate debug info), do:</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code>dibuilder.finalize();</code></pre></div>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.DIBasicType.html" title="struct inkwell::debug_info::DIBasicType">DIBasic<wbr>Type</a></div><div class="desc docblock-short">A primitive debug info type created by <code>create_basic_type</code> method of <code>DebugInfoBuilder</code></div></li><li><div class="item-name"><a class="struct" href="struct.DICompileUnit.html" title="struct inkwell::debug_info::DICompileUnit">DICompile<wbr>Unit</a></div><div class="desc docblock-short">Compilation unit scope for debug info</div></li><li><div class="item-name"><a class="struct" href="struct.DICompositeType.html" title="struct inkwell::debug_info::DICompositeType">DIComposite<wbr>Type</a></div><div class="desc docblock-short">A wrapper around an array of types, such as a union or struct.</div></li><li><div class="item-name"><a class="struct" href="struct.DIDerivedType.html" title="struct inkwell::debug_info::DIDerivedType">DIDerived<wbr>Type</a></div><div class="desc docblock-short">A wrapper around a single type, such as a typedef or member type.</div></li><li><div class="item-name"><a class="struct" href="struct.DIExpression.html" title="struct inkwell::debug_info::DIExpression">DIExpression</a></div><div class="desc docblock-short">https://llvm.org/docs/LangRef.html#diexpression</div></li><li><div class="item-name"><a class="struct" href="struct.DIFile.html" title="struct inkwell::debug_info::DIFile">DIFile</a></div><div class="desc docblock-short">Source file scope for debug info</div></li><li><div class="item-name"><a class="struct" href="struct.DIGlobalVariableExpression.html" title="struct inkwell::debug_info::DIGlobalVariableExpression">DIGlobal<wbr>Variable<wbr>Expression</a></div></li><li><div class="item-name"><a class="struct" href="struct.DILexicalBlock.html" title="struct inkwell::debug_info::DILexicalBlock">DILexical<wbr>Block</a></div><div class="desc docblock-short">Lexical block scope for debug info</div></li><li><div class="item-name"><a class="struct" href="struct.DILocalVariable.html" title="struct inkwell::debug_info::DILocalVariable">DILocal<wbr>Variable</a></div><div class="desc docblock-short">Metadata representing a variable inside a scope</div></li><li><div class="item-name"><a class="struct" href="struct.DILocation.html" title="struct inkwell::debug_info::DILocation">DILocation</a></div><div class="desc docblock-short">A debug location within the source code. Contains the following information:</div></li><li><div class="item-name"><a class="struct" href="struct.DINamespace.html" title="struct inkwell::debug_info::DINamespace">DINamespace</a></div><div class="desc docblock-short">Namespace scope for debug info</div></li><li><div class="item-name"><a class="struct" href="struct.DIScope.html" title="struct inkwell::debug_info::DIScope">DIScope</a></div><div class="desc docblock-short">Any kind of debug information scope (i.e. visibility of a source code symbol). Scopes are
+created by special <code>DebugInfoBuilder</code> methods (eg <code>create_lexical_block</code>) and can be turned
+into a <code>DIScope</code> with the <code>AsDIScope::as_debug_info_scope</code> trait method.</div></li><li><div class="item-name"><a class="struct" href="struct.DISubprogram.html" title="struct inkwell::debug_info::DISubprogram">DISubprogram</a></div><div class="desc docblock-short">Function body scope for debug info</div></li><li><div class="item-name"><a class="struct" href="struct.DISubroutineType.html" title="struct inkwell::debug_info::DISubroutineType">DISubroutine<wbr>Type</a></div><div class="desc docblock-short">Metadata representing the type of a function</div></li><li><div class="item-name"><a class="struct" href="struct.DIType.html" title="struct inkwell::debug_info::DIType">DIType</a></div><div class="desc docblock-short">Any kind of debug info type</div></li><li><div class="item-name"><a class="struct" href="struct.DebugInfoBuilder.html" title="struct inkwell::debug_info::DebugInfoBuilder">Debug<wbr>Info<wbr>Builder</a></div><div class="desc docblock-short">A builder object to create debug info metadata. Used along with <code>Builder</code> while producing
+IR. Created by <code>Module::create_debug_info_builder</code>. See <code>debug_info</code> module level
+documentation for more.</div></li></ul><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="enum" href="enum.DWARFEmissionKind.html" title="enum inkwell::debug_info::DWARFEmissionKind">DWARF<wbr>Emission<wbr>Kind</a></div><div class="desc docblock-short">The amount of debug information to emit. Corresponds to <code>LLVMDWARFEmissionKind</code> enum from LLVM.</div></li><li><div class="item-name"><a class="enum" href="enum.DWARFSourceLanguage.html" title="enum inkwell::debug_info::DWARFSourceLanguage">DWARF<wbr>Source<wbr>Language</a></div><div class="desc docblock-short">Source languages known by DWARF. Corresponds to <code>LLVMDWARFSourceLanguage</code> enum from LLVM.</div></li></ul><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="trait" href="trait.AsDIScope.html" title="trait inkwell::debug_info::AsDIScope">AsDI<wbr>Scope</a></div><div class="desc docblock-short">Specific scopes (i.e. <code>DILexicalBlock</code>) can be turned into a <code>DIScope</code> with the
+<code>AsDIScope::as_debug_info_scope</code> trait method.</div></li><li><div class="item-name"><a class="trait" href="trait.DIFlagsConstants.html" title="trait inkwell::debug_info::DIFlagsConstants">DIFlags<wbr>Constants</a></div></li></ul><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="fn" href="fn.debug_metadata_version.html" title="fn inkwell::debug_info::debug_metadata_version">debug_<wbr>metadata_<wbr>version</a></div><div class="desc docblock-short">Gets the version of debug metadata produced by the current LLVM version.</div></li></ul><h2 id="types" class="section-header">Type Aliases<a href="#types" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="type" href="type.DIFlags.html" title="type inkwell::debug_info::DIFlags">DIFlags</a></div></li><li><div class="item-name"><a class="type" href="type.LLVMDWARFTypeEncoding.html" title="type inkwell::debug_info::LLVMDWARFTypeEncoding">LLVMDWARF<wbr>Type<wbr>Encoding</a></div></li></ul></section></div></main></body></html>
