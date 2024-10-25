@@ -16,6 +16,7 @@ mod int_value;
 mod metadata_value;
 mod phi_value;
 mod ptr_value;
+mod scalable_vec_value;
 mod struct_value;
 mod traits;
 mod vec_value;
@@ -59,10 +60,13 @@ pub use crate::values::metadata_value::{MetadataValue, FIRST_CUSTOM_METADATA_KIN
 pub use crate::values::phi_value::IncomingIter;
 pub use crate::values::phi_value::PhiValue;
 pub use crate::values::ptr_value::PointerValue;
+pub use crate::values::scalable_vec_value::ScalableVectorValue;
 pub use crate::values::struct_value::FieldValueIter;
 pub use crate::values::struct_value::StructValue;
 pub use crate::values::traits::AsValueRef;
-pub use crate::values::traits::{AggregateValue, AnyValue, BasicValue, FloatMathValue, IntMathValue, PointerMathValue};
+pub use crate::values::traits::{
+    AggregateValue, AnyValue, BasicValue, FloatMathValue, IntMathValue, PointerMathValue, VectorBaseValue,
+};
 pub use crate::values::vec_value::VectorValue;
 
 #[llvm_versions(18..)]

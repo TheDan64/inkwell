@@ -7,7 +7,7 @@ use llvm_sys::prelude::LLVMTypeRef;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
-use crate::types::{ArrayType, FunctionType, PointerType, Type, VectorType};
+use crate::types::{ArrayType, FunctionType, PointerType, ScalableVectorType, Type, VectorType};
 use crate::values::{ArrayValue, GenericValue, IntValue};
 use crate::AddressSpace;
 
@@ -242,6 +242,25 @@ impl<'ctx> IntType<'ctx> {
     /// ```
     pub fn vec_type(self, size: u32) -> VectorType<'ctx> {
         self.int_type.vec_type(size)
+    }
+
+    /// Creates a `ScalableVectorType` with this `IntType` for its element type.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let i8_type = context.i8_type();
+    /// let i8_scalable_vector_type = i8_type.scalable_vec_type(3);
+    ///
+    /// assert_eq!(i8_scalable_vector_type.get_size(), 3);
+    /// assert_eq!(i8_scalable_vector_type.get_element_type().into_int_type(), i8_type);
+    /// ```
+    #[llvm_versions(12..)]
+    pub fn scalable_vec_type(self, size: u32) -> ScalableVectorType<'ctx> {
+        self.int_type.scalable_vec_type(size)
     }
 
     /// Gets a reference to the `Context` this `IntType` was created in.

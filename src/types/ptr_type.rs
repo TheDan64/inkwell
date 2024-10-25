@@ -8,7 +8,7 @@ use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
 #[llvm_versions(..=14)]
 use crate::types::AnyTypeEnum;
-use crate::types::{ArrayType, FunctionType, Type, VectorType};
+use crate::types::{ArrayType, FunctionType, ScalableVectorType, Type, VectorType};
 use crate::values::{ArrayValue, IntValue, PointerValue};
 use crate::AddressSpace;
 
@@ -324,6 +324,30 @@ impl<'ctx> PointerType<'ctx> {
     /// ```
     pub fn vec_type(self, size: u32) -> VectorType<'ctx> {
         self.ptr_type.vec_type(size)
+    }
+
+    /// Creates a `ScalableVectorType` with this `PointerType` for its element type.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::AddressSpace;
+    ///
+    /// let context = Context::create();
+    /// let f32_type = context.f32_type();
+    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
+    /// let f32_ptr_scalable_vec_type = f32_ptr_type.scalable_vec_type(3);
+    ///
+    /// assert_eq!(f32_ptr_scalable_vec_type.get_size(), 3);
+    /// assert_eq!(f32_ptr_scalable_vec_type.get_element_type().into_pointer_type(), f32_ptr_type);
+    /// ```
+    #[llvm_versions(12..)]
+    pub fn scalable_vec_type(self, size: u32) -> ScalableVectorType<'ctx> {
+        self.ptr_type.scalable_vec_type(size)
     }
 
     // SubType: PointerrType<BT> -> BT?
