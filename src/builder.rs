@@ -51,7 +51,7 @@ use crate::values::CallableValue;
 use crate::values::{
     AggregateValue, AggregateValueEnum, AsValueRef, BasicMetadataValueEnum, BasicValue, BasicValueEnum, CallSiteValue,
     FloatMathValue, FunctionValue, GlobalValue, InstructionOpcode, InstructionValue, IntMathValue, IntValue, PhiValue,
-    PointerMathValue, PointerValue, StructValue, VectorValue,
+    PointerMathValue, PointerValue, StructValue, VectorBaseValue,
 };
 
 use crate::{AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate};
@@ -3064,9 +3064,9 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.build_return(Some(&extracted)).unwrap();
     /// ```
-    pub fn build_extract_element(
+    pub fn build_extract_element<V: VectorBaseValue<'ctx>>(
         &self,
-        vector: VectorValue<'ctx>,
+        vector: V,
         index: IntValue<'ctx>,
         name: &str,
     ) -> Result<BasicValueEnum<'ctx>, BuilderError> {
@@ -3112,13 +3112,13 @@ impl<'ctx> Builder<'ctx> {
     /// builder.build_insert_element(vector_param, i32_seven, i32_zero, "insert").unwrap();
     /// builder.build_return(None).unwrap();
     /// ```
-    pub fn build_insert_element<V: BasicValue<'ctx>>(
+    pub fn build_insert_element<V: BasicValue<'ctx>, W: VectorBaseValue<'ctx>>(
         &self,
-        vector: VectorValue<'ctx>,
+        vector: W,
         element: V,
         index: IntValue<'ctx>,
         name: &str,
-    ) -> Result<VectorValue<'ctx>, BuilderError> {
+    ) -> Result<W, BuilderError> {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
         }
@@ -3134,7 +3134,7 @@ impl<'ctx> Builder<'ctx> {
             )
         };
 
-        unsafe { Ok(VectorValue::new(value)) }
+        unsafe { Ok(W::new(value)) }
     }
 
     pub fn build_unreachable(&self) -> Result<InstructionValue<'ctx>, BuilderError> {
@@ -3329,13 +3329,13 @@ impl<'ctx> Builder<'ctx> {
     }
 
     // REVIEW: Do we need to constrain types here? subtypes?
-    pub fn build_shuffle_vector(
+    pub fn build_shuffle_vector<V: VectorBaseValue<'ctx>>(
         &self,
-        left: VectorValue<'ctx>,
-        right: VectorValue<'ctx>,
-        mask: VectorValue<'ctx>,
+        left: V,
+        right: V,
+        mask: V,
         name: &str,
-    ) -> Result<VectorValue<'ctx>, BuilderError> {
+    ) -> Result<V, BuilderError> {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
         }
@@ -3350,7 +3350,7 @@ impl<'ctx> Builder<'ctx> {
             )
         };
 
-        unsafe { Ok(VectorValue::new(value)) }
+        unsafe { Ok(V::new(value)) }
     }
 
     // REVIEW: Is return type correct?
