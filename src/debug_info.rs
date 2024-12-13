@@ -123,10 +123,22 @@ use llvm_sys::debuginfo::{
     LLVMDIBuilderCreateMemberType, LLVMDIBuilderCreateNameSpace, LLVMDIBuilderCreateParameterVariable,
     LLVMDIBuilderCreatePointerType, LLVMDIBuilderCreateReferenceType, LLVMDIBuilderCreateStructType,
     LLVMDIBuilderCreateSubroutineType, LLVMDIBuilderCreateUnionType, LLVMDIBuilderFinalize,
-    LLVMDIBuilderGetOrCreateSubrange, LLVMDIBuilderInsertDbgValueBefore, LLVMDIBuilderInsertDeclareAtEnd,
-    LLVMDIBuilderInsertDeclareBefore, LLVMDILocationGetColumn, LLVMDILocationGetLine, LLVMDILocationGetScope,
+    LLVMDIBuilderGetOrCreateSubrange, LLVMDILocationGetColumn, LLVMDILocationGetLine, LLVMDILocationGetScope,
     LLVMDITypeGetAlignInBits, LLVMDITypeGetOffsetInBits, LLVMDITypeGetSizeInBits,
 };
+
+#[llvm_versions(..19)]
+use llvm_sys::debuginfo::{
+    LLVMDIBuilderInsertDbgValueBefore, LLVMDIBuilderInsertDeclareAtEnd, LLVMDIBuilderInsertDeclareBefore,
+};
+
+#[llvm_versions(19..)]
+use llvm_sys::debuginfo::{
+    LLVMDIBuilderInsertDbgValueRecordBefore as LLVMDIBuilderInsertDbgValueBefore,
+    LLVMDIBuilderInsertDeclareRecordAtEnd as LLVMDIBuilderInsertDeclareAtEnd,
+    LLVMDIBuilderInsertDeclareRecordBefore as LLVMDIBuilderInsertDeclareBefore,
+};
+
 #[llvm_versions(8..)]
 use llvm_sys::debuginfo::{LLVMDIBuilderCreateConstantValueExpression, LLVMDIBuilderCreateGlobalVariableExpression};
 use llvm_sys::prelude::{LLVMDIBuilderRef, LLVMMetadataRef};
@@ -195,7 +207,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-0",
+            feature = "llvm19-0"
         ))]
         sysroot: &str,
         #[cfg(any(
@@ -206,7 +219,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-0",
+            feature = "llvm19-0"
         ))]
         sdk: &str,
     ) -> (Self, DICompileUnit<'ctx>) {
@@ -245,7 +259,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-0"
+                feature = "llvm18-0",
+                feature = "llvm19-0"
             ))]
             sysroot,
             #[cfg(any(
@@ -256,7 +271,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-0"
+                feature = "llvm18-0",
+                feature = "llvm19-0"
             ))]
             sdk,
         );
@@ -303,7 +319,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-0",
+            feature = "llvm19-0"
         ))]
         sysroot: &str,
         #[cfg(any(
@@ -314,7 +331,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-0",
+            feature = "llvm19-0"
         ))]
         sdk: &str,
     ) -> DICompileUnit<'ctx> {
@@ -356,7 +374,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-0"
+                feature = "llvm18-0",
+                feature = "llvm19-0"
             ))]
             {
                 LLVMDIBuilderCreateCompileUnit(
@@ -940,7 +959,15 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             )
         };
 
-        unsafe { InstructionValue::new(value_ref) }
+        #[cfg(feature = "llvm19-0")]
+        {
+            todo!()
+        }
+
+        #[cfg(not(feature = "llvm19-0"))]
+        {
+            unsafe { InstructionValue::new(value_ref) }
+        }
     }
 
     /// Insert a variable declaration (`llvm.dbg.declare` intrinsic) at the end of `block`
@@ -963,7 +990,15 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             )
         };
 
-        unsafe { InstructionValue::new(value_ref) }
+        #[cfg(feature = "llvm19-0")]
+        {
+            todo!()
+        }
+
+        #[cfg(not(feature = "llvm19-0"))]
+        {
+            unsafe { InstructionValue::new(value_ref) }
+        }
     }
 
     /// Create an expression
@@ -1001,7 +1036,15 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             )
         };
 
-        unsafe { InstructionValue::new(value_ref) }
+        #[cfg(feature = "llvm19-0")]
+        {
+            todo!()
+        }
+
+        #[cfg(not(feature = "llvm19-0"))]
+        {
+            unsafe { InstructionValue::new(value_ref) }
+        }
     }
 
     /// Construct a placeholders derived type to be used when building debug info with circular references.
@@ -1603,5 +1646,53 @@ mod flags {
         #[llvm_versions(17..)]
         #[llvm_variant(LLVMDWARFSourceLanguageMojo)]
         Mojo,
+
+        #[llvm_versions(19..)]
+        #[llvm_variant(LLVMDWARFSourceLanguageHIP)]
+        Hip,
+
+        #[llvm_versions(19..)]
+        #[llvm_variant(LLVMDWARFSourceLanguageAssembly)]
+        Assembly,
+
+        #[llvm_versions(19..)]
+        #[llvm_variant(LLVMDWARFSourceLanguageC_sharp)]
+        Csharp,
+
+        #[llvm_versions(19..)]
+        #[llvm_variant(LLVMDWARFSourceLanguageGLSL)]
+        Glsl,
+
+        #[llvm_versions(19..)]
+        #[llvm_variant(LLVMDWARFSourceLanguageGLSL_ES)]
+        GlslEs,
+
+        #[llvm_versions(19..)]
+        #[llvm_variant(LLVMDWARFSourceLanguageHLSL)]
+        Hlsl,
+
+        #[llvm_versions(19..)]
+        #[llvm_variant(LLVMDWARFSourceLanguageOpenCL_CPP)]
+        OpenClCpp,
+
+        #[llvm_versions(19..)]
+        #[llvm_variant(LLVMDWARFSourceLanguageCPP_for_OpenCL)]
+        CppForOpenCl,
+
+        #[llvm_versions(19..)]
+        #[llvm_variant(LLVMDWARFSourceLanguageSYCL)]
+        Sycl,
+
+        #[llvm_versions(19..)]
+        #[llvm_variant(LLVMDWARFSourceLanguageRuby)]
+        Ruby,
+
+        #[llvm_versions(19..)]
+        #[llvm_variant(LLVMDWARFSourceLanguageMove)]
+        Move,
+
+        #[llvm_versions(19..)]
+        #[llvm_variant(LLVMDWARFSourceLanguageHylo)]
+        Hylo,
     }
 }

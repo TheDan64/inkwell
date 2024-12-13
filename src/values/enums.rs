@@ -102,7 +102,8 @@ impl<'ctx> AnyValueEnum<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-0"
+                feature = "llvm18-0",
+                feature = "llvm19-0"
             ))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => {
                 AnyValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))
@@ -271,7 +272,8 @@ impl<'ctx> BasicValueEnum<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-0"
+                feature = "llvm18-0",
+                feature = "llvm19-0"
             ))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => {
                 BasicValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))
@@ -456,7 +458,8 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-0"
+                feature = "llvm18-0",
+                feature = "llvm19-0"
             ))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => {
                 BasicMetadataValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))

@@ -345,7 +345,13 @@ impl ContextImpl {
     fn metadata_string<'ctx>(&self, string: &str) -> MetadataValue<'ctx> {
         let c_string = to_c_str(string);
 
-        unsafe { MetadataValue::new(LLVMMDStringInContext(self.0, c_string.as_ptr(), c_string.to_bytes().len() as u32)) }
+        unsafe {
+            MetadataValue::new(LLVMMDStringInContext(
+                self.0,
+                c_string.as_ptr(),
+                c_string.to_bytes().len() as u32,
+            ))
+        }
     }
 
     fn get_kind_id(&self, key: &str) -> u32 {
@@ -594,7 +600,7 @@ impl Context {
     ///     builder.build_call(callable_value, params, "exit").unwrap();
     /// }
     ///
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-0"))]
     /// builder.build_indirect_call(asm_fn, asm, params, "exit").unwrap();
     ///
     /// builder.build_return(None).unwrap();
@@ -1476,7 +1482,7 @@ impl<'ctx> ContextRef<'ctx> {
     ///     builder.build_call(callable_value, params, "exit").unwrap();
     /// }
     ///
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-0"))]
     /// builder.build_indirect_call(asm_fn, asm, params, "exit").unwrap();
     ///
     /// builder.build_return(None).unwrap();

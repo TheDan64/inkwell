@@ -10,7 +10,7 @@ use syn::{Lit, RangeLimits};
 // This array should match the LLVM features in the top level Cargo manifest
 const FEATURE_VERSIONS: &[&str] = &[
     "llvm4-0", "llvm5-0", "llvm6-0", "llvm7-0", "llvm8-0", "llvm9-0", "llvm10-0", "llvm11-0", "llvm12-0", "llvm13-0",
-    "llvm14-0", "llvm15-0", "llvm16-0", "llvm17-0", "llvm18-0",
+    "llvm14-0", "llvm15-0", "llvm16-0", "llvm17-0", "llvm18-0", "llvm19-0",
 ];
 
 pub struct VersionRange {

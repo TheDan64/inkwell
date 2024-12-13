@@ -288,9 +288,9 @@ impl<'ctx> BasicBlock<'ctx> {
     ///
     /// let void_type = context.void_type();
     /// let i32_type = context.i32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-0")))]
     /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-0"))]
     /// let i32_ptr_type = context.ptr_type(AddressSpace::default());
     ///
     /// let fn_type = void_type.fn_type(&[i32_ptr_type.into()], false);
@@ -481,7 +481,13 @@ impl<'ctx> BasicBlock<'ctx> {
         {
             use llvm_sys::core::LLVMSetValueName2;
 
-            unsafe { LLVMSetValueName2(LLVMBasicBlockAsValue(self.basic_block), c_string.as_ptr(), c_string.to_bytes().len()) };
+            unsafe {
+                LLVMSetValueName2(
+                    LLVMBasicBlockAsValue(self.basic_block),
+                    c_string.as_ptr(),
+                    c_string.to_bytes().len(),
+                )
+            };
         }
     }
 

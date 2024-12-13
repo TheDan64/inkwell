@@ -13,6 +13,8 @@ use inkwell::{AddressSpace, DLLStorageClass, GlobalVisibility, ThreadLocalMode};
 pub use llvm_sys::LLVMTailCallKind::*;
 #[cfg(feature = "llvm18-0")]
 use llvm_sys_180 as llvm_sys;
+#[cfg(feature = "llvm19-0")]
+use llvm_sys_190 as llvm_sys;
 
 use std::convert::TryFrom;
 
@@ -72,7 +74,7 @@ fn test_call_site() {
 }
 
 #[test]
-#[cfg(feature = "llvm18-0")]
+#[cfg(any(feature = "llvm18-0", feature = "llvm19-0"))]
 fn test_call_site_tail_call_attributes() {
     let context = Context::create();
     let builder = context.create_builder();
@@ -164,7 +166,8 @@ fn test_set_get_name() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let ptr_type = context.ptr_type(AddressSpace::default());
     let array_type = f64_type.array_type(42);
@@ -184,14 +187,16 @@ fn test_set_get_name() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     )))]
     let ptr_val = bool_type.ptr_type(AddressSpace::default()).const_null();
     #[cfg(any(
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let ptr_val = ptr_type.const_null();
     let array_val = f64_type.const_array(&[f64_val]);
@@ -204,7 +209,8 @@ fn test_set_get_name() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let scalable_vec_val = f64_type.scalable_vec_type(42).const_zero();
     let ppc_f128_val = ppc_f128_type.const_float(0.0);
@@ -230,7 +236,8 @@ fn test_set_get_name() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     assert_eq!(scalable_vec_val.get_name().to_str(), Ok(""));
     assert_eq!(ppc_f128_val.get_name().to_str(), Ok(""));
@@ -257,7 +264,8 @@ fn test_set_get_name() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     scalable_vec_val.set_name("my_val15");
     ppc_f128_val.set_name("my_val16");
@@ -283,7 +291,8 @@ fn test_set_get_name() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     assert_eq!(scalable_vec_val.get_name().to_str(), Ok(""));
     assert_eq!(ppc_f128_val.get_name().to_str(), Ok(""));
@@ -293,14 +302,16 @@ fn test_set_get_name() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     )))]
     let ptr_type = bool_type.ptr_type(AddressSpace::default());
     #[cfg(any(
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let ptr_type = context.ptr_type(AddressSpace::default());
     let struct_type = context.struct_type(&[bool_type.into()], false);
@@ -312,7 +323,8 @@ fn test_set_get_name() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let scalable_vec_type = bool_type.scalable_vec_type(1);
 
@@ -334,7 +346,8 @@ fn test_set_get_name() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-0",
+            feature = "llvm19-0"
         ))]
         scalable_vec_type.into(),
     ];
@@ -358,7 +371,8 @@ fn test_set_get_name() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let scalable_vec_param = function.get_nth_param(6).unwrap().into_scalable_vector_value();
     let phi_val = builder.build_phi(bool_type, "phi_node").unwrap();
@@ -376,7 +390,8 @@ fn test_set_get_name() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     assert_eq!(scalable_vec_param.get_name().to_str(), Ok(""));
     assert_eq!(phi_val.get_name().to_str(), Ok("phi_node"));
@@ -394,7 +409,8 @@ fn test_set_get_name() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     scalable_vec_param.set_name("my_val7");
     phi_val.set_name("phi");
@@ -412,7 +428,8 @@ fn test_set_get_name() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     assert_eq!(scalable_vec_param.get_name().to_str(), Ok("my_val7"));
     assert_eq!(phi_val.get_name().to_str(), Ok("phi"));
@@ -437,7 +454,8 @@ fn test_undef() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let ptr_type = context.ptr_type(AddressSpace::default());
     let array_type = f64_type.array_type(42);
@@ -459,14 +477,16 @@ fn test_undef() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     )))]
     let ptr_val = bool_type.ptr_type(AddressSpace::default()).const_null();
     #[cfg(any(
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let ptr_val = ptr_type.const_null();
     let array_val = f64_type.const_array(&[f64_val]);
@@ -479,7 +499,8 @@ fn test_undef() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let scalable_vec_val = f64_type.scalable_vec_type(42).const_zero();
     let ppc_f128_val = ppc_f128_type.const_float(0.0);
@@ -505,7 +526,8 @@ fn test_undef() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     assert!(!scalable_vec_val.is_undef());
     assert!(!ppc_f128_val.is_undef());
@@ -524,14 +546,16 @@ fn test_undef() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     )))]
     let ptr_undef = bool_type.ptr_type(AddressSpace::default()).get_undef();
     #[cfg(any(
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let ptr_undef = ptr_type.get_undef();
     let array_undef = array_type.get_undef();
@@ -544,7 +568,8 @@ fn test_undef() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let scalable_vec_undef = bool_type.scalable_vec_type(1).get_undef();
     let ppc_f128_undef = ppc_f128_type.get_undef();
@@ -570,7 +595,8 @@ fn test_undef() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     assert!(scalable_vec_undef.is_undef());
     assert!(ppc_f128_undef.is_undef());
@@ -594,7 +620,8 @@ fn test_poison() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let ptr_type = context.ptr_type(AddressSpace::default());
     let array_type = f64_type.array_type(42);
@@ -605,7 +632,8 @@ fn test_poison() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let scalable_vec_type = f64_type.scalable_vec_type(42);
     let ppc_f128_type = context.ppc_f128_type();
@@ -626,14 +654,16 @@ fn test_poison() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     )))]
     let ptr_val = bool_type.ptr_type(AddressSpace::default()).const_null();
     #[cfg(any(
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let ptr_val = ptr_type.const_null();
     let array_val = f64_type.const_array(&[f64_val]);
@@ -646,7 +676,8 @@ fn test_poison() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let scalable_vec_val = scalable_vec_type.const_zero();
     let ppc_f128_val = ppc_f128_type.const_float(0.0);
@@ -672,7 +703,8 @@ fn test_poison() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     assert!(!scalable_vec_val.is_poison());
     assert!(!ppc_f128_val.is_poison());
@@ -691,14 +723,16 @@ fn test_poison() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     )))]
     let ptr_poison = bool_type.ptr_type(AddressSpace::default()).get_poison();
     #[cfg(any(
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let ptr_poison = ptr_type.get_poison();
     let array_poison = array_type.get_poison();
@@ -711,7 +745,8 @@ fn test_poison() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let scalable_vec_poison = scalable_vec_type.get_poison();
     let ppc_f128_poison = ppc_f128_type.get_poison();
@@ -737,7 +772,8 @@ fn test_poison() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     assert!(scalable_vec_poison.is_poison());
     assert!(ppc_f128_poison.is_poison());
@@ -863,7 +899,7 @@ fn test_metadata() {
         let f32_type = context.f32_type();
         // let f64_type = context.f64_type();
         // let f128_type = context.f128_type();
-        // #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+        // #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-0"))]
         // let ptr_type = context.ptr_type(AddressSpace::default());
         // let array_type = f64_type.array_type(42);
         // let ppc_f128_type = context.ppc_f128_type();
@@ -880,9 +916,9 @@ fn test_metadata() {
         // let f64_val = f64_type.const_float(0.0);
         // let f128_val = f128_type.const_float(0.0);
         // let ppc_f128_val = ppc_f128_type.const_float(0.0);
-        // #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+        // #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-0")))]
         // let ptr_val = bool_type.ptr_type(AddressSpace::default()).const_null();
-        // #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+        // #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-0"))]
         // let ptr_val = ptr_type.const_null();
         // let array_val = f64_type.const_array(&[f64_val]);
         // let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
@@ -986,7 +1022,7 @@ fn test_metadata() {
 
 #[test]
 fn test_floats() {
-    #[cfg(not(any(feature = "llvm15-0", feature = "llvm18-0")))]
+    #[cfg(not(any(feature = "llvm15-0", feature = "llvm18-0", feature = "llvm19-0")))]
     {
         use inkwell::FloatPredicate;
 
@@ -1021,7 +1057,12 @@ fn test_floats() {
 
         let f64_one = f64_type.const_float(1.);
         let f64_two = f64_type.const_float(2.);
-        #[cfg(not(any(feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+        #[cfg(not(any(
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-0",
+            feature = "llvm19-0"
+        )))]
         {
             let neg_two = f64_two.const_neg();
 
@@ -1404,7 +1445,8 @@ fn test_allocations() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     )) {
         "ptr"
     } else {
@@ -1540,7 +1582,8 @@ fn test_consts() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let scalable_vec_val = f64_type.scalable_vec_type(42).const_zero();
     let array_val = i8_type.const_array(&[i8_val]);
@@ -1565,7 +1608,8 @@ fn test_consts() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     assert!(scalable_vec_val.is_const());
     assert!(array_val.is_const());
@@ -1695,14 +1739,16 @@ fn test_non_fn_ptr_called() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     )))]
     let i8_ptr_type = i8_type.ptr_type(AddressSpace::default());
     #[cfg(any(
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let i8_ptr_type = context.ptr_type(AddressSpace::default());
     let fn_type = i8_type.fn_type(&[i8_ptr_type.into()], false);
@@ -1733,7 +1779,8 @@ fn test_non_fn_ptr_called() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     builder
         .build_indirect_call(i8_ptr_type.fn_type(&[], false), i8_ptr_param, &[], "call")
@@ -1810,14 +1857,16 @@ fn test_aggregate_returns() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     )))]
     let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
     #[cfg(any(
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     let i32_ptr_type = context.ptr_type(AddressSpace::default());
     let i32_three = i32_type.const_int(3, false);
@@ -1848,7 +1897,8 @@ fn test_aggregate_returns() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-0"
     ))]
     builder
         .build_ptr_diff(i32_ptr_type, ptr_param1, ptr_param2, "diff")

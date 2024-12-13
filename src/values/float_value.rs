@@ -1,8 +1,10 @@
 #[llvm_versions(..=17)]
 use crate::types::IntType;
+#[llvm_versions(..=18)]
+use llvm_sys::core::LLVMConstFCmp;
 #[llvm_versions(..=15)]
 use llvm_sys::core::LLVMConstFNeg;
-use llvm_sys::core::{LLVMConstFCmp, LLVMConstRealGetDouble};
+use llvm_sys::core::LLVMConstRealGetDouble;
 #[llvm_versions(..=17)]
 use llvm_sys::core::{LLVMConstFPCast, LLVMConstFPExt, LLVMConstFPToSI, LLVMConstFPToUI, LLVMConstFPTrunc};
 use llvm_sys::prelude::LLVMValueRef;
@@ -136,6 +138,7 @@ impl<'ctx> FloatValue<'ctx> {
     }
 
     // SubType: rhs same as lhs; return IntValue<bool>
+    #[llvm_versions(..=18)]
     pub fn const_compare(self, op: FloatPredicate, rhs: FloatValue<'ctx>) -> IntValue<'ctx> {
         unsafe { IntValue::new(LLVMConstFCmp(op.into(), self.as_value_ref(), rhs.as_value_ref())) }
     }
