@@ -60,8 +60,8 @@ pub extern crate llvm_sys_160 as llvm_sys;
 pub extern crate llvm_sys_170 as llvm_sys;
 #[cfg(feature = "llvm18-0")]
 pub extern crate llvm_sys_180 as llvm_sys;
-#[cfg(feature = "llvm19-0")]
-pub extern crate llvm_sys_190 as llvm_sys;
+#[cfg(feature = "llvm19-1")]
+pub extern crate llvm_sys_191 as llvm_sys;
 #[cfg(feature = "llvm4-0")]
 pub extern crate llvm_sys_40 as llvm_sys;
 #[cfg(feature = "llvm5-0")]
@@ -133,7 +133,7 @@ assert_unique_used_features! {
     "llvm16-0",
     "llvm17-0",
     "llvm18-0",
-    "llvm19-0"
+    "llvm19-1"
 }
 
 /// Defines the address space in which a global will be inserted.

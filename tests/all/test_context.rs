@@ -58,7 +58,7 @@ fn test_values_get_context() {
         feature = "llvm16-0",
         feature = "llvm17-0",
         feature = "llvm18-0",
-        feature = "llvm19-0"
+        feature = "llvm19-1"
     )))]
     let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
     #[cfg(any(
@@ -66,7 +66,7 @@ fn test_values_get_context() {
         feature = "llvm16-0",
         feature = "llvm17-0",
         feature = "llvm18-0",
-        feature = "llvm19-0"
+        feature = "llvm19-1"
     ))]
     let f32_ptr_type = context.ptr_type(AddressSpace::default());
     let f32_array_type = f32_type.array_type(2);

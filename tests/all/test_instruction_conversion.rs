@@ -115,7 +115,7 @@ fn test_conversion_to_pointer_value() {
         feature = "llvm16-0",
         feature = "llvm17-0",
         feature = "llvm18-0",
-        feature = "llvm19-0"
+        feature = "llvm19-1"
     )))]
     let i64_ptr_type = context.i64_type().ptr_type(AddressSpace::default());
     #[cfg(any(
@@ -123,7 +123,7 @@ fn test_conversion_to_pointer_value() {
         feature = "llvm16-0",
         feature = "llvm17-0",
         feature = "llvm18-0",
-        feature = "llvm19-0"
+        feature = "llvm19-1"
     ))]
     let i64_ptr_type = context.ptr_type(AddressSpace::default());
     let alloca_instr = builder

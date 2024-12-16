@@ -21,7 +21,7 @@ mod struct_value;
 mod traits;
 mod vec_value;
 
-#[cfg(any(feature = "llvm18-0", feature = "llvm19-0"))]
+#[cfg(any(feature = "llvm18-0", feature = "llvm19-1"))]
 pub(crate) mod operand_bundle;
 
 #[cfg(not(any(
@@ -29,7 +29,7 @@ pub(crate) mod operand_bundle;
     feature = "llvm16-0",
     feature = "llvm17-0",
     feature = "llvm18-0",
-    feature = "llvm19-0"
+    feature = "llvm19-1"
 )))]
 mod callable_value;
 
@@ -38,7 +38,7 @@ mod callable_value;
     feature = "llvm16-0",
     feature = "llvm17-0",
     feature = "llvm18-0",
-    feature = "llvm19-0"
+    feature = "llvm19-1"
 )))]
 pub use crate::values::callable_value::CallableValue;
 

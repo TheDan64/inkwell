@@ -138,7 +138,7 @@ pub unsafe trait BasicType<'ctx>: AnyType<'ctx> {
             feature = "llvm16-0",
             feature = "llvm17-0",
             feature = "llvm18-0",
-            feature = "llvm19-0"
+            feature = "llvm19-1"
         ),
         deprecated(
             note = "Starting from version 15.0, LLVM doesn't differentiate between pointer types. Use Context::ptr_type instead."
