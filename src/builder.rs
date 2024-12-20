@@ -3247,6 +3247,7 @@ impl<'ctx> Builder<'ctx> {
     }
 
     pub fn clear_insertion_position(&self) {
+        self.positioned.set(PositionState::NotSet);
         unsafe { LLVMClearInsertionPosition(self.builder) }
     }
 
