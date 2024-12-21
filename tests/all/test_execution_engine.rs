@@ -58,7 +58,8 @@ fn test_jit_execution_engine() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-1"
     )))]
     let i8_ptr_ptr_type = context
         .i8_type()
@@ -68,7 +69,8 @@ fn test_jit_execution_engine() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-0",
+        feature = "llvm19-1"
     ))]
     let i8_ptr_ptr_type = context.ptr_type(AddressSpace::default());
     let one_i32 = i32_type.const_int(1, false);
