@@ -230,7 +230,12 @@ fn test_mcjit_execution_engine_with_memory_manager() {
 
     let data = mmgr_for_test.data.borrow();
     assert_eq!(1, data.code_alloc_calls);
-    assert_eq!(2, data.data_alloc_calls);
+    assert!(
+        data.data_alloc_calls >= 2,
+        "Expected at least 2 calls to allocate_data_section, but got {}. \
+         We've observed that LLVM 5 typically calls it 3 times, while LLVM 18 often calls it only 2.",
+        data.data_alloc_calls
+    );
     assert_eq!(1, data.finalize_calls);
     assert_eq!(1, data.destroy_calls);
 }
