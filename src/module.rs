@@ -694,14 +694,16 @@ impl<'ctx> Module<'ctx> {
         }
 
         // 4) Build LLVMMCJITCompilerOptions
-        let mut options: llvm_sys::execution_engine::LLVMMCJITCompilerOptions = unsafe { std::mem::zeroed() };
+        let mut options_uninit = MaybeUninit::<llvm_sys::execution_engine::LLVMMCJITCompilerOptions>::zeroed();
         unsafe {
             // Ensure defaults are initialized
             llvm_sys::execution_engine::LLVMInitializeMCJITCompilerOptions(
-                &mut options,
+                options_uninit.as_mut_ptr(),
                 std::mem::size_of::<llvm_sys::execution_engine::LLVMMCJITCompilerOptions>(),
             );
         }
+        let mut options = unsafe { options_uninit.assume_init() };
+
         // Override fields
         options.OptLevel = opt_level as u32;
         options.CodeModel = code_model.into();
