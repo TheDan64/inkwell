@@ -676,6 +676,8 @@ impl<'ctx> Module<'ctx> {
             memory_manager: Box::new(memory_manager),
         };
         let adapter_box = Box::new(adapter);
+        // Convert the Box into a raw pointer for LLVM.
+        // In `destroy_adapter`, we use `Box::from_raw` to safely reclaim ownership.
         let opaque = Box::into_raw(adapter_box) as *mut c_void;
 
         // 3) Create the LLVMMCJITMemoryManager using the custom callbacks

@@ -155,13 +155,14 @@ pub(crate) extern "C" fn finalize_memory_adapter(
 /// Called when LLVM is done with the memory manager. Calls `destroy` and drops
 /// the adapter to free resources.
 pub(crate) extern "C" fn destroy_adapter(opaque: *mut libc::c_void) {
-    let adapter = unsafe { &mut *(opaque as *mut MemoryManagerAdapter) };
+    // Re-box to drop the adapter and its contents.
+    // SAFETY: `opaque` must have been allocated by Box<MemoryManagerAdapter>.
+    let mut adapter = unsafe { Box::from_raw(opaque as *mut MemoryManagerAdapter) };
+
+    // Clean up user-defined resources
     adapter.memory_manager.destroy();
 
-    // Re-box to drop the adapter and its contents
-    unsafe {
-        let _ = Box::from_raw(adapter);
-    }
+    // Dropping `adapter` automatically frees the memory
 }
 
 /// Converts a raw C string pointer to a Rust `&str`.
