@@ -705,8 +705,8 @@ impl<'ctx> Module<'ctx> {
         // Override fields
         options.OptLevel = opt_level as u32;
         options.CodeModel = code_model.into();
-        options.NoFramePointerElim = if no_frame_pointer_elim { 1 } else { 0 };
-        options.EnableFastISel = if enable_fast_isel { 1 } else { 0 };
+        options.NoFramePointerElim = no_frame_pointer_elim as i32;
+        options.EnableFastISel = enable_fast_isel as i32;
         options.MCJMM = mmgr;
 
         // 5) Create MCJIT
