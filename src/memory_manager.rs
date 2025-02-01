@@ -105,7 +105,7 @@ pub(crate) extern "C" fn allocate_code_section_adapter(
     section_name: *const libc::c_char,
 ) -> *mut u8 {
     let adapter = unsafe { &mut *(opaque as *mut MemoryManagerAdapter) };
-    let sname = c_str_to_str(section_name);
+    let sname = unsafe { c_str_to_str(section_name) };
     adapter
         .memory_manager
         .allocate_code_section(size, alignment, section_id, sname)
@@ -124,7 +124,7 @@ pub(crate) extern "C" fn allocate_data_section_adapter(
     is_read_only: LLVMBool,
 ) -> *mut u8 {
     let adapter = unsafe { &mut *(opaque as *mut MemoryManagerAdapter) };
-    let sname = c_str_to_str(section_name);
+    let sname = unsafe { c_str_to_str(section_name) };
     adapter
         .memory_manager
         .allocate_data_section(size, alignment, section_id, sname, is_read_only != 0)
@@ -170,7 +170,7 @@ pub(crate) extern "C" fn destroy_adapter(opaque: *mut libc::c_void) {
 ///
 /// The caller must ensure `ptr` points to a valid, null-terminated UTF-8 string.
 /// If the string is invalid UTF-8 or `ptr` is null, an empty string is returned.
-fn c_str_to_str<'a>(ptr: *const libc::c_char) -> &'a str {
+unsafe fn c_str_to_str<'a>(ptr: *const libc::c_char) -> &'a str {
     if ptr.is_null() {
         ""
     } else {
