@@ -6,11 +6,15 @@ use llvm_sys::core::{
     LLVMConstSIToFP, LLVMConstUIToFP, LLVMConstZExt, LLVMConstZExtOrBitCast,
 };
 use llvm_sys::core::{
-    LLVMConstAdd, LLVMConstBitCast, LLVMConstICmp, LLVMConstIntGetSExtValue, LLVMConstIntGetZExtValue,
-    LLVMConstIntToPtr, LLVMConstMul, LLVMConstNSWAdd, LLVMConstNSWMul, LLVMConstNSWNeg, LLVMConstNSWSub,
-    LLVMConstNUWAdd, LLVMConstNUWMul, LLVMConstNUWNeg, LLVMConstNUWSub, LLVMConstNeg, LLVMConstNot, LLVMConstShl,
-    LLVMConstSub, LLVMConstTrunc, LLVMConstTruncOrBitCast, LLVMConstXor, LLVMIsAConstantInt,
+    LLVMConstAdd, LLVMConstBitCast, LLVMConstIntGetSExtValue, LLVMConstIntGetZExtValue, LLVMConstIntToPtr,
+    LLVMConstMul, LLVMConstNSWAdd, LLVMConstNSWMul, LLVMConstNSWNeg, LLVMConstNSWSub, LLVMConstNUWAdd, LLVMConstNUWMul,
+    LLVMConstNUWNeg, LLVMConstNUWSub, LLVMConstNeg, LLVMConstNot, LLVMConstSub, LLVMConstTrunc,
+    LLVMConstTruncOrBitCast, LLVMConstXor, LLVMIsAConstantInt,
 };
+
+#[llvm_versions(..=18)]
+use llvm_sys::core::{LLVMConstICmp, LLVMConstShl};
+
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::convert::TryFrom;
@@ -202,6 +206,7 @@ impl<'ctx> IntValue<'ctx> {
     }
 
     // TODO: Give shift methods more descriptive names
+    #[llvm_versions(..=18)]
     pub fn const_shl(self, rhs: IntValue<'ctx>) -> Self {
         unsafe { IntValue::new(LLVMConstShl(self.as_value_ref(), rhs.as_value_ref())) }
     }
@@ -269,6 +274,7 @@ impl<'ctx> IntValue<'ctx> {
     }
 
     // SubType: rhs same as lhs; return IntValue<bool>
+    #[llvm_versions(..=18)]
     pub fn const_int_compare(self, op: IntPredicate, rhs: IntValue<'ctx>) -> IntValue<'ctx> {
         unsafe { IntValue::new(LLVMConstICmp(op.into(), self.as_value_ref(), rhs.as_value_ref())) }
     }
