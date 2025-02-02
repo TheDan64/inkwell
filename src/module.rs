@@ -9,10 +9,10 @@ use llvm_sys::core::LLVMGetTypeByName;
 
 use llvm_sys::core::{
     LLVMAddFunction, LLVMAddGlobal, LLVMAddGlobalInAddressSpace, LLVMAddNamedMetadataOperand, LLVMCloneModule,
-    LLVMDisposeModule, LLVMDumpModule, LLVMGetFirstFunction, LLVMGetFirstGlobal, LLVMGetLastFunction,
-    LLVMGetLastGlobal, LLVMGetModuleContext, LLVMGetModuleIdentifier, LLVMGetNamedFunction, LLVMGetNamedGlobal,
-    LLVMGetNamedMetadataNumOperands, LLVMGetNamedMetadataOperands, LLVMGetTarget, LLVMPrintModuleToFile,
-    LLVMPrintModuleToString, LLVMSetDataLayout, LLVMSetModuleIdentifier, LLVMSetTarget, LLVMDisposeMessage
+    LLVMDisposeMessage, LLVMDisposeModule, LLVMDumpModule, LLVMGetFirstFunction, LLVMGetFirstGlobal,
+    LLVMGetLastFunction, LLVMGetLastGlobal, LLVMGetModuleContext, LLVMGetModuleIdentifier, LLVMGetNamedFunction,
+    LLVMGetNamedGlobal, LLVMGetNamedMetadataNumOperands, LLVMGetNamedMetadataOperands, LLVMGetTarget,
+    LLVMPrintModuleToFile, LLVMPrintModuleToString, LLVMSetDataLayout, LLVMSetModuleIdentifier, LLVMSetTarget,
 };
 #[llvm_versions(7..)]
 use llvm_sys::core::{LLVMAddModuleFlag, LLVMGetModuleFlag};
@@ -20,6 +20,7 @@ use llvm_sys::core::{LLVMAddModuleFlag, LLVMGetModuleFlag};
 use llvm_sys::error::LLVMGetErrorMessage;
 use llvm_sys::execution_engine::{
     LLVMCreateExecutionEngineForModule, LLVMCreateInterpreterForModule, LLVMCreateJITCompilerForModule,
+    LLVMCreateSimpleMCJITMemoryManager,
 };
 use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
 #[llvm_versions(13..)]
@@ -29,7 +30,7 @@ use llvm_sys::LLVMLinkage;
 use llvm_sys::LLVMModuleFlagBehavior;
 
 use std::cell::{Cell, Ref, RefCell};
-use std::ffi::CStr;
+use std::ffi::{c_void, CStr};
 use std::fs::File;
 use std::marker::PhantomData;
 use std::mem::{forget, MaybeUninit};
@@ -45,12 +46,16 @@ use crate::data_layout::DataLayout;
 use crate::debug_info::{DICompileUnit, DWARFEmissionKind, DWARFSourceLanguage, DebugInfoBuilder};
 use crate::execution_engine::ExecutionEngine;
 use crate::memory_buffer::MemoryBuffer;
+use crate::memory_manager::{
+    allocate_code_section_adapter, allocate_data_section_adapter, destroy_adapter, finalize_memory_adapter,
+    McjitMemoryManager, MemoryManagerAdapter,
+};
 #[llvm_versions(13..)]
 use crate::passes::PassBuilderOptions;
 use crate::support::{to_c_str, LLVMString};
 #[llvm_versions(13..)]
 use crate::targets::TargetMachine;
-use crate::targets::{InitializationConfig, Target, TargetTriple};
+use crate::targets::{CodeModel, InitializationConfig, Target, TargetTriple};
 use crate::types::{AsTypeRef, BasicType, FunctionType, StructType};
 #[llvm_versions(7..)]
 use crate::values::BasicValue;
@@ -601,6 +606,134 @@ impl<'ctx> Module<'ctx> {
             }
         }
 
+        let execution_engine = unsafe { execution_engine.assume_init() };
+        let execution_engine = unsafe { ExecutionEngine::new(Rc::new(execution_engine), true) };
+
+        *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
+
+        Ok(execution_engine)
+    }
+
+    /// Creates an MCJIT `ExecutionEngine` for this `Module` using a custom memory manager.
+    ///
+    /// # Parameters
+    ///
+    /// * `memory_manager` - Specifies how LLVM allocates and finalizes code and data sections.
+    ///   Implement the [`McjitMemoryManager`] trait to customize these operations.
+    /// * `opt_level` - Sets the desired optimization level (e.g. `None`, `Less`, `Default`, `Aggressive`).
+    ///   Higher levels generally produce faster code at the expense of longer compilation times.
+    /// * `code_model` - Determines how code addresses are represented. Common values include
+    ///   `CodeModel::Default` or `CodeModel::JITDefault`. This impacts the generated machine code layout.
+    /// * `no_frame_pointer_elim` - If true, frame pointer elimination is disabled. This may assist
+    ///   with certain debugging or profiling tasks but can incur a performance cost.
+    /// * `enable_fast_isel` - If true, uses a faster instruction selector where possible. This can
+    ///   improve compilation speed, though it may produce less optimized code in some cases.
+    ///
+    /// # Returns
+    ///
+    /// Returns a newly created [`ExecutionEngine`] for MCJIT on success. Returns an error if:
+    /// - The native target fails to initialize,
+    /// - The `Module` is already owned by another `ExecutionEngine`,
+    /// - Or MCJIT fails to create the engine (in which case an error string is returned from LLVM).
+    ///
+    /// # Notes
+    ///
+    /// Using a custom memory manager can help intercept or manage allocations for specific
+    /// sections (for example, capturing `.llvm_stackmaps` or applying custom permissions).
+    /// For details, refer to the [`McjitMemoryManager`] documentation.
+    ///
+    /// # Safety
+    ///
+    /// The returned [`ExecutionEngine`] takes ownership of the memory manager. Do not move
+    /// or free the `memory_manager` after calling this method. When the `ExecutionEngine`
+    /// is dropped, LLVM will destroy the memory manager by calling
+    /// [`McjitMemoryManager::destroy()`] and freeing its adapter.
+    pub fn create_mcjit_execution_engine_with_memory_manager(
+        &self,
+        memory_manager: impl McjitMemoryManager + 'static,
+        opt_level: OptimizationLevel,
+        code_model: CodeModel,
+        no_frame_pointer_elim: bool,
+        enable_fast_isel: bool,
+    ) -> Result<ExecutionEngine<'ctx>, LLVMString> {
+        use std::mem::MaybeUninit;
+        // ...
+
+        // 1) Initialize the native target
+        Target::initialize_native(&InitializationConfig::default()).map_err(|mut err_string| {
+            err_string.push('\0');
+            LLVMString::create_from_str(&err_string)
+        })?;
+
+        // Check if the module is already owned by an ExecutionEngine
+        if self.owned_by_ee.borrow().is_some() {
+            let string = "This module is already owned by an ExecutionEngine.\0";
+            return Err(LLVMString::create_from_str(string));
+        }
+
+        // 2) Box the memory_manager into a MemoryManagerAdapter
+        let adapter = MemoryManagerAdapter {
+            memory_manager: Box::new(memory_manager),
+        };
+        let adapter_box = Box::new(adapter);
+        // Convert the Box into a raw pointer for LLVM.
+        // In `destroy_adapter`, we use `Box::from_raw` to safely reclaim ownership.
+        let opaque = Box::into_raw(adapter_box) as *mut c_void;
+
+        // 3) Create the LLVMMCJITMemoryManager using the custom callbacks
+        let mmgr = unsafe {
+            LLVMCreateSimpleMCJITMemoryManager(
+                opaque,
+                allocate_code_section_adapter,
+                allocate_data_section_adapter,
+                finalize_memory_adapter,
+                Some(destroy_adapter),
+            )
+        };
+        if mmgr.is_null() {
+            let msg = "Failed to create SimpleMCJITMemoryManager.\0";
+            return Err(LLVMString::create_from_str(msg));
+        }
+
+        // 4) Build LLVMMCJITCompilerOptions
+        let mut options_uninit = MaybeUninit::<llvm_sys::execution_engine::LLVMMCJITCompilerOptions>::zeroed();
+        unsafe {
+            // Ensure defaults are initialized
+            llvm_sys::execution_engine::LLVMInitializeMCJITCompilerOptions(
+                options_uninit.as_mut_ptr(),
+                std::mem::size_of::<llvm_sys::execution_engine::LLVMMCJITCompilerOptions>(),
+            );
+        }
+        let mut options = unsafe { options_uninit.assume_init() };
+
+        // Override fields
+        options.OptLevel = opt_level as u32;
+        options.CodeModel = code_model.into();
+        options.NoFramePointerElim = no_frame_pointer_elim as i32;
+        options.EnableFastISel = enable_fast_isel as i32;
+        options.MCJMM = mmgr;
+
+        // 5) Create MCJIT
+        let mut execution_engine = MaybeUninit::uninit();
+        let mut err_string = MaybeUninit::uninit();
+        let code = unsafe {
+            llvm_sys::execution_engine::LLVMCreateMCJITCompilerForModule(
+                execution_engine.as_mut_ptr(),
+                self.module.get(),
+                &mut options,
+                std::mem::size_of::<llvm_sys::execution_engine::LLVMMCJITCompilerOptions>(),
+                err_string.as_mut_ptr(),
+            )
+        };
+
+        // If creation fails, extract the error string
+        if code == 1 {
+            unsafe {
+                return Err(LLVMString::new(err_string.assume_init()));
+            }
+        }
+
+        // Otherwise, it succeeded, so wrap the raw pointer
         let execution_engine = unsafe { execution_engine.assume_init() };
         let execution_engine = unsafe { ExecutionEngine::new(Rc::new(execution_engine), true) };
 
