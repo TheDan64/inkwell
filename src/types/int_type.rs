@@ -321,24 +321,12 @@ impl<'ctx> IntType<'ctx> {
     /// let i8_type = context.i8_type();
     /// let i8_ptr_type = i8_type.ptr_type(AddressSpace::default());
     ///
-    /// #[cfg(any(
-    ///     feature = "llvm4-0",
-    ///     feature = "llvm5-0",
-    ///     feature = "llvm6-0",
-    ///     feature = "llvm7-0",
-    ///     feature = "llvm8-0",
-    ///     feature = "llvm9-0",
-    ///     feature = "llvm10-0",
-    ///     feature = "llvm11-0",
-    ///     feature = "llvm12-0",
-    ///     feature = "llvm13-0",
-    ///     feature = "llvm14-0"
-    /// ))]
+    /// #[cfg(feature = "typed-pointers")]
     /// assert_eq!(i8_ptr_type.get_element_type().into_int_type(), i8_type);
     /// ```
     #[cfg_attr(
         any(
-            feature = "llvm15-0",
+            all(feature = "llvm15-0", not(feature = "typed-pointers")),
             feature = "llvm16-0",
             feature = "llvm17-0",
             feature = "llvm18-0"

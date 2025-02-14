@@ -134,6 +134,30 @@ assert_unique_used_features! {
     "llvm18-0"
 }
 
+#[cfg(all(
+    any(
+        feature = "llvm4-0",
+        feature = "llvm5-0",
+        feature = "llvm6-0",
+        feature = "llvm7-0",
+        feature = "llvm8-0",
+        feature = "llvm9-0",
+        feature = "llvm10-0",
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0"
+    ),
+    not(feature = "typed-pointers")
+))]
+compile_error!("Typed pointers are required prior to LLVM version 15.0.");
+
+#[cfg(all(
+    any(feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"),
+    feature = "typed-pointers"
+))]
+compile_error!("Typed pointers are not supported starting from LLVM version 16.0.");
+
 /// Defines the address space in which a global will be inserted.
 ///
 /// The default address space is zero. An address space can always be created from a `u16`:
