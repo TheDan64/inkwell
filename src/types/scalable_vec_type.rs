@@ -178,7 +178,7 @@ impl<'ctx> ScalableVectorType<'ctx> {
     #[cfg_attr(
         any(
             all(feature = "llvm15-0", not(feature = "typed-pointers")),
-            feature = "llvm16-0",
+            all(feature = "llvm16-0", not(feature = "typed-pointers")),
             feature = "llvm17-0",
             feature = "llvm18-0"
         ),

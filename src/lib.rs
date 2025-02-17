@@ -152,10 +152,7 @@ assert_unique_used_features! {
 ))]
 compile_error!("Opaque pointers are not supported prior to LLVM version 15.0.");
 
-#[cfg(all(
-    any(feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"),
-    feature = "typed-pointers"
-))]
+#[cfg(all(any(feature = "llvm17-0", feature = "llvm18-0"), feature = "typed-pointers"))]
 compile_error!("Typed pointers are not supported starting from LLVM version 17.0.");
 
 /// Defines the address space in which a global will be inserted.

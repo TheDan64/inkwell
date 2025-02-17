@@ -96,7 +96,7 @@ impl<'ctx> PointerType<'ctx> {
     #[cfg_attr(
         any(
             all(feature = "llvm15-0", not(feature = "typed-pointers")),
-            feature = "llvm16-0",
+            all(feature = "llvm16-0", not(feature = "typed-pointers")),
             feature = "llvm17-0",
             feature = "llvm18-0"
         ),
@@ -356,7 +356,7 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// assert_eq!(f32_ptr_type.get_element_type().into_float_type(), f32_type);
     /// ```
-    #[llvm_versions(..=15)]
+    #[llvm_versions(..=16)]
     #[cfg(feature = "typed-pointers")]
     pub fn get_element_type(self) -> AnyTypeEnum<'ctx> {
         self.ptr_type.get_element_type()

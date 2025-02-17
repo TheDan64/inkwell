@@ -1,7 +1,7 @@
-#[cfg(feature = "typed-pointers")]
+#[cfg(all(feature = "typed-pointers", not(feature = "llvm16-0")))]
 #[cfg_attr(feature = "llvm15-0", allow(deprecated))]
 use llvm_sys::core::{LLVMConstGEP, LLVMConstInBoundsGEP};
-#[cfg(not(feature = "typed-pointers"))]
+#[cfg(any(not(feature = "typed-pointers"), feature = "llvm16-0"))]
 use llvm_sys::core::{LLVMConstGEP2, LLVMConstInBoundsGEP2};
 
 use llvm_sys::core::{LLVMConstAddrSpaceCast, LLVMConstPointerCast, LLVMConstPtrToInt};
@@ -89,9 +89,19 @@ impl<'ctx> PointerValue<'ctx> {
     pub unsafe fn const_gep(self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
+        #[cfg(not(feature = "llvm16-0"))]
         #[cfg_attr(feature = "llvm15-0", allow(deprecated))]
         let value = {
             LLVMConstGEP(
+                self.as_value_ref(),
+                index_values.as_mut_ptr(),
+                index_values.len() as u32,
+            )
+        };
+        #[cfg(feature = "llvm16-0")]
+        let value = {
+            LLVMConstGEP2(
+                self.get_type().get_element_type().as_type_ref(),
                 self.as_value_ref(),
                 index_values.as_mut_ptr(),
                 index_values.len() as u32,
@@ -124,9 +134,19 @@ impl<'ctx> PointerValue<'ctx> {
     pub unsafe fn const_in_bounds_gep(self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
+        #[cfg(not(feature = "llvm16-0"))]
         #[cfg_attr(feature = "llvm15-0", allow(deprecated))]
         let value = {
             LLVMConstInBoundsGEP(
+                self.as_value_ref(),
+                index_values.as_mut_ptr(),
+                index_values.len() as u32,
+            )
+        };
+        #[cfg(feature = "llvm16-0")]
+        let value = {
+            LLVMConstInBoundsGEP2(
+                self.get_type().get_element_type().as_type_ref(),
                 self.as_value_ref(),
                 index_values.as_mut_ptr(),
                 index_values.len() as u32,

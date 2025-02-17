@@ -5,7 +5,7 @@ use crate::InlineAsmDialect;
 use libc::c_void;
 #[llvm_versions(..=6)]
 use llvm_sys::core::LLVMConstInlineAsm;
-#[cfg(all(feature = "llvm15-0", feature = "typed-pointers"))]
+#[cfg(all(any(feature = "llvm15-0", feature = "llvm16-0"), feature = "typed-pointers"))]
 use llvm_sys::core::LLVMContextSetOpaquePointers;
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMCreateTypeAttribute;
@@ -82,8 +82,10 @@ impl ContextImpl {
     pub(crate) unsafe fn new(context: LLVMContextRef) -> Self {
         assert!(!context.is_null());
 
-        #[cfg(all(feature = "llvm15-0", feature = "typed-pointers"))]
-        unsafe { LLVMContextSetOpaquePointers(context, 0) };
+        #[cfg(all(any(feature = "llvm15-0", feature = "llvm16-0"), feature = "typed-pointers"))]
+        unsafe {
+            LLVMContextSetOpaquePointers(context, 0)
+        };
 
         ContextImpl(context)
     }
