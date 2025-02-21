@@ -33,6 +33,7 @@ pub mod debug_info;
 pub mod execution_engine;
 pub mod intrinsics;
 pub mod memory_buffer;
+pub mod memory_manager;
 #[deny(missing_docs)]
 pub mod module;
 pub mod object_file;
