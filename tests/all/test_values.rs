@@ -2,11 +2,12 @@ use inkwell::attributes::AttributeLoc;
 #[llvm_versions(7..)]
 use inkwell::comdat::ComdatSelectionKind;
 use inkwell::context::Context;
+use inkwell::memory_buffer::MemoryBuffer;
 use inkwell::module::Linkage::*;
 use inkwell::types::{AnyTypeEnum, StringRadix, VectorType};
 #[llvm_versions(18..)]
 use inkwell::values::OperandBundle;
-use inkwell::values::{AnyValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
+use inkwell::values::{AnyValue, CallSiteValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
 use inkwell::{AddressSpace, DLLStorageClass, GlobalVisibility, ThreadLocalMode};
 
 #[llvm_versions(18..)]
@@ -145,6 +146,53 @@ fn test_call_site_operand_bundles() {
     let args_iter = op_bundle0.get_args();
     assert_eq!(args_iter.len(), 2);
     args_iter.for_each(|arg| assert!(arg.into_int_value().is_const()));
+}
+
+/// Check that `CallSiteValue::get_called_fn_value` returns `None` if the underlying call is indirect.
+/// Regression test for inkwell#571.
+/// Retricted to LLVM >= 15, since the input IR uses opaque pointers.
+#[llvm_versions(15..)]
+#[test]
+fn test_call_site_function_value_indirect_call() {
+    // ```c
+    // void dummy_fn();
+    //
+    // void my_fn() {
+    //    void (*fn_ptr)(void) = &dummy_fn;
+    //    (*fn_ptr)();
+    // }
+    // ```
+
+    let llvm_ir = r#"
+        source_filename = "my_mod";
+
+        define void @my_fn() {
+            entry:
+                %0 = alloca ptr, align 8
+                store ptr @dummy_fn, ptr %0, align 8
+                %1 = load ptr, ptr %0, align 8
+                call void %1()
+                ret void
+        }
+
+        declare void @dummy_fn();
+    "#;
+
+    let memory_buffer = MemoryBuffer::create_from_memory_range_copy(llvm_ir.as_bytes(), "my_mod");
+    let context = Context::create();
+    let module = context.create_module_from_ir(memory_buffer).unwrap();
+
+    let main_fn = module.get_function("my_fn").unwrap();
+    let inst = main_fn
+        .get_last_basic_block()
+        .unwrap()
+        .get_instructions()
+        .nth(3)
+        .unwrap();
+    let call_site_value = CallSiteValue::try_from(inst).unwrap();
+
+    let fn_value = call_site_value.get_called_fn_value();
+    assert!(fn_value.is_none());
 }
 
 #[test]

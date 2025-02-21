@@ -41,11 +41,9 @@ impl<'ctx> FunctionValue<'ctx> {
     ///
     /// The ref must be valid and of type function.
     pub unsafe fn new(value: LLVMValueRef) -> Option<Self> {
-        if value.is_null() {
+        if value.is_null() || LLVMIsAFunction(value).is_null() {
             return None;
         }
-
-        assert!(!LLVMIsAFunction(value).is_null());
 
         Some(FunctionValue {
             fn_value: Value::new(value),
