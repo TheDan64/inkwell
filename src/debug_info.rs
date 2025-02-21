@@ -127,12 +127,12 @@ use llvm_sys::debuginfo::{
     LLVMDITypeGetAlignInBits, LLVMDITypeGetOffsetInBits, LLVMDITypeGetSizeInBits,
 };
 
-#[llvm_versions(..19)]
+#[llvm_versions(..19.1)]
 use llvm_sys::debuginfo::{
     LLVMDIBuilderInsertDbgValueBefore, LLVMDIBuilderInsertDeclareAtEnd, LLVMDIBuilderInsertDeclareBefore,
 };
 
-#[llvm_versions(19..)]
+#[llvm_versions(19.1..)]
 use llvm_sys::debuginfo::{
     LLVMDIBuilderInsertDbgValueRecordBefore as LLVMDIBuilderInsertDbgValueBefore,
     LLVMDIBuilderInsertDeclareRecordAtEnd as LLVMDIBuilderInsertDeclareAtEnd,
@@ -1647,51 +1647,51 @@ mod flags {
         #[llvm_variant(LLVMDWARFSourceLanguageMojo)]
         Mojo,
 
-        #[llvm_versions(19..)]
+        #[llvm_versions(19.1..)]
         #[llvm_variant(LLVMDWARFSourceLanguageHIP)]
         Hip,
 
-        #[llvm_versions(19..)]
+        #[llvm_versions(19.1..)]
         #[llvm_variant(LLVMDWARFSourceLanguageAssembly)]
         Assembly,
 
-        #[llvm_versions(19..)]
+        #[llvm_versions(19.1..)]
         #[llvm_variant(LLVMDWARFSourceLanguageC_sharp)]
         Csharp,
 
-        #[llvm_versions(19..)]
+        #[llvm_versions(19.1..)]
         #[llvm_variant(LLVMDWARFSourceLanguageGLSL)]
         Glsl,
 
-        #[llvm_versions(19..)]
+        #[llvm_versions(19.1..)]
         #[llvm_variant(LLVMDWARFSourceLanguageGLSL_ES)]
         GlslEs,
 
-        #[llvm_versions(19..)]
+        #[llvm_versions(19.1..)]
         #[llvm_variant(LLVMDWARFSourceLanguageHLSL)]
         Hlsl,
 
-        #[llvm_versions(19..)]
+        #[llvm_versions(19.1..)]
         #[llvm_variant(LLVMDWARFSourceLanguageOpenCL_CPP)]
         OpenClCpp,
 
-        #[llvm_versions(19..)]
+        #[llvm_versions(19.1..)]
         #[llvm_variant(LLVMDWARFSourceLanguageCPP_for_OpenCL)]
         CppForOpenCl,
 
-        #[llvm_versions(19..)]
+        #[llvm_versions(19.1..)]
         #[llvm_variant(LLVMDWARFSourceLanguageSYCL)]
         Sycl,
 
-        #[llvm_versions(19..)]
+        #[llvm_versions(19.1..)]
         #[llvm_variant(LLVMDWARFSourceLanguageRuby)]
         Ruby,
 
-        #[llvm_versions(19..)]
+        #[llvm_versions(19.1..)]
         #[llvm_variant(LLVMDWARFSourceLanguageMove)]
         Move,
 
-        #[llvm_versions(19..)]
+        #[llvm_versions(19.1..)]
         #[llvm_variant(LLVMDWARFSourceLanguageHylo)]
         Hylo,
     }

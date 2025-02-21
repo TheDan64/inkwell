@@ -381,11 +381,11 @@ pub enum AtomicRMWBinOp {
     #[llvm_variant(LLVMAtomicRMWBinOpFMin)]
     FMin,
 
-    #[llvm_versions(19..)]
+    #[llvm_versions(19.1..)]
     #[llvm_variant(LLVMAtomicRMWBinOpUIncWrap)]
     UIncWrap,
 
-    #[llvm_versions(19..)]
+    #[llvm_versions(19.1..)]
     #[llvm_variant(LLVMAtomicRMWBinOpUDecWrap)]
     UDecWrap,
 }

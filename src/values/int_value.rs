@@ -30,6 +30,8 @@ use crate::values::FloatValue;
 #[llvm_versions(..=16)]
 use crate::values::{BasicValue, BasicValueEnum};
 use crate::values::{InstructionValue, PointerValue, Value};
+
+#[llvm_versions(..=18)]
 use crate::IntPredicate;
 
 use super::AnyValue;

@@ -17,8 +17,10 @@ use std::fmt::{self, Display};
 use crate::types::AsTypeRef;
 use crate::types::FloatType;
 use crate::values::traits::AsValueRef;
-use crate::values::{InstructionValue, IntValue, Value};
-use crate::FloatPredicate;
+use crate::values::{InstructionValue, Value};
+
+#[llvm_versions(..=18)]
+use crate::{FloatPredicate, IntValue};
 
 use super::AnyValue;
 
