@@ -53,7 +53,7 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
       - name: Install LLVM and Clang (LLVM >= 7.1)
-        uses: sagudev/install-llvm-action@v2
+        uses: sagudev/install-llvm-action@new
         if: ${{ matrix.llvm-version[0] > 7 }}
         with:
           version: ${{ matrix.llvm-version[0] }}
@@ -79,7 +79,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v4
-      - uses: sagudev/install-llvm-action@v2
+      - uses: sagudev/install-llvm-action@new
         with:
           version: ${{ env.DOC_LLVM_VERSION }}
       - name: Install Rust Nightly
