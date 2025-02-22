@@ -1,4 +1,5 @@
 use inkwell::context::Context;
+use inkwell::memory_buffer::MemoryBuffer;
 use inkwell::types::BasicType;
 use inkwell::values::AnyValue;
 use inkwell::AddressSpace;
@@ -139,6 +140,30 @@ fn test_function_type() {
 
     assert!(fn_type.is_var_arg());
     assert_eq!(fn_type.get_context(), context);
+}
+
+/// Check that `FunctionType::get_param_types()` can handle metadata arguments.
+/// Regression test for inkwell#546
+#[llvm_versions(6..)]
+#[test]
+fn test_function_type_metadata_params() {
+    let llvm_ir = r#"
+        declare void @my_fn(i32, metadata)
+    "#;
+
+    let context = Context::create();
+    let i32_type = context.i32_type();
+    let md_type = context.metadata_type();
+
+    let memory_buffer = MemoryBuffer::create_from_memory_range_copy(llvm_ir.as_bytes(), "my_mod");
+    let module = context.create_module_from_ir(memory_buffer).unwrap();
+
+    let fn_type = module.get_function("my_fn").unwrap().get_type();
+    let param_types = fn_type.get_param_types();
+
+    assert_eq!(param_types.len(), 2);
+    assert_eq!(param_types[0].into_int_type(), i32_type);
+    assert_eq!(param_types[1].into_metadata_type(), md_type);
 }
 
 #[test]
