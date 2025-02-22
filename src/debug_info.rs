@@ -400,8 +400,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     /// * `ty` - Function type.
     /// * `is_local_to_unit` - True if this function is not externally visible.
     /// * `is_definition` - True if this is a function definition ("When isDefinition: false,
-    /// subprograms describe a declaration in the type tree as opposed to a definition of a
-    /// function").
+    ///   subprograms describe a declaration in the type tree as opposed to a definition of a
+    ///   function").
     /// * `scope_line` - Set to the beginning of the scope this starts
     /// * `flags` - E.g.: LLVMDIFlagLValueReference. These flags are used to emit dwarf attributes.
     /// * `is_optimized` - True if optimization is ON.
@@ -1363,7 +1363,11 @@ impl<'ctx> DIGlobalVariableExpression<'ctx> {
     }
 }
 
-/// https://llvm.org/docs/LangRef.html#diexpression
+/// Specialized metadata node that contains a DWARF-like expression.
+///
+/// # Remarks
+///
+/// See also the [LLVM language reference](https://llvm.org/docs/LangRef.html#diexpression).
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct DIExpression<'ctx> {
     pub(crate) metadata_ref: LLVMMetadataRef,
