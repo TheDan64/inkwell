@@ -175,7 +175,7 @@ impl<'ctx> InstructionValue<'ctx> {
                 return Some(*self);
             }
         }
-        return self.get_next_instruction()?.get_instruction_with_name(name);
+        self.get_next_instruction()?.get_instruction_with_name(name)
     }
 
     /// Set name of the `InstructionValue`.
