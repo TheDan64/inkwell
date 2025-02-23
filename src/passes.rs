@@ -636,7 +636,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// right-hand side.
     ///
     /// 2. Bitwise operators with constant operands are always grouped so that
-    /// shifts are performed first, then ors, then ands, then xors.
+    /// shifts are performed first, then ORs, then ANDs, then XORs.
     ///
     /// 3. Compare instructions are converted from <, >, ≤, or ≥ to = or ≠ if possible.
     ///
@@ -906,7 +906,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// returns something else (like constant 0), and can still be TRE’d. It can be
     /// TRE'd if all other return instructions in the function return the exact same value.
     ///
-    /// 4. If it can prove that callees do not access theier caller stack frame,
+    /// 4. If it can prove that callees do not access their caller stack frame,
     /// they are marked as eligible for tail call elimination (by the code generator).
     #[llvm_versions(..=16)]
     pub fn add_tail_call_elimination_pass(&self) {
