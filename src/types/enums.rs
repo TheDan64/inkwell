@@ -111,6 +111,28 @@ enum_type_set! {
 }
 
 impl<'ctx> BasicMetadataTypeEnum<'ctx> {
+    /// Create [`BasicMetadataTypeEnum`] from [`LLVMTypeRef`].
+    ///
+    /// # Safety
+    ///
+    /// Undefined behavior if the referenced type cannot be represented as [`BasicMetadataTypeEnum`],
+    /// or the underlying pointer is null.
+    ///
+    /// Before LLVM 6, [`BasicMetadataTypeEnum::MetadataType`] variants cannot be created
+    /// with this function. Attempting to do results in undefined behavior.
+    #[llvm_versions(6..)]
+    pub unsafe fn new(type_: LLVMTypeRef) -> Self {
+        match LLVMGetTypeKind(type_) {
+            LLVMTypeKind::LLVMMetadataTypeKind => Self::MetadataType(MetadataType::new(type_)),
+            _ => BasicTypeEnum::new(type_).into(),
+        }
+    }
+
+    #[llvm_versions(..6)]
+    pub unsafe fn new(type_: LLVMTypeRef) -> Self {
+        BasicTypeEnum::new(type_).into()
+    }
+
     pub fn into_array_type(self) -> ArrayType<'ctx> {
         if let BasicMetadataTypeEnum::ArrayType(t) = self {
             t
