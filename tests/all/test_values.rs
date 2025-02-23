@@ -1011,7 +1011,7 @@ fn test_floats() {
         assert_eq!(f128_pi.get_type(), f128_type);
         assert_eq!(f128_pi_cast.get_type(), f128_type);
 
-        // REIVEW: Why are these not FPTrunc, FPExt, FPToSI, FPToUI, BitCast instructions?
+        // REVIEW: Why are these not FPTrunc, FPExt, FPToSI, FPToUI, BitCast instructions?
         // Only thing I can think of is that they're constants and therefore precalculated
         assert!(f32_pi.as_instruction().is_none());
         assert!(f128_pi.as_instruction().is_none());

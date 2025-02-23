@@ -806,7 +806,7 @@ impl<'ctx> Builder<'ctx> {
     }
 
     /// Landing pads are places where control flow jumps to if a [`Builder::build_invoke`] triggered an exception.
-    /// The landing pad will match the exception against its *clauses*. Depending on the clause
+    /// The landing pad will match the exception against its `clauses`. Depending on the clause
     /// that is matched, the exception can then be handled, or resumed after some optional cleanup,
     /// causing the exception to bubble up.
     ///
@@ -848,7 +848,7 @@ impl<'ctx> Builder<'ctx> {
     /// ```
     ///
     /// * **catch all**: An implementation of the C++ `catch(...)`, which catches all exceptions.
-    /// A catch clause with a NULL pointer value will match anything.
+    ///   A catch clause with a NULL pointer value will match anything.
     ///
     /// ```no_run
     /// use inkwell::context::Context;
@@ -920,7 +920,7 @@ impl<'ctx> Builder<'ctx> {
     /// ```
     ///
     /// * **filter**: A filter clause encodes that only some types of exceptions are valid at this
-    /// point. A filter clause is made by constructing a clause from a constant array.
+    ///   point. A filter clause is made by constructing a clause from a constant array.
     ///
     /// ```no_run
     /// use inkwell::context::Context;
@@ -3455,12 +3455,14 @@ impl<'ctx> Builder<'ctx> {
         unsafe { Ok(IntValue::new(val)) }
     }
 
-    /// Builds a cmpxchg instruction. It allows you to atomically compare and replace memory.
+    /// Builds a [`cmpxchg`](https://llvm.org/docs/LangRef.html#cmpxchg-instruction) instruction.
+    ///
+    /// This instruction allows to atomically compare and replace memory.
     ///
     /// May return one of the following errors:
     /// - `Err(BuilderError::PointeeTypeMismatch)` if the pointer does not point to an element of the value type
     /// - `Err(BuilderError::ValueTypeMismatch)` if the value to compare and the new values are not of the same type, or if
-    /// the value does not have a pointer or integer type
+    ///   the value does not have a pointer or integer type
     /// - `Err(BuilderError::OrderingError)` if the following conditions are not satisfied:
     ///     - Both success and failure orderings are not Monotonic or stronger
     ///     - The failure ordering is stronger than the success ordering
@@ -3490,7 +3492,6 @@ impl<'ctx> Builder<'ctx> {
     /// builder.build_cmpxchg(i32_ptr_param, i32_seven, i32_eight, AtomicOrdering::AcquireRelease, AtomicOrdering::Monotonic).unwrap();
     /// builder.build_return(None).unwrap();
     /// ```
-    // https://llvm.org/docs/LangRef.html#cmpxchg-instruction
     pub fn build_cmpxchg<V: BasicValue<'ctx>>(
         &self,
         ptr: PointerValue<'ctx>,

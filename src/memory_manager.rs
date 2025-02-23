@@ -11,8 +11,8 @@ use llvm_sys::prelude::LLVMBool;
 ///
 /// # StackMap and GC Integration
 ///
-/// By examining the `section_name` argument in [`allocate_data_section`], you
-/// can detect sections such as `.llvm_stackmaps` (on ELF) or `__llvm_stackmaps`
+/// By examining the `section_name` argument in [`McjitMemoryManager::allocate_data_section`],
+/// you can detect sections such as `.llvm_stackmaps` (on ELF) or `__llvm_stackmaps`
 /// (on Mach-O). Recording the location of these sections may be useful for
 /// custom garbage collectors. For more information, refer to the [LLVM
 /// StackMaps documentation](https://llvm.org/docs/StackMaps.html#stack-map-section).

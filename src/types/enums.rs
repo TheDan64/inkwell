@@ -72,7 +72,7 @@ enum_type_set! {
         StructType,
         /// A contiguous homogeneous "SIMD" container type.
         VectorType,
-        /// A contiguous homogenous scalable "SIMD" container type.
+        /// A contiguous homogeneous scalable "SIMD" container type.
         ScalableVectorType,
         /// A valueless type.
         VoidType,
@@ -93,7 +93,7 @@ enum_type_set! {
         StructType,
         /// A contiguous homogeneous "SIMD" container type.
         VectorType,
-        /// A contiguous homogenous scalable "SIMD" container type.
+        /// A contiguous homogeneous scalable "SIMD" container type.
         ScalableVectorType,
     }
 }
