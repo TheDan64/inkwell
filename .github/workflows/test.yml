@@ -9,16 +9,20 @@ env:
   DOC_PATH: target/doc
 
 jobs:
-  typos:
-    name: Typos
+  lint:
+    name: Linting
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
       - name: Install Rust Stable
         uses: dtolnay/rust-toolchain@stable
       - name: Install typos
         uses: taiki-e/install-action@typos
-      - name: Run typos
+      - name: Check typos
         run: typos .
+      - name: Check code formatting
+        run: cargo fmt --check
   tests:
     name: "LLVM ${{ matrix.llvm-version[0] }}: ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
@@ -74,7 +78,7 @@ jobs:
   doc:
     name: Documentation
     runs-on: ubuntu-20.04
-    needs: [typos, tests]
+    needs: [lint, tests]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v4
