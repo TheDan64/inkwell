@@ -859,11 +859,12 @@ impl<'ctx> Module<'ctx> {
         unsafe { MemoryBuffer::new(memory_buffer) }
     }
 
-    /// Ensures that the current `Module` is valid, and returns a `Result`
-    /// that describes whether or not it is, returning a LLVM allocated string on error.
+    /// Check whether the current [`Module`] is valid.
+    ///
+    /// The error variant is an LLVM-allocated string.
     ///
     /// # Remarks
-    /// See also: http://llvm.org/doxygen/Analysis_2Analysis_8cpp_source.html
+    /// See also: [`LLVMVerifyModule`](https://llvm.org/doxygen/group__LLVMCAnalysis.html#ga5645aec2d95116c0432a676db77b2cb0).
     pub fn verify(&self) -> Result<(), LLVMString> {
         let mut err_str = MaybeUninit::uninit();
 
@@ -1627,11 +1628,15 @@ impl<'ctx> Module<'ctx> {
     }
 
     /// Construct and run a set of passes over a module.
+    ///
     /// This function takes a string with the passes that should be used.
-    /// The format of this string is the same as opt's -passes argument for the new pass manager.
+    /// The format of this string is the same as
+    /// [`opt`](https://llvm.org/docs/CommandGuide/opt.html)'s
+    /// `-{passes}` argument for the new pass manager.
     /// Individual passes may be specified, separated by commas.
-    /// Full pipelines may also be invoked using default<O3> and friends.
-    /// See opt for full reference of the Passes format.
+    /// Full pipelines may also be invoked using `"default<O3>"` and friends.
+    /// See [`opt`](https://llvm.org/docs/CommandGuide/opt.html)
+    /// for full reference of the `passes` format.
     #[llvm_versions(13..)]
     pub fn run_passes(
         &self,
