@@ -150,7 +150,7 @@ fn test_call_site_operand_bundles() {
 
 /// Check that `CallSiteValue::get_called_fn_value` returns `None` if the underlying call is indirect.
 /// Regression test for inkwell#571.
-/// Retricted to LLVM >= 15, since the input IR uses opaque pointers.
+/// Restricted to LLVM >= 15, since the input IR uses opaque pointers.
 #[llvm_versions(15..)]
 #[test]
 fn test_call_site_function_value_indirect_call() {
