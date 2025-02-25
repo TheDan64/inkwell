@@ -10,7 +10,7 @@ use std::mem::forget;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
-use crate::types::{AnyType, BasicTypeEnum, PointerType, Type};
+use crate::types::{AnyType, BasicMetadataTypeEnum, BasicTypeEnum, PointerType, Type};
 use crate::AddressSpace;
 
 /// A `FunctionType` is the type of a function variable.
@@ -84,7 +84,7 @@ impl<'ctx> FunctionType<'ctx> {
     ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```
     /// use inkwell::context::Context;
     ///
     /// let context = Context::create();
@@ -95,7 +95,7 @@ impl<'ctx> FunctionType<'ctx> {
     /// assert_eq!(param_types.len(), 1);
     /// assert_eq!(param_types[0].into_float_type(), f32_type);
     /// ```
-    pub fn get_param_types(self) -> Vec<BasicTypeEnum<'ctx>> {
+    pub fn get_param_types(self) -> Vec<BasicMetadataTypeEnum<'ctx>> {
         let count = self.count_param_types();
         let mut raw_vec: Vec<LLVMTypeRef> = Vec::with_capacity(count as usize);
         let ptr = raw_vec.as_mut_ptr();
@@ -108,7 +108,10 @@ impl<'ctx> FunctionType<'ctx> {
             Vec::from_raw_parts(ptr, count as usize, count as usize)
         };
 
-        raw_vec.iter().map(|val| unsafe { BasicTypeEnum::new(*val) }).collect()
+        raw_vec
+            .iter()
+            .map(|val| unsafe { BasicMetadataTypeEnum::new(*val) })
+            .collect()
     }
 
     /// Counts the number of param types this `FunctionType` has.

@@ -481,7 +481,13 @@ impl<'ctx> BasicBlock<'ctx> {
         {
             use llvm_sys::core::LLVMSetValueName2;
 
-            unsafe { LLVMSetValueName2(LLVMBasicBlockAsValue(self.basic_block), c_string.as_ptr(), c_string.to_bytes().len()) };
+            unsafe {
+                LLVMSetValueName2(
+                    LLVMBasicBlockAsValue(self.basic_block),
+                    c_string.as_ptr(),
+                    c_string.to_bytes().len(),
+                )
+            };
         }
     }
 

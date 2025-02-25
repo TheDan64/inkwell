@@ -175,7 +175,7 @@ impl<'ctx> InstructionValue<'ctx> {
                 return Some(*self);
             }
         }
-        return self.get_next_instruction()?.get_instruction_with_name(name);
+        self.get_next_instruction()?.get_instruction_with_name(name)
     }
 
     /// Set name of the `InstructionValue`.
@@ -534,7 +534,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// 2) Bitcast has one: a variable float pointer %0
     /// 3) Function call has two: i8 pointer %1 argument, and the free function itself
     /// 4) Void return has zero: void is not a value and does not count as an operand
-    /// even though the return instruction can take values.
+    ///    even though the return instruction can take values.
     pub fn get_num_operands(self) -> u32 {
         unsafe { LLVMGetNumOperands(self.as_value_ref()) as u32 }
     }
@@ -602,7 +602,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// 2) Bitcast has one: a variable float pointer %0
     /// 3) Function call has two: i8 pointer %1 argument, and the free function itself
     /// 4) Void return has zero: void is not a value and does not count as an operand
-    /// even though the return instruction can take values.
+    ///    even though the return instruction can take values.
     pub fn get_operand(self, index: u32) -> Option<Either<BasicValueEnum<'ctx>, BasicBlock<'ctx>>> {
         let num_operands = self.get_num_operands();
 

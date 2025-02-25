@@ -157,19 +157,19 @@ compile_error!("Typed pointers are not supported starting from LLVM version 17.0
 
 /// Defines the address space in which a global will be inserted.
 ///
-/// The default address space is zero. An address space can always be created from a `u16`:
+/// The default address space is number zero. An address space can always be created from a [`u16`]:
 /// ```no_run
 /// inkwell::AddressSpace::from(1u16);
 /// ```
 ///
-/// An Address space is a 24-bit number. To convert from a u32, use the `TryFrom` instance
+/// An address space is a 24-bit number. To convert from a [`u32`], use the [`TryFrom`] implementation:
 ///
 /// ```no_run
 /// inkwell::AddressSpace::try_from(42u32).expect("fits in 24-bit unsigned int");
 /// ```
 ///
 /// # Remarks
-/// See also: https://llvm.org/doxygen/NVPTXBaseInfo_8h_source.html
+/// See also: <https://llvm-swift.github.io/LLVMSwift/Structs/AddressSpace.html>
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Default)]
 pub struct AddressSpace(u32);
 
@@ -400,10 +400,11 @@ pub enum AtomicRMWBinOp {
     FMin,
 }
 
-/// Defines the optimization level used to compile a `Module`.
+/// Defines the optimization level used to compile a [`Module`](crate::module::Module).
 ///
 /// # Remarks
-/// See also: https://llvm.org/doxygen/CodeGen_8h_source.html
+///
+/// See the C++ API documentation: [`llvm::CodeGenOpt`](https://llvm.org/doxygen/namespacellvm_1_1CodeGenOpt.html).
 #[repr(u32)]
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
