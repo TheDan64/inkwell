@@ -53,19 +53,9 @@ fn test_values_get_context() {
     let i8_type = context.i8_type();
     let f32_type = context.f32_type();
     let f32_vec_type = f32_type.vec_type(3);
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    )))]
+    #[cfg(feature = "typed-pointers")]
     let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let f32_ptr_type = context.ptr_type(AddressSpace::default());
     let f32_array_type = f32_type.array_type(2);
     let fn_type = f32_type.fn_type(&[], false);
