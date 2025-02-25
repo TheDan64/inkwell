@@ -266,7 +266,8 @@ impl<'ctx> AnyTypeEnum<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-0"
+                feature = "llvm18-0",
+                feature = "llvm19-1"
             ))]
             LLVMTypeKind::LLVMBFloatTypeKind => AnyTypeEnum::FloatType(FloatType::new(type_)),
             LLVMTypeKind::LLVMLabelTypeKind => panic!("FIXME: Unsupported type: Label"),
@@ -284,7 +285,8 @@ impl<'ctx> AnyTypeEnum<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-0"
+                feature = "llvm18-0",
+                feature = "llvm19-1"
             ))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => AnyTypeEnum::ScalableVectorType(ScalableVectorType::new(type_)),
             // FIXME: should inkwell support metadata as AnyType?
@@ -297,11 +299,17 @@ impl<'ctx> AnyTypeEnum<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-0"
+                feature = "llvm18-0",
+                feature = "llvm19-1"
             ))]
             LLVMTypeKind::LLVMX86_AMXTypeKind => panic!("FIXME: Unsupported type: AMX"),
             LLVMTypeKind::LLVMTokenTypeKind => panic!("FIXME: Unsupported type: Token"),
-            #[cfg(any(feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+            #[cfg(any(
+                feature = "llvm16-0",
+                feature = "llvm17-0",
+                feature = "llvm18-0",
+                feature = "llvm19-1"
+            ))]
             LLVMTypeKind::LLVMTargetExtTypeKind => panic!("FIXME: Unsupported type: TargetExt"),
         }
     }
@@ -466,7 +474,8 @@ impl<'ctx> BasicTypeEnum<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-0"
+                feature = "llvm18-0",
+                feature = "llvm19-1"
             ))]
             LLVMTypeKind::LLVMBFloatTypeKind => BasicTypeEnum::FloatType(FloatType::new(type_)),
             LLVMTypeKind::LLVMIntegerTypeKind => BasicTypeEnum::IntType(IntType::new(type_)),
@@ -482,7 +491,8 @@ impl<'ctx> BasicTypeEnum<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-0"
+                feature = "llvm18-0",
+                feature = "llvm19-1"
             ))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => {
                 BasicTypeEnum::ScalableVectorType(ScalableVectorType::new(type_))
@@ -498,14 +508,20 @@ impl<'ctx> BasicTypeEnum<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-0"
+                feature = "llvm18-0",
+                feature = "llvm19-1"
             ))]
             LLVMTypeKind::LLVMX86_AMXTypeKind => unreachable!("Unsupported basic type: AMX"),
             LLVMTypeKind::LLVMLabelTypeKind => unreachable!("Unsupported basic type: Label"),
             LLVMTypeKind::LLVMVoidTypeKind => unreachable!("Unsupported basic type: VoidType"),
             LLVMTypeKind::LLVMFunctionTypeKind => unreachable!("Unsupported basic type: FunctionType"),
             LLVMTypeKind::LLVMTokenTypeKind => unreachable!("Unsupported basic type: Token"),
-            #[cfg(any(feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+            #[cfg(any(
+                feature = "llvm16-0",
+                feature = "llvm17-0",
+                feature = "llvm18-0",
+                feature = "llvm19-1"
+            ))]
             LLVMTypeKind::LLVMTargetExtTypeKind => unreachable!("Unsupported basic type: TargetExt"),
         }
     }
