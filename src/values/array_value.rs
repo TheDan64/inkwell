@@ -139,7 +139,7 @@ impl<'ctx> ArrayValue<'ctx> {
     /// use std::ffi::CStr;
     ///
     /// let context = Context::create();
-    /// let string = context.const_string(b"hello!", true);
+    /// let string = context.const_string(b"hello!", false);
     ///
     /// let result = b"hello!".as_slice();
     /// assert_eq!(string.as_const_string(), Some(result));
