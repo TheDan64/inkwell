@@ -1510,6 +1510,7 @@ fn test_string_values() {
     let i8_type = context.i8_type();
     let string = context.const_string(b"my_string", false);
     let string_null = context.const_string(b"my_string", true);
+    let string_internal_nul = context.const_string(b"my\0string", false);
 
     assert!(string.is_const());
     assert!(string_null.is_const());
@@ -1524,27 +1525,32 @@ fn test_string_values() {
     assert_eq!(string.get_type().get_element_type().into_int_type(), i8_type);
     assert_eq!(string_null.get_type().get_element_type().into_int_type(), i8_type);
 
-    let string_const = string.get_string_constant();
-    let string_null_const = string_null.get_string_constant();
+    let string_const = string.as_const_string();
+    let string_null_const = string_null.as_const_string();
+    let string_internal_nul_const = string_internal_nul.as_const_string();
 
     assert!(string_const.is_some());
     assert!(string_null_const.is_some());
-    assert_eq!(string_const.unwrap().to_str(), Ok("my_string"));
-    assert_eq!(string_null_const.unwrap().to_str(), Ok("my_string"));
+    assert_eq!(string_const.unwrap(), b"my_string");
+    assert_eq!(string_null_const.unwrap(), b"my_string\0");
+    assert_eq!(string_internal_nul_const.unwrap(), b"my\0string");
 
     let i8_val = i8_type.const_int(33, false);
     let i8_val2 = i8_type.const_int(43, false);
     let non_string_vec_i8 = i8_type.const_array(&[i8_val, i8_val2]);
-    let non_string_vec_i8_const = non_string_vec_i8.get_string_constant();
+    let non_string_vec_i8_const = non_string_vec_i8.as_const_string();
 
     // TODOC: Will still interpret vec as string even if not generated with const_string:
     assert!(non_string_vec_i8_const.is_some());
-    assert_eq!(non_string_vec_i8_const.unwrap().to_str(), Ok("!+"));
+    assert_eq!(non_string_vec_i8_const.unwrap(), b"!+");
 
     let i32_type = context.i32_type();
     let i32_val = i32_type.const_int(33, false);
     let i32_val2 = i32_type.const_int(43, false);
     let non_string_vec_i32 = i8_type.const_array(&[i32_val, i32_val2, i32_val2]);
+
+    // This test expects silent truncation
+    #[allow(deprecated)]
     let non_string_vec_i32_const = non_string_vec_i32.get_string_constant();
 
     // TODOC: Will still interpret vec with non i8 but in unexpected ways:
