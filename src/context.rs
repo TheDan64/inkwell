@@ -5,6 +5,8 @@ use crate::InlineAsmDialect;
 use libc::c_void;
 #[llvm_versions(..=6)]
 use llvm_sys::core::LLVMConstInlineAsm;
+#[cfg(all(any(feature = "llvm15-0", feature = "llvm16-0"), feature = "typed-pointers"))]
+use llvm_sys::core::LLVMContextSetOpaquePointers;
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMCreateTypeAttribute;
 #[llvm_versions(7..)]
@@ -13,7 +15,7 @@ use llvm_sys::core::LLVMGetInlineAsm;
 use llvm_sys::core::LLVMGetTypeByName2;
 #[llvm_versions(6..)]
 use llvm_sys::core::LLVMMetadataTypeInContext;
-#[llvm_versions(15..)]
+#[cfg(not(feature = "typed-pointers"))]
 use llvm_sys::core::LLVMPointerTypeInContext;
 use llvm_sys::core::{
     LLVMAppendBasicBlockInContext, LLVMConstStringInContext, LLVMConstStructInContext, LLVMContextCreate,
@@ -43,7 +45,9 @@ use crate::targets::TargetData;
 use crate::types::AnyTypeEnum;
 #[llvm_versions(6..)]
 use crate::types::MetadataType;
-use crate::types::{AsTypeRef, BasicTypeEnum, FloatType, FunctionType, IntType, PointerType, StructType, VoidType};
+#[cfg(not(feature = "typed-pointers"))]
+use crate::types::PointerType;
+use crate::types::{AsTypeRef, BasicTypeEnum, FloatType, FunctionType, IntType, StructType, VoidType};
 use crate::values::{
     ArrayValue, AsValueRef, BasicMetadataValueEnum, BasicValueEnum, FunctionValue, MetadataValue, PointerValue,
     StructValue,
@@ -77,6 +81,11 @@ pub(crate) struct ContextImpl(pub(crate) LLVMContextRef);
 impl ContextImpl {
     pub(crate) unsafe fn new(context: LLVMContextRef) -> Self {
         assert!(!context.is_null());
+
+        #[cfg(all(any(feature = "llvm15-0", feature = "llvm16-0"), feature = "typed-pointers"))]
+        unsafe {
+            LLVMContextSetOpaquePointers(context, 0)
+        };
 
         ContextImpl(context)
     }
@@ -245,7 +254,7 @@ impl ContextImpl {
         unsafe { FloatType::new(LLVMPPCFP128TypeInContext(self.0)) }
     }
 
-    #[llvm_versions(15..)]
+    #[cfg(not(feature = "typed-pointers"))]
     fn ptr_type<'ctx>(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         unsafe { PointerType::new(LLVMPointerTypeInContext(self.0, address_space.0)) }
     }
@@ -962,7 +971,7 @@ impl Context {
     /// assert_eq!(ptr_type.get_address_space(), AddressSpace::default());
     /// assert_eq!(ptr_type.get_context(), context);
     /// ```
-    #[llvm_versions(15..)]
+    #[cfg(not(feature = "typed-pointers"))]
     #[inline]
     pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
         self.context.ptr_type(address_space)
@@ -1844,7 +1853,7 @@ impl<'ctx> ContextRef<'ctx> {
     /// assert_eq!(ptr_type.get_address_space(), AddressSpace::default());
     /// assert_eq!(ptr_type.get_context(), context);
     /// ```
-    #[llvm_versions(15..)]
+    #[cfg(not(feature = "typed-pointers"))]
     #[inline]
     pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.context.ptr_type(address_space)
