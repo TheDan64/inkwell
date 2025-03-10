@@ -37,6 +37,7 @@ use std::mem::{forget, MaybeUninit};
 use std::path::Path;
 use std::ptr;
 use std::rc::Rc;
+use std::sync::Arc;
 
 #[llvm_versions(7..)]
 use crate::comdat::Comdat;
@@ -173,7 +174,7 @@ pub enum Linkage {
 pub struct Module<'ctx> {
     data_layout: RefCell<Option<DataLayout>>,
     pub(crate) module: Cell<LLVMModuleRef>,
-    pub(crate) owned_by_ee: RefCell<Option<ExecutionEngine<'ctx>>>,
+    pub(crate) owned_by_ee: RefCell<Option<ExecutionEngine>>,
     _marker: PhantomData<&'ctx Context>,
 }
 
@@ -462,7 +463,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_context(), context);
     /// ```
     // SubType: ExecutionEngine<Basic?>
-    pub fn create_execution_engine(&self) -> Result<ExecutionEngine<'ctx>, LLVMString> {
+    pub fn create_execution_engine(&self) -> Result<ExecutionEngine, LLVMString> {
         Target::initialize_native(&InitializationConfig::default()).map_err(|mut err_string| {
             err_string.push('\0');
 
@@ -492,7 +493,7 @@ impl<'ctx> Module<'ctx> {
         }
 
         let execution_engine = unsafe { execution_engine.assume_init() };
-        let execution_engine = unsafe { ExecutionEngine::new(Rc::new(execution_engine), false) };
+        let execution_engine = unsafe { ExecutionEngine::new(Arc::new(execution_engine), false) };
 
         *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
 
@@ -516,7 +517,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_context(), context);
     /// ```
     // SubType: ExecutionEngine<Interpreter>
-    pub fn create_interpreter_execution_engine(&self) -> Result<ExecutionEngine<'ctx>, LLVMString> {
+    pub fn create_interpreter_execution_engine(&self) -> Result<ExecutionEngine, LLVMString> {
         Target::initialize_native(&InitializationConfig::default()).map_err(|mut err_string| {
             err_string.push('\0');
 
@@ -547,7 +548,7 @@ impl<'ctx> Module<'ctx> {
         }
 
         let execution_engine = unsafe { execution_engine.assume_init() };
-        let execution_engine = unsafe { ExecutionEngine::new(Rc::new(execution_engine), false) };
+        let execution_engine = unsafe { ExecutionEngine::new(Arc::new(execution_engine), false) };
 
         *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
 
@@ -572,10 +573,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_context(), context);
     /// ```
     // SubType: ExecutionEngine<Jit>
-    pub fn create_jit_execution_engine(
-        &self,
-        opt_level: OptimizationLevel,
-    ) -> Result<ExecutionEngine<'ctx>, LLVMString> {
+    pub fn create_jit_execution_engine(&self, opt_level: OptimizationLevel) -> Result<ExecutionEngine, LLVMString> {
         Target::initialize_native(&InitializationConfig::default()).map_err(|mut err_string| {
             err_string.push('\0');
 
@@ -607,7 +605,7 @@ impl<'ctx> Module<'ctx> {
         }
 
         let execution_engine = unsafe { execution_engine.assume_init() };
-        let execution_engine = unsafe { ExecutionEngine::new(Rc::new(execution_engine), true) };
+        let execution_engine = unsafe { ExecutionEngine::new(Arc::new(execution_engine), true) };
 
         *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
 

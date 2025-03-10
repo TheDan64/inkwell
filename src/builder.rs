@@ -57,6 +57,7 @@ use crate::{AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate};
 
 use std::cell::Cell;
 use std::marker::PhantomData;
+use std::sync::Arc;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 enum PositionState {
