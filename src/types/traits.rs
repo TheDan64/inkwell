@@ -134,8 +134,8 @@ pub unsafe trait BasicType<'ctx>: AnyType<'ctx> {
     /// ```
     #[cfg_attr(
         any(
-            feature = "llvm15-0",
-            feature = "llvm16-0",
+            all(feature = "llvm15-0", not(feature = "typed-pointers")),
+            all(feature = "llvm16-0", not(feature = "typed-pointers")),
             feature = "llvm17-0",
             feature = "llvm18-0"
         ),

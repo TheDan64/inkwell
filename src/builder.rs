@@ -22,15 +22,14 @@ use llvm_sys::core::{
     LLVMSetCleanup,
 };
 #[llvm_versions(..=14)]
-use llvm_sys::core::{
-    LLVMBuildCall, LLVMBuildGEP, LLVMBuildInBoundsGEP, LLVMBuildInvoke, LLVMBuildLoad, LLVMBuildPtrDiff,
-    LLVMBuildStructGEP,
-};
+use llvm_sys::core::{LLVMBuildCall, LLVMBuildInvoke};
 #[llvm_versions(15..)]
-use llvm_sys::core::{
-    LLVMBuildCall2, LLVMBuildGEP2, LLVMBuildInBoundsGEP2, LLVMBuildInvoke2, LLVMBuildLoad2, LLVMBuildPtrDiff2,
-    LLVMBuildStructGEP2,
-};
+use llvm_sys::core::{LLVMBuildCall2, LLVMBuildInvoke2};
+#[cfg(all(feature = "typed-pointers", not(feature = "llvm16-0")))]
+#[cfg_attr(feature = "llvm15-0", allow(deprecated))]
+use llvm_sys::core::{LLVMBuildGEP, LLVMBuildInBoundsGEP, LLVMBuildLoad, LLVMBuildPtrDiff, LLVMBuildStructGEP};
+#[cfg(any(not(feature = "typed-pointers"), feature = "llvm16-0"))]
+use llvm_sys::core::{LLVMBuildGEP2, LLVMBuildInBoundsGEP2, LLVMBuildLoad2, LLVMBuildPtrDiff2, LLVMBuildStructGEP2};
 #[llvm_versions(8..)]
 use llvm_sys::core::{LLVMBuildIntCast2, LLVMBuildMemCpy, LLVMBuildMemMove, LLVMBuildMemSet};
 
@@ -576,9 +575,9 @@ impl<'ctx> Builder<'ctx> {
     ///     };
     ///
     ///     // type of an exception in C++
-    ///     #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    ///     #[cfg(feature = "typed-pointers")]
     ///     let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::default());
-    ///     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    ///     #[cfg(not(feature = "typed-pointers"))]
     ///     let i32_ptr_ty = context.ptr_type(AddressSpace::default());
     ///     let i32_type = context.i32_type();
     ///     let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
@@ -697,6 +696,9 @@ impl<'ctx> Builder<'ctx> {
     ///     };
     ///
     ///     // type of an exception in C++
+    ///     #[cfg(feature = "typed-pointers")]
+    ///     let ptr_type = context.i8_type().ptr_type(AddressSpace::default());
+    ///     #[cfg(not(feature = "typed-pointers"))]
     ///     let ptr_type = context.ptr_type(AddressSpace::default());
     ///     let i32_type = context.i32_type();
     ///     let exception_type = context.struct_type(&[ptr_type.into(), i32_type.into()], false);
@@ -828,9 +830,9 @@ impl<'ctx> Builder<'ctx> {
     /// let builder = context.create_builder();
     ///
     /// // type of an exception in C++
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let i8_ptr_type = context.i8_type().ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let i8_ptr_type = context.ptr_type(AddressSpace::default());
     /// let i32_type = context.i32_type();
     /// let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
@@ -860,9 +862,9 @@ impl<'ctx> Builder<'ctx> {
     /// let builder = context.create_builder();
     ///
     /// // type of an exception in C++
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let i8_ptr_type = context.i8_type().ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let i8_ptr_type = context.ptr_type(AddressSpace::default());
     /// let i32_type = context.i32_type();
     /// let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
@@ -895,9 +897,9 @@ impl<'ctx> Builder<'ctx> {
     /// let builder = context.create_builder();
     ///
     /// // type of an exception in C++
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let i8_ptr_type = context.i8_type().ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let i8_ptr_type = context.ptr_type(AddressSpace::default());
     /// let i32_type = context.i32_type();
     /// let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
@@ -933,9 +935,9 @@ impl<'ctx> Builder<'ctx> {
     /// let builder = context.create_builder();
     ///
     /// // type of an exception in C++
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let i8_ptr_type = context.i8_type().ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let i8_ptr_type = context.ptr_type(AddressSpace::default());
     /// let i32_type = context.i32_type();
     /// let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
@@ -1055,9 +1057,9 @@ impl<'ctx> Builder<'ctx> {
     ///     };
     ///
     ///     // type of an exception in C++
-    ///     #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    ///     #[cfg(feature = "typed-pointers")]
     ///     let i8_ptr_type = context.i8_type().ptr_type(AddressSpace::default());
-    ///     #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    ///     #[cfg(not(feature = "typed-pointers"))]
     ///     let i8_ptr_type = context.ptr_type(AddressSpace::default());
     ///     let i32_type = context.i32_type();
     ///     let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
@@ -1081,7 +1083,7 @@ impl<'ctx> Builder<'ctx> {
 
     // REVIEW: Doesn't GEP work on array too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    #[llvm_versions(..=14)]
+    #[cfg(feature = "typed-pointers")]
     pub unsafe fn build_gep(
         &self,
         ptr: PointerValue<'ctx>,
@@ -1095,8 +1097,19 @@ impl<'ctx> Builder<'ctx> {
 
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
+        #[cfg(not(feature = "llvm16-0"))]
+        #[cfg_attr(feature = "llvm15-0", allow(deprecated))]
         let value = LLVMBuildGEP(
             self.builder,
+            ptr.as_value_ref(),
+            index_values.as_mut_ptr(),
+            index_values.len() as u32,
+            c_string.as_ptr(),
+        );
+        #[cfg(feature = "llvm16-0")]
+        let value = LLVMBuildGEP2(
+            self.builder,
+            ptr.get_type().get_element_type().as_type_ref(),
             ptr.as_value_ref(),
             index_values.as_mut_ptr(),
             index_values.len() as u32,
@@ -1108,7 +1121,7 @@ impl<'ctx> Builder<'ctx> {
 
     // REVIEW: Doesn't GEP work on array too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    #[llvm_versions(15..)]
+    #[cfg(not(feature = "typed-pointers"))]
     pub unsafe fn build_gep<T: BasicType<'ctx>>(
         &self,
         pointee_ty: T,
@@ -1138,7 +1151,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Doesn't GEP work on array too?
     // REVIEW: This could be merge in with build_gep via a in_bounds: bool param
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    #[llvm_versions(..=14)]
+    #[cfg(feature = "typed-pointers")]
     pub unsafe fn build_in_bounds_gep(
         &self,
         ptr: PointerValue<'ctx>,
@@ -1152,8 +1165,19 @@ impl<'ctx> Builder<'ctx> {
 
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
+        #[cfg(not(feature = "llvm16-0"))]
+        #[cfg_attr(feature = "llvm15-0", allow(deprecated))]
         let value = LLVMBuildInBoundsGEP(
             self.builder,
+            ptr.as_value_ref(),
+            index_values.as_mut_ptr(),
+            index_values.len() as u32,
+            c_string.as_ptr(),
+        );
+        #[cfg(feature = "llvm16-0")]
+        let value = LLVMBuildInBoundsGEP2(
+            self.builder,
+            ptr.get_type().get_element_type().as_type_ref(),
             ptr.as_value_ref(),
             index_values.as_mut_ptr(),
             index_values.len() as u32,
@@ -1166,7 +1190,7 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Doesn't GEP work on array too?
     // REVIEW: This could be merge in with build_gep via a in_bounds: bool param
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    #[llvm_versions(15..)]
+    #[cfg(not(feature = "typed-pointers"))]
     pub unsafe fn build_in_bounds_gep<T: BasicType<'ctx>>(
         &self,
         pointee_ty: T,
@@ -1207,9 +1231,9 @@ impl<'ctx> Builder<'ctx> {
     /// let module = context.create_module("struct_gep");
     /// let void_type = context.void_type();
     /// let i32_ty = context.i32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let i32_ptr_ty = i32_ty.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let i32_ptr_ty = context.ptr_type(AddressSpace::default());
     /// let field_types = &[i32_ty.into(), i32_ty.into()];
     /// let struct_ty = context.struct_type(field_types, false);
@@ -1229,7 +1253,7 @@ impl<'ctx> Builder<'ctx> {
     /// assert!(builder.build_struct_gep(struct_ptr, 1, "struct_gep").is_ok());
     /// assert!(builder.build_struct_gep(struct_ptr, 2, "struct_gep").is_err());
     /// ```
-    #[llvm_versions(..=14)]
+    #[cfg(feature = "typed-pointers")]
     pub fn build_struct_gep(
         &self,
         ptr: PointerValue<'ctx>,
@@ -1254,7 +1278,19 @@ impl<'ctx> Builder<'ctx> {
 
         let c_string = to_c_str(name);
 
+        #[cfg(not(feature = "llvm16-0"))]
+        #[cfg_attr(feature = "llvm15-0", allow(deprecated))]
         let value = unsafe { LLVMBuildStructGEP(self.builder, ptr.as_value_ref(), index, c_string.as_ptr()) };
+        #[cfg(feature = "llvm16-0")]
+        let value = unsafe {
+            LLVMBuildStructGEP2(
+                self.builder,
+                ptr.get_type().get_element_type().as_type_ref(),
+                ptr.as_value_ref(),
+                index,
+                c_string.as_ptr(),
+            )
+        };
 
         unsafe { Ok(PointerValue::new(value)) }
     }
@@ -1273,9 +1309,9 @@ impl<'ctx> Builder<'ctx> {
     /// let module = context.create_module("struct_gep");
     /// let void_type = context.void_type();
     /// let i32_ty = context.i32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let i32_ptr_ty = i32_ty.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let i32_ptr_ty = context.ptr_type(AddressSpace::default());
     /// let field_types = &[i32_ty.into(), i32_ty.into()];
     /// let struct_ty = context.struct_type(field_types, false);
@@ -1295,7 +1331,7 @@ impl<'ctx> Builder<'ctx> {
     /// assert!(builder.build_struct_gep(struct_ty, struct_ptr, 1, "struct_gep").is_ok());
     /// assert!(builder.build_struct_gep(struct_ty, struct_ptr, 2, "struct_gep").is_err());
     /// ```
-    #[llvm_versions(15..)]
+    #[cfg(not(feature = "typed-pointers"))]
     pub fn build_struct_gep<T: BasicType<'ctx>>(
         &self,
         pointee_ty: T,
@@ -1347,9 +1383,9 @@ impl<'ctx> Builder<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let i32_type = context.i32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let i32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[i32_ptr_type.into(), i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("ret", fn_type, None);
@@ -1361,7 +1397,7 @@ impl<'ctx> Builder<'ctx> {
     /// builder.build_ptr_diff(i32_ptr_param1, i32_ptr_param2, "diff").unwrap();
     /// builder.build_return(None).unwrap();
     /// ```
-    #[llvm_versions(..=14)]
+    #[cfg(feature = "typed-pointers")]
     pub fn build_ptr_diff(
         &self,
         lhs_ptr: PointerValue<'ctx>,
@@ -1372,6 +1408,8 @@ impl<'ctx> Builder<'ctx> {
             return Err(BuilderError::UnsetPosition);
         }
         let c_string = to_c_str(name);
+        #[cfg(not(feature = "llvm16-0"))]
+        #[cfg_attr(feature = "llvm15-0", allow(deprecated))]
         let value = unsafe {
             LLVMBuildPtrDiff(
                 self.builder,
@@ -1379,6 +1417,24 @@ impl<'ctx> Builder<'ctx> {
                 rhs_ptr.as_value_ref(),
                 c_string.as_ptr(),
             )
+        };
+        #[cfg(feature = "llvm16-0")]
+        let value = {
+            if lhs_ptr.get_type().as_basic_type_enum() != rhs_ptr.get_type().as_basic_type_enum() {
+                return Err(BuilderError::ValueTypeMismatch(
+                    "The values must have the same pointer type.",
+                ));
+            }
+
+            unsafe {
+                LLVMBuildPtrDiff2(
+                    self.builder,
+                    lhs_ptr.get_type().get_element_type().as_type_ref(),
+                    lhs_ptr.as_value_ref(),
+                    rhs_ptr.as_value_ref(),
+                    c_string.as_ptr(),
+                )
+            }
         };
 
         unsafe { Ok(IntValue::new(value)) }
@@ -1398,9 +1454,9 @@ impl<'ctx> Builder<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let i32_type = context.i32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let i32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[i32_ptr_type.into(), i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("ret", fn_type, None);
@@ -1412,7 +1468,7 @@ impl<'ctx> Builder<'ctx> {
     /// builder.build_ptr_diff(i32_ptr_type, i32_ptr_param1, i32_ptr_param2, "diff").unwrap();
     /// builder.build_return(None).unwrap();
     /// ```
-    #[llvm_versions(15..)]
+    #[cfg(not(feature = "typed-pointers"))]
     pub fn build_ptr_diff<T: BasicType<'ctx>>(
         &self,
         pointee_ty: T,
@@ -1467,9 +1523,9 @@ impl<'ctx> Builder<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let i32_type = context.i32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let i32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let i32_seven = i32_type.const_int(7, false);
     /// let fn_type = void_type.fn_type(&[i32_ptr_type.into()], false);
@@ -1507,9 +1563,9 @@ impl<'ctx> Builder<'ctx> {
     /// let module = context.create_module("ret");
     /// let builder = context.create_builder();
     /// let i32_type = context.i32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let i32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = i32_type.fn_type(&[i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("ret", fn_type, None);
@@ -1522,14 +1578,25 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.build_return(Some(&pointee)).unwrap();
     /// ```
-    #[llvm_versions(..=14)]
+    #[cfg(feature = "typed-pointers")]
     pub fn build_load(&self, ptr: PointerValue<'ctx>, name: &str) -> Result<BasicValueEnum<'ctx>, BuilderError> {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
         }
         let c_string = to_c_str(name);
 
+        #[cfg(not(feature = "llvm16-0"))]
+        #[cfg_attr(feature = "llvm15-0", allow(deprecated))]
         let value = unsafe { LLVMBuildLoad(self.builder, ptr.as_value_ref(), c_string.as_ptr()) };
+        #[cfg(feature = "llvm16-0")]
+        let value = unsafe {
+            LLVMBuildLoad2(
+                self.builder,
+                ptr.get_type().get_element_type().as_type_ref(),
+                ptr.as_value_ref(),
+                c_string.as_ptr(),
+            )
+        };
 
         unsafe { Ok(BasicValueEnum::new(value)) }
     }
@@ -1547,9 +1614,9 @@ impl<'ctx> Builder<'ctx> {
     /// let module = context.create_module("ret");
     /// let builder = context.create_builder();
     /// let i32_type = context.i32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let i32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = i32_type.fn_type(&[i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("ret", fn_type, None);
@@ -1562,7 +1629,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// builder.build_return(Some(&pointee)).unwrap();
     /// ```
-    #[llvm_versions(15..)]
+    #[cfg(not(feature = "typed-pointers"))]
     pub fn build_load<T: BasicType<'ctx>>(
         &self,
         pointee_ty: T,
@@ -2907,21 +2974,9 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// let array_alloca = builder.build_alloca(array_type, "array_alloca").unwrap();
     ///
-    /// #[cfg(any(
-    ///     feature = "llvm4-0",
-    ///     feature = "llvm5-0",
-    ///     feature = "llvm6-0",
-    ///     feature = "llvm7-0",
-    ///     feature = "llvm8-0",
-    ///     feature = "llvm9-0",
-    ///     feature = "llvm10-0",
-    ///     feature = "llvm11-0",
-    ///     feature = "llvm12-0",
-    ///     feature = "llvm13-0",
-    ///     feature = "llvm14-0"
-    /// ))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let array = builder.build_load(array_alloca, "array_load").unwrap().into_array_value();
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let array = builder.build_load(i32_type, array_alloca, "array_load").unwrap().into_array_value();
     ///
     /// let const_int1 = i32_type.const_int(2, false);
@@ -2990,21 +3045,9 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// let array_alloca = builder.build_alloca(array_type, "array_alloca").unwrap();
     ///
-    /// #[cfg(any(
-    ///     feature = "llvm4-0",
-    ///     feature = "llvm5-0",
-    ///     feature = "llvm6-0",
-    ///     feature = "llvm7-0",
-    ///     feature = "llvm8-0",
-    ///     feature = "llvm9-0",
-    ///     feature = "llvm10-0",
-    ///     feature = "llvm11-0",
-    ///     feature = "llvm12-0",
-    ///     feature = "llvm13-0",
-    ///     feature = "llvm14-0"
-    /// ))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let array = builder.build_load(array_alloca, "array_load").unwrap().into_array_value();
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let array = builder.build_load(i32_type, array_alloca, "array_load").unwrap().into_array_value();
     ///
     /// let const_int1 = i32_type.const_int(2, false);
@@ -3410,9 +3453,9 @@ impl<'ctx> Builder<'ctx> {
     /// let void_type = context.void_type();
     /// let i32_type = context.i32_type();
     /// let i32_seven = i32_type.const_int(7, false);
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let i32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("rmw", fn_type, None);
@@ -3443,12 +3486,7 @@ impl<'ctx> Builder<'ctx> {
             ));
         }
 
-        #[cfg(not(any(
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        )))]
+        #[cfg(feature = "typed-pointers")]
         if ptr.get_type().get_element_type() != value.get_type().into() {
             return Err(BuilderError::PointeeTypeMismatch(
                 "Pointer's pointee type must match the value's type.",
@@ -3491,9 +3529,9 @@ impl<'ctx> Builder<'ctx> {
     /// let module = context.create_module("cmpxchg");
     /// let void_type = context.void_type();
     /// let i32_type = context.i32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let i32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[i32_ptr_type.into()], false);
     /// let fn_value = module.add_function("", fn_type, None);
@@ -3530,12 +3568,7 @@ impl<'ctx> Builder<'ctx> {
             ));
         }
 
-        #[cfg(not(any(
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0"
-        )))]
+        #[cfg(feature = "typed-pointers")]
         if ptr.get_type().get_element_type().as_basic_type_enum() != cmp.get_type() {
             return Err(BuilderError::PointeeTypeMismatch(
                 "The pointer does not point to an element of the value type.",
