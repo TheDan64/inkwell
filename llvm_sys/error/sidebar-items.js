@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["LLVMErrorSuccess"],"enum":["LLVMOpaqueError"],"fn":["LLVMConsumeError","LLVMCreateStringError","LLVMDisposeErrorMessage","LLVMGetErrorMessage","LLVMGetErrorTypeId","LLVMGetStringErrorTypeId"],"type":["LLVMErrorRef","LLVMErrorTypeId"]};
