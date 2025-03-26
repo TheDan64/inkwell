@@ -246,7 +246,7 @@ impl<'ctx> InstructionValue<'ctx> {
     // SubTypes: Only apply to terminators
     /// Returns if a terminator is conditional or not
     pub fn is_conditional(self) -> bool {
-        if self.is_terminator() {
+        if self.get_opcode() == InstructionOpcode::Br {
             unsafe { LLVMIsConditional(self.as_value_ref()) == 1 }
         } else {
             false
