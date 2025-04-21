@@ -1,13 +1,5 @@
 #[llvm_versions(8..)]
 use llvm_sys::core::LLVMGlobalSetMetadata;
-#[llvm_versions(..=7)]
-use llvm_sys::core::{
-    LLVMDeleteGlobal, LLVMGetAlignment, LLVMGetDLLStorageClass, LLVMGetInitializer, LLVMGetLinkage, LLVMGetNextGlobal,
-    LLVMGetPreviousGlobal, LLVMGetSection, LLVMGetThreadLocalMode, LLVMGetVisibility, LLVMIsDeclaration,
-    LLVMIsExternallyInitialized, LLVMIsGlobalConstant, LLVMIsThreadLocal, LLVMSetAlignment, LLVMSetDLLStorageClass,
-    LLVMSetExternallyInitialized, LLVMSetGlobalConstant, LLVMSetInitializer, LLVMSetLinkage, LLVMSetSection,
-    LLVMSetThreadLocal, LLVMSetThreadLocalMode, LLVMSetVisibility,
-};
 #[llvm_versions(8..)]
 use llvm_sys::core::{
     LLVMDeleteGlobal, LLVMGetAlignment, LLVMGetDLLStorageClass, LLVMGetInitializer, LLVMGetLinkage, LLVMGetNextGlobal,
@@ -16,19 +8,17 @@ use llvm_sys::core::{
     LLVMSetGlobalConstant, LLVMSetInitializer, LLVMSetLinkage, LLVMSetThreadLocal, LLVMSetThreadLocalMode,
     LLVMSetVisibility,
 };
-#[llvm_versions(7..)]
+#[llvm_versions(8..)]
 use llvm_sys::core::{LLVMGetUnnamedAddress, LLVMSetUnnamedAddress};
-#[llvm_versions(..=6)]
-use llvm_sys::core::{LLVMHasUnnamedAddr, LLVMSetUnnamedAddr};
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMThreadLocalMode;
-#[llvm_versions(7..)]
+#[llvm_versions(8..)]
 use llvm_sys::LLVMUnnamedAddr;
 
 use std::ffi::CStr;
 use std::fmt::{self, Display};
 
-#[llvm_versions(7..)]
+#[llvm_versions(8..)]
 use crate::comdat::Comdat;
 use crate::module::Linkage;
 use crate::types::AnyTypeEnum;
@@ -172,7 +162,7 @@ impl<'ctx> GlobalValue<'ctx> {
         unsafe { LLVMHasUnnamedAddr(self.as_value_ref()) == 1 }
     }
 
-    #[llvm_versions(7..)]
+    #[llvm_versions(8..)]
     pub fn has_unnamed_addr(self) -> bool {
         unsafe { LLVMGetUnnamedAddress(self.as_value_ref()) == LLVMUnnamedAddr::LLVMGlobalUnnamedAddr }
     }
@@ -182,7 +172,7 @@ impl<'ctx> GlobalValue<'ctx> {
         unsafe { LLVMSetUnnamedAddr(self.as_value_ref(), has_unnamed_addr as i32) }
     }
 
-    #[llvm_versions(7..)]
+    #[llvm_versions(8..)]
     pub fn set_unnamed_addr(self, has_unnamed_addr: bool) {
         unsafe {
             if has_unnamed_addr {
@@ -252,7 +242,7 @@ impl<'ctx> GlobalValue<'ctx> {
     }
 
     /// Gets a `Comdat` assigned to this `GlobalValue`, if any.
-    #[llvm_versions(7..)]
+    #[llvm_versions(8..)]
     pub fn get_comdat(self) -> Option<Comdat> {
         use llvm_sys::comdat::LLVMGetComdat;
 
@@ -266,14 +256,14 @@ impl<'ctx> GlobalValue<'ctx> {
     }
 
     /// Assigns a `Comdat` to this `GlobalValue`.
-    #[llvm_versions(7..)]
+    #[llvm_versions(8..)]
     pub fn set_comdat(self, comdat: Comdat) {
         use llvm_sys::comdat::LLVMSetComdat;
 
         unsafe { LLVMSetComdat(self.as_value_ref(), comdat.0) }
     }
 
-    #[llvm_versions(7..)]
+    #[llvm_versions(8..)]
     pub fn get_unnamed_address(self) -> UnnamedAddress {
         use llvm_sys::core::LLVMGetUnnamedAddress;
 
@@ -282,7 +272,7 @@ impl<'ctx> GlobalValue<'ctx> {
         UnnamedAddress::new(unnamed_address)
     }
 
-    #[llvm_versions(7..)]
+    #[llvm_versions(8..)]
     pub fn set_unnamed_address(self, address: UnnamedAddress) {
         use llvm_sys::core::LLVMSetUnnamedAddress;
 
@@ -316,7 +306,7 @@ impl Display for GlobalValue<'_> {
 }
 
 /// This enum determines the significance of a `GlobalValue`'s address.
-#[llvm_versions(7..)]
+#[llvm_versions(8..)]
 #[llvm_enum(LLVMUnnamedAddr)]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum UnnamedAddress {

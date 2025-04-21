@@ -319,15 +319,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         sdk: &str,
     ) -> DICompileUnit<'ctx> {
         let metadata_ref = unsafe {
-            #[cfg(any(
-                feature = "llvm4-0",
-                feature = "llvm5-0",
-                feature = "llvm6-0",
-                feature = "llvm7-0",
-                feature = "llvm8-0",
-                feature = "llvm9-0",
-                feature = "llvm10-0"
-            ))]
+            #[cfg(any(feature = "llvm8-0", feature = "llvm9-0", feature = "llvm10-0"))]
             {
                 LLVMDIBuilderCreateCompileUnit(
                     self.builder,
@@ -511,13 +503,13 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
 
     /// Create a primitive basic type. `encoding` is an unsigned int flag (`DW_ATE_*`
     /// enum) defined by the chosen DWARF standard.
-    #[llvm_versions(7..)]
+    #[llvm_versions(8..)]
     pub fn create_basic_type(
         &self,
         name: &str,
         size_in_bits: u64,
         encoding: LLVMDWARFTypeEncoding,
-        #[cfg(not(feature = "llvm7-0"))] flags: DIFlags,
+        flags: DIFlags,
     ) -> Result<DIBasicType<'ctx>, &'static str> {
         if name.is_empty() {
             // Also, LLVM returns the same type if you ask for the same
@@ -531,7 +523,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 name.len(),
                 size_in_bits,
                 encoding,
-                #[cfg(not(feature = "llvm7-0"))]
                 flags,
             )
         };
@@ -1393,7 +1384,7 @@ mod flags {
         const PUBLIC: Self;
         const FWD_DECL: Self;
         const APPLE_BLOCK: Self;
-        //#[llvm_versions(7..=9)]
+        //#[llvm_versions(8..=9)]
         //const BLOCK_BYREF_STRUCT: Self;
         const VIRTUAL: Self;
         const ARTIFICIAL: Self;
@@ -1412,16 +1403,14 @@ mod flags {
         const INTRODUCED_VIRTUAL: Self;
         const BIT_FIELD: Self;
         const NO_RETURN: Self;
-        //#[llvm_versions(7..=8)]
+        //#[llvm_versions(8..=8)]
         //const MAIN_SUBPROGRAM: Self;
         const TYPE_PASS_BY_VALUE: Self;
         const TYPE_PASS_BY_REFERENCE: Self;
-        //#[llvm_versions(7)]
-        //const FIXED_ENUM: Self;
         //#[llvm_versions(8..)]
         //const ENUM_CLASS: Self;
         const THUNK: Self;
-        //#[llvm_versions(7..=8)]
+        //#[llvm_versions(8..=8)]
         //const TRIVIAL: Self;
         //#[llvm_versions(9..)]
         //const NON_TRIVIAL: Self;
@@ -1440,7 +1429,7 @@ mod flags {
         const PUBLIC: DIFlags = llvm_sys::debuginfo::LLVMDIFlagPublic;
         const FWD_DECL: DIFlags = llvm_sys::debuginfo::LLVMDIFlagFwdDecl;
         const APPLE_BLOCK: DIFlags = llvm_sys::debuginfo::LLVMDIFlagAppleBlock;
-        //#[llvm_versions(7..=9)]
+        //#[llvm_versions(8..=9)]
         //const BLOCK_BYREF_STRUCT: DIFlags = llvm_sys::debuginfo::LLVMDIFlagBlockByrefStruct;
         const VIRTUAL: DIFlags = llvm_sys::debuginfo::LLVMDIFlagVirtual;
         const ARTIFICIAL: DIFlags = llvm_sys::debuginfo::LLVMDIFlagArtificial;
@@ -1459,16 +1448,14 @@ mod flags {
         const INTRODUCED_VIRTUAL: DIFlags = llvm_sys::debuginfo::LLVMDIFlagIntroducedVirtual;
         const BIT_FIELD: DIFlags = llvm_sys::debuginfo::LLVMDIFlagBitField;
         const NO_RETURN: DIFlags = llvm_sys::debuginfo::LLVMDIFlagNoReturn;
-        //#[llvm_versions(7..=8)]
+        //#[llvm_versions(8..=8)]
         //const MAIN_SUBPROGRAM: DIFlags = llvm_sys::debuginfo::LLVMDIFlagMainSubprogram;
         const TYPE_PASS_BY_VALUE: DIFlags = llvm_sys::debuginfo::LLVMDIFlagTypePassByValue;
         const TYPE_PASS_BY_REFERENCE: DIFlags = llvm_sys::debuginfo::LLVMDIFlagTypePassByReference;
-        //#[llvm_versions(7)]
-        //const FIXED_ENUM: DIFlags = llvm_sys::debuginfo::LLVMDIFlagFixedEnum;
         //#[llvm_versions(8..)]
         //const ENUM_CLASS: DIFlags = llvm_sys::debuginfo::LLVMDIFlagEnumClass;
         const THUNK: DIFlags = llvm_sys::debuginfo::LLVMDIFlagThunk;
-        //#[llvm_versions(7..=8)]
+        //#[llvm_versions(8..=8)]
         //const TRIVIAL: DIFlags = llvm_sys::debuginfo::LLVMDIFlagTrivial;
         //#[llvm_versions(9..)]
         //const NON_TRIVIAL: DIFlags = llvm_sys::debuginfo::LLVMDIFlagNonTrivial;

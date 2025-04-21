@@ -5,12 +5,12 @@ use inkwell::types::IntType;
 use inkwell::values::BasicValue;
 use inkwell::OptimizationLevel;
 
-#[llvm_versions(7..)]
+#[llvm_versions(8..)]
 fn get_host_cpu_name() -> String {
     TargetMachine::get_host_cpu_name().to_string()
 }
 
-#[llvm_versions(7..)]
+#[llvm_versions(8..)]
 fn get_host_cpu_features() -> String {
     TargetMachine::get_host_cpu_features().to_string()
 }

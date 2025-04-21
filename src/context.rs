@@ -1,6 +1,6 @@
 //! A `Context` is an opaque owner and manager of core global data.
 
-#[llvm_versions(7..)]
+#[llvm_versions(8..)]
 use crate::InlineAsmDialect;
 use libc::c_void;
 #[llvm_versions(..=6)]
@@ -9,7 +9,7 @@ use llvm_sys::core::LLVMConstInlineAsm;
 use llvm_sys::core::LLVMContextSetOpaquePointers;
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMCreateTypeAttribute;
-#[llvm_versions(7..)]
+#[llvm_versions(8..)]
 use llvm_sys::core::LLVMGetInlineAsm;
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMGetTypeByName2;
@@ -124,14 +124,8 @@ impl ContextImpl {
         mut constraints: String,
         sideeffects: bool,
         alignstack: bool,
-        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))] dialect: Option<
-            InlineAsmDialect,
-        >,
+        dialect: Option<InlineAsmDialect>,
         #[cfg(not(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
             feature = "llvm8-0",
             feature = "llvm9-0",
             feature = "llvm10-0",
@@ -140,17 +134,6 @@ impl ContextImpl {
         )))]
         can_throw: bool,
     ) -> PointerValue<'ctx> {
-        #[cfg(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
-        let value = unsafe {
-            LLVMConstInlineAsm(
-                ty.as_type_ref(),
-                assembly.as_ptr() as *const ::libc::c_char,
-                constraints.as_ptr() as *const ::libc::c_char,
-                sideeffects as i32,
-                alignstack as i32,
-            )
-        };
-        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
         let value = unsafe {
             LLVMGetInlineAsm(
                 ty.as_type_ref(),
@@ -162,10 +145,6 @@ impl ContextImpl {
                 alignstack as i32,
                 dialect.unwrap_or(InlineAsmDialect::ATT).into(),
                 #[cfg(not(any(
-                    feature = "llvm4-0",
-                    feature = "llvm5-0",
-                    feature = "llvm6-0",
-                    feature = "llvm7-0",
                     feature = "llvm8-0",
                     feature = "llvm9-0",
                     feature = "llvm10-0",
@@ -574,12 +553,7 @@ impl Context {
     ///     "=r,{rax},{rdi}".to_string(),
     ///     true,
     ///     false,
-    ///     #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))] None,
     ///     #[cfg(not(any(
-    ///         feature = "llvm4-0",
-    ///         feature = "llvm5-0",
-    ///         feature = "llvm6-0",
-    ///         feature = "llvm7-0",
     ///         feature = "llvm8-0",
     ///         feature = "llvm9-0",
     ///         feature = "llvm10-0",
@@ -591,10 +565,6 @@ impl Context {
     /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
     ///
     /// #[cfg(any(
-    ///     feature = "llvm4-0",
-    ///     feature = "llvm5-0",
-    ///     feature = "llvm6-0",
-    ///     feature = "llvm7-0",
     ///     feature = "llvm8-0",
     ///     feature = "llvm9-0",
     ///     feature = "llvm10-0",
@@ -622,14 +592,8 @@ impl Context {
         constraints: String,
         sideeffects: bool,
         alignstack: bool,
-        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))] dialect: Option<
-            InlineAsmDialect,
-        >,
+        dialect: Option<InlineAsmDialect>,
         #[cfg(not(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
             feature = "llvm8-0",
             feature = "llvm9-0",
             feature = "llvm10-0",
@@ -644,13 +608,8 @@ impl Context {
             constraints,
             sideeffects,
             alignstack,
-            #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
             dialect,
             #[cfg(not(any(
-                feature = "llvm4-0",
-                feature = "llvm5-0",
-                feature = "llvm6-0",
-                feature = "llvm7-0",
                 feature = "llvm8-0",
                 feature = "llvm9-0",
                 feature = "llvm10-0",
@@ -1456,12 +1415,7 @@ impl<'ctx> ContextRef<'ctx> {
     ///     "=r,{rax},{rdi}".to_string(),
     ///     true,
     ///     false,
-    ///     #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))] None,
     ///     #[cfg(not(any(
-    ///         feature = "llvm4-0",
-    ///         feature = "llvm5-0",
-    ///         feature = "llvm6-0",
-    ///         feature = "llvm7-0",
     ///         feature = "llvm8-0",
     ///         feature = "llvm9-0",
     ///         feature = "llvm10-0",
@@ -1473,10 +1427,6 @@ impl<'ctx> ContextRef<'ctx> {
     /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
     ///
     /// #[cfg(any(
-    ///     feature = "llvm4-0",
-    ///     feature = "llvm5-0",
-    ///     feature = "llvm6-0",
-    ///     feature = "llvm7-0",
     ///     feature = "llvm8-0",
     ///     feature = "llvm9-0",
     ///     feature = "llvm10-0",
@@ -1504,14 +1454,8 @@ impl<'ctx> ContextRef<'ctx> {
         constraints: String,
         sideeffects: bool,
         alignstack: bool,
-        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))] dialect: Option<
-            InlineAsmDialect,
-        >,
+        dialect: Option<InlineAsmDialect>,
         #[cfg(not(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
             feature = "llvm8-0",
             feature = "llvm9-0",
             feature = "llvm10-0",
@@ -1526,13 +1470,8 @@ impl<'ctx> ContextRef<'ctx> {
             constraints,
             sideeffects,
             alignstack,
-            #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
             dialect,
             #[cfg(not(any(
-                feature = "llvm4-0",
-                feature = "llvm5-0",
-                feature = "llvm6-0",
-                feature = "llvm7-0",
                 feature = "llvm8-0",
                 feature = "llvm9-0",
                 feature = "llvm10-0",

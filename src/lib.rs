@@ -23,12 +23,10 @@ pub mod attributes;
 pub mod basic_block;
 pub mod builder;
 #[deny(missing_docs)]
-#[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
 pub mod comdat;
 #[deny(missing_docs)]
 pub mod context;
 pub mod data_layout;
-#[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
 pub mod debug_info;
 pub mod execution_engine;
 pub mod intrinsics;
@@ -61,14 +59,6 @@ pub extern crate llvm_sys_160 as llvm_sys;
 pub extern crate llvm_sys_170 as llvm_sys;
 #[cfg(feature = "llvm18-0")]
 pub extern crate llvm_sys_180 as llvm_sys;
-#[cfg(feature = "llvm4-0")]
-pub extern crate llvm_sys_40 as llvm_sys;
-#[cfg(feature = "llvm5-0")]
-pub extern crate llvm_sys_50 as llvm_sys;
-#[cfg(feature = "llvm6-0")]
-pub extern crate llvm_sys_60 as llvm_sys;
-#[cfg(feature = "llvm7-0")]
-pub extern crate llvm_sys_70 as llvm_sys;
 #[cfg(feature = "llvm8-0")]
 pub extern crate llvm_sys_80 as llvm_sys;
 #[cfg(feature = "llvm9-0")]
@@ -80,13 +70,13 @@ use llvm_sys::{
     LLVMThreadLocalMode, LLVMVisibility,
 };
 
-#[llvm_versions(7..)]
+#[llvm_versions(8..)]
 use llvm_sys::LLVMInlineAsmDialect;
 
+pub use either::Either;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
-pub use either::Either;
 
 // Thanks to kennytm for coming up with assert_unique_features!
 // which ensures that the LLVM feature flags are mutually exclusive
@@ -118,10 +108,6 @@ macro_rules! assert_unique_used_features {
 }
 
 assert_unique_used_features! {
-    "llvm4-0",
-    "llvm5-0",
-    "llvm6-0",
-    "llvm7-0",
     "llvm8-0",
     "llvm9-0",
     "llvm10-0",
@@ -137,10 +123,6 @@ assert_unique_used_features! {
 
 #[cfg(all(
     any(
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
         feature = "llvm8-0",
         feature = "llvm9-0",
         feature = "llvm10-0",
@@ -503,7 +485,7 @@ impl Default for DLLStorageClass {
     }
 }
 
-#[llvm_versions(7..)]
+#[llvm_versions(8..)]
 #[llvm_enum(LLVMInlineAsmDialect)]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

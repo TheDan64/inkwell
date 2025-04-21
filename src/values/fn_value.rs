@@ -10,7 +10,7 @@ use llvm_sys::core::{
     LLVMIsAFunction, LLVMIsConstant, LLVMSetFunctionCallConv, LLVMSetGC, LLVMSetLinkage, LLVMSetParamAlignment,
 };
 use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
-#[llvm_versions(7..)]
+#[llvm_versions(8..)]
 use llvm_sys::debuginfo::{LLVMGetSubprogram, LLVMSetSubprogram};
 use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 
@@ -21,7 +21,7 @@ use std::mem::forget;
 
 use crate::attributes::{Attribute, AttributeLoc};
 use crate::basic_block::BasicBlock;
-#[llvm_versions(7..)]
+#[llvm_versions(8..)]
 use crate::debug_info::DISubprogram;
 use crate::module::Linkage;
 use crate::support::to_c_str;
@@ -497,13 +497,13 @@ impl<'ctx> FunctionValue<'ctx> {
     }
 
     /// Set the debug info descriptor
-    #[llvm_versions(7..)]
+    #[llvm_versions(8..)]
     pub fn set_subprogram(self, subprogram: DISubprogram<'ctx>) {
         unsafe { LLVMSetSubprogram(self.as_value_ref(), subprogram.metadata_ref) }
     }
 
     /// Get the debug info descriptor
-    #[llvm_versions(7..)]
+    #[llvm_versions(8..)]
     pub fn get_subprogram(self) -> Option<DISubprogram<'ctx>> {
         let metadata_ref = unsafe { LLVMGetSubprogram(self.as_value_ref()) };
 

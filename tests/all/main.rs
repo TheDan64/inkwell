@@ -7,7 +7,6 @@ mod test_attributes;
 mod test_basic_block;
 mod test_builder;
 mod test_context;
-#[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
 mod test_debug_info;
 mod test_execution_engine;
 mod test_instruction_conversion;

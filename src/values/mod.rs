@@ -52,7 +52,7 @@ pub use crate::values::float_value::FloatValue;
 pub use crate::values::fn_value::FunctionValue;
 pub use crate::values::generic_value::GenericValue;
 pub use crate::values::global_value::GlobalValue;
-#[llvm_versions(7..)]
+#[llvm_versions(8..)]
 pub use crate::values::global_value::UnnamedAddress;
 pub use crate::values::instruction_value::{InstructionOpcode, InstructionValue, OperandIter, OperandUseIter};
 pub use crate::values::int_value::IntValue;
@@ -73,8 +73,9 @@ pub use crate::values::vec_value::VectorValue;
 pub use llvm_sys::LLVMTailCallKind;
 
 use llvm_sys::core::{
-    LLVMDumpValue, LLVMGetFirstUse, LLVMGetSection, LLVMIsAInstruction, LLVMIsConstant, LLVMIsNull, LLVMIsUndef,
-    LLVMPrintTypeToString, LLVMPrintValueToString, LLVMReplaceAllUsesWith, LLVMSetSection, LLVMTypeOf,
+    LLVMDumpValue, LLVMGetFirstUse, LLVMGetSection, LLVMGetValueName2, LLVMIsAInstruction, LLVMIsConstant, LLVMIsNull,
+    LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMReplaceAllUsesWith, LLVMSetSection,
+    LLVMSetValueName2, LLVMTypeOf,
 };
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
@@ -130,34 +131,13 @@ impl<'ctx> Value<'ctx> {
     fn set_name(self, name: &str) {
         let c_string = to_c_str(name);
 
-        #[cfg(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
-        {
-            use llvm_sys::core::LLVMSetValueName;
-
-            unsafe {
-                LLVMSetValueName(self.value, c_string.as_ptr());
-            }
-        }
-        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
-        {
-            use llvm_sys::core::LLVMSetValueName2;
-
-            unsafe { LLVMSetValueName2(self.value, c_string.as_ptr(), c_string.to_bytes().len()) }
-        }
+        unsafe { LLVMSetValueName2(self.value, c_string.as_ptr(), c_string.to_bytes().len()) }
     }
 
     // get_name should *not* return a LLVMString, because it is not an owned value AFAICT
     // TODO: Should make this take ownership of self. But what is the lifetime of the string? 'ctx?
     fn get_name(&self) -> &CStr {
-        #[cfg(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
         let ptr = unsafe {
-            use llvm_sys::core::LLVMGetValueName;
-
-            LLVMGetValueName(self.value)
-        };
-        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
-        let ptr = unsafe {
-            use llvm_sys::core::LLVMGetValueName2;
             let mut len = 0;
 
             LLVMGetValueName2(self.value, &mut len)

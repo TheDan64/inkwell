@@ -17,10 +17,6 @@ default = ["target-all"]
 typed-pointers = []
 
 # Please update internal_macros::FEATURE_VERSIONS when adding a new LLVM version
-llvm4-0 = ["llvm-sys-40", "typed-pointers"]
-llvm5-0 = ["llvm-sys-50", "typed-pointers"]
-llvm6-0 = ["llvm-sys-60", "typed-pointers"]
-llvm7-0 = ["llvm-sys-70", "typed-pointers"]
 llvm8-0 = ["llvm-sys-80", "typed-pointers"]
 llvm9-0 = ["llvm-sys-90", "typed-pointers"]
 llvm10-0 = ["llvm-sys-100", "typed-pointers"]
@@ -38,10 +34,6 @@ llvm18-0 = ["llvm-sys-180"]
 # `no-llvm-linking` feature across the board of llvm versions, as it'll cause
 # cargo to try and download and compile them all. See
 # https://github.com/rust-lang/cargo/issues/3494
-llvm4-0-no-llvm-linking = ["llvm4-0", "llvm-sys-40/no-llvm-linking"]
-llvm5-0-no-llvm-linking = ["llvm5-0", "llvm-sys-50/no-llvm-linking"]
-llvm6-0-no-llvm-linking = ["llvm6-0", "llvm-sys-60/no-llvm-linking"]
-llvm7-0-no-llvm-linking = ["llvm7-0", "llvm-sys-70/no-llvm-linking"]
 llvm8-0-no-llvm-linking = ["llvm8-0", "llvm-sys-80/no-llvm-linking"]
 llvm9-0-no-llvm-linking = ["llvm9-0", "llvm-sys-90/no-llvm-linking"]
 llvm10-0-no-llvm-linking = ["llvm10-0", "llvm-sys-100/no-llvm-linking"]
@@ -161,7 +153,9 @@ once_cell = "1.16"
 thiserror = "1.0.48"
 
 static-alloc = { version = "0.2", optional = true }
-serde = { version = "1.0", default-features = false, features = ["derive"], optional = true }
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+], optional = true }
 
 [dev-dependencies]
 regex = "1"
