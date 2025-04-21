@@ -784,7 +784,7 @@ impl Target {
     }
 
     #[cfg(feature = "target-webassembly")]
-    #[llvm_versions(8..)]
+
     pub fn initialize_webassembly(config: &InitializationConfig) {
         use llvm_sys::target::{
             LLVMInitializeWebAssemblyAsmParser, LLVMInitializeWebAssemblyAsmPrinter,
@@ -1094,7 +1094,6 @@ impl TargetMachine {
         unsafe { TargetTriple::new(llvm_string) }
     }
 
-    #[llvm_versions(8..)]
     pub fn normalize_triple(triple: &TargetTriple) -> TargetTriple {
         use llvm_sys::target_machine::LLVMNormalizeTargetTriple;
 
@@ -1108,7 +1107,7 @@ impl TargetMachine {
     /// # Example Output
     ///
     /// `x86_64-pc-linux-gnu`
-    #[llvm_versions(8..)]
+
     pub fn get_host_cpu_name() -> LLVMString {
         use llvm_sys::target_machine::LLVMGetHostCPUName;
 
@@ -1120,7 +1119,7 @@ impl TargetMachine {
     /// # Example Output
     ///
     /// `+sse2,+cx16,+sahf,-tbm`
-    #[llvm_versions(8..)]
+
     pub fn get_host_cpu_features() -> LLVMString {
         use llvm_sys::target_machine::LLVMGetHostCPUFeatures;
 

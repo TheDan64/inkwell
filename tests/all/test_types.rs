@@ -144,7 +144,6 @@ fn test_function_type() {
 
 /// Check that `FunctionType::get_param_types()` can handle metadata arguments.
 /// Regression test for inkwell#546
-#[llvm_versions(6..)]
 #[test]
 fn test_function_type_metadata_params() {
     let llvm_ir = r#"

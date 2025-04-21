@@ -1,19 +1,15 @@
 //! A `Context` is an opaque owner and manager of core global data.
 
-#[llvm_versions(8..)]
 use crate::InlineAsmDialect;
 use libc::c_void;
-#[llvm_versions(..=6)]
-use llvm_sys::core::LLVMConstInlineAsm;
 #[cfg(all(any(feature = "llvm15-0", feature = "llvm16-0"), feature = "typed-pointers"))]
 use llvm_sys::core::LLVMContextSetOpaquePointers;
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMCreateTypeAttribute;
-#[llvm_versions(8..)]
+
 use llvm_sys::core::LLVMGetInlineAsm;
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMGetTypeByName2;
-#[llvm_versions(6..)]
 use llvm_sys::core::LLVMMetadataTypeInContext;
 #[cfg(not(feature = "typed-pointers"))]
 use llvm_sys::core::LLVMPointerTypeInContext;
@@ -43,7 +39,6 @@ use crate::support::{to_c_str, LLVMString};
 use crate::targets::TargetData;
 #[llvm_versions(12..)]
 use crate::types::AnyTypeEnum;
-#[llvm_versions(6..)]
 use crate::types::MetadataType;
 #[cfg(not(feature = "typed-pointers"))]
 use crate::types::PointerType;
@@ -193,7 +188,6 @@ impl ContextImpl {
         unsafe { IntType::new(LLVMIntTypeInContext(self.0, bits)) }
     }
 
-    #[llvm_versions(6..)]
     fn metadata_type<'ctx>(&self) -> MetadataType<'ctx> {
         unsafe { MetadataType::new(LLVMMetadataTypeInContext(self.0)) }
     }
@@ -553,6 +547,7 @@ impl Context {
     ///     "=r,{rax},{rdi}".to_string(),
     ///     true,
     ///     false,
+    ///     None,
     ///     #[cfg(not(any(
     ///         feature = "llvm8-0",
     ///         feature = "llvm9-0",
@@ -777,7 +772,6 @@ impl Context {
     /// assert_eq!(md_type.get_context(), context);
     /// ```
     #[inline]
-    #[llvm_versions(6..)]
     pub fn metadata_type(&self) -> MetadataType {
         self.context.metadata_type()
     }
@@ -1415,6 +1409,7 @@ impl<'ctx> ContextRef<'ctx> {
     ///     "=r,{rax},{rdi}".to_string(),
     ///     true,
     ///     false,
+    ///     None,
     ///     #[cfg(not(any(
     ///         feature = "llvm8-0",
     ///         feature = "llvm9-0",
@@ -1639,7 +1634,6 @@ impl<'ctx> ContextRef<'ctx> {
     /// assert_eq!(md_type.get_context(), context);
     /// ```
     #[inline]
-    #[llvm_versions(6..)]
     pub fn metadata_type(&self) -> MetadataType<'ctx> {
         self.context.metadata_type()
     }

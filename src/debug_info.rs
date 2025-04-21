@@ -108,7 +108,7 @@ use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, MetadataValue,
 use crate::AddressSpace;
 
 use llvm_sys::core::LLVMMetadataAsValue;
-#[llvm_versions(8..)]
+
 use llvm_sys::debuginfo::LLVMDIBuilderCreateTypedef;
 pub use llvm_sys::debuginfo::LLVMDWARFTypeEncoding;
 use llvm_sys::debuginfo::LLVMDebugMetadataVersion;
@@ -127,7 +127,7 @@ use llvm_sys::debuginfo::{
     LLVMDIBuilderInsertDeclareBefore, LLVMDILocationGetColumn, LLVMDILocationGetLine, LLVMDILocationGetScope,
     LLVMDITypeGetAlignInBits, LLVMDITypeGetOffsetInBits, LLVMDITypeGetSizeInBits,
 };
-#[llvm_versions(8..)]
+
 use llvm_sys::debuginfo::{LLVMDIBuilderCreateConstantValueExpression, LLVMDIBuilderCreateGlobalVariableExpression};
 use llvm_sys::prelude::{LLVMDIBuilderRef, LLVMMetadataRef};
 use std::convert::TryInto;
@@ -503,7 +503,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
 
     /// Create a primitive basic type. `encoding` is an unsigned int flag (`DW_ATE_*`
     /// enum) defined by the chosen DWARF standard.
-    #[llvm_versions(8..)]
+
     pub fn create_basic_type(
         &self,
         name: &str,
@@ -533,7 +533,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     }
 
     /// Create a typedef (alias) of `ditype`
-    #[llvm_versions(8..)]
+
     pub fn create_typedef(
         &self,
         ditype: DIType<'ctx>,
@@ -782,7 +782,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         }
     }
 
-    #[llvm_versions(8..)]
     pub fn create_global_variable_expression(
         &self,
         scope: DIScope<'ctx>,
@@ -821,7 +820,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         }
     }
 
-    #[llvm_versions(8..)]
     pub fn create_constant_expression(&self, value: i64) -> DIExpression<'ctx> {
         let metadata_ref = unsafe { LLVMDIBuilderCreateConstantValueExpression(self.builder, value as _) };
 
@@ -1407,7 +1405,7 @@ mod flags {
         //const MAIN_SUBPROGRAM: Self;
         const TYPE_PASS_BY_VALUE: Self;
         const TYPE_PASS_BY_REFERENCE: Self;
-        //#[llvm_versions(8..)]
+        //
         //const ENUM_CLASS: Self;
         const THUNK: Self;
         //#[llvm_versions(8..=8)]
@@ -1416,9 +1414,9 @@ mod flags {
         //const NON_TRIVIAL: Self;
         //#[llvm_versions(10)]
         //const RESERVED_BIT4: Self;
-        //#[llvm_versions(8..)]
+        //
         //const BIGE_NDIAN: Self;
-        //#[llvm_versions(8..)]
+        //
         //const LITTLE_ENDIAN: Self;
         const INDIRECT_VIRTUAL_BASE: Self;
     }
@@ -1452,7 +1450,7 @@ mod flags {
         //const MAIN_SUBPROGRAM: DIFlags = llvm_sys::debuginfo::LLVMDIFlagMainSubprogram;
         const TYPE_PASS_BY_VALUE: DIFlags = llvm_sys::debuginfo::LLVMDIFlagTypePassByValue;
         const TYPE_PASS_BY_REFERENCE: DIFlags = llvm_sys::debuginfo::LLVMDIFlagTypePassByReference;
-        //#[llvm_versions(8..)]
+        //
         //const ENUM_CLASS: DIFlags = llvm_sys::debuginfo::LLVMDIFlagEnumClass;
         const THUNK: DIFlags = llvm_sys::debuginfo::LLVMDIFlagThunk;
         //#[llvm_versions(8..=8)]
@@ -1461,9 +1459,9 @@ mod flags {
         //const NON_TRIVIAL: DIFlags = llvm_sys::debuginfo::LLVMDIFlagNonTrivial;
         //#[llvm_versions(10)]
         //const RESERVED_BIT4: DIFlags = llvm_sys::debuginfo::LLVMDIFlagReservedBit4;
-        //#[llvm_versions(8..)]
+        //
         //const BIG_ENDIAN: DIFlags = llvm_sys::debuginfo::LLVMDIFlagBigEndian;
-        //#[llvm_versions(8..)]
+        //
         //const LITTLE_ENDIAN: DIFlags = llvm_sys::debuginfo::LLVMDIFlagLittleEndian;
         const INDIRECT_VIRTUAL_BASE: DIFlags = llvm_sys::debuginfo::LLVMDIFlagIndirectVirtualBase;
     }

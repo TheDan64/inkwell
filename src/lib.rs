@@ -70,7 +70,6 @@ use llvm_sys::{
     LLVMThreadLocalMode, LLVMVisibility,
 };
 
-#[llvm_versions(8..)]
 use llvm_sys::LLVMInlineAsmDialect;
 
 pub use either::Either;
@@ -485,7 +484,6 @@ impl Default for DLLStorageClass {
     }
 }
 
-#[llvm_versions(8..)]
 #[llvm_enum(LLVMInlineAsmDialect)]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]

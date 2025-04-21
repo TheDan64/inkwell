@@ -53,7 +53,6 @@ pub enum InstructionOpcode {
     CleanupRet,
     ExtractElement,
     ExtractValue,
-    #[llvm_versions(8..)]
     FNeg,
     FAdd,
     FCmp,

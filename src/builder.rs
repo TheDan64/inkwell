@@ -30,16 +30,13 @@ use llvm_sys::core::{LLVMBuildCall2, LLVMBuildInvoke2};
 use llvm_sys::core::{LLVMBuildGEP, LLVMBuildInBoundsGEP, LLVMBuildLoad, LLVMBuildPtrDiff, LLVMBuildStructGEP};
 #[cfg(any(not(feature = "typed-pointers"), feature = "llvm16-0"))]
 use llvm_sys::core::{LLVMBuildGEP2, LLVMBuildInBoundsGEP2, LLVMBuildLoad2, LLVMBuildPtrDiff2, LLVMBuildStructGEP2};
-#[llvm_versions(8..)]
 use llvm_sys::core::{LLVMBuildIntCast2, LLVMBuildMemCpy, LLVMBuildMemMove, LLVMBuildMemSet};
-
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use thiserror::Error;
 
 use crate::basic_block::BasicBlock;
 #[cfg(feature = "llvm8-0")]
 use crate::context::AsContextRef;
-#[llvm_versions(8..)]
 use crate::debug_info::DILocation;
 use crate::support::to_c_str;
 use crate::types::{AsTypeRef, BasicType, FloatMathType, FunctionType, IntMathType, PointerMathType, PointerType};
@@ -1691,7 +1688,6 @@ impl<'ctx> Builder<'ctx> {
     /// Returns an `Err(BuilderError::AlignmentError)` if the source or destination alignments are not a power of 2.
     ///
     /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
-    #[llvm_versions(8..)]
     pub fn build_memcpy(
         &self,
         dest: PointerValue<'ctx>,
@@ -1739,7 +1735,6 @@ impl<'ctx> Builder<'ctx> {
     /// Returns an `Err(BuilderError::AlignmentError)` if the source or destination alignments are not a power of 2 under 2^64.
     ///
     /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
-    #[llvm_versions(8..)]
     pub fn build_memmove(
         &self,
         dest: PointerValue<'ctx>,
@@ -1787,7 +1782,6 @@ impl<'ctx> Builder<'ctx> {
     /// Returns an `Err(BuilderError::AlignmentError)` if the source alignment is not a power of 2 under 2^64.
     ///
     /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
-    #[llvm_versions(8..)]
     pub fn build_memset(
         &self,
         dest: PointerValue<'ctx>,
@@ -2348,7 +2342,6 @@ impl<'ctx> Builder<'ctx> {
     }
 
     /// Like `build_int_cast`, but respects the signedness of the type being cast to.
-    #[llvm_versions(8..)]
     pub fn build_int_cast_sign_flag<T: IntMathValue<'ctx>>(
         &self,
         int: T,
@@ -3631,7 +3624,6 @@ impl<'ctx> Builder<'ctx> {
 
     /// Get the debug info source location of the instruction currently pointed at by the builder,
     /// if available.
-    #[llvm_versions(8..)]
     pub fn get_current_debug_location(&self) -> Option<DILocation<'ctx>> {
         use llvm_sys::core::LLVMGetCurrentDebugLocation;
         use llvm_sys::core::LLVMValueAsMetadata;
@@ -3667,7 +3659,7 @@ impl<'ctx> Builder<'ctx> {
 }
 
 /// Used by build_memcpy and build_memmove
-#[llvm_versions(8..)]
+
 fn is_alignment_ok(align: u32) -> bool {
     // This replicates the assertions LLVM runs.
     //

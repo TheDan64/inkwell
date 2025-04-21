@@ -238,7 +238,6 @@ fn test_no_explicit_finalize() {
     assert!(module.verify().is_ok());
 }
 
-#[llvm_versions(8..)]
 #[test]
 fn test_replacing_placeholder_with_placeholder() {
     let context = Context::create();
@@ -351,7 +350,6 @@ fn test_anonymous_basic_type() {
     );
 }
 
-#[llvm_versions(8..)]
 #[test]
 fn test_global_expressions() {
     let context = Context::create();

@@ -15,6 +15,7 @@ use llvm_sys::initialization::{LLVMInitializeInstrumentation, LLVMInitializeObjC
 use llvm_sys::prelude::LLVMPassManagerRef;
 #[llvm_versions(..=16)]
 use llvm_sys::prelude::LLVMPassRegistryRef;
+#[llvm_versions(..=15)]
 use llvm_sys::transforms::aggressive_instcombine::LLVMAddAggressiveInstCombinerPass;
 #[llvm_versions(10..=16)]
 use llvm_sys::transforms::ipo::LLVMAddMergeFunctionsPass;
@@ -1052,40 +1053,40 @@ impl<T: PassManagerSubType> PassManager<T> {
         unsafe { LLVMAddBasicAliasAnalysisPass(self.pass_manager) }
     }
 
-    #[llvm_versions(8..=15)]
+    #[llvm_versions(..=15)]
     pub fn add_aggressive_inst_combiner_pass(&self) {
         unsafe { LLVMAddAggressiveInstCombinerPass(self.pass_manager) }
     }
 
-    #[llvm_versions(8..=16)]
+    #[llvm_versions(..=16)]
     pub fn add_loop_unroll_and_jam_pass(&self) {
         use llvm_sys::transforms::scalar::LLVMAddLoopUnrollAndJamPass;
 
         unsafe { LLVMAddLoopUnrollAndJamPass(self.pass_manager) }
     }
 
-    #[llvm_versions(8..15)]
+    #[llvm_versions(..15)]
     pub fn add_coroutine_early_pass(&self) {
         use llvm_sys::transforms::coroutines::LLVMAddCoroEarlyPass;
 
         unsafe { LLVMAddCoroEarlyPass(self.pass_manager) }
     }
 
-    #[llvm_versions(8..15)]
+    #[llvm_versions(..15)]
     pub fn add_coroutine_split_pass(&self) {
         use llvm_sys::transforms::coroutines::LLVMAddCoroSplitPass;
 
         unsafe { LLVMAddCoroSplitPass(self.pass_manager) }
     }
 
-    #[llvm_versions(8..15)]
+    #[llvm_versions(..15)]
     pub fn add_coroutine_elide_pass(&self) {
         use llvm_sys::transforms::coroutines::LLVMAddCoroElidePass;
 
         unsafe { LLVMAddCoroElidePass(self.pass_manager) }
     }
 
-    #[llvm_versions(8..15)]
+    #[llvm_versions(..15)]
     pub fn add_coroutine_cleanup_pass(&self) {
         use llvm_sys::transforms::coroutines::LLVMAddCoroCleanupPass;
 

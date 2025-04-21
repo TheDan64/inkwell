@@ -6,7 +6,6 @@ use llvm_sys::bit_reader::LLVMParseBitcodeInContext;
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
 #[llvm_versions(..=14)]
 use llvm_sys::core::LLVMGetTypeByName;
-
 use llvm_sys::core::{
     LLVMAddFunction, LLVMAddGlobal, LLVMAddGlobalInAddressSpace, LLVMAddNamedMetadataOperand, LLVMCloneModule,
     LLVMDisposeMessage, LLVMDisposeModule, LLVMDumpModule, LLVMGetFirstFunction, LLVMGetFirstGlobal,
@@ -15,9 +14,8 @@ use llvm_sys::core::{
     LLVMPrintModuleToFile, LLVMPrintModuleToString, LLVMSetDataLayout, LLVMSetModuleIdentifier,
     LLVMSetModuleInlineAsm2, LLVMSetTarget,
 };
-
-#[llvm_versions(8..)]
 use llvm_sys::core::{LLVMAddModuleFlag, LLVMGetModuleFlag};
+use llvm_sys::debuginfo::{LLVMGetModuleDebugMetadataVersion, LLVMStripModuleDebugInfo};
 #[llvm_versions(13..)]
 use llvm_sys::error::LLVMGetErrorMessage;
 use llvm_sys::execution_engine::{
@@ -28,7 +26,7 @@ use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
 #[llvm_versions(13..)]
 use llvm_sys::transforms::pass_builder::LLVMRunPasses;
 use llvm_sys::LLVMLinkage;
-#[llvm_versions(8..)]
+
 use llvm_sys::LLVMModuleFlagBehavior;
 
 use std::cell::{Cell, Ref, RefCell};
@@ -40,11 +38,10 @@ use std::path::Path;
 use std::ptr;
 use std::rc::Rc;
 
-#[llvm_versions(8..)]
 use crate::comdat::Comdat;
 use crate::context::{AsContextRef, Context, ContextRef};
 use crate::data_layout::DataLayout;
-#[llvm_versions(8..)]
+
 use crate::debug_info::{DICompileUnit, DWARFEmissionKind, DWARFSourceLanguage, DebugInfoBuilder};
 use crate::execution_engine::ExecutionEngine;
 use crate::memory_buffer::MemoryBuffer;
@@ -59,7 +56,7 @@ use crate::support::{to_c_str, LLVMString};
 use crate::targets::TargetMachine;
 use crate::targets::{CodeModel, InitializationConfig, Target, TargetTriple};
 use crate::types::{AsTypeRef, BasicType, FunctionType, StructType};
-#[llvm_versions(8..)]
+
 use crate::values::BasicValue;
 use crate::values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
 use crate::{AddressSpace, OptimizationLevel};
@@ -1367,7 +1364,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_name().to_str(), Ok("my_mod"));
     /// assert_eq!(module.get_source_file_name().to_str(), Ok("my_mod.rs"));
     /// ```
-    #[llvm_versions(8..)]
+
     pub fn get_source_file_name(&self) -> &CStr {
         use llvm_sys::core::LLVMGetSourceFileName;
 
@@ -1394,7 +1391,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_name().to_str(), Ok("my_mod"));
     /// assert_eq!(module.get_source_file_name().to_str(), Ok("my_mod.rs"));
     /// ```
-    #[llvm_versions(8..)]
+
     pub fn set_source_file_name(&self, file_name: &str) {
         use llvm_sys::core::LLVMSetSourceFileName;
 
@@ -1454,7 +1451,7 @@ impl<'ctx> Module<'ctx> {
 
     /// Gets the `Comdat` associated with a particular name. If it does not exist, it will be created.
     /// A new `Comdat` defaults to a kind of `ComdatSelectionKind::Any`.
-    #[llvm_versions(8..)]
+
     pub fn get_or_insert_comdat(&self, name: &str) -> Comdat {
         use llvm_sys::comdat::LLVMGetOrInsertComdat;
 
@@ -1468,7 +1465,7 @@ impl<'ctx> Module<'ctx> {
     /// If a `BasicValue` was used to create this flag, it will be wrapped in a `MetadataValue`
     /// when returned from this function.
     // SubTypes: Might need to return Option<BVE, MV<Enum>, or MV<String>>
-    #[llvm_versions(8..)]
+
     pub fn get_flag(&self, key: &str) -> Option<MetadataValue<'ctx>> {
         use llvm_sys::core::LLVMMetadataAsValue;
 
@@ -1485,7 +1482,7 @@ impl<'ctx> Module<'ctx> {
 
     /// Append a `MetadataValue` as a module wide flag. Note that using the same key twice
     /// will likely invalidate the module.
-    #[llvm_versions(8..)]
+
     pub fn add_metadata_flag(&self, key: &str, behavior: FlagBehavior, flag: MetadataValue<'ctx>) {
         let md = flag.as_metadata_ref();
 
@@ -1503,7 +1500,7 @@ impl<'ctx> Module<'ctx> {
     /// Append a `BasicValue` as a module wide flag. Note that using the same key twice
     /// will likely invalidate the module.
     // REVIEW: What happens if value is not const?
-    #[llvm_versions(8..)]
+
     pub fn add_basic_value_flag<BV: BasicValue<'ctx>>(&self, key: &str, behavior: FlagBehavior, flag: BV) {
         use llvm_sys::core::LLVMValueAsMetadata;
 
@@ -1521,23 +1518,17 @@ impl<'ctx> Module<'ctx> {
     }
 
     /// Strips and debug info from the module, if it exists.
-    #[llvm_versions(6..)]
     pub fn strip_debug_info(&self) -> bool {
-        use llvm_sys::debuginfo::LLVMStripModuleDebugInfo;
-
         unsafe { LLVMStripModuleDebugInfo(self.module.get()) == 1 }
     }
 
     /// Gets the version of debug metadata contained in this `Module`.
-    #[llvm_versions(6..)]
     pub fn get_debug_metadata_version(&self) -> libc::c_uint {
-        use llvm_sys::debuginfo::LLVMGetModuleDebugMetadataVersion;
-
         unsafe { LLVMGetModuleDebugMetadataVersion(self.module.get()) }
     }
 
     /// Creates a `DebugInfoBuilder` for this `Module`.
-    #[llvm_versions(8..)]
+
     pub fn create_debug_info_builder(
         &self,
         allow_unresolved: bool,
@@ -1679,7 +1670,6 @@ impl Drop for Module<'_> {
     }
 }
 
-#[llvm_versions(8..)]
 #[llvm_enum(LLVMModuleFlagBehavior)]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 /// Defines the operational behavior for a module wide flag. This documentation comes directly
