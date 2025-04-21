@@ -788,9 +788,6 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// switch instruction until it is convenient.
     #[llvm_versions(..=16)]
     pub fn add_lower_switch_pass(&self) {
-        #[llvm_versions(..=6)]
-        use llvm_sys::transforms::scalar::LLVMAddLowerSwitchPass;
-        #[llvm_versions(8..=16)]
         use llvm_sys::transforms::util::LLVMAddLowerSwitchPass;
 
         unsafe { LLVMAddLowerSwitchPass(self.pass_manager) }
@@ -804,9 +801,6 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// the standard SSA construction algorithm to construct "pruned" SSA form.
     #[llvm_versions(..=16)]
     pub fn add_promote_memory_to_register_pass(&self) {
-        #[llvm_versions(..=6)]
-        use llvm_sys::transforms::scalar::LLVMAddPromoteMemoryToRegisterPass;
-        #[llvm_versions(8..=16)]
         use llvm_sys::transforms::util::LLVMAddPromoteMemoryToRegisterPass;
 
         unsafe { LLVMAddPromoteMemoryToRegisterPass(self.pass_manager) }
