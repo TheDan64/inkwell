@@ -1170,7 +1170,7 @@ impl PassRegistry {
         unsafe { LLVMInitializeTarget(self.pass_registry) }
     }
 
-    #[llvm_versions(8..=15)]
+    #[llvm_versions(..=15)]
     pub fn initialize_aggressive_inst_combiner(&self) {
         use llvm_sys::initialization::LLVMInitializeAggressiveInstCombiner;
 
