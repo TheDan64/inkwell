@@ -18,6 +18,7 @@ use std::marker::PhantomData;
 use std::mem::{forget, size_of, transmute_copy, MaybeUninit};
 use std::ops::Deref;
 use std::rc::Rc;
+use std::sync::Arc;
 
 static EE_INNER_PANIC: &str = "ExecutionEngineInner should exist until Drop";
 
@@ -88,21 +89,21 @@ impl Display for RemoveModuleError {
 /// copies. The underlying LLVM object will be automatically deallocated when
 /// there are no more references to it.
 #[derive(PartialEq, Eq, Debug)]
-pub struct ExecutionEngine<'ctx> {
-    execution_engine: Option<ExecEngineInner<'ctx>>,
+pub struct ExecutionEngine {
+    execution_engine: Option<ExecEngineInner>,
     target_data: Option<TargetData>,
     jit_mode: bool,
 }
 
-impl<'ctx> ExecutionEngine<'ctx> {
-    pub unsafe fn new(execution_engine: Rc<LLVMExecutionEngineRef>, jit_mode: bool) -> Self {
+impl ExecutionEngine {
+    pub unsafe fn new(execution_engine: Arc<LLVMExecutionEngineRef>, jit_mode: bool) -> Self {
         assert!(!execution_engine.is_null());
 
         // REVIEW: Will we have to do this for LLVMGetExecutionEngineTargetMachine too?
         let target_data = LLVMGetExecutionEngineTargetData(*execution_engine);
 
         ExecutionEngine {
-            execution_engine: Some(ExecEngineInner(execution_engine, PhantomData)),
+            execution_engine: Some(ExecEngineInner(execution_engine)),
             target_data: Some(TargetData::new(target_data)),
             jit_mode,
         }
@@ -113,7 +114,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
         self.execution_engine_inner()
     }
 
-    pub(crate) fn execution_engine_rc(&self) -> &Rc<LLVMExecutionEngineRef> {
+    pub(crate) fn execution_engine_rc(&self) -> &Arc<LLVMExecutionEngineRef> {
         &self.execution_engine.as_ref().expect(EE_INNER_PANIC).0
     }
 
@@ -177,7 +178,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
     ///
     /// assert_eq!(result, 128.);
     /// ```
-    pub fn add_global_mapping(&self, value: &dyn AnyValue<'ctx>, addr: usize) {
+    pub fn add_global_mapping<'ctx>(&self, value: &dyn AnyValue<'ctx>, addr: usize) {
         unsafe { LLVMAddGlobalMapping(self.execution_engine_inner(), value.as_value_ref(), addr as *mut _) }
     }
 
@@ -198,7 +199,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
     ///
     /// assert!(ee.add_module(&module).is_err());
     /// ```
-    pub fn add_module(&self, module: &Module<'ctx>) -> Result<(), ()> {
+    pub fn add_module(&self, module: &Module<'_>) -> Result<(), ()> {
         unsafe { LLVMAddModule(self.execution_engine_inner(), module.module.get()) }
 
         if module.owned_by_ee.borrow().is_some() {
@@ -210,7 +211,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
         Ok(())
     }
 
-    pub fn remove_module(&self, module: &Module<'ctx>) -> Result<(), RemoveModuleError> {
+    pub fn remove_module<'ctx>(&self, module: &Module<'ctx>) -> Result<(), RemoveModuleError> {
         match *module.owned_by_ee.borrow() {
             Some(ref ee) if ee.execution_engine_inner() != self.execution_engine_inner() => {
                 return Err(RemoveModuleError::IncorrectModuleOwner)
@@ -302,7 +303,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
     /// method *may* invalidate the function pointer.
     ///
     /// [`UnsafeFunctionPointer`]: trait.UnsafeFunctionPointer.html
-    pub unsafe fn get_function<F>(&self, fn_name: &str) -> Result<JitFunction<'ctx, F>, FunctionLookupError>
+    pub unsafe fn get_function<F>(&self, fn_name: &str) -> Result<JitFunction<F>, FunctionLookupError>
     where
         F: UnsafeFunctionPointer,
     {
@@ -318,10 +319,10 @@ impl<'ctx> ExecutionEngine<'ctx> {
             "The type `F` must have the same size as a function pointer"
         );
 
-        let execution_engine = self.execution_engine.as_ref().expect(EE_INNER_PANIC);
+        let execution_engine = self.execution_engine.clone().expect(EE_INNER_PANIC);
 
         Ok(JitFunction {
-            _execution_engine: execution_engine.clone(),
+            _execution_engine: execution_engine,
             inner: transmute_copy(&address),
         })
     }
@@ -363,7 +364,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
     // do have a global flag for anything initialized. Catch is that it must be initialized
     // before EE is created
     // REVIEW: Should FunctionValue lifetime be tied to self not 'ctx?
-    pub fn get_function_value(&self, fn_name: &str) -> Result<FunctionValue<'ctx>, FunctionLookupError> {
+    pub fn get_function_value<'ctx>(&self, fn_name: &str) -> Result<FunctionValue<'ctx>, FunctionLookupError> {
         if !self.jit_mode {
             return Err(FunctionLookupError::JITNotEnabled);
         }
@@ -382,7 +383,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
 
     // TODOC: Marked as unsafe because input function could very well do something unsafe. It's up to the caller
     // to ensure that doesn't happen by defining their function correctly.
-    pub unsafe fn run_function(
+    pub unsafe fn run_function<'ctx>(
         &self,
         function: FunctionValue<'ctx>,
         args: &[&GenericValue<'ctx>],
@@ -402,7 +403,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
     // TODOC: Marked as unsafe because input function could very well do something unsafe. It's up to the caller
     // to ensure that doesn't happen by defining their function correctly.
     // SubType: Only for JIT EEs?
-    pub unsafe fn run_function_as_main(&self, function: FunctionValue<'ctx>, args: &[&str]) -> c_int {
+    pub unsafe fn run_function_as_main<'ctx>(&self, function: FunctionValue<'ctx>, args: &[&str]) -> c_int {
         let cstring_args: Vec<_> = args.iter().map(|&arg| to_c_str(arg)).collect();
         let raw_args: Vec<*const _> = cstring_args.iter().map(|arg| arg.as_ptr()).collect();
 
@@ -417,7 +418,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
         ) // REVIEW: usize to u32 cast ok??
     }
 
-    pub fn free_fn_machine_code(&self, function: FunctionValue<'ctx>) {
+    pub fn free_fn_machine_code<'ctx>(&self, function: FunctionValue<'ctx>) {
         unsafe { LLVMFreeMachineCodeForFunction(self.execution_engine_inner(), function.as_value_ref()) }
     }
 
@@ -434,7 +435,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
 
 // Modules owned by the EE will be discarded by the EE so we don't
 // want owned modules to drop.
-impl Drop for ExecutionEngine<'_> {
+impl Drop for ExecutionEngine {
     fn drop(&mut self) {
         forget(
             self.target_data
@@ -449,7 +450,7 @@ impl Drop for ExecutionEngine<'_> {
     }
 }
 
-impl Clone for ExecutionEngine<'_> {
+impl Clone for ExecutionEngine {
     fn clone(&self) -> Self {
         let execution_engine_rc = self.execution_engine_rc().clone();
 
@@ -459,11 +460,11 @@ impl Clone for ExecutionEngine<'_> {
 
 /// A smart pointer which wraps the `Drop` logic for `LLVMExecutionEngineRef`.
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct ExecEngineInner<'ctx>(Rc<LLVMExecutionEngineRef>, PhantomData<&'ctx Context>);
+struct ExecEngineInner(Arc<LLVMExecutionEngineRef>);
 
-impl Drop for ExecEngineInner<'_> {
+impl Drop for ExecEngineInner {
     fn drop(&mut self) {
-        if Rc::strong_count(&self.0) == 1 {
+        if Arc::strong_count(&self.0) == 1 {
             unsafe {
                 LLVMDisposeExecutionEngine(*self.0);
             }
@@ -471,7 +472,7 @@ impl Drop for ExecEngineInner<'_> {
     }
 }
 
-impl Deref for ExecEngineInner<'_> {
+impl Deref for ExecEngineInner {
     type Target = LLVMExecutionEngineRef;
 
     fn deref(&self) -> &Self::Target {
@@ -482,12 +483,15 @@ impl Deref for ExecEngineInner<'_> {
 /// A wrapper around a function pointer which ensures the function being pointed
 /// to doesn't accidentally outlive its execution engine.
 #[derive(Clone)]
-pub struct JitFunction<'ctx, F> {
-    _execution_engine: ExecEngineInner<'ctx>,
+pub struct JitFunction<F> {
     inner: F,
+    _execution_engine: ExecEngineInner,
+    // This needs some thread safe way to ensure the Context doesn't get dropped.
+    // The following doesn't work, and is just for demonstration purposes:
+    _context: Arc<Context>,
 }
 
-impl<'ctx, F: Copy> JitFunction<'ctx, F> {
+impl<F: Copy> JitFunction<F> {
     /// Returns the raw function pointer, consuming self in the process.
     /// This function is unsafe because the function pointer may dangle
     /// if the ExecutionEngine it came from is dropped. The caller is
@@ -505,7 +509,7 @@ impl<'ctx, F: Copy> JitFunction<'ctx, F> {
     }
 }
 
-impl<F> Debug for JitFunction<'_, F> {
+impl<F> Debug for JitFunction<F> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         f.debug_tuple("JitFunction").field(&"<unnamed>").finish()
     }
@@ -534,7 +538,7 @@ macro_rules! impl_unsafe_fn {
     ($( $param:ident ),*) => {
         impl<Output, $( $param ),*> private::SealedUnsafeFunctionPointer for unsafe extern "C" fn($( $param ),*) -> Output {}
 
-        impl<Output, $( $param ),*> JitFunction<'_, unsafe extern "C" fn($( $param ),*) -> Output> {
+        impl<Output, $( $param ),*> JitFunction<unsafe extern "C" fn($( $param ),*) -> Output> {
             /// This method allows you to call the underlying function while making
             /// sure that the backing storage is not dropped too early and
             /// preserves the `unsafe` marker for any calls.
