@@ -122,6 +122,7 @@ impl<'ctx> InstructionValue<'ctx> {
     fn is_a_alloca_inst(self) -> bool {
         !unsafe { LLVMIsAAllocaInst(self.as_value_ref()) }.is_null()
     }
+    #[allow(dead_code)]
     fn is_a_getelementptr_inst(self) -> bool {
         !unsafe { LLVMIsAGetElementPtrInst(self.as_value_ref()) }.is_null()
     }

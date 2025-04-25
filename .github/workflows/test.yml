@@ -55,6 +55,8 @@ jobs:
         run: llvm-config --version --bindir --libdir
       - name: Install Rust Stable
         uses: dtolnay/rust-toolchain@stable
+      - name: cargo clippy
+        run: cargo clippy --tests --features llvm${{ matrix.llvm-version[1] }} --locked -- -D warnings
       - name: Build
         run: cargo build --release --features llvm${{ matrix.llvm-version[1] }} --verbose
       - name: Run tests

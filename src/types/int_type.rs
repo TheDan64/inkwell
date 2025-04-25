@@ -7,7 +7,9 @@ use llvm_sys::prelude::LLVMTypeRef;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
-use crate::types::{ArrayType, FunctionType, PointerType, ScalableVectorType, Type, VectorType};
+#[llvm_versions(12..)]
+use crate::types::ScalableVectorType;
+use crate::types::{ArrayType, FunctionType, PointerType, Type, VectorType};
 use crate::values::{ArrayValue, GenericValue, IntValue};
 use crate::AddressSpace;
 

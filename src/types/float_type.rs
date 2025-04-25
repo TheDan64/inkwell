@@ -6,7 +6,9 @@ use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::traits::AsTypeRef;
-use crate::types::{ArrayType, FunctionType, PointerType, ScalableVectorType, Type, VectorType};
+#[llvm_versions(12..)]
+use crate::types::ScalableVectorType;
+use crate::types::{ArrayType, FunctionType, PointerType, Type, VectorType};
 use crate::values::{ArrayValue, FloatValue, GenericValue, IntValue};
 use crate::AddressSpace;
 
@@ -64,7 +66,7 @@ impl<'ctx> FloatType<'ctx> {
         self.float_type.array_type(size)
     }
 
-    /// Creates a `ScalableVectorType` with this `FloatType` for its element type.
+    /// Creates a `VectorType` with this `FloatType` for its element type.
     ///
     /// # Example
     ///

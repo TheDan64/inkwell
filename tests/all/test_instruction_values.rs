@@ -283,7 +283,7 @@ fn test_instructions() {
 
     #[cfg(not(feature = "typed-pointers"))]
     {
-        let gep_instr = unsafe { builder.build_gep(i64_type, alloca_val, &vec![], "gep").unwrap() };
+        let gep_instr = unsafe { builder.build_gep(i64_type, alloca_val, &[], "gep").unwrap() };
         assert_eq!(
             gep_instr
                 .as_instruction_value()
