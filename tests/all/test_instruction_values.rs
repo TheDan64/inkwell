@@ -3,7 +3,9 @@ use inkwell::context::Context;
 use inkwell::types::AnyType;
 use inkwell::types::{AnyTypeEnum, BasicType};
 use inkwell::values::{BasicValue, CallSiteValue, InstructionOpcode::*};
-use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate};
+#[llvm_versions(10..)]
+use inkwell::AtomicRMWBinOp;
+use inkwell::{AddressSpace, AtomicOrdering, FloatPredicate, IntPredicate};
 
 #[test]
 #[ignore]
