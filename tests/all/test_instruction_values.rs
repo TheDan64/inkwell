@@ -436,16 +436,16 @@ fn test_mem_instructions() {
     let load = builder.build_load(arg1, "").unwrap();
     let load_instruction = load.as_instruction_value().unwrap();
 
-    assert_eq!(store_instruction.get_volatile().unwrap(), false);
-    assert_eq!(load_instruction.get_volatile().unwrap(), false);
+    assert!(!store_instruction.get_volatile().unwrap());
+    assert!(!load_instruction.get_volatile().unwrap());
     store_instruction.set_volatile(true).unwrap();
     load_instruction.set_volatile(true).unwrap();
-    assert_eq!(store_instruction.get_volatile().unwrap(), true);
-    assert_eq!(load_instruction.get_volatile().unwrap(), true);
+    assert!(store_instruction.get_volatile().unwrap());
+    assert!(load_instruction.get_volatile().unwrap());
     store_instruction.set_volatile(false).unwrap();
     load_instruction.set_volatile(false).unwrap();
-    assert_eq!(store_instruction.get_volatile().unwrap(), false);
-    assert_eq!(load_instruction.get_volatile().unwrap(), false);
+    assert!(!store_instruction.get_volatile().unwrap());
+    assert!(!load_instruction.get_volatile().unwrap());
 
     assert_eq!(store_instruction.get_alignment().unwrap(), 0);
     assert_eq!(load_instruction.get_alignment().unwrap(), 0);

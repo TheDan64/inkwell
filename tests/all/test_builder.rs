@@ -1368,6 +1368,7 @@ fn run_memcpy_on<'ctx>(
     builder.position_at_end(entry);
 
     let len_value = i64_type.const_int(array_len as u64, false);
+    #[cfg(not(feature = "typed-pointers"))]
     let element_type = i32_type;
     let array_ptr = builder.build_array_malloc(i32_type, len_value, "array_ptr").unwrap();
 
@@ -1454,6 +1455,7 @@ fn run_memmove_on<'ctx>(
     builder.position_at_end(entry);
 
     let len_value = i64_type.const_int(array_len as u64, false);
+    #[cfg(not(feature = "typed-pointers"))]
     let element_type = i32_type;
     let array_ptr = builder.build_array_malloc(i32_type, len_value, "array_ptr").unwrap();
 
@@ -1541,6 +1543,7 @@ fn run_memset_on<'ctx>(
     builder.position_at_end(entry);
 
     let len_value = i64_type.const_int(array_len as u64, false);
+    #[cfg(not(feature = "typed-pointers"))]
     let element_type = i32_type;
     let array_ptr = builder.build_array_malloc(i32_type, len_value, "array_ptr").unwrap();
 

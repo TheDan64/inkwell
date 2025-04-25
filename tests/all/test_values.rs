@@ -2,12 +2,15 @@ use inkwell::attributes::AttributeLoc;
 
 use inkwell::comdat::ComdatSelectionKind;
 use inkwell::context::Context;
+#[llvm_versions(15..)]
 use inkwell::memory_buffer::MemoryBuffer;
 use inkwell::module::Linkage::*;
 use inkwell::types::{AnyTypeEnum, StringRadix, VectorType};
+#[llvm_versions(15..)]
+use inkwell::values::CallSiteValue;
 #[llvm_versions(18..)]
 use inkwell::values::OperandBundle;
-use inkwell::values::{AnyValue, CallSiteValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
+use inkwell::values::{AnyValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
 use inkwell::{AddressSpace, DLLStorageClass, GlobalVisibility, ThreadLocalMode};
 
 #[llvm_versions(18..)]
