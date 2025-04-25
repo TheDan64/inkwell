@@ -1,4 +1,3 @@
-#[llvm_versions(9..)]
 use llvm_sys::core::{LLVMGetIntrinsicDeclaration, LLVMIntrinsicIsOverloaded, LLVMLookupIntrinsicID};
 use llvm_sys::prelude::LLVMTypeRef;
 
@@ -14,7 +13,6 @@ pub struct Intrinsic {
 /// A wrapper around LLVM intrinsic id
 ///
 /// To call it you would need to create a declaration inside a module using [`Self::get_declaration()`].
-#[llvm_versions(9..)]
 impl Intrinsic {
     /// Create an Intrinsic object from raw LLVM intrinsic id
     ///

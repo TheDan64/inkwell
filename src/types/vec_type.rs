@@ -200,27 +200,15 @@ impl<'ctx> VectorType<'ctx> {
     /// let f32_vec_type = f32_type.vec_type(3);
     /// let f32_vec_ptr_type = f32_vec_type.ptr_type(AddressSpace::default());
     ///
-    /// #[cfg(any(
-    ///     feature = "llvm4-0",
-    ///     feature = "llvm5-0",
-    ///     feature = "llvm6-0",
-    ///     feature = "llvm7-0",
-    ///     feature = "llvm8-0",
-    ///     feature = "llvm9-0",
-    ///     feature = "llvm10-0",
-    ///     feature = "llvm11-0",
-    ///     feature = "llvm12-0",
-    ///     feature = "llvm13-0",
-    ///     feature = "llvm14-0"
-    /// ))]
+    /// #[cfg(feature = "typed-pointers")]
     /// assert_eq!(f32_vec_ptr_type.get_element_type().into_vector_type(), f32_vec_type);
     /// ```
     #[cfg_attr(
         any(
-            feature = "llvm15-0",
-            feature = "llvm16-0",
+            all(feature = "llvm15-0", not(feature = "typed-pointers")),
+            all(feature = "llvm16-0", not(feature = "typed-pointers")),
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ),
         deprecated(
             note = "Starting from version 15.0, LLVM doesn't differentiate between pointer types. Use Context::ptr_type instead."

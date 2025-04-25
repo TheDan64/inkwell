@@ -11,8 +11,6 @@ use inkwell::types::BasicMetadataTypeEnum;
 use inkwell::values::{BasicMetadataValueEnum, BasicValueEnum, FloatValue, FunctionValue, PointerValue};
 use inkwell::FloatPredicate;
 
-use inkwell_internals::llvm_versions;
-
 use crate::Token::*;
 
 const ANONYMOUS_FUNCTION_NAME: &str = "anonymous";
@@ -856,12 +854,12 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
         builder.build_alloca(self.context.f64_type(), name).unwrap()
     }
 
-    #[llvm_versions(..=14)]
+    #[cfg(feature = "typed-pointers")]
     pub fn build_load(&self, ptr: PointerValue<'ctx>, name: &str) -> BasicValueEnum<'ctx> {
         self.builder.build_load(ptr, name).unwrap()
     }
 
-    #[llvm_versions(15..)]
+    #[cfg(not(feature = "typed-pointers"))]
     pub fn build_load(&self, ptr: PointerValue<'ctx>, name: &str) -> BasicValueEnum<'ctx> {
         self.builder.build_load(self.context.f64_type(), ptr, name).unwrap()
     }

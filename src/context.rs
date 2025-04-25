@@ -1,19 +1,17 @@
 //! A `Context` is an opaque owner and manager of core global data.
 
-#[llvm_versions(7..)]
 use crate::InlineAsmDialect;
 use libc::c_void;
-#[llvm_versions(..=6)]
-use llvm_sys::core::LLVMConstInlineAsm;
+#[cfg(all(any(feature = "llvm15-0", feature = "llvm16-0"), feature = "typed-pointers"))]
+use llvm_sys::core::LLVMContextSetOpaquePointers;
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMCreateTypeAttribute;
-#[llvm_versions(7..)]
+
 use llvm_sys::core::LLVMGetInlineAsm;
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMGetTypeByName2;
-#[llvm_versions(6..)]
 use llvm_sys::core::LLVMMetadataTypeInContext;
-#[llvm_versions(15..)]
+#[cfg(not(feature = "typed-pointers"))]
 use llvm_sys::core::LLVMPointerTypeInContext;
 use llvm_sys::core::{
     LLVMAppendBasicBlockInContext, LLVMConstStringInContext, LLVMConstStructInContext, LLVMContextCreate,
@@ -41,9 +39,10 @@ use crate::support::{to_c_str, LLVMString};
 use crate::targets::TargetData;
 #[llvm_versions(12..)]
 use crate::types::AnyTypeEnum;
-#[llvm_versions(6..)]
 use crate::types::MetadataType;
-use crate::types::{AsTypeRef, BasicTypeEnum, FloatType, FunctionType, IntType, PointerType, StructType, VoidType};
+#[cfg(not(feature = "typed-pointers"))]
+use crate::types::PointerType;
+use crate::types::{AsTypeRef, BasicTypeEnum, FloatType, FunctionType, IntType, StructType, VoidType};
 use crate::values::{
     ArrayValue, AsValueRef, BasicMetadataValueEnum, BasicValueEnum, FunctionValue, MetadataValue, PointerValue,
     StructValue,
@@ -77,6 +76,11 @@ pub(crate) struct ContextImpl(pub(crate) LLVMContextRef);
 impl ContextImpl {
     pub(crate) unsafe fn new(context: LLVMContextRef) -> Self {
         assert!(!context.is_null());
+
+        #[cfg(all(any(feature = "llvm15-0", feature = "llvm16-0"), feature = "typed-pointers"))]
+        unsafe {
+            LLVMContextSetOpaquePointers(context, 0)
+        };
 
         ContextImpl(context)
     }
@@ -115,14 +119,8 @@ impl ContextImpl {
         mut constraints: String,
         sideeffects: bool,
         alignstack: bool,
-        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))] dialect: Option<
-            InlineAsmDialect,
-        >,
+        dialect: Option<InlineAsmDialect>,
         #[cfg(not(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
             feature = "llvm8-0",
             feature = "llvm9-0",
             feature = "llvm10-0",
@@ -131,17 +129,6 @@ impl ContextImpl {
         )))]
         can_throw: bool,
     ) -> PointerValue<'ctx> {
-        #[cfg(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
-        let value = unsafe {
-            LLVMConstInlineAsm(
-                ty.as_type_ref(),
-                assembly.as_ptr() as *const ::libc::c_char,
-                constraints.as_ptr() as *const ::libc::c_char,
-                sideeffects as i32,
-                alignstack as i32,
-            )
-        };
-        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
         let value = unsafe {
             LLVMGetInlineAsm(
                 ty.as_type_ref(),
@@ -153,10 +140,6 @@ impl ContextImpl {
                 alignstack as i32,
                 dialect.unwrap_or(InlineAsmDialect::ATT).into(),
                 #[cfg(not(any(
-                    feature = "llvm4-0",
-                    feature = "llvm5-0",
-                    feature = "llvm6-0",
-                    feature = "llvm7-0",
                     feature = "llvm8-0",
                     feature = "llvm9-0",
                     feature = "llvm10-0",
@@ -205,7 +188,6 @@ impl ContextImpl {
         unsafe { IntType::new(LLVMIntTypeInContext(self.0, bits)) }
     }
 
-    #[llvm_versions(6..)]
     fn metadata_type<'ctx>(&self) -> MetadataType<'ctx> {
         unsafe { MetadataType::new(LLVMMetadataTypeInContext(self.0)) }
     }
@@ -245,7 +227,7 @@ impl ContextImpl {
         unsafe { FloatType::new(LLVMPPCFP128TypeInContext(self.0)) }
     }
 
-    #[llvm_versions(15..)]
+    #[cfg(not(feature = "typed-pointers"))]
     fn ptr_type<'ctx>(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         unsafe { PointerType::new(LLVMPointerTypeInContext(self.0, address_space.0)) }
     }
@@ -345,7 +327,13 @@ impl ContextImpl {
     fn metadata_string<'ctx>(&self, string: &str) -> MetadataValue<'ctx> {
         let c_string = to_c_str(string);
 
-        unsafe { MetadataValue::new(LLVMMDStringInContext(self.0, c_string.as_ptr(), c_string.to_bytes().len() as u32)) }
+        unsafe {
+            MetadataValue::new(LLVMMDStringInContext(
+                self.0,
+                c_string.as_ptr(),
+                c_string.to_bytes().len() as u32,
+            ))
+        }
     }
 
     fn get_kind_id(&self, key: &str) -> u32 {
@@ -559,12 +547,8 @@ impl Context {
     ///     "=r,{rax},{rdi}".to_string(),
     ///     true,
     ///     false,
-    ///     #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))] None,
+    ///     None,
     ///     #[cfg(not(any(
-    ///         feature = "llvm4-0",
-    ///         feature = "llvm5-0",
-    ///         feature = "llvm6-0",
-    ///         feature = "llvm7-0",
     ///         feature = "llvm8-0",
     ///         feature = "llvm9-0",
     ///         feature = "llvm10-0",
@@ -576,10 +560,6 @@ impl Context {
     /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
     ///
     /// #[cfg(any(
-    ///     feature = "llvm4-0",
-    ///     feature = "llvm5-0",
-    ///     feature = "llvm6-0",
-    ///     feature = "llvm7-0",
     ///     feature = "llvm8-0",
     ///     feature = "llvm9-0",
     ///     feature = "llvm10-0",
@@ -594,7 +574,7 @@ impl Context {
     ///     builder.build_call(callable_value, params, "exit").unwrap();
     /// }
     ///
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1"))]
     /// builder.build_indirect_call(asm_fn, asm, params, "exit").unwrap();
     ///
     /// builder.build_return(None).unwrap();
@@ -607,14 +587,8 @@ impl Context {
         constraints: String,
         sideeffects: bool,
         alignstack: bool,
-        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))] dialect: Option<
-            InlineAsmDialect,
-        >,
+        dialect: Option<InlineAsmDialect>,
         #[cfg(not(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
             feature = "llvm8-0",
             feature = "llvm9-0",
             feature = "llvm10-0",
@@ -629,13 +603,8 @@ impl Context {
             constraints,
             sideeffects,
             alignstack,
-            #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
             dialect,
             #[cfg(not(any(
-                feature = "llvm4-0",
-                feature = "llvm5-0",
-                feature = "llvm6-0",
-                feature = "llvm7-0",
                 feature = "llvm8-0",
                 feature = "llvm9-0",
                 feature = "llvm10-0",
@@ -803,7 +772,6 @@ impl Context {
     /// assert_eq!(md_type.get_context(), context);
     /// ```
     #[inline]
-    #[llvm_versions(6..)]
     pub fn metadata_type(&self) -> MetadataType {
         self.context.metadata_type()
     }
@@ -956,7 +924,7 @@ impl Context {
     /// assert_eq!(ptr_type.get_address_space(), AddressSpace::default());
     /// assert_eq!(ptr_type.get_context(), context);
     /// ```
-    #[llvm_versions(15..)]
+    #[cfg(not(feature = "typed-pointers"))]
     #[inline]
     pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
         self.context.ptr_type(address_space)
@@ -1441,12 +1409,8 @@ impl<'ctx> ContextRef<'ctx> {
     ///     "=r,{rax},{rdi}".to_string(),
     ///     true,
     ///     false,
-    ///     #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))] None,
+    ///     None,
     ///     #[cfg(not(any(
-    ///         feature = "llvm4-0",
-    ///         feature = "llvm5-0",
-    ///         feature = "llvm6-0",
-    ///         feature = "llvm7-0",
     ///         feature = "llvm8-0",
     ///         feature = "llvm9-0",
     ///         feature = "llvm10-0",
@@ -1458,10 +1422,6 @@ impl<'ctx> ContextRef<'ctx> {
     /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
     ///
     /// #[cfg(any(
-    ///     feature = "llvm4-0",
-    ///     feature = "llvm5-0",
-    ///     feature = "llvm6-0",
-    ///     feature = "llvm7-0",
     ///     feature = "llvm8-0",
     ///     feature = "llvm9-0",
     ///     feature = "llvm10-0",
@@ -1476,7 +1436,7 @@ impl<'ctx> ContextRef<'ctx> {
     ///     builder.build_call(callable_value, params, "exit").unwrap();
     /// }
     ///
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1"))]
     /// builder.build_indirect_call(asm_fn, asm, params, "exit").unwrap();
     ///
     /// builder.build_return(None).unwrap();
@@ -1489,14 +1449,8 @@ impl<'ctx> ContextRef<'ctx> {
         constraints: String,
         sideeffects: bool,
         alignstack: bool,
-        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))] dialect: Option<
-            InlineAsmDialect,
-        >,
+        dialect: Option<InlineAsmDialect>,
         #[cfg(not(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
             feature = "llvm8-0",
             feature = "llvm9-0",
             feature = "llvm10-0",
@@ -1511,13 +1465,8 @@ impl<'ctx> ContextRef<'ctx> {
             constraints,
             sideeffects,
             alignstack,
-            #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
             dialect,
             #[cfg(not(any(
-                feature = "llvm4-0",
-                feature = "llvm5-0",
-                feature = "llvm6-0",
-                feature = "llvm7-0",
                 feature = "llvm8-0",
                 feature = "llvm9-0",
                 feature = "llvm10-0",
@@ -1685,7 +1634,6 @@ impl<'ctx> ContextRef<'ctx> {
     /// assert_eq!(md_type.get_context(), context);
     /// ```
     #[inline]
-    #[llvm_versions(6..)]
     pub fn metadata_type(&self) -> MetadataType<'ctx> {
         self.context.metadata_type()
     }
@@ -1838,7 +1786,7 @@ impl<'ctx> ContextRef<'ctx> {
     /// assert_eq!(ptr_type.get_address_space(), AddressSpace::default());
     /// assert_eq!(ptr_type.get_context(), context);
     /// ```
-    #[llvm_versions(15..)]
+    #[cfg(not(feature = "typed-pointers"))]
     #[inline]
     pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.context.ptr_type(address_space)

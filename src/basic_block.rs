@@ -5,7 +5,7 @@ use llvm_sys::core::{
     LLVMGetBasicBlockTerminator, LLVMGetFirstInstruction, LLVMGetFirstUse, LLVMGetLastInstruction,
     LLVMGetNextBasicBlock, LLVMGetPreviousBasicBlock, LLVMGetTypeContext, LLVMIsABasicBlock, LLVMIsConstant,
     LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString,
-    LLVMRemoveBasicBlockFromParent, LLVMReplaceAllUsesWith, LLVMTypeOf,
+    LLVMRemoveBasicBlockFromParent, LLVMReplaceAllUsesWith, LLVMSetValueName2, LLVMTypeOf,
 };
 use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 
@@ -288,9 +288,9 @@ impl<'ctx> BasicBlock<'ctx> {
     ///
     /// let void_type = context.void_type();
     /// let i32_type = context.i32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let i32_ptr_type = context.ptr_type(AddressSpace::default());
     ///
     /// let fn_type = void_type.fn_type(&[i32_ptr_type.into()], false);
@@ -471,18 +471,13 @@ impl<'ctx> BasicBlock<'ctx> {
     pub fn set_name(&self, name: &str) {
         let c_string = to_c_str(name);
 
-        #[cfg(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
-        {
-            use llvm_sys::core::LLVMSetValueName;
-
-            unsafe { LLVMSetValueName(LLVMBasicBlockAsValue(self.basic_block), c_string.as_ptr()) };
-        }
-        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
-        {
-            use llvm_sys::core::LLVMSetValueName2;
-
-            unsafe { LLVMSetValueName2(LLVMBasicBlockAsValue(self.basic_block), c_string.as_ptr(), c_string.to_bytes().len()) };
-        }
+        unsafe {
+            LLVMSetValueName2(
+                LLVMBasicBlockAsValue(self.basic_block),
+                c_string.as_ptr(),
+                c_string.to_bytes().len(),
+            )
+        };
     }
 
     /// Replaces all uses of this basic block with another.

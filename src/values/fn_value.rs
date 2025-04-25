@@ -10,7 +10,6 @@ use llvm_sys::core::{
     LLVMIsAFunction, LLVMIsConstant, LLVMSetFunctionCallConv, LLVMSetGC, LLVMSetLinkage, LLVMSetParamAlignment,
 };
 use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
-#[llvm_versions(7..)]
 use llvm_sys::debuginfo::{LLVMGetSubprogram, LLVMSetSubprogram};
 use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 
@@ -21,7 +20,6 @@ use std::mem::forget;
 
 use crate::attributes::{Attribute, AttributeLoc};
 use crate::basic_block::BasicBlock;
-#[llvm_versions(7..)]
 use crate::debug_info::DISubprogram;
 use crate::module::Linkage;
 use crate::support::to_c_str;
@@ -41,11 +39,9 @@ impl<'ctx> FunctionValue<'ctx> {
     ///
     /// The ref must be valid and of type function.
     pub unsafe fn new(value: LLVMValueRef) -> Option<Self> {
-        if value.is_null() {
+        if value.is_null() || LLVMIsAFunction(value).is_null() {
             return None;
         }
-
-        assert!(!LLVMIsAFunction(value).is_null());
 
         Some(FunctionValue {
             fn_value: Value::new(value),
@@ -207,16 +203,6 @@ impl<'ctx> FunctionValue<'ctx> {
         LLVMDeleteFunction(self.as_value_ref())
     }
 
-    #[llvm_versions(..=7)]
-    pub fn get_type(self) -> FunctionType<'ctx> {
-        use crate::types::PointerType;
-
-        let ptr_type = unsafe { PointerType::new(self.fn_value.get_type()) };
-
-        ptr_type.get_element_type().into_function_type()
-    }
-
-    #[llvm_versions(8..)]
     pub fn get_type(self) -> FunctionType<'ctx> {
         unsafe { FunctionType::new(llvm_sys::core::LLVMGlobalGetValueType(self.as_value_ref())) }
     }
@@ -499,13 +485,11 @@ impl<'ctx> FunctionValue<'ctx> {
     }
 
     /// Set the debug info descriptor
-    #[llvm_versions(7..)]
     pub fn set_subprogram(self, subprogram: DISubprogram<'ctx>) {
         unsafe { LLVMSetSubprogram(self.as_value_ref(), subprogram.metadata_ref) }
     }
 
     /// Get the debug info descriptor
-    #[llvm_versions(7..)]
     pub fn get_subprogram(self) -> Option<DISubprogram<'ctx>> {
         let metadata_ref = unsafe { LLVMGetSubprogram(self.as_value_ref()) };
 

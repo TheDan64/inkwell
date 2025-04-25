@@ -1,12 +1,12 @@
 [package]
 authors = ["Daniel Kolsoi <thadan64@gmail.com>"]
 description = "Internal macro crate for inkwell"
-edition = "2021"
+edition = "2024"
 license = "Apache-2.0"
 name = "inkwell_internals"
 readme = "README.md"
 repository = "https://github.com/TheDan64/inkwell"
-version = "0.10.0"
+version = "0.11.0"
 
 [dependencies]
 proc-macro2 = "1.0"

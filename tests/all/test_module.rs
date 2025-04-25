@@ -341,7 +341,6 @@ fn test_get_set_target() {
     assert_eq!(module.get_name().to_str(), Ok("mod"));
     assert_eq!(module.get_triple(), TargetTriple::create(""));
 
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
     assert_eq!(module.get_source_file_name().to_str(), Ok("mod"));
 
     module.set_name("mod2");
@@ -350,13 +349,10 @@ fn test_get_set_target() {
     assert_eq!(module.get_name().to_str(), Ok("mod2"));
     assert_eq!(module.get_triple(), triple);
 
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
-    {
-        module.set_source_file_name("foo.rs");
+    module.set_source_file_name("foo.rs");
 
-        assert_eq!(module.get_source_file_name().to_str(), Ok("foo.rs"));
-        assert_eq!(module.get_name().to_str(), Ok("mod2"));
-    }
+    assert_eq!(module.get_source_file_name().to_str(), Ok("foo.rs"));
+    assert_eq!(module.get_name().to_str(), Ok("mod2"));
 }
 
 #[test]
@@ -433,40 +429,37 @@ fn test_linking_modules() {
 
 #[test]
 fn test_metadata_flags() {
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
-    {
-        let context = Context::create();
-        let module = context.create_module("my_module");
+    let context = Context::create();
+    let module = context.create_module("my_module");
 
-        use inkwell::module::FlagBehavior;
+    use inkwell::module::FlagBehavior;
 
-        assert!(module.get_flag("some_key").is_none());
+    assert!(module.get_flag("some_key").is_none());
 
-        let md = context.metadata_string("lots of metadata here");
+    let md = context.metadata_string("lots of metadata here");
 
-        module.add_metadata_flag("some_key", FlagBehavior::Error, md);
+    module.add_metadata_flag("some_key", FlagBehavior::Error, md);
 
-        // These have different addresses but same value
-        assert!(module.get_flag("some_key").is_some());
+    // These have different addresses but same value
+    assert!(module.get_flag("some_key").is_some());
 
-        let f64_type = context.f64_type();
-        let f64_val = f64_type.const_float(std::f64::consts::PI);
+    let f64_type = context.f64_type();
+    let f64_val = f64_type.const_float(std::f64::consts::PI);
 
-        assert!(module.get_flag("some_key2").is_none());
+    assert!(module.get_flag("some_key2").is_none());
 
-        module.add_basic_value_flag("some_key2", FlagBehavior::Error, f64_val);
+    module.add_basic_value_flag("some_key2", FlagBehavior::Error, f64_val);
 
-        assert!(module.get_flag("some_key2").is_some());
+    assert!(module.get_flag("some_key2").is_some());
 
-        let struct_val = context.const_struct(&[f64_val.into()], false);
+    let struct_val = context.const_struct(&[f64_val.into()], false);
 
-        assert!(module.get_flag("some_key3").is_none());
+    assert!(module.get_flag("some_key3").is_none());
 
-        module.add_basic_value_flag("some_key3", FlagBehavior::Error, struct_val);
+    module.add_basic_value_flag("some_key3", FlagBehavior::Error, struct_val);
 
-        assert!(module.get_flag("some_key3").is_some());
-        assert!(module.verify().is_ok());
-    }
+    assert!(module.get_flag("some_key3").is_some());
+    assert!(module.verify().is_ok());
 }
 
 #[test]

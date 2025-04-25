@@ -227,7 +227,7 @@ fn test_attributes_on_call_site_values() {
     assert!(call_site_value
         .get_string_attribute(AttributeLoc::Return, "my_key")
         .is_none());
-    assert_eq!(call_site_value.get_called_fn_value(), fn_value);
+    assert_eq!(call_site_value.get_called_fn_value(), Some(fn_value));
 
     call_site_value.set_alignment_attribute(AttributeLoc::Return, 16);
 

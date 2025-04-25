@@ -139,12 +139,40 @@ impl<'ctx> ArrayValue<'ctx> {
     /// use std::ffi::CStr;
     ///
     /// let context = Context::create();
+    /// let string = context.const_string(b"hello!", false);
+    ///
+    /// let result = b"hello!".as_slice();
+    /// assert_eq!(string.as_const_string(), Some(result));
+    /// ```
+    // SubTypes: Impl only for ArrayValue<IntValue<i8>>
+    pub fn as_const_string(&self) -> Option<&[u8]> {
+        let mut len = 0;
+        let ptr = unsafe { LLVMGetAsString(self.as_value_ref(), &mut len) };
+
+        if ptr.is_null() {
+            None
+        } else {
+            unsafe { Some(std::slice::from_raw_parts(ptr.cast(), len)) }
+        }
+    }
+
+    /// Obtain the string from the ArrayValue
+    /// if the value points to a constant string.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use std::ffi::CStr;
+    ///
+    /// let context = Context::create();
     /// let string = context.const_string(b"hello!", true);
     ///
     /// let result = CStr::from_bytes_with_nul(b"hello!\0").unwrap();
     /// assert_eq!(string.get_string_constant(), Some(result));
     /// ```
     // SubTypes: Impl only for ArrayValue<IntValue<i8>>
+    #[deprecated = "llvm strings can contain internal NULs, and this function truncates such values, use as_const_string instead"]
     pub fn get_string_constant(&self) -> Option<&CStr> {
         let mut len = 0;
         let ptr = unsafe { LLVMGetAsString(self.as_value_ref(), &mut len) };

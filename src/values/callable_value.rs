@@ -79,7 +79,7 @@ use llvm_sys::LLVMTypeKind;
 #[derive(Debug)]
 pub struct CallableValue<'ctx>(Either<FunctionValue<'ctx>, PointerValue<'ctx>>);
 
-unsafe impl<'ctx> AsValueRef for CallableValue<'ctx> {
+unsafe impl AsValueRef for CallableValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         use either::Either::*;
 
@@ -92,7 +92,7 @@ unsafe impl<'ctx> AsValueRef for CallableValue<'ctx> {
 
 unsafe impl<'ctx> AnyValue<'ctx> for CallableValue<'ctx> {}
 
-unsafe impl<'ctx> AsTypeRef for CallableValue<'ctx> {
+unsafe impl AsTypeRef for CallableValue<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
         use either::Either::*;
 
@@ -103,7 +103,7 @@ unsafe impl<'ctx> AsTypeRef for CallableValue<'ctx> {
     }
 }
 
-impl<'ctx> CallableValue<'ctx> {
+impl CallableValue<'_> {
     #[llvm_versions(..=14)]
     pub(crate) fn returns_void(&self) -> bool {
         use llvm_sys::core::LLVMGetReturnType;

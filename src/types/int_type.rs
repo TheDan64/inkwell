@@ -7,7 +7,9 @@ use llvm_sys::prelude::LLVMTypeRef;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
-use crate::types::{ArrayType, FunctionType, PointerType, ScalableVectorType, Type, VectorType};
+#[llvm_versions(12..)]
+use crate::types::ScalableVectorType;
+use crate::types::{ArrayType, FunctionType, PointerType, Type, VectorType};
 use crate::values::{ArrayValue, GenericValue, IntValue};
 use crate::AddressSpace;
 
@@ -321,27 +323,15 @@ impl<'ctx> IntType<'ctx> {
     /// let i8_type = context.i8_type();
     /// let i8_ptr_type = i8_type.ptr_type(AddressSpace::default());
     ///
-    /// #[cfg(any(
-    ///     feature = "llvm4-0",
-    ///     feature = "llvm5-0",
-    ///     feature = "llvm6-0",
-    ///     feature = "llvm7-0",
-    ///     feature = "llvm8-0",
-    ///     feature = "llvm9-0",
-    ///     feature = "llvm10-0",
-    ///     feature = "llvm11-0",
-    ///     feature = "llvm12-0",
-    ///     feature = "llvm13-0",
-    ///     feature = "llvm14-0"
-    /// ))]
+    /// #[cfg(feature = "typed-pointers")]
     /// assert_eq!(i8_ptr_type.get_element_type().into_int_type(), i8_type);
     /// ```
     #[cfg_attr(
         any(
-            feature = "llvm15-0",
-            feature = "llvm16-0",
+            all(feature = "llvm15-0", not(feature = "typed-pointers")),
+            all(feature = "llvm16-0", not(feature = "typed-pointers")),
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ),
         deprecated(
             note = "Starting from version 15.0, LLVM doesn't differentiate between pointer types. Use Context::ptr_type instead."
