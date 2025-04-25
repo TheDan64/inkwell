@@ -4,7 +4,7 @@ use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyModule};
 #[allow(deprecated)]
 use llvm_sys::bit_reader::LLVMParseBitcodeInContext;
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
-#[llvm_versions(..=14)]
+#[llvm_versions(..=11)]
 use llvm_sys::core::LLVMGetTypeByName;
 use llvm_sys::core::{
     LLVMAddFunction, LLVMAddGlobal, LLVMAddGlobalInAddressSpace, LLVMAddNamedMetadataOperand, LLVMCloneModule,
