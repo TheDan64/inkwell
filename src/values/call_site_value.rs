@@ -270,7 +270,6 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// assert_eq!(call_site_value.get_called_fn_type(), fn_type);
     /// ```
-
     pub fn get_called_fn_type(self) -> FunctionType<'ctx> {
         // SAFETY: the passed LLVMValueRef is of type CallSite
         let fn_type_ref = unsafe { LLVMGetCalledFunctionType(self.as_value_ref()) };

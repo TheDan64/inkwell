@@ -222,13 +222,11 @@ impl<'ctx> GlobalValue<'ctx> {
     }
 
     /// Sets a metadata of the given type on the GlobalValue
-
     pub fn set_metadata(self, metadata: MetadataValue<'ctx>, kind_id: u32) {
         unsafe { LLVMGlobalSetMetadata(self.as_value_ref(), kind_id, metadata.as_metadata_ref()) }
     }
 
     /// Gets a `Comdat` assigned to this `GlobalValue`, if any.
-
     pub fn get_comdat(self) -> Option<Comdat> {
         use llvm_sys::comdat::LLVMGetComdat;
 
@@ -242,7 +240,6 @@ impl<'ctx> GlobalValue<'ctx> {
     }
 
     /// Assigns a `Comdat` to this `GlobalValue`.
-
     pub fn set_comdat(self, comdat: Comdat) {
         use llvm_sys::comdat::LLVMSetComdat;
 

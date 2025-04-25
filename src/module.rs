@@ -1364,7 +1364,6 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_name().to_str(), Ok("my_mod"));
     /// assert_eq!(module.get_source_file_name().to_str(), Ok("my_mod.rs"));
     /// ```
-
     pub fn get_source_file_name(&self) -> &CStr {
         use llvm_sys::core::LLVMGetSourceFileName;
 
@@ -1391,7 +1390,6 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_name().to_str(), Ok("my_mod"));
     /// assert_eq!(module.get_source_file_name().to_str(), Ok("my_mod.rs"));
     /// ```
-
     pub fn set_source_file_name(&self, file_name: &str) {
         use llvm_sys::core::LLVMSetSourceFileName;
 
@@ -1451,7 +1449,6 @@ impl<'ctx> Module<'ctx> {
 
     /// Gets the `Comdat` associated with a particular name. If it does not exist, it will be created.
     /// A new `Comdat` defaults to a kind of `ComdatSelectionKind::Any`.
-
     pub fn get_or_insert_comdat(&self, name: &str) -> Comdat {
         use llvm_sys::comdat::LLVMGetOrInsertComdat;
 
@@ -1465,7 +1462,6 @@ impl<'ctx> Module<'ctx> {
     /// If a `BasicValue` was used to create this flag, it will be wrapped in a `MetadataValue`
     /// when returned from this function.
     // SubTypes: Might need to return Option<BVE, MV<Enum>, or MV<String>>
-
     pub fn get_flag(&self, key: &str) -> Option<MetadataValue<'ctx>> {
         use llvm_sys::core::LLVMMetadataAsValue;
 
@@ -1482,7 +1478,6 @@ impl<'ctx> Module<'ctx> {
 
     /// Append a `MetadataValue` as a module wide flag. Note that using the same key twice
     /// will likely invalidate the module.
-
     pub fn add_metadata_flag(&self, key: &str, behavior: FlagBehavior, flag: MetadataValue<'ctx>) {
         let md = flag.as_metadata_ref();
 
@@ -1500,7 +1495,6 @@ impl<'ctx> Module<'ctx> {
     /// Append a `BasicValue` as a module wide flag. Note that using the same key twice
     /// will likely invalidate the module.
     // REVIEW: What happens if value is not const?
-
     pub fn add_basic_value_flag<BV: BasicValue<'ctx>>(&self, key: &str, behavior: FlagBehavior, flag: BV) {
         use llvm_sys::core::LLVMValueAsMetadata;
 
@@ -1528,7 +1522,6 @@ impl<'ctx> Module<'ctx> {
     }
 
     /// Creates a `DebugInfoBuilder` for this `Module`.
-
     pub fn create_debug_info_builder(
         &self,
         allow_unresolved: bool,

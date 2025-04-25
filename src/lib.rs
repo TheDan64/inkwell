@@ -29,6 +29,7 @@ pub mod context;
 pub mod data_layout;
 pub mod debug_info;
 pub mod execution_engine;
+#[cfg(not(feature = "llvm8-0"))]
 pub mod intrinsics;
 pub mod memory_buffer;
 pub mod memory_manager;

@@ -39,7 +39,9 @@ use crate::basic_block::BasicBlock;
 use crate::context::AsContextRef;
 use crate::debug_info::DILocation;
 use crate::support::to_c_str;
-use crate::types::{AsTypeRef, BasicType, FloatMathType, FunctionType, IntMathType, PointerMathType, PointerType};
+#[llvm_versions(15..)]
+use crate::types::FunctionType;
+use crate::types::{AsTypeRef, BasicType, FloatMathType, IntMathType, PointerMathType, PointerType};
 #[llvm_versions(18..)]
 use crate::values::operand_bundle::OperandBundle;
 #[llvm_versions(..=14)]
@@ -3659,7 +3661,6 @@ impl<'ctx> Builder<'ctx> {
 }
 
 /// Used by build_memcpy and build_memmove
-
 fn is_alignment_ok(align: u32) -> bool {
     // This replicates the assertions LLVM runs.
     //

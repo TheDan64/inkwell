@@ -784,7 +784,6 @@ impl Target {
     }
 
     #[cfg(feature = "target-webassembly")]
-
     pub fn initialize_webassembly(config: &InitializationConfig) {
         use llvm_sys::target::{
             LLVMInitializeWebAssemblyAsmParser, LLVMInitializeWebAssemblyAsmPrinter,
@@ -1107,7 +1106,6 @@ impl TargetMachine {
     /// # Example Output
     ///
     /// `x86_64-pc-linux-gnu`
-
     pub fn get_host_cpu_name() -> LLVMString {
         use llvm_sys::target_machine::LLVMGetHostCPUName;
 
@@ -1119,7 +1117,6 @@ impl TargetMachine {
     /// # Example Output
     ///
     /// `+sse2,+cx16,+sahf,-tbm`
-
     pub fn get_host_cpu_features() -> LLVMString {
         use llvm_sys::target_machine::LLVMGetHostCPUFeatures;
 

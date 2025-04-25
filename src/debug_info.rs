@@ -157,7 +157,7 @@ pub struct DIScope<'ctx> {
     _marker: PhantomData<&'ctx Context>,
 }
 
-impl<'ctx> DIScope<'ctx> {
+impl DIScope<'_> {
     /// Acquires the underlying raw pointer belonging to this `DIScope` type.
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref
@@ -503,7 +503,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
 
     /// Create a primitive basic type. `encoding` is an unsigned int flag (`DW_ATE_*`
     /// enum) defined by the chosen DWARF standard.
-
     pub fn create_basic_type(
         &self,
         name: &str,
@@ -533,7 +532,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     }
 
     /// Create a typedef (alias) of `ditype`
-
     pub fn create_typedef(
         &self,
         ditype: DIType<'ctx>,
@@ -1026,7 +1024,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     }
 }
 
-impl<'ctx> Drop for DebugInfoBuilder<'ctx> {
+impl Drop for DebugInfoBuilder<'_> {
     fn drop(&mut self) {
         self.finalize();
         unsafe { LLVMDisposeDIBuilder(self.builder) }
@@ -1049,7 +1047,7 @@ impl<'ctx> AsDIScope<'ctx> for DIFile<'ctx> {
     }
 }
 
-impl<'ctx> DIFile<'ctx> {
+impl DIFile<'_> {
     /// Acquires the underlying raw pointer belonging to this `DIFile` type.
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref
@@ -1091,7 +1089,7 @@ pub struct DINamespace<'ctx> {
     _marker: PhantomData<&'ctx Context>,
 }
 
-impl<'ctx> DINamespace<'ctx> {
+impl DINamespace<'_> {
     /// Acquires the underlying raw pointer belonging to this `DINamespace` type.
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref
@@ -1123,7 +1121,7 @@ impl<'ctx> AsDIScope<'ctx> for DISubprogram<'ctx> {
     }
 }
 
-impl<'ctx> DISubprogram<'ctx> {
+impl DISubprogram<'_> {
     /// Acquires the underlying raw pointer belonging to this `DISubprogram` type.
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref
@@ -1137,7 +1135,7 @@ pub struct DIType<'ctx> {
     _marker: PhantomData<&'ctx Context>,
 }
 
-impl<'ctx> DIType<'ctx> {
+impl DIType<'_> {
     pub fn get_size_in_bits(&self) -> u64 {
         unsafe { LLVMDITypeGetSizeInBits(self.metadata_ref) }
     }
@@ -1181,7 +1179,7 @@ impl<'ctx> DIDerivedType<'ctx> {
     }
 }
 
-impl<'ctx> DIDerivedType<'ctx> {
+impl DIDerivedType<'_> {
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref
     }
@@ -1278,7 +1276,7 @@ impl<'ctx> AsDIScope<'ctx> for DILexicalBlock<'ctx> {
     }
 }
 
-impl<'ctx> DILexicalBlock<'ctx> {
+impl DILexicalBlock<'_> {
     /// Acquires the underlying raw pointer belonging to this `DILexicalBlock` type.
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref
@@ -1328,7 +1326,7 @@ pub struct DILocalVariable<'ctx> {
     _marker: PhantomData<&'ctx Context>,
 }
 
-impl<'ctx> DILocalVariable<'ctx> {
+impl DILocalVariable<'_> {
     /// Acquires the underlying raw pointer belonging to this `DILocalVariable` type.
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref
@@ -1363,7 +1361,7 @@ pub struct DIExpression<'ctx> {
     _marker: PhantomData<&'ctx Context>,
 }
 
-impl<'ctx> DIExpression<'ctx> {
+impl DIExpression<'_> {
     /// Acquires the underlying raw pointer belonging to this `DIExpression` type.
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref

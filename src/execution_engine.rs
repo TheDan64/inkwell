@@ -487,7 +487,7 @@ pub struct JitFunction<'ctx, F> {
     inner: F,
 }
 
-impl<'ctx, F: Copy> JitFunction<'ctx, F> {
+impl<F: Copy> JitFunction<'_, F> {
     /// Returns the raw function pointer, consuming self in the process.
     /// This function is unsafe because the function pointer may dangle
     /// if the ExecutionEngine it came from is dropped. The caller is

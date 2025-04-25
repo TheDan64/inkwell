@@ -8,7 +8,9 @@ use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
 #[cfg(feature = "typed-pointers")]
 use crate::types::AnyTypeEnum;
-use crate::types::{ArrayType, FunctionType, ScalableVectorType, Type, VectorType};
+#[llvm_versions(12..)]
+use crate::types::ScalableVectorType;
+use crate::types::{ArrayType, FunctionType, Type, VectorType};
 use crate::values::{ArrayValue, IntValue, PointerValue};
 use crate::AddressSpace;
 
