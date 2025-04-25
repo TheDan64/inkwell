@@ -73,6 +73,8 @@ impl PartialEq<Self> for Attribute {
         }
 
         if self.is_type() && other.is_type() {
+            // Seems to be some clippy bug here, but it's not clear why.
+            #[allow(clippy::unit_cmp)]
             return self.get_enum_kind_id() == other.get_enum_kind_id()
                 && self.get_type_value() == other.get_type_value();
         }

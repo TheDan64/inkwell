@@ -43,7 +43,7 @@ impl LLVMString {
 
     /// This method will allocate a c string through LLVM
     pub(crate) fn create_from_str(string: &str) -> LLVMString {
-        debug_assert_eq!(string.as_bytes()[string.as_bytes().len() - 1], 0);
+        debug_assert_eq!(string.as_bytes()[string.len() - 1], 0);
 
         unsafe { LLVMString::new(LLVMCreateMessage(string.as_ptr() as *const _)) }
     }

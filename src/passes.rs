@@ -15,6 +15,8 @@ use llvm_sys::initialization::{LLVMInitializeInstrumentation, LLVMInitializeObjC
 use llvm_sys::prelude::LLVMPassManagerRef;
 #[llvm_versions(..=16)]
 use llvm_sys::prelude::LLVMPassRegistryRef;
+#[llvm_versions(..=15)]
+use llvm_sys::transforms::aggressive_instcombine::LLVMAddAggressiveInstCombinerPass;
 #[llvm_versions(10..=16)]
 use llvm_sys::transforms::ipo::LLVMAddMergeFunctionsPass;
 #[llvm_versions(..=15)]
@@ -466,26 +468,6 @@ impl<T: PassManagerSubType> PassManager<T> {
         unsafe { LLVMAddStripSymbolsPass(self.pass_manager) }
     }
 
-    /// This pass combines instructions inside basic blocks to form
-    /// vector instructions. It iterates over each basic block,
-    /// attempting to pair compatible instructions, repeating this
-    /// process until no additional pairs are selected for vectorization.
-    /// When the outputs of some pair of compatible instructions are
-    /// used as inputs by some other pair of compatible instructions,
-    /// those pairs are part of a potential vectorization chain.
-    /// Instruction pairs are only fused into vector instructions when
-    /// they are part of a chain longer than some threshold length.
-    /// Moreover, the pass attempts to find the best possible chain
-    /// for each pair of compatible instructions. These heuristics
-    /// are intended to prevent vectorization in cases where it would
-    /// not yield a performance increase of the resulting code.
-    #[cfg(feature = "llvm4-0")]
-    pub fn add_bb_vectorize_pass(&self) {
-        use llvm_sys::transforms::vectorize::LLVMAddBBVectorizePass;
-
-        unsafe { LLVMAddBBVectorizePass(self.pass_manager) }
-    }
-
     /// No LLVM documentation is available at this time.
     #[llvm_versions(..=16)]
     pub fn add_loop_vectorize_pass(&self) {
@@ -806,9 +788,6 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// switch instruction until it is convenient.
     #[llvm_versions(..=16)]
     pub fn add_lower_switch_pass(&self) {
-        #[llvm_versions(..=6)]
-        use llvm_sys::transforms::scalar::LLVMAddLowerSwitchPass;
-        #[llvm_versions(7..=16)]
         use llvm_sys::transforms::util::LLVMAddLowerSwitchPass;
 
         unsafe { LLVMAddLowerSwitchPass(self.pass_manager) }
@@ -822,9 +801,6 @@ impl<T: PassManagerSubType> PassManager<T> {
     /// the standard SSA construction algorithm to construct "pruned" SSA form.
     #[llvm_versions(..=16)]
     pub fn add_promote_memory_to_register_pass(&self) {
-        #[llvm_versions(..=6)]
-        use llvm_sys::transforms::scalar::LLVMAddPromoteMemoryToRegisterPass;
-        #[llvm_versions(7..=16)]
         use llvm_sys::transforms::util::LLVMAddPromoteMemoryToRegisterPass;
 
         unsafe { LLVMAddPromoteMemoryToRegisterPass(self.pass_manager) }
@@ -1071,45 +1047,40 @@ impl<T: PassManagerSubType> PassManager<T> {
         unsafe { LLVMAddBasicAliasAnalysisPass(self.pass_manager) }
     }
 
-    #[llvm_versions(7..=15)]
+    #[llvm_versions(..=15)]
     pub fn add_aggressive_inst_combiner_pass(&self) {
-        #[cfg(not(feature = "llvm7-0"))]
-        use llvm_sys::transforms::aggressive_instcombine::LLVMAddAggressiveInstCombinerPass;
-        #[cfg(feature = "llvm7-0")]
-        use llvm_sys::transforms::scalar::LLVMAddAggressiveInstCombinerPass;
-
         unsafe { LLVMAddAggressiveInstCombinerPass(self.pass_manager) }
     }
 
-    #[llvm_versions(7..=16)]
+    #[llvm_versions(..=16)]
     pub fn add_loop_unroll_and_jam_pass(&self) {
         use llvm_sys::transforms::scalar::LLVMAddLoopUnrollAndJamPass;
 
         unsafe { LLVMAddLoopUnrollAndJamPass(self.pass_manager) }
     }
 
-    #[llvm_versions(8..15)]
+    #[llvm_versions(..15)]
     pub fn add_coroutine_early_pass(&self) {
         use llvm_sys::transforms::coroutines::LLVMAddCoroEarlyPass;
 
         unsafe { LLVMAddCoroEarlyPass(self.pass_manager) }
     }
 
-    #[llvm_versions(8..15)]
+    #[llvm_versions(..15)]
     pub fn add_coroutine_split_pass(&self) {
         use llvm_sys::transforms::coroutines::LLVMAddCoroSplitPass;
 
         unsafe { LLVMAddCoroSplitPass(self.pass_manager) }
     }
 
-    #[llvm_versions(8..15)]
+    #[llvm_versions(..15)]
     pub fn add_coroutine_elide_pass(&self) {
         use llvm_sys::transforms::coroutines::LLVMAddCoroElidePass;
 
         unsafe { LLVMAddCoroElidePass(self.pass_manager) }
     }
 
-    #[llvm_versions(8..15)]
+    #[llvm_versions(..15)]
     pub fn add_coroutine_cleanup_pass(&self) {
         use llvm_sys::transforms::coroutines::LLVMAddCoroCleanupPass;
 
@@ -1199,7 +1170,7 @@ impl PassRegistry {
         unsafe { LLVMInitializeTarget(self.pass_registry) }
     }
 
-    #[llvm_versions(7..=15)]
+    #[llvm_versions(..=15)]
     pub fn initialize_aggressive_inst_combiner(&self) {
         use llvm_sys::initialization::LLVMInitializeAggressiveInstCombiner;
 

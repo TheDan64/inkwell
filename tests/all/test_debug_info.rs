@@ -33,7 +33,7 @@ fn test_smoke() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         "",
         #[cfg(any(
@@ -44,19 +44,13 @@ fn test_smoke() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         "",
     );
 
     let ditype = dibuilder
-        .create_basic_type(
-            "type_name",
-            0_u64,
-            0x00,
-            #[cfg(not(feature = "llvm7-0"))]
-            DIFlags::PUBLIC,
-        )
+        .create_basic_type("type_name", 0_u64, 0x00, DIFlags::PUBLIC)
         .unwrap();
     let subroutine_type =
         dibuilder.create_subroutine_type(compile_unit.get_file(), Some(ditype.as_type()), &[], DIFlags::PUBLIC);
@@ -86,9 +80,9 @@ fn test_smoke() {
 
     let loc = dibuilder.create_debug_location(&context, 0, 0, lexical_block.as_debug_info_scope(), None);
 
-    #[cfg(any(feature = "llvm7-0", feature = "llvm8-0",))]
+    #[cfg(feature = "llvm8-0")]
     builder.set_current_debug_location(&context, loc);
-    #[cfg(not(any(feature = "llvm7-0", feature = "llvm8-0",)))]
+    #[cfg(not(feature = "llvm8-0"))]
     builder.set_current_debug_location(loc);
 
     dibuilder.finalize();
@@ -123,7 +117,7 @@ fn test_struct_with_placeholders() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         "",
         #[cfg(any(
@@ -134,48 +128,16 @@ fn test_struct_with_placeholders() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         "",
     );
 
     // Some byte aligned integer types.
-    let i32ty = dibuilder
-        .create_basic_type(
-            "i32",
-            32,
-            0x07,
-            #[cfg(not(feature = "llvm7-0"))]
-            DIFlags::PUBLIC,
-        )
-        .unwrap();
-    let i64ty = dibuilder
-        .create_basic_type(
-            "i64",
-            64,
-            0x07,
-            #[cfg(not(feature = "llvm7-0"))]
-            DIFlags::PUBLIC,
-        )
-        .unwrap();
-    let f32ty = dibuilder
-        .create_basic_type(
-            "f32",
-            32,
-            0x04,
-            #[cfg(not(feature = "llvm7-0"))]
-            DIFlags::PUBLIC,
-        )
-        .unwrap();
-    let f64ty = dibuilder
-        .create_basic_type(
-            "f64",
-            64,
-            0x04,
-            #[cfg(not(feature = "llvm7-0"))]
-            DIFlags::PUBLIC,
-        )
-        .unwrap();
+    let i32ty = dibuilder.create_basic_type("i32", 32, 0x07, DIFlags::PUBLIC).unwrap();
+    let i64ty = dibuilder.create_basic_type("i64", 64, 0x07, DIFlags::PUBLIC).unwrap();
+    let f32ty = dibuilder.create_basic_type("f32", 32, 0x04, DIFlags::PUBLIC).unwrap();
+    let f64ty = dibuilder.create_basic_type("f64", 64, 0x04, DIFlags::PUBLIC).unwrap();
 
     let member_sizes = [32, 64, 32, 64];
     let member_types = [i32ty, i64ty, f32ty, f64ty];
@@ -255,7 +217,7 @@ fn test_no_explicit_finalize() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         "",
         #[cfg(any(
@@ -266,7 +228,7 @@ fn test_no_explicit_finalize() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         "",
     );
@@ -276,7 +238,6 @@ fn test_no_explicit_finalize() {
     assert!(module.verify().is_ok());
 }
 
-#[llvm_versions(8..)]
 #[test]
 fn test_replacing_placeholder_with_placeholder() {
     let context = Context::create();
@@ -304,7 +265,7 @@ fn test_replacing_placeholder_with_placeholder() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         "",
         #[cfg(any(
@@ -315,7 +276,7 @@ fn test_replacing_placeholder_with_placeholder() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         "",
     );
@@ -367,7 +328,7 @@ fn test_anonymous_basic_type() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         "",
         #[cfg(any(
@@ -378,24 +339,17 @@ fn test_anonymous_basic_type() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         "",
     );
 
     assert_eq!(
-        dibuilder.create_basic_type(
-            "",
-            0_u64,
-            0x00,
-            #[cfg(not(feature = "llvm7-0"))]
-            DIFlags::ZERO
-        ),
+        dibuilder.create_basic_type("", 0_u64, 0x00, DIFlags::ZERO),
         Err("basic types must have names")
     );
 }
 
-#[llvm_versions(8..)]
 #[test]
 fn test_global_expressions() {
     let context = Context::create();
@@ -423,7 +377,7 @@ fn test_global_expressions() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         "",
         #[cfg(any(
@@ -434,7 +388,7 @@ fn test_global_expressions() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         "",
     );
@@ -497,7 +451,7 @@ fn test_pointer_types() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         "",
         #[cfg(any(
@@ -508,19 +462,13 @@ fn test_pointer_types() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         "",
     );
 
     let di_type = dibuilder
-        .create_basic_type(
-            "type_name",
-            8_u64,
-            0x00,
-            #[cfg(not(feature = "llvm7-0"))]
-            DIFlags::ZERO,
-        )
+        .create_basic_type("type_name", 8_u64, 0x00, DIFlags::ZERO)
         .unwrap()
         .as_type();
 
@@ -555,7 +503,7 @@ fn test_reference_types() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         "",
         #[cfg(any(
@@ -566,19 +514,13 @@ fn test_reference_types() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         "",
     );
 
     let di_type = dibuilder
-        .create_basic_type(
-            "type_name",
-            8_u64,
-            0x00,
-            #[cfg(not(feature = "llvm7-0"))]
-            DIFlags::ZERO,
-        )
+        .create_basic_type("type_name", 8_u64, 0x00, DIFlags::ZERO)
         .unwrap()
         .as_type();
 
@@ -614,7 +556,7 @@ fn test_array_type() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         "",
         #[cfg(any(
@@ -625,19 +567,13 @@ fn test_array_type() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         "",
     );
 
     let di_type = dibuilder
-        .create_basic_type(
-            "type_name",
-            8_u64,
-            0x00,
-            #[cfg(not(feature = "llvm7-0"))]
-            DIFlags::ZERO,
-        )
+        .create_basic_type("type_name", 8_u64, 0x00, DIFlags::ZERO)
         .unwrap()
         .as_type();
 

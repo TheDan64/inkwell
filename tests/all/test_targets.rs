@@ -97,12 +97,6 @@ fn test_target_and_target_machine() {
 
     let bad_target2 = Target::from_triple(&TargetTriple::create("sadas"));
 
-    #[cfg(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0"))]
-    assert_eq!(
-        bad_target2.unwrap_err().to_string(),
-        "No available targets are compatible with this triple."
-    );
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0")))]
     assert_eq!(
         bad_target2.unwrap_err().to_string(),
         "No available targets are compatible with triple \"sadas\""
@@ -165,17 +159,14 @@ fn test_target_and_target_machine() {
     assert_eq!(target_machine.get_cpu().to_str(), Ok("x86-64"));
     assert_eq!(target_machine.get_feature_string().to_str(), Ok("+avx2"));
 
-    #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
-    {
-        // TODO: Try and find a triple that actually gets normalized..
-        assert_eq!(
-            TargetMachine::normalize_triple(&triple).as_str().to_str(),
-            Ok("x86_64-pc-linux-gnu"),
-        );
+    // TODO: Try and find a triple that actually gets normalized..
+    assert_eq!(
+        TargetMachine::normalize_triple(&triple).as_str().to_str(),
+        Ok("x86_64-pc-linux-gnu"),
+    );
 
-        let _host_name = TargetMachine::get_host_cpu_name();
-        let _host_cpu_features = TargetMachine::get_host_cpu_features();
-    }
+    let _host_name = TargetMachine::get_host_cpu_name();
+    let _host_cpu_features = TargetMachine::get_host_cpu_features();
 }
 
 #[test]

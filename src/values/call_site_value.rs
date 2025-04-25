@@ -1,7 +1,7 @@
 use std::fmt::{self, Display};
 
 use either::Either;
-#[llvm_versions(8..)]
+
 use llvm_sys::core::LLVMGetCalledFunctionType;
 use llvm_sys::core::{
     LLVMGetCalledValue, LLVMGetInstructionCallConv, LLVMGetTypeKind, LLVMIsTailCall, LLVMSetInstrParamAlignment,
@@ -240,16 +240,6 @@ impl<'ctx> CallSiteValue<'ctx> {
         self.get_called_fn_value_check_type_consistency(fn_value)
     }
 
-    #[llvm_versions(..8)]
-    #[inline]
-    fn get_called_fn_value_check_type_consistency(
-        &self,
-        fn_value: Option<FunctionValue<'ctx>>,
-    ) -> Option<FunctionValue<'ctx>> {
-        fn_value
-    }
-
-    #[llvm_versions(8..)]
     #[inline]
     fn get_called_fn_value_check_type_consistency(
         &self,
@@ -280,7 +270,6 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// assert_eq!(call_site_value.get_called_fn_type(), fn_type);
     /// ```
-    #[llvm_versions(8..)]
     pub fn get_called_fn_type(self) -> FunctionType<'ctx> {
         // SAFETY: the passed LLVMValueRef is of type CallSite
         let fn_type_ref = unsafe { LLVMGetCalledFunctionType(self.as_value_ref()) };
