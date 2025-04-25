@@ -90,7 +90,7 @@ impl<'ctx> PointerValue<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
         #[cfg(not(feature = "llvm16-0"))]
-        #[cfg_attr(feature = "llvm15-0", allow(deprecated))]
+        #[allow(deprecated)]
         let value = {
             LLVMConstGEP(
                 self.as_value_ref(),
@@ -135,7 +135,7 @@ impl<'ctx> PointerValue<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
         #[cfg(not(feature = "llvm16-0"))]
-        #[cfg_attr(feature = "llvm15-0", allow(deprecated))]
+        #[allow(deprecated)]
         let value = {
             LLVMConstInBoundsGEP(
                 self.as_value_ref(),
