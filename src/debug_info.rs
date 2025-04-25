@@ -195,7 +195,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         sysroot: &str,
         #[cfg(any(
@@ -206,7 +206,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         sdk: &str,
     ) -> (Self, DICompileUnit<'ctx>) {
@@ -245,7 +245,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-0"
+                feature = "llvm18-1"
             ))]
             sysroot,
             #[cfg(any(
@@ -256,7 +256,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-0"
+                feature = "llvm18-1"
             ))]
             sdk,
         );
@@ -303,7 +303,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         sysroot: &str,
         #[cfg(any(
@@ -314,7 +314,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         sdk: &str,
     ) -> DICompileUnit<'ctx> {
@@ -348,7 +348,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-0"
+                feature = "llvm18-1"
             ))]
             {
                 LLVMDIBuilderCreateCompileUnit(

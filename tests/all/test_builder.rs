@@ -84,7 +84,7 @@ fn test_build_call() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-1"
     ))]
     builder.build_indirect_call(fn_type2, load, &[], "call").unwrap();
     builder.build_return(None).unwrap();
@@ -1624,7 +1624,7 @@ fn test_bit_cast() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-1"
     ))]
     let i32_scalable_vec_type = i32_type.scalable_vec_type(2);
     let arg_types = [
@@ -1640,7 +1640,7 @@ fn test_bit_cast() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         i32_scalable_vec_type.into(),
     ];
@@ -1660,7 +1660,7 @@ fn test_bit_cast() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-1"
     ))]
     let i32_scalable_vec_arg = fn_value.get_nth_param(5).unwrap();
 
@@ -1677,7 +1677,7 @@ fn test_bit_cast() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-1"
     ))]
     {
         let i64_scalable_vec_type = i64_type.scalable_vec_type(1);

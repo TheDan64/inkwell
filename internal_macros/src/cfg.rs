@@ -10,7 +10,7 @@ use syn::{Lit, RangeLimits};
 // This array should match the LLVM features in the top level Cargo manifest
 const FEATURE_VERSIONS: &[&str] = &[
     "llvm8-0", "llvm9-0", "llvm10-0", "llvm11-0", "llvm12-0", "llvm13-0", "llvm14-0", "llvm15-0", "llvm16-0",
-    "llvm17-0", "llvm18-0",
+    "llvm17-0", "llvm18-1",
 ];
 
 pub struct VersionRange {
@@ -111,11 +111,22 @@ struct Version {
     span: Span,
 }
 
+fn default_minor(major: u32) -> u32 {
+    if major >= 18 {
+        1
+    } else {
+        0
+    }
+}
+
 impl Parse for Version {
     fn parse(input: ParseStream) -> Result<Self> {
         let lit = input.parse::<Lit>()?;
         let (major, minor) = match &lit {
-            Lit::Int(int) => (int.base10_parse()?, 0),
+            Lit::Int(int) => {
+                let major = int.base10_parse()?;
+                (major, default_minor(major))
+            },
             Lit::Float(float) => {
                 let s = float.base10_digits();
                 let mut parts = s.split('.');
@@ -127,7 +138,7 @@ impl Parse for Version {
                 let minor = if let Some(minor) = parts.next() {
                     minor.parse().map_err(|e| syn::Error::new(float.span(), e))?
                 } else {
-                    0
+                    default_minor(major)
                 };
                 (major, minor)
             },

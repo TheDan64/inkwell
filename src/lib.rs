@@ -58,8 +58,8 @@ pub extern crate llvm_sys_150 as llvm_sys;
 pub extern crate llvm_sys_160 as llvm_sys;
 #[cfg(feature = "llvm17-0")]
 pub extern crate llvm_sys_170 as llvm_sys;
-#[cfg(feature = "llvm18-0")]
-pub extern crate llvm_sys_180 as llvm_sys;
+#[cfg(feature = "llvm18-1")]
+pub extern crate llvm_sys_181 as llvm_sys;
 #[cfg(feature = "llvm8-0")]
 pub extern crate llvm_sys_80 as llvm_sys;
 #[cfg(feature = "llvm9-0")]
@@ -118,7 +118,7 @@ assert_unique_used_features! {
     "llvm15-0",
     "llvm16-0",
     "llvm17-0",
-    "llvm18-0"
+    "llvm18-1"
 }
 
 #[cfg(all(
@@ -135,7 +135,7 @@ assert_unique_used_features! {
 ))]
 compile_error!("Opaque pointers are not supported prior to LLVM version 15.0.");
 
-#[cfg(all(any(feature = "llvm17-0", feature = "llvm18-0"), feature = "typed-pointers"))]
+#[cfg(all(any(feature = "llvm17-0", feature = "llvm18-1"), feature = "typed-pointers"))]
 compile_error!("Typed pointers are not supported starting from LLVM version 17.0.");
 
 /// Defines the address space in which a global will be inserted.
