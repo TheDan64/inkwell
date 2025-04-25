@@ -45,6 +45,8 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
+      - name: Install Dependencies
+        run: sudo apt update && sudo apt install -y libtinfo5
       - name: Install LLVM and Clang (LLVM >= 7.1)
         uses: KyleMayes/install-llvm-action@v2
         with:
@@ -61,7 +63,7 @@ jobs:
         run: cargo build --example kaleidoscope --features llvm${{ matrix.llvm-version[1] }} --verbose
   doc:
     name: Documentation
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [lint, tests]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
