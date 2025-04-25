@@ -1,5 +1,5 @@
 #[cfg(all(feature = "typed-pointers", not(feature = "llvm16-0")))]
-#[cfg_attr(feature = "llvm15-0", allow(deprecated))]
+#[allow(deprecated)]
 use llvm_sys::core::{LLVMConstGEP, LLVMConstInBoundsGEP};
 #[cfg(any(not(feature = "typed-pointers"), feature = "llvm16-0"))]
 use llvm_sys::core::{LLVMConstGEP2, LLVMConstInBoundsGEP2};

@@ -22,6 +22,7 @@ use llvm_sys::core::{
     LLVMSetCleanup,
 };
 #[llvm_versions(..=14)]
+#[allow(deprecated)]
 use llvm_sys::core::{LLVMBuildCall, LLVMBuildInvoke};
 #[llvm_versions(15..)]
 use llvm_sys::core::{LLVMBuildCall2, LLVMBuildInvoke2};
@@ -242,6 +243,7 @@ impl<'ctx> Builder<'ctx> {
         let c_string = to_c_str(name);
         let mut args: Vec<LLVMValueRef> = args.iter().map(|val| val.as_value_ref()).collect();
 
+        #[allow(deprecated)]
         let value = unsafe {
             LLVMBuildCall(
                 self.builder,
@@ -612,6 +614,7 @@ impl<'ctx> Builder<'ctx> {
         let c_string = to_c_str(name);
         let mut args: Vec<LLVMValueRef> = args.iter().map(|val| val.as_value_ref()).collect();
 
+        #[allow(deprecated)]
         let value = unsafe {
             LLVMBuildInvoke(
                 self.builder,
@@ -1165,7 +1168,7 @@ impl<'ctx> Builder<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
         #[cfg(not(feature = "llvm16-0"))]
-        #[cfg_attr(feature = "llvm15-0", allow(deprecated))]
+        #[allow(deprecated)]
         let value = LLVMBuildInBoundsGEP(
             self.builder,
             ptr.as_value_ref(),
@@ -1278,7 +1281,7 @@ impl<'ctx> Builder<'ctx> {
         let c_string = to_c_str(name);
 
         #[cfg(not(feature = "llvm16-0"))]
-        #[cfg_attr(feature = "llvm15-0", allow(deprecated))]
+        #[allow(deprecated)]
         let value = unsafe { LLVMBuildStructGEP(self.builder, ptr.as_value_ref(), index, c_string.as_ptr()) };
         #[cfg(feature = "llvm16-0")]
         let value = unsafe {
@@ -1585,7 +1588,7 @@ impl<'ctx> Builder<'ctx> {
         let c_string = to_c_str(name);
 
         #[cfg(not(feature = "llvm16-0"))]
-        #[cfg_attr(feature = "llvm15-0", allow(deprecated))]
+        #[allow(deprecated)]
         let value = unsafe { LLVMBuildLoad(self.builder, ptr.as_value_ref(), c_string.as_ptr()) };
         #[cfg(feature = "llvm16-0")]
         let value = unsafe {
