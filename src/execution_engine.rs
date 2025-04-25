@@ -332,9 +332,9 @@ impl<'ctx> ExecutionEngine<'ctx> {
     /// It is recommended to use `get_function` instead of this method when intending to call the function
     /// pointer so that you don't have to do error-prone transmutes yourself.
     pub fn get_function_address(&self, fn_name: &str) -> Result<usize, FunctionLookupError> {
-        // LLVMGetFunctionAddress segfaults in llvm 5.0 -> 8.0 when fn_name doesn't exist. This is a workaround
+        // LLVMGetFunctionAddress segfaults in llvm 8.0 when fn_name doesn't exist. This is a workaround
         // to see if it exists and avoid the segfault when it doesn't
-        #[cfg(any(feature = "llvm5-0", feature = "llvm6-0", feature = "llvm7-0", feature = "llvm8-0"))]
+        #[cfg(feature = "llvm8-0")]
         self.get_function_value(fn_name)?;
 
         let c_string = to_c_str(fn_name);
@@ -487,7 +487,7 @@ pub struct JitFunction<'ctx, F> {
     inner: F,
 }
 
-impl<'ctx, F: Copy> JitFunction<'ctx, F> {
+impl<F: Copy> JitFunction<'_, F> {
     /// Returns the raw function pointer, consuming self in the process.
     /// This function is unsafe because the function pointer may dangle
     /// if the ExecutionEngine it came from is dropped. The caller is

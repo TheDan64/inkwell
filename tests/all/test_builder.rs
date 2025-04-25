@@ -67,10 +67,6 @@ fn test_build_call() {
         .into_pointer_value();
 
     #[cfg(any(
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
         feature = "llvm8-0",
         feature = "llvm9-0",
         feature = "llvm10-0",
@@ -88,7 +84,7 @@ fn test_build_call() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-1"
     ))]
     builder.build_indirect_call(fn_type2, load, &[], "call").unwrap();
     builder.build_return(None).unwrap();
@@ -871,7 +867,6 @@ fn test_scalable_vector_convert_ops() {
     assert!(fn_value.verify(true));
 }
 
-#[llvm_versions(8..)]
 #[test]
 fn test_vector_convert_ops_respect_target_signedness() {
     let context = Context::create();
@@ -1317,7 +1312,6 @@ fn is_alignment_ok(align: u32) -> bool {
     align > 0 && align.is_power_of_two() && (align as f64).log2() < 64.0
 }
 
-#[llvm_versions(8..)]
 #[test]
 fn test_alignment_bytes() {
     let verify_alignment = |alignment: u32| {
@@ -1355,7 +1349,6 @@ fn test_alignment_bytes() {
     verify_alignment(u32::MAX);
 }
 
-#[llvm_versions(8..)]
 fn run_memcpy_on<'ctx>(
     context: &'ctx Context,
     module: &inkwell::module::Module<'ctx>,
@@ -1375,6 +1368,7 @@ fn run_memcpy_on<'ctx>(
     builder.position_at_end(entry);
 
     let len_value = i64_type.const_int(array_len as u64, false);
+    #[cfg(not(feature = "typed-pointers"))]
     let element_type = i32_type;
     let array_ptr = builder.build_array_malloc(i32_type, len_value, "array_ptr").unwrap();
 
@@ -1415,7 +1409,6 @@ fn run_memcpy_on<'ctx>(
     Ok(())
 }
 
-#[llvm_versions(8..)]
 #[test]
 fn test_memcpy() {
     // 1. Allocate an array with a few elements.
@@ -1443,7 +1436,6 @@ fn test_memcpy() {
     }
 }
 
-#[llvm_versions(8..)]
 fn run_memmove_on<'ctx>(
     context: &'ctx Context,
     module: &inkwell::module::Module<'ctx>,
@@ -1463,6 +1455,7 @@ fn run_memmove_on<'ctx>(
     builder.position_at_end(entry);
 
     let len_value = i64_type.const_int(array_len as u64, false);
+    #[cfg(not(feature = "typed-pointers"))]
     let element_type = i32_type;
     let array_ptr = builder.build_array_malloc(i32_type, len_value, "array_ptr").unwrap();
 
@@ -1503,7 +1496,6 @@ fn run_memmove_on<'ctx>(
     Ok(())
 }
 
-#[llvm_versions(8..)]
 #[test]
 fn test_memmove() {
     // 1. Allocate an array with a few elements.
@@ -1531,7 +1523,6 @@ fn test_memmove() {
     }
 }
 
-#[llvm_versions(8..)]
 fn run_memset_on<'ctx>(
     context: &'ctx Context,
     module: &inkwell::module::Module<'ctx>,
@@ -1552,6 +1543,7 @@ fn run_memset_on<'ctx>(
     builder.position_at_end(entry);
 
     let len_value = i64_type.const_int(array_len as u64, false);
+    #[cfg(not(feature = "typed-pointers"))]
     let element_type = i32_type;
     let array_ptr = builder.build_array_malloc(i32_type, len_value, "array_ptr").unwrap();
 
@@ -1578,7 +1570,6 @@ fn run_memset_on<'ctx>(
     Ok(())
 }
 
-#[llvm_versions(8..)]
 #[test]
 fn test_memset() {
     // 1. Allocate an array with a few elements.
@@ -1633,7 +1624,7 @@ fn test_bit_cast() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-1"
     ))]
     let i32_scalable_vec_type = i32_type.scalable_vec_type(2);
     let arg_types = [
@@ -1649,7 +1640,7 @@ fn test_bit_cast() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0"
+            feature = "llvm18-1"
         ))]
         i32_scalable_vec_type.into(),
     ];
@@ -1669,7 +1660,7 @@ fn test_bit_cast() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-1"
     ))]
     let i32_scalable_vec_arg = fn_value.get_nth_param(5).unwrap();
 
@@ -1686,7 +1677,7 @@ fn test_bit_cast() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0"
+        feature = "llvm18-1"
     ))]
     {
         let i64_scalable_vec_type = i64_type.scalable_vec_type(1);

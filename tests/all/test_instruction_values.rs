@@ -3,7 +3,9 @@ use inkwell::context::Context;
 use inkwell::types::AnyType;
 use inkwell::types::{AnyTypeEnum, BasicType};
 use inkwell::values::{BasicValue, CallSiteValue, InstructionOpcode::*};
-use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate};
+#[llvm_versions(10..)]
+use inkwell::AtomicRMWBinOp;
+use inkwell::{AddressSpace, AtomicOrdering, FloatPredicate, IntPredicate};
 
 #[test]
 #[ignore]
@@ -283,7 +285,7 @@ fn test_instructions() {
 
     #[cfg(not(feature = "typed-pointers"))]
     {
-        let gep_instr = unsafe { builder.build_gep(i64_type, alloca_val, &vec![], "gep").unwrap() };
+        let gep_instr = unsafe { builder.build_gep(i64_type, alloca_val, &[], "gep").unwrap() };
         assert_eq!(
             gep_instr
                 .as_instruction_value()
@@ -436,16 +438,16 @@ fn test_mem_instructions() {
     let load = builder.build_load(arg1, "").unwrap();
     let load_instruction = load.as_instruction_value().unwrap();
 
-    assert_eq!(store_instruction.get_volatile().unwrap(), false);
-    assert_eq!(load_instruction.get_volatile().unwrap(), false);
+    assert!(!store_instruction.get_volatile().unwrap());
+    assert!(!load_instruction.get_volatile().unwrap());
     store_instruction.set_volatile(true).unwrap();
     load_instruction.set_volatile(true).unwrap();
-    assert_eq!(store_instruction.get_volatile().unwrap(), true);
-    assert_eq!(load_instruction.get_volatile().unwrap(), true);
+    assert!(store_instruction.get_volatile().unwrap());
+    assert!(load_instruction.get_volatile().unwrap());
     store_instruction.set_volatile(false).unwrap();
     load_instruction.set_volatile(false).unwrap();
-    assert_eq!(store_instruction.get_volatile().unwrap(), false);
-    assert_eq!(load_instruction.get_volatile().unwrap(), false);
+    assert!(!store_instruction.get_volatile().unwrap());
+    assert!(!load_instruction.get_volatile().unwrap());
 
     assert_eq!(store_instruction.get_alignment().unwrap(), 0);
     assert_eq!(load_instruction.get_alignment().unwrap(), 0);

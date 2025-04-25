@@ -53,7 +53,6 @@ pub enum InstructionOpcode {
     CleanupRet,
     ExtractElement,
     ExtractValue,
-    #[llvm_versions(8..)]
     FNeg,
     FAdd,
     FCmp,
@@ -123,6 +122,7 @@ impl<'ctx> InstructionValue<'ctx> {
     fn is_a_alloca_inst(self) -> bool {
         !unsafe { LLVMIsAAllocaInst(self.as_value_ref()) }.is_null()
     }
+    #[allow(dead_code)]
     fn is_a_getelementptr_inst(self) -> bool {
         !unsafe { LLVMIsAGetElementPtrInst(self.as_value_ref()) }.is_null()
     }
@@ -379,7 +379,8 @@ impl<'ctx> InstructionValue<'ctx> {
         if !self.is_a_load_inst() && !self.is_a_store_inst() {
             return Err("Value is not a load or store.");
         }
-        Ok(unsafe { LLVMSetVolatile(self.as_value_ref(), volatile as i32) })
+        unsafe { LLVMSetVolatile(self.as_value_ref(), volatile as i32) };
+        Ok(())
     }
 
     // SubTypes: Only apply to memory access instructions

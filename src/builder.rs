@@ -22,27 +22,27 @@ use llvm_sys::core::{
     LLVMSetCleanup,
 };
 #[llvm_versions(..=14)]
+#[allow(deprecated)]
 use llvm_sys::core::{LLVMBuildCall, LLVMBuildInvoke};
 #[llvm_versions(15..)]
 use llvm_sys::core::{LLVMBuildCall2, LLVMBuildInvoke2};
 #[cfg(all(feature = "typed-pointers", not(feature = "llvm16-0")))]
-#[cfg_attr(feature = "llvm15-0", allow(deprecated))]
+#[allow(deprecated)]
 use llvm_sys::core::{LLVMBuildGEP, LLVMBuildInBoundsGEP, LLVMBuildLoad, LLVMBuildPtrDiff, LLVMBuildStructGEP};
 #[cfg(any(not(feature = "typed-pointers"), feature = "llvm16-0"))]
 use llvm_sys::core::{LLVMBuildGEP2, LLVMBuildInBoundsGEP2, LLVMBuildLoad2, LLVMBuildPtrDiff2, LLVMBuildStructGEP2};
-#[llvm_versions(8..)]
 use llvm_sys::core::{LLVMBuildIntCast2, LLVMBuildMemCpy, LLVMBuildMemMove, LLVMBuildMemSet};
-
 use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use thiserror::Error;
 
 use crate::basic_block::BasicBlock;
-#[llvm_versions(7..=8)]
+#[cfg(feature = "llvm8-0")]
 use crate::context::AsContextRef;
-#[llvm_versions(7..)]
 use crate::debug_info::DILocation;
 use crate::support::to_c_str;
-use crate::types::{AsTypeRef, BasicType, FloatMathType, FunctionType, IntMathType, PointerMathType, PointerType};
+#[llvm_versions(15..)]
+use crate::types::FunctionType;
+use crate::types::{AsTypeRef, BasicType, FloatMathType, IntMathType, PointerMathType, PointerType};
 #[llvm_versions(18..)]
 use crate::values::operand_bundle::OperandBundle;
 #[llvm_versions(..=14)]
@@ -243,6 +243,7 @@ impl<'ctx> Builder<'ctx> {
         let c_string = to_c_str(name);
         let mut args: Vec<LLVMValueRef> = args.iter().map(|val| val.as_value_ref()).collect();
 
+        #[allow(deprecated)]
         let value = unsafe {
             LLVMBuildCall(
                 self.builder,
@@ -613,6 +614,7 @@ impl<'ctx> Builder<'ctx> {
         let c_string = to_c_str(name);
         let mut args: Vec<LLVMValueRef> = args.iter().map(|val| val.as_value_ref()).collect();
 
+        #[allow(deprecated)]
         let value = unsafe {
             LLVMBuildInvoke(
                 self.builder,
@@ -1098,7 +1100,7 @@ impl<'ctx> Builder<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
         #[cfg(not(feature = "llvm16-0"))]
-        #[cfg_attr(feature = "llvm15-0", allow(deprecated))]
+        #[allow(deprecated)]
         let value = LLVMBuildGEP(
             self.builder,
             ptr.as_value_ref(),
@@ -1166,7 +1168,7 @@ impl<'ctx> Builder<'ctx> {
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
         #[cfg(not(feature = "llvm16-0"))]
-        #[cfg_attr(feature = "llvm15-0", allow(deprecated))]
+        #[allow(deprecated)]
         let value = LLVMBuildInBoundsGEP(
             self.builder,
             ptr.as_value_ref(),
@@ -1279,7 +1281,7 @@ impl<'ctx> Builder<'ctx> {
         let c_string = to_c_str(name);
 
         #[cfg(not(feature = "llvm16-0"))]
-        #[cfg_attr(feature = "llvm15-0", allow(deprecated))]
+        #[allow(deprecated)]
         let value = unsafe { LLVMBuildStructGEP(self.builder, ptr.as_value_ref(), index, c_string.as_ptr()) };
         #[cfg(feature = "llvm16-0")]
         let value = unsafe {
@@ -1409,7 +1411,7 @@ impl<'ctx> Builder<'ctx> {
         }
         let c_string = to_c_str(name);
         #[cfg(not(feature = "llvm16-0"))]
-        #[cfg_attr(feature = "llvm15-0", allow(deprecated))]
+        #[allow(deprecated)]
         let value = unsafe {
             LLVMBuildPtrDiff(
                 self.builder,
@@ -1586,7 +1588,7 @@ impl<'ctx> Builder<'ctx> {
         let c_string = to_c_str(name);
 
         #[cfg(not(feature = "llvm16-0"))]
-        #[cfg_attr(feature = "llvm15-0", allow(deprecated))]
+        #[allow(deprecated)]
         let value = unsafe { LLVMBuildLoad(self.builder, ptr.as_value_ref(), c_string.as_ptr()) };
         #[cfg(feature = "llvm16-0")]
         let value = unsafe {
@@ -1691,7 +1693,6 @@ impl<'ctx> Builder<'ctx> {
     /// Returns an `Err(BuilderError::AlignmentError)` if the source or destination alignments are not a power of 2.
     ///
     /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
-    #[llvm_versions(8..)]
     pub fn build_memcpy(
         &self,
         dest: PointerValue<'ctx>,
@@ -1739,7 +1740,6 @@ impl<'ctx> Builder<'ctx> {
     /// Returns an `Err(BuilderError::AlignmentError)` if the source or destination alignments are not a power of 2 under 2^64.
     ///
     /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
-    #[llvm_versions(8..)]
     pub fn build_memmove(
         &self,
         dest: PointerValue<'ctx>,
@@ -1787,7 +1787,6 @@ impl<'ctx> Builder<'ctx> {
     /// Returns an `Err(BuilderError::AlignmentError)` if the source alignment is not a power of 2 under 2^64.
     ///
     /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
-    #[llvm_versions(8..)]
     pub fn build_memset(
         &self,
         dest: PointerValue<'ctx>,
@@ -2348,7 +2347,6 @@ impl<'ctx> Builder<'ctx> {
     }
 
     /// Like `build_int_cast`, but respects the signedness of the type being cast to.
-    #[llvm_versions(8..)]
     pub fn build_int_cast_sign_flag<T: IntMathValue<'ctx>>(
         &self,
         int: T,
@@ -3608,7 +3606,7 @@ impl<'ctx> Builder<'ctx> {
     }
 
     /// Set the debug info source location of the instruction currently pointed at by the builder
-    #[llvm_versions(7..=8)]
+    #[cfg(feature = "llvm8-0")]
     pub fn set_current_debug_location(&self, context: impl AsContextRef<'ctx>, location: DILocation<'ctx>) {
         use llvm_sys::core::LLVMMetadataAsValue;
         use llvm_sys::core::LLVMSetCurrentDebugLocation;
@@ -3631,7 +3629,6 @@ impl<'ctx> Builder<'ctx> {
 
     /// Get the debug info source location of the instruction currently pointed at by the builder,
     /// if available.
-    #[llvm_versions(7..)]
     pub fn get_current_debug_location(&self) -> Option<DILocation<'ctx>> {
         use llvm_sys::core::LLVMGetCurrentDebugLocation;
         use llvm_sys::core::LLVMValueAsMetadata;
@@ -3647,7 +3644,7 @@ impl<'ctx> Builder<'ctx> {
 
     /// Unset the debug info source location of the instruction currently pointed at by the
     /// builder. If there isn't any debug info, this is a no-op.
-    #[llvm_versions(7..=8)]
+    #[cfg(feature = "llvm8-0")]
     pub fn unset_current_debug_location(&self) {
         use llvm_sys::core::LLVMSetCurrentDebugLocation;
         unsafe {
@@ -3667,7 +3664,6 @@ impl<'ctx> Builder<'ctx> {
 }
 
 /// Used by build_memcpy and build_memmove
-#[llvm_versions(8..)]
 fn is_alignment_ok(align: u32) -> bool {
     // This replicates the assertions LLVM runs.
     //

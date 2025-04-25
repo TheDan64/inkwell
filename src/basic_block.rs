@@ -5,7 +5,7 @@ use llvm_sys::core::{
     LLVMGetBasicBlockTerminator, LLVMGetFirstInstruction, LLVMGetFirstUse, LLVMGetLastInstruction,
     LLVMGetNextBasicBlock, LLVMGetPreviousBasicBlock, LLVMGetTypeContext, LLVMIsABasicBlock, LLVMIsConstant,
     LLVMMoveBasicBlockAfter, LLVMMoveBasicBlockBefore, LLVMPrintTypeToString, LLVMPrintValueToString,
-    LLVMRemoveBasicBlockFromParent, LLVMReplaceAllUsesWith, LLVMTypeOf,
+    LLVMRemoveBasicBlockFromParent, LLVMReplaceAllUsesWith, LLVMSetValueName2, LLVMTypeOf,
 };
 use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 
@@ -471,24 +471,13 @@ impl<'ctx> BasicBlock<'ctx> {
     pub fn set_name(&self, name: &str) {
         let c_string = to_c_str(name);
 
-        #[cfg(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0"))]
-        {
-            use llvm_sys::core::LLVMSetValueName;
-
-            unsafe { LLVMSetValueName(LLVMBasicBlockAsValue(self.basic_block), c_string.as_ptr()) };
-        }
-        #[cfg(not(any(feature = "llvm4-0", feature = "llvm5-0", feature = "llvm6-0")))]
-        {
-            use llvm_sys::core::LLVMSetValueName2;
-
-            unsafe {
-                LLVMSetValueName2(
-                    LLVMBasicBlockAsValue(self.basic_block),
-                    c_string.as_ptr(),
-                    c_string.to_bytes().len(),
-                )
-            };
-        }
+        unsafe {
+            LLVMSetValueName2(
+                LLVMBasicBlockAsValue(self.basic_block),
+                c_string.as_ptr(),
+                c_string.to_bytes().len(),
+            )
+        };
     }
 
     /// Replaces all uses of this basic block with another.
