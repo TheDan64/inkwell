@@ -379,7 +379,8 @@ impl<'ctx> InstructionValue<'ctx> {
         if !self.is_a_load_inst() && !self.is_a_store_inst() {
             return Err("Value is not a load or store.");
         }
-        Ok(unsafe { LLVMSetVolatile(self.as_value_ref(), volatile as i32) })
+        unsafe { LLVMSetVolatile(self.as_value_ref(), volatile as i32) };
+        Ok(())
     }
 
     // SubTypes: Only apply to memory access instructions
