@@ -490,6 +490,25 @@ fn test_const_zero() {
 }
 
 #[test]
+fn test_float_type() {
+    let context = Context::create();
+
+    let f16_type = context.f16_type();
+    let f32_type = context.f32_type();
+    let f64_type = context.f64_type();
+    let f128_type = context.f128_type();
+    let x86_f80_type = context.x86_f80_type();
+    let ppc_f128_type = context.ppc_f128_type();
+
+    assert_eq!(f16_type.get_bit_width(), 16);
+    assert_eq!(f32_type.get_bit_width(), 32);
+    assert_eq!(f64_type.get_bit_width(), 64);
+    assert_eq!(f128_type.get_bit_width(), 128);
+    assert_eq!(x86_f80_type.get_bit_width(), 80);
+    assert_eq!(ppc_f128_type.get_bit_width(), 128);
+}
+
+#[test]
 fn test_vec_type() {
     let context = Context::create();
     let int = context.i8_type();

@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMConstReal, LLVMConstRealOfStringAndSize};
+use llvm_sys::core::{LLVMConstReal, LLVMConstRealOfStringAndSize, LLVMGetTypeKind};
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfFloat;
 use llvm_sys::prelude::LLVMTypeRef;
 
@@ -252,6 +252,41 @@ impl<'ctx> FloatType<'ctx> {
     )]
     pub fn ptr_type(self, address_space: AddressSpace) -> PointerType<'ctx> {
         self.float_type.ptr_type(address_space)
+    }
+
+    /// Gets the bit width of a `FloatType`.
+    ///
+    /// # Example
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let f128_type = context.f128_type();
+    ///
+    /// assert_eq!(f128_type.get_bit_width(), 128);
+    /// ```
+    pub fn get_bit_width(self) -> u32 {
+        let type_kind = unsafe { LLVMGetTypeKind(self.as_type_ref()) };
+
+        match type_kind {
+            llvm_sys::LLVMTypeKind::LLVMHalfTypeKind => 16,
+            #[cfg(any(
+                feature = "llvm11-0",
+                feature = "llvm12-0",
+                feature = "llvm13-0",
+                feature = "llvm14-0",
+                feature = "llvm15-0",
+                feature = "llvm16-0",
+                feature = "llvm17-0",
+                feature = "llvm18-1"
+            ))]
+            llvm_sys::LLVMTypeKind::LLVMBFloatTypeKind => 16,
+            llvm_sys::LLVMTypeKind::LLVMFloatTypeKind => 32,
+            llvm_sys::LLVMTypeKind::LLVMDoubleTypeKind => 64,
+            llvm_sys::LLVMTypeKind::LLVMX86_FP80TypeKind => 80,
+            llvm_sys::LLVMTypeKind::LLVMFP128TypeKind | llvm_sys::LLVMTypeKind::LLVMPPC_FP128TypeKind => 128,
+            _ => unreachable!(),
+        }
     }
 
     /// Print the definition of a `FloatType` to `LLVMString`.
