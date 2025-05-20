@@ -269,7 +269,18 @@ impl<'ctx> FloatType<'ctx> {
         let type_kind = unsafe { LLVMGetTypeKind(self.as_type_ref()) };
 
         match type_kind {
-            llvm_sys::LLVMTypeKind::LLVMHalfTypeKind | llvm_sys::LLVMTypeKind::LLVMBFloatTypeKind => 16,
+            llvm_sys::LLVMTypeKind::LLVMHalfTypeKind => 16,
+            #[cfg(any(
+                feature = "llvm11-0",
+                feature = "llvm12-0",
+                feature = "llvm13-0",
+                feature = "llvm14-0",
+                feature = "llvm15-0",
+                feature = "llvm16-0",
+                feature = "llvm17-0",
+                feature = "llvm18-1"
+            ))]
+            llvm_sys::LLVMTypeKind::LLVMBFloatTypeKind => 16,
             llvm_sys::LLVMTypeKind::LLVMFloatTypeKind => 32,
             llvm_sys::LLVMTypeKind::LLVMDoubleTypeKind => 64,
             llvm_sys::LLVMTypeKind::LLVMX86_FP80TypeKind => 80,
