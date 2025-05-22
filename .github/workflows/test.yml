@@ -87,8 +87,11 @@ jobs:
       run: |
         cargo nextest run --release --features llvm${{ matrix.llvm-version[1] }} --verbose
         cargo test --doc --release --features llvm${{ matrix.llvm-version[1] }} --verbose
-    - name: Build example
-      run: cargo build --example kaleidoscope --features llvm${{ matrix.llvm-version[1] }} --verbose
+    - name: Build examples and run JIT for verification
+      run: |
+        cargo build --example kaleidoscope --features llvm${{ matrix.llvm-version[1] }} --verbose
+        cargo run --example jit --features llvm${{ matrix.llvm-version[1] }} --verbose
+        cargo run --example jit --features llvm${{ matrix.llvm-version[1] }} --verbose --release
   doc:
     name: Documentation
     runs-on: ubuntu-22.04
