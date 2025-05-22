@@ -1,8 +1,8 @@
 #[llvm_versions(..=16)]
-use llvm_sys::core::LLVMConstSelect;
+use llvm_sys::core::{LLVMConstSelect, LLVMConstNUWNeg};
 #[llvm_versions(..=17)]
 use llvm_sys::core::{
-    LLVMConstAShr, LLVMConstAnd, LLVMConstIntCast, LLVMConstLShr, LLVMConstNUWNeg, LLVMConstOr, LLVMConstSExt,
+    LLVMConstAShr, LLVMConstAnd, LLVMConstIntCast, LLVMConstLShr, LLVMConstOr, LLVMConstSExt,
     LLVMConstSExtOrBitCast, LLVMConstSIToFP, LLVMConstUIToFP, LLVMConstZExt, LLVMConstZExtOrBitCast,
 };
 use llvm_sys::core::{
