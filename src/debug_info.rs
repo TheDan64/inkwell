@@ -207,7 +207,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm16-0",
             feature = "llvm17-0",
             feature = "llvm18-1",
-            feature = "llvm19-1"
+            feature = "llvm19-1",
+            feature = "llvm20-1"
         ))]
         sysroot: &str,
         #[cfg(any(
@@ -219,7 +220,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm16-0",
             feature = "llvm17-0",
             feature = "llvm18-1",
-            feature = "llvm19-1"
+            feature = "llvm19-1",
+            feature = "llvm20-1"
         ))]
         sdk: &str,
     ) -> (Self, DICompileUnit<'ctx>) {
@@ -259,7 +261,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 feature = "llvm16-0",
                 feature = "llvm17-0",
                 feature = "llvm18-1",
-                feature = "llvm19-1"
+                feature = "llvm19-1",
+                feature = "llvm20-1"
             ))]
             sysroot,
             #[cfg(any(
@@ -271,7 +274,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 feature = "llvm16-0",
                 feature = "llvm17-0",
                 feature = "llvm18-1",
-                feature = "llvm19-1"
+                feature = "llvm19-1",
+                feature = "llvm20-1"
             ))]
             sdk,
         );
@@ -319,7 +323,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm16-0",
             feature = "llvm17-0",
             feature = "llvm18-1",
-            feature = "llvm19-1"
+            feature = "llvm19-1",
+            feature = "llvm20-1"
         ))]
         sysroot: &str,
         #[cfg(any(
@@ -331,7 +336,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm16-0",
             feature = "llvm17-0",
             feature = "llvm18-1",
-            feature = "llvm19-1"
+            feature = "llvm19-1",
+            feature = "llvm20-1"
         ))]
         sdk: &str,
     ) -> DICompileUnit<'ctx> {
@@ -366,7 +372,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 feature = "llvm16-0",
                 feature = "llvm17-0",
                 feature = "llvm18-1",
-                feature = "llvm19-1"
+                feature = "llvm19-1",
+                feature = "llvm20-1"
             ))]
             {
                 LLVMDIBuilderCreateCompileUnit(
@@ -945,12 +952,13 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             )
         };
 
-        #[cfg(feature = "llvm19-1")]
+        #[cfg(any(feature = "llvm19-1", feature = "llvm20-1"))]
         {
+            let _ = value_ref;
             todo!()
         }
 
-        #[cfg(not(feature = "llvm19-1"))]
+        #[cfg(not(any(feature = "llvm19-1", feature = "llvm20-1")))]
         {
             unsafe { InstructionValue::new(value_ref) }
         }
@@ -976,12 +984,13 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             )
         };
 
-        #[cfg(feature = "llvm19-1")]
+        #[cfg(any(feature = "llvm19-1", feature = "llvm20-1"))]
         {
+            let _ = value_ref;
             todo!()
         }
 
-        #[cfg(not(feature = "llvm19-1"))]
+        #[cfg(not(any(feature = "llvm19-1", feature = "llvm20-1")))]
         {
             unsafe { InstructionValue::new(value_ref) }
         }
@@ -1022,12 +1031,13 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             )
         };
 
-        #[cfg(feature = "llvm19-1")]
+        #[cfg(any(feature = "llvm19-1", feature = "llvm20-1"))]
         {
+            let _ = value_ref;
             todo!()
         }
 
-        #[cfg(not(feature = "llvm19-1"))]
+        #[cfg(not(any(feature = "llvm19-1", feature = "llvm20-1")))]
         {
             unsafe { InstructionValue::new(value_ref) }
         }

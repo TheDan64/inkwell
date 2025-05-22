@@ -62,6 +62,8 @@ pub extern crate llvm_sys_170 as llvm_sys;
 pub extern crate llvm_sys_181 as llvm_sys;
 #[cfg(feature = "llvm19-1")]
 pub extern crate llvm_sys_191 as llvm_sys;
+#[cfg(feature = "llvm20-1")]
+pub extern crate llvm_sys_201 as llvm_sys;
 #[cfg(feature = "llvm8-0")]
 pub extern crate llvm_sys_80 as llvm_sys;
 #[cfg(feature = "llvm9-0")]

@@ -1546,7 +1546,8 @@ impl<'ctx> Module<'ctx> {
             feature = "llvm16-0",
             feature = "llvm17-0",
             feature = "llvm18-1",
-            feature = "llvm19-1"
+            feature = "llvm19-1",
+            feature = "llvm20-1"
         ))]
         sysroot: &str,
         #[cfg(any(
@@ -1558,7 +1559,8 @@ impl<'ctx> Module<'ctx> {
             feature = "llvm16-0",
             feature = "llvm17-0",
             feature = "llvm18-1",
-            feature = "llvm19-1"
+            feature = "llvm19-1",
+            feature = "llvm20-1"
         ))]
         sdk: &str,
     ) -> (DebugInfoBuilder<'ctx>, DICompileUnit<'ctx>) {
@@ -1586,7 +1588,8 @@ impl<'ctx> Module<'ctx> {
                 feature = "llvm16-0",
                 feature = "llvm17-0",
                 feature = "llvm18-1",
-                feature = "llvm19-1"
+                feature = "llvm19-1",
+                feature = "llvm20-1"
             ))]
             sysroot,
             #[cfg(any(
@@ -1598,7 +1601,8 @@ impl<'ctx> Module<'ctx> {
                 feature = "llvm16-0",
                 feature = "llvm17-0",
                 feature = "llvm18-1",
-                feature = "llvm19-1"
+                feature = "llvm19-1",
+                feature = "llvm20-1"
             ))]
             sdk,
         )

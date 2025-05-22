@@ -14,14 +14,21 @@ use llvm_sys::core::LLVMMetadataTypeInContext;
 #[cfg(not(feature = "typed-pointers"))]
 use llvm_sys::core::LLVMPointerTypeInContext;
 use llvm_sys::core::{
-    LLVMAppendBasicBlockInContext, LLVMConstStringInContext, LLVMConstStructInContext, LLVMContextCreate,
-    LLVMContextDispose, LLVMContextSetDiagnosticHandler, LLVMCreateBuilderInContext, LLVMCreateEnumAttribute,
-    LLVMCreateStringAttribute, LLVMDoubleTypeInContext, LLVMFP128TypeInContext, LLVMFloatTypeInContext,
-    LLVMGetGlobalContext, LLVMGetMDKindIDInContext, LLVMHalfTypeInContext, LLVMInsertBasicBlockInContext,
-    LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext,
-    LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext,
-    LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMX86FP80TypeInContext,
+    LLVMAppendBasicBlockInContext, LLVMConstStructInContext, LLVMContextCreate, LLVMContextDispose,
+    LLVMContextSetDiagnosticHandler, LLVMCreateBuilderInContext, LLVMCreateEnumAttribute, LLVMCreateStringAttribute,
+    LLVMDoubleTypeInContext, LLVMFP128TypeInContext, LLVMFloatTypeInContext, LLVMGetGlobalContext,
+    LLVMGetMDKindIDInContext, LLVMHalfTypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext,
+    LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext,
+    LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext, LLVMStructCreateNamed, LLVMStructTypeInContext,
+    LLVMVoidTypeInContext, LLVMX86FP80TypeInContext,
 };
+
+#[llvm_versions(..19)]
+use llvm_sys::core::LLVMConstStringInContext;
+
+#[llvm_versions(19..)]
+use llvm_sys::core::LLVMConstStringInContext2;
+
 #[allow(deprecated)]
 use llvm_sys::core::{LLVMMDNodeInContext, LLVMMDStringInContext};
 use llvm_sys::ir_reader::LLVMParseIRInContext;
@@ -361,12 +368,25 @@ impl ContextImpl {
         unsafe { Attribute::new(LLVMCreateTypeAttribute(self.0, kind_id, type_ref.as_type_ref())) }
     }
 
+    #[llvm_versions(..19)]
     fn const_string<'ctx>(&self, string: &[u8], null_terminated: bool) -> ArrayValue<'ctx> {
         unsafe {
             ArrayValue::new(LLVMConstStringInContext(
                 self.0,
                 string.as_ptr() as *const ::libc::c_char,
                 string.len() as u32,
+                !null_terminated as i32,
+            ))
+        }
+    }
+
+    #[llvm_versions(19..)]
+    fn const_string<'ctx>(&self, string: &[u8], null_terminated: bool) -> ArrayValue<'ctx> {
+        unsafe {
+            ArrayValue::new(LLVMConstStringInContext2(
+                self.0,
+                string.as_ptr() as *const ::libc::c_char,
+                string.len(),
                 !null_terminated as i32,
             ))
         }
@@ -574,7 +594,7 @@ impl Context {
     ///     builder.build_call(callable_value, params, "exit").unwrap();
     /// }
     ///
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1"))]
     /// builder.build_indirect_call(asm_fn, asm, params, "exit").unwrap();
     ///
     /// builder.build_return(None).unwrap();
@@ -1436,7 +1456,7 @@ impl<'ctx> ContextRef<'ctx> {
     ///     builder.build_call(callable_value, params, "exit").unwrap();
     /// }
     ///
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1"))]
     /// builder.build_indirect_call(asm_fn, asm, params, "exit").unwrap();
     ///
     /// builder.build_return(None).unwrap();
