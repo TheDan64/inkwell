@@ -57,7 +57,11 @@ jobs:
         chmod +x llvm.sh
         sudo ./llvm.sh ${{ matrix.llvm-version[2] }}
         sudo apt-get update
-        sudo apt install --no-install-recommends -y libllvm${{ matrix.llvm-version[2] }} llvm-${{ matrix.llvm-version[2] }} llvm-${{ matrix.llvm-version[2] }}-dev llvm-${{ matrix.llvm-version[2] }}-runtime
+        sudo apt install --no-install-recommends -y libllvm${{ matrix.llvm-version[2] }} \
+                                                    llvm-${{ matrix.llvm-version[2] }} \
+                                                    llvm-${{ matrix.llvm-version[2] }}-dev \
+                                                    llvm-${{ matrix.llvm-version[2] }}-runtime \
+                                                    libpolly-${{ matrix.llvm-version[2] }}-dev
         sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-${{ matrix.llvm-version[2] }} 10
     - name: Install LLVM and Clang (7.1 <= LLVM <= 19)
       uses: KyleMayes/install-llvm-action@v2
