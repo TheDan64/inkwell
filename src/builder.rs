@@ -19,8 +19,12 @@ use llvm_sys::core::{
     LLVMBuildUIToFP, LLVMBuildURem, LLVMBuildUnreachable, LLVMBuildVAArg, LLVMBuildXor, LLVMBuildZExt,
     LLVMBuildZExtOrBitCast, LLVMClearInsertionPosition, LLVMDisposeBuilder, LLVMGetInsertBlock, LLVMInsertIntoBuilder,
     LLVMInsertIntoBuilderWithName, LLVMPositionBuilder, LLVMPositionBuilderAtEnd, LLVMPositionBuilderBefore,
-    LLVMSetCleanup, LLVMSetNUW,
+    LLVMSetCleanup,
 };
+
+#[llvm_versions(17..)]
+use llvm_sys::core::LLVMSetNUW;
+
 #[llvm_versions(..=14)]
 #[allow(deprecated)]
 use llvm_sys::core::{LLVMBuildCall, LLVMBuildInvoke};
@@ -2882,6 +2886,7 @@ impl<'ctx> Builder<'ctx> {
     }
 
     // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<I> {
+    #[llvm_versions(..17)]
     pub fn build_int_nuw_neg<T: IntMathValue<'ctx>>(&self, value: T, name: &str) -> Result<T, BuilderError> {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
@@ -2891,6 +2896,18 @@ impl<'ctx> Builder<'ctx> {
         unsafe {
             LLVMSetNUW(value, true.into());
         }
+
+        unsafe { Ok(T::new(value)) }
+    }
+
+    // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<I> {
+    #[llvm_versions(17..)]
+    pub fn build_int_nuw_neg<T: IntMathValue<'ctx>>(&self, value: T, name: &str) -> Result<T, BuilderError> {
+        if self.positioned.get() != PositionState::Set {
+            return Err(BuilderError::UnsetPosition);
+        }
+        let c_string = to_c_str(name);
+        let value = unsafe { LLVMBuildNUWNeg(self.builder, value.as_value_ref(), c_string.as_ptr()) };
 
         unsafe { Ok(T::new(value)) }
     }
