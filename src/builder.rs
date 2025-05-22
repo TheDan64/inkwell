@@ -2892,11 +2892,7 @@ impl<'ctx> Builder<'ctx> {
             return Err(BuilderError::UnsetPosition);
         }
         let c_string = to_c_str(name);
-        let value = unsafe { LLVMBuildNeg(self.builder, value.as_value_ref(), c_string.as_ptr()) };
-        unsafe {
-            LLVMSetNUW(value, true.into());
-        }
-
+        let value = unsafe { LLVMBuildNUWNeg(self.builder, value.as_value_ref(), c_string.as_ptr()) };
         unsafe { Ok(T::new(value)) }
     }
 
@@ -2907,7 +2903,10 @@ impl<'ctx> Builder<'ctx> {
             return Err(BuilderError::UnsetPosition);
         }
         let c_string = to_c_str(name);
-        let value = unsafe { LLVMBuildNUWNeg(self.builder, value.as_value_ref(), c_string.as_ptr()) };
+        let value = unsafe { LLVMBuildNeg(self.builder, value.as_value_ref(), c_string.as_ptr()) };
+        unsafe {
+            LLVMSetNUW(value, true.into());
+        }
 
         unsafe { Ok(T::new(value)) }
     }
