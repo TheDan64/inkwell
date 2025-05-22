@@ -59,24 +59,12 @@ fn test_jit_execution_engine() {
     let module = context.create_module("main_module");
     let builder = context.create_builder();
     let i32_type = context.i32_type();
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    )))]
+    #[cfg(feature = "typed-pointers")]
     let i8_ptr_ptr_type = context
         .i8_type()
         .ptr_type(AddressSpace::default())
         .ptr_type(AddressSpace::default());
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let i8_ptr_ptr_type = context.ptr_type(AddressSpace::default());
     let one_i32 = i32_type.const_int(1, false);
     let three_i32 = i32_type.const_int(3, false);

@@ -6,9 +6,11 @@ use llvm_sys::prelude::LLVMTypeRef;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::traits::AsTypeRef;
-#[llvm_versions(..=14)]
+#[cfg(feature = "typed-pointers")]
 use crate::types::AnyTypeEnum;
-use crate::types::{ArrayType, FunctionType, ScalableVectorType, Type, VectorType};
+#[llvm_versions(12..)]
+use crate::types::ScalableVectorType;
+use crate::types::{ArrayType, FunctionType, Type, VectorType};
 use crate::values::{ArrayValue, IntValue, PointerValue};
 use crate::AddressSpace;
 
@@ -44,9 +46,9 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let f32_ptr_type_size = f32_ptr_type.size_of();
     /// ```
@@ -64,9 +66,9 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let f32_ptr_type_alignment = f32_ptr_type.get_alignment();
     /// ```
@@ -84,33 +86,21 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let f32_ptr_ptr_type = f32_ptr_type.ptr_type(AddressSpace::default());
     ///
-    /// #[cfg(any(
-    ///     feature = "llvm4-0",
-    ///     feature = "llvm5-0",
-    ///     feature = "llvm6-0",
-    ///     feature = "llvm7-0",
-    ///     feature = "llvm8-0",
-    ///     feature = "llvm9-0",
-    ///     feature = "llvm10-0",
-    ///     feature = "llvm11-0",
-    ///     feature = "llvm12-0",
-    ///     feature = "llvm13-0",
-    ///     feature = "llvm14-0"
-    /// ))]
+    /// #[cfg(feature = "typed-pointers")]
     /// assert_eq!(f32_ptr_ptr_type.get_element_type().into_pointer_type(), f32_ptr_type);
     /// ```
     #[cfg_attr(
         any(
-            feature = "llvm15-0",
-            feature = "llvm16-0",
+            all(feature = "llvm15-0", not(feature = "typed-pointers")),
+            all(feature = "llvm16-0", not(feature = "typed-pointers")),
             feature = "llvm17-0",
-            feature = "llvm18-0",
+            feature = "llvm18-1",
             feature = "llvm19-1"
         ),
         deprecated(
@@ -131,9 +121,9 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     ///
     /// assert_eq!(f32_ptr_type.get_context(), context);
@@ -153,9 +143,9 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = f32_ptr_type.fn_type(&[], false);
     /// ```
@@ -173,9 +163,9 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let f32_ptr_array_type = f32_ptr_type.array_type(3);
     ///
@@ -196,9 +186,9 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     ///
     /// assert_eq!(f32_ptr_type.get_address_space(), AddressSpace::default());
@@ -225,9 +215,9 @@ impl<'ctx> PointerType<'ctx> {
     /// // Local Context
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let f32_ptr_null = f32_ptr_type.const_null();
     ///
@@ -250,9 +240,9 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let f32_ptr_zero = f32_ptr_type.const_zero();
     /// ```
@@ -269,9 +259,9 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let f32_ptr_undef = f32_ptr_type.get_undef();
     ///
@@ -291,9 +281,9 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let f32_ptr_undef = f32_ptr_type.get_poison();
     ///
@@ -314,9 +304,9 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let f32_ptr_vec_type = f32_ptr_type.vec_type(3);
     ///
@@ -337,9 +327,9 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let f32_ptr_scalable_vec_type = f32_ptr_type.scalable_vec_type(3);
     ///
@@ -362,14 +352,15 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     ///
     /// assert_eq!(f32_ptr_type.get_element_type().into_float_type(), f32_type);
     /// ```
-    #[llvm_versions(..=14)]
+    #[llvm_versions(..=16)]
+    #[cfg(feature = "typed-pointers")]
     pub fn get_element_type(self) -> AnyTypeEnum<'ctx> {
         self.ptr_type.get_element_type()
     }
@@ -383,9 +374,9 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let f32_ptr_val = f32_ptr_type.const_null();
     /// let f32_ptr_array = f32_ptr_type.const_array(&[f32_ptr_val, f32_ptr_val]);

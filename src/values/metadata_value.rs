@@ -3,9 +3,7 @@ use llvm_sys::core::{
 };
 use llvm_sys::prelude::LLVMValueRef;
 
-#[llvm_versions(7..)]
 use llvm_sys::core::LLVMValueAsMetadata;
-#[llvm_versions(7..)]
 use llvm_sys::prelude::LLVMMetadataRef;
 
 use crate::values::traits::AsValueRef;
@@ -20,13 +18,7 @@ use std::fmt::{self, Display};
 /// for the first input string that isn't known.
 ///
 /// Each LLVM version has a different set of pre-defined metadata kinds.
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = if cfg!(feature = "llvm4-0") {
-    22
-} else if cfg!(feature = "llvm5-0") {
-    23
-} else if cfg!(any(feature = "llvm6-0", feature = "llvm7-0")) {
-    25
-} else if cfg!(feature = "llvm8-0") {
+pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = if cfg!(feature = "llvm8-0") {
     26
 } else if cfg!(feature = "llvm9-0") {
     28
@@ -38,8 +30,8 @@ pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = if cfg!(feature = "llvm4-0") {
     36
 } else if cfg!(any(feature = "llvm16-0", feature = "llvm17-0")) {
     39
-} else if cfg!(any(feature = "llvm18-0", feature = "llvm19-1")) {
-    40
+} else if cfg!(any(feature = "llvm18-1", feature = "llvm19-1")) {
+    41
 } else {
     panic!("Unhandled LLVM version")
 };
@@ -64,7 +56,6 @@ impl<'ctx> MetadataValue<'ctx> {
         }
     }
 
-    #[llvm_versions(7..)]
     pub(crate) fn as_metadata_ref(self) -> LLVMMetadataRef {
         unsafe { LLVMValueAsMetadata(self.as_value_ref()) }
     }

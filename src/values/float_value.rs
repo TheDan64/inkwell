@@ -20,7 +20,7 @@ use crate::values::traits::AsValueRef;
 use crate::values::{InstructionValue, Value};
 
 #[llvm_versions(..=18)]
-use crate::{FloatPredicate, IntValue};
+use crate::{values::IntValue, FloatPredicate};
 
 use super::AnyValue;
 

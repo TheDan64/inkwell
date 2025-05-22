@@ -47,21 +47,9 @@ fn test_build_call() {
     let function3 = module.add_function("call_fn", fn_type2, None);
     let basic_block3 = context.append_basic_block(function3, "entry");
     let fn_ptr = function3.as_global_value().as_pointer_value();
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    )))]
+    #[cfg(feature = "typed-pointers")]
     let fn_ptr_type = fn_ptr.get_type();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let fn_ptr_type = context.ptr_type(AddressSpace::default());
 
     builder.position_at_end(basic_block3);
@@ -70,37 +58,15 @@ fn test_build_call() {
 
     builder.build_store(alloca, fn_ptr).unwrap();
 
-    #[cfg(any(
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
+    #[cfg(feature = "typed-pointers")]
     let load = builder.build_load(alloca, "load").unwrap().into_pointer_value();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let load = builder
         .build_load(fn_ptr_type, alloca, "load")
         .unwrap()
         .into_pointer_value();
 
     #[cfg(any(
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
         feature = "llvm8-0",
         feature = "llvm9-0",
         feature = "llvm10-0",
@@ -118,7 +84,7 @@ fn test_build_call() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0",
+        feature = "llvm18-1",
         feature = "llvm19-1"
     ))]
     builder.build_indirect_call(fn_type2, load, &[], "call").unwrap();
@@ -183,21 +149,9 @@ fn test_build_invoke_cleanup_resume() {
         };
 
         // type of an exception in C++
-        #[cfg(not(any(
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0",
-            feature = "llvm19-1"
-        )))]
+        #[cfg(feature = "typed-pointers")]
         let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::default());
-        #[cfg(any(
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0",
-            feature = "llvm19-1"
-        ))]
+        #[cfg(not(feature = "typed-pointers"))]
         let i8_ptr_type = context.ptr_type(AddressSpace::default());
         let i32_type = context.i32_type();
         let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
@@ -269,21 +223,9 @@ fn test_build_invoke_catch_all() {
         };
 
         // type of an exception in C++
-        #[cfg(not(any(
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0",
-            feature = "llvm19-1"
-        )))]
+        #[cfg(feature = "typed-pointers")]
         let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::default());
-        #[cfg(any(
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0",
-            feature = "llvm19-1"
-        ))]
+        #[cfg(not(feature = "typed-pointers"))]
         let i8_ptr_type = context.ptr_type(AddressSpace::default());
         let i32_type = context.i32_type();
         let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
@@ -359,21 +301,9 @@ fn landing_pad_filter() {
         };
 
         // type of an exception in C++
-        #[cfg(not(any(
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0",
-            feature = "llvm19-1"
-        )))]
+        #[cfg(feature = "typed-pointers")]
         let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::default());
-        #[cfg(any(
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0",
-            feature = "llvm19-1"
-        ))]
+        #[cfg(not(feature = "typed-pointers"))]
         let i8_ptr_type = context.ptr_type(AddressSpace::default());
         let i32_type = context.i32_type();
         let exception_type = context.struct_type(&[i8_ptr_type.into(), i32_type.into()], false);
@@ -419,21 +349,9 @@ fn test_null_checked_ptr_ops() {
     // }
 
     let i8_type = context.i8_type();
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    )))]
+    #[cfg(feature = "typed-pointers")]
     let i8_ptr_type = context.i32_type().ptr_type(AddressSpace::default());
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let i8_ptr_type = context.ptr_type(AddressSpace::default());
     let i64_type = context.i64_type();
     let fn_type = i8_type.fn_type(&[i8_ptr_type.into()], false);
@@ -466,27 +384,9 @@ fn test_null_checked_ptr_ops() {
     let new_ptr = builder
         .build_int_to_ptr(new_ptr_as_int, i8_ptr_type, "int_as_ptr")
         .unwrap();
-    #[cfg(any(
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
+    #[cfg(feature = "typed-pointers")]
     let index1 = builder.build_load(new_ptr, "deref").unwrap();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let index1 = builder.build_load(i8_ptr_type, new_ptr, "deref").unwrap();
 
     builder.build_return(Some(&index1)).unwrap();
@@ -526,27 +426,9 @@ fn test_null_checked_ptr_ops() {
     let new_ptr = builder
         .build_int_to_ptr(new_ptr_as_int, i8_ptr_type, "int_as_ptr")
         .unwrap();
-    #[cfg(any(
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
+    #[cfg(feature = "typed-pointers")]
     let index1 = builder.build_load(new_ptr, "deref").unwrap();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let index1 = builder.build_load(i8_ptr_type, new_ptr, "deref").unwrap();
 
     builder.build_return(Some(&index1)).unwrap();
@@ -986,7 +868,6 @@ fn test_scalable_vector_convert_ops() {
     assert!(fn_value.verify(true));
 }
 
-#[llvm_versions(8..)]
 #[test]
 fn test_vector_convert_ops_respect_target_signedness() {
     let context = Context::create();
@@ -1184,21 +1065,9 @@ fn test_vector_pointer_ops() {
     let context = Context::create();
     let module = context.create_module("test");
     let int32_vec_type = context.i32_type().vec_type(4);
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    )))]
+    #[cfg(feature = "typed-pointers")]
     let i8_ptr_vec_type = context.i8_type().ptr_type(AddressSpace::default()).vec_type(4);
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let i8_ptr_vec_type = context.ptr_type(AddressSpace::default()).vec_type(4);
     let bool_vec_type = context.bool_type().vec_type(4);
 
@@ -1223,21 +1092,9 @@ fn test_scalable_vector_pointer_ops() {
     let context = Context::create();
     let module = context.create_module("test");
     let int32_vec_type = context.i32_type().scalable_vec_type(4);
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    )))]
+    #[cfg(feature = "typed-pointers")]
     let i8_ptr_vec_type = context.i8_type().ptr_type(AddressSpace::default()).scalable_vec_type(4);
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let i8_ptr_vec_type = context.ptr_type(AddressSpace::default()).scalable_vec_type(4);
     let bool_vec_type = context.bool_type().scalable_vec_type(4);
 
@@ -1273,30 +1130,12 @@ fn test_insert_value() {
     builder.position_at_end(entry);
 
     let array_alloca = builder.build_alloca(array_type, "array_alloca").unwrap();
-    #[cfg(any(
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
+    #[cfg(feature = "typed-pointers")]
     let array = builder
         .build_load(array_alloca, "array_load")
         .unwrap()
         .into_array_value();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let array = builder
         .build_load(array_type, array_alloca, "array_load")
         .unwrap()
@@ -1333,30 +1172,12 @@ fn test_insert_value() {
         .is_err_and(|e| e == BuilderError::ExtractOutOfRange));
 
     let struct_alloca = builder.build_alloca(struct_type, "struct_alloca").unwrap();
-    #[cfg(any(
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
+    #[cfg(feature = "typed-pointers")]
     let struct_value = builder
         .build_load(struct_alloca, "struct_load")
         .unwrap()
         .into_struct_value();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let struct_value = builder
         .build_load(struct_type, struct_alloca, "struct_load")
         .unwrap()
@@ -1492,7 +1313,6 @@ fn is_alignment_ok(align: u32) -> bool {
     align > 0 && align.is_power_of_two() && (align as f64).log2() < 64.0
 }
 
-#[llvm_versions(8..)]
 #[test]
 fn test_alignment_bytes() {
     let verify_alignment = |alignment: u32| {
@@ -1530,7 +1350,6 @@ fn test_alignment_bytes() {
     verify_alignment(u32::MAX);
 }
 
-#[llvm_versions(8..)]
 fn run_memcpy_on<'ctx>(
     context: &'ctx Context,
     module: &inkwell::module::Module<'ctx>,
@@ -1539,21 +1358,9 @@ fn run_memcpy_on<'ctx>(
     let i32_type = context.i32_type();
     let i64_type = context.i64_type();
     let array_len = 4;
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    )))]
+    #[cfg(feature = "typed-pointers")]
     let fn_type = i32_type.ptr_type(AddressSpace::default()).fn_type(&[], false);
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let fn_type = context.ptr_type(AddressSpace::default()).fn_type(&[], false);
     let fn_value = module.add_function("test_fn", fn_type, None);
     let builder = context.create_builder();
@@ -1562,33 +1369,16 @@ fn run_memcpy_on<'ctx>(
     builder.position_at_end(entry);
 
     let len_value = i64_type.const_int(array_len as u64, false);
+    #[cfg(not(feature = "typed-pointers"))]
     let element_type = i32_type;
     let array_ptr = builder.build_array_malloc(i32_type, len_value, "array_ptr").unwrap();
 
     // Initialize the array with the values [1, 2, 3, 4]
     for index in 0..4 {
         let index_val = i32_type.const_int(index, false);
-        #[cfg(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0"
-        ))]
+        #[cfg(feature = "typed-pointers")]
         let elem_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") }.unwrap();
-        #[cfg(any(
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0",
-            feature = "llvm19-1"
-        ))]
+        #[cfg(not(feature = "typed-pointers"))]
         let elem_ptr = unsafe {
             builder
                 .build_in_bounds_gep(element_type, array_ptr, &[index_val], "index")
@@ -1604,27 +1394,9 @@ fn run_memcpy_on<'ctx>(
     let bytes_to_copy = elems_to_copy * std::mem::size_of::<i32>();
     let size_val = i64_type.const_int(bytes_to_copy as u64, false);
     let index_val = i32_type.const_int(2, false);
-    #[cfg(any(
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
+    #[cfg(feature = "typed-pointers")]
     let dest_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") }.unwrap();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let dest_ptr = unsafe {
         builder
             .build_in_bounds_gep(element_type, array_ptr, &[index_val], "index")
@@ -1638,7 +1410,6 @@ fn run_memcpy_on<'ctx>(
     Ok(())
 }
 
-#[llvm_versions(8..)]
 #[test]
 fn test_memcpy() {
     // 1. Allocate an array with a few elements.
@@ -1666,7 +1437,6 @@ fn test_memcpy() {
     }
 }
 
-#[llvm_versions(8..)]
 fn run_memmove_on<'ctx>(
     context: &'ctx Context,
     module: &inkwell::module::Module<'ctx>,
@@ -1675,21 +1445,9 @@ fn run_memmove_on<'ctx>(
     let i32_type = context.i32_type();
     let i64_type = context.i64_type();
     let array_len = 4;
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    )))]
+    #[cfg(feature = "typed-pointers")]
     let fn_type = i32_type.ptr_type(AddressSpace::default()).fn_type(&[], false);
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let fn_type = context.ptr_type(AddressSpace::default()).fn_type(&[], false);
     let fn_value = module.add_function("test_fn", fn_type, None);
     let builder = context.create_builder();
@@ -1698,33 +1456,16 @@ fn run_memmove_on<'ctx>(
     builder.position_at_end(entry);
 
     let len_value = i64_type.const_int(array_len as u64, false);
+    #[cfg(not(feature = "typed-pointers"))]
     let element_type = i32_type;
     let array_ptr = builder.build_array_malloc(i32_type, len_value, "array_ptr").unwrap();
 
     // Initialize the array with the values [1, 2, 3, 4]
     for index in 0..4 {
         let index_val = i32_type.const_int(index, false);
-        #[cfg(any(
-            feature = "llvm4-0",
-            feature = "llvm5-0",
-            feature = "llvm6-0",
-            feature = "llvm7-0",
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0"
-        ))]
+        #[cfg(feature = "typed-pointers")]
         let elem_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") }.unwrap();
-        #[cfg(any(
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-0",
-            feature = "llvm19-1"
-        ))]
+        #[cfg(not(feature = "typed-pointers"))]
         let elem_ptr = unsafe {
             builder
                 .build_in_bounds_gep(element_type, array_ptr, &[index_val], "index")
@@ -1740,27 +1481,9 @@ fn run_memmove_on<'ctx>(
     let bytes_to_copy = elems_to_copy * std::mem::size_of::<i32>();
     let size_val = i64_type.const_int(bytes_to_copy as u64, false);
     let index_val = i32_type.const_int(2, false);
-    #[cfg(any(
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
+    #[cfg(feature = "typed-pointers")]
     let dest_ptr = unsafe { builder.build_in_bounds_gep(array_ptr, &[index_val], "index") }.unwrap();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let dest_ptr = unsafe {
         builder
             .build_in_bounds_gep(element_type, array_ptr, &[index_val], "index")
@@ -1774,7 +1497,6 @@ fn run_memmove_on<'ctx>(
     Ok(())
 }
 
-#[llvm_versions(8..)]
 #[test]
 fn test_memmove() {
     // 1. Allocate an array with a few elements.
@@ -1802,7 +1524,6 @@ fn test_memmove() {
     }
 }
 
-#[llvm_versions(8..)]
 fn run_memset_on<'ctx>(
     context: &'ctx Context,
     module: &inkwell::module::Module<'ctx>,
@@ -1812,21 +1533,9 @@ fn run_memset_on<'ctx>(
     let i32_type = context.i32_type();
     let i64_type = context.i64_type();
     let array_len = 4;
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    )))]
+    #[cfg(feature = "typed-pointers")]
     let fn_type = i32_type.ptr_type(AddressSpace::default()).fn_type(&[], false);
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let fn_type = context.ptr_type(AddressSpace::default()).fn_type(&[], false);
     let fn_value = module.add_function("test_fn", fn_type, None);
     let builder = context.create_builder();
@@ -1835,6 +1544,7 @@ fn run_memset_on<'ctx>(
     builder.position_at_end(entry);
 
     let len_value = i64_type.const_int(array_len as u64, false);
+    #[cfg(not(feature = "typed-pointers"))]
     let element_type = i32_type;
     let array_ptr = builder.build_array_malloc(i32_type, len_value, "array_ptr").unwrap();
 
@@ -1847,27 +1557,9 @@ fn run_memset_on<'ctx>(
     // Memset the second half of the array as -1
     let val = i8_type.const_all_ones();
     let index = i32_type.const_int(2, false);
-    #[cfg(any(
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
+    #[cfg(feature = "typed-pointers")]
     let part_2 = unsafe { builder.build_in_bounds_gep(array_ptr, &[index], "index") }.unwrap();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let part_2 = unsafe {
         builder
             .build_in_bounds_gep(element_type, array_ptr, &[index], "index")
@@ -1879,7 +1571,6 @@ fn run_memset_on<'ctx>(
     Ok(())
 }
 
-#[llvm_versions(8..)]
 #[test]
 fn test_memset() {
     // 1. Allocate an array with a few elements.
@@ -1918,37 +1609,13 @@ fn test_bit_cast() {
     let i32_type = context.i32_type();
     let f64_type = context.f64_type();
     let i64_type = context.i64_type();
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    )))]
+    #[cfg(feature = "typed-pointers")]
     let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let i32_ptr_type = context.ptr_type(AddressSpace::default());
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    )))]
+    #[cfg(feature = "typed-pointers")]
     let i64_ptr_type = i64_type.ptr_type(AddressSpace::default());
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let i64_ptr_type = context.ptr_type(AddressSpace::default());
     let i32_vec_type = i32_type.vec_type(2);
     #[cfg(any(
@@ -1958,7 +1625,7 @@ fn test_bit_cast() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0",
+        feature = "llvm18-1",
         feature = "llvm19-1"
     ))]
     let i32_scalable_vec_type = i32_type.scalable_vec_type(2);
@@ -1975,7 +1642,7 @@ fn test_bit_cast() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-0",
+            feature = "llvm18-1",
             feature = "llvm19-1"
         ))]
         i32_scalable_vec_type.into(),
@@ -1996,7 +1663,7 @@ fn test_bit_cast() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0",
+        feature = "llvm18-1",
         feature = "llvm19-1"
     ))]
     let i32_scalable_vec_arg = fn_value.get_nth_param(5).unwrap();
@@ -2014,7 +1681,7 @@ fn test_bit_cast() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-0",
+        feature = "llvm18-1",
         feature = "llvm19-1"
     ))]
     {
@@ -2065,39 +1732,15 @@ fn test_atomicrmw() {
     let i31_type = context.custom_width_int_type(31);
     let i4_type = context.custom_width_int_type(4);
 
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    )))]
+    #[cfg(feature = "typed-pointers")]
     let ptr_value = i32_type.ptr_type(AddressSpace::default()).get_undef();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let ptr_value = context.ptr_type(AddressSpace::default()).get_undef();
     let zero_value = i32_type.const_zero();
     let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Unordered);
     assert!(result.is_ok());
 
-    #[cfg(any(
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
+    #[cfg(feature = "typed-pointers")]
     {
         let i64_type = context.i64_type();
         let ptr_value = i64_type.ptr_type(AddressSpace::default()).get_undef();
@@ -2106,41 +1749,17 @@ fn test_atomicrmw() {
         assert!(result.is_err());
     }
 
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    )))]
+    #[cfg(feature = "typed-pointers")]
     let ptr_value = i31_type.ptr_type(AddressSpace::default()).get_undef();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let ptr_value = context.ptr_type(AddressSpace::default()).get_undef();
     let zero_value = i31_type.const_zero();
     let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Unordered);
     assert!(result.is_err());
 
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    )))]
+    #[cfg(feature = "typed-pointers")]
     let ptr_value = i4_type.ptr_type(AddressSpace::default()).get_undef();
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let ptr_value = context.ptr_type(AddressSpace::default()).get_undef();
     let zero_value = i4_type.const_zero();
     let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Unordered);
@@ -2161,37 +1780,13 @@ fn test_cmpxchg() {
 
     let i32_type = context.i32_type();
     let i64_type = context.i64_type();
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    )))]
+    #[cfg(feature = "typed-pointers")]
     let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let i32_ptr_type = context.ptr_type(AddressSpace::default());
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    )))]
+    #[cfg(feature = "typed-pointers")]
     let i32_ptr_ptr_type = i32_ptr_type.ptr_type(AddressSpace::default());
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let i32_ptr_ptr_type = context.ptr_type(AddressSpace::default());
 
     let ptr_value = i32_ptr_type.get_undef();
@@ -2266,19 +1861,7 @@ fn test_cmpxchg() {
     );
     assert!(result.is_err());
 
-    #[cfg(any(
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
+    #[cfg(feature = "typed-pointers")]
     {
         let ptr_value = i32_ptr_ptr_type.get_undef();
         let zero_value = i32_type.const_zero();
@@ -2329,19 +1912,7 @@ fn test_cmpxchg() {
     );
     assert!(result.is_ok());
 
-    #[cfg(any(
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
+    #[cfg(feature = "typed-pointers")]
     {
         let ptr_value = i32_ptr_type.get_undef();
         let zero_value = i32_ptr_type.const_zero();
@@ -2364,39 +1935,15 @@ fn test_safe_struct_gep() {
     let module = context.create_module("struct_gep");
     let void_type = context.void_type();
     let i32_ty = context.i32_type();
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    )))]
+    #[cfg(feature = "typed-pointers")]
     let i32_ptr_ty = i32_ty.ptr_type(AddressSpace::default());
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let i32_ptr_ty = context.ptr_type(AddressSpace::default());
     let field_types = &[i32_ty.into(), i32_ty.into()];
     let struct_ty = context.struct_type(field_types, false);
-    #[cfg(not(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    )))]
+    #[cfg(feature = "typed-pointers")]
     let struct_ptr_ty = struct_ty.ptr_type(AddressSpace::default());
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     let struct_ptr_ty = context.ptr_type(AddressSpace::default());
     let fn_type = void_type.fn_type(&[i32_ptr_ty.into(), struct_ptr_ty.into()], false);
     let fn_value = module.add_function("", fn_type, None);
@@ -2407,19 +1954,7 @@ fn test_safe_struct_gep() {
     let i32_ptr = fn_value.get_first_param().unwrap().into_pointer_value();
     let struct_ptr = fn_value.get_last_param().unwrap().into_pointer_value();
 
-    #[cfg(any(
-        feature = "llvm4-0",
-        feature = "llvm5-0",
-        feature = "llvm6-0",
-        feature = "llvm7-0",
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
+    #[cfg(feature = "typed-pointers")]
     {
         assert!(builder.build_struct_gep(i32_ptr, 0, "struct_gep").is_err());
         assert!(builder.build_struct_gep(i32_ptr, 10, "struct_gep").is_err());
@@ -2427,13 +1962,7 @@ fn test_safe_struct_gep() {
         assert!(builder.build_struct_gep(struct_ptr, 1, "struct_gep").is_ok());
         assert!(builder.build_struct_gep(struct_ptr, 2, "struct_gep").is_err());
     }
-    #[cfg(any(
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-0",
-        feature = "llvm19-1"
-    ))]
+    #[cfg(not(feature = "typed-pointers"))]
     {
         assert!(builder.build_struct_gep(i32_ty, i32_ptr, 0, "struct_gep").is_err());
         assert!(builder.build_struct_gep(i32_ty, i32_ptr, 10, "struct_gep").is_err());

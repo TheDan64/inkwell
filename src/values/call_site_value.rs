@@ -1,8 +1,10 @@
 use std::fmt::{self, Display};
 
 use either::Either;
+
+use llvm_sys::core::LLVMGetCalledFunctionType;
 use llvm_sys::core::{
-    LLVMGetInstructionCallConv, LLVMGetTypeKind, LLVMIsTailCall, LLVMSetInstrParamAlignment,
+    LLVMGetCalledValue, LLVMGetInstructionCallConv, LLVMGetTypeKind, LLVMIsTailCall, LLVMSetInstrParamAlignment,
     LLVMSetInstructionCallConv, LLVMSetTailCall, LLVMTypeOf,
 };
 #[llvm_versions(18..)]
@@ -11,6 +13,7 @@ use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMTypeKind;
 
 use crate::attributes::{Attribute, AttributeLoc};
+use crate::types::FunctionType;
 #[llvm_versions(18..)]
 use crate::values::operand_bundle::OperandBundleIter;
 use crate::values::{AsValueRef, BasicValueEnum, FunctionValue, InstructionValue, Value};
@@ -201,9 +204,12 @@ impl<'ctx> CallSiteValue<'ctx> {
 
     /// Gets the `FunctionValue` this `CallSiteValue` is based on.
     ///
+    /// Returns [`None`] if the call this value bases on is indirect or the retrieved function
+    /// value doesn't have the same type as the underlying call instruction.
+    ///
     /// # Example
     ///
-    /// ```no_run
+    /// ```
     /// use inkwell::context::Context;
     ///
     /// let context = Context::create();
@@ -220,12 +226,57 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// let call_site_value = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
-    /// assert_eq!(call_site_value.get_called_fn_value(), fn_value);
+    /// assert_eq!(call_site_value.get_called_fn_value(), Some(fn_value));
     /// ```
-    pub fn get_called_fn_value(self) -> FunctionValue<'ctx> {
-        use llvm_sys::core::LLVMGetCalledValue;
+    pub fn get_called_fn_value(self) -> Option<FunctionValue<'ctx>> {
+        // SAFETY: the passed LLVMValueRef is of type CallSite
+        let called_value = unsafe { LLVMGetCalledValue(self.as_value_ref()) };
 
-        unsafe { FunctionValue::new(LLVMGetCalledValue(self.as_value_ref())).expect("This should never be null?") }
+        let fn_value = unsafe { FunctionValue::new(called_value) };
+
+        // Check that the retrieved function value has the same type as the callee.
+        // This matches the behavior of the C++ API `CallBase::getCalledFunction`.
+        // This is only possible on LLVM >=8, where the `LLVMGetCalledFunctionType` API exists.
+        self.get_called_fn_value_check_type_consistency(fn_value)
+    }
+
+    #[inline]
+    fn get_called_fn_value_check_type_consistency(
+        &self,
+        fn_value: Option<FunctionValue<'ctx>>,
+    ) -> Option<FunctionValue<'ctx>> {
+        fn_value.filter(|fn_value| fn_value.get_type() == self.get_called_fn_type())
+    }
+
+    /// Gets the type of the function called by the instruction this `CallSiteValue` is based on.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let builder = context.create_builder();
+    /// let module = context.create_module("my_mod");
+    /// let i32_type = context.i32_type();
+    /// let fn_type = i32_type.fn_type(&[], false);
+    /// let fn_value = module.add_function("my_fn", fn_type, None);
+    ///
+    /// let entry_bb = context.append_basic_block(fn_value, "entry");
+    /// builder.position_at_end(entry_bb);
+    ///
+    /// // Recursive call.
+    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn").unwrap();
+    ///
+    /// assert_eq!(call_site_value.get_called_fn_type(), fn_type);
+    /// ```
+    pub fn get_called_fn_type(self) -> FunctionType<'ctx> {
+        // SAFETY: the passed LLVMValueRef is of type CallSite
+        let fn_type_ref = unsafe { LLVMGetCalledFunctionType(self.as_value_ref()) };
+
+        // FIXME?: this assumes that fn_type_ref is not null.
+        // SAFETY: fn_type_ref is a function type reference.
+        unsafe { FunctionType::new(fn_type_ref) }
     }
 
     /// Counts the number of `Attribute`s on this `CallSiteValue` at an index.

@@ -102,7 +102,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-0",
+                feature = "llvm18-1",
                 feature = "llvm19-1"
             ))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => {
@@ -164,6 +164,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         matches!(self, AnyValueEnum::InstructionValue(_))
     }
 
+    #[track_caller]
     pub fn into_array_value(self) -> ArrayValue<'ctx> {
         if let AnyValueEnum::ArrayValue(v) = self {
             v
@@ -172,6 +173,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_int_value(self) -> IntValue<'ctx> {
         if let AnyValueEnum::IntValue(v) = self {
             v
@@ -180,6 +182,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_float_value(self) -> FloatValue<'ctx> {
         if let AnyValueEnum::FloatValue(v) = self {
             v
@@ -188,6 +191,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_phi_value(self) -> PhiValue<'ctx> {
         if let AnyValueEnum::PhiValue(v) = self {
             v
@@ -196,6 +200,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_function_value(self) -> FunctionValue<'ctx> {
         if let AnyValueEnum::FunctionValue(v) = self {
             v
@@ -204,6 +209,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_pointer_value(self) -> PointerValue<'ctx> {
         if let AnyValueEnum::PointerValue(v) = self {
             v
@@ -212,6 +218,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_struct_value(self) -> StructValue<'ctx> {
         if let AnyValueEnum::StructValue(v) = self {
             v
@@ -220,6 +227,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_vector_value(self) -> VectorValue<'ctx> {
         if let AnyValueEnum::VectorValue(v) = self {
             v
@@ -228,6 +236,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_scalable_vector_value(self) -> ScalableVectorValue<'ctx> {
         if let AnyValueEnum::ScalableVectorValue(v) = self {
             v
@@ -236,6 +245,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_instruction_value(self) -> InstructionValue<'ctx> {
         if let AnyValueEnum::InstructionValue(v) = self {
             v
@@ -272,7 +282,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-0",
+                feature = "llvm18-1",
                 feature = "llvm19-1"
             ))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => {
@@ -340,6 +350,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
         matches!(self, BasicValueEnum::ScalableVectorValue(_))
     }
 
+    #[track_caller]
     pub fn into_array_value(self) -> ArrayValue<'ctx> {
         if let BasicValueEnum::ArrayValue(v) = self {
             v
@@ -348,6 +359,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_int_value(self) -> IntValue<'ctx> {
         if let BasicValueEnum::IntValue(v) = self {
             v
@@ -356,6 +368,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_float_value(self) -> FloatValue<'ctx> {
         if let BasicValueEnum::FloatValue(v) = self {
             v
@@ -364,6 +377,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_pointer_value(self) -> PointerValue<'ctx> {
         if let BasicValueEnum::PointerValue(v) = self {
             v
@@ -372,6 +386,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_struct_value(self) -> StructValue<'ctx> {
         if let BasicValueEnum::StructValue(v) = self {
             v
@@ -380,6 +395,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_vector_value(self) -> VectorValue<'ctx> {
         if let BasicValueEnum::VectorValue(v) = self {
             v
@@ -388,6 +404,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_scalable_vector_value(self) -> ScalableVectorValue<'ctx> {
         if let BasicValueEnum::ScalableVectorValue(v) = self {
             v
@@ -419,6 +436,7 @@ impl<'ctx> AggregateValueEnum<'ctx> {
         matches!(self, AggregateValueEnum::StructValue(_))
     }
 
+    #[track_caller]
     pub fn into_array_value(self) -> ArrayValue<'ctx> {
         if let AggregateValueEnum::ArrayValue(v) = self {
             v
@@ -427,6 +445,7 @@ impl<'ctx> AggregateValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_struct_value(self) -> StructValue<'ctx> {
         if let AggregateValueEnum::StructValue(v) = self {
             v
@@ -458,7 +477,7 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-0",
+                feature = "llvm18-1",
                 feature = "llvm19-1"
             ))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => {
@@ -501,6 +520,7 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
         matches!(self, BasicMetadataValueEnum::MetadataValue(_))
     }
 
+    #[track_caller]
     pub fn into_array_value(self) -> ArrayValue<'ctx> {
         if let BasicMetadataValueEnum::ArrayValue(v) = self {
             v
@@ -509,6 +529,7 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_int_value(self) -> IntValue<'ctx> {
         if let BasicMetadataValueEnum::IntValue(v) = self {
             v
@@ -517,6 +538,7 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_float_value(self) -> FloatValue<'ctx> {
         if let BasicMetadataValueEnum::FloatValue(v) = self {
             v
@@ -525,6 +547,7 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_pointer_value(self) -> PointerValue<'ctx> {
         if let BasicMetadataValueEnum::PointerValue(v) = self {
             v
@@ -533,6 +556,7 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_struct_value(self) -> StructValue<'ctx> {
         if let BasicMetadataValueEnum::StructValue(v) = self {
             v
@@ -541,6 +565,7 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_vector_value(self) -> VectorValue<'ctx> {
         if let BasicMetadataValueEnum::VectorValue(v) = self {
             v
@@ -549,6 +574,7 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_scalable_vector_value(self) -> ScalableVectorValue<'ctx> {
         if let BasicMetadataValueEnum::ScalableVectorValue(v) = self {
             v
@@ -557,6 +583,7 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
         }
     }
 
+    #[track_caller]
     pub fn into_metadata_value(self) -> MetadataValue<'ctx> {
         if let BasicMetadataValueEnum::MetadataValue(v) = self {
             v

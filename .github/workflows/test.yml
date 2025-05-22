@@ -1,96 +1,94 @@
 name: Test Suite and Doc
 
-on: [push, pull_request]
+on: [ push, pull_request ]
 
 env:
   CARGO_TERM_COLOR: always
-  DOC_LLVM_FEATURE: llvm18-0
+  DOC_LLVM_FEATURE: llvm18-1
   DOC_LLVM_VERSION: "18.1"
   DOC_PATH: target/doc
 
 jobs:
-  typos:
-    name: Typos
+  lint:
+    name: Linting
     runs-on: ubuntu-latest
     steps:
-      - name: Install Rust Stable
-        uses: dtolnay/rust-toolchain@stable
-      - name: Install typos
-        uses: taiki-e/install-action@typos
-      - name: Run typos
-        run: typos .
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+    - name: Install Rust Stable
+      uses: dtolnay/rust-toolchain@stable
+    - name: Install typos
+      uses: taiki-e/install-action@typos
+    - name: Check typos
+      run: typos .
+    - name: Check code formatting
+      run: cargo fmt --check
   tests:
     name: "LLVM ${{ matrix.llvm-version[0] }}: ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         llvm-version:
-          - ["4.0", "4-0"]
-          - ["5.0", "5-0"]
-          - ["6.0", "6-0"]
-          - ["7.0", "7-0"]
-          - ["7.1", "7-0"]
-          - ["8.0", "8-0"]
-          - ["9.0", "9-0"]
-          - ["10.0", "10-0"]
-          - ["11.0", "11-0"]
-          - ["12.0", "12-0"]
-          - ["13.0", "13-0"]
-          - ["14.0", "14-0"]
-          - ["15.0", "15-0"]
-          - ["16.0", "16-0"]
-          - ["17.0", "17-0"]
-          - ["18.1", "18-0"]
-          - ["19.1", "19-1"]
+        - [ "8.0", "8-0" ]
+        - [ "9.0", "9-0" ]
+        - [ "10.0", "10-0" ]
+        - [ "11.0", "11-0" ]
+        - [ "12.0", "12-0" ]
+        - [ "13.0", "13-0" ]
+        - [ "14.0", "14-0" ]
+        - [ "15.0", "15-0" ]
+        - [ "16.0", "16-0" ]
+        - [ "17.0", "17-0" ]
+        - [ "18.1", "18-1" ]
+        - [ "19.1", "19-1" ]
         include:
-          - os: ubuntu-20.04
-          # only use ubuntu-22.04 for llvm 16 and llvm 17
-          - os: ubuntu-22.04
-            llvm-version: ["16.0", "16-0"]
-          - os: ubuntu-22.04
-            llvm-version: ["17.0", "17-0"]
+        - os: ubuntu-22.04
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-      - name: Install LLVM and Clang (LLVM >= 7.1)
-        uses: sagudev/install-llvm-action@new
-        if: ${{ matrix.llvm-version[0] > 7 }}
-        with:
-          version: ${{ matrix.llvm-version[0] }}
-      - name: Install LLVM and Clang (LLVM <= 7)
-        uses: KyleMayes/install-llvm-action@v1
-        if: ${{ matrix.llvm-version[0] <= 7 }}
-        with:
-          version: ${{ matrix.llvm-version[0] }}
-      - name: llvm-config
-        run: llvm-config --version --bindir --libdir
-      - name: Install Rust Stable
-        uses: dtolnay/rust-toolchain@stable
-      - name: Build
-        run: cargo build --release --features llvm${{ matrix.llvm-version[1] }} --verbose
-      - name: Run tests
-        run: cargo test --release --features llvm${{ matrix.llvm-version[1] }} --verbose
-      - name: Build example
-        run: cargo build --example kaleidoscope --features llvm${{ matrix.llvm-version[1] }} --verbose
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+    - name: Install Dependencies
+      run: sudo apt update && sudo apt install -y libtinfo5
+    - name: Install LLVM and Clang (LLVM >= 7.1)
+      uses: KyleMayes/install-llvm-action@v2
+      if: ${{ matrix.llvm-version[0] > 7 }}
+      with:
+        version: ${{ matrix.llvm-version[0] }}
+    - name: Install LLVM and Clang (LLVM <= 7)
+      uses: KyleMayes/install-llvm-action@v1
+      if: ${{ matrix.llvm-version[0] <= 7 }}
+      with:
+        version: ${{ matrix.llvm-version[0] }}
+    - name: llvm-config
+      run: llvm-config --version --bindir --libdir
+    - name: Install Rust Stable
+      uses: dtolnay/rust-toolchain@stable
+    - name: cargo clippy
+      run: cargo clippy --tests --features llvm${{ matrix.llvm-version[1] }} -- -D warnings
+    - name: Build
+      run: cargo build --release --features llvm${{ matrix.llvm-version[1] }} --verbose
+    - name: Run tests
+      run: cargo test --release --features llvm${{ matrix.llvm-version[1] }} --verbose
+    - name: Build example
+      run: cargo build --example kaleidoscope --features llvm${{ matrix.llvm-version[1] }} --verbose
   doc:
     name: Documentation
-    runs-on: ubuntu-20.04
-    needs: [typos, tests]
+    runs-on: ubuntu-22.04
+    needs: [ lint, tests ]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
-      - uses: actions/checkout@v4
-      - uses: sagudev/install-llvm-action@new
-        with:
-          version: ${{ env.DOC_LLVM_VERSION }}
-      - name: Install Rust Nightly
-        uses: dtolnay/rust-toolchain@nightly
-      - name: Build Documentation
-        run: cargo +nightly doc --features ${{ env.DOC_LLVM_FEATURE }},nightly --verbose
-      - name: Doc Index Page Redirection
-        run: echo '<meta http-equiv="refresh" content="1; url=inkwell/index.html">' > ${{ env.DOC_PATH }}/index.html
-      - name: Deploy Documentation
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ${{ env.DOC_PATH }}
-          force_orphan: true
+    - uses: actions/checkout@v4
+    - uses: sagudev/install-llvm-action@new
+      with:
+        version: ${{ env.DOC_LLVM_VERSION }}
+    - name: Install Rust Nightly
+      uses: dtolnay/rust-toolchain@nightly
+    - name: Build Documentation
+      run: cargo +nightly doc --features ${{ env.DOC_LLVM_FEATURE }},nightly --verbose
+    - name: Doc Index Page Redirection
+      run: echo '<meta http-equiv="refresh" content="1; url=inkwell/index.html">' > ${{ env.DOC_PATH }}/index.html
+    - name: Deploy Documentation
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ${{ env.DOC_PATH }}
+        force_orphan: true

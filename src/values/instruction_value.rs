@@ -53,7 +53,6 @@ pub enum InstructionOpcode {
     CleanupRet,
     ExtractElement,
     ExtractValue,
-    #[llvm_versions(8..)]
     FNeg,
     FAdd,
     FCmp,
@@ -123,6 +122,7 @@ impl<'ctx> InstructionValue<'ctx> {
     fn is_a_alloca_inst(self) -> bool {
         !unsafe { LLVMIsAAllocaInst(self.as_value_ref()) }.is_null()
     }
+    #[allow(dead_code)]
     fn is_a_getelementptr_inst(self) -> bool {
         !unsafe { LLVMIsAGetElementPtrInst(self.as_value_ref()) }.is_null()
     }
@@ -175,7 +175,7 @@ impl<'ctx> InstructionValue<'ctx> {
                 return Some(*self);
             }
         }
-        return self.get_next_instruction()?.get_instruction_with_name(name);
+        self.get_next_instruction()?.get_instruction_with_name(name)
     }
 
     /// Set name of the `InstructionValue`.
@@ -246,7 +246,7 @@ impl<'ctx> InstructionValue<'ctx> {
     // SubTypes: Only apply to terminators
     /// Returns if a terminator is conditional or not
     pub fn is_conditional(self) -> bool {
-        if self.is_terminator() {
+        if self.get_opcode() == InstructionOpcode::Br {
             unsafe { LLVMIsConditional(self.as_value_ref()) == 1 }
         } else {
             false
@@ -379,7 +379,8 @@ impl<'ctx> InstructionValue<'ctx> {
         if !self.is_a_load_inst() && !self.is_a_store_inst() {
             return Err("Value is not a load or store.");
         }
-        Ok(unsafe { LLVMSetVolatile(self.as_value_ref(), volatile as i32) })
+        unsafe { LLVMSetVolatile(self.as_value_ref(), volatile as i32) };
+        Ok(())
     }
 
     // SubTypes: Only apply to memory access instructions
@@ -490,9 +491,9 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
@@ -534,7 +535,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// 2) Bitcast has one: a variable float pointer %0
     /// 3) Function call has two: i8 pointer %1 argument, and the free function itself
     /// 4) Void return has zero: void is not a value and does not count as an operand
-    /// even though the return instruction can take values.
+    ///    even though the return instruction can take values.
     pub fn get_num_operands(self) -> u32 {
         unsafe { LLVMGetNumOperands(self.as_value_ref()) as u32 }
     }
@@ -553,9 +554,9 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
@@ -602,7 +603,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// 2) Bitcast has one: a variable float pointer %0
     /// 3) Function call has two: i8 pointer %1 argument, and the free function itself
     /// 4) Void return has zero: void is not a value and does not count as an operand
-    /// even though the return instruction can take values.
+    ///    even though the return instruction can take values.
     pub fn get_operand(self, index: u32) -> Option<Either<BasicValueEnum<'ctx>, BasicBlock<'ctx>>> {
         let num_operands = self.get_num_operands();
 
@@ -657,9 +658,9 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
@@ -703,9 +704,9 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
@@ -770,9 +771,9 @@ impl<'ctx> InstructionValue<'ctx> {
     /// let builder = context.create_builder();
     /// let void_type = context.void_type();
     /// let f32_type = context.f32_type();
-    /// #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1")))]
+    /// #[cfg(feature = "typed-pointers")]
     /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-0", feature = "llvm19-1"))]
+    /// #[cfg(not(feature = "typed-pointers"))]
     /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
     /// let fn_type = void_type.fn_type(&[f32_ptr_type.into()], false);
     ///
