@@ -123,7 +123,8 @@ assert_unique_used_features! {
     "llvm16-0",
     "llvm17-0",
     "llvm18-1",
-    "llvm19-1"
+    "llvm19-1".
+    "llvm20-1"
 }
 
 #[cfg(all(
