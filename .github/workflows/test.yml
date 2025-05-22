@@ -76,13 +76,17 @@ jobs:
     - name: llvm-config
       run: llvm-config --version --bindir --libdir
     - name: Install Rust Stable
-      uses: dtolnay/rust-toolchain@stable
+      uses: moonrepo/setup-rust@v1
+      with:
+        bins: cargo-nextest
     - name: cargo clippy
       run: cargo clippy --tests --features llvm${{ matrix.llvm-version[1] }} -- -D warnings
     - name: Build
       run: cargo build --release --features llvm${{ matrix.llvm-version[1] }} --verbose
     - name: Run tests
-      run: cargo test --release --features llvm${{ matrix.llvm-version[1] }} --verbose
+      run: |
+        cargo nextest run --release --features llvm${{ matrix.llvm-version[1] }} --verbose
+        cargo test --doc --release --features llvm${{ matrix.llvm-version[1] }} --verbose
     - name: Build example
       run: cargo build --example kaleidoscope --features llvm${{ matrix.llvm-version[1] }} --verbose
   doc:
