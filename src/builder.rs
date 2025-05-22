@@ -22,6 +22,9 @@ use llvm_sys::core::{
     LLVMSetCleanup,
 };
 
+#[llvm_versions(..17)]
+use llvm_sys::core::LLVMBuildNUWNeg;
+
 #[llvm_versions(17..)]
 use llvm_sys::core::LLVMSetNUW;
 
