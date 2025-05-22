@@ -1690,5 +1690,9 @@ mod flags {
         #[llvm_versions(19.1..)]
         #[llvm_variant(LLVMDWARFSourceLanguageHylo)]
         Hylo,
+
+        #[llvm_versions(20..)]
+        #[llvm_variant(LLVMDWARFSourceLanguageMetal)]
+        Metal,
     }
 }

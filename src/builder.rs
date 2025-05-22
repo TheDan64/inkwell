@@ -22,8 +22,11 @@ use llvm_sys::core::{
     LLVMSetCleanup,
 };
 
-#[allow(deprecated)]
+#[llvm_versions(..20)]
 use llvm_sys::core::LLVMBuildGlobalStringPtr;
+
+#[llvm_versions(20..)]
+use llvm_sys::core::LLVMBuildGlobalString as LLVMBuildGlobalStringPtr;
 
 #[llvm_versions(..17)]
 use llvm_sys::core::LLVMBuildNUWNeg;

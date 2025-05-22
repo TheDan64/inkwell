@@ -395,6 +395,14 @@ pub enum AtomicRMWBinOp {
     #[llvm_versions(19.1..)]
     #[llvm_variant(LLVMAtomicRMWBinOpUDecWrap)]
     UDecWrap,
+
+    #[llvm_versions(20..)]
+    #[llvm_variant(LLVMAtomicRMWBinOpUSubCond)]
+    USubCond,
+
+    #[llvm_versions(20..)]
+    #[llvm_variant(LLVMAtomicRMWBinOpUSubSat)]
+    USubSat,
 }
 
 /// Defines the optimization level used to compile a [`Module`](crate::module::Module).
