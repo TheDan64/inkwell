@@ -288,16 +288,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
             // FIXME: should inkwell support metadata as AnyType?
             LLVMTypeKind::LLVMMetadataTypeKind => panic!("Metadata type is not supported as AnyType."),
 
-            #[cfg(any(
-                feature = "llvm12-0",
-                feature = "llvm13-0",
-                feature = "llvm14-0",
-                feature = "llvm15-0",
-                feature = "llvm16-0",
-                feature = "llvm17-0",
-                feature = "llvm18-1",
-                feature = "llvm19-1"
-            ))]
+            #[cfg(not(feature = "llvm20-1"))]
             LLVMTypeKind::LLVMX86_MMXTypeKind => panic!("FIXME: Unsupported type: MMX"),
             #[cfg(any(
                 feature = "llvm12-0",
@@ -510,16 +501,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
             },
             LLVMTypeKind::LLVMMetadataTypeKind => panic!("Unsupported basic type: Metadata"),
             // see https://llvm.org/docs/LangRef.html#x86-mmx-type
-            #[cfg(any(
-                feature = "llvm12-0",
-                feature = "llvm13-0",
-                feature = "llvm14-0",
-                feature = "llvm15-0",
-                feature = "llvm16-0",
-                feature = "llvm17-0",
-                feature = "llvm18-1",
-                feature = "llvm19-1"
-            ))]
+            #[cfg(not(feature = "llvm20-1"))]
             LLVMTypeKind::LLVMX86_MMXTypeKind => panic!("Unsupported basic type: MMX"),
             // see https://llvm.org/docs/LangRef.html#x86-amx-type
             #[cfg(any(
