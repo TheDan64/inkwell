@@ -209,7 +209,9 @@ impl<'ctx> StructType<'ctx> {
             all(feature = "llvm15-0", not(feature = "typed-pointers")),
             all(feature = "llvm16-0", not(feature = "typed-pointers")),
             feature = "llvm17-0",
-            feature = "llvm18-1"
+            feature = "llvm18-1",
+            feature = "llvm19-1",
+            feature = "llvm20-1"
         ),
         deprecated(
             note = "Starting from version 15.0, LLVM doesn't differentiate between pointer types. Use Context::ptr_type instead."
