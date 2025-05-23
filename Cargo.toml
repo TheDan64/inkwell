@@ -167,6 +167,7 @@ serde = { version = "1.0", default-features = false, features = [
 ], optional = true }
 
 [dev-dependencies]
+gumdrop = "0.8.1"
 regex = "1"
 
 [badges]

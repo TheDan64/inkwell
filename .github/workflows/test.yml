@@ -89,7 +89,7 @@ jobs:
         cargo test --doc --release --features llvm${{ matrix.llvm-version[1] }} --verbose
     - name: Build examples and run JIT for verification
       run: |
-        cargo build --example kaleidoscope --features llvm${{ matrix.llvm-version[1] }} --verbose
+        cargo run --example kaleidoscope --features llvm${{ matrix.llvm-version[1] }} --verbose -- --dl --dp --dc -e "(1 + 2 + 3) / (2 + 3)"
         cargo run --example jit --features llvm${{ matrix.llvm-version[1] }} --verbose
         cargo run --example jit --features llvm${{ matrix.llvm-version[1] }} --verbose --release
   doc:
@@ -99,7 +99,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
     - uses: actions/checkout@v4
-    - uses: sagudev/install-llvm-action@new
+    - uses: KyleMayes/install-llvm-action@v2
       with:
         version: ${{ env.DOC_LLVM_VERSION }}
     - name: Install Rust Nightly

@@ -34,6 +34,8 @@ use inkwell_internals::llvm_versions;
 mod implementation_typed_pointers;
 pub use implementation_typed_pointers::*;
 
+use gumdrop::Options;
+
 // ======================================================================================
 // PROGRAM ==============================================================================
 // ======================================================================================
@@ -110,40 +112,34 @@ fn run_passes_on(module: &Module) {
 
 /// Entry point of the program; acts as a REPL.
 pub fn main() {
-    let mut display_lexer_output = false;
-    let mut display_parser_output = false;
-    let mut display_compiler_output = false;
-
-    for arg in std::env::args() {
-        match arg.as_str() {
-            "--dl" => display_lexer_output = true,
-            "--dp" => display_parser_output = true,
-            "--dc" => display_compiler_output = true,
-            _ => (),
-        }
+    #[derive(Debug, Options)]
+    struct Opts {
+        #[options(help = "print help message")]
+        help: bool,
+        #[options(long = "dl", no_short, help = "Display lexer output")]
+        display_lexer_output: bool,
+        #[options(long = "dp", no_short, help = "Display parser output")]
+        display_parser_output: bool,
+        #[options(long = "dc", no_short, help = "Display compiler output")]
+        display_compiler_output: bool,
+        #[options(short = "e", help = "Display compiler output")]
+        eval: Option<String>,
     }
+
+    let Opts {
+        display_lexer_output,
+        display_parser_output,
+        display_compiler_output,
+        eval,
+        ..
+    } = Opts::parse_args_default_or_exit();
 
     let context = Context::create();
     let builder = context.create_builder();
 
     let mut previous_exprs = Vec::new();
 
-    loop {
-        println!();
-        print_flush!("?> ");
-
-        // Read input from stdin
-        let mut input = String::new();
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Could not read from standard input.");
-
-        if input.starts_with("exit") || input.starts_with("quit") {
-            break;
-        } else if input.chars().all(char::is_whitespace) {
-            continue;
-        }
-
+    let mut compute = |input: String| {
         // Build precedence map
         let mut prec = HashMap::with_capacity(6);
 
@@ -193,13 +189,13 @@ pub fn main() {
                     },
                     Err(err) => {
                         println!("!> Error compiling function: {}", err);
-                        continue;
+                        return;
                     },
                 }
             },
             Err(err) => {
                 println!("!> Error parsing expression: {}", err);
-                continue;
+                return;
             },
         };
 
@@ -219,13 +215,36 @@ pub fn main() {
                 Ok(f) => f,
                 Err(err) => {
                     println!("!> Error during execution: {:?}", err);
-                    continue;
+                    return;
                 },
             };
 
             unsafe {
                 println!("=> {}", compiled_fn.call());
             }
+        }
+    };
+
+    if let Some(input) = eval {
+        compute(format!("{input}\n"));
+    } else {
+        loop {
+            println!();
+            print_flush!("?> ");
+
+            // Read input from stdin
+            let mut input = String::new();
+            io::stdin()
+                .read_line(&mut input)
+                .expect("Could not read from standard input.");
+
+            if input.starts_with("exit") || input.starts_with("quit") {
+                break;
+            } else if input.chars().all(char::is_whitespace) {
+                continue;
+            }
+
+            compute(input);
         }
     }
 }
