@@ -9,18 +9,31 @@ use llvm_sys::core::{
     LLVMBuildCondBr, LLVMBuildExactSDiv, LLVMBuildExtractElement, LLVMBuildExtractValue, LLVMBuildFAdd, LLVMBuildFCmp,
     LLVMBuildFDiv, LLVMBuildFMul, LLVMBuildFNeg, LLVMBuildFPCast, LLVMBuildFPExt, LLVMBuildFPToSI, LLVMBuildFPToUI,
     LLVMBuildFPTrunc, LLVMBuildFRem, LLVMBuildFSub, LLVMBuildFence, LLVMBuildFree, LLVMBuildGlobalString,
-    LLVMBuildGlobalStringPtr, LLVMBuildICmp, LLVMBuildIndirectBr, LLVMBuildInsertElement, LLVMBuildInsertValue,
-    LLVMBuildIntCast, LLVMBuildIntToPtr, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLShr, LLVMBuildLandingPad,
-    LLVMBuildMalloc, LLVMBuildMul, LLVMBuildNSWAdd, LLVMBuildNSWMul, LLVMBuildNSWNeg, LLVMBuildNSWSub, LLVMBuildNUWAdd,
-    LLVMBuildNUWMul, LLVMBuildNUWNeg, LLVMBuildNUWSub, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi,
-    LLVMBuildPointerCast, LLVMBuildPtrToInt, LLVMBuildResume, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildSDiv,
-    LLVMBuildSExt, LLVMBuildSExtOrBitCast, LLVMBuildSIToFP, LLVMBuildSRem, LLVMBuildSelect, LLVMBuildShl,
-    LLVMBuildShuffleVector, LLVMBuildStore, LLVMBuildSub, LLVMBuildSwitch, LLVMBuildTrunc, LLVMBuildTruncOrBitCast,
-    LLVMBuildUDiv, LLVMBuildUIToFP, LLVMBuildURem, LLVMBuildUnreachable, LLVMBuildVAArg, LLVMBuildXor, LLVMBuildZExt,
-    LLVMBuildZExtOrBitCast, LLVMClearInsertionPosition, LLVMDisposeBuilder, LLVMGetInsertBlock, LLVMInsertIntoBuilder,
+    LLVMBuildICmp, LLVMBuildIndirectBr, LLVMBuildInsertElement, LLVMBuildInsertValue, LLVMBuildIntCast,
+    LLVMBuildIntToPtr, LLVMBuildIsNotNull, LLVMBuildIsNull, LLVMBuildLShr, LLVMBuildLandingPad, LLVMBuildMalloc,
+    LLVMBuildMul, LLVMBuildNSWAdd, LLVMBuildNSWMul, LLVMBuildNSWNeg, LLVMBuildNSWSub, LLVMBuildNUWAdd, LLVMBuildNUWMul,
+    LLVMBuildNUWSub, LLVMBuildNeg, LLVMBuildNot, LLVMBuildOr, LLVMBuildPhi, LLVMBuildPointerCast, LLVMBuildPtrToInt,
+    LLVMBuildResume, LLVMBuildRet, LLVMBuildRetVoid, LLVMBuildSDiv, LLVMBuildSExt, LLVMBuildSExtOrBitCast,
+    LLVMBuildSIToFP, LLVMBuildSRem, LLVMBuildSelect, LLVMBuildShl, LLVMBuildShuffleVector, LLVMBuildStore,
+    LLVMBuildSub, LLVMBuildSwitch, LLVMBuildTrunc, LLVMBuildTruncOrBitCast, LLVMBuildUDiv, LLVMBuildUIToFP,
+    LLVMBuildURem, LLVMBuildUnreachable, LLVMBuildVAArg, LLVMBuildXor, LLVMBuildZExt, LLVMBuildZExtOrBitCast,
+    LLVMClearInsertionPosition, LLVMDisposeBuilder, LLVMGetInsertBlock, LLVMInsertIntoBuilder,
     LLVMInsertIntoBuilderWithName, LLVMPositionBuilder, LLVMPositionBuilderAtEnd, LLVMPositionBuilderBefore,
     LLVMSetCleanup,
 };
+
+#[llvm_versions(..20)]
+use llvm_sys::core::LLVMBuildGlobalStringPtr;
+
+#[llvm_versions(20..)]
+use llvm_sys::core::LLVMBuildGlobalString as LLVMBuildGlobalStringPtr;
+
+#[llvm_versions(..17)]
+use llvm_sys::core::LLVMBuildNUWNeg;
+
+#[llvm_versions(17..)]
+use llvm_sys::core::LLVMSetNUW;
+
 #[llvm_versions(..=14)]
 #[allow(deprecated)]
 use llvm_sys::core::{LLVMBuildCall, LLVMBuildInvoke};
@@ -2882,12 +2895,27 @@ impl<'ctx> Builder<'ctx> {
     }
 
     // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<I> {
+    #[llvm_versions(..17)]
     pub fn build_int_nuw_neg<T: IntMathValue<'ctx>>(&self, value: T, name: &str) -> Result<T, BuilderError> {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
         }
         let c_string = to_c_str(name);
         let value = unsafe { LLVMBuildNUWNeg(self.builder, value.as_value_ref(), c_string.as_ptr()) };
+        unsafe { Ok(T::new(value)) }
+    }
+
+    // SubType: <I>(&self, value: &IntValue<I>, name) -> IntValue<I> {
+    #[llvm_versions(17..)]
+    pub fn build_int_nuw_neg<T: IntMathValue<'ctx>>(&self, value: T, name: &str) -> Result<T, BuilderError> {
+        if self.positioned.get() != PositionState::Set {
+            return Err(BuilderError::UnsetPosition);
+        }
+        let c_string = to_c_str(name);
+        let value = unsafe { LLVMBuildNeg(self.builder, value.as_value_ref(), c_string.as_ptr()) };
+        unsafe {
+            LLVMSetNUW(value, true.into());
+        }
 
         unsafe { Ok(T::new(value)) }
     }

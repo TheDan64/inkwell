@@ -60,6 +60,10 @@ pub extern crate llvm_sys_160 as llvm_sys;
 pub extern crate llvm_sys_170 as llvm_sys;
 #[cfg(feature = "llvm18-1")]
 pub extern crate llvm_sys_181 as llvm_sys;
+#[cfg(feature = "llvm19-1")]
+pub extern crate llvm_sys_191 as llvm_sys;
+#[cfg(feature = "llvm20-1")]
+pub extern crate llvm_sys_201 as llvm_sys;
 #[cfg(feature = "llvm8-0")]
 pub extern crate llvm_sys_80 as llvm_sys;
 #[cfg(feature = "llvm9-0")]
@@ -118,7 +122,9 @@ assert_unique_used_features! {
     "llvm15-0",
     "llvm16-0",
     "llvm17-0",
-    "llvm18-1"
+    "llvm18-1",
+    "llvm19-1",
+    "llvm20-1"
 }
 
 #[cfg(all(
@@ -381,6 +387,22 @@ pub enum AtomicRMWBinOp {
     #[llvm_versions(15..)]
     #[llvm_variant(LLVMAtomicRMWBinOpFMin)]
     FMin,
+
+    #[llvm_versions(19.1..)]
+    #[llvm_variant(LLVMAtomicRMWBinOpUIncWrap)]
+    UIncWrap,
+
+    #[llvm_versions(19.1..)]
+    #[llvm_variant(LLVMAtomicRMWBinOpUDecWrap)]
+    UDecWrap,
+
+    #[llvm_versions(20..)]
+    #[llvm_variant(LLVMAtomicRMWBinOpUSubCond)]
+    USubCond,
+
+    #[llvm_versions(20..)]
+    #[llvm_variant(LLVMAtomicRMWBinOpUSubSat)]
+    USubSat,
 }
 
 /// Defines the optimization level used to compile a [`Module`](crate::module::Module).
