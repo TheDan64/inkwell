@@ -32,6 +32,8 @@ pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = if cfg!(feature = "llvm8-0") {
     39
 } else if cfg!(feature = "llvm18-1") {
     40
+} else if cfg!(feature = "llvm19-1") {
+    41 // TODO: not sure if this is right https://mirrors.git.embecosm.com/mirrors/llvm-project/-/blob/llvmorg-19.1.7/llvm/include/llvm/IR/FixedMetadataKinds.def?ref_type=tags
 } else {
     panic!("Unhandled LLVM version")
 };

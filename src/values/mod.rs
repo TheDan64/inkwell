@@ -28,7 +28,8 @@ pub(crate) mod operand_bundle;
     feature = "llvm15-0",
     feature = "llvm16-0",
     feature = "llvm17-0",
-    feature = "llvm18-1"
+    feature = "llvm18-1", 
+    feature = "llvm19-1"
 )))]
 mod callable_value;
 
@@ -36,7 +37,8 @@ mod callable_value;
     feature = "llvm15-0",
     feature = "llvm16-0",
     feature = "llvm17-0",
-    feature = "llvm18-1"
+    feature = "llvm18-1", 
+    feature = "llvm19-1"
 )))]
 pub use crate::values::callable_value::CallableValue;
 
