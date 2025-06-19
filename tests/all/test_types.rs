@@ -282,7 +282,8 @@ fn sized_types(global_ctx: &Context) {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-1"
+        feature = "llvm18-1", 
+        feature = "llvm19-1"
     ))]
     {
         assert!(bool_type.scalable_vec_type(42).is_sized());
@@ -341,7 +342,8 @@ fn test_const_zero() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-1"
+        feature = "llvm18-1", 
+        feature = "llvm19-1"
     ))]
     let scalable_vec_type = f64_type.scalable_vec_type(42);
     let array_type = f64_type.array_type(42);
@@ -358,7 +360,8 @@ fn test_const_zero() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-1"
+        feature = "llvm18-1", 
+        feature = "llvm19-1"
     ))]
     scalable_vec_type.size_of();
     array_type.size_of();
@@ -375,7 +378,8 @@ fn test_const_zero() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-1"
+        feature = "llvm18-1", 
+        feature = "llvm19-1"
     ))]
     scalable_vec_type.get_alignment();
     array_type.get_alignment();
@@ -402,7 +406,8 @@ fn test_const_zero() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-1"
+        feature = "llvm18-1", 
+        feature = "llvm19-1"
     ))]
     let scalable_vec_zero = scalable_vec_type.const_zero();
     let array_zero = array_type.const_zero();
@@ -429,7 +434,8 @@ fn test_const_zero() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-1"
+        feature = "llvm18-1", 
+        feature = "llvm19-1"
     ))]
     assert!(scalable_vec_zero.is_null());
     assert!(array_zero.is_null());
@@ -477,7 +483,8 @@ fn test_const_zero() {
         feature = "llvm15-0",
         feature = "llvm16-0",
         feature = "llvm17-0",
-        feature = "llvm18-1"
+        feature = "llvm18-1", 
+        feature = "llvm19-1"
     ))]
     assert_eq!(
         scalable_vec_zero.print_to_string().to_str(),
@@ -587,7 +594,8 @@ fn test_basic_type_enum() {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-1"
+            feature = "llvm18-1", 
+            feature = "llvm19-1"
         ))]
         &int.scalable_vec_type(1),
     ];
