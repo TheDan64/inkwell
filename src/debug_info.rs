@@ -139,6 +139,9 @@ use llvm_sys::debuginfo::{
     LLVMDIBuilderInsertDeclareRecordBefore as LLVMDIBuilderInsertDeclareBefore,
 };
 
+#[llvm_versions(19.1..)]
+use llvm_sys::prelude::LLVMValueRef;
+
 use llvm_sys::debuginfo::{LLVMDIBuilderCreateConstantValueExpression, LLVMDIBuilderCreateGlobalVariableExpression};
 use llvm_sys::prelude::{LLVMDIBuilderRef, LLVMMetadataRef};
 use std::convert::TryInto;
@@ -954,8 +957,10 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
 
         #[cfg(any(feature = "llvm19-1", feature = "llvm20-1"))]
         {
-            let _ = value_ref;
-            todo!()
+            // In LLVM 19+, the insert... functions return a DbgRecord, not a Value.
+            // We need to cast it to a ValueRef to create an InstructionValue.
+            // This is unsafe, but it's the only way to do it.
+            unsafe { InstructionValue::new(value_ref as LLVMValueRef) }
         }
 
         #[cfg(not(any(feature = "llvm19-1", feature = "llvm20-1")))]
@@ -986,8 +991,10 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
 
         #[cfg(any(feature = "llvm19-1", feature = "llvm20-1"))]
         {
-            let _ = value_ref;
-            todo!()
+            // In LLVM 19+, the insert... functions return a DbgRecord, not a Value.
+            // We need to cast it to a ValueRef to create an InstructionValue.
+            // This is unsafe, but it's the only way to do it.
+            unsafe { InstructionValue::new(value_ref as LLVMValueRef) }
         }
 
         #[cfg(not(any(feature = "llvm19-1", feature = "llvm20-1")))]
@@ -1033,8 +1040,10 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
 
         #[cfg(any(feature = "llvm19-1", feature = "llvm20-1"))]
         {
-            let _ = value_ref;
-            todo!()
+            // In LLVM 19+, the insert... functions return a DbgRecord, not a Value.
+            // We need to cast it to a ValueRef to create an InstructionValue.
+            // This is unsafe, but it's the only way to do it.
+            unsafe { InstructionValue::new(value_ref as LLVMValueRef) }
         }
 
         #[cfg(not(any(feature = "llvm19-1", feature = "llvm20-1")))]
