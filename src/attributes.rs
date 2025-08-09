@@ -342,7 +342,7 @@ impl Attribute {
     /// assert_ne!(type_attribute.get_type_value(), context.i64_type().as_any_type_enum());
     /// ```
     #[llvm_versions(12..)]
-    pub fn get_type_value(&self) -> AnyTypeEnum {
+    pub fn get_type_value(&self) -> AnyTypeEnum<'_> {
         assert!(self.is_type()); // FIXME: SubTypes
 
         unsafe { AnyTypeEnum::new(LLVMGetTypeAttributeValue(self.attribute)) }

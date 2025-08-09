@@ -912,7 +912,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(*module.get_data_layout(), data_layout);
     /// ```
-    pub fn get_data_layout(&self) -> Ref<DataLayout> {
+    pub fn get_data_layout(&self) -> Ref<'_, DataLayout> {
         Ref::map(self.data_layout.borrow(), |l| {
             l.as_ref().expect("DataLayout should always exist until Drop")
         })
@@ -1545,7 +1545,9 @@ impl<'ctx> Module<'ctx> {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-1"
+            feature = "llvm18-1",
+            feature = "llvm19-1",
+            feature = "llvm20-1"
         ))]
         sysroot: &str,
         #[cfg(any(
@@ -1556,7 +1558,9 @@ impl<'ctx> Module<'ctx> {
             feature = "llvm15-0",
             feature = "llvm16-0",
             feature = "llvm17-0",
-            feature = "llvm18-1"
+            feature = "llvm18-1",
+            feature = "llvm19-1",
+            feature = "llvm20-1"
         ))]
         sdk: &str,
     ) -> (DebugInfoBuilder<'ctx>, DICompileUnit<'ctx>) {
@@ -1583,7 +1587,9 @@ impl<'ctx> Module<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-1"
+                feature = "llvm18-1",
+                feature = "llvm19-1",
+                feature = "llvm20-1"
             ))]
             sysroot,
             #[cfg(any(
@@ -1594,7 +1600,9 @@ impl<'ctx> Module<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-1"
+                feature = "llvm18-1",
+                feature = "llvm19-1",
+                feature = "llvm20-1"
             ))]
             sdk,
         )

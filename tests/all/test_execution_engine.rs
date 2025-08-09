@@ -113,11 +113,11 @@ fn test_jit_execution_engine() {
 
     let ret = unsafe { execution_engine.run_function_as_main(main, &["input", "bar"]) };
 
-    assert_eq!(ret, 1, "unexpected main return code: {}", ret);
+    assert_eq!(ret, 1, "unexpected main return code: {ret}");
 
     let ret = unsafe { execution_engine.run_function_as_main(main, &["input", "bar", "baz"]) };
 
-    assert_eq!(ret, 42, "unexpected main return code: {}", ret);
+    assert_eq!(ret, 42, "unexpected main return code: {ret}");
 }
 
 // #[test]

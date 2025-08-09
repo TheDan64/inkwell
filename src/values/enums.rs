@@ -102,7 +102,9 @@ impl<'ctx> AnyValueEnum<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-1"
+                feature = "llvm18-1",
+                feature = "llvm19-1",
+                feature = "llvm20-1"
             ))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => {
                 AnyValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))
@@ -168,7 +170,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         if let AnyValueEnum::ArrayValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the ArrayValue variant", self)
+            panic!("Found {self:?} but expected the ArrayValue variant")
         }
     }
 
@@ -177,7 +179,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         if let AnyValueEnum::IntValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the IntValue variant", self)
+            panic!("Found {self:?} but expected the IntValue variant")
         }
     }
 
@@ -186,7 +188,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         if let AnyValueEnum::FloatValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the FloatValue variant", self)
+            panic!("Found {self:?} but expected the FloatValue variant")
         }
     }
 
@@ -195,7 +197,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         if let AnyValueEnum::PhiValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the PhiValue variant", self)
+            panic!("Found {self:?} but expected the PhiValue variant")
         }
     }
 
@@ -204,7 +206,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         if let AnyValueEnum::FunctionValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the FunctionValue variant", self)
+            panic!("Found {self:?} but expected the FunctionValue variant")
         }
     }
 
@@ -213,7 +215,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         if let AnyValueEnum::PointerValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the PointerValue variant", self)
+            panic!("Found {self:?} but expected the PointerValue variant")
         }
     }
 
@@ -222,7 +224,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         if let AnyValueEnum::StructValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the StructValue variant", self)
+            panic!("Found {self:?} but expected the StructValue variant")
         }
     }
 
@@ -231,7 +233,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         if let AnyValueEnum::VectorValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the VectorValue variant", self)
+            panic!("Found {self:?} but expected the VectorValue variant")
         }
     }
 
@@ -240,7 +242,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         if let AnyValueEnum::ScalableVectorValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the ScalableVectorValue variant", self)
+            panic!("Found {self:?} but expected the ScalableVectorValue variant")
         }
     }
 
@@ -249,7 +251,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
         if let AnyValueEnum::InstructionValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the InstructionValue variant", self)
+            panic!("Found {self:?} but expected the InstructionValue variant")
         }
     }
 }
@@ -281,7 +283,9 @@ impl<'ctx> BasicValueEnum<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-1"
+                feature = "llvm18-1",
+                feature = "llvm19-1",
+                feature = "llvm20-1"
             ))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => {
                 BasicValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))
@@ -353,7 +357,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
         if let BasicValueEnum::ArrayValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the ArrayValue variant", self)
+            panic!("Found {self:?} but expected the ArrayValue variant")
         }
     }
 
@@ -362,7 +366,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
         if let BasicValueEnum::IntValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the IntValue variant", self)
+            panic!("Found {self:?} but expected the IntValue variant")
         }
     }
 
@@ -371,7 +375,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
         if let BasicValueEnum::FloatValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the FloatValue variant", self)
+            panic!("Found {self:?} but expected the FloatValue variant")
         }
     }
 
@@ -380,7 +384,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
         if let BasicValueEnum::PointerValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected PointerValue variant", self)
+            panic!("Found {self:?} but expected PointerValue variant")
         }
     }
 
@@ -389,7 +393,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
         if let BasicValueEnum::StructValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the StructValue variant", self)
+            panic!("Found {self:?} but expected the StructValue variant")
         }
     }
 
@@ -398,7 +402,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
         if let BasicValueEnum::VectorValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the VectorValue variant", self)
+            panic!("Found {self:?} but expected the VectorValue variant")
         }
     }
 
@@ -407,7 +411,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
         if let BasicValueEnum::ScalableVectorValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the ScalableVectorValue variant", self)
+            panic!("Found {self:?} but expected the ScalableVectorValue variant")
         }
     }
 }
@@ -439,7 +443,7 @@ impl<'ctx> AggregateValueEnum<'ctx> {
         if let AggregateValueEnum::ArrayValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the ArrayValue variant", self)
+            panic!("Found {self:?} but expected the ArrayValue variant")
         }
     }
 
@@ -448,7 +452,7 @@ impl<'ctx> AggregateValueEnum<'ctx> {
         if let AggregateValueEnum::StructValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the StructValue variant", self)
+            panic!("Found {self:?} but expected the StructValue variant")
         }
     }
 }
@@ -475,7 +479,9 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-1"
+                feature = "llvm18-1",
+                feature = "llvm19-1",
+                feature = "llvm20-1"
             ))]
             LLVMTypeKind::LLVMScalableVectorTypeKind => {
                 BasicMetadataValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))
@@ -522,7 +528,7 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
         if let BasicMetadataValueEnum::ArrayValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the ArrayValue variant", self)
+            panic!("Found {self:?} but expected the ArrayValue variant")
         }
     }
 
@@ -531,7 +537,7 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
         if let BasicMetadataValueEnum::IntValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the IntValue variant", self)
+            panic!("Found {self:?} but expected the IntValue variant")
         }
     }
 
@@ -540,7 +546,7 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
         if let BasicMetadataValueEnum::FloatValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected FloatValue variant", self)
+            panic!("Found {self:?} but expected FloatValue variant")
         }
     }
 
@@ -549,7 +555,7 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
         if let BasicMetadataValueEnum::PointerValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the PointerValue variant", self)
+            panic!("Found {self:?} but expected the PointerValue variant")
         }
     }
 
@@ -558,7 +564,7 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
         if let BasicMetadataValueEnum::StructValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the StructValue variant", self)
+            panic!("Found {self:?} but expected the StructValue variant")
         }
     }
 
@@ -567,7 +573,7 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
         if let BasicMetadataValueEnum::VectorValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the VectorValue variant", self)
+            panic!("Found {self:?} but expected the VectorValue variant")
         }
     }
 
@@ -576,7 +582,7 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
         if let BasicMetadataValueEnum::ScalableVectorValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected the ScalableVectorValue variant", self)
+            panic!("Found {self:?} but expected the ScalableVectorValue variant")
         }
     }
 
@@ -585,7 +591,7 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
         if let BasicMetadataValueEnum::MetadataValue(v) = self {
             v
         } else {
-            panic!("Found {:?} but expected MetaData variant", self)
+            panic!("Found {self:?} but expected MetaData variant")
         }
     }
 }

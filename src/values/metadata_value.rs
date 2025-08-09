@@ -32,6 +32,10 @@ pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = if cfg!(feature = "llvm8-0") {
     39
 } else if cfg!(feature = "llvm18-1") {
     40
+} else if cfg!(feature = "llvm19-1") {
+    41
+} else if cfg!(feature = "llvm20-1") {
+    42
 } else {
     panic!("Unhandled LLVM version")
 };
