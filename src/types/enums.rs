@@ -131,7 +131,7 @@ impl<'ctx> BasicMetadataTypeEnum<'ctx> {
         if let BasicMetadataTypeEnum::ArrayType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {self:?} but expected another variant");
         }
     }
 
@@ -139,7 +139,7 @@ impl<'ctx> BasicMetadataTypeEnum<'ctx> {
         if let BasicMetadataTypeEnum::FloatType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {self:?} but expected another variant");
         }
     }
 
@@ -147,7 +147,7 @@ impl<'ctx> BasicMetadataTypeEnum<'ctx> {
         if let BasicMetadataTypeEnum::IntType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {self:?} but expected another variant");
         }
     }
 
@@ -155,7 +155,7 @@ impl<'ctx> BasicMetadataTypeEnum<'ctx> {
         if let BasicMetadataTypeEnum::PointerType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {self:?} but expected another variant");
         }
     }
 
@@ -163,7 +163,7 @@ impl<'ctx> BasicMetadataTypeEnum<'ctx> {
         if let BasicMetadataTypeEnum::StructType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {self:?} but expected another variant");
         }
     }
 
@@ -171,7 +171,7 @@ impl<'ctx> BasicMetadataTypeEnum<'ctx> {
         if let BasicMetadataTypeEnum::VectorType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {self:?} but expected another variant");
         }
     }
 
@@ -179,7 +179,7 @@ impl<'ctx> BasicMetadataTypeEnum<'ctx> {
         if let BasicMetadataTypeEnum::ScalableVectorType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {self:?} but expected another variant");
         }
     }
 
@@ -187,7 +187,7 @@ impl<'ctx> BasicMetadataTypeEnum<'ctx> {
         if let BasicMetadataTypeEnum::MetadataType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected another variant", self);
+            panic!("Found {self:?} but expected another variant");
         }
     }
 
@@ -323,7 +323,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         if let AnyTypeEnum::ArrayType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected the ArrayType variant", self);
+            panic!("Found {self:?} but expected the ArrayType variant");
         }
     }
 
@@ -331,7 +331,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         if let AnyTypeEnum::FloatType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected the FloatType variant", self);
+            panic!("Found {self:?} but expected the FloatType variant");
         }
     }
 
@@ -339,7 +339,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         if let AnyTypeEnum::FunctionType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected the FunctionType variant", self);
+            panic!("Found {self:?} but expected the FunctionType variant");
         }
     }
 
@@ -347,7 +347,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         if let AnyTypeEnum::IntType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected the IntType variant", self);
+            panic!("Found {self:?} but expected the IntType variant");
         }
     }
 
@@ -355,7 +355,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         if let AnyTypeEnum::PointerType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected the PointerType variant", self);
+            panic!("Found {self:?} but expected the PointerType variant");
         }
     }
 
@@ -363,7 +363,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         if let AnyTypeEnum::StructType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected the StructType variant", self);
+            panic!("Found {self:?} but expected the StructType variant");
         }
     }
 
@@ -371,7 +371,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         if let AnyTypeEnum::VectorType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected the VectorType variant", self);
+            panic!("Found {self:?} but expected the VectorType variant");
         }
     }
 
@@ -379,7 +379,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         if let AnyTypeEnum::ScalableVectorType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected the ScalableVectorType variant", self);
+            panic!("Found {self:?} but expected the ScalableVectorType variant");
         }
     }
 
@@ -387,7 +387,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         if let AnyTypeEnum::VoidType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected the VoidType variant", self);
+            panic!("Found {self:?} but expected the VoidType variant");
         }
     }
 
@@ -535,7 +535,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
         if let BasicTypeEnum::ArrayType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected the ArrayType variant", self);
+            panic!("Found {self:?} but expected the ArrayType variant");
         }
     }
 
@@ -543,7 +543,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
         if let BasicTypeEnum::FloatType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected the FloatType variant", self);
+            panic!("Found {self:?} but expected the FloatType variant");
         }
     }
 
@@ -551,7 +551,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
         if let BasicTypeEnum::IntType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected the IntType variant", self);
+            panic!("Found {self:?} but expected the IntType variant");
         }
     }
 
@@ -559,7 +559,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
         if let BasicTypeEnum::PointerType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected the PointerType variant", self);
+            panic!("Found {self:?} but expected the PointerType variant");
         }
     }
 
@@ -567,7 +567,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
         if let BasicTypeEnum::StructType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected the StructType variant", self);
+            panic!("Found {self:?} but expected the StructType variant");
         }
     }
 
@@ -575,7 +575,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
         if let BasicTypeEnum::VectorType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected the VectorType variant", self);
+            panic!("Found {self:?} but expected the VectorType variant");
         }
     }
 
@@ -583,7 +583,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
         if let BasicTypeEnum::ScalableVectorType(t) = self {
             t
         } else {
-            panic!("Found {:?} but expected the ScalableVectorType variant", self);
+            panic!("Found {self:?} but expected the ScalableVectorType variant");
         }
     }
 

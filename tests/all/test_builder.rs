@@ -1324,11 +1324,10 @@ fn test_alignment_bytes() {
         if is_alignment_ok(alignment) {
             assert!(
                 result.is_ok() && module.verify().is_ok(),
-                "alignment of {} was a power of 2 under 2^64, but did not verify for memcpy.",
-                alignment
+                "alignment of {alignment} was a power of 2 under 2^64, but did not verify for memcpy."
             );
         } else {
-            assert!(result.is_err(), "alignment of {} was a power of 2 under 2^64, yet verification passed for memcpy when it should not have.", alignment);
+            assert!(result.is_err(), "alignment of {alignment} was a power of 2 under 2^64, yet verification passed for memcpy when it should not have.");
         }
 
         let result = run_memmove_on(&context, &module, alignment);
@@ -1336,11 +1335,10 @@ fn test_alignment_bytes() {
         if is_alignment_ok(alignment) {
             assert!(
                 result.is_ok() && module.verify().is_ok(),
-                "alignment of {} was a power of 2 under 2^64, but did not verify for memmove.",
-                alignment
+                "alignment of {alignment} was a power of 2 under 2^64, but did not verify for memmove."
             );
         } else {
-            assert!(result.is_err(), "alignment of {} was a power of 2 under 2^64, yet verification passed for memmove when it should not have.", alignment);
+            assert!(result.is_err(), "alignment of {alignment} was a power of 2 under 2^64, yet verification passed for memmove when it should not have.");
         }
     };
 
@@ -1423,7 +1421,7 @@ fn test_memcpy() {
 
     // Verify the module
     if let Err(errors) = module.verify() {
-        panic!("Errors defining module: {:?}", errors);
+        panic!("Errors defining module: {errors:?}");
     }
 
     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
@@ -1510,7 +1508,7 @@ fn test_memmove() {
 
     // Verify the module
     if let Err(errors) = module.verify() {
-        panic!("Errors defining module: {:?}", errors);
+        panic!("Errors defining module: {errors:?}");
     }
 
     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
@@ -1584,7 +1582,7 @@ fn test_memset() {
 
     // Verify the module
     if let Err(errors) = module.verify() {
-        panic!("Errors defining module: {:?}", errors);
+        panic!("Errors defining module: {errors:?}");
     }
 
     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();

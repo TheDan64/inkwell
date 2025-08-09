@@ -6,11 +6,11 @@
 //! This example is supposed to be ran as a executable, which launches a REPL.
 //! The source code is in the following order:
 //! - `implementation_typed_pointers.rs`:
-//!     Lexer,
-//!     Parser,
-//!     Compiler.
+//!  - Lexer,
+//!  - Parser,
+//!  - Compiler.
 //! - `main.rs`:
-//!     Program.
+//!  - Program.
 //!
 //! Both the `Parser` and the `Compiler` may fail, in which case they would return
 //! an error represented by `Result<T, &'static str>`, for easier error reporting.
@@ -57,7 +57,7 @@ pub extern "C" fn putchard(x: f64) -> f64 {
 
 #[no_mangle]
 pub extern "C" fn printd(x: f64) -> f64 {
-    println!("{}", x);
+    println!("{x}");
     x
 }
 
@@ -174,7 +174,7 @@ pub fn main() {
                     if is_anon {
                         println!("-> Expression parsed: \n{:?}\n", fun.body);
                     } else {
-                        println!("-> Function parsed: \n{:?}\n", fun);
+                        println!("-> Function parsed: \n{fun:?}\n");
                     }
                 }
 
@@ -188,13 +188,13 @@ pub fn main() {
                         (function, is_anon)
                     },
                     Err(err) => {
-                        println!("!> Error compiling function: {}", err);
+                        println!("!> Error compiling function: {err}");
                         return;
                     },
                 }
             },
             Err(err) => {
-                println!("!> Error parsing expression: {}", err);
+                println!("!> Error parsing expression: {err}");
                 return;
             },
         };
@@ -214,7 +214,7 @@ pub fn main() {
             let compiled_fn = match maybe_fn {
                 Ok(f) => f,
                 Err(err) => {
-                    println!("!> Error during execution: {:?}", err);
+                    println!("!> Error during execution: {err:?}");
                     return;
                 },
             };
