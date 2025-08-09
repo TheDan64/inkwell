@@ -494,7 +494,7 @@ impl Context {
     /// let builder = context.create_builder();
     /// ```
     #[inline]
-    pub fn create_builder(&self) -> Builder {
+    pub fn create_builder(&self) -> Builder<'_> {
         self.context.create_builder()
     }
 
@@ -509,7 +509,7 @@ impl Context {
     /// let module = context.create_module("my_module");
     /// ```
     #[inline]
-    pub fn create_module(&self, name: &str) -> Module {
+    pub fn create_module(&self, name: &str) -> Module<'_> {
         self.context.create_module(name)
     }
 
@@ -540,7 +540,7 @@ impl Context {
     // a double free in valgrind when the MemoryBuffer drops so we are `forget`ting MemoryBuffer here
     // for now until we can confirm this is the correct thing to do
     #[inline]
-    pub fn create_module_from_ir(&self, memory_buffer: MemoryBuffer) -> Result<Module, LLVMString> {
+    pub fn create_module_from_ir(&self, memory_buffer: MemoryBuffer) -> Result<Module<'_>, LLVMString> {
         self.context.create_module_from_ir(memory_buffer)
     }
 
@@ -648,7 +648,7 @@ impl Context {
     /// assert_eq!(void_type.get_context(), context);
     /// ```
     #[inline]
-    pub fn void_type(&self) -> VoidType {
+    pub fn void_type(&self) -> VoidType<'_> {
         self.context.void_type()
     }
 
@@ -666,7 +666,7 @@ impl Context {
     /// assert_eq!(bool_type.get_context(), context);
     /// ```
     #[inline]
-    pub fn bool_type(&self) -> IntType {
+    pub fn bool_type(&self) -> IntType<'_> {
         self.context.bool_type()
     }
 
@@ -684,7 +684,7 @@ impl Context {
     /// assert_eq!(i8_type.get_context(), context);
     /// ```
     #[inline]
-    pub fn i8_type(&self) -> IntType {
+    pub fn i8_type(&self) -> IntType<'_> {
         self.context.i8_type()
     }
 
@@ -702,7 +702,7 @@ impl Context {
     /// assert_eq!(i16_type.get_context(), context);
     /// ```
     #[inline]
-    pub fn i16_type(&self) -> IntType {
+    pub fn i16_type(&self) -> IntType<'_> {
         self.context.i16_type()
     }
 
@@ -720,7 +720,7 @@ impl Context {
     /// assert_eq!(i32_type.get_context(), context);
     /// ```
     #[inline]
-    pub fn i32_type(&self) -> IntType {
+    pub fn i32_type(&self) -> IntType<'_> {
         self.context.i32_type()
     }
 
@@ -738,7 +738,7 @@ impl Context {
     /// assert_eq!(i64_type.get_context(), context);
     /// ```
     #[inline]
-    pub fn i64_type(&self) -> IntType {
+    pub fn i64_type(&self) -> IntType<'_> {
         self.context.i64_type()
     }
 
@@ -756,7 +756,7 @@ impl Context {
     /// assert_eq!(i128_type.get_context(), context);
     /// ```
     #[inline]
-    pub fn i128_type(&self) -> IntType {
+    pub fn i128_type(&self) -> IntType<'_> {
         self.context.i128_type()
     }
 
@@ -774,7 +774,7 @@ impl Context {
     /// assert_eq!(i42_type.get_context(), context);
     /// ```
     #[inline]
-    pub fn custom_width_int_type(&self, bits: u32) -> IntType {
+    pub fn custom_width_int_type(&self, bits: u32) -> IntType<'_> {
         self.context.custom_width_int_type(bits)
     }
 
@@ -792,7 +792,7 @@ impl Context {
     /// assert_eq!(md_type.get_context(), context);
     /// ```
     #[inline]
-    pub fn metadata_type(&self) -> MetadataType {
+    pub fn metadata_type(&self) -> MetadataType<'_> {
         self.context.metadata_type()
     }
 
@@ -814,7 +814,7 @@ impl Context {
     /// let int_type = context.ptr_sized_int_type(&target_data, None);
     /// ```
     #[inline]
-    pub fn ptr_sized_int_type(&self, target_data: &TargetData, address_space: Option<AddressSpace>) -> IntType {
+    pub fn ptr_sized_int_type(&self, target_data: &TargetData, address_space: Option<AddressSpace>) -> IntType<'_> {
         self.context.ptr_sized_int_type(target_data, address_space)
     }
 
@@ -832,7 +832,7 @@ impl Context {
     /// assert_eq!(f16_type.get_context(), context);
     /// ```
     #[inline]
-    pub fn f16_type(&self) -> FloatType {
+    pub fn f16_type(&self) -> FloatType<'_> {
         self.context.f16_type()
     }
 
@@ -850,7 +850,7 @@ impl Context {
     /// assert_eq!(f32_type.get_context(), context);
     /// ```
     #[inline]
-    pub fn f32_type(&self) -> FloatType {
+    pub fn f32_type(&self) -> FloatType<'_> {
         self.context.f32_type()
     }
 
@@ -868,7 +868,7 @@ impl Context {
     /// assert_eq!(f64_type.get_context(), context);
     /// ```
     #[inline]
-    pub fn f64_type(&self) -> FloatType {
+    pub fn f64_type(&self) -> FloatType<'_> {
         self.context.f64_type()
     }
 
@@ -886,7 +886,7 @@ impl Context {
     /// assert_eq!(x86_f80_type.get_context(), context);
     /// ```
     #[inline]
-    pub fn x86_f80_type(&self) -> FloatType {
+    pub fn x86_f80_type(&self) -> FloatType<'_> {
         self.context.x86_f80_type()
     }
 
@@ -905,7 +905,7 @@ impl Context {
     /// ```
     // IEEE 754-2008’s binary128 floats according to https://internals.rust-lang.org/t/pre-rfc-introduction-of-half-and-quadruple-precision-floats-f16-and-f128/7521
     #[inline]
-    pub fn f128_type(&self) -> FloatType {
+    pub fn f128_type(&self) -> FloatType<'_> {
         self.context.f128_type()
     }
 
@@ -926,7 +926,7 @@ impl Context {
     /// ```
     // Two 64 bits according to https://internals.rust-lang.org/t/pre-rfc-introduction-of-half-and-quadruple-precision-floats-f16-and-f128/7521
     #[inline]
-    pub fn ppc_f128_type(&self) -> FloatType {
+    pub fn ppc_f128_type(&self) -> FloatType<'_> {
         self.context.ppc_f128_type()
     }
 
@@ -946,7 +946,7 @@ impl Context {
     /// ```
     #[cfg(not(feature = "typed-pointers"))]
     #[inline]
-    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
+    pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType<'_> {
         self.context.ptr_type(address_space)
     }
 
@@ -966,7 +966,7 @@ impl Context {
     /// ```
     // REVIEW: AnyType but VoidType? FunctionType?
     #[inline]
-    pub fn struct_type(&self, field_types: &[BasicTypeEnum], packed: bool) -> StructType {
+    pub fn struct_type<'ctx>(&'ctx self, field_types: &[BasicTypeEnum], packed: bool) -> StructType<'ctx> {
         self.context.struct_type(field_types, packed)
     }
 
@@ -985,7 +985,7 @@ impl Context {
     /// assert_eq!(struct_type.get_field_types(), &[]);
     /// ```
     #[inline]
-    pub fn opaque_struct_type(&self, name: &str) -> StructType {
+    pub fn opaque_struct_type<'ctx>(&'ctx self, name: &str) -> StructType<'ctx> {
         self.context.opaque_struct_type(name)
     }
 
@@ -1027,7 +1027,7 @@ impl Context {
     /// assert_eq!(const_struct.get_type().get_field_types(), &[i16_type.into(), f32_type.into()]);
     /// ```
     #[inline]
-    pub fn const_struct(&self, values: &[BasicValueEnum], packed: bool) -> StructValue {
+    pub fn const_struct<'ctx>(&'ctx self, values: &[BasicValueEnum], packed: bool) -> StructValue<'ctx> {
         self.context.const_struct(values, packed)
     }
 
@@ -1181,7 +1181,7 @@ impl Context {
     /// ```
     // REVIEW: Seems to be unassigned to anything
     #[inline]
-    pub fn metadata_string(&self, string: &str) -> MetadataValue {
+    pub fn metadata_string<'ctx>(&'ctx self, string: &str) -> MetadataValue<'ctx> {
         self.context.metadata_string(string)
     }
 
@@ -1293,7 +1293,7 @@ impl Context {
     /// ```
     // SubTypes: Should return ArrayValue<IntValue<i8>>
     #[inline]
-    pub fn const_string(&self, string: &[u8], null_terminated: bool) -> ArrayValue {
+    pub fn const_string<'ctx>(&'ctx self, string: &[u8], null_terminated: bool) -> ArrayValue<'ctx> {
         self.context.const_string(string, null_terminated)
     }
 
