@@ -31,7 +31,7 @@ pub struct BasicBlock<'ctx> {
 }
 
 impl<'ctx> BasicBlock<'ctx> {
-    pub(crate) unsafe fn new(basic_block: LLVMBasicBlockRef) -> Option<Self> {
+    pub unsafe fn new(basic_block: LLVMBasicBlockRef) -> Option<Self> {
         if basic_block.is_null() {
             return None;
         }
