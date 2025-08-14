@@ -77,7 +77,7 @@ enum PositionState {
     Set,
 }
 
-/// 
+/// Errors for incorrect alignment.
 #[derive(Error, Debug, PartialEq, Eq)]
 pub enum AlignmentError {
     #[error("{0} is not a power of 2.")]
