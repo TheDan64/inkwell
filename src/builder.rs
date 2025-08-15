@@ -3696,7 +3696,8 @@ fn is_alignment_ok(align: u32) -> bool {
     // This replicates the assertions LLVM runs.
     //
     // See https://github.com/TheDan64/inkwell/issues/168
-    align > 0 && align.is_power_of_two()
+    // is_power_of_two returns false for 0.
+    align.is_power_of_two()
 }
 
 impl Drop for Builder<'_> {
