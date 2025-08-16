@@ -56,7 +56,7 @@ pub enum InstructionValueError {
     #[error("Not a GEP instruction.")]
     NotGEPInst,
     #[error("Atomic Error: {0}")]
-    AtomicError(AtomicError),
+    AtomicError(#[from] AtomicError),
     #[error("Metadata is expected to be a node.")]
     ExpectedNode,
 }
