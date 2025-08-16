@@ -366,7 +366,7 @@ fn test_anonymous_basic_type() {
 
     assert_eq!(
         dibuilder.create_basic_type("", 0_u64, 0x00, DIFlags::ZERO),
-        Err("basic types must have names")
+        Err(inkwell::Error::EmptyNameError)
     );
 }
 

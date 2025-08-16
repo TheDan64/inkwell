@@ -58,7 +58,14 @@ pub use crate::values::generic_value::GenericValue;
 pub use crate::values::global_value::GlobalValue;
 
 pub use crate::values::global_value::UnnamedAddress;
-pub use crate::values::instruction_value::{InstructionOpcode, InstructionValue, OperandIter, OperandUseIter};
+pub use crate::values::instruction_value::{
+    InstructionOpcode,
+    InstructionValue,
+    OperandIter,
+    OperandUseIter,
+    AtomicError,
+    InstructionValueError,
+};
 pub use crate::values::int_value::IntValue;
 pub use crate::values::metadata_value::{MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID};
 pub use crate::values::phi_value::IncomingIter;

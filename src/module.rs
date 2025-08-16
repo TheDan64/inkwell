@@ -1037,9 +1037,9 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(md_1[0].into_int_value(), bool_val);
     /// assert_eq!(md_1[1].into_float_value(), f32_val);
     /// ```
-    pub fn add_global_metadata(&self, key: &str, metadata: &MetadataValue<'ctx>) -> Result<(), &'static str> {
+    pub fn add_global_metadata(&self, key: &str, metadata: &MetadataValue<'ctx>) -> Result<(), crate::Error> {
         if !metadata.is_node() {
-            return Err("metadata is expected to be a node.");
+            return Err(crate::Error::GlobalMetadataError);
         }
 
         let c_string = to_c_str(key);
