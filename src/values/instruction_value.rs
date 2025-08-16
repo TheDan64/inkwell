@@ -474,7 +474,9 @@ impl<'ctx> InstructionValue<'ctx> {
     /// Returns alignment on a memory access instruction or alloca.
     pub fn get_alignment(self) -> Result<u32, InstructionValueError> {
         if !self.is_a_alloca_inst() && !self.is_a_load_inst() && !self.is_a_store_inst() {
-            return Err(InstructionValueError::AlignmentError(AlignmentError::UnalignedInstruction));
+            return Err(InstructionValueError::AlignmentError(
+                AlignmentError::UnalignedInstruction,
+            ));
         }
         Ok(unsafe { LLVMGetAlignment(self.as_value_ref()) })
     }
@@ -485,12 +487,12 @@ impl<'ctx> InstructionValue<'ctx> {
         // Zero check is unnecessary as 0 is not a power of two.
         if !alignment.is_power_of_two() {
             return Err(InstructionValueError::AlignmentError(AlignmentError::NonPowerOfTwo(
-                alignment
+                alignment,
             )));
         }
         if !self.is_a_alloca_inst() && !self.is_a_load_inst() && !self.is_a_store_inst() {
             return Err(InstructionValueError::AlignmentError(
-                AlignmentError::UnalignedInstruction
+                AlignmentError::UnalignedInstruction,
             ));
         }
         unsafe { LLVMSetAlignment(self.as_value_ref(), alignment) };

@@ -1730,13 +1730,13 @@ impl<'ctx> Builder<'ctx> {
         }
         if !is_alignment_ok(src_align_bytes) {
             return Err(BuilderError::AlignmentError(AlignmentError::SrcNonPowerOfTwo(
-                src_align_bytes
+                src_align_bytes,
             )));
         }
 
         if !is_alignment_ok(dest_align_bytes) {
             return Err(BuilderError::AlignmentError(AlignmentError::DestNonPowerOfTwo(
-                dest_align_bytes
+                dest_align_bytes,
             )));
         }
 
@@ -1777,13 +1777,13 @@ impl<'ctx> Builder<'ctx> {
         }
         if !is_alignment_ok(src_align_bytes) {
             return Err(BuilderError::AlignmentError(AlignmentError::SrcNonPowerOfTwo(
-                src_align_bytes
+                src_align_bytes,
             )));
         }
 
         if !is_alignment_ok(dest_align_bytes) {
             return Err(BuilderError::AlignmentError(AlignmentError::DestNonPowerOfTwo(
-                dest_align_bytes
+                dest_align_bytes,
             )));
         }
 
@@ -1823,7 +1823,7 @@ impl<'ctx> Builder<'ctx> {
         }
         if !is_alignment_ok(dest_align_bytes) {
             return Err(BuilderError::AlignmentError(AlignmentError::DestNonPowerOfTwo(
-                dest_align_bytes
+                dest_align_bytes,
             )));
         }
 

@@ -1,4 +1,3 @@
-
 /// Errors for operations involving alignment.
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
 pub enum AlignmentError {
