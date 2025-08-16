@@ -78,8 +78,8 @@ use llvm_sys::{
 
 use llvm_sys::LLVMInlineAsmDialect;
 
-pub use error::Error;
 pub use either::Either;
+pub use error::Error;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
