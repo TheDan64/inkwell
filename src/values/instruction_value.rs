@@ -53,7 +53,7 @@ pub enum InstructionValueError {
     NotAllocaInst,
     #[error("Alignment Error: {0}")]
     AlignmentError(AlignmentError),
-    #[error("Not a GEP isntruction.")]
+    #[error("Not a GEP instruction.")]
     NotGEPInst,
     #[error("Atomic Error: {0}")]
     AtomicError(AtomicError),
@@ -75,7 +75,7 @@ pub enum InstructionValueError {
     NotAllocaInst,
     #[error("Alignment Error: {0}")]
     AlignmentError(AlignmentError),
-    #[error("Not a GEP isntruction.")]
+    #[error("Not a GEP instruction.")]
     NotGEPInst,
     #[error("Atomic Error: {0}")]
     AtomicError(AtomicError),
