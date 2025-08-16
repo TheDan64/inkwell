@@ -8,8 +8,10 @@ pub enum AlignmentError {
     SrcNonPowerOfTwo(u32),
     #[error("The dest_align_bytes argument was not a power of two.")]
     DestNonPowerOfTwo(u32),
-    #[error("Type is unsized and cannot be aligned. \
-    Suggestion: Align memory manually.")]
+    #[error(
+        "Type is unsized and cannot be aligned. \
+    Suggestion: Align memory manually."
+    )]
     Unsized,
     #[error("Value is not an alloca, load, or store instruction.")]
     UnalignedInstruction,

@@ -443,10 +443,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// Sets whether or not a memory access instruction is volatile.
     #[llvm_versions(10..)]
     pub fn set_volatile(self, volatile: bool) -> Result<(), InstructionValueError> {
-        if !self.is_a_load_inst()
-            && !self.is_a_store_inst()
-            && !self.is_a_atomicrmw_inst()
-            && !self.is_a_cmpxchg_inst()
+        if !self.is_a_load_inst() && !self.is_a_store_inst() && !self.is_a_atomicrmw_inst() && !self.is_a_cmpxchg_inst()
         {
             return Err(InstructionValueError::NotMemoryAccessInst);
         }
@@ -487,10 +484,14 @@ impl<'ctx> InstructionValue<'ctx> {
     pub fn set_alignment(self, alignment: u32) -> Result<(), InstructionValueError> {
         // Zero check is unnecessary as 0 is not a power of two.
         if !alignment.is_power_of_two() {
-            return Err(InstructionValueError::AlignmentError(AlignmentError::NonPowerOfTwo(alignment)));
+            return Err(InstructionValueError::AlignmentError(AlignmentError::NonPowerOfTwo(
+                alignment
+            )));
         }
         if !self.is_a_alloca_inst() && !self.is_a_load_inst() && !self.is_a_store_inst() {
-            return Err(InstructionValueError::AlignmentError(AlignmentError::UnalignedInstruction));
+            return Err(InstructionValueError::AlignmentError(
+                AlignmentError::UnalignedInstruction
+            ));
         }
         unsafe { LLVMSetAlignment(self.as_value_ref(), alignment) };
         Ok(())

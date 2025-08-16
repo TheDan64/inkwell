@@ -66,8 +66,8 @@ use crate::values::{
     PointerMathValue, PointerValue, StructValue, VectorBaseValue,
 };
 
-use crate::{AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate};
 use crate::error::AlignmentError;
+use crate::{AtomicOrdering, AtomicRMWBinOp, FloatPredicate, IntPredicate};
 
 use std::cell::Cell;
 use std::marker::PhantomData;
@@ -1729,15 +1729,15 @@ impl<'ctx> Builder<'ctx> {
             return Err(BuilderError::UnsetPosition);
         }
         if !is_alignment_ok(src_align_bytes) {
-            return Err(BuilderError::AlignmentError(
-                AlignmentError::SrcNonPowerOfTwo(src_align_bytes)
-            ));
+            return Err(BuilderError::AlignmentError(AlignmentError::SrcNonPowerOfTwo(
+                src_align_bytes
+            )));
         }
 
         if !is_alignment_ok(dest_align_bytes) {
-            return Err(BuilderError::AlignmentError(
-                AlignmentError::DestNonPowerOfTwo(dest_align_bytes)
-            ));
+            return Err(BuilderError::AlignmentError(AlignmentError::DestNonPowerOfTwo(
+                dest_align_bytes
+            )));
         }
 
         let value = unsafe {
@@ -1776,15 +1776,15 @@ impl<'ctx> Builder<'ctx> {
             return Err(BuilderError::UnsetPosition);
         }
         if !is_alignment_ok(src_align_bytes) {
-            return Err(BuilderError::AlignmentError(
-                AlignmentError::SrcNonPowerOfTwo(src_align_bytes)
-            ));
+            return Err(BuilderError::AlignmentError(AlignmentError::SrcNonPowerOfTwo(
+                src_align_bytes
+            )));
         }
 
         if !is_alignment_ok(dest_align_bytes) {
-            return Err(BuilderError::AlignmentError(
-                AlignmentError::DestNonPowerOfTwo(dest_align_bytes)
-            ));
+            return Err(BuilderError::AlignmentError(AlignmentError::DestNonPowerOfTwo(
+                dest_align_bytes
+            )));
         }
 
         let value = unsafe {
@@ -1822,9 +1822,9 @@ impl<'ctx> Builder<'ctx> {
             return Err(BuilderError::UnsetPosition);
         }
         if !is_alignment_ok(dest_align_bytes) {
-            return Err(BuilderError::AlignmentError(
-                AlignmentError::DestNonPowerOfTwo(dest_align_bytes)
-            ));
+            return Err(BuilderError::AlignmentError(AlignmentError::DestNonPowerOfTwo(
+                dest_align_bytes
+            )));
         }
 
         let value = unsafe {
@@ -1848,9 +1848,7 @@ impl<'ctx> Builder<'ctx> {
         }
         // LLVMBuildMalloc segfaults if ty is unsized
         if !ty.is_sized() {
-            return Err(BuilderError::AlignmentError(
-                AlignmentError::Unsized
-            ));
+            return Err(BuilderError::AlignmentError(AlignmentError::Unsized));
         }
 
         let c_string = to_c_str(name);
@@ -1873,9 +1871,7 @@ impl<'ctx> Builder<'ctx> {
         }
         // LLVMBuildArrayMalloc segfaults if ty is unsized
         if !ty.is_sized() {
-            return Err(BuilderError::AlignmentError(
-                AlignmentError::Unsized
-            ));
+            return Err(BuilderError::AlignmentError(AlignmentError::Unsized));
         }
 
         let c_string = to_c_str(name);
@@ -3604,19 +3600,13 @@ impl<'ctx> Builder<'ctx> {
 
         // "Both ordering parameters must be at least monotonic, the ordering constraint on failure must be no stronger than that on success, and the failure ordering cannot be either release or acq_rel." -- https://llvm.org/docs/LangRef.html#cmpxchg-instruction
         if success < AtomicOrdering::Monotonic || failure < AtomicOrdering::Monotonic {
-            return Err(BuilderError::OrderingError(
-                OrderingError::WeakerThanMonotic
-            ));
+            return Err(BuilderError::OrderingError(OrderingError::WeakerThanMonotic));
         }
         if failure > success {
-            return Err(BuilderError::OrderingError(
-                OrderingError::WeakerSuccessOrdering
-            ));
+            return Err(BuilderError::OrderingError(OrderingError::WeakerSuccessOrdering));
         }
         if failure == AtomicOrdering::Release || failure == AtomicOrdering::AcquireRelease {
-            return Err(BuilderError::OrderingError(
-                OrderingError::ReleaseOrAcqRel
-            ));
+            return Err(BuilderError::OrderingError(OrderingError::ReleaseOrAcqRel));
         }
 
         let val = unsafe {
