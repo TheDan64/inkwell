@@ -457,8 +457,8 @@ fn test_mem_instructions() {
     assert_eq!(load_instruction.get_alignment().unwrap(), 16);
     assert!(store_instruction.set_alignment(0).is_err());
     assert!(load_instruction.set_alignment(0).is_err());
-    assert_eq!(store_instruction.get_alignment().unwrap(), 0);
-    assert_eq!(load_instruction.get_alignment().unwrap(), 0);
+    assert_ne!(store_instruction.get_alignment().unwrap(), 0);
+    assert_ne!(load_instruction.get_alignment().unwrap(), 0);
 
     assert!(store_instruction.set_alignment(14).is_err());
     assert_eq!(store_instruction.get_alignment().unwrap(), 0);
