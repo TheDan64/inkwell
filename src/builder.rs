@@ -97,7 +97,7 @@ pub enum BuilderError {
     AlignmentError(#[from] crate::error::AlignmentError),
     #[error("Aggregate extract index out of range")]
     ExtractOutOfRange,
-    #[error("The bitwidth of value must be a power of 2 and greater than 8.")]
+    #[error("The bitwidth of value must be a power of 2 and greater than or equal to 8.")]
     BitwidthError,
     #[error("Pointee type does not match the value's type")]
     PointeeTypeMismatch,
