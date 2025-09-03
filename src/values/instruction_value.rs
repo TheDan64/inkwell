@@ -20,12 +20,68 @@ use llvm_sys::LLVMOpcode;
 
 use std::{ffi::CStr, fmt, fmt::Display};
 
+use crate::error::AlignmentError;
 use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, MetadataValue, Value};
 use crate::{basic_block::BasicBlock, types::AnyTypeEnum};
 use crate::{types::BasicTypeEnum, values::traits::AsValueRef};
 use crate::{AtomicOrdering, FloatPredicate, IntPredicate};
 
 use super::AnyValue;
+
+/// Errors for atomic operations on load/store instructions.
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum AtomicError {
+    #[error("The release ordering is not valid on load instructions.")]
+    ReleaseOnLoad,
+    #[error("The acq_rel ordering is not valid on load or store instructions.")]
+    AcquireRelease,
+    #[error("The acquire ordering is not valid on store instructions.")]
+    AcquireOnStore,
+}
+
+/// Errors for InstructionValue.
+#[llvm_versions(..=9)]
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum InstructionValueError {
+    #[error("Cannot set name of a void-type instruction.")]
+    CannotNameVoidTypeInst,
+    #[error("Value is not a load or store instruction.")]
+    NotMemoryAccessInst,
+    #[error("Value is not a load or store instruction.")]
+    NotLoadOrStoreInst,
+    #[error("Value is not an alloca instruction.")]
+    NotAllocaInst,
+    #[error("Alignment Error: {0}")]
+    AlignmentError(AlignmentError),
+    #[error("Not a GEP instruction.")]
+    NotGEPInst,
+    #[error("Atomic Error: {0}")]
+    AtomicError(#[from] AtomicError),
+    #[error("Metadata is expected to be a node.")]
+    ExpectedNode,
+}
+
+/// Errors for InstructionValue.
+#[llvm_versions(10..)]
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum InstructionValueError {
+    #[error("Cannot set name of a void-type instruction.")]
+    CannotNameVoidTypeInst,
+    #[error("Value is not a load, store, atomicrmw or cmpxchg instruction.")]
+    NotMemoryAccessInst,
+    #[error("Value is not a load or store instruction.")]
+    NotLoadOrStoreInst,
+    #[error("Value is not an alloca instruction.")]
+    NotAllocaInst,
+    #[error("Alignment Error: {0}")]
+    AlignmentError(AlignmentError),
+    #[error("Not a GEP instruction.")]
+    NotGEPInst,
+    #[error("Atomic Error: {0}")]
+    AtomicError(AtomicError),
+    #[error("Metadata is expected to be a node.")]
+    ExpectedNode,
+}
 
 // REVIEW: Split up into structs for SubTypes on InstructionValues?
 // REVIEW: This should maybe be split up into InstructionOpcode and ConstOpcode?
@@ -179,9 +235,9 @@ impl<'ctx> InstructionValue<'ctx> {
     }
 
     /// Set name of the `InstructionValue`.
-    pub fn set_name(&self, name: &str) -> Result<(), &'static str> {
+    pub fn set_name(&self, name: &str) -> Result<(), InstructionValueError> {
         if self.get_type().is_void_type() {
-            Err("Cannot set name of a void-type instruction!")
+            Err(InstructionValueError::CannotNameVoidTypeInst)
         } else {
             self.instruction_value.set_name(name);
             Ok(())
@@ -350,11 +406,11 @@ impl<'ctx> InstructionValue<'ctx> {
     // SubTypes: Only apply to memory access instructions
     /// Returns whether or not a memory access instruction is volatile.
     #[llvm_versions(..=9)]
-    pub fn get_volatile(self) -> Result<bool, &'static str> {
+    pub fn get_volatile(self) -> Result<bool, InstructionValueError> {
         // Although cmpxchg and atomicrmw can have volatile, LLVM's C API
         // does not export that functionality until 10.0.
         if !self.is_a_load_inst() && !self.is_a_store_inst() {
-            return Err("Value is not a load or store.");
+            return Err(InstructionValueError::NotMemoryAccessInst);
         }
         Ok(unsafe { LLVMGetVolatile(self.as_value_ref()) } == 1)
     }
@@ -362,10 +418,10 @@ impl<'ctx> InstructionValue<'ctx> {
     // SubTypes: Only apply to memory access instructions
     /// Returns whether or not a memory access instruction is volatile.
     #[llvm_versions(10..)]
-    pub fn get_volatile(self) -> Result<bool, &'static str> {
+    pub fn get_volatile(self) -> Result<bool, InstructionValueError> {
         if !self.is_a_load_inst() && !self.is_a_store_inst() && !self.is_a_atomicrmw_inst() && !self.is_a_cmpxchg_inst()
         {
-            return Err("Value is not a load, store, atomicrmw or cmpxchg.");
+            return Err(InstructionValueError::NotMemoryAccessInst);
         }
         Ok(unsafe { LLVMGetVolatile(self.as_value_ref()) } == 1)
     }
@@ -373,11 +429,11 @@ impl<'ctx> InstructionValue<'ctx> {
     // SubTypes: Only apply to memory access instructions
     /// Sets whether or not a memory access instruction is volatile.
     #[llvm_versions(..=9)]
-    pub fn set_volatile(self, volatile: bool) -> Result<(), &'static str> {
+    pub fn set_volatile(self, volatile: bool) -> Result<(), InstructionValueError> {
         // Although cmpxchg and atomicrmw can have volatile, LLVM's C API
         // does not export that functionality until 10.0.
         if !self.is_a_load_inst() && !self.is_a_store_inst() {
-            return Err("Value is not a load or store.");
+            return Err(InstructionValueError::NotMemoryAccessInst);
         }
         unsafe { LLVMSetVolatile(self.as_value_ref(), volatile as i32) };
         Ok(())
@@ -386,10 +442,10 @@ impl<'ctx> InstructionValue<'ctx> {
     // SubTypes: Only apply to memory access instructions
     /// Sets whether or not a memory access instruction is volatile.
     #[llvm_versions(10..)]
-    pub fn set_volatile(self, volatile: bool) -> Result<(), &'static str> {
+    pub fn set_volatile(self, volatile: bool) -> Result<(), InstructionValueError> {
         if !self.is_a_load_inst() && !self.is_a_store_inst() && !self.is_a_atomicrmw_inst() && !self.is_a_cmpxchg_inst()
         {
-            return Err("Value is not a load, store, atomicrmw or cmpxchg.");
+            return Err(InstructionValueError::NotMemoryAccessInst);
         }
         unsafe { LLVMSetVolatile(self.as_value_ref(), volatile as i32) };
         Ok(())
@@ -397,9 +453,9 @@ impl<'ctx> InstructionValue<'ctx> {
 
     // SubTypes: Only apply to alloca instruction
     /// Returns the type that is allocated by the alloca instruction.
-    pub fn get_allocated_type(self) -> Result<BasicTypeEnum<'ctx>, &'static str> {
+    pub fn get_allocated_type(self) -> Result<BasicTypeEnum<'ctx>, InstructionValueError> {
         if !self.is_a_alloca_inst() {
-            return Err("Value is not an alloca.");
+            return Err(InstructionValueError::NotAllocaInst);
         }
         Ok(unsafe { BasicTypeEnum::new(LLVMGetAllocatedType(self.as_value_ref())) })
     }
@@ -407,37 +463,37 @@ impl<'ctx> InstructionValue<'ctx> {
     // SubTypes: Only apply to GetElementPtr instruction
     /// Returns the source element type of the given GEP.
     #[llvm_versions(14..)]
-    pub fn get_gep_source_element_type(self) -> Result<BasicTypeEnum<'ctx>, &'static str> {
+    pub fn get_gep_source_element_type(self) -> Result<BasicTypeEnum<'ctx>, InstructionValueError> {
         if !self.is_a_getelementptr_inst() {
-            return Err("Value is not a GEP.");
+            return Err(InstructionValueError::NotGEPInst);
         }
         Ok(unsafe { BasicTypeEnum::new(LLVMGetGEPSourceElementType(self.as_value_ref())) })
     }
 
     // SubTypes: Only apply to memory access and alloca instructions
     /// Returns alignment on a memory access instruction or alloca.
-    pub fn get_alignment(self) -> Result<u32, &'static str> {
+    pub fn get_alignment(self) -> Result<u32, InstructionValueError> {
         if !self.is_a_alloca_inst() && !self.is_a_load_inst() && !self.is_a_store_inst() {
-            return Err("Value is not an alloca, load or store.");
+            return Err(InstructionValueError::AlignmentError(
+                AlignmentError::UnalignedInstruction,
+            ));
         }
         Ok(unsafe { LLVMGetAlignment(self.as_value_ref()) })
     }
 
     // SubTypes: Only apply to memory access and alloca instructions
     /// Sets alignment on a memory access instruction or alloca.
-    pub fn set_alignment(self, alignment: u32) -> Result<(), &'static str> {
-        #[cfg(any(feature = "llvm11-0", feature = "llvm12-0"))]
-        {
-            if alignment == 0 {
-                return Err("Alignment cannot be 0");
-            }
-        }
-        //The alignment = 0 check above covers LLVM >= 11, the != 0 check here keeps older versions compatible
-        if !alignment.is_power_of_two() && alignment != 0 {
-            return Err("Alignment is not a power of 2!");
+    pub fn set_alignment(self, alignment: u32) -> Result<(), InstructionValueError> {
+        // Zero check is unnecessary as 0 is not a power of two.
+        if !alignment.is_power_of_two() {
+            return Err(InstructionValueError::AlignmentError(AlignmentError::NonPowerOfTwo(
+                alignment,
+            )));
         }
         if !self.is_a_alloca_inst() && !self.is_a_load_inst() && !self.is_a_store_inst() {
-            return Err("Value is not an alloca, load or store.");
+            return Err(InstructionValueError::AlignmentError(
+                AlignmentError::UnalignedInstruction,
+            ));
         }
         unsafe { LLVMSetAlignment(self.as_value_ref(), alignment) };
         Ok(())
@@ -445,31 +501,31 @@ impl<'ctx> InstructionValue<'ctx> {
 
     // SubTypes: Only apply to memory access instructions
     /// Returns atomic ordering on a memory access instruction.
-    pub fn get_atomic_ordering(self) -> Result<AtomicOrdering, &'static str> {
+    pub fn get_atomic_ordering(self) -> Result<AtomicOrdering, InstructionValueError> {
         if !self.is_a_load_inst() && !self.is_a_store_inst() {
-            return Err("Value is not a load or store.");
+            return Err(InstructionValueError::NotLoadOrStoreInst);
         }
         Ok(unsafe { LLVMGetOrdering(self.as_value_ref()) }.into())
     }
 
     // SubTypes: Only apply to memory access instructions
     /// Sets atomic ordering on a memory access instruction.
-    pub fn set_atomic_ordering(self, ordering: AtomicOrdering) -> Result<(), &'static str> {
+    pub fn set_atomic_ordering(self, ordering: AtomicOrdering) -> Result<(), InstructionValueError> {
         // Although fence and atomicrmw both have an ordering, the LLVM C API
         // does not support them. The cmpxchg instruction has two orderings and
         // does not work with this API.
         if !self.is_a_load_inst() && !self.is_a_store_inst() {
-            return Err("Value is not a load or store instruction.");
+            return Err(InstructionValueError::NotLoadOrStoreInst);
         }
         match ordering {
             AtomicOrdering::Release if self.is_a_load_inst() => {
-                return Err("The release ordering is not valid on load instructions.")
+                return Err(InstructionValueError::AtomicError(AtomicError::ReleaseOnLoad))
             },
             AtomicOrdering::AcquireRelease => {
-                return Err("The acq_rel ordering is not valid on load or store instructions.")
+                return Err(InstructionValueError::AtomicError(AtomicError::AcquireRelease))
             },
             AtomicOrdering::Acquire if self.is_a_store_inst() => {
-                return Err("The acquire ordering is not valid on store instructions.")
+                return Err(InstructionValueError::AtomicError(AtomicError::AcquireOnStore))
             },
             _ => {},
         };
@@ -849,9 +905,9 @@ impl<'ctx> InstructionValue<'ctx> {
 
     /// Determines whether or not this `Instruction` has any associated metadata
     /// `kind_id`.
-    pub fn set_metadata(self, metadata: MetadataValue<'ctx>, kind_id: u32) -> Result<(), &'static str> {
+    pub fn set_metadata(self, metadata: MetadataValue<'ctx>, kind_id: u32) -> Result<(), InstructionValueError> {
         if !metadata.is_node() {
-            return Err("metadata is expected to be a node.");
+            return Err(InstructionValueError::ExpectedNode);
         }
 
         unsafe {

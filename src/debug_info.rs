@@ -537,11 +537,11 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         size_in_bits: u64,
         encoding: LLVMDWARFTypeEncoding,
         flags: DIFlags,
-    ) -> Result<DIBasicType<'ctx>, &'static str> {
+    ) -> Result<DIBasicType<'ctx>, crate::error::Error> {
         if name.is_empty() {
             // Also, LLVM returns the same type if you ask for the same
             // (name, size_in_bits, encoding).
-            return Err("basic types must have names");
+            return Err(crate::error::Error::EmptyNameError);
         }
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateBasicType(
