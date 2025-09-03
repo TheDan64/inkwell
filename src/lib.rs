@@ -28,6 +28,7 @@ pub mod comdat;
 pub mod context;
 pub mod data_layout;
 pub mod debug_info;
+pub mod error;
 pub mod execution_engine;
 #[cfg(not(feature = "llvm8-0"))]
 pub mod intrinsics;
@@ -78,6 +79,7 @@ use llvm_sys::{
 use llvm_sys::LLVMInlineAsmDialect;
 
 pub use either::Either;
+pub use error::Error;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;

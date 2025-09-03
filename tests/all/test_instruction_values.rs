@@ -455,13 +455,13 @@ fn test_mem_instructions() {
     assert!(load_instruction.set_alignment(16).is_ok());
     assert_eq!(store_instruction.get_alignment().unwrap(), 16);
     assert_eq!(load_instruction.get_alignment().unwrap(), 16);
-    assert!(store_instruction.set_alignment(0).is_ok());
-    assert!(load_instruction.set_alignment(0).is_ok());
-    assert_eq!(store_instruction.get_alignment().unwrap(), 0);
-    assert_eq!(load_instruction.get_alignment().unwrap(), 0);
+    assert!(store_instruction.set_alignment(0).is_err());
+    assert!(load_instruction.set_alignment(0).is_err());
+    assert_eq!(store_instruction.get_alignment().unwrap(), 16);
+    assert_eq!(load_instruction.get_alignment().unwrap(), 16);
 
     assert!(store_instruction.set_alignment(14).is_err());
-    assert_eq!(store_instruction.get_alignment().unwrap(), 0);
+    assert_eq!(store_instruction.get_alignment().unwrap(), 16);
 
     let fadd_instruction = builder
         .build_float_add(load.into_float_value(), f32_val, "")
