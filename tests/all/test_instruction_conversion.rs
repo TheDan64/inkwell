@@ -103,7 +103,7 @@ fn test_conversion_to_pointer_value() {
     let module = context.create_module("testing");
     let builder = context.create_builder();
 
-    // Create a function whose the first parameter is of IntType
+    // Create a function with no parameters
     let fn_type = context.void_type().fn_type(&[], false);
     let function = module.add_function("testing", fn_type, None);
     let basic_block = context.append_basic_block(function, "entry");
@@ -120,7 +120,7 @@ fn test_conversion_to_pointer_value() {
         .as_instruction()
         .unwrap();
 
-    // Test the instruction conversion to a FloatValue
+    // Test the instruction conversion to a PointerValue
     let ptr_conversion: Result<PointerValue, _> = alloca_instr.try_into();
     assert!(ptr_conversion.is_ok());
 
