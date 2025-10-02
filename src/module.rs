@@ -56,6 +56,8 @@ use crate::support::{to_c_str, LLVMString};
 use crate::targets::TargetMachine;
 use crate::targets::{CodeModel, InitializationConfig, Target, TargetTriple};
 use crate::types::{AsTypeRef, BasicType, FunctionType, StructType};
+#[llvm_versions(19..)]
+use llvm_sys::core::{LLVMIsNewDbgInfoFormat, LLVMSetIsNewDbgInfoFormat};
 
 use crate::values::BasicValue;
 use crate::values::{AsValueRef, FunctionValue, GlobalValue, MetadataValue};
@@ -1639,6 +1641,20 @@ impl<'ctx> Module<'ctx> {
                 Err(LLVMString::new(message as *const libc::c_char))
             }
         }
+    }
+
+    /// https://llvm.org/docs/RemoveDIsDebugInfo.html
+    /// Set true to use new debug information format.
+    #[llvm_versions(19..)]
+    pub fn set_new_debug_format(&self, value: bool) {
+        unsafe { LLVMSetIsNewDbgInfoFormat(self.module.get(), value.into()) }
+    }
+
+    /// https://llvm.org/docs/RemoveDIsDebugInfo.html
+    /// Returns true if this module is set to utilize the new debug format.
+    #[llvm_versions(19..)]
+    pub fn is_new_debug_format(&self) -> bool {
+        unsafe { LLVMIsNewDbgInfoFormat(self.module.get()) != 0 }
     }
 }
 

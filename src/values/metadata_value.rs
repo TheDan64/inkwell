@@ -117,7 +117,13 @@ impl<'ctx> MetadataValue<'ctx> {
         };
 
         vec.iter()
-            .map(|val| unsafe { BasicMetadataValueEnum::new(*val) })
+            .filter_map(|val| {
+                if !val.is_null() {
+                    unsafe { Some(BasicMetadataValueEnum::new(*val)) }
+                } else {
+                    None
+                }
+            })
             .collect()
     }
 

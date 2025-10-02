@@ -116,7 +116,9 @@ impl<'ctx> AnyValueEnum<'ctx> {
                 }
                 AnyValueEnum::InstructionValue(InstructionValue::new(value))
             },
-            LLVMTypeKind::LLVMMetadataTypeKind => panic!("Metadata values are not supported as AnyValue's."),
+            LLVMTypeKind::LLVMMetadataTypeKind => {
+                panic!("Metadata values are not supported as AnyValue's.")
+            },
             _ => panic!("The given type is not supported."),
         }
     }
@@ -263,7 +265,8 @@ impl<'ctx> BasicValueEnum<'ctx> {
     ///
     /// The ref must be valid and of supported enum type options ([LLVMTypeKind]).
     pub unsafe fn new(value: LLVMValueRef) -> Self {
-        match LLVMGetTypeKind(LLVMTypeOf(value)) {
+        let kind = LLVMGetTypeKind(LLVMTypeOf(value));
+        match kind {
             LLVMTypeKind::LLVMFloatTypeKind
             | LLVMTypeKind::LLVMFP128TypeKind
             | LLVMTypeKind::LLVMDoubleTypeKind
@@ -290,7 +293,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
             LLVMTypeKind::LLVMScalableVectorTypeKind => {
                 BasicValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))
             },
-            _ => unreachable!("The given type is not a basic type."),
+            _ => unreachable!("The given type is not a basic type: {:?}", kind),
         }
     }
 
