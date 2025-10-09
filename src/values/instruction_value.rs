@@ -939,23 +939,23 @@ pub enum OperandValue<'ctx> {
     BasicMetadataValue(BasicMetadataValueEnum<'ctx>),
 }
 impl<'ctx> OperandValue<'ctx> {
-    pub fn into_basic_value(self) -> Option<BasicValueEnum<'ctx>> {
+    pub fn into_basic_value(self) -> BasicValueEnum<'ctx> {
         match self {
-            OperandValue::BasicValue(value) => Some(value),
-            _ => None,
+            OperandValue::BasicValue(value) => value,
+            _ => panic!("Found {self:?} but expected the BasicValue variant"),
         }
     }
-    pub fn into_basic_block(self) -> Option<BasicBlock<'ctx>> {
+    pub fn into_basic_block(self) -> BasicBlock<'ctx> {
         match self {
-            OperandValue::BasicBlock(value) => Some(value),
-            _ => None,
+            OperandValue::BasicBlock(value) => value,
+            _ => panic!("Found {self:?} but expected the BasicBlock variant"),
         }
     }
 
-    pub fn into_metadata_value(self) -> Option<BasicMetadataValueEnum<'ctx>> {
+    pub fn into_metadata_value(self) -> BasicMetadataValueEnum<'ctx> {
         match self {
-            OperandValue::BasicMetadataValue(value) => Some(value),
-            _ => None,
+            OperandValue::BasicMetadataValue(value) => value,
+            _ => panic!("Found {self:?} but expected the VectorValue variant"),
         }
     }
 }
