@@ -988,21 +988,21 @@ impl<'ctx> TryFrom<OperandValue<'ctx>> for BasicValueEnum<'ctx> {
     type Error = ();
 
     fn try_from(value: OperandValue<'ctx>) -> Result<Self, Self::Error> {
-        value.into_basic_value().ok_or(())
+        Ok(value.into_basic_value())
     }
 }
 impl<'ctx> TryFrom<OperandValue<'ctx>> for BasicBlock<'ctx> {
     type Error = ();
 
     fn try_from(value: OperandValue<'ctx>) -> Result<Self, Self::Error> {
-        value.into_basic_block().ok_or(())
+        Ok(value.into_basic_block())
     }
 }
 impl<'ctx> TryFrom<OperandValue<'ctx>> for BasicMetadataValueEnum<'ctx> {
     type Error = ();
 
     fn try_from(value: OperandValue<'ctx>) -> Result<Self, Self::Error> {
-        value.into_metadata_value().ok_or(())
+        Ok(value.into_metadata_value())
     }
 }
 
