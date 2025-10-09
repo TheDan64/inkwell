@@ -18,9 +18,7 @@ use llvm_sys::{LLVMOpcode, LLVMTypeKind};
 use std::{ffi::CStr, fmt, fmt::Display};
 
 use crate::error::AlignmentError;
-use crate::values::{
-    AnyValue, BasicMetadataValueEnum, BasicValue, BasicValueEnum, BasicValueUse, MetadataValue, Value,
-};
+use crate::values::{AnyValue, BasicMetadataValueEnum, BasicValueEnum, BasicValueUse, MetadataValue, Value};
 use crate::{basic_block::BasicBlock, types::AnyTypeEnum};
 use crate::{types::BasicTypeEnum, values::traits::AsValueRef};
 use crate::{AtomicOrdering, FloatPredicate, IntPredicate};
@@ -738,14 +736,14 @@ impl<'ctx> InstructionValue<'ctx> {
     ///
     /// assert_eq!(free_instruction.get_operand(0).unwrap().into_basic_value().unwrap(), f32_val);
     /// ```
-    pub fn set_operand<BV: BasicValue<'ctx>>(self, index: u32, val: BV) -> bool {
+    pub fn set_operand<BV: Into<OperandValue<'ctx>>>(self, index: u32, val: BV) -> bool {
         let num_operands = self.get_num_operands();
 
         if index >= num_operands {
             return false;
         }
 
-        unsafe { LLVMSetOperand(self.as_value_ref(), index, val.as_value_ref()) }
+        unsafe { LLVMSetOperand(self.as_value_ref(), index, val.into().as_value_ref()) }
 
         true
     }
@@ -959,6 +957,31 @@ impl<'ctx> OperandValue<'ctx> {
             OperandValue::BasicMetadataValue(value) => Some(value),
             _ => None,
         }
+    }
+}
+
+unsafe impl AsValueRef for OperandValue<'_> {
+    fn as_value_ref(&self) -> LLVMValueRef {
+        match self {
+            OperandValue::BasicValue(value) => value.as_value_ref(),
+            OperandValue::BasicBlock(value) => value.as_value_ref(),
+            OperandValue::BasicMetadataValue(value) => value.as_value_ref(),
+        }
+    }
+}
+impl<'ctx, T: Into<BasicValueEnum<'ctx>>> From<T> for OperandValue<'ctx> {
+    fn from(value: T) -> Self {
+        Self::BasicValue(value.into())
+    }
+}
+impl<'ctx> From<BasicBlock<'ctx>> for OperandValue<'ctx> {
+    fn from(value: BasicBlock<'ctx>) -> Self {
+        Self::BasicBlock(value)
+    }
+}
+impl<'ctx> From<BasicMetadataValueEnum<'ctx>> for OperandValue<'ctx> {
+    fn from(value: BasicMetadataValueEnum<'ctx>) -> Self {
+        Self::BasicMetadataValue(value)
     }
 }
 impl<'ctx> TryFrom<OperandValue<'ctx>> for BasicValueEnum<'ctx> {

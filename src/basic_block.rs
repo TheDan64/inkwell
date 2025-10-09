@@ -591,6 +591,12 @@ impl<'ctx> BasicBlock<'ctx> {
     }
 }
 
+unsafe impl AsValueRef for BasicBlock<'_> {
+    fn as_value_ref(&self) -> LLVMValueRef {
+        self.basic_block as LLVMValueRef
+    }
+}
+
 impl fmt::Debug for BasicBlock<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let llvm_value = unsafe { CStr::from_ptr(LLVMPrintValueToString(self.basic_block as LLVMValueRef)) };
