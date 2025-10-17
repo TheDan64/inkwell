@@ -193,13 +193,21 @@ fn test_default_triple() {
     let has_known_vendor = vendors.iter().any(|vendor| default_triple.contains(*vendor));
     assert!(has_known_vendor, "Target triple '{default_triple}' has unknown vendor");
 
-    let os = [
-        #[cfg(target_os = "linux")]
-        "linux",
-        #[cfg(target_os = "macos")]
-        "darwin",
-    ];
-    let has_known_os = os.iter().any(|os| default_triple.contains(*os));
+    #[cfg(target_os = "linux")]
+    let os = "linux";
+    #[cfg(target_os = "macos")]
+    let os = "macos";
+    #[cfg(target_os = "windows")]
+    let os = "windows";
+    // If the OS is not supported, we'll just use a string that definitely won't be found.
+    #[cfg(not(any(
+        target_os = "linux",
+        target_os = "macos",
+        target_os = "windows",
+    )))]
+    let os = "__unsupported_os__";
+    
+    let has_known_os = default_triple.contains(os);
     assert!(has_known_os, "Target triple '{default_triple}' has unknown OS");
 
     // TODO: CFG for other supported major OSes
