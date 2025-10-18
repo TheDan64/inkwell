@@ -10,6 +10,7 @@ use llvm_sys::prelude::LLVMTypeRef;
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMTypeKind;
 
+/// Either [FunctionValue] or [PointerValue].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) enum CallableValueEnum<'ctx> {
     Function(FunctionValue<'ctx>),
@@ -17,6 +18,7 @@ pub(crate) enum CallableValueEnum<'ctx> {
 }
 
 impl<'ctx> CallableValueEnum<'ctx> {
+    /// Determines if [CallableValueEnum] is a [FunctionValue].
     #[allow(unused)]
     #[inline]
     #[must_use]
@@ -24,6 +26,7 @@ impl<'ctx> CallableValueEnum<'ctx> {
         matches!(self, Self::Function(_))
     }
 
+    /// Determines if [CallableValueEnum] is a [PointerValue].
     #[allow(unused)]
     #[inline]
     #[must_use]
@@ -31,6 +34,7 @@ impl<'ctx> CallableValueEnum<'ctx> {
         matches!(self, Self::Pointer(_))
     }
 
+    /// If the [CallableValueEnum] is a [FunctionValue], map it into [Option::Some].
     #[allow(unused)]
     #[inline]
     #[must_use]
@@ -41,6 +45,7 @@ impl<'ctx> CallableValueEnum<'ctx> {
         }
     }
 
+    /// If the [CallableValueEnum] is a [PointerValue], map it into [Option::Some].
     #[allow(unused)]
     #[inline]
     #[must_use]
@@ -51,6 +56,7 @@ impl<'ctx> CallableValueEnum<'ctx> {
         }
     }
 
+    /// Expect [FunctionValue], panic with the message if it is not.
     #[allow(unused)]
     #[inline]
     #[must_use]
@@ -62,6 +68,7 @@ impl<'ctx> CallableValueEnum<'ctx> {
         }
     }
 
+    /// Expect [PointerValue], panic with the message if it is not.
     #[allow(unused)]
     #[inline]
     #[must_use]
@@ -73,6 +80,7 @@ impl<'ctx> CallableValueEnum<'ctx> {
         }
     }
 
+    /// Unwrap [FunctionValue]. Will panic if it is not.
     #[allow(unused)]
     #[inline]
     #[must_use]
@@ -81,6 +89,7 @@ impl<'ctx> CallableValueEnum<'ctx> {
         self.expect_function("Called unwrap_function() on CallableValueEnum::Pointer.")
     }
 
+    /// Unwrap [PointerValue]. Will panic if it is not.
     #[allow(unused)]
     #[inline]
     #[must_use]

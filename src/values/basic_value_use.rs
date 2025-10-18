@@ -6,6 +6,7 @@ use std::marker::PhantomData;
 use crate::basic_block::BasicBlock;
 use crate::values::{AnyValueEnum, BasicValueEnum};
 
+/// Either [BasicValueEnum] or [BasicBlock].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Operand<'ctx> {
     Value(BasicValueEnum<'ctx>),
@@ -13,18 +14,21 @@ pub enum Operand<'ctx> {
 }
 
 impl<'ctx> Operand<'ctx> {
+    /// Determines if the [Operand] is a [BasicValueEnum].
     #[inline]
     #[must_use]
     pub fn is_value(self) -> bool {
         matches!(self, Self::Value(_))
     }
 
+    /// Determines if the [Operand] is a [BasicBlock].
     #[inline]
     #[must_use]
     pub fn is_block(self) -> bool {
         matches!(self, Self::Block(_))
     }
 
+    /// If the [Operand] is a [BasicValueEnum], map it into [Option::Some].
     #[inline]
     #[must_use]
     pub fn value(self) -> Option<BasicValueEnum<'ctx>> {
@@ -34,6 +38,7 @@ impl<'ctx> Operand<'ctx> {
         }
     }
 
+    /// If the [Operand] is a [BasicBlock], map it into [Option::Some].
     #[inline]
     #[must_use]
     pub fn block(self) -> Option<BasicBlock<'ctx>> {
@@ -43,6 +48,7 @@ impl<'ctx> Operand<'ctx> {
         }
     }
 
+    /// Expect [BasicValueEnum], panic with the message if it is not.
     #[inline]
     #[must_use]
     #[track_caller]
@@ -53,6 +59,7 @@ impl<'ctx> Operand<'ctx> {
         }
     }
 
+    /// Expect [BasicBlock], panic with the message if it is not.
     #[inline]
     #[must_use]
     #[track_caller]
@@ -63,6 +70,7 @@ impl<'ctx> Operand<'ctx> {
         }
     }
 
+    /// Unwrap [BasicValueEnum]. Will panic if it is not.
     #[inline]
     #[must_use]
     #[track_caller]
@@ -70,6 +78,7 @@ impl<'ctx> Operand<'ctx> {
         self.expect_value("Called unwrap_value() on UsedValue::Block.")
     }
 
+    /// Unwrap [BasicBlock]. Will panic if it is not.
     #[inline]
     #[must_use]
     #[track_caller]

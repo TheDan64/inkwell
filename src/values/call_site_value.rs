@@ -18,6 +18,7 @@ use crate::values::{AsValueRef, BasicValueEnum, FunctionValue, InstructionValue,
 
 use super::{AnyValue, InstructionOpcode};
 
+/// Either [BasicValueEnum] or [InstructionValue].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ValueKind<'ctx> {
     Basic(BasicValueEnum<'ctx>),
@@ -25,18 +26,21 @@ pub enum ValueKind<'ctx> {
 }
 
 impl<'ctx> ValueKind<'ctx> {
+    /// Determines if the [ValueKind] is a [BasicValueEnum].
     #[inline]
     #[must_use]
     pub fn is_basic(self) -> bool {
         matches!(self, Self::Basic(_))
     }
 
+    /// Determines if the [ValueKind] is an [InstructionValue].
     #[inline]
     #[must_use]
     pub fn is_instruction(self) -> bool {
         matches!(self, Self::Instruction(_))
     }
 
+    /// If the [ValueKind] is a [BasicValueEnum], map it into [Option::Some].
     #[inline]
     #[must_use]
     pub fn basic(self) -> Option<BasicValueEnum<'ctx>> {
@@ -46,6 +50,7 @@ impl<'ctx> ValueKind<'ctx> {
         }
     }
 
+    /// If the [ValueKind] is an [InstructionValue], map it into [Option::Some].
     #[inline]
     #[must_use]
     pub fn instruction(self) -> Option<InstructionValue<'ctx>> {
@@ -55,6 +60,7 @@ impl<'ctx> ValueKind<'ctx> {
         }
     }
 
+    /// Expect [BasicValueEnum], panic with the message if it is not.
     #[inline]
     #[must_use]
     #[track_caller]
@@ -65,6 +71,7 @@ impl<'ctx> ValueKind<'ctx> {
         }
     }
 
+    /// Expect [InstructionValue], panic with the message if it is not.
     #[inline]
     #[must_use]
     #[track_caller]
@@ -75,6 +82,7 @@ impl<'ctx> ValueKind<'ctx> {
         }
     }
 
+    /// Unwrap [BasicValueEnum]. Will panic if it is not.
     #[inline]
     #[must_use]
     #[track_caller]
@@ -82,6 +90,7 @@ impl<'ctx> ValueKind<'ctx> {
         self.expect_basic("Called unwrap_basic() on ValueKind::Instruction.")
     }
 
+    /// Unwrap [InstructionValue]. Will panic if it is not.
     #[inline]
     #[must_use]
     #[track_caller]
