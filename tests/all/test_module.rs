@@ -346,7 +346,7 @@ fn test_print_to_file_bad_path() {
         Ok("no such file or directory") | Ok("No such file or directory") => (),
         Ok(err) => panic!("Some other error: {err}"),
         Err(_) => panic!("Should have failed."),
-    };
+    }
 }
 
 #[test]
