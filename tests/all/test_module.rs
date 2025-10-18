@@ -304,7 +304,6 @@ fn test_clone() {
     assert_eq!(module.print_to_string(), module2.print_to_string());
 }
 
-
 #[test]
 fn test_print_to_file_good_path() {
     let context = Context::create();
