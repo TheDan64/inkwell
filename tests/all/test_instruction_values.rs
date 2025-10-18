@@ -104,8 +104,7 @@ fn test_operands() {
         .get_first_use()
         .unwrap()
         .get_used_value()
-        .value()
-        .unwrap();
+        .unwrap_value();
     let free_call_param = free_instruction.get_operand(0).unwrap().unwrap_value();
 
     assert_eq!(bit_cast_use_value, free_call_param);
