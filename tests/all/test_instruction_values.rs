@@ -47,8 +47,8 @@ fn test_operands() {
     let store_operand0 = store_instruction.get_operand(0).unwrap();
     let store_operand1 = store_instruction.get_operand(1).unwrap();
 
-    assert_eq!(store_operand0.left().unwrap(), f32_val); // f32 const
-    assert_eq!(store_operand1.left().unwrap(), arg1); // f32* arg1
+    assert_eq!(store_operand0.into_basic_value().unwrap(), f32_val); // f32 const
+    assert_eq!(store_operand1.into_basic_value().unwrap(), arg1); // f32* arg1
     assert!(store_instruction.get_operand(2).is_none());
     assert!(store_instruction.get_operand(3).is_none());
     assert!(store_instruction.get_operand(4).is_none());
@@ -57,12 +57,12 @@ fn test_operands() {
     let store_operand0 = store_operands.next().unwrap().unwrap();
     let store_operand1 = store_operands.next().unwrap().unwrap();
 
-    assert_eq!(store_operand0.left().unwrap(), f32_val); // f32 const
-    assert_eq!(store_operand1.left().unwrap(), arg1); // f32* arg1
+    assert_eq!(store_operand0.into_basic_value().unwrap(), f32_val); // f32 const
+    assert_eq!(store_operand1.into_basic_value().unwrap(), arg1); // f32* arg1
     assert!(store_operands.next().is_none());
 
-    let free_operand0 = free_instruction.get_operand(0).unwrap().left().unwrap();
-    let free_operand1 = free_instruction.get_operand(1).unwrap().left().unwrap();
+    let free_operand0 = free_instruction.get_operand(0).unwrap().into_basic_value().unwrap();
+    let free_operand1 = free_instruction.get_operand(1).unwrap().into_basic_value().unwrap();
 
     assert!(free_operand0.is_pointer_value()); // (implicitly casted) i8* arg1
     assert!(free_operand1.is_pointer_value()); // Free function ptr
@@ -72,7 +72,14 @@ fn test_operands() {
 
     let free_operand0_instruction = free_operand0.as_instruction_value().unwrap();
     assert_eq!(free_operand0_instruction.get_opcode(), BitCast);
-    assert_eq!(free_operand0_instruction.get_operand(0).unwrap().left().unwrap(), arg1);
+    assert_eq!(
+        free_operand0_instruction
+            .get_operand(0)
+            .unwrap()
+            .into_basic_value()
+            .unwrap(),
+        arg1
+    );
     assert!(free_operand0_instruction.get_operand(1).is_none());
     assert!(free_operand0_instruction.get_operand(2).is_none());
 
@@ -106,7 +113,7 @@ fn test_operands() {
         .get_used_value()
         .left()
         .unwrap();
-    let free_call_param = free_instruction.get_operand(0).unwrap().left().unwrap();
+    let free_call_param = free_instruction.get_operand(0).unwrap().into_basic_value().unwrap();
 
     assert_eq!(bit_cast_use_value, free_call_param);
 
@@ -195,7 +202,7 @@ fn test_basic_block_operand() {
     builder.position_at_end(basic_block);
 
     let branch_instruction = builder.build_unconditional_branch(basic_block2).unwrap();
-    let bb_operand = branch_instruction.get_operand(0).unwrap().right().unwrap();
+    let bb_operand = branch_instruction.get_operand(0).unwrap().into_basic_block().unwrap();
 
     assert_eq!(bb_operand, basic_block2);
 

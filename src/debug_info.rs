@@ -171,7 +171,11 @@ pub struct DIScope<'ctx> {
     _marker: PhantomData<&'ctx Context>,
 }
 
-impl DIScope<'_> {
+impl<'ctx> DIScope<'ctx> {
+    pub fn as_metadata_value(&self, context: impl AsContextRef<'ctx>) -> MetadataValue<'ctx> {
+        unsafe { MetadataValue::new(LLVMMetadataAsValue(context.as_ctx_ref(), self.metadata_ref)) }
+    }
+
     /// Acquires the underlying raw pointer belonging to this `DIScope` type.
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref
@@ -1108,7 +1112,11 @@ impl<'ctx> AsDIScope<'ctx> for DIFile<'ctx> {
     }
 }
 
-impl DIFile<'_> {
+impl<'ctx> DIFile<'ctx> {
+    pub fn as_metadata_value(&self, context: impl AsContextRef<'ctx>) -> MetadataValue<'ctx> {
+        unsafe { MetadataValue::new(LLVMMetadataAsValue(context.as_ctx_ref(), self.metadata_ref)) }
+    }
+
     /// Acquires the underlying raw pointer belonging to this `DIFile` type.
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref
@@ -1126,6 +1134,10 @@ pub struct DICompileUnit<'ctx> {
 impl<'ctx> DICompileUnit<'ctx> {
     pub fn get_file(&self) -> DIFile<'ctx> {
         self.file
+    }
+
+    pub fn as_metadata_value(&self, context: impl AsContextRef<'ctx>) -> MetadataValue<'ctx> {
+        unsafe { MetadataValue::new(LLVMMetadataAsValue(context.as_ctx_ref(), self.metadata_ref)) }
     }
 
     /// Acquires the underlying raw pointer belonging to this `DICompileUnit` type.
@@ -1150,7 +1162,11 @@ pub struct DINamespace<'ctx> {
     _marker: PhantomData<&'ctx Context>,
 }
 
-impl DINamespace<'_> {
+impl<'ctx> DINamespace<'ctx> {
+    pub fn as_metadata_value(&self, context: impl AsContextRef<'ctx>) -> MetadataValue<'ctx> {
+        unsafe { MetadataValue::new(LLVMMetadataAsValue(context.as_ctx_ref(), self.metadata_ref)) }
+    }
+
     /// Acquires the underlying raw pointer belonging to this `DINamespace` type.
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref
@@ -1182,7 +1198,11 @@ impl<'ctx> AsDIScope<'ctx> for DISubprogram<'ctx> {
     }
 }
 
-impl DISubprogram<'_> {
+impl<'ctx> DISubprogram<'ctx> {
+    pub fn as_metadata_value(&self, context: impl AsContextRef<'ctx>) -> MetadataValue<'ctx> {
+        unsafe { MetadataValue::new(LLVMMetadataAsValue(context.as_ctx_ref(), self.metadata_ref)) }
+    }
+
     /// Acquires the underlying raw pointer belonging to this `DISubprogram` type.
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref
@@ -1196,7 +1216,7 @@ pub struct DIType<'ctx> {
     _marker: PhantomData<&'ctx Context>,
 }
 
-impl DIType<'_> {
+impl<'ctx> DIType<'ctx> {
     pub fn get_size_in_bits(&self) -> u64 {
         unsafe { LLVMDITypeGetSizeInBits(self.metadata_ref) }
     }
@@ -1207,6 +1227,10 @@ impl DIType<'_> {
 
     pub fn get_offset_in_bits(&self) -> u64 {
         unsafe { LLVMDITypeGetOffsetInBits(self.metadata_ref) }
+    }
+
+    pub fn as_metadata_value(&self, context: impl AsContextRef<'ctx>) -> MetadataValue<'ctx> {
+        unsafe { MetadataValue::new(LLVMMetadataAsValue(context.as_ctx_ref(), self.metadata_ref)) }
     }
 
     /// Acquires the underlying raw pointer belonging to this `DIType` type.
@@ -1240,7 +1264,11 @@ impl<'ctx> DIDerivedType<'ctx> {
     }
 }
 
-impl DIDerivedType<'_> {
+impl<'ctx> DIDerivedType<'ctx> {
+    pub fn as_metadata_value(&self, context: impl AsContextRef<'ctx>) -> MetadataValue<'ctx> {
+        unsafe { MetadataValue::new(LLVMMetadataAsValue(context.as_ctx_ref(), self.metadata_ref)) }
+    }
+
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref
     }
@@ -1270,6 +1298,10 @@ impl<'ctx> DIBasicType<'ctx> {
         }
     }
 
+    pub fn as_metadata_value(&self, context: impl AsContextRef<'ctx>) -> MetadataValue<'ctx> {
+        unsafe { MetadataValue::new(LLVMMetadataAsValue(context.as_ctx_ref(), self.metadata_ref)) }
+    }
+
     /// Acquires the underlying raw pointer belonging to this `DIBasicType` type.
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref
@@ -1297,6 +1329,10 @@ impl<'ctx> DICompositeType<'ctx> {
             metadata_ref: self.metadata_ref,
             _marker: PhantomData,
         }
+    }
+
+    pub fn as_metadata_value(&self, context: impl AsContextRef<'ctx>) -> MetadataValue<'ctx> {
+        unsafe { MetadataValue::new(LLVMMetadataAsValue(context.as_ctx_ref(), self.metadata_ref)) }
     }
 
     /// Acquires the underlying raw pointer belonging to this `DICompositeType` type.
@@ -1337,10 +1373,14 @@ impl<'ctx> AsDIScope<'ctx> for DILexicalBlock<'ctx> {
     }
 }
 
-impl DILexicalBlock<'_> {
+impl<'ctx> DILexicalBlock<'ctx> {
     /// Acquires the underlying raw pointer belonging to this `DILexicalBlock` type.
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref
+    }
+
+    pub fn as_metadata_value(&self, context: impl AsContextRef<'ctx>) -> MetadataValue<'ctx> {
+        unsafe { MetadataValue::new(LLVMMetadataAsValue(context.as_ctx_ref(), self.metadata_ref)) }
     }
 }
 
@@ -1374,6 +1414,10 @@ impl<'ctx> DILocation<'ctx> {
         }
     }
 
+    pub fn as_metadata_value(&self, context: impl AsContextRef<'ctx>) -> MetadataValue<'ctx> {
+        unsafe { MetadataValue::new(LLVMMetadataAsValue(context.as_ctx_ref(), self.metadata_ref)) }
+    }
+
     /// Acquires the underlying raw pointer belonging to this `DILocation` type.
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref
@@ -1387,7 +1431,11 @@ pub struct DILocalVariable<'ctx> {
     _marker: PhantomData<&'ctx Context>,
 }
 
-impl DILocalVariable<'_> {
+impl<'ctx> DILocalVariable<'ctx> {
+    pub fn as_metadata_value(&self, context: impl AsContextRef<'ctx>) -> MetadataValue<'ctx> {
+        unsafe { MetadataValue::new(LLVMMetadataAsValue(context.as_ctx_ref(), self.metadata_ref)) }
+    }
+
     /// Acquires the underlying raw pointer belonging to this `DILocalVariable` type.
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref
@@ -1422,7 +1470,11 @@ pub struct DIExpression<'ctx> {
     _marker: PhantomData<&'ctx Context>,
 }
 
-impl DIExpression<'_> {
+impl<'ctx> DIExpression<'ctx> {
+    pub fn as_metadata_value(&self, context: impl AsContextRef<'ctx>) -> MetadataValue<'_> {
+        unsafe { MetadataValue::new(LLVMMetadataAsValue(context.as_ctx_ref(), self.metadata_ref)) }
+    }
+
     /// Acquires the underlying raw pointer belonging to this `DIExpression` type.
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref

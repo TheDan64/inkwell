@@ -1,32 +1,27 @@
-use either::{
-    Either,
-    Either::{Left, Right},
-};
 #[llvm_versions(14..)]
 use llvm_sys::core::LLVMGetGEPSourceElementType;
 use llvm_sys::core::{
     LLVMGetAlignment, LLVMGetAllocatedType, LLVMGetFCmpPredicate, LLVMGetICmpPredicate, LLVMGetInstructionOpcode,
     LLVMGetInstructionParent, LLVMGetMetadata, LLVMGetNextInstruction, LLVMGetNumOperands, LLVMGetOperand,
-    LLVMGetOperandUse, LLVMGetPreviousInstruction, LLVMGetVolatile, LLVMHasMetadata, LLVMInstructionClone,
-    LLVMInstructionEraseFromParent, LLVMInstructionRemoveFromParent, LLVMIsAAllocaInst, LLVMIsABasicBlock,
-    LLVMIsAGetElementPtrInst, LLVMIsALoadInst, LLVMIsAStoreInst, LLVMIsATerminatorInst, LLVMIsConditional,
-    LLVMIsTailCall, LLVMSetAlignment, LLVMSetMetadata, LLVMSetOperand, LLVMSetVolatile, LLVMValueAsBasicBlock,
+    LLVMGetOperandUse, LLVMGetPreviousInstruction, LLVMGetTypeKind, LLVMGetVolatile, LLVMHasMetadata,
+    LLVMInstructionClone, LLVMInstructionEraseFromParent, LLVMInstructionRemoveFromParent, LLVMIsAAllocaInst,
+    LLVMIsABasicBlock, LLVMIsAGetElementPtrInst, LLVMIsALoadInst, LLVMIsAStoreInst, LLVMIsATerminatorInst,
+    LLVMIsConditional, LLVMIsTailCall, LLVMSetAlignment, LLVMSetMetadata, LLVMSetOperand, LLVMSetVolatile, LLVMTypeOf,
+    LLVMValueAsBasicBlock,
 };
 use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
 #[llvm_versions(10..)]
 use llvm_sys::core::{LLVMIsAAtomicCmpXchgInst, LLVMIsAAtomicRMWInst};
 use llvm_sys::prelude::LLVMValueRef;
-use llvm_sys::LLVMOpcode;
+use llvm_sys::{LLVMOpcode, LLVMTypeKind};
 
 use std::{ffi::CStr, fmt, fmt::Display};
 
 use crate::error::AlignmentError;
-use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, MetadataValue, Value};
+use crate::values::{AnyValue, BasicMetadataValueEnum, BasicValueEnum, BasicValueUse, MetadataValue, Value};
 use crate::{basic_block::BasicBlock, types::AnyTypeEnum};
 use crate::{types::BasicTypeEnum, values::traits::AsValueRef};
 use crate::{AtomicOrdering, FloatPredicate, IntPredicate};
-
-use super::AnyValue;
 
 /// Errors for atomic operations on load/store instructions.
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
@@ -660,7 +655,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// 3) Function call has two: i8 pointer %1 argument, and the free function itself
     /// 4) Void return has zero: void is not a value and does not count as an operand
     ///    even though the return instruction can take values.
-    pub fn get_operand(self, index: u32) -> Option<Either<BasicValueEnum<'ctx>, BasicBlock<'ctx>>> {
+    pub fn get_operand(self, index: u32) -> Option<OperandValue<'ctx>> {
         let num_operands = self.get_num_operands();
 
         if index >= num_operands {
@@ -675,7 +670,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// # Safety
     ///
     /// The index must be less than [InstructionValue::get_num_operands].
-    pub unsafe fn get_operand_unchecked(self, index: u32) -> Option<Either<BasicValueEnum<'ctx>, BasicBlock<'ctx>>> {
+    pub unsafe fn get_operand_unchecked(self, index: u32) -> Option<OperandValue<'ctx>> {
         let operand = unsafe { LLVMGetOperand(self.as_value_ref(), index) };
 
         if operand.is_null() {
@@ -683,13 +678,18 @@ impl<'ctx> InstructionValue<'ctx> {
         }
 
         let is_basic_block = unsafe { !LLVMIsABasicBlock(operand).is_null() };
+        let is_metadata = unsafe { LLVMGetTypeKind(LLVMTypeOf(operand)) == LLVMTypeKind::LLVMMetadataTypeKind };
 
         if is_basic_block {
             let bb = unsafe { BasicBlock::new(LLVMValueAsBasicBlock(operand)) };
 
-            Some(Right(bb.expect("BasicBlock should always be valid")))
+            Some(OperandValue::BasicBlock(bb.expect("BasicBlock should always be valid")))
+        } else if is_metadata {
+            Some(OperandValue::BasicMetadataValue(unsafe {
+                BasicMetadataValueEnum::new(operand)
+            }))
         } else {
-            Some(Left(unsafe { BasicValueEnum::new(operand) }))
+            Some(OperandValue::BasicValue(unsafe { BasicValueEnum::new(operand) }))
         }
     }
 
@@ -734,16 +734,16 @@ impl<'ctx> InstructionValue<'ctx> {
     /// // This will produce invalid IR:
     /// free_instruction.set_operand(0, f32_val);
     ///
-    /// assert_eq!(free_instruction.get_operand(0).unwrap().left().unwrap(), f32_val);
+    /// assert_eq!(free_instruction.get_operand(0).unwrap().into_basic_value().unwrap(), f32_val);
     /// ```
-    pub fn set_operand<BV: BasicValue<'ctx>>(self, index: u32, val: BV) -> bool {
+    pub fn set_operand<BV: Into<OperandValue<'ctx>>>(self, index: u32, val: BV) -> bool {
         let num_operands = self.get_num_operands();
 
         if index >= num_operands {
             return false;
         }
 
-        unsafe { LLVMSetOperand(self.as_value_ref(), index, val.as_value_ref()) }
+        unsafe { LLVMSetOperand(self.as_value_ref(), index, val.into().as_value_ref()) }
 
         true
     }
@@ -930,6 +930,82 @@ impl Display for InstructionValue<'_> {
     }
 }
 
+/// An operand within a given instruction can be a value, basic block, or metadata.
+/// This is a wrapper type to handle those variations returned by `InstructionValue::get_operand` family.
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+pub enum OperandValue<'ctx> {
+    BasicValue(BasicValueEnum<'ctx>),
+    BasicBlock(BasicBlock<'ctx>),
+    BasicMetadataValue(BasicMetadataValueEnum<'ctx>),
+}
+impl<'ctx> OperandValue<'ctx> {
+    pub fn into_basic_value(self) -> BasicValueEnum<'ctx> {
+        match self {
+            OperandValue::BasicValue(value) => value,
+            _ => panic!("Found {self:?} but expected the BasicValue variant"),
+        }
+    }
+    pub fn into_basic_block(self) -> BasicBlock<'ctx> {
+        match self {
+            OperandValue::BasicBlock(value) => value,
+            _ => panic!("Found {self:?} but expected the BasicBlock variant"),
+        }
+    }
+
+    pub fn into_metadata_value(self) -> BasicMetadataValueEnum<'ctx> {
+        match self {
+            OperandValue::BasicMetadataValue(value) => value,
+            _ => panic!("Found {self:?} but expected the VectorValue variant"),
+        }
+    }
+}
+
+unsafe impl AsValueRef for OperandValue<'_> {
+    fn as_value_ref(&self) -> LLVMValueRef {
+        match self {
+            OperandValue::BasicValue(value) => value.as_value_ref(),
+            OperandValue::BasicBlock(value) => value.as_value_ref(),
+            OperandValue::BasicMetadataValue(value) => value.as_value_ref(),
+        }
+    }
+}
+impl<'ctx, T: Into<BasicValueEnum<'ctx>>> From<T> for OperandValue<'ctx> {
+    fn from(value: T) -> Self {
+        Self::BasicValue(value.into())
+    }
+}
+impl<'ctx> From<BasicBlock<'ctx>> for OperandValue<'ctx> {
+    fn from(value: BasicBlock<'ctx>) -> Self {
+        Self::BasicBlock(value)
+    }
+}
+impl<'ctx> From<BasicMetadataValueEnum<'ctx>> for OperandValue<'ctx> {
+    fn from(value: BasicMetadataValueEnum<'ctx>) -> Self {
+        Self::BasicMetadataValue(value)
+    }
+}
+impl<'ctx> TryFrom<OperandValue<'ctx>> for BasicValueEnum<'ctx> {
+    type Error = ();
+
+    fn try_from(value: OperandValue<'ctx>) -> Result<Self, Self::Error> {
+        Ok(value.into_basic_value())
+    }
+}
+impl<'ctx> TryFrom<OperandValue<'ctx>> for BasicBlock<'ctx> {
+    type Error = ();
+
+    fn try_from(value: OperandValue<'ctx>) -> Result<Self, Self::Error> {
+        Ok(value.into_basic_block())
+    }
+}
+impl<'ctx> TryFrom<OperandValue<'ctx>> for BasicMetadataValueEnum<'ctx> {
+    type Error = ();
+
+    fn try_from(value: OperandValue<'ctx>) -> Result<Self, Self::Error> {
+        Ok(value.into_metadata_value())
+    }
+}
+
 /// Iterate over all the operands of an instruction value.
 #[derive(Debug)]
 pub struct OperandIter<'ctx> {
@@ -939,7 +1015,7 @@ pub struct OperandIter<'ctx> {
 }
 
 impl<'ctx> Iterator for OperandIter<'ctx> {
-    type Item = Option<Either<BasicValueEnum<'ctx>, BasicBlock<'ctx>>>;
+    type Item = Option<OperandValue<'ctx>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.i < self.count {

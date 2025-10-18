@@ -506,7 +506,7 @@ impl<'ctx> BasicBlock<'ctx> {
     ///
     /// bb1.replace_all_uses_with(&bb2);
     ///
-    /// assert_eq!(branch_inst.get_operand(0).unwrap().right().unwrap(), bb2);
+    /// assert_eq!(branch_inst.get_operand(0).unwrap().into_basic_block().unwrap(), bb2);
     /// ```
     pub fn replace_all_uses_with(self, other: &BasicBlock<'ctx>) {
         let value = unsafe { LLVMBasicBlockAsValue(self.basic_block) };
@@ -588,6 +588,12 @@ impl<'ctx> BasicBlock<'ctx> {
         }
 
         Some(value)
+    }
+}
+
+unsafe impl AsValueRef for BasicBlock<'_> {
+    fn as_value_ref(&self) -> LLVMValueRef {
+        self.basic_block as LLVMValueRef
     }
 }
 
