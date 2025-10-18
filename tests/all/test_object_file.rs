@@ -154,7 +154,10 @@ fn test_symbol_iterator() {
                 "a" => {
                     assert!(!has_symbol_a);
                     has_symbol_a = true;
+                    #[cfg(unix)]
                     assert_eq!(symbol.size(), 1);
+                    #[cfg(windows)]
+                    assert_eq!(symbol.size(), 0);
                 },
                 "b" => {
                     assert!(!has_symbol_b);
