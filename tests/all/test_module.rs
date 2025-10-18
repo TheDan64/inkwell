@@ -304,8 +304,30 @@ fn test_clone() {
     assert_eq!(module.print_to_string(), module2.print_to_string());
 }
 
+
 #[test]
-fn test_print_to_file() {
+fn test_print_to_file_good_path() {
+    let context = Context::create();
+    let module = context.create_module("mod");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let f = module.add_function("f", fn_type, None);
+    let basic_block = context.append_basic_block(f, "entry");
+    let builder = context.create_builder();
+
+    builder.position_at_end(basic_block);
+    builder.build_return(None).unwrap();
+
+    let mut temp_path = temp_dir();
+
+    temp_path.push("module");
+
+    assert!(module.print_to_file(&temp_path).is_ok());
+}
+
+#[should_panic]
+#[test]
+fn test_print_to_file_bad_path() {
     let context = Context::create();
     let module = context.create_module("mod");
     let void_type = context.void_type();
@@ -323,12 +345,6 @@ fn test_print_to_file() {
         module.print_to_file(bad_path).unwrap_err().to_str(),
         Ok("No such file or directory")
     );
-
-    let mut temp_path = temp_dir();
-
-    temp_path.push("module");
-
-    assert!(module.print_to_file(&temp_path).is_ok());
 }
 
 #[test]

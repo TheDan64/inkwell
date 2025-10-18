@@ -8,6 +8,12 @@ use inkwell::module::Linkage;
 use inkwell::targets::{CodeModel, InitializationConfig, Target};
 use inkwell::{AddressSpace, IntPredicate, OptimizationLevel};
 
+#[cfg(target_os = "windows")]
+use windows::Win32::System::{
+    SystemInformation::{SYSTEM_INFO, GetSystemInfo},
+    Memory::{VirtualAlloc, VirtualFree, VirtualProtect, MEM_COMMIT, MEM_RESERVE, MEM_RELEASE, PAGE_READWRITE, PAGE_EXECUTE_READ},
+};
+
 type Thunk = unsafe extern "C" fn();
 
 #[test]
@@ -374,8 +380,18 @@ struct MockMemoryManagerData {
 impl MockMemoryManager {
     pub fn new() -> Self {
         let capacity_bytes = 128 * 1024;
+        #[cfg(unix)]
         let page_size = unsafe { libc::sysconf(libc::_SC_PAGESIZE) as usize };
 
+        #[cfg(target_os = "windows")]
+        let page_size = {
+            let mut info = std::mem::MaybeUninit::<SYSTEM_INFO>::uninit();
+            unsafe { GetSystemInfo(info.as_mut_ptr()); }
+            let info = unsafe { info.assume_init() };
+            info.dwPageSize as usize
+        };
+        
+        #[cfg(unix)]
         let code_buff_ptr = unsafe {
             std::ptr::NonNull::new_unchecked(libc::mmap(
                 std::ptr::null_mut(),
@@ -386,7 +402,18 @@ impl MockMemoryManager {
                 0,
             ) as *mut u8)
         };
+        
+        #[cfg(target_os = "windows")]
+        let code_buff_ptr = unsafe {
+            std::ptr::NonNull::new_unchecked(VirtualAlloc(
+                None,
+                capacity_bytes,
+                MEM_COMMIT | MEM_RESERVE,
+                PAGE_READWRITE,
+            ).cast::<u8>())
+        };
 
+        #[cfg(unix)]
         let data_buff_ptr = unsafe {
             std::ptr::NonNull::new_unchecked(libc::mmap(
                 std::ptr::null_mut(),
@@ -396,6 +423,16 @@ impl MockMemoryManager {
                 -1,
                 0,
             ) as *mut u8)
+        };
+        
+        #[cfg(target_os = "windows")]
+        let data_buff_ptr = unsafe {
+            std::ptr::NonNull::new_unchecked(VirtualAlloc(
+                None,
+                capacity_bytes,
+                MEM_COMMIT | MEM_RESERVE,
+                PAGE_READWRITE,
+            ).cast::<u8>())
         };
 
         Self {
@@ -432,7 +469,7 @@ impl McjitMemoryManager for MockMemoryManager {
         let alloc_size = size.div_ceil(data.fixed_page_size) * data.fixed_page_size;
         let ptr = unsafe { data.code_buff_ptr.as_ptr().add(data.code_offset) };
         data.code_offset += alloc_size;
-
+        
         ptr
     }
 
@@ -459,7 +496,8 @@ impl McjitMemoryManager for MockMemoryManager {
         let mut data = self.data.borrow_mut();
 
         data.finalize_calls += 1;
-
+        
+        #[cfg(unix)]
         unsafe {
             libc::mprotect(
                 data.code_buff_ptr.as_ptr() as *mut libc::c_void,
@@ -472,6 +510,23 @@ impl McjitMemoryManager for MockMemoryManager {
                 libc::PROT_READ | libc::PROT_WRITE,
             );
         }
+        
+        #[cfg(windows)]
+        unsafe {
+            let mut old_protect = PAGE_READWRITE;
+            VirtualProtect(
+                data.code_buff_ptr.as_ptr() as *mut _,
+                data.fixed_capacity_bytes,
+                PAGE_EXECUTE_READ,
+                &mut old_protect,
+            ).expect("VirtualProtect failed");
+            VirtualProtect(
+                data.data_buff_ptr.as_ptr() as *mut _,
+                data.fixed_capacity_bytes,
+                PAGE_READWRITE,
+                &mut old_protect,
+            ).expect("VirtualProtect failed");
+        }
 
         Ok(())
     }
@@ -480,7 +535,8 @@ impl McjitMemoryManager for MockMemoryManager {
         let mut data = self.data.borrow_mut();
 
         data.destroy_calls += 1;
-
+        
+        #[cfg(unix)]
         unsafe {
             libc::munmap(
                 data.code_buff_ptr.as_ptr() as *mut libc::c_void,
@@ -490,6 +546,12 @@ impl McjitMemoryManager for MockMemoryManager {
                 data.data_buff_ptr.as_ptr() as *mut libc::c_void,
                 data.fixed_capacity_bytes,
             );
+        }
+        
+        #[cfg(windows)]
+        unsafe {
+            VirtualFree(data.code_buff_ptr.as_ptr() as *mut _, 0, MEM_RELEASE).expect("Failed to free memory.");
+            VirtualFree(data.data_buff_ptr.as_ptr() as *mut _, 0, MEM_RELEASE).expect("Failed to free memory.");
         }
     }
 }
