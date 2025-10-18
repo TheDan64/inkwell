@@ -342,11 +342,11 @@ fn test_print_to_file_bad_path() {
     #[cfg(windows)]
     let bad_path = Path::new("/does/not/exist/hopefully");
 
-    assert!(match module.print_to_file(bad_path).unwrap_err().to_str() {
-        Ok("no such file or directory") => true,
-        Ok("No such file or directory") => true,
-        _ => false,
-    });
+    match module.print_to_file(bad_path).unwrap_err().to_str() {
+        Ok("no such file or directory") | Ok("No such file or directory") => (),
+        Ok(err) => panic!("Some other error: {err}"),
+        Err(_) => panic!("Should have failed."),
+    };
 }
 
 #[test]
