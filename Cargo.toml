@@ -170,7 +170,7 @@ serde = { version = "1.0", default-features = false, features = [
 gumdrop = "0.8.1"
 regex = "1"
 
-[dev-dependencies.windows]
+[target.'cfg(windows)'.dev-dependencies.windows]
 version = "0.62.2"
 features = [
     "Win32_System_SystemInformation",
