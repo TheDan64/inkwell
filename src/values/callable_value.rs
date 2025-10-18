@@ -55,7 +55,7 @@ impl<'ctx> CallableValueEnum<'ctx> {
     #[inline]
     #[must_use]
     #[track_caller]
-    pub fn expect_function(self, msg: &str) -> FunctionValue<'ctx>  {
+    pub fn expect_function(self, msg: &str) -> FunctionValue<'ctx> {
         match self {
             Self::Function(function) => function,
             _ => panic!("{msg}"),
