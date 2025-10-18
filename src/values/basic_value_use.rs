@@ -10,6 +10,12 @@ use std::marker::PhantomData;
 use crate::basic_block::BasicBlock;
 use crate::values::{AnyValueEnum, BasicValueEnum};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum UsedValue<'ctx> {
+    Value(BasicValueEnum<'ctx>),
+    Block(BasicBlock<'ctx>),
+}
+
 /// A usage of a `BasicValue` in another value.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct BasicValueUse<'ctx>(LLVMUseRef, PhantomData<&'ctx ()>);
@@ -171,7 +177,7 @@ impl<'ctx> BasicValueUse<'ctx> {
     ///
     /// assert_eq!(bitcast_use_value, free_operand0);
     /// ```
-    pub fn get_used_value(self) -> Either<BasicValueEnum<'ctx>, BasicBlock<'ctx>> {
+    pub fn get_used_value(self) -> UsedValue<'ctx> {
         let used_value = unsafe { LLVMGetUsedValue(self.0) };
 
         let is_basic_block = unsafe { !LLVMIsABasicBlock(used_value).is_null() };
@@ -179,9 +185,9 @@ impl<'ctx> BasicValueUse<'ctx> {
         if is_basic_block {
             let bb = unsafe { BasicBlock::new(LLVMValueAsBasicBlock(used_value)) };
 
-            Right(bb.expect("BasicBlock should always be valid"))
+            UsedValue::Block(bb.expect("BasicBlock should always be valid"))
         } else {
-            unsafe { Left(BasicValueEnum::new(used_value)) }
+            unsafe { UsedValue::Value(BasicValueEnum::new(used_value)) }
         }
     }
 }
