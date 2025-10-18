@@ -204,7 +204,7 @@ fn test_default_triple() {
     } else {
         false
     };
-    
+
     assert!(has_known_os, "Target triple '{default_triple}' has unknown OS");
 
     // TODO: CFG for other supported major OSes
