@@ -1,7 +1,5 @@
 use std::fmt::{self, Display};
 
-use either::Either;
-
 use llvm_sys::core::LLVMGetCalledFunctionType;
 use llvm_sys::core::{
     LLVMGetCalledValue, LLVMGetInstructionCallConv, LLVMGetTypeKind, LLVMIsTailCall, LLVMSetInstrParamAlignment,
@@ -19,6 +17,78 @@ use crate::values::operand_bundle::OperandBundleIter;
 use crate::values::{AsValueRef, BasicValueEnum, FunctionValue, InstructionValue, Value};
 
 use super::{AnyValue, InstructionOpcode};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ValueKind<'ctx> {
+    Basic(BasicValueEnum<'ctx>),
+    Instruction(InstructionValue<'ctx>),
+}
+
+impl<'ctx> ValueKind<'ctx> {
+    #[inline]
+    #[must_use]
+    pub fn is_basic(self) -> bool {
+        matches!(self, Self::Basic(_))
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn is_instruction(self) -> bool {
+        matches!(self, Self::Instruction(_))
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn basic(self) -> Option<BasicValueEnum<'ctx>> {
+        match self {
+            Self::Basic(value) => Some(value),
+            _ => None,
+        }
+    }
+
+    #[inline]
+    #[must_use]
+    pub fn instruction(self) -> Option<InstructionValue<'ctx>> {
+        match self {
+            Self::Instruction(inst) => Some(inst),
+            _ => None,
+        }
+    }
+
+    #[inline]
+    #[must_use]
+    #[track_caller]
+    pub fn expect_basic(self, msg: &str) -> BasicValueEnum<'ctx> {
+        match self {
+            Self::Basic(value) => value,
+            _ => panic!("{msg}"),
+        }
+    }
+
+    #[inline]
+    #[must_use]
+    #[track_caller]
+    pub fn expect_instruction(self, msg: &str) -> InstructionValue<'ctx> {
+        match self {
+            Self::Instruction(inst) => inst,
+            _ => panic!("{msg}"),
+        }
+    }
+
+    #[inline]
+    #[must_use]
+    #[track_caller]
+    pub fn unwrap_basic(self) -> BasicValueEnum<'ctx> {
+        self.expect_basic("Called unwrap_basic() on ValueKind::Instruction.")
+    }
+
+    #[inline]
+    #[must_use]
+    #[track_caller]
+    pub fn unwrap_instruction(self) -> InstructionValue<'ctx> {
+        self.expect_instruction("Called unwrap_instruction() on ValueKind::Basic.")
+    }
+}
 
 /// A value resulting from a function call. It may have function attributes applied to it.
 ///
@@ -160,13 +230,13 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// let call_site_value = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
-    /// assert!(call_site_value.try_as_basic_value().is_right());
+    /// assert!(call_site_value.try_as_basic_value().is_instruction());
     /// ```
-    pub fn try_as_basic_value(self) -> Either<BasicValueEnum<'ctx>, InstructionValue<'ctx>> {
+    pub fn try_as_basic_value(self) -> ValueKind<'ctx> {
         unsafe {
             match LLVMGetTypeKind(LLVMTypeOf(self.as_value_ref())) {
-                LLVMTypeKind::LLVMVoidTypeKind => Either::Right(InstructionValue::new(self.as_value_ref())),
-                _ => Either::Left(BasicValueEnum::new(self.as_value_ref())),
+                LLVMTypeKind::LLVMVoidTypeKind => ValueKind::Instruction(InstructionValue::new(self.as_value_ref())),
+                _ => ValueKind::Basic(BasicValueEnum::new(self.as_value_ref())),
             }
         }
     }

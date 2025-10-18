@@ -104,7 +104,7 @@ fn test_operands() {
         .get_first_use()
         .unwrap()
         .get_used_value()
-        .left()
+        .value()
         .unwrap();
     let free_call_param = free_instruction.get_operand(0).unwrap().left().unwrap();
 
@@ -137,8 +137,8 @@ fn test_operands() {
         store_operand_use1.get_user().into_instruction_value(),
         store_instruction
     );
-    assert_eq!(store_operand_use0.get_used_value().left().unwrap(), f32_val);
-    assert_eq!(store_operand_use1.get_used_value().left().unwrap(), arg1);
+    assert_eq!(store_operand_use0.get_used_value().value().unwrap(), f32_val);
+    assert_eq!(store_operand_use1.get_used_value().value().unwrap(), arg1);
 
     assert!(store_instruction.get_operand_use(2).is_none());
     assert!(store_instruction.get_operand_use(3).is_none());
@@ -163,8 +163,8 @@ fn test_operands() {
         store_operand_use1.get_user().into_instruction_value(),
         store_instruction
     );
-    assert_eq!(store_operand_use0.get_used_value().left().unwrap(), f32_val);
-    assert_eq!(store_operand_use1.get_used_value().left().unwrap(), arg1);
+    assert_eq!(store_operand_use0.get_used_value().value().unwrap(), f32_val);
+    assert_eq!(store_operand_use1.get_used_value().value().unwrap(), arg1);
     assert!(store_operand_uses.next().is_none());
 
     let free_operand_use0 = free_instruction.get_operand_use(0).unwrap();
@@ -201,7 +201,7 @@ fn test_basic_block_operand() {
 
     let bb_operand_use = branch_instruction.get_operand_use(0).unwrap();
 
-    assert_eq!(bb_operand_use.get_used_value().right().unwrap(), basic_block2);
+    assert_eq!(bb_operand_use.get_used_value().block().unwrap(), basic_block2);
 
     builder.position_at_end(basic_block2);
     builder.build_return(None).unwrap();

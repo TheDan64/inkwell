@@ -36,8 +36,7 @@ use llvm_sys::LLVMTypeKind;
 ///
 /// let ret_val = builder.build_call(fn_value, &[i32_arg.into()], "call").unwrap()
 ///     .try_as_basic_value()
-///     .left()
-///     .unwrap();
+///     .unwrap_basic();
 ///
 /// builder.build_return(Some(&ret_val)).unwrap();
 /// ```
@@ -71,8 +70,7 @@ use llvm_sys::LLVMTypeKind;
 ///
 /// let ret_val = builder.build_call(callable_value, &[i32_arg.into()], "call").unwrap()
 ///     .try_as_basic_value()
-///     .left()
-///     .unwrap();
+///     .unwrap_basic();
 ///
 /// builder.build_return(Some(&ret_val)).unwrap();
 /// ```
