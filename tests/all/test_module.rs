@@ -324,7 +324,6 @@ fn test_print_to_file_good_path() {
     assert!(module.print_to_file(&temp_path).is_ok());
 }
 
-#[should_panic]
 #[test]
 fn test_print_to_file_bad_path() {
     let context = Context::create();
@@ -337,13 +336,18 @@ fn test_print_to_file_bad_path() {
 
     builder.position_at_end(basic_block);
     builder.build_return(None).unwrap();
-
+    
+    #[cfg(unix)]
     let bad_path = Path::new("/tmp/some/silly/path/that/sure/doesn't/exist");
-
-    assert_eq!(
-        module.print_to_file(bad_path).unwrap_err().to_str(),
-        Ok("No such file or directory")
-    );
+    #[cfg(windows)]
+    let bad_path = Path::new("/does/not/exist/hopefully");
+    
+    assert!(match module.print_to_file(bad_path).unwrap_err().to_str() {
+        Ok("no such file or directory") => true,
+        Ok("No such file or directory") => true,
+        Ok(_) => false,
+        Err(_) => false,
+    });
 }
 
 #[test]
