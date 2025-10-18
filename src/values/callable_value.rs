@@ -1,4 +1,3 @@
-use either::Either;
 use std::convert::TryFrom;
 use std::fmt::{self, Display};
 
@@ -10,6 +9,86 @@ use llvm_sys::core::{LLVMGetElementType, LLVMGetTypeKind, LLVMTypeOf};
 use llvm_sys::prelude::LLVMTypeRef;
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMTypeKind;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub(crate) enum CallableValueEnum<'ctx> {
+    Function(FunctionValue<'ctx>),
+    Pointer(PointerValue<'ctx>),
+}
+
+impl<'ctx> CallableValueEnum<'ctx> {
+    #[allow(unused)]
+    #[inline]
+    #[must_use]
+    pub fn is_function(self) -> bool {
+        matches!(self, Self::Function(_))
+    }
+
+    #[allow(unused)]
+    #[inline]
+    #[must_use]
+    pub fn is_pointer(self) -> bool {
+        matches!(self, Self::Pointer(_))
+    }
+
+    #[allow(unused)]
+    #[inline]
+    #[must_use]
+    pub fn function(self) -> Option<FunctionValue<'ctx>> {
+        match self {
+            Self::Function(function) => Some(function),
+            _ => None,
+        }
+    }
+
+    #[allow(unused)]
+    #[inline]
+    #[must_use]
+    pub fn pointer(self) -> Option<PointerValue<'ctx>> {
+        match self {
+            Self::Pointer(pointer) => Some(pointer),
+            _ => None,
+        }
+    }
+
+    #[allow(unused)]
+    #[inline]
+    #[must_use]
+    #[track_caller]
+    pub fn expect_function(self, msg: &str) -> FunctionValue<'ctx>  {
+        match self {
+            Self::Function(function) => function,
+            _ => panic!("{msg}"),
+        }
+    }
+
+    #[allow(unused)]
+    #[inline]
+    #[must_use]
+    #[track_caller]
+    pub fn expect_pointer(self, msg: &str) -> PointerValue<'ctx> {
+        match self {
+            Self::Pointer(pointer) => pointer,
+            _ => panic!("{msg}"),
+        }
+    }
+
+    #[allow(unused)]
+    #[inline]
+    #[must_use]
+    #[track_caller]
+    pub fn unwrap_function(self) -> FunctionValue<'ctx> {
+        self.expect_function("Called unwrap_function() on CallableValueEnum::Pointer.")
+    }
+
+    #[allow(unused)]
+    #[inline]
+    #[must_use]
+    #[track_caller]
+    pub fn unwrap_pointer(self) -> PointerValue<'ctx> {
+        self.expect_pointer("Called unwrap_pointer() on CallableValueEnum::Function.")
+    }
+}
 
 /// A value that can be called with the [`build_call`] instruction.
 ///
@@ -75,15 +154,13 @@ use llvm_sys::LLVMTypeKind;
 /// builder.build_return(Some(&ret_val)).unwrap();
 /// ```
 #[derive(Debug)]
-pub struct CallableValue<'ctx>(Either<FunctionValue<'ctx>, PointerValue<'ctx>>);
+pub struct CallableValue<'ctx>(CallableValueEnum<'ctx>);
 
 unsafe impl AsValueRef for CallableValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
-        use either::Either::*;
-
         match self.0 {
-            Left(function) => function.as_value_ref(),
-            Right(pointer) => pointer.as_value_ref(),
+            CallableValueEnum::Function(function) => function.as_value_ref(),
+            CallableValueEnum::Pointer(pointer) => pointer.as_value_ref(),
         }
     }
 }
@@ -92,11 +169,9 @@ unsafe impl<'ctx> AnyValue<'ctx> for CallableValue<'ctx> {}
 
 unsafe impl AsTypeRef for CallableValue<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        use either::Either::*;
-
         match self.0 {
-            Left(function) => function.get_type().as_type_ref(),
-            Right(pointer) => pointer.get_type().get_element_type().as_type_ref(),
+            CallableValueEnum::Function(function) => function.get_type().as_type_ref(),
+            CallableValueEnum::Pointer(pointer) => pointer.get_type().get_element_type().as_type_ref(),
         }
     }
 }
@@ -115,7 +190,7 @@ impl CallableValue<'_> {
 
 impl<'ctx> From<FunctionValue<'ctx>> for CallableValue<'ctx> {
     fn from(value: FunctionValue<'ctx>) -> Self {
-        Self(Either::Left(value))
+        Self(CallableValueEnum::Function(value))
     }
 }
 
@@ -129,7 +204,7 @@ impl<'ctx> TryFrom<PointerValue<'ctx>> for CallableValue<'ctx> {
         let is_a_fn_ptr = matches!(ty_kind, LLVMTypeKind::LLVMFunctionTypeKind);
 
         if is_a_fn_ptr {
-            Ok(Self(Either::Right(value)))
+            Ok(Self(CallableValueEnum::Pointer(value)))
         } else {
             Err(())
         }
