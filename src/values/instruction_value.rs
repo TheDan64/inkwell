@@ -824,6 +824,7 @@ impl<'ctx> InstructionValue<'ctx> {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
+    /// use inkwell::values::BasicValue;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("ivs");
@@ -862,6 +863,7 @@ impl<'ctx> InstructionValue<'ctx> {
     ///
     /// ```no_run
     /// use inkwell::context::Context;
+    /// use inkwell::values::BasicValue;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("ivs");
