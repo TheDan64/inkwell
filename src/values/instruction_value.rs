@@ -14,7 +14,7 @@ use llvm_sys::core::{
 };
 use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
 #[llvm_versions(10..)]
-use llvm_sys::core::{LLVMIsAAtomicCmpXchgInst, LLVMIsAAtomicRMWInst};
+use llvm_sys::core::{LLVMGetAtomicRMWBinOp, LLVMIsAAtomicCmpXchgInst, LLVMIsAAtomicRMWInst};
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMOpcode;
 
@@ -24,6 +24,8 @@ use crate::error::AlignmentError;
 use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, MetadataValue, Value};
 use crate::{basic_block::BasicBlock, types::AnyTypeEnum};
 use crate::{types::BasicTypeEnum, values::traits::AsValueRef};
+#[llvm_versions(10..)]
+use crate::AtomicRMWBinOp;
 use crate::{AtomicOrdering, FloatPredicate, IntPredicate};
 
 use super::AnyValue;
@@ -881,6 +883,22 @@ impl<'ctx> InstructionValue<'ctx> {
         if self.get_opcode() == InstructionOpcode::FCmp {
             let pred = unsafe { LLVMGetFCmpPredicate(self.as_value_ref()) };
             Some(FloatPredicate::new(pred))
+        } else {
+            None
+        }
+    }
+
+    /// Gets the binary operation of an `AtomicRMW` `InstructionValue`.
+    /// For instance, in the LLVM instruction
+    /// `%3 = atomicrmw add i32* %ptr, i32 %val monotonic`
+    /// this gives the `add`.
+    ///
+    /// If the instruction is not an `AtomicRMW`, this returns None.
+    #[llvm_versions(10..)]
+    pub fn get_atomic_rmw_bin_op(self) -> Option<AtomicRMWBinOp> {
+        if self.get_opcode() == InstructionOpcode::AtomicRMW {
+            let bin_op = unsafe { LLVMGetAtomicRMWBinOp(self.as_value_ref()) };
+            Some(AtomicRMWBinOp::new(bin_op))
         } else {
             None
         }
