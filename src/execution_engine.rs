@@ -166,7 +166,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
     ///
     /// let argf = ft.const_float(64.);
     /// let call_site_value = builder.build_call(extf, &[argf.into(), argf.into()], "retv").unwrap();
-    /// let retv = call_site_value.try_as_basic_value().left().unwrap().into_float_value();
+    /// let retv = call_site_value.try_as_basic_value().unwrap_basic().into_float_value();
     ///
     /// builder.build_return(Some(&retv)).unwrap();
     ///

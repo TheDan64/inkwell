@@ -971,7 +971,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                                         .build_call(fun, &[lhs.into(), rhs.into()], "tmpbin")
                                         .unwrap()
                                         .try_as_basic_value()
-                                        .left()
+                                        .basic()
                                     {
                                         Some(value) => Ok(value.into_float_value()),
                                         None => Err("Invalid call produced."),
@@ -1001,7 +1001,7 @@ impl<'a, 'ctx> Compiler<'a, 'ctx> {
                         .build_call(fun, argsv.as_slice(), "tmp")
                         .unwrap()
                         .try_as_basic_value()
-                        .left()
+                        .basic()
                     {
                         Some(value) => Ok(value.into_float_value()),
                         None => Err("Invalid call produced."),

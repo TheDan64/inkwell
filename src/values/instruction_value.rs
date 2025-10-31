@@ -1,7 +1,3 @@
-use either::{
-    Either,
-    Either::{Left, Right},
-};
 #[llvm_versions(14..)]
 use llvm_sys::core::LLVMGetGEPSourceElementType;
 use llvm_sys::core::{
@@ -21,11 +17,11 @@ use llvm_sys::LLVMOpcode;
 
 use std::{ffi::CStr, fmt, fmt::Display};
 
-use crate::error::AlignmentError;
 use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, MetadataValue, Value};
 #[llvm_versions(10..)]
 use crate::AtomicRMWBinOp;
 use crate::{basic_block::BasicBlock, types::AnyTypeEnum};
+use crate::{error::AlignmentError, values::basic_value_use::Operand};
 use crate::{types::BasicTypeEnum, values::traits::AsValueRef};
 use crate::{AtomicOrdering, FloatPredicate, IntPredicate};
 
@@ -663,7 +659,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// 3) Function call has two: i8 pointer %1 argument, and the free function itself
     /// 4) Void return has zero: void is not a value and does not count as an operand
     ///    even though the return instruction can take values.
-    pub fn get_operand(self, index: u32) -> Option<Either<BasicValueEnum<'ctx>, BasicBlock<'ctx>>> {
+    pub fn get_operand(self, index: u32) -> Option<Operand<'ctx>> {
         let num_operands = self.get_num_operands();
 
         if index >= num_operands {
@@ -678,7 +674,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// # Safety
     ///
     /// The index must be less than [InstructionValue::get_num_operands].
-    pub unsafe fn get_operand_unchecked(self, index: u32) -> Option<Either<BasicValueEnum<'ctx>, BasicBlock<'ctx>>> {
+    pub unsafe fn get_operand_unchecked(self, index: u32) -> Option<Operand<'ctx>> {
         let operand = unsafe { LLVMGetOperand(self.as_value_ref(), index) };
 
         if operand.is_null() {
@@ -690,9 +686,9 @@ impl<'ctx> InstructionValue<'ctx> {
         if is_basic_block {
             let bb = unsafe { BasicBlock::new(LLVMValueAsBasicBlock(operand)) };
 
-            Some(Right(bb.expect("BasicBlock should always be valid")))
+            Some(Operand::Block(bb.expect("BasicBlock should always be valid")))
         } else {
-            Some(Left(unsafe { BasicValueEnum::new(operand) }))
+            Some(Operand::Value(unsafe { BasicValueEnum::new(operand) }))
         }
     }
 
@@ -737,7 +733,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// // This will produce invalid IR:
     /// free_instruction.set_operand(0, f32_val);
     ///
-    /// assert_eq!(free_instruction.get_operand(0).unwrap().left().unwrap(), f32_val);
+    /// assert_eq!(free_instruction.get_operand(0).unwrap().unwrap_value(), f32_val);
     /// ```
     pub fn set_operand<BV: BasicValue<'ctx>>(self, index: u32, val: BV) -> bool {
         let num_operands = self.get_num_operands();
@@ -1040,7 +1036,7 @@ pub struct OperandIter<'ctx> {
 }
 
 impl<'ctx> Iterator for OperandIter<'ctx> {
-    type Item = Option<Either<BasicValueEnum<'ctx>, BasicBlock<'ctx>>>;
+    type Item = Option<Operand<'ctx>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.i < self.count {

@@ -1,7 +1,3 @@
-use either::{
-    Either,
-    Either::{Left, Right},
-};
 use llvm_sys::core::{LLVMGetNextUse, LLVMGetUsedValue, LLVMGetUser, LLVMIsABasicBlock, LLVMValueAsBasicBlock};
 use llvm_sys::prelude::LLVMUseRef;
 
@@ -9,6 +5,87 @@ use std::marker::PhantomData;
 
 use crate::basic_block::BasicBlock;
 use crate::values::{AnyValueEnum, BasicValueEnum};
+
+/// Either [BasicValueEnum] or [BasicBlock].
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Operand<'ctx> {
+    Value(BasicValueEnum<'ctx>),
+    Block(BasicBlock<'ctx>),
+}
+
+impl<'ctx> Operand<'ctx> {
+    /// Determines if the [Operand] is a [BasicValueEnum].
+    #[inline]
+    #[must_use]
+    pub fn is_value(self) -> bool {
+        matches!(self, Self::Value(_))
+    }
+
+    /// Determines if the [Operand] is a [BasicBlock].
+    #[inline]
+    #[must_use]
+    pub fn is_block(self) -> bool {
+        matches!(self, Self::Block(_))
+    }
+
+    /// If the [Operand] is a [BasicValueEnum], map it into [Option::Some].
+    #[inline]
+    #[must_use]
+    pub fn value(self) -> Option<BasicValueEnum<'ctx>> {
+        match self {
+            Self::Value(value) => Some(value),
+            _ => None,
+        }
+    }
+
+    /// If the [Operand] is a [BasicBlock], map it into [Option::Some].
+    #[inline]
+    #[must_use]
+    pub fn block(self) -> Option<BasicBlock<'ctx>> {
+        match self {
+            Self::Block(block) => Some(block),
+            _ => None,
+        }
+    }
+
+    /// Expect [BasicValueEnum], panic with the message if it is not.
+    #[inline]
+    #[must_use]
+    #[track_caller]
+    pub fn expect_value(self, msg: &str) -> BasicValueEnum<'ctx> {
+        match self {
+            Self::Value(value) => value,
+            _ => panic!("{msg}"),
+        }
+    }
+
+    /// Expect [BasicBlock], panic with the message if it is not.
+    #[inline]
+    #[must_use]
+    #[track_caller]
+    pub fn expect_block(self, msg: &str) -> BasicBlock<'ctx> {
+        match self {
+            Self::Block(block) => block,
+            _ => panic!("{msg}"),
+        }
+    }
+
+    /// Unwrap [BasicValueEnum]. Will panic if it is not.
+    #[inline]
+    #[must_use]
+    #[track_caller]
+    pub fn unwrap_value(self) -> BasicValueEnum<'ctx> {
+        self.expect_value("Called unwrap_value() on UsedValue::Block.")
+    }
+
+    /// Unwrap [BasicBlock]. Will panic if it is not.
+    #[inline]
+    #[must_use]
+    #[track_caller]
+    pub fn unwrap_block(self) -> BasicBlock<'ctx> {
+        self.expect_block("Called unwrap_block() on UsedValue::Value.")
+    }
+}
 
 /// A usage of a `BasicValue` in another value.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -160,18 +237,18 @@ impl<'ctx> BasicValueUse<'ctx> {
     /// let free_instruction = builder.build_free(arg1).unwrap();
     /// let return_instruction = builder.build_return(None).unwrap();
     ///
-    /// let free_operand0 = free_instruction.get_operand(0).unwrap().left().unwrap();
+    /// let free_operand0 = free_instruction.get_operand(0).unwrap().unwrap_value();
     /// let free_operand0_instruction = free_operand0.as_instruction_value().unwrap();
     /// let bitcast_use_value = free_operand0_instruction
     ///     .get_first_use()
     ///     .unwrap()
     ///     .get_used_value()
-    ///     .left()
+    ///     .value()
     ///     .unwrap();
     ///
     /// assert_eq!(bitcast_use_value, free_operand0);
     /// ```
-    pub fn get_used_value(self) -> Either<BasicValueEnum<'ctx>, BasicBlock<'ctx>> {
+    pub fn get_used_value(self) -> Operand<'ctx> {
         let used_value = unsafe { LLVMGetUsedValue(self.0) };
 
         let is_basic_block = unsafe { !LLVMIsABasicBlock(used_value).is_null() };
@@ -179,9 +256,9 @@ impl<'ctx> BasicValueUse<'ctx> {
         if is_basic_block {
             let bb = unsafe { BasicBlock::new(LLVMValueAsBasicBlock(used_value)) };
 
-            Right(bb.expect("BasicBlock should always be valid"))
+            Operand::Block(bb.expect("BasicBlock should always be valid"))
         } else {
-            unsafe { Left(BasicValueEnum::new(used_value)) }
+            unsafe { Operand::Value(BasicValueEnum::new(used_value)) }
         }
     }
 }

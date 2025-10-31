@@ -185,7 +185,7 @@ fn test_rauw() {
     bb1.replace_all_uses_with(&bb1); // no-op
     bb1.replace_all_uses_with(&bb2);
 
-    assert_eq!(branch_inst.get_operand(0).unwrap().right().unwrap(), bb2);
+    assert_eq!(branch_inst.get_operand(0).unwrap().unwrap_block(), bb2);
 }
 
 #[test]
