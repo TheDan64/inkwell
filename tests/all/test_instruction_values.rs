@@ -808,3 +808,105 @@ fn test_or_disjoint_flag() {
 
     assert_eq!(i32_and.get_disjoint_flag(), None);
 }
+
+#[test]
+fn test_instruction_indices() {
+    let context = Context::create();
+    let module = context.create_module("testing");
+    let builder = context.create_builder();
+
+    let void_type = context.void_type();
+    let i32_type = context.i32_type();
+    let f32_type = context.f32_type();
+    let struct_type = context.struct_type(&[i32_type.into(), f32_type.into(), i32_type.into()], false);
+    let array_type = i32_type.array_type(3);
+    let fn_type = void_type.fn_type(&[], false);
+
+    let function = module.add_function("test_indices", fn_type, None);
+    let basic_block = context.append_basic_block(function, "entry");
+
+    builder.position_at_end(basic_block);
+
+    // Create actual instruction values by using alloca and load
+    let struct_alloca = builder.build_alloca(struct_type, "struct_alloca").unwrap();
+    #[cfg(feature = "typed-pointers")]
+    let struct_val = builder.build_load(struct_alloca, "struct_load").unwrap();
+    #[cfg(not(feature = "typed-pointers"))]
+    let struct_val = builder.build_load(struct_type, struct_alloca, "struct_load").unwrap();
+
+    // Test with struct ExtractValue - now these will be instructions
+    let extract_struct_0 = builder
+        .build_extract_value(struct_val.into_struct_value(), 0, "extract_0")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+    let extract_struct_1 = builder
+        .build_extract_value(struct_val.into_struct_value(), 1, "extract_1")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+    let extract_struct_2 = builder
+        .build_extract_value(struct_val.into_struct_value(), 2, "extract_2")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    assert_eq!(extract_struct_0.get_num_indices(), 1);
+    assert_eq!(extract_struct_0.get_indices(), vec![0]);
+    assert_eq!(extract_struct_1.get_num_indices(), 1);
+    assert_eq!(extract_struct_1.get_indices(), vec![1]);
+    assert_eq!(extract_struct_2.get_num_indices(), 1);
+    assert_eq!(extract_struct_2.get_indices(), vec![2]);
+
+    // Test with array ExtractValue
+    let array_alloca = builder.build_alloca(array_type, "array_alloca").unwrap();
+    #[cfg(feature = "typed-pointers")]
+    let array_val = builder.build_load(array_alloca, "array_load").unwrap();
+    #[cfg(not(feature = "typed-pointers"))]
+    let array_val = builder.build_load(array_type, array_alloca, "array_load").unwrap();
+
+    let extract_array_0 = builder
+        .build_extract_value(array_val.into_array_value(), 0, "extract_arr_0")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+    let extract_array_1 = builder
+        .build_extract_value(array_val.into_array_value(), 1, "extract_arr_1")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    assert_eq!(extract_array_0.get_num_indices(), 1);
+    assert_eq!(extract_array_0.get_indices(), vec![0]);
+    assert_eq!(extract_array_1.get_num_indices(), 1);
+    assert_eq!(extract_array_1.get_indices(), vec![1]);
+
+    // Test with InsertValue
+    let i32_val = i32_type.const_int(42, false);
+    let insert_struct_0 = builder
+        .build_insert_value(struct_val.into_struct_value(), i32_val, 0, "insert_0")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+    let insert_struct_2 = builder
+        .build_insert_value(struct_val.into_struct_value(), i32_val, 2, "insert_2")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    assert_eq!(insert_struct_0.get_num_indices(), 1);
+    assert_eq!(insert_struct_0.get_indices(), vec![0]);
+    assert_eq!(insert_struct_2.get_num_indices(), 1);
+    assert_eq!(insert_struct_2.get_indices(), vec![2]);
+
+    // Test with non-extractvalue/insertvalue instruction (should return 0/empty)
+    let i32_alloca = builder.build_alloca(i32_type, "i32_alloca").unwrap();
+    let store_inst = builder.build_store(i32_alloca, i32_val).unwrap();
+
+    assert_eq!(store_inst.get_num_indices(), 0);
+    assert_eq!(store_inst.get_indices(), vec![]);
+
+    builder.build_return(None).unwrap();
+
+    assert!(module.verify().is_ok());
+}
