@@ -394,6 +394,10 @@ fn test_volatile_atomicrmw_cmpxchg() {
         .as_instruction_value()
         .unwrap();
 
+    // Test get_atomic_rmw_bin_op
+    assert_eq!(atomicrmw.get_atomic_rmw_bin_op(), Some(AtomicRMWBinOp::Add));
+    assert_eq!(cmpxchg.get_atomic_rmw_bin_op(), None);
+
     assert!(!atomicrmw.get_volatile().unwrap());
     assert!(!cmpxchg.get_volatile().unwrap());
     atomicrmw.set_volatile(true).unwrap();
