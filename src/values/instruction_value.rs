@@ -1,22 +1,25 @@
 #[llvm_versions(14..)]
 use llvm_sys::core::LLVMGetGEPSourceElementType;
 use llvm_sys::core::{
-    LLVMGetAlignment, LLVMGetAllocatedType, LLVMGetFCmpPredicate, LLVMGetICmpPredicate, LLVMGetInstructionOpcode,
-    LLVMGetInstructionParent, LLVMGetMetadata, LLVMGetNextInstruction, LLVMGetNumOperands, LLVMGetOperand,
-    LLVMGetOperandUse, LLVMGetPreviousInstruction, LLVMGetVolatile, LLVMHasMetadata, LLVMInstructionClone,
-    LLVMInstructionEraseFromParent, LLVMInstructionRemoveFromParent, LLVMIsAAllocaInst, LLVMIsABasicBlock,
-    LLVMIsAGetElementPtrInst, LLVMIsALoadInst, LLVMIsAStoreInst, LLVMIsATerminatorInst, LLVMIsConditional,
-    LLVMIsTailCall, LLVMSetAlignment, LLVMSetMetadata, LLVMSetOperand, LLVMSetVolatile, LLVMValueAsBasicBlock,
+    LLVMGetAlignment, LLVMGetAllocatedType, LLVMGetFCmpPredicate, LLVMGetICmpPredicate, LLVMGetIndices,
+    LLVMGetInstructionOpcode, LLVMGetInstructionParent, LLVMGetMetadata, LLVMGetNextInstruction, LLVMGetNumIndices,
+    LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMGetPreviousInstruction, LLVMGetVolatile,
+    LLVMHasMetadata, LLVMInstructionClone, LLVMInstructionEraseFromParent, LLVMInstructionRemoveFromParent,
+    LLVMIsAAllocaInst, LLVMIsABasicBlock, LLVMIsAGetElementPtrInst, LLVMIsALoadInst, LLVMIsAStoreInst,
+    LLVMIsATerminatorInst, LLVMIsConditional, LLVMIsTailCall, LLVMSetAlignment, LLVMSetMetadata, LLVMSetOperand,
+    LLVMSetVolatile, LLVMValueAsBasicBlock,
 };
-use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
 #[llvm_versions(10..)]
-use llvm_sys::core::{LLVMIsAAtomicCmpXchgInst, LLVMIsAAtomicRMWInst};
+use llvm_sys::core::{LLVMGetAtomicRMWBinOp, LLVMIsAAtomicCmpXchgInst, LLVMIsAAtomicRMWInst};
+use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMOpcode;
 
 use std::{ffi::CStr, fmt, fmt::Display};
 
 use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, MetadataValue, Value};
+#[llvm_versions(10..)]
+use crate::AtomicRMWBinOp;
 use crate::{basic_block::BasicBlock, types::AnyTypeEnum};
 use crate::{error::AlignmentError, values::basic_value_use::Operand};
 use crate::{types::BasicTypeEnum, values::traits::AsValueRef};
@@ -809,6 +812,88 @@ impl<'ctx> InstructionValue<'ctx> {
         }
     }
 
+    /// Obtains the number of indices an `InstructionValue` has.
+    /// An index is used in `ExtractValue` and `InsertValue` instructions to specify
+    /// which field or element to access in an aggregate type (struct or array).
+    ///
+    /// Returns 0 for instructions that are not `ExtractValue` or `InsertValue`.
+    ///
+    /// The following example,
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::values::BasicValue;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("ivs");
+    /// let builder = context.create_builder();
+    /// let void_type = context.void_type();
+    /// let i32_type = context.i32_type();
+    /// let struct_type = context.struct_type(&[i32_type.into(), i32_type.into()], false);
+    /// let fn_type = void_type.fn_type(&[], false);
+    ///
+    /// let function = module.add_function("test", fn_type, None);
+    /// let basic_block = context.append_basic_block(function, "entry");
+    ///
+    /// builder.position_at_end(basic_block);
+    ///
+    /// let struct_val = struct_type.get_undef();
+    /// let extract_instruction = builder.build_extract_value(struct_val, 0, "extract").unwrap()
+    ///     .as_instruction_value().unwrap();
+    ///
+    /// assert_eq!(extract_instruction.get_num_indices(), 1);
+    /// ```
+    pub fn get_num_indices(self) -> u32 {
+        let opcode = self.get_opcode();
+        if opcode != InstructionOpcode::ExtractValue && opcode != InstructionOpcode::InsertValue {
+            return 0;
+        }
+        unsafe { LLVMGetNumIndices(self.as_value_ref()) }
+    }
+
+    /// Obtains the indices an `InstructionValue` has as a vector.
+    /// An index is used in `ExtractValue` and `InsertValue` instructions to specify
+    /// which field or element to access in an aggregate type (struct or array).
+    ///
+    /// Returns an empty vector for instructions that are not `ExtractValue` or `InsertValue`.
+    ///
+    /// The following example,
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::values::BasicValue;
+    ///
+    /// let context = Context::create();
+    /// let module = context.create_module("ivs");
+    /// let builder = context.create_builder();
+    /// let void_type = context.void_type();
+    /// let i32_type = context.i32_type();
+    /// let struct_type = context.struct_type(&[i32_type.into(), i32_type.into()], false);
+    /// let fn_type = void_type.fn_type(&[], false);
+    ///
+    /// let function = module.add_function("test", fn_type, None);
+    /// let basic_block = context.append_basic_block(function, "entry");
+    ///
+    /// builder.position_at_end(basic_block);
+    ///
+    /// let struct_val = struct_type.get_undef();
+    /// let extract_instruction = builder.build_extract_value(struct_val, 0, "extract").unwrap()
+    ///     .as_instruction_value().unwrap();
+    ///
+    /// assert_eq!(extract_instruction.get_indices(), vec![0]);
+    /// ```
+    pub fn get_indices(self) -> Vec<u32> {
+        let num_indices = self.get_num_indices();
+        if num_indices == 0 {
+            return Vec::new();
+        }
+
+        unsafe {
+            let indices_ptr = LLVMGetIndices(self.as_value_ref());
+            std::slice::from_raw_parts(indices_ptr, num_indices as usize).to_vec()
+        }
+    }
+
     /// Gets the first use of an `InstructionValue` if any.
     ///
     /// The following example,
@@ -877,6 +962,22 @@ impl<'ctx> InstructionValue<'ctx> {
         if self.get_opcode() == InstructionOpcode::FCmp {
             let pred = unsafe { LLVMGetFCmpPredicate(self.as_value_ref()) };
             Some(FloatPredicate::new(pred))
+        } else {
+            None
+        }
+    }
+
+    /// Gets the binary operation of an `AtomicRMW` `InstructionValue`.
+    /// For instance, in the LLVM instruction
+    /// `%3 = atomicrmw add i32* %ptr, i32 %val monotonic`
+    /// this gives the `add`.
+    ///
+    /// If the instruction is not an `AtomicRMW`, this returns None.
+    #[llvm_versions(10..)]
+    pub fn get_atomic_rmw_bin_op(self) -> Option<AtomicRMWBinOp> {
+        if self.get_opcode() == InstructionOpcode::AtomicRMW {
+            let bin_op = unsafe { LLVMGetAtomicRMWBinOp(self.as_value_ref()) };
+            Some(AtomicRMWBinOp::new(bin_op))
         } else {
             None
         }
