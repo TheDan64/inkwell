@@ -14,7 +14,7 @@ Inkwell aims to help you pen your own programming languages by safely wrapping l
 ## Requirements
 
 * Rust 1.56+ (Stable, Beta, or Nightly)
-* One of LLVM 8-18 (WIP: 19 and 20 are barely supported without extensive tests)
+* One of LLVM 8-18 (WIP: 19, 20, and 21 are barely supported without extensive tests)
 
 ## Usage
 

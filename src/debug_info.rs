@@ -211,7 +211,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm17-0",
             feature = "llvm18-1",
             feature = "llvm19-1",
-            feature = "llvm20-1"
+            feature = "llvm20-1",
+            feature = "llvm21-1"
         ))]
         sysroot: &str,
         #[cfg(any(
@@ -224,7 +225,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm17-0",
             feature = "llvm18-1",
             feature = "llvm19-1",
-            feature = "llvm20-1"
+            feature = "llvm20-1",
+            feature = "llvm21-1"
         ))]
         sdk: &str,
     ) -> (Self, DICompileUnit<'ctx>) {
@@ -265,7 +267,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 feature = "llvm17-0",
                 feature = "llvm18-1",
                 feature = "llvm19-1",
-                feature = "llvm20-1"
+                feature = "llvm20-1",
+                feature = "llvm21-1",
             ))]
             sysroot,
             #[cfg(any(
@@ -278,7 +281,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 feature = "llvm17-0",
                 feature = "llvm18-1",
                 feature = "llvm19-1",
-                feature = "llvm20-1"
+                feature = "llvm20-1",
+                feature = "llvm21-1",
             ))]
             sdk,
         );
@@ -327,7 +331,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm17-0",
             feature = "llvm18-1",
             feature = "llvm19-1",
-            feature = "llvm20-1"
+            feature = "llvm20-1",
+            feature = "llvm21-1",
         ))]
         sysroot: &str,
         #[cfg(any(
@@ -340,7 +345,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm17-0",
             feature = "llvm18-1",
             feature = "llvm19-1",
-            feature = "llvm20-1"
+            feature = "llvm20-1",
+            feature = "llvm21-1",
         ))]
         sdk: &str,
     ) -> DICompileUnit<'ctx> {
@@ -376,7 +382,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 feature = "llvm17-0",
                 feature = "llvm18-1",
                 feature = "llvm19-1",
-                feature = "llvm20-1"
+                feature = "llvm20-1",
+                feature = "llvm21-1",
             ))]
             {
                 LLVMDIBuilderCreateCompileUnit(
@@ -955,7 +962,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             )
         };
 
-        #[cfg(any(feature = "llvm19-1", feature = "llvm20-1"))]
+        #[cfg(any(feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1"))]
         {
             // In LLVM 19+, the insert... functions return a DbgRecord, not a Value.
             // We need to cast it to a ValueRef to create an InstructionValue.
@@ -963,7 +970,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             unsafe { InstructionValue::new(value_ref as LLVMValueRef) }
         }
 
-        #[cfg(not(any(feature = "llvm19-1", feature = "llvm20-1")))]
+        #[cfg(not(any(feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1")))]
         {
             unsafe { InstructionValue::new(value_ref) }
         }
@@ -989,7 +996,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             )
         };
 
-        #[cfg(any(feature = "llvm19-1", feature = "llvm20-1"))]
+        #[cfg(any(feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1"))]
         {
             // In LLVM 19+, the insert... functions return a DbgRecord, not a Value.
             // We need to cast it to a ValueRef to create an InstructionValue.
@@ -997,7 +1004,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             unsafe { InstructionValue::new(value_ref as LLVMValueRef) }
         }
 
-        #[cfg(not(any(feature = "llvm19-1", feature = "llvm20-1")))]
+        #[cfg(not(any(feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1")))]
         {
             unsafe { InstructionValue::new(value_ref) }
         }
@@ -1038,7 +1045,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             )
         };
 
-        #[cfg(any(feature = "llvm19-1", feature = "llvm20-1"))]
+        #[cfg(any(feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1"))]
         {
             // In LLVM 19+, the insert... functions return a DbgRecord, not a Value.
             // We need to cast it to a ValueRef to create an InstructionValue.
@@ -1046,7 +1053,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             unsafe { InstructionValue::new(value_ref as LLVMValueRef) }
         }
 
-        #[cfg(not(any(feature = "llvm19-1", feature = "llvm20-1")))]
+        #[cfg(not(any(feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1")))]
         {
             unsafe { InstructionValue::new(value_ref) }
         }

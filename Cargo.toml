@@ -29,6 +29,7 @@ llvm17-0 = ["llvm-sys-170"]
 llvm18-1 = ["llvm-sys-181"]
 llvm19-1 = ["llvm-sys-191"]
 llvm20-1 = ["llvm-sys-201"]
+llvm21-1 = ["llvm-sys-211"]
 
 # Don't link against LLVM libraries. This is useful if another dependency is
 # installing LLVM. See llvm-sys for more details. We can't enable a single
@@ -48,6 +49,7 @@ llvm17-0-no-llvm-linking = ["llvm17-0", "llvm-sys-170/no-llvm-linking"]
 llvm18-1-no-llvm-linking = ["llvm18-1", "llvm-sys-181/no-llvm-linking"]
 llvm19-1-no-llvm-linking = ["llvm19-1", "llvm-sys-191/no-llvm-linking"]
 llvm20-1-no-llvm-linking = ["llvm20-1", "llvm-sys-201/no-llvm-linking"]
+llvm21-1-no-llvm-linking = ["llvm21-1", "llvm-sys-211/no-llvm-linking"]
 
 # Linking preference.
 # If none of these are enabled, it defaults to force static linking.
@@ -62,6 +64,7 @@ llvm17-0-force-dynamic = ["llvm17-0", "llvm-sys-170/force-dynamic"]
 llvm18-1-force-dynamic = ["llvm18-1", "llvm-sys-181/force-dynamic"]
 llvm19-1-force-dynamic = ["llvm19-1", "llvm-sys-191/force-dynamic"]
 llvm20-1-force-dynamic = ["llvm20-1", "llvm-sys-201/force-dynamic"]
+llvm21-1-force-dynamic = ["llvm21-1", "llvm-sys-211/force-dynamic"]
 
 # Prefer dynamic linking against LLVM libraries. See llvm-sys for more details
 llvm12-0-prefer-dynamic = ["llvm12-0", "llvm-sys-120/prefer-dynamic"]
@@ -73,6 +76,7 @@ llvm17-0-prefer-dynamic = ["llvm17-0", "llvm-sys-170/prefer-dynamic"]
 llvm18-1-prefer-dynamic = ["llvm18-1", "llvm-sys-181/prefer-dynamic"]
 llvm19-1-prefer-dynamic = ["llvm19-1", "llvm-sys-191/prefer-dynamic"]
 llvm20-1-prefer-dynamic = ["llvm20-1", "llvm-sys-201/prefer-dynamic"]
+llvm21-1-prefer-dynamic = ["llvm21-1", "llvm-sys-211/prefer-dynamic"]
 
 # Force static linking against LLVM libraries. See llvm-sys for more details
 llvm12-0-force-static = ["llvm12-0", "llvm-sys-120/force-static"]
@@ -84,6 +88,7 @@ llvm17-0-force-static = ["llvm17-0", "llvm-sys-170/force-static"]
 llvm18-1-force-static = ["llvm18-1", "llvm-sys-181/force-static"]
 llvm19-1-force-static = ["llvm19-1", "llvm-sys-191/force-static"]
 llvm20-1-force-static = ["llvm20-1", "llvm-sys-201/force-static"]
+llvm21-1-force-static = ["llvm21-1", "llvm-sys-211/force-static"]
 
 # Prefer static linking against LLVM libraries. See llvm-sys for more details
 llvm12-0-prefer-static = ["llvm12-0", "llvm-sys-120/prefer-static"]
@@ -95,6 +100,7 @@ llvm17-0-prefer-static = ["llvm17-0", "llvm-sys-170/prefer-static"]
 llvm18-1-prefer-static = ["llvm18-1", "llvm-sys-181/prefer-static"]
 llvm19-1-prefer-static = ["llvm19-1", "llvm-sys-191/prefer-static"]
 llvm20-1-prefer-static = ["llvm20-1", "llvm-sys-201/prefer-static"]
+llvm21-1-prefer-static = ["llvm21-1", "llvm-sys-211/prefer-static"]
 
 # Don't force linking to libffi on non-windows platforms. Without this feature
 # inkwell always links to libffi on non-windows platforms.
@@ -155,6 +161,7 @@ llvm-sys-170 = { package = "llvm-sys", version = "170.2.0", optional = true }
 llvm-sys-181 = { package = "llvm-sys", version = "181.2.0", optional = true }
 llvm-sys-191 = { package = "llvm-sys", version = "191.0.0", optional = true }
 llvm-sys-201 = { package = "llvm-sys", version = "201.0.0", optional = true }
+llvm-sys-211 = { package = "llvm-sys", version = "211.0.0", optional = true }
 
 either = "1.5"
 libc = "0.2"

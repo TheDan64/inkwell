@@ -87,7 +87,8 @@ impl<'ctx> ArrayType<'ctx> {
             feature = "llvm17-0",
             feature = "llvm18-1",
             feature = "llvm19-1",
-            feature = "llvm20-1"
+            feature = "llvm20-1",
+            feature = "llvm21-1",
         ),
         deprecated(
             note = "Starting from version 15.0, LLVM doesn't differentiate between pointer types. Use Context::ptr_type instead."
