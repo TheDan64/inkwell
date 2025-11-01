@@ -242,8 +242,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// let ret_val = builder.build_call(fn_value, &[i32_arg.into(), md_string.into()], "call").unwrap()
     ///     .try_as_basic_value()
-    ///     .left()
-    ///     .unwrap();
+    ///     .unwrap_basic();
     ///
     /// builder.build_return(Some(&ret_val)).unwrap();
     /// ```
@@ -320,8 +319,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// let ret_val = builder.build_call(fn_value, &[i32_arg.into(), md_string.into()], "call").unwrap()
     ///     .try_as_basic_value()
-    ///     .left()
-    ///     .unwrap();
+    ///     .unwrap_basic();
     ///
     /// builder.build_return(Some(&ret_val)).unwrap();
     /// ```
@@ -367,7 +365,7 @@ impl<'ctx> Builder<'ctx> {
     /// )
     ///     .unwrap()
     ///     .try_as_basic_value()
-    ///     .unwrap_left();
+    ///     .unwrap_basic();
     /// builder.build_return(Some(&ret_val)).unwrap();
     ///
     /// # module.verify().unwrap();
@@ -413,8 +411,7 @@ impl<'ctx> Builder<'ctx> {
     /// let function_pointer = fn_value.as_global_value().as_pointer_value();
     /// let ret_val = builder.build_indirect_call(fn_value.get_type(), function_pointer, &[i32_arg.into(), md_string.into()], "call").unwrap()
     ///     .try_as_basic_value()
-    ///     .left()
-    ///     .unwrap();
+    ///     .unwrap_basic();
     ///
     /// builder.build_return(Some(&ret_val)).unwrap();
     /// ```
@@ -585,7 +582,7 @@ impl<'ctx> Builder<'ctx> {
     ///     builder.position_at_end(then_block);
     ///
     ///     // in the then_block, the `call_site` value is defined and can be used
-    ///     let result = call_site.try_as_basic_value().left().unwrap();
+    ///     let result = call_site.try_as_basic_value().unwrap_basic();
     ///
     ///     builder.build_return(Some(&result)).unwrap();
     /// }
@@ -707,7 +704,7 @@ impl<'ctx> Builder<'ctx> {
     ///     builder.position_at_end(then_block);
     ///
     ///     // in the then_block, the `call_site` value is defined and can be used
-    ///     let result = call_site.try_as_basic_value().left().unwrap();
+    ///     let result = call_site.try_as_basic_value().unwrap_basic();
     ///
     ///     builder.build_return(Some(&result)).unwrap();
     /// }
@@ -1068,7 +1065,7 @@ impl<'ctx> Builder<'ctx> {
     ///     builder.position_at_end(then_block);
     ///
     ///     // in the then_block, the `call_site` value is defined and can be used
-    ///     let result = call_site.try_as_basic_value().left().unwrap();
+    ///     let result = call_site.try_as_basic_value().unwrap_basic();
     ///
     ///     builder.build_return(Some(&result)).unwrap();
     /// }
