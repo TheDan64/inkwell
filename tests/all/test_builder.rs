@@ -35,7 +35,7 @@ fn test_build_call() {
 
     assert!(pi2_call_site.is_tail_call());
 
-    let pi2 = pi2_call_site.try_as_basic_value().left().unwrap();
+    let pi2 = pi2_call_site.try_as_basic_value().unwrap_basic();
 
     builder.build_return(Some(&pi2)).unwrap();
 
@@ -134,7 +134,7 @@ fn test_build_invoke_cleanup_resume() {
     {
         builder.position_at_end(then_block);
 
-        let result = call_site.try_as_basic_value().left().unwrap();
+        let result = call_site.try_as_basic_value().unwrap_basic();
 
         builder.build_return(Some(&result)).unwrap();
     }
@@ -208,7 +208,7 @@ fn test_build_invoke_catch_all() {
     {
         builder.position_at_end(then_block);
 
-        let pi2 = pi2_call_site.try_as_basic_value().left().unwrap();
+        let pi2 = pi2_call_site.try_as_basic_value().unwrap_basic();
 
         builder.build_return(Some(&pi2)).unwrap();
     }
@@ -286,7 +286,7 @@ fn landing_pad_filter() {
     {
         builder.position_at_end(then_block);
 
-        let pi2 = pi2_call_site.try_as_basic_value().left().unwrap();
+        let pi2 = pi2_call_site.try_as_basic_value().unwrap_basic();
 
         builder.build_return(Some(&pi2)).unwrap();
     }
