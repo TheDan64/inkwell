@@ -426,7 +426,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
             BasicValueEnum::StructValue(v) => v.is_const(),
             BasicValueEnum::ArrayValue(v) => v.is_const(),
             BasicValueEnum::VectorValue(v) => v.is_const(),
-            BasicValueEnum::ScalableVectorValue(_) => false, // until supported
+            BasicValueEnum::ScalableVectorValue(v) => v.is_const(), 
         }
     }
 }
