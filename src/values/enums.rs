@@ -416,19 +416,6 @@ impl<'ctx> BasicValueEnum<'ctx> {
             panic!("Found {self:?} but expected the ScalableVectorValue variant")
         }
     }
-
-    /// Returns true if this BasicValueEnum represents a constant value.
-    pub fn is_const(&self) -> bool {
-        match self {
-            BasicValueEnum::IntValue(v) => v.is_const(),
-            BasicValueEnum::FloatValue(v) => v.is_const(),
-            BasicValueEnum::PointerValue(v) => v.is_const(),
-            BasicValueEnum::StructValue(v) => v.is_const(),
-            BasicValueEnum::ArrayValue(v) => v.is_const(),
-            BasicValueEnum::VectorValue(v) => v.is_const(),
-            BasicValueEnum::ScalableVectorValue(v) => v.is_const(), 
-        }
-    }
 }
 
 impl<'ctx> AggregateValueEnum<'ctx> {

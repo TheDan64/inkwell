@@ -131,6 +131,11 @@ pub unsafe trait BasicValue<'ctx>: AnyValue<'ctx> {
         unsafe { Value::new(self.as_value_ref()).set_name(name) }
     }
 
+    /// Returns true if this value is a constant.
+    fn is_const(&self) -> bool {
+        unsafe { Value::new(self.as_value_ref()).is_const() }
+    }
+
     // REVIEW: Possible encompassing methods to implement:
     // get/set metadata
 }
