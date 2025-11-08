@@ -1,4 +1,4 @@
-use llvm_sys::core::LLVMIsConst;
+use llvm_sys::core::LLVMIsConstant;
 use llvm_sys::prelude::LLVMValueRef;
 
 #[llvm_versions(12..)]
@@ -134,7 +134,7 @@ pub unsafe trait BasicValue<'ctx>: AnyValue<'ctx> {
 
     /// Returns true if this value is a constant.
     fn is_const(&self) -> bool {
-        unsafe { LLVMIsConst(self.as_value_ref()) == 1 }
+        unsafe { LLVMIsConstant(self.as_value_ref()) == 1 }
     }
 
     // REVIEW: Possible encompassing methods to implement:
