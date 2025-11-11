@@ -1,3 +1,4 @@
+use llvm_sys::core::LLVMIsConstant;
 use llvm_sys::prelude::LLVMValueRef;
 
 #[llvm_versions(12..)]
@@ -129,6 +130,11 @@ pub unsafe trait BasicValue<'ctx>: AnyValue<'ctx> {
     /// Sets the name of a `BasicValue`. If the value is a constant, this is a noop.
     fn set_name(&self, name: &str) {
         unsafe { Value::new(self.as_value_ref()).set_name(name) }
+    }
+
+    /// Returns true if this value is a constant.
+    fn is_const(&self) -> bool {
+        unsafe { LLVMIsConstant(self.as_value_ref()) == 1 }
     }
 
     // REVIEW: Possible encompassing methods to implement:
