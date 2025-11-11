@@ -118,13 +118,13 @@ use llvm_sys::debuginfo::LLVMTemporaryMDNode;
 use llvm_sys::debuginfo::{LLVMCreateDIBuilder, LLVMCreateDIBuilderDisallowUnresolved};
 use llvm_sys::debuginfo::{
     LLVMDIBuilderCreateArrayType, LLVMDIBuilderCreateAutoVariable, LLVMDIBuilderCreateBasicType,
-    LLVMDIBuilderCreateCompileUnit, LLVMDIBuilderCreateDebugLocation, LLVMDIBuilderCreateExpression,
-    LLVMDIBuilderCreateFile, LLVMDIBuilderCreateFunction, LLVMDIBuilderCreateLexicalBlock,
-    LLVMDIBuilderCreateMemberType, LLVMDIBuilderCreateNameSpace, LLVMDIBuilderCreateParameterVariable,
-    LLVMDIBuilderCreatePointerType, LLVMDIBuilderCreateReferenceType, LLVMDIBuilderCreateStructType,
-    LLVMDIBuilderCreateSubroutineType, LLVMDIBuilderCreateUnionType, LLVMDIBuilderFinalize,
-    LLVMDIBuilderGetOrCreateSubrange, LLVMDILocationGetColumn, LLVMDILocationGetLine, LLVMDILocationGetScope,
-    LLVMDITypeGetAlignInBits, LLVMDITypeGetOffsetInBits, LLVMDITypeGetSizeInBits,
+    LLVMDIBuilderCreateCompileUnit, LLVMDIBuilderCreateDebugLocation, LLVMDIBuilderCreateEnumerationType,
+    LLVMDIBuilderCreateEnumerator, LLVMDIBuilderCreateExpression, LLVMDIBuilderCreateFile, LLVMDIBuilderCreateFunction,
+    LLVMDIBuilderCreateLexicalBlock, LLVMDIBuilderCreateMemberType, LLVMDIBuilderCreateNameSpace,
+    LLVMDIBuilderCreateParameterVariable, LLVMDIBuilderCreatePointerType, LLVMDIBuilderCreateReferenceType,
+    LLVMDIBuilderCreateStructType, LLVMDIBuilderCreateSubroutineType, LLVMDIBuilderCreateUnionType,
+    LLVMDIBuilderFinalize, LLVMDIBuilderGetOrCreateSubrange, LLVMDILocationGetColumn, LLVMDILocationGetLine,
+    LLVMDILocationGetScope, LLVMDITypeGetAlignInBits, LLVMDITypeGetOffsetInBits, LLVMDITypeGetSizeInBits,
 };
 
 #[llvm_versions(..19.1)]
@@ -815,6 +815,53 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         }
     }
 
+    /// Create an enumeration type
+    pub fn create_enumeration_type(
+        &self,
+        scope: DIScope<'ctx>,
+        name: &str,
+        file: DIFile<'ctx>,
+        line_no: u32,
+        size_in_bits: u64,
+        align_in_bits: u32,
+        elements: &[DIEnumerator<'ctx>],
+        inner_type: DIType<'ctx>,
+    ) -> DICompositeType<'ctx> {
+        let mut elements: Vec<LLVMMetadataRef> = elements.iter().map(|dt| dt.metadata_ref).collect();
+        let metadata_ref = unsafe {
+            LLVMDIBuilderCreateEnumerationType(
+                self.builder,
+                scope.metadata_ref,
+                name.as_ptr() as _,
+                name.len(),
+                file.metadata_ref,
+                line_no,
+                size_in_bits,
+                align_in_bits,
+                elements.as_mut_ptr(),
+                elements.len().try_into().unwrap(),
+                inner_type.metadata_ref,
+            )
+        };
+
+        DICompositeType {
+            metadata_ref,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Create an enumerator
+    pub fn create_enumerator(&self, name: &str, value: i64, is_unsigned: bool) -> DIEnumerator<'ctx> {
+        let metadata_ref = unsafe {
+            LLVMDIBuilderCreateEnumerator(self.builder, name.as_ptr() as _, name.len(), value, is_unsigned as i32)
+        };
+
+        DIEnumerator {
+            metadata_ref,
+            _marker: PhantomData,
+        }
+    }
+
     pub fn create_global_variable_expression(
         &self,
         scope: DIScope<'ctx>,
@@ -1433,6 +1480,26 @@ impl DIExpression<'_> {
     /// Acquires the underlying raw pointer belonging to this `DIExpression` type.
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref
+    }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct DIEnumerator<'ctx> {
+    pub(crate) metadata_ref: LLVMMetadataRef,
+    _marker: PhantomData<&'ctx Context>,
+}
+
+impl<'ctx> DIEnumerator<'ctx> {
+    /// Acquires the underlying raw pointer belonging to this `DIEnumerator` type.
+    pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
+        self.metadata_ref
+    }
+
+    pub fn as_type(&self) -> DIType<'ctx> {
+        DIType {
+            metadata_ref: self.metadata_ref,
+            _marker: PhantomData,
+        }
     }
 }
 
