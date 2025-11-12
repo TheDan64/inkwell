@@ -1,6 +1,6 @@
 [package]
 name = "inkwell"
-version = "0.6.0"
+version = "0.7.0"
 authors = ["Daniel Kolsoi <thadan64@gmail.com>"]
 description = "Inkwell aims to help you pen your own programming languages by safely wrapping llvm-sys."
 documentation = "https://thedan64.github.io/inkwell/"
@@ -146,7 +146,7 @@ experimental = ["static-alloc"]
 nightly = ["inkwell_internals/nightly"]
 
 [dependencies]
-inkwell_internals = { path = "./internal_macros", version = "0.11.0" }
+inkwell_internals = { path = "./internal_macros", version = "0.12.0" }
 
 llvm-sys-80 = { package = "llvm-sys", version = "80.3", optional = true }
 llvm-sys-90 = { package = "llvm-sys", version = "90.2.2", optional = true }
@@ -178,10 +178,7 @@ regex = "1"
 
 [target.'cfg(windows)'.dev-dependencies.windows]
 version = "0.62.2"
-features = [
-    "Win32_System_SystemInformation",
-    "Win32_System_Memory"
-]
+features = ["Win32_System_SystemInformation", "Win32_System_Memory"]
 
 [badges]
 codecov = { repository = "TheDan64/inkwell" }
