@@ -671,10 +671,12 @@ fn test_enumeration_types() {
         .unwrap()
         .as_type();
 
+    // Smoke test that the enums get created
     let enum_red = dibuilder.create_enumerator("RED", 0, false);
     let enum_green = dibuilder.create_enumerator("GREEN", 1, false);
     let enum_blue = dibuilder.create_enumerator("BLUE", 2, false);
 
+    // Smoke test that the enumeration type gets created
     dibuilder.create_enumeration_type(
         compile_unit.as_debug_info_scope(),
         "Color",
@@ -686,10 +688,14 @@ fn test_enumeration_types() {
         di_type,
     );
 
+    // Smoke test that we can get the pointer and type back from the enumerator
     assert!(!enum_red.as_mut_ptr().is_null());
+
     let _enum_red_as_type = enum_red.as_type();
 
+    // check that finalize works without errors
     dibuilder.finalize();
 
+    // check that module is still valid
     assert!(module.verify().is_ok());
 }
