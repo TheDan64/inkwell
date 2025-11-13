@@ -14,7 +14,7 @@ Inkwell aims to help you pen your own programming languages by safely wrapping l
 ## Requirements
 
 * Rust 1.56+ (Stable, Beta, or Nightly)
-* One of LLVM 8-18 (WIP: 19, 20, and 21 are barely supported without extensive tests)
+* One of LLVM 8-21
 
 ## Usage
 
@@ -22,11 +22,11 @@ You'll need to point your Cargo.toml to use a single LLVM version feature flag c
 
 ```toml
 [dependencies]
-inkwell = { version = "0.6.0", features = ["llvm18-1"] }
+inkwell = { version = "0.7.0", features = ["llvm21-1"] }
 ```
 
 Supported versions:
-LLVM 4-18 mapping to a cargo feature flag `llvmM-0` where `M` corresponds to the LLVM major version.
+LLVM 8-21 mapping to a cargo feature flag `llvmM-0` where `M` corresponds to the LLVM major version.
 
 Please be aware that we may make breaking changes on master from time to time since we are
 pre-v1.0.0, in compliance with semver. Please prefer a crates.io release whenever possible!

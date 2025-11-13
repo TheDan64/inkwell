@@ -6,7 +6,7 @@ license = "Apache-2.0"
 name = "inkwell_internals"
 readme = "README.md"
 repository = "https://github.com/TheDan64/inkwell"
-version = "0.11.0"
+version = "0.12.0"
 
 [dependencies]
 proc-macro2 = "1.0"
