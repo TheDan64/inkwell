@@ -7,7 +7,7 @@ use llvm_sys::core::LLVMContextSetOpaquePointers;
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMCreateTypeAttribute;
 
-use llvm_sys::core::LLVMGetInlineAsm;
+use llvm_sys::core::{LLVMAppendExistingBasicBlock, LLVMGetInlineAsm};
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMGetTypeByName2;
 use llvm_sys::core::LLVMMetadataTypeInContext;
@@ -279,6 +279,10 @@ impl ContextImpl {
                 packed as i32,
             ))
         }
+    }
+
+    fn append_existing_basic_block<'ctx>(&self, basic_block: BasicBlock<'ctx>) {
+        unsafe { LLVMAppendExistingBasicBlock(self.0, basic_block.as_mut_ptr()) };
     }
 
     fn append_basic_block<'ctx>(&self, function: FunctionValue<'ctx>, name: &str) -> BasicBlock<'ctx> {
