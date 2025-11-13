@@ -7,7 +7,6 @@ use llvm_sys::core::LLVMContextSetOpaquePointers;
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMCreateTypeAttribute;
 
-use llvm_sys::core::{LLVMAppendExistingBasicBlock, LLVMGetInlineAsm};
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMGetTypeByName2;
 use llvm_sys::core::LLVMMetadataTypeInContext;
@@ -22,6 +21,7 @@ use llvm_sys::core::{
     LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext, LLVMStructCreateNamed, LLVMStructTypeInContext,
     LLVMVoidTypeInContext, LLVMX86FP80TypeInContext,
 };
+use llvm_sys::core::{LLVMAppendExistingBasicBlock, LLVMGetInlineAsm};
 
 #[llvm_versions(..19)]
 use llvm_sys::core::LLVMConstStringInContext;
