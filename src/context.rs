@@ -2,6 +2,7 @@
 
 use crate::InlineAsmDialect;
 use libc::c_void;
+use llvm_sys::core::LLVMBasicBlockAsValue;
 #[cfg(all(any(feature = "llvm15-0", feature = "llvm16-0"), feature = "typed-pointers"))]
 use llvm_sys::core::LLVMContextSetOpaquePointers;
 #[llvm_versions(12..)]
@@ -282,7 +283,8 @@ impl ContextImpl {
     }
 
     fn append_existing_basic_block<'ctx>(&self, basic_block: BasicBlock<'ctx>) {
-        unsafe { LLVMAppendExistingBasicBlock(self.0, basic_block.as_mut_ptr()) };
+        let llvm_value = unsafe { LLVMBasicBlockAsValue(basic_block.as_mut_ptr()) };
+        unsafe { LLVMAppendExistingBasicBlock(self.0, llvm_value) };
     }
 
     fn append_basic_block<'ctx>(&self, function: FunctionValue<'ctx>, name: &str) -> BasicBlock<'ctx> {
