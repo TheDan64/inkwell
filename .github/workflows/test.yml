@@ -99,9 +99,11 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
     - uses: actions/checkout@v4
-    - uses: KyleMayes/install-llvm-action@v2
+    - uses: unlimited-code/install-llvm-action@v1
       with:
         version: ${{ env.DOC_LLVM_VERSION }}
+    - name: Verify LLVM installation
+      run: llvm-config --version
     - name: Install Rust Nightly
       uses: dtolnay/rust-toolchain@nightly
     - name: Build Documentation
