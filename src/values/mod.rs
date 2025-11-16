@@ -49,8 +49,8 @@ pub use crate::values::operand_bundle::OperandBundle;
 
 use crate::support::{to_c_str, LLVMString};
 pub use crate::values::array_value::ArrayValue;
-pub use crate::values::basic_value_use::BasicValueUse;
-pub use crate::values::call_site_value::CallSiteValue;
+pub use crate::values::basic_value_use::{BasicValueUse, Operand};
+pub use crate::values::call_site_value::{CallSiteValue, ValueKind};
 pub use crate::values::enums::{AggregateValueEnum, AnyValueEnum, BasicMetadataValueEnum, BasicValueEnum};
 pub use crate::values::float_value::FloatValue;
 pub use crate::values::fn_value::FunctionValue;
