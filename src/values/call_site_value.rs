@@ -21,7 +21,9 @@ use super::{AnyValue, InstructionOpcode};
 /// Either [BasicValueEnum] or [InstructionValue].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ValueKind<'ctx> {
+    /// Represents a [BasicValueEnum].
     Basic(BasicValueEnum<'ctx>),
+    /// Represents an [InstructionValue].
     Instruction(InstructionValue<'ctx>),
 }
 

@@ -9,7 +9,9 @@ use crate::values::{AnyValueEnum, BasicValueEnum};
 /// Either [BasicValueEnum] or [BasicBlock].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Operand<'ctx> {
+    /// Represents a [BasicValueEnum].
     Value(BasicValueEnum<'ctx>),
+    /// Represents a [BasicBlock].
     Block(BasicBlock<'ctx>),
 }
 

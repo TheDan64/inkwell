@@ -13,7 +13,9 @@ use llvm_sys::LLVMTypeKind;
 /// Either [FunctionValue] or [PointerValue].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub(crate) enum CallableValueEnum<'ctx> {
+    /// Represents a [FunctionValue].
     Function(FunctionValue<'ctx>),
+    /// Represents a [PointerValue].
     Pointer(PointerValue<'ctx>),
 }
 
