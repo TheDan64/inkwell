@@ -221,13 +221,26 @@ fn test_get_next_use() {
     builder.position_at_end(basic_block);
 
     let arg1 = function.get_first_param().unwrap().into_float_value();
+
+    #[cfg(feature = "llvm21-1")]
+    let f32_ptr = builder.build_alloca(f32_type, "f32_ptr").unwrap();
+    #[cfg(feature = "llvm21-1")]
+    let _ = builder.build_store(f32_ptr, f32_type.const_float(std::f64::consts::PI));
+    #[cfg(feature = "llvm21-1")]
+    let f32_val = builder
+        .build_load(f32_type, f32_ptr, "f32_val")
+        .unwrap()
+        .into_float_value();
+
+    #[cfg(not(feature = "llvm21-1"))]
     let f32_val = f32_type.const_float(std::f64::consts::PI);
+
     let add_pi0 = builder.build_float_add(arg1, f32_val, "add_pi").unwrap();
     let add_pi1 = builder.build_float_add(add_pi0, f32_val, "add_pi").unwrap();
 
     builder.build_return(Some(&add_pi1)).unwrap();
 
-    // f32_val constant appears twice, so there are two uses (first, next)
+    // f32_val appears twice, so there are two uses (first, next)
     let first_use = f32_val.get_first_use().unwrap();
 
     assert_eq!(first_use.get_user(), add_pi1.as_instruction_value().unwrap());
