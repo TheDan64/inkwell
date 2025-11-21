@@ -34,7 +34,7 @@ fn test_get_decl_va_copy() {
     let va_copy = Intrinsic::find("llvm.va_copy").unwrap();
 
     // Looks like starting from LLVM 19, this is overloaded?
-    #[cfg(not(any(feature = "llvm19-1", feature = "llvm20-1")))]
+    #[cfg(not(any(feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1")))]
     {
         assert!(!va_copy.is_overloaded());
     }
