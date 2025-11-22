@@ -17,6 +17,8 @@ use llvm_sys::LLVMOpcode;
 
 use std::{ffi::CStr, fmt, fmt::Display};
 
+#[llvm_versions(9..)]
+use crate::debug_info::DILocation;
 use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, MetadataValue, Value};
 #[llvm_versions(10..)]
 use crate::AtomicRMWBinOp;
@@ -1012,6 +1014,31 @@ impl<'ctx> InstructionValue<'ctx> {
         }
 
         Ok(())
+    }
+
+    /// Get the debug location for this instruction.
+    #[llvm_versions(9..)]
+    pub fn get_debug_location(self) -> Option<DILocation<'ctx>> {
+        // https://github.com/llvm/llvm-project/blob/e83cc896e7c2378914a391f942c188d454b517d2/llvm/include/llvm/IR/Instruction.h#L513
+        let metadata_ref = unsafe { llvm_sys::debuginfo::LLVMInstructionGetDebugLoc(self.as_value_ref()) };
+        if metadata_ref.is_null() {
+            None
+        } else {
+            Some(DILocation {
+                metadata_ref,
+                _marker: std::marker::PhantomData,
+            })
+        }
+    }
+
+    /// Set the debug location for this instruction.
+    #[llvm_versions(9..)]
+    pub fn set_debug_location(self, location: Option<DILocation<'_>>) {
+        // https://github.com/llvm/llvm-project/blob/e83cc896e7c2378914a391f942c188d454b517d2/llvm/include/llvm/IR/Instruction.h#L510
+        let metadata_ref = location.map_or(std::ptr::null_mut(), |loc| loc.metadata_ref);
+        unsafe {
+            llvm_sys::debuginfo::LLVMInstructionSetDebugLoc(self.as_value_ref(), metadata_ref);
+        }
     }
 }
 
