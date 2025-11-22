@@ -12,11 +12,13 @@ use llvm_sys::core::{
 #[llvm_versions(10..)]
 use llvm_sys::core::{LLVMGetAtomicRMWBinOp, LLVMIsAAtomicCmpXchgInst, LLVMIsAAtomicRMWInst};
 use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
+use llvm_sys::debuginfo::LLVMInstructionGetDebugLoc;
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMOpcode;
 
 use std::{ffi::CStr, fmt, fmt::Display};
 
+use crate::debug_info::DILocation;
 use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, MetadataValue, Value};
 #[llvm_versions(10..)]
 use crate::AtomicRMWBinOp;
@@ -1012,6 +1014,15 @@ impl<'ctx> InstructionValue<'ctx> {
         }
 
         Ok(())
+    }
+    /// Get the debug location for this instruction.
+    pub fn get_debug_location(self) -> DILocation<'ctx> {
+        DILocation {
+            metadata_ref: unsafe {
+                LLVMInstructionGetDebugLoc(self.as_value_ref())
+            },
+            _marker: std::marker::PhantomData,
+        }
     }
 }
 
