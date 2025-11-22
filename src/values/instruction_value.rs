@@ -12,7 +12,6 @@ use llvm_sys::core::{
 #[llvm_versions(10..)]
 use llvm_sys::core::{LLVMGetAtomicRMWBinOp, LLVMIsAAtomicCmpXchgInst, LLVMIsAAtomicRMWInst};
 use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
-use llvm_sys::debuginfo::LLVMInstructionGetDebugLoc;
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMOpcode;
 
@@ -1015,13 +1014,30 @@ impl<'ctx> InstructionValue<'ctx> {
 
         Ok(())
     }
+    
+    
     /// Get the debug location for this instruction.
-    pub fn get_debug_location(self) -> DILocation<'ctx> {
-        DILocation {
-            metadata_ref: unsafe {
-                LLVMInstructionGetDebugLoc(self.as_value_ref())
-            },
-            _marker: std::marker::PhantomData,
+    #[llvm_versions(9..)]
+    pub fn get_debug_location(self) -> Option<DILocation<'ctx>> {
+        let metadata_ref = unsafe {
+            llvm_sys::debuginfo::LLVMInstructionGetDebugLoc(self.as_value_ref())
+        };
+        if metadata_ref.is_null() {
+            None
+        } else {
+            Some(DILocation {
+                metadata_ref,
+                _marker: std::marker::PhantomData,
+            })
+        }
+    }
+    
+    /// Set the debug location for this instruction.
+    #[llvm_versions(9..)]
+    pub fn set_debug_location(self, location: Option<DILocation<'_>>) {
+        let metadata_ref = location.map_or(std::ptr::null_mut(), |loc| loc.metadata_ref);
+        unsafe {
+            llvm_sys::debuginfo::LLVMInstructionSetDebugLoc(self.as_value_ref(), metadata_ref);
         }
     }
 }
