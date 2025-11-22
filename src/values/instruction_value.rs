@@ -17,6 +17,7 @@ use llvm_sys::LLVMOpcode;
 
 use std::{ffi::CStr, fmt, fmt::Display};
 
+#[llvm_versions(9..)]
 use crate::debug_info::DILocation;
 use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, MetadataValue, Value};
 #[llvm_versions(10..)]
