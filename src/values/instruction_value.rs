@@ -1014,8 +1014,7 @@ impl<'ctx> InstructionValue<'ctx> {
 
         Ok(())
     }
-    
-    
+
     /// Get the debug location for this instruction.
     #[llvm_versions(9..)]
     pub fn get_debug_location(self) -> Option<DILocation<'ctx>> {
@@ -1030,7 +1029,7 @@ impl<'ctx> InstructionValue<'ctx> {
             })
         }
     }
-    
+
     /// Set the debug location for this instruction.
     #[llvm_versions(9..)]
     pub fn set_debug_location(self, location: Option<DILocation<'_>>) {
