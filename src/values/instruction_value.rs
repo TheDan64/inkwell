@@ -1035,7 +1035,9 @@ impl<'ctx> InstructionValue<'ctx> {
     pub fn set_debug_location(self, location: Option<DILocation<'_>>) {
         // https://github.com/llvm/llvm-project/blob/e83cc896e7c2378914a391f942c188d454b517d2/llvm/include/llvm/IR/Instruction.h#L510
         let metadata_ref = location.map_or(std::ptr::null_mut(), |loc| loc.metadata_ref);
-        unsafe { llvm_sys::debuginfo::LLVMInstructionSetDebugLoc(self.as_value_ref(), metadata_ref); }
+        unsafe {
+            llvm_sys::debuginfo::LLVMInstructionSetDebugLoc(self.as_value_ref(), metadata_ref);
+        }
     }
 }
 
