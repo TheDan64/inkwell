@@ -5,9 +5,8 @@ use llvm_sys::core::{
 };
 use llvm_sys::core::{
     LLVMConstAdd, LLVMConstBitCast, LLVMConstIntGetSExtValue, LLVMConstIntGetZExtValue, LLVMConstIntToPtr,
-    LLVMConstMul, LLVMConstNSWAdd, LLVMConstNSWMul, LLVMConstNSWNeg, LLVMConstNSWSub, LLVMConstNUWAdd, LLVMConstNUWMul,
-    LLVMConstNUWSub, LLVMConstNeg, LLVMConstNot, LLVMConstSub, LLVMConstTrunc, LLVMConstTruncOrBitCast, LLVMConstXor,
-    LLVMIsAConstantInt,
+    LLVMConstNSWAdd, LLVMConstNSWNeg, LLVMConstNSWSub, LLVMConstNUWAdd, LLVMConstNUWSub, LLVMConstNeg, LLVMConstNot,
+    LLVMConstSub, LLVMConstTrunc, LLVMConstTruncOrBitCast, LLVMConstXor, LLVMIsAConstantInt,
 };
 #[llvm_versions(..=16)]
 use llvm_sys::core::{LLVMConstNUWNeg, LLVMConstSelect};
@@ -17,6 +16,9 @@ use llvm_sys::core::LLVMSetNUW;
 
 #[llvm_versions(..=18)]
 use llvm_sys::core::{LLVMConstICmp, LLVMConstShl};
+
+#[llvm_versions(..21)]
+use llvm_sys::core::{LLVMConstMul, LLVMConstNSWMul, LLVMConstNUWMul};
 
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -140,14 +142,17 @@ impl<'ctx> IntValue<'ctx> {
         unsafe { IntValue::new(LLVMConstNUWSub(self.as_value_ref(), rhs.as_value_ref())) }
     }
 
+    #[llvm_versions(..21)]
     pub fn const_mul(self, rhs: IntValue<'ctx>) -> Self {
         unsafe { IntValue::new(LLVMConstMul(self.as_value_ref(), rhs.as_value_ref())) }
     }
 
+    #[llvm_versions(..21)]
     pub fn const_nsw_mul(self, rhs: IntValue<'ctx>) -> Self {
         unsafe { IntValue::new(LLVMConstNSWMul(self.as_value_ref(), rhs.as_value_ref())) }
     }
 
+    #[llvm_versions(..21)]
     pub fn const_nuw_mul(self, rhs: IntValue<'ctx>) -> Self {
         unsafe { IntValue::new(LLVMConstNUWMul(self.as_value_ref(), rhs.as_value_ref())) }
     }

@@ -19,7 +19,8 @@ mod test_object_file;
     feature = "llvm17-0",
     feature = "llvm18-1",
     feature = "llvm19-1",
-    feature = "llvm20-1"
+    feature = "llvm20-1",
+    feature = "llvm21-1"
 )))]
 mod test_passes;
 mod test_targets;
