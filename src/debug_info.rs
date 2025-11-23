@@ -118,14 +118,17 @@ use llvm_sys::debuginfo::LLVMTemporaryMDNode;
 use llvm_sys::debuginfo::{LLVMCreateDIBuilder, LLVMCreateDIBuilderDisallowUnresolved};
 use llvm_sys::debuginfo::{
     LLVMDIBuilderCreateArrayType, LLVMDIBuilderCreateAutoVariable, LLVMDIBuilderCreateBasicType,
-    LLVMDIBuilderCreateCompileUnit, LLVMDIBuilderCreateDebugLocation, LLVMDIBuilderCreateEnumerationType,
-    LLVMDIBuilderCreateEnumerator, LLVMDIBuilderCreateExpression, LLVMDIBuilderCreateFile, LLVMDIBuilderCreateFunction,
-    LLVMDIBuilderCreateLexicalBlock, LLVMDIBuilderCreateMemberType, LLVMDIBuilderCreateNameSpace,
-    LLVMDIBuilderCreateParameterVariable, LLVMDIBuilderCreatePointerType, LLVMDIBuilderCreateReferenceType,
-    LLVMDIBuilderCreateStructType, LLVMDIBuilderCreateSubroutineType, LLVMDIBuilderCreateUnionType,
-    LLVMDIBuilderFinalize, LLVMDIBuilderGetOrCreateSubrange, LLVMDILocationGetColumn, LLVMDILocationGetLine,
-    LLVMDILocationGetScope, LLVMDITypeGetAlignInBits, LLVMDITypeGetOffsetInBits, LLVMDITypeGetSizeInBits,
+    LLVMDIBuilderCreateCompileUnit, LLVMDIBuilderCreateDebugLocation, LLVMDIBuilderCreateExpression,
+    LLVMDIBuilderCreateFile, LLVMDIBuilderCreateFunction, LLVMDIBuilderCreateLexicalBlock,
+    LLVMDIBuilderCreateMemberType, LLVMDIBuilderCreateNameSpace, LLVMDIBuilderCreateParameterVariable,
+    LLVMDIBuilderCreatePointerType, LLVMDIBuilderCreateReferenceType, LLVMDIBuilderCreateStructType,
+    LLVMDIBuilderCreateSubroutineType, LLVMDIBuilderCreateUnionType, LLVMDIBuilderFinalize,
+    LLVMDIBuilderGetOrCreateSubrange, LLVMDILocationGetColumn, LLVMDILocationGetLine, LLVMDILocationGetScope,
+    LLVMDITypeGetAlignInBits, LLVMDITypeGetOffsetInBits, LLVMDITypeGetSizeInBits,
 };
+
+#[llvm_versions(9..)]
+use llvm_sys::debuginfo::{LLVMDIBuilderCreateEnumerationType, LLVMDIBuilderCreateEnumerator};
 
 #[llvm_versions(..19.1)]
 use llvm_sys::debuginfo::{
@@ -816,6 +819,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     }
 
     /// Create an enumeration type
+    #[llvm_versions(9..)]
     pub fn create_enumeration_type(
         &self,
         scope: DIScope<'ctx>,
@@ -851,6 +855,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     }
 
     /// Create an enumerator
+    #[llvm_versions(9..)]
     pub fn create_enumerator(&self, name: &str, value: i64, is_unsigned: bool) -> DIEnumerator<'ctx> {
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateEnumerator(self.builder, name.as_ptr() as _, name.len(), value, is_unsigned as i32)

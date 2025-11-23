@@ -619,6 +619,7 @@ fn test_array_type() {
     dibuilder.create_array_type(di_type, 160, 64, &[(0..20), (-1..30), (20..55)]);
 }
 
+#[llvm_versions(9..)]
 #[test]
 fn test_enumeration_types() {
     let context = Context::create();
