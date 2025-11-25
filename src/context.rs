@@ -29,8 +29,6 @@ use llvm_sys::core::LLVMConstStringInContext;
 #[llvm_versions(19..)]
 use llvm_sys::core::LLVMConstStringInContext2;
 
-use crate::llvm_sys::core::LLVMBasicBlockAsValue;
-
 #[allow(deprecated)]
 use llvm_sys::core::{LLVMMDNodeInContext, LLVMMDStringInContext};
 use llvm_sys::ir_reader::LLVMParseIRInContext;
