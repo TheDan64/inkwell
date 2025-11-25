@@ -21,7 +21,7 @@ use llvm_sys::core::{
     LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext, LLVMStructCreateNamed, LLVMStructTypeInContext,
     LLVMVoidTypeInContext, LLVMX86FP80TypeInContext,
 };
-#[llvm_versions(12..20)]
+#[llvm_versions(12..=20)]
 use llvm_sys::core::{LLVMAppendExistingBasicBlock, LLVMGetInlineAsm};
 
 #[llvm_versions(..19)]
