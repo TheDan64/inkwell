@@ -221,3 +221,103 @@ fn test_get_address() {
     assert!(unsafe { entry_bb.get_address() }.is_none());
     assert!(unsafe { next_bb.get_address() }.is_some());
 }
+
+#[cfg(llvm_versions = "12..20")]
+#[test]
+fn test_append_existing_basic_block_legacy() {
+    use inkwell::context::Context;
+
+    let context = Context::create();
+    let module = context.create_module("existing_bb_legacy");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+
+    let function = module.add_function("f", fn_type, None);
+
+    // Create two orphan blocks (no parent).
+    let bb1 = context.insert_basic_block_after(context.append_basic_block(function, "tmp"), "bb1");
+    let bb2 = context.append_basic_block(function, "bb2");
+
+    // Remove them from the function to make them orphans.
+    assert!(bb1.remove_from_function().is_ok());
+    assert!(bb2.remove_from_function().is_ok());
+
+    assert!(bb1.get_parent().is_none());
+    assert!(bb2.get_parent().is_none());
+
+    let initial_blocks = function.get_basic_blocks();
+    assert_eq!(initial_blocks.len(), 1);
+
+    function.append_existing_basic_block(bb1);
+
+    let blocks = function.get_basic_blocks();
+    assert_eq!(blocks.len(), 2);
+    assert_eq!(blocks[0].get_name().to_str(), Ok("tmp"));
+    assert_eq!(blocks[1].get_name().to_str(), Ok("bb1"));
+    assert_eq!(blocks[1].get_parent().unwrap(), function);
+
+    function.append_existing_basic_block(bb2);
+
+    let blocks2 = function.get_basic_blocks();
+    assert_eq!(blocks2.len(), 3);
+    assert_eq!(blocks2[2].get_name().to_str(), Ok("bb2"));
+    assert_eq!(blocks2[2].get_parent().unwrap(), function);
+
+    let collected: Vec<_> = function.get_basic_block_iter().collect();
+    assert_eq!(collected, blocks2);
+}
+
+#[cfg(llvm_versions = "20..")]
+#[test]
+fn test_append_existing_basic_block_modern() {
+    use inkwell::context::Context;
+
+    let context = Context::create();
+    let module = context.create_module("existing_bb_modern");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+
+    let function = module.add_function("f", fn_type, None);
+
+    let tmp = context.append_basic_block(function, "tmp");
+    let bb1 = context.insert_basic_block_after(tmp, "bb1");
+    let bb2 = context.append_basic_block(function, "bb2");
+
+    assert!(bb1.remove_from_function().is_ok());
+    assert!(bb2.remove_from_function().is_ok());
+
+    assert!(bb1.get_parent().is_none());
+    assert!(bb2.get_parent().is_none());
+
+    assert_eq!(function.get_basic_blocks().len(), 1);
+    assert_eq!(function.get_last_basic_block().unwrap(), tmp);
+
+    function.append_existing_basic_block(function, bb1);
+
+    let blocks = function.get_basic_blocks();
+    assert_eq!(blocks.len(), 2);
+    assert_eq!(blocks[0], tmp);
+    assert_eq!(blocks[1], bb1);
+    assert_eq!(blocks[1].get_parent().unwrap(), function);
+
+    function.append_existing_basic_block(function, bb2);
+
+    let blocks2 = function.get_basic_blocks();
+    assert_eq!(blocks2.len(), 3);
+    assert_eq!(blocks2[2], bb2);
+    assert_eq!(blocks2[2].get_parent().unwrap(), function);
+
+    let iterated: Vec<_> = function.get_basic_block_iter().collect();
+    assert_eq!(iterated, blocks2);
+
+    assert!(bb1.remove_from_function().is_ok());
+    assert!(bb1.get_parent().is_none());
+
+    function.append_existing_basic_block(function, bb1);
+
+    let blocks3 = function.get_basic_blocks();
+    assert_eq!(blocks3.len(), 3);
+    assert_eq!(blocks3[2], bb1);
+
+    assert_eq!(function.get_last_basic_block().unwrap(), bb1);
+}
