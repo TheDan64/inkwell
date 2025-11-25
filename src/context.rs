@@ -21,7 +21,6 @@ use llvm_sys::core::{
     LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext, LLVMStructCreateNamed, LLVMStructTypeInContext,
     LLVMVoidTypeInContext, LLVMX86FP80TypeInContext,
 };
-#[llvm_versions(12..=20)]
 use llvm_sys::core::{LLVMAppendExistingBasicBlock, LLVMGetInlineAsm};
 
 #[llvm_versions(..19)]
@@ -284,15 +283,6 @@ impl ContextImpl {
         }
     }
 
-    #[llvm_versions(12..20)]
-    fn append_existing_basic_block<'ctx>(&self, basic_block: BasicBlock<'ctx>) {
-        unsafe {
-            let basic_block_value = LLVMBasicBlockAsValue(basic_block.as_mut_ptr());
-            LLVMAppendExistingBasicBlock(self.0, basic_block_value);
-        }
-    }
-
-    #[llvm_versions(20..)]
     fn append_existing_basic_block<'ctx>(&self, function: FunctionValue<'ctx>, basic_block: BasicBlock<'ctx>) {
         unsafe {
             LLVMAppendExistingBasicBlock(function.as_value_ref(), basic_block.as_mut_ptr());
