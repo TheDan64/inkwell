@@ -224,8 +224,6 @@ fn test_get_address() {
 
 #[test]
 fn test_append_existing_basic_block_legacy() {
-    use inkwell::context::Context;
-
     let context = Context::create();
     let module = context.create_module("existing_bb_legacy");
     let void_type = context.void_type();
