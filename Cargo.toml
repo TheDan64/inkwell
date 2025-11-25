@@ -171,7 +171,6 @@ static-alloc = { version = "0.2", optional = true }
 serde = { version = "1.0", default-features = false, features = [
     "derive",
 ], optional = true }
-llvm-sys = "211.0.0"
 
 [dev-dependencies]
 gumdrop = "0.8.1"
