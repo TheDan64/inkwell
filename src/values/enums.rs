@@ -118,7 +118,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
                 AnyValueEnum::InstructionValue(InstructionValue::new(value))
             },
             LLVMTypeKind::LLVMMetadataTypeKind => panic!("Metadata values are not supported as AnyValue's."),
-            _ => panic!("The given type is not supported."),
+            other => panic!("The given type is not supported: {:?}", other),
         }
     }
 
@@ -292,7 +292,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
             LLVMTypeKind::LLVMScalableVectorTypeKind => {
                 BasicValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))
             },
-            _ => unreachable!("The given type is not a basic type."),
+            other => panic!("The given type is not a basic type: {:?}", other),
         }
     }
 

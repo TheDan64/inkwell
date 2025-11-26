@@ -4,7 +4,7 @@ use llvm_sys::prelude::LLVMUseRef;
 use std::marker::PhantomData;
 
 use crate::basic_block::BasicBlock;
-use crate::values::{AnyValueEnum, BasicValueEnum};
+use crate::values::{AnyValueEnum, BasicValueEnum, MetadataValue};
 
 /// Either [BasicValueEnum] or [BasicBlock].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -13,6 +13,8 @@ pub enum Operand<'ctx> {
     Value(BasicValueEnum<'ctx>),
     /// Represents a [BasicBlock].
     Block(BasicBlock<'ctx>),
+    /// Represents a [MetadataValue].
+    Metadata(MetadataValue<'ctx>),
 }
 
 impl<'ctx> Operand<'ctx> {

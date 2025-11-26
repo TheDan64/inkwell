@@ -3,17 +3,17 @@ use llvm_sys::core::LLVMGetGEPSourceElementType;
 use llvm_sys::core::{
     LLVMGetAlignment, LLVMGetAllocatedType, LLVMGetFCmpPredicate, LLVMGetICmpPredicate, LLVMGetIndices,
     LLVMGetInstructionOpcode, LLVMGetInstructionParent, LLVMGetMetadata, LLVMGetNextInstruction, LLVMGetNumIndices,
-    LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMGetPreviousInstruction, LLVMGetVolatile,
-    LLVMHasMetadata, LLVMInstructionClone, LLVMInstructionEraseFromParent, LLVMInstructionRemoveFromParent,
-    LLVMIsAAllocaInst, LLVMIsABasicBlock, LLVMIsAGetElementPtrInst, LLVMIsALoadInst, LLVMIsAStoreInst,
-    LLVMIsATerminatorInst, LLVMIsConditional, LLVMIsTailCall, LLVMSetAlignment, LLVMSetMetadata, LLVMSetOperand,
-    LLVMSetVolatile, LLVMValueAsBasicBlock,
+    LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMGetPreviousInstruction, LLVMGetTypeKind,
+    LLVMGetVolatile, LLVMHasMetadata, LLVMInstructionClone, LLVMInstructionEraseFromParent,
+    LLVMInstructionRemoveFromParent, LLVMIsAAllocaInst, LLVMIsABasicBlock, LLVMIsAGetElementPtrInst, LLVMIsALoadInst,
+    LLVMIsAStoreInst, LLVMIsATerminatorInst, LLVMIsAValueAsMetadata, LLVMIsConditional, LLVMIsTailCall,
+    LLVMSetAlignment, LLVMSetMetadata, LLVMSetOperand, LLVMSetVolatile, LLVMTypeOf, LLVMValueAsBasicBlock,
 };
 #[llvm_versions(10..)]
 use llvm_sys::core::{LLVMGetAtomicRMWBinOp, LLVMIsAAtomicCmpXchgInst, LLVMIsAAtomicRMWInst};
 use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
 use llvm_sys::prelude::LLVMValueRef;
-use llvm_sys::LLVMOpcode;
+use llvm_sys::{LLVMOpcode, LLVMTypeKind};
 
 use std::{ffi::CStr, fmt, fmt::Display};
 
@@ -684,14 +684,21 @@ impl<'ctx> InstructionValue<'ctx> {
         }
 
         let is_basic_block = unsafe { !LLVMIsABasicBlock(operand).is_null() };
-
         if is_basic_block {
             let bb = unsafe { BasicBlock::new(LLVMValueAsBasicBlock(operand)) };
 
-            Some(Operand::Block(bb.expect("BasicBlock should always be valid")))
-        } else {
-            Some(Operand::Value(unsafe { BasicValueEnum::new(operand) }))
+            return Some(Operand::Block(bb.expect("BasicBlock should always be valid")));
         }
+
+        if unsafe { LLVMGetTypeKind(LLVMTypeOf(operand)) == LLVMTypeKind::LLVMMetadataTypeKind } {
+            // We may be dealing with null metadata, which would break memory invariants.
+            if LLVMIsAValueAsMetadata(operand).is_null() {
+                return None;
+            }
+            return Some(Operand::Metadata(MetadataValue::new(operand)));
+        }
+
+        Some(Operand::Value(unsafe { BasicValueEnum::new(operand) }))
     }
 
     /// Get an instruction value operand iterator.
