@@ -32,6 +32,13 @@ impl<'ctx> Operand<'ctx> {
         matches!(self, Self::Block(_))
     }
 
+    /// Determines if the [Operand] is a [Metadata].
+    #[inline]
+    #[must_use]
+    pub fn is_metadata(self) -> bool {
+        matches!(self, Self::Metadata(_))
+    }
+
     /// If the [Operand] is a [BasicValueEnum], map it into [Option::Some].
     #[inline]
     #[must_use]
@@ -48,6 +55,16 @@ impl<'ctx> Operand<'ctx> {
     pub fn block(self) -> Option<BasicBlock<'ctx>> {
         match self {
             Self::Block(block) => Some(block),
+            _ => None,
+        }
+    }
+
+    /// If the [Operand] is a [Metadata], map it into [Option::Some].
+    #[inline]
+    #[must_use]
+    pub fn metadata(self) -> Option<MetadataValue<'ctx>> {
+        match self {
+            Self::Metadata(md) => Some(md),
             _ => None,
         }
     }
@@ -74,12 +91,27 @@ impl<'ctx> Operand<'ctx> {
         }
     }
 
+    /// Expect [Metadata], panic with the message if it is not.
+    #[inline]
+    #[must_use]
+    #[track_caller]
+    pub fn expect_metadata(self, msg: &str) -> MetadataValue<'ctx> {
+        match self {
+            Self::Metadata(md) => md,
+            _ => panic!("{msg}"),
+        }
+    }
+
     /// Unwrap [BasicValueEnum]. Will panic if it is not.
     #[inline]
     #[must_use]
     #[track_caller]
     pub fn unwrap_value(self) -> BasicValueEnum<'ctx> {
-        self.expect_value("Called unwrap_value() on UsedValue::Block.")
+        match self {
+            Self::Value(value) => value,
+            Self::Block(_) => panic!("Called unwrap_value() on UsedValue::Block."),
+            Self::Metadata(_) => panic!("Called unwrap_value() on UsedValue::Metadata."),
+        }
     }
 
     /// Unwrap [BasicBlock]. Will panic if it is not.
@@ -87,7 +119,23 @@ impl<'ctx> Operand<'ctx> {
     #[must_use]
     #[track_caller]
     pub fn unwrap_block(self) -> BasicBlock<'ctx> {
-        self.expect_block("Called unwrap_block() on UsedValue::Value.")
+        match self {
+            Self::Value(_) => panic!("Called unwrap_value() on UsedValue::Value."),
+            Self::Block(block) => block,
+            Self::Metadata(_) => panic!("Called unwrap_value() on UsedValue::Metadata."),
+        }
+    }
+
+    /// Unwrap [Metadata]. Will panic if it is not.
+    #[inline]
+    #[must_use]
+    #[track_caller]
+    pub fn unwrap_metadata(self) -> MetadataValue<'ctx> {
+        match self {
+            Self::Value(_) => panic!("Called unwrap_value() on UsedValue::Value."),
+            Self::Block(_) => panic!("Called unwrap_value() on UsedValue::Block."),
+            Self::Metadata(md) => md,
+        }
     }
 }
 
