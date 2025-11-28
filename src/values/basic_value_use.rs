@@ -109,8 +109,8 @@ impl<'ctx> Operand<'ctx> {
     pub fn unwrap_value(self) -> BasicValueEnum<'ctx> {
         match self {
             Self::Value(value) => value,
-            Self::Block(_) => panic!("Called unwrap_value() on UsedValue::Block."),
-            Self::Metadata(_) => panic!("Called unwrap_value() on UsedValue::Metadata."),
+            Self::Block(_) => panic!("Called unwrap_value() on Operand::Block."),
+            Self::Metadata(_) => panic!("Called unwrap_value() on Operand::Metadata."),
         }
     }
 
@@ -120,9 +120,9 @@ impl<'ctx> Operand<'ctx> {
     #[track_caller]
     pub fn unwrap_block(self) -> BasicBlock<'ctx> {
         match self {
-            Self::Value(_) => panic!("Called unwrap_value() on UsedValue::Value."),
+            Self::Value(_) => panic!("Called unwrap_value() on Operand::Value."),
             Self::Block(block) => block,
-            Self::Metadata(_) => panic!("Called unwrap_value() on UsedValue::Metadata."),
+            Self::Metadata(_) => panic!("Called unwrap_value() on Operand::Metadata."),
         }
     }
 
@@ -132,8 +132,8 @@ impl<'ctx> Operand<'ctx> {
     #[track_caller]
     pub fn unwrap_metadata(self) -> MetadataValue<'ctx> {
         match self {
-            Self::Value(_) => panic!("Called unwrap_value() on UsedValue::Value."),
-            Self::Block(_) => panic!("Called unwrap_value() on UsedValue::Block."),
+            Self::Value(_) => panic!("Called unwrap_value() on Operand::Value."),
+            Self::Block(_) => panic!("Called unwrap_value() on Operand::Block."),
             Self::Metadata(md) => md,
         }
     }

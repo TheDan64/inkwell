@@ -6,11 +6,13 @@ use llvm_sys::core::{
     LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMGetPreviousInstruction, LLVMGetTypeKind,
     LLVMGetVolatile, LLVMHasMetadata, LLVMInstructionClone, LLVMInstructionEraseFromParent,
     LLVMInstructionRemoveFromParent, LLVMIsAAllocaInst, LLVMIsABasicBlock, LLVMIsAGetElementPtrInst, LLVMIsALoadInst,
-    LLVMIsAStoreInst, LLVMIsATerminatorInst, LLVMIsAValueAsMetadata, LLVMIsConditional, LLVMIsTailCall,
+    LLVMIsAStoreInst, LLVMIsATerminatorInst, LLVMIsConditional, LLVMIsTailCall,
     LLVMSetAlignment, LLVMSetMetadata, LLVMSetOperand, LLVMSetVolatile, LLVMTypeOf, LLVMValueAsBasicBlock,
 };
 #[llvm_versions(10..)]
 use llvm_sys::core::{LLVMGetAtomicRMWBinOp, LLVMIsAAtomicCmpXchgInst, LLVMIsAAtomicRMWInst};
+#[llvm_versions(17..)]
+use llvm_sys::core::LLVMIsAValueAsMetadata;
 use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::{LLVMOpcode, LLVMTypeKind};
@@ -690,16 +692,31 @@ impl<'ctx> InstructionValue<'ctx> {
             return Some(Operand::Block(bb.expect("BasicBlock should always be valid")));
         }
 
+        if let Some(metadata) = self.try_ingest_metadata(operand) {
+            return Some(Operand::Metadata(metadata));
+        }
+
+
+        Some(Operand::Value(unsafe { BasicValueEnum::new(operand) }))
+    }
+
+    #[llvm_versions(17..)] // LLVMIsAValueAsMetadata was introduced un 17.0.
+    unsafe fn try_ingest_metadata(self, operand: LLVMValueRef) -> Option<MetadataValue<'ctx>> {
+        assert!(!operand.is_null());
         if unsafe { LLVMGetTypeKind(LLVMTypeOf(operand)) == LLVMTypeKind::LLVMMetadataTypeKind } {
             // We may be dealing with null metadata, which would break memory invariants.
             if LLVMIsAValueAsMetadata(operand).is_null() {
                 return None;
             }
-            return Some(Operand::Metadata(MetadataValue::new(operand)));
+            return Some(MetadataValue::new(operand));
         }
-
-        Some(Operand::Value(unsafe { BasicValueEnum::new(operand) }))
+        None
     }
+    #[llvm_versions(..17)] // LLVMIsAValueAsMetadata was introduced un 17.0.
+    unsafe fn try_ingest_metadata(self, operand: LLVMValueRef) -> Option<MetadataValue<'ctx>> {
+        None
+    }
+
 
     /// Get an instruction value operand iterator.
     pub fn get_operands(self) -> OperandIter<'ctx> {
