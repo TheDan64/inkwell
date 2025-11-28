@@ -667,7 +667,8 @@ fn test_enumeration_types() {
             feature = "llvm17-0",
             feature = "llvm18-1",
             feature = "llvm19-1",
-            feature = "llvm20-1"
+            feature = "llvm20-1",
+            feature = "llvm21-1"
         ))]
         "",
         #[cfg(any(
@@ -680,7 +681,8 @@ fn test_enumeration_types() {
             feature = "llvm17-0",
             feature = "llvm18-1",
             feature = "llvm19-1",
-            feature = "llvm20-1"
+            feature = "llvm20-1",
+            feature = "llvm21-1"
         ))]
         "",
     );
