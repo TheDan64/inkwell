@@ -662,6 +662,7 @@ fn test_metadata_kinds() {
     ]);
 }
 
+#[llvm_versions(17..)]
 #[test]
 fn test_metadata_as_operand() {
     // clang can introduce instructions such as
