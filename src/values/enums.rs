@@ -461,6 +461,7 @@ impl<'ctx> AggregateValueEnum<'ctx> {
 
 impl<'ctx> BasicMetadataValueEnum<'ctx> {
     pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
+        assert!(!value.is_null());
         match LLVMGetTypeKind(LLVMTypeOf(value)) {
             LLVMTypeKind::LLVMFloatTypeKind
             | LLVMTypeKind::LLVMFP128TypeKind

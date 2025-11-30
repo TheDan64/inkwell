@@ -3,20 +3,17 @@ use llvm_sys::core::LLVMGetGEPSourceElementType;
 use llvm_sys::core::{
     LLVMGetAlignment, LLVMGetAllocatedType, LLVMGetFCmpPredicate, LLVMGetICmpPredicate, LLVMGetIndices,
     LLVMGetInstructionOpcode, LLVMGetInstructionParent, LLVMGetMetadata, LLVMGetNextInstruction, LLVMGetNumIndices,
-    LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMGetPreviousInstruction,
+    LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMGetPreviousInstruction, LLVMGetTypeKind,
     LLVMGetVolatile, LLVMHasMetadata, LLVMInstructionClone, LLVMInstructionEraseFromParent,
     LLVMInstructionRemoveFromParent, LLVMIsAAllocaInst, LLVMIsABasicBlock, LLVMIsAGetElementPtrInst, LLVMIsALoadInst,
-    LLVMIsAStoreInst, LLVMIsATerminatorInst, LLVMIsConditional, LLVMIsTailCall,
-    LLVMSetAlignment, LLVMSetMetadata, LLVMSetOperand, LLVMSetVolatile, LLVMValueAsBasicBlock,
+    LLVMIsAStoreInst, LLVMIsATerminatorInst, LLVMIsConditional, LLVMIsTailCall, LLVMSetAlignment, LLVMSetMetadata,
+    LLVMSetOperand, LLVMSetVolatile, LLVMTypeOf, LLVMValueAsBasicBlock,
 };
 #[llvm_versions(10..)]
 use llvm_sys::core::{LLVMGetAtomicRMWBinOp, LLVMIsAAtomicCmpXchgInst, LLVMIsAAtomicRMWInst};
-#[llvm_versions(17..)]
-use llvm_sys::core::{LLVMGetTypeKind, LLVMIsAValueAsMetadata, LLVMTypeOf};
 use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
 use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::LLVMOpcode;
-#[llvm_versions(17..)]
 use llvm_sys::LLVMTypeKind;
 
 use std::{ffi::CStr, fmt, fmt::Display};
@@ -694,35 +691,12 @@ impl<'ctx> InstructionValue<'ctx> {
             return Some(Operand::Block(bb.expect("BasicBlock should always be valid")));
         }
 
-        match self.try_ingest_metadata(operand) {
-            // This is indeed metadata.
-            Ok(Some(metadata)) => return Some(Operand::Metadata(metadata)),
-            // This is null metadata, which we can't convert to an operand.
-            Err(_) => return None,
-            // Not metadata at all.
-            Ok(None) => {}
+        if unsafe { LLVMGetTypeKind(LLVMTypeOf(operand)) == LLVMTypeKind::LLVMMetadataTypeKind } {
+            return Some(Operand::Metadata(MetadataValue::new(operand)));
         }
 
         Some(Operand::Value(unsafe { BasicValueEnum::new(operand) }))
     }
-
-    #[llvm_versions(17..)] // LLVMIsAValueAsMetadata was introduced un 17.0.
-    unsafe fn try_ingest_metadata(self, operand: LLVMValueRef) -> Result<Option<MetadataValue<'ctx>>, ()> {
-        assert!(!operand.is_null());
-        if unsafe { LLVMGetTypeKind(LLVMTypeOf(operand)) == LLVMTypeKind::LLVMMetadataTypeKind } {
-            // We may be dealing with null metadata, which would break memory invariants.
-            if LLVMIsAValueAsMetadata(operand).is_null() {
-                return Err(());
-            }
-            return Ok(Some(MetadataValue::new(operand)));
-        }
-        Ok(None)
-    }
-    #[llvm_versions(..17)] // LLVMIsAValueAsMetadata was introduced un 17.0.
-    unsafe fn try_ingest_metadata(self, _: LLVMValueRef) -> Result<Option<MetadataValue<'ctx>>, ()> {
-        Ok(None)
-    }
-
 
     /// Get an instruction value operand iterator.
     pub fn get_operands(self) -> OperandIter<'ctx> {

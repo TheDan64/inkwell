@@ -7,8 +7,6 @@ use crate::basic_block::BasicBlock;
 use crate::values::{AnyValueEnum, BasicValueEnum, MetadataValue};
 
 /// Either [BasicValueEnum], a [BasicBlock] or a [Metadata].
-///
-/// Note that [Metadata] variants are only constructed for LLVM 17+.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Operand<'ctx> {
     /// Represents a [BasicValueEnum].

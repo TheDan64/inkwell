@@ -662,7 +662,6 @@ fn test_metadata_kinds() {
     ]);
 }
 
-#[llvm_versions(17..)]
 #[test]
 fn test_metadata_as_operand() {
     // clang can introduce instructions such as
@@ -713,10 +712,13 @@ fn test_metadata_as_operand() {
     );
     let instruction = debug_info_builder.insert_declare_at_end(i32_ptr, Some(var_info), None, debug_loc, block);
     assert_eq!(instruction.get_num_operands(), 4);
-    assert!(instruction.get_operand(0).is_some());
-    assert!(instruction.get_operand(1).is_none());
-    assert!(instruction.get_operand(2).is_none());
-    assert!(instruction.get_operand(3).is_some());
+    assert_eq!(instruction.get_operands().count(), 4);
+    for (i, operand) in instruction.get_operands().enumerate() {
+        assert!(operand.is_some());
+        // A cheap (and certainly insufficient) test that we can walk through
+        // the operand without segfaulting.
+        eprintln!("operand {i} is {:?}", operand);
+    }
 }
 
 #[test]

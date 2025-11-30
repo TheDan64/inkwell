@@ -101,7 +101,7 @@ impl<'ctx> MetadataValue<'ctx> {
 
     // SubTypes: Node only one day
     // REVIEW: BasicMetadataValueEnum only if you can put metadata in metadata...
-    pub fn get_node_values(self) -> Vec<BasicMetadataValueEnum<'ctx>> {
+    pub fn get_node_values(self) -> Vec<Option<BasicMetadataValueEnum<'ctx>>> {
         if self.is_string() {
             return Vec::new();
         }
@@ -117,7 +117,13 @@ impl<'ctx> MetadataValue<'ctx> {
         };
 
         vec.iter()
-            .map(|val| unsafe { BasicMetadataValueEnum::new(*val) })
+            .map(|val| {
+                if val.is_null() {
+                    None
+                } else {
+                    Some(unsafe { BasicMetadataValueEnum::new(*val) })
+                }
+            })
             .collect()
     }
 
