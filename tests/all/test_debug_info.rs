@@ -636,3 +636,87 @@ fn test_array_type() {
 
     dibuilder.create_array_type(di_type, 160, 64, &[(0..20), (-1..30), (20..55)]);
 }
+
+#[llvm_versions(9..)]
+#[test]
+fn test_enumeration_types() {
+    let context = Context::create();
+    let module = context.create_module("bin");
+
+    let (dibuilder, compile_unit) = module.create_debug_info_builder(
+        true,
+        DWARFSourceLanguage::C,
+        "source_file",
+        ".",
+        "my llvm compiler frontend",
+        false,
+        "",
+        0,
+        "",
+        DWARFEmissionKind::Full,
+        0,
+        false,
+        false,
+        #[cfg(any(
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+            feature = "llvm14-0",
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-1",
+            feature = "llvm19-1",
+            feature = "llvm20-1",
+            feature = "llvm21-1"
+        ))]
+        "",
+        #[cfg(any(
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+            feature = "llvm14-0",
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-1",
+            feature = "llvm19-1",
+            feature = "llvm20-1",
+            feature = "llvm21-1"
+        ))]
+        "",
+    );
+
+    let di_type = dibuilder
+        .create_basic_type("type_name", 8_u64, 0x00, DIFlags::ZERO)
+        .unwrap()
+        .as_type();
+
+    // Smoke test that the enums get created
+    let enum_red = dibuilder.create_enumerator("RED", 0, false);
+    let enum_green = dibuilder.create_enumerator("GREEN", 1, false);
+    let enum_blue = dibuilder.create_enumerator("BLUE", 2, false);
+
+    // Smoke test that the enumeration type gets created
+    dibuilder.create_enumeration_type(
+        compile_unit.as_debug_info_scope(),
+        "Color",
+        compile_unit.get_file(),
+        1,
+        32,
+        32,
+        &[enum_red, enum_green, enum_blue],
+        di_type,
+    );
+
+    // Smoke test that we can get the pointer and type back from the enumerator
+    assert!(!enum_red.as_mut_ptr().is_null());
+
+    let _enum_red_as_type = enum_red.as_type();
+
+    // check that finalize works without errors
+    dibuilder.finalize();
+
+    // check that module is still valid
+    assert!(module.verify().is_ok());
+}
