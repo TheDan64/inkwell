@@ -101,6 +101,24 @@ pub unsafe trait BasicType<'ctx>: AnyType<'ctx> {
         unsafe { Type::new(self.as_type_ref()).size_of() }
     }
 
+    /// Gets the alignment of this `BasicType`. Value may vary depending on the target architecture.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::types::BasicType;
+    ///
+    /// let context = Context::create();
+    /// let i8_type = context.i8_type();
+    /// let i8_type_alignment = i8_type.get_alignment();
+    ///
+    /// assert_eq!(i8_type_alignment.get_zero_extended_constant(), Some(1));
+    /// ```
+    fn get_alignment(&self) -> IntValue<'ctx> {
+        unsafe { Type::new(self.as_type_ref()).get_alignment() }
+    }
+
     /// Create an `ArrayType` with this `BasicType` as its elements.
     ///
     /// Example:
