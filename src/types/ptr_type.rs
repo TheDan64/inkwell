@@ -56,26 +56,6 @@ impl<'ctx> PointerType<'ctx> {
         self.ptr_type.size_of().unwrap()
     }
 
-    /// Gets the alignment of this `PointerType`. Value may vary depending on the target architecture.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    /// use inkwell::AddressSpace;
-    ///
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    /// #[cfg(feature = "typed-pointers")]
-    /// let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
-    /// #[cfg(not(feature = "typed-pointers"))]
-    /// let f32_ptr_type = context.ptr_type(AddressSpace::default());
-    /// let f32_ptr_type_alignment = f32_ptr_type.get_alignment();
-    /// ```
-    pub fn get_alignment(self) -> IntValue<'ctx> {
-        self.ptr_type.get_alignment()
-    }
-
     /// Creates a `PointerType` with this `PointerType` for its element type.
     ///
     /// # Example

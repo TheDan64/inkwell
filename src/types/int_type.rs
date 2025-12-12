@@ -296,21 +296,6 @@ impl<'ctx> IntType<'ctx> {
         self.int_type.size_of().unwrap()
     }
 
-    /// Gets the alignment of this `IntType`. Value may vary depending on the target architecture.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let i8_type = context.i8_type();
-    /// let i8_type_alignment = i8_type.get_alignment();
-    /// ```
-    pub fn get_alignment(self) -> IntValue<'ctx> {
-        self.int_type.get_alignment()
-    }
-
     /// Creates a `PointerType` with this `IntType` for its element type.
     ///
     /// # Example

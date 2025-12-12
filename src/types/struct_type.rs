@@ -130,22 +130,6 @@ impl<'ctx> StructType<'ctx> {
         self.struct_type.size_of()
     }
 
-    /// Gets the alignment of this `StructType`. Value may vary depending on the target architecture.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    /// let struct_type = context.struct_type(&[f32_type.into(), f32_type.into()], false);
-    /// let struct_type_alignment = struct_type.get_alignment();
-    /// ```
-    pub fn get_alignment(self) -> IntValue<'ctx> {
-        self.struct_type.get_alignment()
-    }
-
     /// Gets a reference to the `Context` this `StructType` was created in.
     ///
     /// # Example

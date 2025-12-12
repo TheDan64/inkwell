@@ -48,22 +48,6 @@ impl<'ctx> ArrayType<'ctx> {
         self.array_type.size_of()
     }
 
-    /// Gets the alignment of this `ArrayType`. Value may vary depending on the target architecture.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let i8_type = context.i8_type();
-    /// let i8_array_type = i8_type.array_type(3);
-    /// let i8_array_type_alignment = i8_array_type.get_alignment();
-    /// ```
-    pub fn get_alignment(self) -> IntValue<'ctx> {
-        self.array_type.get_alignment()
-    }
-
     /// Creates a `PointerType` with this `ArrayType` for its element type.
     ///
     /// # Example
