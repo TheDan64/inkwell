@@ -211,6 +211,7 @@ fn test_set_get_name() {
     let i64_type = context.i64_type();
     let i128_type = context.i128_type();
     let f16_type = context.f16_type();
+    let bf16_type = context.bf16_type();
     let f32_type = context.f32_type();
     let f64_type = context.f64_type();
     let f128_type = context.f128_type();
@@ -226,6 +227,7 @@ fn test_set_get_name() {
     let i64_val = i64_type.const_int(0, false);
     let i128_val = i128_type.const_int(0, false);
     let f16_val = f16_type.const_float(0.0);
+    let bf16_val = bf16_type.const_float(0.0);
     let f32_val = f32_type.const_float(0.0);
     let f64_val = f64_type.const_float(0.0);
     let f128_val = f128_type.const_float(0.0);
@@ -258,6 +260,7 @@ fn test_set_get_name() {
     assert_eq!(i64_val.get_name().to_str(), Ok(""));
     assert_eq!(i128_val.get_name().to_str(), Ok(""));
     assert_eq!(f16_val.get_name().to_str(), Ok(""));
+    assert_eq!(bf16_val.get_name().to_str(), Ok(""));
     assert_eq!(f32_val.get_name().to_str(), Ok(""));
     assert_eq!(f64_val.get_name().to_str(), Ok(""));
     assert_eq!(f128_val.get_name().to_str(), Ok(""));
@@ -288,13 +291,14 @@ fn test_set_get_name() {
     i64_val.set_name("my_val5");
     i128_val.set_name("my_val6");
     f16_val.set_name("my_val7");
-    f32_val.set_name("my_val8");
-    f64_val.set_name("my_val9");
-    f128_val.set_name("my_val10");
-    ptr_val.set_name("my_val11");
-    array_val.set_name("my_val12");
-    struct_val.set_name("my_val13");
-    vec_val.set_name("my_val14");
+    bf16_val.set_name("my_val8");
+    f32_val.set_name("my_val9");
+    f64_val.set_name("my_val10");
+    f128_val.set_name("my_val11");
+    ptr_val.set_name("my_val12");
+    array_val.set_name("my_val13");
+    struct_val.set_name("my_val14");
+    vec_val.set_name("my_val15");
     #[cfg(any(
         feature = "llvm12-0",
         feature = "llvm13-0",
@@ -307,8 +311,8 @@ fn test_set_get_name() {
         feature = "llvm20-1",
         feature = "llvm21-1"
     ))]
-    scalable_vec_val.set_name("my_val15");
-    ppc_f128_val.set_name("my_val16");
+    scalable_vec_val.set_name("my_val16");
+    ppc_f128_val.set_name("my_val17");
 
     assert_eq!(bool_val.get_name().to_str(), Ok(""));
     assert_eq!(i8_val.get_name().to_str(), Ok(""));
@@ -317,6 +321,7 @@ fn test_set_get_name() {
     assert_eq!(i64_val.get_name().to_str(), Ok(""));
     assert_eq!(i128_val.get_name().to_str(), Ok(""));
     assert_eq!(f16_val.get_name().to_str(), Ok(""));
+    assert_eq!(bf16_val.get_name().to_str(), Ok(""));
     assert_eq!(f32_val.get_name().to_str(), Ok(""));
     assert_eq!(f64_val.get_name().to_str(), Ok(""));
     assert_eq!(f128_val.get_name().to_str(), Ok(""));
@@ -489,6 +494,7 @@ fn test_undef() {
     let i64_type = context.i64_type();
     let i128_type = context.i128_type();
     let f16_type = context.f16_type();
+    let bf16_type = context.bf16_type();
     let f32_type = context.f32_type();
     let f64_type = context.f64_type();
     let f128_type = context.f128_type();
@@ -506,6 +512,7 @@ fn test_undef() {
     let i64_val = i64_type.const_int(0, false);
     let i128_val = i128_type.const_int(0, false);
     let f16_val = f16_type.const_float(0.0);
+    let bf16_val = bf16_type.const_float(0.0);
     let f32_val = f32_type.const_float(0.0);
     let f64_val = f64_type.const_float(0.0);
     let f128_val = f128_type.const_float(0.0);
@@ -538,6 +545,7 @@ fn test_undef() {
     assert!(!i64_val.is_undef());
     assert!(!i128_val.is_undef());
     assert!(!f16_val.is_undef());
+    assert!(!bf16_val.is_undef());
     assert!(!f32_val.is_undef());
     assert!(!f64_val.is_undef());
     assert!(!f128_val.is_undef());
@@ -567,6 +575,7 @@ fn test_undef() {
     let i64_undef = i64_type.get_undef();
     let i128_undef = i128_type.get_undef();
     let f16_undef = f16_type.get_undef();
+    let bf16_undef = bf16_type.get_undef();
     let f32_undef = f32_type.get_undef();
     let f64_undef = f64_type.get_undef();
     let f128_undef = f128_type.get_undef();
@@ -599,6 +608,7 @@ fn test_undef() {
     assert!(i64_undef.is_undef());
     assert!(i128_undef.is_undef());
     assert!(f16_undef.is_undef());
+    assert!(bf16_undef.is_undef());
     assert!(f32_undef.is_undef());
     assert!(f64_undef.is_undef());
     assert!(f128_undef.is_undef());
@@ -633,6 +643,7 @@ fn test_poison() {
     let i64_type = context.i64_type();
     let i128_type = context.i128_type();
     let f16_type = context.f16_type();
+    let bf16_type = context.bf16_type();
     let f32_type = context.f32_type();
     let f64_type = context.f64_type();
     let f128_type = context.f128_type();
@@ -663,6 +674,7 @@ fn test_poison() {
     let i64_val = i64_type.const_int(0, false);
     let i128_val = i128_type.const_int(0, false);
     let f16_val = f16_type.const_float(0.0);
+    let bf16_val = bf16_type.const_float(0.0);
     let f32_val = f32_type.const_float(0.0);
     let f64_val = f64_type.const_float(0.0);
     let f128_val = f128_type.const_float(0.0);
@@ -695,6 +707,7 @@ fn test_poison() {
     assert!(!i64_val.is_poison());
     assert!(!i128_val.is_poison());
     assert!(!f16_val.is_poison());
+    assert!(!bf16_val.is_poison());
     assert!(!f32_val.is_poison());
     assert!(!f64_val.is_poison());
     assert!(!f128_val.is_poison());
@@ -724,6 +737,7 @@ fn test_poison() {
     let i64_poison = i64_type.get_poison();
     let i128_poison = i128_type.get_poison();
     let f16_poison = f16_type.get_poison();
+    let bf16_poison = bf16_type.get_poison();
     let f32_poison = f32_type.get_poison();
     let f64_poison = f64_type.get_poison();
     let f128_poison = f128_type.get_poison();
@@ -756,6 +770,7 @@ fn test_poison() {
     assert!(i64_poison.is_poison());
     assert!(i128_poison.is_poison());
     assert!(f16_poison.is_poison());
+    assert!(bf16_poison.is_poison());
     assert!(f32_poison.is_poison());
     assert!(f64_poison.is_poison());
     assert!(f128_poison.is_poison());
@@ -885,6 +900,7 @@ fn test_metadata() {
     // let i64_type = context.i64_type();
     // let i128_type = context.i128_type();
     // let f16_type = context.f16_type();
+    // let bf16_type = context.bf16_type();
     let f32_type = context.f32_type();
     // let f64_type = context.f64_type();
     // let f128_type = context.f128_type();
@@ -901,6 +917,7 @@ fn test_metadata() {
     // let i64_val = i64_type.const_int(0, false);
     // let i128_val = i128_type.const_int(0, false);
     // let f16_val = f16_type.const_float(0.0);
+    // let bf16_val = bf16_type.const_float(0.0);
     let f32_val = f32_type.const_float(0.0);
     // let f64_val = f64_type.const_float(0.0);
     // let f128_val = f128_type.const_float(0.0);
@@ -964,6 +981,7 @@ fn test_metadata() {
     // assert!(i64_val.has_metadata());
     // assert!(!i128_val.has_metadata());
     // assert!(!f16_val.has_metadata());
+    // assert!(!bf16_val.has_metadata());
     // assert!(!f32_val.has_metadata());
     // assert!(!f64_val.has_metadata());
     // assert!(!f128_val.has_metadata());
@@ -1545,6 +1563,7 @@ fn test_consts() {
     let i64_type = context.i64_type();
     let i128_type = context.i128_type();
     let f16_type = context.f16_type();
+    let bf16_type = context.bf16_type();
     let f32_type = context.f32_type();
     let f64_type = context.f64_type();
     let f128_type = context.f128_type();
@@ -1556,6 +1575,7 @@ fn test_consts() {
     let i64_val = i64_type.const_all_ones();
     let i128_val = i128_type.const_all_ones();
     let f16_val = f16_type.const_float(1.2);
+    let bf16_val = bf16_type.const_float(1.2);
     let f32_val = f32_type.const_float(3.4);
     let f64_val = f64_type.const_float(5.6);
     let f128_val = f128_type.const_float(7.8);
@@ -1584,6 +1604,7 @@ fn test_consts() {
     assert!(i64_val.is_const());
     assert!(i128_val.is_const());
     assert!(f16_val.is_const());
+    assert!(bf16_val.is_const());
     assert!(f32_val.is_const());
     assert!(f64_val.is_const());
     assert!(f128_val.is_const());
@@ -1625,6 +1646,7 @@ fn test_consts() {
     assert_eq!(i128_val.get_sign_extended_constant(), None);
 
     assert_eq!(f16_val.get_constant(), Some((1.2001953125, false)));
+    assert_eq!(bf16_val.get_constant(), Some((1.203125, false)));
     assert_eq!(f32_val.get_constant(), Some((3.4000000953674316, false)));
     assert_eq!(f64_val.get_constant(), Some((5.6, false)));
     assert_eq!(f128_val.get_constant(), Some((7.8, false)));

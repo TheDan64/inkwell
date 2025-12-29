@@ -14,13 +14,13 @@ use llvm_sys::core::LLVMMetadataTypeInContext;
 #[cfg(not(feature = "typed-pointers"))]
 use llvm_sys::core::LLVMPointerTypeInContext;
 use llvm_sys::core::{
-    LLVMAppendBasicBlockInContext, LLVMConstStructInContext, LLVMContextCreate, LLVMContextDispose,
-    LLVMContextSetDiagnosticHandler, LLVMCreateBuilderInContext, LLVMCreateEnumAttribute, LLVMCreateStringAttribute,
-    LLVMDoubleTypeInContext, LLVMFP128TypeInContext, LLVMFloatTypeInContext, LLVMGetGlobalContext,
-    LLVMGetMDKindIDInContext, LLVMHalfTypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext,
-    LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext,
-    LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext, LLVMStructCreateNamed, LLVMStructTypeInContext,
-    LLVMVoidTypeInContext, LLVMX86FP80TypeInContext,
+    LLVMAppendBasicBlockInContext, LLVMBFloatTypeInContext, LLVMConstStructInContext, LLVMContextCreate,
+    LLVMContextDispose, LLVMContextSetDiagnosticHandler, LLVMCreateBuilderInContext, LLVMCreateEnumAttribute,
+    LLVMCreateStringAttribute, LLVMDoubleTypeInContext, LLVMFP128TypeInContext, LLVMFloatTypeInContext,
+    LLVMGetGlobalContext, LLVMGetMDKindIDInContext, LLVMHalfTypeInContext, LLVMInsertBasicBlockInContext,
+    LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext,
+    LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext,
+    LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMX86FP80TypeInContext,
 };
 
 #[llvm_versions(..19)]
@@ -212,6 +212,10 @@ impl ContextImpl {
 
     fn f16_type<'ctx>(&self) -> FloatType<'ctx> {
         unsafe { FloatType::new(LLVMHalfTypeInContext(self.0)) }
+    }
+
+    fn bf16_type<'ctx>(&self) -> FloatType<'ctx> {
+        unsafe { FloatType::new(LLVMBFloatTypeInContext(self.0)) }
     }
 
     fn f32_type<'ctx>(&self) -> FloatType<'ctx> {
@@ -834,6 +838,24 @@ impl Context {
     #[inline]
     pub fn f16_type(&self) -> FloatType<'_> {
         self.context.f16_type()
+    }
+
+    /// Gets the `FloatType` representing bfloat16 with a 16 bit width. It will be assigned the current context.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    ///
+    /// let bf16_type = context.bf16_tye();
+    ///
+    /// assert_eq!(bf16_type.get_context(), context);
+    /// ```
+    #[inline]
+    pub fn bf16_type(&self) -> FloatType<'_> {
+        self.context.bf16_type()
     }
 
     /// Gets the `FloatType` representing a 32 bit width. It will be assigned the current context.
@@ -1696,6 +1718,24 @@ impl<'ctx> ContextRef<'ctx> {
     #[inline]
     pub fn f16_type(&self) -> FloatType<'ctx> {
         self.context.f16_type()
+    }
+
+    /// Gets the `FloatType` representing bfloat16 with a 16 bit width. It will be assigned the current context.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    ///
+    /// let bf16_type = context.bf16_tye();
+    ///
+    /// assert_eq!(bf16_type.get_context(), context);
+    /// ```
+    #[inline]
+    pub fn bf16_type(&self) -> FloatType<'ctx> {
+        self.context.bf16_type()
     }
 
     /// Gets the `FloatType` representing a 32 bit width. It will be assigned the current context.
