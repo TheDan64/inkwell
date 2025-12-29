@@ -10,7 +10,7 @@ use inkwell::types::{AnyTypeEnum, StringRadix, VectorType};
 use inkwell::values::CallSiteValue;
 #[llvm_versions(18..)]
 use inkwell::values::OperandBundle;
-use inkwell::values::{AnyValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
+use inkwell::values::{AnyValue, BasicValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
 use inkwell::{AddressSpace, DLLStorageClass, GlobalVisibility, ThreadLocalMode};
 
 #[llvm_versions(18..)]
@@ -2024,4 +2024,167 @@ fn test_constant_expression() {
 
     assert!(expr.is_const());
     assert!(!expr.is_constant_int());
+}
+
+#[test]
+fn test_basic_value_types() {
+    let context = Context::create();
+    let bool_type = context.bool_type();
+    let i8_type = context.i8_type();
+    let i16_type = context.i16_type();
+    let i32_type = context.i32_type();
+    let i64_type = context.i64_type();
+    let i128_type = context.i128_type();
+    let f16_type = context.f16_type();
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1",
+    ))]
+    let bf16_type = context.bf16_type();
+    let f32_type = context.f32_type();
+    let f64_type = context.f64_type();
+    let f128_type = context.f128_type();
+    #[cfg(not(feature = "typed-pointers"))]
+    let ptr_type = context.ptr_type(AddressSpace::default());
+    let array_type = f64_type.array_type(42);
+    let ppc_f128_type = context.ppc_f128_type();
+
+    let bool_val = bool_type.const_int(0, false);
+    let i8_val = i8_type.const_int(0, false);
+    let i16_val = i16_type.const_int(0, false);
+    let i32_val = i32_type.const_int(0, false);
+    let i64_val = i64_type.const_int(0, false);
+    let i128_val = i128_type.const_int(0, false);
+    let f16_val = f16_type.const_float(0.0);
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1",
+    ))]
+    let bf16_val = bf16_type.const_float(0.0);
+    let f32_val = f32_type.const_float(0.0);
+    let f64_val = f64_type.const_float(0.0);
+    let f128_val = f128_type.const_float(0.0);
+    #[cfg(feature = "typed-pointers")]
+    let ptr_val = bool_type.ptr_type(AddressSpace::default()).const_null();
+    #[cfg(not(feature = "typed-pointers"))]
+    let ptr_val = ptr_type.const_null();
+    let array_val = array_type.const_zero();
+    let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
+    let vec_val = VectorType::const_vector(&[i8_val]);
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1"
+    ))]
+    let scalable_vec_val = f64_type.scalable_vec_type(42).const_zero();
+    let ppc_f128_val = ppc_f128_type.const_float(0.0);
+
+    assert!(bool_val.as_basic_value_enum().is_int_value());
+    assert!(i8_val.as_basic_value_enum().is_int_value());
+    assert!(i16_val.as_basic_value_enum().is_int_value());
+    assert!(i32_val.as_basic_value_enum().is_int_value());
+    assert!(i64_val.as_basic_value_enum().is_int_value());
+    assert!(i128_val.as_basic_value_enum().is_int_value());
+    assert!(f16_val.as_basic_value_enum().is_float_value());
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1"
+    ))]
+    assert!(bf16_val.as_basic_value_enum().is_float_value());
+    assert!(f32_val.as_basic_value_enum().is_float_value());
+    assert!(f64_val.as_basic_value_enum().is_float_value());
+    assert!(f128_val.as_basic_value_enum().is_float_value());
+    assert!(ptr_val.as_basic_value_enum().is_pointer_value());
+    assert!(array_val.as_basic_value_enum().is_array_value());
+    assert!(struct_val.as_basic_value_enum().is_struct_value());
+    assert!(vec_val.as_basic_value_enum().is_vector_value());
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1"
+    ))]
+    assert!(scalable_vec_val.as_basic_value_enum().is_scalable_vector_value());
+    assert!(ppc_f128_val.as_basic_value_enum().is_float_value());
+
+    assert!(bool_val.as_any_value_enum().is_int_value());
+    assert!(i8_val.as_any_value_enum().is_int_value());
+    assert!(i16_val.as_any_value_enum().is_int_value());
+    assert!(i32_val.as_any_value_enum().is_int_value());
+    assert!(i64_val.as_any_value_enum().is_int_value());
+    assert!(i128_val.as_any_value_enum().is_int_value());
+    assert!(f16_val.as_any_value_enum().is_float_value());
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1"
+    ))]
+    assert!(bf16_val.as_any_value_enum().is_float_value());
+    assert!(f32_val.as_any_value_enum().is_float_value());
+    assert!(f64_val.as_any_value_enum().is_float_value());
+    assert!(f128_val.as_any_value_enum().is_float_value());
+    assert!(ptr_val.as_any_value_enum().is_pointer_value());
+    assert!(array_val.as_any_value_enum().is_array_value());
+    assert!(struct_val.as_any_value_enum().is_struct_value());
+    assert!(vec_val.as_any_value_enum().is_vector_value());
+    #[cfg(any(
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1"
+    ))]
+    assert!(scalable_vec_val.as_any_value_enum().is_scalable_vector_value());
+    assert!(ppc_f128_val.as_any_value_enum().is_float_value());
 }
