@@ -214,6 +214,19 @@ impl ContextImpl {
         unsafe { FloatType::new(LLVMHalfTypeInContext(self.0)) }
     }
 
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1",
+    ))]
     fn bf16_type<'ctx>(&self) -> FloatType<'ctx> {
         unsafe { FloatType::new(LLVMBFloatTypeInContext(self.0)) }
     }
@@ -841,6 +854,7 @@ impl Context {
     }
 
     /// Gets the `FloatType` representing bfloat16 with a 16 bit width. It will be assigned the current context.
+    /// This is only available with LLVM >= 11.
     ///
     /// # Example
     ///
@@ -849,10 +863,23 @@ impl Context {
     ///
     /// let context = Context::create();
     ///
-    /// let bf16_type = context.bf16_tye();
+    /// let bf16_type = context.bf16_type();
     ///
     /// assert_eq!(bf16_type.get_context(), context);
     /// ```
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1",
+    ))]
     #[inline]
     pub fn bf16_type(&self) -> FloatType<'_> {
         self.context.bf16_type()
@@ -1721,6 +1748,7 @@ impl<'ctx> ContextRef<'ctx> {
     }
 
     /// Gets the `FloatType` representing bfloat16 with a 16 bit width. It will be assigned the current context.
+    /// This is only available with LLVM >= 11.
     ///
     /// # Example
     ///
@@ -1729,10 +1757,23 @@ impl<'ctx> ContextRef<'ctx> {
     ///
     /// let context = Context::create();
     ///
-    /// let bf16_type = context.bf16_tye();
+    /// let bf16_type = context.bf16_type();
     ///
     /// assert_eq!(bf16_type.get_context(), context);
     /// ```
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1",
+    ))]
     #[inline]
     pub fn bf16_type(&self) -> FloatType<'ctx> {
         self.context.bf16_type()

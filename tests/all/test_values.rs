@@ -211,6 +211,19 @@ fn test_set_get_name() {
     let i64_type = context.i64_type();
     let i128_type = context.i128_type();
     let f16_type = context.f16_type();
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1",
+    ))]
     let bf16_type = context.bf16_type();
     let f32_type = context.f32_type();
     let f64_type = context.f64_type();
@@ -227,6 +240,19 @@ fn test_set_get_name() {
     let i64_val = i64_type.const_int(0, false);
     let i128_val = i128_type.const_int(0, false);
     let f16_val = f16_type.const_float(0.0);
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1",
+    ))]
     let bf16_val = bf16_type.const_float(0.0);
     let f32_val = f32_type.const_float(0.0);
     let f64_val = f64_type.const_float(0.0);
@@ -260,6 +286,19 @@ fn test_set_get_name() {
     assert_eq!(i64_val.get_name().to_str(), Ok(""));
     assert_eq!(i128_val.get_name().to_str(), Ok(""));
     assert_eq!(f16_val.get_name().to_str(), Ok(""));
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1",
+    ))]
     assert_eq!(bf16_val.get_name().to_str(), Ok(""));
     assert_eq!(f32_val.get_name().to_str(), Ok(""));
     assert_eq!(f64_val.get_name().to_str(), Ok(""));
@@ -291,6 +330,19 @@ fn test_set_get_name() {
     i64_val.set_name("my_val5");
     i128_val.set_name("my_val6");
     f16_val.set_name("my_val7");
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1",
+    ))]
     bf16_val.set_name("my_val8");
     f32_val.set_name("my_val9");
     f64_val.set_name("my_val10");
@@ -321,6 +373,19 @@ fn test_set_get_name() {
     assert_eq!(i64_val.get_name().to_str(), Ok(""));
     assert_eq!(i128_val.get_name().to_str(), Ok(""));
     assert_eq!(f16_val.get_name().to_str(), Ok(""));
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1",
+    ))]
     assert_eq!(bf16_val.get_name().to_str(), Ok(""));
     assert_eq!(f32_val.get_name().to_str(), Ok(""));
     assert_eq!(f64_val.get_name().to_str(), Ok(""));
@@ -494,6 +559,19 @@ fn test_undef() {
     let i64_type = context.i64_type();
     let i128_type = context.i128_type();
     let f16_type = context.f16_type();
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1",
+    ))]
     let bf16_type = context.bf16_type();
     let f32_type = context.f32_type();
     let f64_type = context.f64_type();
@@ -512,6 +590,19 @@ fn test_undef() {
     let i64_val = i64_type.const_int(0, false);
     let i128_val = i128_type.const_int(0, false);
     let f16_val = f16_type.const_float(0.0);
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1",
+    ))]
     let bf16_val = bf16_type.const_float(0.0);
     let f32_val = f32_type.const_float(0.0);
     let f64_val = f64_type.const_float(0.0);
@@ -545,6 +636,19 @@ fn test_undef() {
     assert!(!i64_val.is_undef());
     assert!(!i128_val.is_undef());
     assert!(!f16_val.is_undef());
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1",
+    ))]
     assert!(!bf16_val.is_undef());
     assert!(!f32_val.is_undef());
     assert!(!f64_val.is_undef());
@@ -575,6 +679,19 @@ fn test_undef() {
     let i64_undef = i64_type.get_undef();
     let i128_undef = i128_type.get_undef();
     let f16_undef = f16_type.get_undef();
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1",
+    ))]
     let bf16_undef = bf16_type.get_undef();
     let f32_undef = f32_type.get_undef();
     let f64_undef = f64_type.get_undef();
@@ -608,6 +725,19 @@ fn test_undef() {
     assert!(i64_undef.is_undef());
     assert!(i128_undef.is_undef());
     assert!(f16_undef.is_undef());
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1",
+    ))]
     assert!(bf16_undef.is_undef());
     assert!(f32_undef.is_undef());
     assert!(f64_undef.is_undef());
@@ -650,18 +780,6 @@ fn test_poison() {
     #[cfg(not(feature = "typed-pointers"))]
     let ptr_type = context.ptr_type(AddressSpace::default());
     let array_type = f64_type.array_type(42);
-    #[cfg(any(
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0",
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-1",
-        feature = "llvm19-1",
-        feature = "llvm20-1",
-        feature = "llvm21-1"
-    ))]
     let scalable_vec_type = f64_type.scalable_vec_type(42);
     let ppc_f128_type = context.ppc_f128_type();
 
@@ -685,18 +803,6 @@ fn test_poison() {
     let array_val = f64_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
     let vec_val = VectorType::const_vector(&[i8_val]);
-    #[cfg(any(
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0",
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-1",
-        feature = "llvm19-1",
-        feature = "llvm20-1",
-        feature = "llvm21-1"
-    ))]
     let scalable_vec_val = scalable_vec_type.const_zero();
     let ppc_f128_val = ppc_f128_type.const_float(0.0);
 
@@ -715,18 +821,6 @@ fn test_poison() {
     assert!(!array_val.is_poison());
     assert!(!struct_val.is_poison());
     assert!(!vec_val.is_poison());
-    #[cfg(any(
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0",
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-1",
-        feature = "llvm19-1",
-        feature = "llvm20-1",
-        feature = "llvm21-1"
-    ))]
     assert!(!scalable_vec_val.is_poison());
     assert!(!ppc_f128_val.is_poison());
 
@@ -748,18 +842,6 @@ fn test_poison() {
     let array_poison = array_type.get_poison();
     let struct_poison = context.struct_type(&[bool_type.into()], false).get_poison();
     let vec_poison = bool_type.vec_type(1).get_poison();
-    #[cfg(any(
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0",
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-1",
-        feature = "llvm19-1",
-        feature = "llvm20-1",
-        feature = "llvm21-1"
-    ))]
     let scalable_vec_poison = scalable_vec_type.get_poison();
     let ppc_f128_poison = ppc_f128_type.get_poison();
 
@@ -778,18 +860,6 @@ fn test_poison() {
     assert!(array_poison.is_poison());
     assert!(struct_poison.is_poison());
     assert!(vec_poison.is_poison());
-    #[cfg(any(
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0",
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-1",
-        feature = "llvm19-1",
-        feature = "llvm20-1",
-        feature = "llvm21-1"
-    ))]
     assert!(scalable_vec_poison.is_poison());
     assert!(ppc_f128_poison.is_poison());
 }
@@ -900,6 +970,7 @@ fn test_metadata() {
     // let i64_type = context.i64_type();
     // let i128_type = context.i128_type();
     // let f16_type = context.f16_type();
+    // #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0", feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1"))]
     // let bf16_type = context.bf16_type();
     let f32_type = context.f32_type();
     // let f64_type = context.f64_type();
@@ -917,6 +988,7 @@ fn test_metadata() {
     // let i64_val = i64_type.const_int(0, false);
     // let i128_val = i128_type.const_int(0, false);
     // let f16_val = f16_type.const_float(0.0);
+    // #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0", feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1"))]
     // let bf16_val = bf16_type.const_float(0.0);
     let f32_val = f32_type.const_float(0.0);
     // let f64_val = f64_type.const_float(0.0);
@@ -981,6 +1053,7 @@ fn test_metadata() {
     // assert!(i64_val.has_metadata());
     // assert!(!i128_val.has_metadata());
     // assert!(!f16_val.has_metadata());
+    // #[cfg(any(feature = "llvm11-0", feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0", feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1"))]
     // assert!(!bf16_val.has_metadata());
     // assert!(!f32_val.has_metadata());
     // assert!(!f64_val.has_metadata());
@@ -1563,6 +1636,19 @@ fn test_consts() {
     let i64_type = context.i64_type();
     let i128_type = context.i128_type();
     let f16_type = context.f16_type();
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1"
+    ))]
     let bf16_type = context.bf16_type();
     let f32_type = context.f32_type();
     let f64_type = context.f64_type();
@@ -1575,6 +1661,19 @@ fn test_consts() {
     let i64_val = i64_type.const_all_ones();
     let i128_val = i128_type.const_all_ones();
     let f16_val = f16_type.const_float(1.2);
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1"
+    ))]
     let bf16_val = bf16_type.const_float(1.2);
     let f32_val = f32_type.const_float(3.4);
     let f64_val = f64_type.const_float(5.6);
@@ -1604,6 +1703,19 @@ fn test_consts() {
     assert!(i64_val.is_const());
     assert!(i128_val.is_const());
     assert!(f16_val.is_const());
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1"
+    ))]
     assert!(bf16_val.is_const());
     assert!(f32_val.is_const());
     assert!(f64_val.is_const());
@@ -1646,6 +1758,19 @@ fn test_consts() {
     assert_eq!(i128_val.get_sign_extended_constant(), None);
 
     assert_eq!(f16_val.get_constant(), Some((1.2001953125, false)));
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1"
+    ))]
     assert_eq!(bf16_val.get_constant(), Some((1.203125, false)));
     assert_eq!(f32_val.get_constant(), Some((3.4000000953674316, false)));
     assert_eq!(f64_val.get_constant(), Some((5.6, false)));
