@@ -86,6 +86,20 @@ impl<'ctx> AnyValueEnum<'ctx> {
             | LLVMTypeKind::LLVMHalfTypeKind
             | LLVMTypeKind::LLVMX86_FP80TypeKind
             | LLVMTypeKind::LLVMPPC_FP128TypeKind => AnyValueEnum::FloatValue(FloatValue::new(value)),
+            #[cfg(any(
+                feature = "llvm11-0",
+                feature = "llvm12-0",
+                feature = "llvm13-0",
+                feature = "llvm14-0",
+                feature = "llvm15-0",
+                feature = "llvm16-0",
+                feature = "llvm17-0",
+                feature = "llvm18-1",
+                feature = "llvm19-1",
+                feature = "llvm20-1",
+                feature = "llvm21-1",
+            ))]
+            LLVMTypeKind::LLVMBFloatTypeKind => AnyValueEnum::FloatValue(FloatValue::new(value)),
             LLVMTypeKind::LLVMIntegerTypeKind => AnyValueEnum::IntValue(IntValue::new(value)),
             LLVMTypeKind::LLVMStructTypeKind => AnyValueEnum::StructValue(StructValue::new(value)),
             LLVMTypeKind::LLVMPointerTypeKind => match LLVMGetValueKind(value) {
@@ -271,6 +285,20 @@ impl<'ctx> BasicValueEnum<'ctx> {
             | LLVMTypeKind::LLVMHalfTypeKind
             | LLVMTypeKind::LLVMX86_FP80TypeKind
             | LLVMTypeKind::LLVMPPC_FP128TypeKind => BasicValueEnum::FloatValue(FloatValue::new(value)),
+            #[cfg(any(
+                feature = "llvm11-0",
+                feature = "llvm12-0",
+                feature = "llvm13-0",
+                feature = "llvm14-0",
+                feature = "llvm15-0",
+                feature = "llvm16-0",
+                feature = "llvm17-0",
+                feature = "llvm18-1",
+                feature = "llvm19-1",
+                feature = "llvm20-1",
+                feature = "llvm21-1",
+            ))]
+            LLVMTypeKind::LLVMBFloatTypeKind => BasicValueEnum::FloatValue(FloatValue::new(value)),
             LLVMTypeKind::LLVMIntegerTypeKind => BasicValueEnum::IntValue(IntValue::new(value)),
             LLVMTypeKind::LLVMStructTypeKind => BasicValueEnum::StructValue(StructValue::new(value)),
             LLVMTypeKind::LLVMPointerTypeKind => BasicValueEnum::PointerValue(PointerValue::new(value)),
@@ -468,6 +496,20 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
             | LLVMTypeKind::LLVMHalfTypeKind
             | LLVMTypeKind::LLVMX86_FP80TypeKind
             | LLVMTypeKind::LLVMPPC_FP128TypeKind => BasicMetadataValueEnum::FloatValue(FloatValue::new(value)),
+            #[cfg(any(
+                feature = "llvm11-0",
+                feature = "llvm12-0",
+                feature = "llvm13-0",
+                feature = "llvm14-0",
+                feature = "llvm15-0",
+                feature = "llvm16-0",
+                feature = "llvm17-0",
+                feature = "llvm18-1",
+                feature = "llvm19-1",
+                feature = "llvm20-1",
+                feature = "llvm21-1",
+            ))]
+            LLVMTypeKind::LLVMBFloatTypeKind => BasicMetadataValueEnum::FloatValue(FloatValue::new(value)),
             LLVMTypeKind::LLVMIntegerTypeKind => BasicMetadataValueEnum::IntValue(IntValue::new(value)),
             LLVMTypeKind::LLVMStructTypeKind => BasicMetadataValueEnum::StructValue(StructValue::new(value)),
             LLVMTypeKind::LLVMPointerTypeKind => BasicMetadataValueEnum::PointerValue(PointerValue::new(value)),
