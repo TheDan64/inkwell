@@ -48,22 +48,6 @@ impl<'ctx> VectorType<'ctx> {
         self.vec_type.size_of()
     }
 
-    /// Gets the alignment of this `VectorType`. Value may vary depending on the target architecture.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    /// let f32_vec_type = f32_type.vec_type(7);
-    /// let f32_type_alignment = f32_vec_type.get_alignment();
-    /// ```
-    pub fn get_alignment(self) -> IntValue<'ctx> {
-        self.vec_type.get_alignment()
-    }
-
     /// Gets the size of this `VectorType`.
     ///
     /// # Example

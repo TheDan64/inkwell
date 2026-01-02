@@ -48,22 +48,6 @@ impl<'ctx> ScalableVectorType<'ctx> {
         self.scalable_vec_type.size_of()
     }
 
-    /// Gets the alignment of this `ScalableVectorType`. Value may vary depending on the target architecture.
-    ///
-    /// # Example
-    ///
-    /// ```ignore
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    /// let f32_scalable_vec_type = f32_type.scalable_vec_type(7);
-    /// let f32_type_alignment = f32_scalable_vec_type.get_alignment();
-    /// ```
-    pub fn get_alignment(self) -> IntValue<'ctx> {
-        self.scalable_vec_type.get_alignment()
-    }
-
     /// Gets the size of this `ScalableVectorType`.
     ///
     /// # Example

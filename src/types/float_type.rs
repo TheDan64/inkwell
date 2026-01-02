@@ -193,21 +193,6 @@ impl<'ctx> FloatType<'ctx> {
         self.float_type.size_of().unwrap()
     }
 
-    /// Gets the alignment of this `FloatType`. Value may vary depending on the target architecture.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let f32_type = context.f32_type();
-    /// let f32_type_alignment = f32_type.get_alignment();
-    /// ```
-    pub fn get_alignment(self) -> IntValue<'ctx> {
-        self.float_type.get_alignment()
-    }
-
     /// Gets a reference to the `Context` this `FloatType` was created in.
     ///
     /// # Example
