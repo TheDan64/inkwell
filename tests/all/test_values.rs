@@ -2112,6 +2112,7 @@ fn test_basic_value_types() {
     assert!(i128_val.as_basic_value_enum().is_int_value());
     assert!(f16_val.as_basic_value_enum().is_float_value());
     #[cfg(any(
+        feature = "llvm11-0",
         feature = "llvm12-0",
         feature = "llvm13-0",
         feature = "llvm14-0",
@@ -2154,6 +2155,7 @@ fn test_basic_value_types() {
     assert!(i128_val.as_any_value_enum().is_int_value());
     assert!(f16_val.as_any_value_enum().is_float_value());
     #[cfg(any(
+        feature = "llvm11-0",
         feature = "llvm12-0",
         feature = "llvm13-0",
         feature = "llvm14-0",
