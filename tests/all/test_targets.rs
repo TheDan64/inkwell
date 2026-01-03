@@ -198,7 +198,7 @@ fn test_default_triple() {
     let has_known_os = if cfg!(target_os = "linux") {
         default_triple.contains("linux")
     } else if cfg!(target_os = "macos") {
-        default_triple.contains("macos")
+        default_triple.contains("darwin")
     } else if cfg!(target_os = "windows") {
         default_triple.contains("windows")
     } else {

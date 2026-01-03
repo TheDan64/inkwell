@@ -266,7 +266,10 @@ impl<'ctx> FloatType<'ctx> {
                 feature = "llvm15-0",
                 feature = "llvm16-0",
                 feature = "llvm17-0",
-                feature = "llvm18-1"
+                feature = "llvm18-1",
+                feature = "llvm19-1",
+                feature = "llvm20-1",
+                feature = "llvm21-1",
             ))]
             llvm_sys::LLVMTypeKind::LLVMBFloatTypeKind => 16,
             llvm_sys::LLVMTypeKind::LLVMFloatTypeKind => 32,
