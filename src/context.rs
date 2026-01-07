@@ -7,6 +7,8 @@ use llvm_sys::core::LLVMContextSetOpaquePointers;
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMCreateTypeAttribute;
 
+#[llvm_versions(11..)]
+use llvm_sys::core::LLVMBFloatTypeInContext;
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMGetTypeByName2;
 use llvm_sys::core::LLVMMetadataTypeInContext;
@@ -212,6 +214,23 @@ impl ContextImpl {
 
     fn f16_type<'ctx>(&self) -> FloatType<'ctx> {
         unsafe { FloatType::new(LLVMHalfTypeInContext(self.0)) }
+    }
+
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1",
+    ))]
+    fn bf16_type<'ctx>(&self) -> FloatType<'ctx> {
+        unsafe { FloatType::new(LLVMBFloatTypeInContext(self.0)) }
     }
 
     fn f32_type<'ctx>(&self) -> FloatType<'ctx> {
@@ -840,6 +859,38 @@ impl Context {
     #[inline]
     pub fn f16_type(&self) -> FloatType<'_> {
         self.context.f16_type()
+    }
+
+    /// Gets the `FloatType` representing bfloat16 with a 16 bit width. It will be assigned the current context.
+    /// This is only available with LLVM >= 11.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    ///
+    /// let bf16_type = context.bf16_type();
+    ///
+    /// assert_eq!(bf16_type.get_context(), context);
+    /// ```
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1",
+    ))]
+    #[inline]
+    pub fn bf16_type(&self) -> FloatType<'_> {
+        self.context.bf16_type()
     }
 
     /// Gets the `FloatType` representing a 32 bit width. It will be assigned the current context.
@@ -1702,6 +1753,38 @@ impl<'ctx> ContextRef<'ctx> {
     #[inline]
     pub fn f16_type(&self) -> FloatType<'ctx> {
         self.context.f16_type()
+    }
+
+    /// Gets the `FloatType` representing bfloat16 with a 16 bit width. It will be assigned the current context.
+    /// This is only available with LLVM >= 11.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    ///
+    /// let bf16_type = context.bf16_type();
+    ///
+    /// assert_eq!(bf16_type.get_context(), context);
+    /// ```
+    #[cfg(any(
+        feature = "llvm11-0",
+        feature = "llvm12-0",
+        feature = "llvm13-0",
+        feature = "llvm14-0",
+        feature = "llvm15-0",
+        feature = "llvm16-0",
+        feature = "llvm17-0",
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1",
+    ))]
+    #[inline]
+    pub fn bf16_type(&self) -> FloatType<'ctx> {
+        self.context.bf16_type()
     }
 
     /// Gets the `FloatType` representing a 32 bit width. It will be assigned the current context.

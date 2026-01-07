@@ -222,7 +222,7 @@ impl<'ctx> Value<'ctx> {
         #[cfg(target_os = "macos")]
         let mapped_section = section.map(|s| {
             if s.contains(",") {
-                format!("{}", s)
+                s.to_string()
             } else {
                 format!(",{}", s)
             }
