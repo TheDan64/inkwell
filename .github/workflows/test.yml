@@ -64,14 +64,9 @@ jobs:
                                                     llvm-${{ matrix.llvm-version[2] }}-runtime \
                                                     libpolly-${{ matrix.llvm-version[2] }}-dev
         sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-${{ matrix.llvm-version[2] }} 10
-    - name: Install LLVM and Clang (7.1 <= LLVM <= 19)
+    - name: Install LLVM and Clang (8 <= LLVM <= 19)
       uses: KyleMayes/install-llvm-action@v2
-      if: ${{ matrix.llvm-version[0] > 7 && matrix.llvm-version[0] <= 19 }}
-      with:
-        version: ${{ matrix.llvm-version[0] }}
-    - name: Install LLVM and Clang (LLVM <= 7)
-      uses: KyleMayes/install-llvm-action@v1
-      if: ${{ matrix.llvm-version[0] <= 7 }}
+      if: ${{ matrix.llvm-version[0] >= 8 && matrix.llvm-version[0] <= 19 }}
       with:
         version: ${{ matrix.llvm-version[0] }}
     - name: llvm-config
