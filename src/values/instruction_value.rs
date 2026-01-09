@@ -9,7 +9,6 @@ use llvm_sys::core::{
     LLVMIsATerminatorInst, LLVMIsConditional, LLVMIsTailCall, LLVMSetAlignment, LLVMSetMetadata, LLVMSetOperand,
     LLVMSetVolatile, LLVMValueAsBasicBlock,
 };
-#[llvm_versions(10..)]
 use llvm_sys::core::{LLVMGetAtomicRMWBinOp, LLVMIsAAtomicCmpXchgInst, LLVMIsAAtomicRMWInst};
 use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
 use llvm_sys::prelude::LLVMValueRef;
@@ -17,10 +16,8 @@ use llvm_sys::LLVMOpcode;
 
 use std::{ffi::CStr, fmt, fmt::Display};
 
-#[llvm_versions(9..)]
 use crate::debug_info::DILocation;
 use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, MetadataValue, Value};
-#[llvm_versions(10..)]
 use crate::AtomicRMWBinOp;
 use crate::{basic_block::BasicBlock, types::AnyTypeEnum};
 use crate::{error::AlignmentError, values::basic_value_use::Operand};
@@ -41,29 +38,6 @@ pub enum AtomicError {
 }
 
 /// Errors for InstructionValue.
-#[llvm_versions(..=9)]
-#[derive(Debug, thiserror::Error, PartialEq, Eq)]
-pub enum InstructionValueError {
-    #[error("Cannot set name of a void-type instruction.")]
-    CannotNameVoidTypeInst,
-    #[error("Value is not a load or store instruction.")]
-    NotMemoryAccessInst,
-    #[error("Value is not a load or store instruction.")]
-    NotLoadOrStoreInst,
-    #[error("Value is not an alloca instruction.")]
-    NotAllocaInst,
-    #[error("Alignment Error: {0}")]
-    AlignmentError(AlignmentError),
-    #[error("Not a GEP instruction.")]
-    NotGEPInst,
-    #[error("Atomic Error: {0}")]
-    AtomicError(#[from] AtomicError),
-    #[error("Metadata is expected to be a node.")]
-    ExpectedNode,
-}
-
-/// Errors for InstructionValue.
-#[llvm_versions(10..)]
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
 pub enum InstructionValueError {
     #[error("Cannot set name of a void-type instruction.")]
@@ -101,7 +75,6 @@ pub enum InstructionOpcode {
     BitCast,
     Br,
     Call,
-    #[llvm_versions(9..)]
     CallBr,
     CatchPad,
     CatchRet,
@@ -120,7 +93,6 @@ pub enum InstructionOpcode {
     FPToSI,
     FPToUI,
     FPTrunc,
-    #[llvm_versions(10..)]
     Freeze,
     FRem,
     FSub,
@@ -173,21 +145,24 @@ impl<'ctx> InstructionValue<'ctx> {
     fn is_a_load_inst(self) -> bool {
         !unsafe { LLVMIsALoadInst(self.as_value_ref()) }.is_null()
     }
+
     fn is_a_store_inst(self) -> bool {
         !unsafe { LLVMIsAStoreInst(self.as_value_ref()) }.is_null()
     }
+
     fn is_a_alloca_inst(self) -> bool {
         !unsafe { LLVMIsAAllocaInst(self.as_value_ref()) }.is_null()
     }
+
     #[allow(dead_code)]
     fn is_a_getelementptr_inst(self) -> bool {
         !unsafe { LLVMIsAGetElementPtrInst(self.as_value_ref()) }.is_null()
     }
-    #[llvm_versions(10..)]
+
     fn is_a_atomicrmw_inst(self) -> bool {
         !unsafe { LLVMIsAAtomicRMWInst(self.as_value_ref()) }.is_null()
     }
-    #[llvm_versions(10..)]
+
     fn is_a_cmpxchg_inst(self) -> bool {
         !unsafe { LLVMIsAAtomicCmpXchgInst(self.as_value_ref()) }.is_null()
     }
@@ -406,19 +381,6 @@ impl<'ctx> InstructionValue<'ctx> {
 
     // SubTypes: Only apply to memory access instructions
     /// Returns whether or not a memory access instruction is volatile.
-    #[llvm_versions(..=9)]
-    pub fn get_volatile(self) -> Result<bool, InstructionValueError> {
-        // Although cmpxchg and atomicrmw can have volatile, LLVM's C API
-        // does not export that functionality until 10.0.
-        if !self.is_a_load_inst() && !self.is_a_store_inst() {
-            return Err(InstructionValueError::NotMemoryAccessInst);
-        }
-        Ok(unsafe { LLVMGetVolatile(self.as_value_ref()) } == 1)
-    }
-
-    // SubTypes: Only apply to memory access instructions
-    /// Returns whether or not a memory access instruction is volatile.
-    #[llvm_versions(10..)]
     pub fn get_volatile(self) -> Result<bool, InstructionValueError> {
         if !self.is_a_load_inst() && !self.is_a_store_inst() && !self.is_a_atomicrmw_inst() && !self.is_a_cmpxchg_inst()
         {
@@ -429,20 +391,6 @@ impl<'ctx> InstructionValue<'ctx> {
 
     // SubTypes: Only apply to memory access instructions
     /// Sets whether or not a memory access instruction is volatile.
-    #[llvm_versions(..=9)]
-    pub fn set_volatile(self, volatile: bool) -> Result<(), InstructionValueError> {
-        // Although cmpxchg and atomicrmw can have volatile, LLVM's C API
-        // does not export that functionality until 10.0.
-        if !self.is_a_load_inst() && !self.is_a_store_inst() {
-            return Err(InstructionValueError::NotMemoryAccessInst);
-        }
-        unsafe { LLVMSetVolatile(self.as_value_ref(), volatile as i32) };
-        Ok(())
-    }
-
-    // SubTypes: Only apply to memory access instructions
-    /// Sets whether or not a memory access instruction is volatile.
-    #[llvm_versions(10..)]
     pub fn set_volatile(self, volatile: bool) -> Result<(), InstructionValueError> {
         if !self.is_a_load_inst() && !self.is_a_store_inst() && !self.is_a_atomicrmw_inst() && !self.is_a_cmpxchg_inst()
         {
@@ -975,7 +923,6 @@ impl<'ctx> InstructionValue<'ctx> {
     /// this gives the `add`.
     ///
     /// If the instruction is not an `AtomicRMW`, this returns None.
-    #[llvm_versions(10..)]
     pub fn get_atomic_rmw_bin_op(self) -> Option<AtomicRMWBinOp> {
         if self.get_opcode() == InstructionOpcode::AtomicRMW {
             let bin_op = unsafe { LLVMGetAtomicRMWBinOp(self.as_value_ref()) };
@@ -1017,7 +964,6 @@ impl<'ctx> InstructionValue<'ctx> {
     }
 
     /// Get the debug location for this instruction.
-    #[llvm_versions(9..)]
     pub fn get_debug_location(self) -> Option<DILocation<'ctx>> {
         // https://github.com/llvm/llvm-project/blob/e83cc896e7c2378914a391f942c188d454b517d2/llvm/include/llvm/IR/Instruction.h#L513
         let metadata_ref = unsafe { llvm_sys::debuginfo::LLVMInstructionGetDebugLoc(self.as_value_ref()) };
@@ -1032,7 +978,6 @@ impl<'ctx> InstructionValue<'ctx> {
     }
 
     /// Set the debug location for this instruction.
-    #[llvm_versions(9..)]
     pub fn set_debug_location(self, location: Option<DILocation<'_>>) {
         // https://github.com/llvm/llvm-project/blob/e83cc896e7c2378914a391f942c188d454b517d2/llvm/include/llvm/IR/Instruction.h#L510
         let metadata_ref = location.map_or(std::ptr::null_mut(), |loc| loc.metadata_ref);

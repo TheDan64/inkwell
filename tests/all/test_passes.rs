@@ -14,9 +14,6 @@ fn test_init_all_passes_for_module() {
     let pass_manager = PassManager::create(());
 
     #[cfg(any(
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
         feature = "llvm11-0",
         feature = "llvm12-0",
         feature = "llvm13-0",
@@ -24,7 +21,6 @@ fn test_init_all_passes_for_module() {
     ))]
     pass_manager.add_argument_promotion_pass();
     pass_manager.add_constant_merge_pass();
-    #[cfg(not(any(feature = "llvm8-0", feature = "llvm9-0")))]
     pass_manager.add_merge_functions_pass();
     pass_manager.add_dead_arg_elimination_pass();
     pass_manager.add_function_attrs_pass();
@@ -66,9 +62,6 @@ fn test_init_all_passes_for_module() {
     pass_manager.add_loop_reroll_pass();
     pass_manager.add_loop_unroll_pass();
     #[cfg(any(
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
         feature = "llvm11-0",
         feature = "llvm12-0",
         feature = "llvm13-0",
@@ -166,9 +159,6 @@ fn test_pass_manager_builder() {
     pass_manager_builder.populate_module_pass_manager(&module_pass_manager);
 
     #[cfg(any(
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
         feature = "llvm11-0",
         feature = "llvm12-0",
         feature = "llvm13-0",

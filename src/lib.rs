@@ -30,7 +30,6 @@ pub mod data_layout;
 pub mod debug_info;
 pub mod error;
 pub mod execution_engine;
-#[cfg(not(feature = "llvm8-0"))]
 pub mod intrinsics;
 pub mod memory_buffer;
 pub mod memory_manager;
@@ -43,8 +42,6 @@ pub mod types;
 pub mod values;
 
 // Boilerplate to select a desired llvm_sys version at compile & link time.
-#[cfg(feature = "llvm10-0")]
-pub extern crate llvm_sys_100 as llvm_sys;
 #[cfg(feature = "llvm11-0")]
 pub extern crate llvm_sys_110 as llvm_sys;
 #[cfg(feature = "llvm12-0")]
@@ -67,10 +64,6 @@ pub extern crate llvm_sys_191 as llvm_sys;
 pub extern crate llvm_sys_201 as llvm_sys;
 #[cfg(feature = "llvm21-1")]
 pub extern crate llvm_sys_211 as llvm_sys;
-#[cfg(feature = "llvm8-0")]
-pub extern crate llvm_sys_80 as llvm_sys;
-#[cfg(feature = "llvm9-0")]
-pub extern crate llvm_sys_90 as llvm_sys;
 
 use llvm_sys::target_machine::LLVMCodeGenOptLevel;
 use llvm_sys::{
@@ -115,9 +108,6 @@ macro_rules! assert_unique_used_features {
 }
 
 assert_unique_used_features! {
-    "llvm8-0",
-    "llvm9-0",
-    "llvm10-0",
     "llvm11-0",
     "llvm12-0",
     "llvm13-0",
@@ -133,9 +123,6 @@ assert_unique_used_features! {
 
 #[cfg(all(
     any(
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
         feature = "llvm11-0",
         feature = "llvm12-0",
         feature = "llvm13-0",
@@ -369,16 +356,10 @@ pub enum AtomicRMWBinOp {
     UMin,
 
     /// Adds to the float-typed value in memory and returns the prior value.
-    // Although this was added in LLVM 9, it wasn't exposed to the C API
-    // until 10.0.
-    #[llvm_versions(10..)]
     #[llvm_variant(LLVMAtomicRMWBinOpFAdd)]
     FAdd,
 
     /// Subtract a float-typed value off the value in memory and returns the prior value.
-    // Although this was added in LLVM 9, it wasn't exposed to the C API
-    // until 10.0.
-    #[llvm_versions(10..)]
     #[llvm_variant(LLVMAtomicRMWBinOpFSub)]
     FSub,
 

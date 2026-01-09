@@ -17,7 +17,7 @@ use llvm_sys::prelude::LLVMPassManagerRef;
 use llvm_sys::prelude::LLVMPassRegistryRef;
 #[llvm_versions(..=15)]
 use llvm_sys::transforms::aggressive_instcombine::LLVMAddAggressiveInstCombinerPass;
-#[llvm_versions(10..=16)]
+#[llvm_versions(..=16)]
 use llvm_sys::transforms::ipo::LLVMAddMergeFunctionsPass;
 #[llvm_versions(..=15)]
 use llvm_sys::transforms::ipo::LLVMAddPruneEHPass;
@@ -53,9 +53,9 @@ use llvm_sys::transforms::vectorize::{LLVMAddLoopVectorizePass, LLVMAddSLPVector
 
 // LLVM12 removes the ConstantPropagation pass
 // Users should use the InstSimplify pass instead.
-#[llvm_versions(..=11)]
+#[cfg(feature = "llvm11-0")]
 use llvm_sys::transforms::ipo::LLVMAddIPConstantPropagationPass;
-#[llvm_versions(..=11)]
+#[cfg(feature = "llvm11-0")]
 use llvm_sys::transforms::scalar::LLVMAddConstantPropagationPass;
 
 #[llvm_versions(13..)]
@@ -343,7 +343,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     }
 
     /// Discovers identical functions and collapses them.
-    #[llvm_versions(10..=16)]
+    #[llvm_versions(..=16)]
     pub fn add_merge_functions_pass(&self) {
         unsafe { LLVMAddMergeFunctionsPass(self.pass_manager) }
     }
@@ -413,7 +413,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     ///
     /// In LLVM 12 and later, this instruction is replaced by the
     /// [`add_instruction_simplify_pass`].
-    #[llvm_versions(..=11)]
+    #[cfg(feature = "llvm11-0")]
     pub fn add_ip_constant_propagation_pass(&self) {
         unsafe { LLVMAddIPConstantPropagationPass(self.pass_manager) }
     }
@@ -908,7 +908,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     ///
     /// In LLVM 12 and later, this instruction is replaced by the
     /// [`add_instruction_simplify_pass`].
-    #[llvm_versions(..=11)]
+    #[cfg(feature = "llvm11-0")]
     pub fn add_constant_propagation_pass(&self) {
         unsafe { LLVMAddConstantPropagationPass(self.pass_manager) }
     }

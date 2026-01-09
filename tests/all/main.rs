@@ -11,7 +11,6 @@ mod test_debug_info;
 mod test_execution_engine;
 mod test_instruction_conversion;
 mod test_instruction_values;
-#[cfg(not(feature = "llvm8-0"))]
 mod test_intrinsics;
 mod test_module;
 mod test_object_file;

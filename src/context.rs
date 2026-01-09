@@ -7,7 +7,6 @@ use llvm_sys::core::LLVMContextSetOpaquePointers;
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMCreateTypeAttribute;
 
-#[llvm_versions(11..)]
 use llvm_sys::core::LLVMBFloatTypeInContext;
 use llvm_sys::core::LLVMGetInlineAsm;
 #[llvm_versions(12..)]
@@ -129,14 +128,7 @@ impl ContextImpl {
         sideeffects: bool,
         alignstack: bool,
         dialect: Option<InlineAsmDialect>,
-        #[cfg(not(any(
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0"
-        )))]
-        can_throw: bool,
+        #[cfg(not(any(feature = "llvm11-0", feature = "llvm12-0")))] can_throw: bool,
     ) -> PointerValue<'ctx> {
         let value = unsafe {
             LLVMGetInlineAsm(
@@ -148,13 +140,7 @@ impl ContextImpl {
                 sideeffects as i32,
                 alignstack as i32,
                 dialect.unwrap_or(InlineAsmDialect::ATT).into(),
-                #[cfg(not(any(
-                    feature = "llvm8-0",
-                    feature = "llvm9-0",
-                    feature = "llvm10-0",
-                    feature = "llvm11-0",
-                    feature = "llvm12-0"
-                )))]
+                #[cfg(not(any(feature = "llvm11-0", feature = "llvm12-0")))]
                 {
                     can_throw as i32
                 },
@@ -588,9 +574,6 @@ impl Context {
     ///     false,
     ///     None,
     ///     #[cfg(not(any(
-    ///         feature = "llvm8-0",
-    ///         feature = "llvm9-0",
-    ///         feature = "llvm10-0",
     ///         feature = "llvm11-0",
     ///         feature = "llvm12-0"
     ///     )))]
@@ -599,9 +582,6 @@ impl Context {
     /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
     ///
     /// #[cfg(any(
-    ///     feature = "llvm8-0",
-    ///     feature = "llvm9-0",
-    ///     feature = "llvm10-0",
     ///     feature = "llvm11-0",
     ///     feature = "llvm12-0",
     ///     feature = "llvm13-0",
@@ -627,14 +607,7 @@ impl Context {
         sideeffects: bool,
         alignstack: bool,
         dialect: Option<InlineAsmDialect>,
-        #[cfg(not(any(
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0"
-        )))]
-        can_throw: bool,
+        #[cfg(not(any(feature = "llvm11-0", feature = "llvm12-0")))] can_throw: bool,
     ) -> PointerValue<'ctx> {
         self.context.create_inline_asm(
             ty,
@@ -643,13 +616,7 @@ impl Context {
             sideeffects,
             alignstack,
             dialect,
-            #[cfg(not(any(
-                feature = "llvm8-0",
-                feature = "llvm9-0",
-                feature = "llvm10-0",
-                feature = "llvm11-0",
-                feature = "llvm12-0"
-            )))]
+            #[cfg(not(any(feature = "llvm11-0", feature = "llvm12-0")))]
             can_throw,
         )
     }
@@ -1482,9 +1449,6 @@ impl<'ctx> ContextRef<'ctx> {
     ///     false,
     ///     None,
     ///     #[cfg(not(any(
-    ///         feature = "llvm8-0",
-    ///         feature = "llvm9-0",
-    ///         feature = "llvm10-0",
     ///         feature = "llvm11-0",
     ///         feature = "llvm12-0"
     ///     )))]
@@ -1493,9 +1457,6 @@ impl<'ctx> ContextRef<'ctx> {
     /// let params = &[context.i64_type().const_int(60, false).into(), context.i64_type().const_int(1, false).into()];
     ///
     /// #[cfg(any(
-    ///     feature = "llvm8-0",
-    ///     feature = "llvm9-0",
-    ///     feature = "llvm10-0",
     ///     feature = "llvm11-0",
     ///     feature = "llvm12-0",
     ///     feature = "llvm13-0",
@@ -1521,14 +1482,7 @@ impl<'ctx> ContextRef<'ctx> {
         sideeffects: bool,
         alignstack: bool,
         dialect: Option<InlineAsmDialect>,
-        #[cfg(not(any(
-            feature = "llvm8-0",
-            feature = "llvm9-0",
-            feature = "llvm10-0",
-            feature = "llvm11-0",
-            feature = "llvm12-0"
-        )))]
-        can_throw: bool,
+        #[cfg(not(any(feature = "llvm11-0", feature = "llvm12-0")))] can_throw: bool,
     ) -> PointerValue<'ctx> {
         self.context.create_inline_asm(
             ty,
@@ -1537,13 +1491,7 @@ impl<'ctx> ContextRef<'ctx> {
             sideeffects,
             alignstack,
             dialect,
-            #[cfg(not(any(
-                feature = "llvm8-0",
-                feature = "llvm9-0",
-                feature = "llvm10-0",
-                feature = "llvm11-0",
-                feature = "llvm12-0"
-            )))]
+            #[cfg(not(any(feature = "llvm11-0", feature = "llvm12-0")))]
             can_throw,
         )
     }

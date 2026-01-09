@@ -86,9 +86,6 @@ fn test_smoke() {
 
     let loc = dibuilder.create_debug_location(&context, 0, 0, lexical_block.as_debug_info_scope(), None);
 
-    #[cfg(feature = "llvm8-0")]
-    builder.set_current_debug_location(&context, loc);
-    #[cfg(not(feature = "llvm8-0"))]
     builder.set_current_debug_location(loc);
 
     dibuilder.finalize();
@@ -312,7 +309,6 @@ fn test_replacing_placeholder_with_placeholder() {
         compile_unit.get_file(),
         0,
         compile_unit.get_file().as_debug_info_scope(),
-        #[cfg(not(any(feature = "llvm8-0", feature = "llvm9-0")))]
         32,
     );
 
@@ -637,7 +633,6 @@ fn test_array_type() {
     dibuilder.create_array_type(di_type, 160, 64, &[(0..20), (-1..30), (20..55)]);
 }
 
-#[llvm_versions(9..)]
 #[test]
 fn test_enumeration_types() {
     let context = Context::create();

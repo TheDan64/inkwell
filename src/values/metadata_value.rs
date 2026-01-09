@@ -18,11 +18,7 @@ use std::fmt::{self, Display};
 /// for the first input string that isn't known.
 ///
 /// Each LLVM version has a different set of pre-defined metadata kinds.
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = if cfg!(feature = "llvm8-0") {
-    26
-} else if cfg!(feature = "llvm9-0") {
-    28
-} else if cfg!(any(feature = "llvm10-0", feature = "llvm11-0")) {
+pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = if cfg!(feature = "llvm11-0") {
     30
 } else if cfg!(any(feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0",)) {
     31

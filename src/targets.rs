@@ -700,13 +700,7 @@ impl Target {
         }
     }
 
-    // RISCV was accidentally built by default in 4.0 since it was meant to be marked
-    // experimental and so it was later removed from default builds in 5.0 until it was
-    // officially released in 9.0 Since llvm-sys doesn't officially support any experimental
-    // targets we're going to make this 9.0+ only. See
-    // https://lists.llvm.org/pipermail/llvm-dev/2017-August/116347.html for more info.
     #[cfg(feature = "target-riscv")]
-    #[llvm_versions(9..)]
     pub fn initialize_riscv(config: &InitializationConfig) {
         use llvm_sys::target::{
             LLVMInitializeRISCVAsmParser, LLVMInitializeRISCVAsmPrinter, LLVMInitializeRISCVDisassembler,
