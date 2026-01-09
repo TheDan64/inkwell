@@ -332,11 +332,6 @@ impl<'ctx> ExecutionEngine<'ctx> {
     /// It is recommended to use `get_function` instead of this method when intending to call the function
     /// pointer so that you don't have to do error-prone transmutes yourself.
     pub fn get_function_address(&self, fn_name: &str) -> Result<usize, FunctionLookupError> {
-        // LLVMGetFunctionAddress segfaults in llvm 8.0 when fn_name doesn't exist. This is a workaround
-        // to see if it exists and avoid the segfault when it doesn't
-        #[cfg(feature = "llvm8-0")]
-        self.get_function_value(fn_name)?;
-
         let c_string = to_c_str(fn_name);
         let address = unsafe { LLVMGetFunctionAddress(self.execution_engine_inner(), c_string.as_ptr()) };
 

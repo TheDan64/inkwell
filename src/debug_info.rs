@@ -127,7 +127,6 @@ use llvm_sys::debuginfo::{
     LLVMDITypeGetAlignInBits, LLVMDITypeGetOffsetInBits, LLVMDITypeGetSizeInBits,
 };
 
-#[llvm_versions(9..)]
 use llvm_sys::debuginfo::{LLVMDIBuilderCreateEnumerationType, LLVMDIBuilderCreateEnumerator};
 
 #[llvm_versions(..19.1)]
@@ -354,63 +353,27 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         sdk: &str,
     ) -> DICompileUnit<'ctx> {
         let metadata_ref = unsafe {
-            #[cfg(any(feature = "llvm8-0", feature = "llvm9-0", feature = "llvm10-0"))]
-            {
-                LLVMDIBuilderCreateCompileUnit(
-                    self.builder,
-                    language.into(),
-                    file.metadata_ref,
-                    producer.as_ptr() as _,
-                    producer.len(),
-                    is_optimized as _,
-                    flags.as_ptr() as _,
-                    flags.len(),
-                    runtime_ver,
-                    split_name.as_ptr() as _,
-                    split_name.len(),
-                    kind.into(),
-                    dwo_id,
-                    split_debug_inlining as _,
-                    debug_info_for_profiling as _,
-                )
-            }
-
-            #[cfg(any(
-                feature = "llvm11-0",
-                feature = "llvm12-0",
-                feature = "llvm13-0",
-                feature = "llvm14-0",
-                feature = "llvm15-0",
-                feature = "llvm16-0",
-                feature = "llvm17-0",
-                feature = "llvm18-1",
-                feature = "llvm19-1",
-                feature = "llvm20-1",
-                feature = "llvm21-1",
-            ))]
-            {
-                LLVMDIBuilderCreateCompileUnit(
-                    self.builder,
-                    language.into(),
-                    file.metadata_ref,
-                    producer.as_ptr() as _,
-                    producer.len(),
-                    is_optimized as _,
-                    flags.as_ptr() as _,
-                    flags.len(),
-                    runtime_ver,
-                    split_name.as_ptr() as _,
-                    split_name.len(),
-                    kind.into(),
-                    dwo_id,
-                    split_debug_inlining as _,
-                    debug_info_for_profiling as _,
-                    sysroot.as_ptr() as _,
-                    sysroot.len(),
-                    sdk.as_ptr() as _,
-                    sdk.len(),
-                )
-            }
+            LLVMDIBuilderCreateCompileUnit(
+                self.builder,
+                language.into(),
+                file.metadata_ref,
+                producer.as_ptr() as _,
+                producer.len(),
+                is_optimized as _,
+                flags.as_ptr() as _,
+                flags.len(),
+                runtime_ver,
+                split_name.as_ptr() as _,
+                split_name.len(),
+                kind.into(),
+                dwo_id,
+                split_debug_inlining as _,
+                debug_info_for_profiling as _,
+                sysroot.as_ptr() as _,
+                sysroot.len(),
+                sdk.as_ptr() as _,
+                sdk.len(),
+            )
         };
 
         DICompileUnit {
@@ -577,7 +540,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         file: DIFile<'ctx>,
         line_no: u32,
         scope: DIScope<'ctx>,
-        #[cfg(not(any(feature = "llvm8-0", feature = "llvm9-0")))] align_in_bits: u32,
+        align_in_bits: u32,
     ) -> DIDerivedType<'ctx> {
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateTypedef(
@@ -588,7 +551,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
                 file.metadata_ref,
                 line_no,
                 scope.metadata_ref,
-                #[cfg(not(any(feature = "llvm8-0", feature = "llvm9-0")))]
                 align_in_bits,
             )
         };
@@ -819,7 +781,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     }
 
     /// Create an enumeration type
-    #[llvm_versions(9..)]
     pub fn create_enumeration_type(
         &self,
         scope: DIScope<'ctx>,
@@ -855,7 +816,6 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     }
 
     /// Create an enumerator
-    #[llvm_versions(9..)]
     pub fn create_enumerator(&self, name: &str, value: i64, is_unsigned: bool) -> DIEnumerator<'ctx> {
         let metadata_ref = unsafe {
             LLVMDIBuilderCreateEnumerator(self.builder, name.as_ptr() as _, name.len(), value, is_unsigned as i32)
@@ -1520,8 +1480,6 @@ mod flags {
         const PUBLIC: Self;
         const FWD_DECL: Self;
         const APPLE_BLOCK: Self;
-        //#[llvm_versions(8..=9)]
-        //const BLOCK_BYREF_STRUCT: Self;
         const VIRTUAL: Self;
         const ARTIFICIAL: Self;
         const EXPLICIT: Self;
@@ -1539,18 +1497,11 @@ mod flags {
         const INTRODUCED_VIRTUAL: Self;
         const BIT_FIELD: Self;
         const NO_RETURN: Self;
-        //#[llvm_versions(8..=8)]
-        //const MAIN_SUBPROGRAM: Self;
         const TYPE_PASS_BY_VALUE: Self;
         const TYPE_PASS_BY_REFERENCE: Self;
         //
         //const ENUM_CLASS: Self;
         const THUNK: Self;
-        //#[llvm_versions(8..=8)]
-        //const TRIVIAL: Self;
-        //#[llvm_versions(9..)]
-        //const NON_TRIVIAL: Self;
-        //#[llvm_versions(10)]
         //const RESERVED_BIT4: Self;
         //
         //const BIGE_NDIAN: Self;
@@ -1565,8 +1516,6 @@ mod flags {
         const PUBLIC: DIFlags = llvm_sys::debuginfo::LLVMDIFlagPublic;
         const FWD_DECL: DIFlags = llvm_sys::debuginfo::LLVMDIFlagFwdDecl;
         const APPLE_BLOCK: DIFlags = llvm_sys::debuginfo::LLVMDIFlagAppleBlock;
-        //#[llvm_versions(8..=9)]
-        //const BLOCK_BYREF_STRUCT: DIFlags = llvm_sys::debuginfo::LLVMDIFlagBlockByrefStruct;
         const VIRTUAL: DIFlags = llvm_sys::debuginfo::LLVMDIFlagVirtual;
         const ARTIFICIAL: DIFlags = llvm_sys::debuginfo::LLVMDIFlagArtificial;
         const EXPLICIT: DIFlags = llvm_sys::debuginfo::LLVMDIFlagExplicit;
@@ -1584,20 +1533,11 @@ mod flags {
         const INTRODUCED_VIRTUAL: DIFlags = llvm_sys::debuginfo::LLVMDIFlagIntroducedVirtual;
         const BIT_FIELD: DIFlags = llvm_sys::debuginfo::LLVMDIFlagBitField;
         const NO_RETURN: DIFlags = llvm_sys::debuginfo::LLVMDIFlagNoReturn;
-        //#[llvm_versions(8..=8)]
-        //const MAIN_SUBPROGRAM: DIFlags = llvm_sys::debuginfo::LLVMDIFlagMainSubprogram;
         const TYPE_PASS_BY_VALUE: DIFlags = llvm_sys::debuginfo::LLVMDIFlagTypePassByValue;
         const TYPE_PASS_BY_REFERENCE: DIFlags = llvm_sys::debuginfo::LLVMDIFlagTypePassByReference;
         //
         //const ENUM_CLASS: DIFlags = llvm_sys::debuginfo::LLVMDIFlagEnumClass;
         const THUNK: DIFlags = llvm_sys::debuginfo::LLVMDIFlagThunk;
-        //#[llvm_versions(8..=8)]
-        //const TRIVIAL: DIFlags = llvm_sys::debuginfo::LLVMDIFlagTrivial;
-        //#[llvm_versions(9..)]
-        //const NON_TRIVIAL: DIFlags = llvm_sys::debuginfo::LLVMDIFlagNonTrivial;
-        //#[llvm_versions(10)]
-        //const RESERVED_BIT4: DIFlags = llvm_sys::debuginfo::LLVMDIFlagReservedBit4;
-        //
         //const BIG_ENDIAN: DIFlags = llvm_sys::debuginfo::LLVMDIFlagBigEndian;
         //
         //const LITTLE_ENDIAN: DIFlags = llvm_sys::debuginfo::LLVMDIFlagLittleEndian;

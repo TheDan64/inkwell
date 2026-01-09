@@ -9,8 +9,8 @@ use syn::{Lit, RangeLimits};
 
 // This array should match the LLVM features in the top level Cargo manifest
 const FEATURE_VERSIONS: &[&str] = &[
-    "llvm8-0", "llvm9-0", "llvm10-0", "llvm11-0", "llvm12-0", "llvm13-0", "llvm14-0", "llvm15-0", "llvm16-0",
-    "llvm17-0", "llvm18-1", "llvm19-1", "llvm20-1", "llvm21-1",
+    "llvm11-0", "llvm12-0", "llvm13-0", "llvm14-0", "llvm15-0", "llvm16-0", "llvm17-0", "llvm18-1", "llvm19-1",
+    "llvm20-1", "llvm21-1",
 ];
 
 pub struct VersionRange {
@@ -112,11 +112,7 @@ struct Version {
 }
 
 fn default_minor(major: u32) -> u32 {
-    if major >= 18 {
-        1
-    } else {
-        0
-    }
+    if major >= 18 { 1 } else { 0 }
 }
 
 impl Parse for Version {

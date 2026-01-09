@@ -49,8 +49,6 @@ use llvm_sys::prelude::{LLVMBuilderRef, LLVMValueRef};
 use thiserror::Error;
 
 use crate::basic_block::BasicBlock;
-#[cfg(feature = "llvm8-0")]
-use crate::context::AsContextRef;
 use crate::debug_info::DILocation;
 use crate::support::to_c_str;
 #[llvm_versions(15..)]
@@ -3625,20 +3623,6 @@ impl<'ctx> Builder<'ctx> {
     }
 
     /// Set the debug info source location of the instruction currently pointed at by the builder
-    #[cfg(feature = "llvm8-0")]
-    pub fn set_current_debug_location(&self, context: impl AsContextRef<'ctx>, location: DILocation<'ctx>) {
-        use llvm_sys::core::LLVMMetadataAsValue;
-        use llvm_sys::core::LLVMSetCurrentDebugLocation;
-        unsafe {
-            LLVMSetCurrentDebugLocation(
-                self.builder,
-                LLVMMetadataAsValue(context.as_ctx_ref(), location.metadata_ref),
-            );
-        }
-    }
-
-    /// Set the debug info source location of the instruction currently pointed at by the builder
-    #[llvm_versions(9..)]
     pub fn set_current_debug_location(&self, location: DILocation<'ctx>) {
         use llvm_sys::core::LLVMSetCurrentDebugLocation2;
         unsafe {
@@ -3663,17 +3647,6 @@ impl<'ctx> Builder<'ctx> {
 
     /// Unset the debug info source location of the instruction currently pointed at by the
     /// builder. If there isn't any debug info, this is a no-op.
-    #[cfg(feature = "llvm8-0")]
-    pub fn unset_current_debug_location(&self) {
-        use llvm_sys::core::LLVMSetCurrentDebugLocation;
-        unsafe {
-            LLVMSetCurrentDebugLocation(self.builder, std::ptr::null_mut());
-        }
-    }
-
-    /// Unset the debug info source location of the instruction currently pointed at by the
-    /// builder. If there isn't any debug info, this is a no-op.
-    #[llvm_versions(9..)]
     pub fn unset_current_debug_location(&self) {
         use llvm_sys::core::LLVMSetCurrentDebugLocation2;
         unsafe {

@@ -222,7 +222,6 @@ fn test_get_address() {
     assert!(unsafe { next_bb.get_address() }.is_some());
 }
 
-#[llvm_versions(9..)]
 #[test]
 fn test_append_existing_basic_block_legacy() {
     let context = Context::create();

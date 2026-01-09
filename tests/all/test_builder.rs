@@ -67,9 +67,6 @@ fn test_build_call() {
         .into_pointer_value();
 
     #[cfg(any(
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
         feature = "llvm11-0",
         feature = "llvm12-0",
         feature = "llvm13-0",

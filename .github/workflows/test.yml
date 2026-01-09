@@ -29,9 +29,6 @@ jobs:
     strategy:
       matrix:
         llvm-version:
-        - [ "8.0", "8-0" ]
-        - [ "9.0", "9-0" ]
-        - [ "10.0", "10-0" ]
         - [ "11.0", "11-0" ]
         - [ "12.0", "12-0" ]
         - [ "13.0", "13-0" ]
@@ -64,9 +61,9 @@ jobs:
                                                     llvm-${{ matrix.llvm-version[2] }}-runtime \
                                                     libpolly-${{ matrix.llvm-version[2] }}-dev
         sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-${{ matrix.llvm-version[2] }} 10
-    - name: Install LLVM and Clang (8 <= LLVM <= 19)
+    - name: Install LLVM and Clang (11 <= LLVM <= 19)
       uses: KyleMayes/install-llvm-action@v2
-      if: ${{ matrix.llvm-version[0] >= 8 && matrix.llvm-version[0] <= 19 }}
+      if: ${{ matrix.llvm-version[0] >= 11 && matrix.llvm-version[0] <= 19 }}
       with:
         version: ${{ matrix.llvm-version[0] }}
     - name: llvm-config

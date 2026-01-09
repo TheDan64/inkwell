@@ -1883,9 +1883,6 @@ fn test_non_fn_ptr_called() {
 
     builder.position_at_end(bb);
     #[cfg(any(
-        feature = "llvm8-0",
-        feature = "llvm9-0",
-        feature = "llvm10-0",
         feature = "llvm11-0",
         feature = "llvm12-0",
         feature = "llvm13-0",

@@ -1,5 +1,4 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-#[llvm_versions(9..)]
 use llvm_sys::core::LLVMAppendExistingBasicBlock;
 use llvm_sys::core::{
     LLVMAddAttributeAtIndex, LLVMGetAttributeCountAtIndex, LLVMGetEnumAttributeAtIndex, LLVMGetStringAttributeAtIndex,
@@ -515,7 +514,6 @@ impl<'ctx> FunctionValue<'ctx> {
         self.fn_value.set_section(section)
     }
 
-    #[llvm_versions(9..)]
     pub fn append_existing_basic_block(&self, basic_block: BasicBlock<'ctx>) {
         unsafe {
             LLVMAppendExistingBasicBlock(self.as_value_ref(), basic_block.as_mut_ptr());

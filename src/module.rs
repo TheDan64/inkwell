@@ -4,7 +4,7 @@ use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyModule};
 #[allow(deprecated)]
 use llvm_sys::bit_reader::LLVMParseBitcodeInContext;
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
-#[llvm_versions(..=11)]
+#[cfg(feature = "llvm11-0")]
 use llvm_sys::core::LLVMGetTypeByName;
 use llvm_sys::core::{
     LLVMAddFunction, LLVMAddGlobal, LLVMAddGlobalInAddressSpace, LLVMAddNamedMetadataOperand, LLVMCloneModule,
@@ -360,7 +360,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_struct_type("foo").unwrap(), opaque);
     /// ```
     ///
-    #[llvm_versions(..=11)]
+    #[cfg(feature = "llvm11-0")]
     pub fn get_struct_type(&self, name: &str) -> Option<StructType<'ctx>> {
         let c_string = to_c_str(name);
 
