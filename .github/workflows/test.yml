@@ -4,8 +4,8 @@ on: [ push, pull_request ]
 
 env:
   CARGO_TERM_COLOR: always
-  DOC_LLVM_FEATURE: llvm18-1
-  DOC_LLVM_VERSION: "18.1"
+  DOC_LLVM_FEATURE: llvm21-1
+  DOC_LLVM_VERSION: "21.1"
   DOC_PATH: target/doc
 
 jobs:
@@ -41,12 +41,14 @@ jobs:
         - [ "20.1", "20-1", "20" ]
         - [ "21.1", "21-1", "21" ]
         include:
-        - os: ubuntu-22.04
+        - os: ubuntu-latest
     steps:
     - name: Checkout Repo
       uses: actions/checkout@v4
-    - name: Install Dependencies
-      run: sudo apt update && sudo apt install -y libtinfo5
+    - name: Install libtinfo5
+      run: |
+        wget https://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb
+        sudo apt install ./libtinfo5_6.3-2ubuntu0.1_amd64.deb
     - name: Install LLVM and Clang (LLVM >= 19.1)
       if: ${{ matrix.llvm-version[0] >= 19 }}
       run: |
@@ -87,12 +89,14 @@ jobs:
         cargo run --example jit --features llvm${{ matrix.llvm-version[1] }} --verbose --release
   doc:
     name: Documentation
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+    env:
+      LLVM_SYS_211_PREFIX: ${{ github.workspace }}/llvm
     needs: [ lint, tests ]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
     - uses: actions/checkout@v4
-    - uses: KyleMayes/install-llvm-action@v2
+    - uses: KyleMayes/install-llvm-action@v2.0.8
       with:
         version: ${{ env.DOC_LLVM_VERSION }}
     - name: Install Rust Nightly
