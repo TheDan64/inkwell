@@ -314,26 +314,24 @@ impl<'ctx> InstructionValue<'ctx> {
         unsafe { llvm_sys::core::LLVMCanValueUseFastMathFlags(self.as_value_ref()) == 1 }
     }
 
-    /// Get [fast math flags][0] of supported instructions.
+    /// Get [`FastMathFlags`] of supported instructions.
     ///
     /// Calling this on unsupported instructions is safe and returns `None`.
-    ///
-    /// [0]: https://llvm.org/docs/LangRef.html#fast-math-flags
     #[llvm_versions(18..)]
-    pub fn get_fast_math_flags(self) -> Option<u32> {
-        self.can_use_fast_math_flags()
-            .then(|| unsafe { llvm_sys::core::LLVMGetFastMathFlags(self.as_value_ref()) } as u32)
+    pub fn get_fast_math_flags(self) -> Option<FastMathFlags> {
+        self.can_use_fast_math_flags().then(|| {
+            let raw = unsafe { llvm_sys::core::LLVMGetFastMathFlags(self.as_value_ref()) };
+            FastMathFlags::from_bits_retain(raw)
+        })
     }
 
-    /// Set [fast math flags][0] on supported instructions.
+    /// Set [`FastMathFlags`] on supported instructions.
     ///
     /// Calling this on unsupported instructions is safe and results in a no-op.
-    ///
-    /// [0]: https://llvm.org/docs/LangRef.html#fast-math-flags
     #[llvm_versions(18..)]
-    pub fn set_fast_math_flags(self, flags: u32) {
+    pub fn set_fast_math_flags(self, flags: FastMathFlags) {
         if self.can_use_fast_math_flags() {
-            unsafe { llvm_sys::core::LLVMSetFastMathFlags(self.as_value_ref(), flags) };
+            unsafe { llvm_sys::core::LLVMSetFastMathFlags(self.as_value_ref(), flags.bits()) };
         }
     }
 
@@ -1040,5 +1038,28 @@ impl<'ctx> Iterator for OperandUseIter<'ctx> {
         } else {
             None
         }
+    }
+}
+
+#[llvm_versions(18..)]
+bitflags::bitflags! {
+    /// Fast math flags to enable otherwise unsafe floating-point transformations.
+    #[repr(transparent)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub struct FastMathFlags: u32 {
+        /// Allows all non-strict floating-point transforms.
+        const AllowReassoc = llvm_sys::LLVMFastMathAllowReassoc;
+        /// Arguments and results are assumed not-NaN.
+        const NoNaNs = llvm_sys::LLVMFastMathNoNaNs;
+        /// Arguments and results are assumed not-infinite.
+        const NoInfs = llvm_sys::LLVMFastMathNoInfs;
+        /// Can ignore the sign of zero.
+        const NoSignedZeros = llvm_sys::LLVMFastMathNoSignedZeros;
+        /// Can use reciprocal multiply instead of division.
+        const AllowReciprocal = llvm_sys::LLVMFastMathAllowReciprocal;
+        /// Can be floating-point contracted (FMA).
+        const AllowContract = llvm_sys::LLVMFastMathAllowContract;
+        /// Allows approximations of math library functions or intrinsics
+        const ApproxFunc = llvm_sys::LLVMFastMathApproxFunc;
     }
 }

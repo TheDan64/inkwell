@@ -626,6 +626,8 @@ fn test_find_instruction_with_name() {
 #[llvm_versions(18..)]
 #[test]
 fn test_fast_math_flags() {
+    use inkwell::values::FastMathFlags;
+
     let context = Context::create();
     let module = context.create_module("testing");
 
@@ -651,7 +653,7 @@ fn test_fast_math_flags() {
 
     assert!(!i32_addition.can_use_fast_math_flags());
 
-    i32_addition.set_fast_math_flags(1);
+    i32_addition.set_fast_math_flags(FastMathFlags::AllowReassoc);
     assert_eq!(i32_addition.get_fast_math_flags(), None);
 
     let f32_addition = builder
@@ -661,10 +663,10 @@ fn test_fast_math_flags() {
         .unwrap();
 
     assert!(f32_addition.can_use_fast_math_flags());
-    assert_eq!(f32_addition.get_fast_math_flags(), Some(0));
+    assert_eq!(f32_addition.get_fast_math_flags(), Some(FastMathFlags::empty()));
 
-    f32_addition.set_fast_math_flags(1);
-    assert_eq!(f32_addition.get_fast_math_flags(), Some(1));
+    f32_addition.set_fast_math_flags(FastMathFlags::AllowReassoc);
+    assert_eq!(f32_addition.get_fast_math_flags(), Some(FastMathFlags::AllowReassoc));
 }
 
 #[llvm_versions(18..)]
