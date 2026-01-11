@@ -419,6 +419,27 @@ impl<'ctx> InstructionValue<'ctx> {
         Ok(unsafe { BasicTypeEnum::new(LLVMGetGEPSourceElementType(self.as_value_ref())) })
     }
 
+    // SubTypes: Only apply to GetElementPtr instruction
+    /// Returns whether or not the GEP is in bounds.
+    pub fn get_in_bounds_flag(self) -> Result<bool, InstructionValueError> {
+        if !self.is_a_getelementptr_inst() {
+            return Err(InstructionValueError::NotGEPInst);
+        }
+        Ok(unsafe { llvm_sys::core::LLVMIsInBounds(self.as_value_ref()) == 1 })
+    }
+
+    // SubTypes: Only apply to GetElementPtr instruction
+    /// Sets the given GEP to be in bounds or not.
+    pub fn set_in_bounds_flag(self, flag: bool) -> Result<(), InstructionValueError> {
+        if !self.is_a_getelementptr_inst() {
+            return Err(InstructionValueError::NotGEPInst);
+        }
+        unsafe {
+            llvm_sys::core::LLVMSetIsInBounds(self.as_value_ref(), flag as i32);
+        }
+        Ok(())
+    }
+
     // SubTypes: Only apply to memory access and alloca instructions
     /// Returns alignment on a memory access instruction or alloca.
     pub fn get_alignment(self) -> Result<u32, InstructionValueError> {

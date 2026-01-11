@@ -297,15 +297,21 @@ fn test_instructions() {
     #[cfg(not(feature = "typed-pointers"))]
     {
         let gep_instr = unsafe { builder.build_gep(i64_type, alloca_val, &[], "gep").unwrap() };
+        let gep_instr = gep_instr.as_instruction_value().unwrap();
+
         assert_eq!(
-            gep_instr
-                .as_instruction_value()
-                .unwrap()
-                .get_gep_source_element_type()
-                .unwrap()
-                .as_any_type_enum(),
+            gep_instr.get_gep_source_element_type().unwrap().as_any_type_enum(),
             i64_type.as_any_type_enum()
         );
+
+        assert!(!gep_instr.get_in_bounds_flag().unwrap());
+
+        gep_instr.set_in_bounds_flag(true).unwrap();
+
+        assert!(gep_instr.get_in_bounds_flag().unwrap());
+
+        assert!(free_instruction.get_in_bounds_flag().is_err());
+        assert!(free_instruction.set_in_bounds_flag(true).is_err());
     }
     assert_eq!(
         alloca_val.as_instruction().unwrap().get_allocated_type(),
