@@ -757,6 +757,72 @@ fn test_or_disjoint_flag() {
     assert_eq!(i32_and.get_disjoint_flag(), None);
 }
 
+#[llvm_versions(17..)]
+#[test]
+fn test_nsw_nuw_flags() {
+    let context = Context::create();
+    let module = context.create_module("testing");
+
+    let void_type = context.void_type();
+    let i32_type = context.i32_type();
+    let fn_type = void_type.fn_type(&[i32_type.into(), i32_type.into()], false);
+
+    let builder = context.create_builder();
+    let function = module.add_function("nsw_nuw", fn_type, None);
+    let basic_block = context.append_basic_block(function, "entry");
+
+    builder.position_at_end(basic_block);
+
+    let arg1 = function.get_first_param().unwrap().into_int_value();
+    let arg2 = function.get_nth_param(1).unwrap().into_int_value();
+
+    let i32_mul = builder
+        .build_int_mul(arg1, arg2, "i32_mul")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    assert_eq!(i32_mul.get_no_signed_wrap_flag(), Ok(false));
+    assert_eq!(i32_mul.get_no_unsigned_wrap_flag(), Ok(false));
+
+    i32_mul.set_no_signed_wrap_flag(true).unwrap();
+
+    assert_eq!(i32_mul.get_no_signed_wrap_flag(), Ok(true));
+    assert_eq!(i32_mul.get_no_unsigned_wrap_flag(), Ok(false));
+
+    i32_mul.set_no_unsigned_wrap_flag(true).unwrap();
+
+    assert_eq!(i32_mul.get_no_signed_wrap_flag(), Ok(true));
+    assert_eq!(i32_mul.get_no_unsigned_wrap_flag(), Ok(true));
+
+    let i32_nsw_mul = builder
+        .build_int_nsw_mul(arg1, arg2, "i32_nsw_mul")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    assert_eq!(i32_nsw_mul.get_no_signed_wrap_flag(), Ok(true));
+
+    let i32_nuw_mul = builder
+        .build_int_nuw_mul(arg1, arg2, "i32_nuw_mul")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    assert_eq!(i32_nuw_mul.get_no_unsigned_wrap_flag(), Ok(true));
+
+    let i32_or = builder
+        .build_or(arg1, arg2, "i32_or")
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
+
+    assert!(i32_or.get_no_signed_wrap_flag().is_err());
+    assert!(i32_or.get_no_unsigned_wrap_flag().is_err());
+    assert!(i32_or.set_no_signed_wrap_flag(true).is_err());
+    assert!(i32_or.set_no_unsigned_wrap_flag(true).is_err());
+}
+
 #[test]
 fn test_instruction_indices() {
     let context = Context::create();

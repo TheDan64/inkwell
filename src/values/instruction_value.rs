@@ -48,6 +48,8 @@ pub enum InstructionValueError {
     NotLoadOrStoreInst,
     #[error("Value is not an alloca instruction.")]
     NotAllocaInst,
+    #[error("Value is not an arithmetic instruction.")]
+    NotArithmeticInst,
     #[error("Alignment Error: {0}")]
     AlignmentError(AlignmentError),
     #[error("Not a GEP instruction.")]
@@ -372,6 +374,68 @@ impl<'ctx> InstructionValue<'ctx> {
     pub fn set_disjoint_flag(self, flag: bool) {
         if self.get_opcode() == InstructionOpcode::Or {
             unsafe { llvm_sys::core::LLVMSetIsDisjoint(self.as_value_ref(), flag as i32) };
+        }
+    }
+
+    /// SubTypes: Only apply to specific arithmetic instructions
+    /// Returns whether or not an arithmetic instruction has the no signed wrap flag set.
+    #[llvm_versions(17..)]
+    pub fn get_no_signed_wrap_flag(self) -> Result<bool, InstructionValueError> {
+        match self.get_opcode() {
+            InstructionOpcode::Add
+            | InstructionOpcode::Sub
+            | InstructionOpcode::Mul
+            | InstructionOpcode::Shl
+            | InstructionOpcode::Trunc => Ok(unsafe { llvm_sys::core::LLVMGetNSW(self.as_value_ref()) == 1 }),
+            _ => Err(InstructionValueError::NotArithmeticInst),
+        }
+    }
+
+    /// SubTypes: Only apply to specific arithmetic instructions
+    /// Sets whether or not an arithmetic instruction is no signed wrap.
+    #[llvm_versions(17..)]
+    pub fn set_no_signed_wrap_flag(self, flag: bool) -> Result<(), InstructionValueError> {
+        match self.get_opcode() {
+            InstructionOpcode::Add
+            | InstructionOpcode::Sub
+            | InstructionOpcode::Mul
+            | InstructionOpcode::Shl
+            | InstructionOpcode::Trunc => {
+                unsafe { llvm_sys::core::LLVMSetNSW(self.as_value_ref(), flag as i32) };
+                Ok(())
+            },
+            _ => Err(InstructionValueError::NotArithmeticInst),
+        }
+    }
+
+    /// SubTypes: Only apply to specific arithmetic instructions
+    /// Returns whether or not an arithmetic instruction has the no unsigned wrap flag set.
+    #[llvm_versions(17..)]
+    pub fn get_no_unsigned_wrap_flag(self) -> Result<bool, InstructionValueError> {
+        match self.get_opcode() {
+            InstructionOpcode::Add
+            | InstructionOpcode::Sub
+            | InstructionOpcode::Mul
+            | InstructionOpcode::Shl
+            | InstructionOpcode::Trunc => Ok(unsafe { llvm_sys::core::LLVMGetNUW(self.as_value_ref()) == 1 }),
+            _ => Err(InstructionValueError::NotArithmeticInst),
+        }
+    }
+
+    /// SubTypes: Only apply to specific arithmetic instructions
+    /// Sets whether or not an arithmetic instruction is no unsigned wrap.
+    #[llvm_versions(17..)]
+    pub fn set_no_unsigned_wrap_flag(self, flag: bool) -> Result<(), InstructionValueError> {
+        match self.get_opcode() {
+            InstructionOpcode::Add
+            | InstructionOpcode::Sub
+            | InstructionOpcode::Mul
+            | InstructionOpcode::Shl
+            | InstructionOpcode::Trunc => {
+                unsafe { llvm_sys::core::LLVMSetNUW(self.as_value_ref(), flag as i32) };
+                Ok(())
+            },
+            _ => Err(InstructionValueError::NotArithmeticInst),
         }
     }
 
