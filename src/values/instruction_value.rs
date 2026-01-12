@@ -481,6 +481,32 @@ impl<'ctx> InstructionValue<'ctx> {
         }
     }
 
+    #[llvm_versions(21..)]
+    const SAME_SIGN_INSTRUCTION: &'static [InstructionOpcode] = &[InstructionOpcode::ICmp];
+
+    /// SubTypes: Only apply to integer comparison instruction
+    /// Returns whether or not an instruction has the same sign flag set.
+    #[llvm_versions(21..)]
+    pub fn get_same_sign_flag(self) -> Result<bool, InstructionValueError> {
+        match self.get_opcode() {
+            InstructionOpcode::ICmp => Ok(unsafe { llvm_sys::core::LLVMGetICmpSameSign(self.as_value_ref()) == 1 }),
+            _ => Err(InstructionValueError::NotValidInst(Self::SAME_SIGN_INSTRUCTION)),
+        }
+    }
+
+    /// SubTypes: Only apply to integer comparison instruction
+    /// Sets whether or not an instruction is same sign.
+    #[llvm_versions(21..)]
+    pub fn set_same_sign_flag(self, flag: bool) -> Result<(), InstructionValueError> {
+        match self.get_opcode() {
+            InstructionOpcode::ICmp => {
+                unsafe { llvm_sys::core::LLVMSetICmpSameSign(self.as_value_ref(), flag as i32) };
+                Ok(())
+            },
+            _ => Err(InstructionValueError::NotValidInst(Self::SAME_SIGN_INSTRUCTION)),
+        }
+    }
+
     pub fn replace_all_uses_with(self, other: &InstructionValue<'ctx>) {
         self.instruction_value.replace_all_uses_with(other.as_value_ref())
     }
