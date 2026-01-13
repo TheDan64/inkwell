@@ -1,10 +1,11 @@
 use inkwell::context::Context;
+use inkwell::debug_info::AsDIScope;
 #[cfg(not(feature = "typed-pointers"))]
 use inkwell::types::AnyType;
 use inkwell::types::{AnyTypeEnum, BasicType};
 use inkwell::values::{BasicValue, CallSiteValue, InstructionOpcode::*};
 use inkwell::AtomicRMWBinOp;
-use inkwell::{AddressSpace, AtomicOrdering, FloatPredicate, IntPredicate};
+use inkwell::{debug_info, AddressSpace, AtomicOrdering, FloatPredicate, IntPredicate};
 
 #[test]
 #[ignore]
@@ -589,6 +590,65 @@ fn test_metadata_kinds() {
         vector_value.into(),
         md_string.into(),
     ]);
+}
+
+#[test]
+fn test_metadata_as_operand() {
+    // clang can introduce instructions such as
+    //  call void @llvm.dbg.declare(metadata i32* %2, metadata !16, metadata !DIExpression()), !dbg !17
+    // we want to make sure that looking at the operands works.
+
+    let context = Context::create();
+    let module = context.create_module("testing");
+
+    let void_type = context.void_type();
+    let i32_type = context.i32_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let function = module.add_function("fun", fn_type, None);
+    let block = context.append_basic_block(function, "block");
+
+    let (debug_info_builder, compile_unit) = module.create_debug_info_builder(
+        true,
+        debug_info::DWARFSourceLanguage::C,
+        "test.ll",
+        "/tmp",
+        "test",
+        false,
+        "",
+        0,
+        "split",
+        debug_info::DWARFEmissionKind::Full,
+        0,
+        false,
+        false,
+        "/",
+        "18.1",
+    );
+
+    let address_space = AddressSpace::default();
+    let debug_loc = debug_info_builder.create_debug_location(&context, 5, 32, compile_unit.as_debug_info_scope(), None);
+    #[allow(deprecated)]
+    let i32_ptr = i32_type.ptr_type(address_space).const_null();
+    let di_i32_type = debug_info_builder.create_basic_type("i32", 32, 0, 0).unwrap();
+    let var_info = debug_info_builder.create_auto_variable(
+        compile_unit.as_debug_info_scope(),
+        "var",
+        compile_unit.get_file(),
+        42,
+        di_i32_type.as_type(),
+        false,
+        0,
+        32,
+    );
+    let instruction = debug_info_builder.insert_declare_at_end(i32_ptr, Some(var_info), None, debug_loc, block);
+    assert_eq!(instruction.get_num_operands(), 4);
+    assert_eq!(instruction.get_operands().count(), 4);
+    for (i, operand) in instruction.get_operands().enumerate() {
+        assert!(operand.is_some());
+        // A cheap (and certainly insufficient) test that we can walk through
+        // the operand without segfaulting.
+        eprintln!("operand {i} is {:?}", operand);
+    }
 }
 
 #[test]
