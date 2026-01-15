@@ -509,7 +509,13 @@ fn test_atomic_ordering_mem_instructions() {
     let f32_ptr_type = f32_type.ptr_type(AddressSpace::default());
     #[cfg(not(feature = "typed-pointers"))]
     let f32_ptr_type = context.ptr_type(AddressSpace::default());
-    let fn_type = void_type.fn_type(&[f32_ptr_type.into(), f32_type.into()], false);
+    let i32_type = context.i32_type();
+    #[cfg(feature = "typed-pointers")]
+    let i32_ptr_type = i32_type.ptr_type(AddressSpace::default());
+    #[cfg(not(feature = "typed-pointers"))]
+    let i32_ptr_type = context.ptr_type(AddressSpace::default());
+
+    let fn_type = void_type.fn_type(&[f32_ptr_type.into(), i32_ptr_type.into()], false);
 
     let function = module.add_function("mem_inst", fn_type, None);
     let basic_block = context.append_basic_block(function, "entry");
@@ -517,12 +523,13 @@ fn test_atomic_ordering_mem_instructions() {
     builder.position_at_end(basic_block);
 
     let arg1 = function.get_first_param().unwrap().into_pointer_value();
-    let arg2 = function.get_nth_param(1).unwrap().into_float_value();
+    let arg2 = function.get_nth_param(1).unwrap().into_pointer_value();
 
     assert!(arg1.get_first_use().is_none());
     assert!(arg2.get_first_use().is_none());
 
     let f32_val = f32_type.const_float(std::f64::consts::PI);
+    let i32_val = i32_type.const_int(0xDEADBEEF, true);
 
     let store_instruction = builder.build_store(arg1, f32_val).unwrap();
     #[cfg(feature = "typed-pointers")]
@@ -530,6 +537,24 @@ fn test_atomic_ordering_mem_instructions() {
     #[cfg(not(feature = "typed-pointers"))]
     let load = builder.build_load(f32_type, arg1, "").unwrap();
     let load_instruction = load.as_instruction_value().unwrap();
+
+    #[cfg(any(
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1"
+    ))]
+    let fence_instruction = builder.build_fence(AtomicOrdering::AcquireRelease, 1, "fence").unwrap();
+    let atomicrmw_instruction = builder
+        .build_atomicrmw(
+            AtomicRMWBinOp::Add,
+            arg2,
+            i32_val,
+            AtomicOrdering::SequentiallyConsistent,
+        )
+        .unwrap()
+        .as_instruction_value()
+        .unwrap();
 
     assert_eq!(
         store_instruction.get_atomic_ordering().unwrap(),
@@ -539,11 +564,29 @@ fn test_atomic_ordering_mem_instructions() {
         load_instruction.get_atomic_ordering().unwrap(),
         AtomicOrdering::NotAtomic
     );
+
+    #[cfg(any(
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1"
+    ))]
+    assert_eq!(
+        fence_instruction.get_atomic_ordering().unwrap(),
+        AtomicOrdering::AcquireRelease
+    );
+
+    assert_eq!(
+        atomicrmw_instruction.get_atomic_ordering().unwrap(),
+        AtomicOrdering::SequentiallyConsistent
+    );
+
     assert!(store_instruction.set_atomic_ordering(AtomicOrdering::Monotonic).is_ok());
     assert_eq!(
         store_instruction.get_atomic_ordering().unwrap(),
         AtomicOrdering::Monotonic
     );
+
     assert!(store_instruction.set_atomic_ordering(AtomicOrdering::Release).is_ok());
     assert!(load_instruction.set_atomic_ordering(AtomicOrdering::Acquire).is_ok());
 
@@ -555,6 +598,27 @@ fn test_atomic_ordering_mem_instructions() {
         .set_atomic_ordering(AtomicOrdering::AcquireRelease)
         .is_err());
     assert!(load_instruction.set_atomic_ordering(AtomicOrdering::Release).is_err());
+
+    #[cfg(any(
+        feature = "llvm18-1",
+        feature = "llvm19-1",
+        feature = "llvm20-1",
+        feature = "llvm21-1"
+    ))]
+    {
+        assert!(fence_instruction
+            .set_atomic_ordering(AtomicOrdering::SequentiallyConsistent)
+            .is_ok());
+        assert!(fence_instruction
+            .set_atomic_ordering(AtomicOrdering::Monotonic)
+            .is_err());
+        assert!(atomicrmw_instruction
+            .set_atomic_ordering(AtomicOrdering::AcquireRelease)
+            .is_ok());
+        assert!(atomicrmw_instruction
+            .set_atomic_ordering(AtomicOrdering::Unordered)
+            .is_err());
+    }
 
     let fadd_instruction = builder
         .build_float_add(load.into_float_value(), f32_val, "")

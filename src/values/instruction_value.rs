@@ -32,6 +32,10 @@ pub enum AtomicError {
     AcquireRelease,
     #[error("The acquire ordering is not valid on store instructions.")]
     AcquireOnStore,
+    #[error("Only acquire, release, acq_rel and sequentially consistent orderings are valid on fence instructions.")]
+    InvalidOrderingOnFence,
+    #[error("The not_atomic and unordered orderings are not valid on atomicrmw instructions.")]
+    InvalidOrderingOnAtomicRMW,
 }
 
 /// Errors for InstructionValue.
@@ -41,8 +45,8 @@ pub enum InstructionValueError {
     CannotNameVoidTypeInst,
     #[error("Value is not a load, store, atomicrmw or cmpxchg instruction.")]
     NotMemoryAccessInst,
-    #[error("Value is not a load or store instruction.")]
-    NotLoadOrStoreInst,
+    #[error("Value is not an atomic ordering capable memory access instruction.")]
+    NotAtomicOrderingInst,
     #[error("Value is not an alloca instruction.")]
     NotAllocaInst,
     #[error("Value is not an icmp instruction.")]
@@ -576,10 +580,17 @@ impl<'ctx> InstructionValue<'ctx> {
     /// Returns atomic ordering on a memory access instruction.
     pub fn get_atomic_ordering(self) -> Result<AtomicOrdering, InstructionValueError> {
         match self.get_opcode() {
-            InstructionOpcode::Load | InstructionOpcode::Store => {
+            InstructionOpcode::Load | InstructionOpcode::Store | InstructionOpcode::AtomicRMW => {
                 Ok(unsafe { LLVMGetOrdering(self.as_value_ref()) }.into())
             },
-            _ => Err(InstructionValueError::NotLoadOrStoreInst),
+            #[cfg(any(
+                feature = "llvm18-1",
+                feature = "llvm19-1",
+                feature = "llvm20-1",
+                feature = "llvm21-1"
+            ))]
+            InstructionOpcode::Fence => Ok(unsafe { LLVMGetOrdering(self.as_value_ref()) }.into()),
+            _ => Err(InstructionValueError::NotAtomicOrderingInst),
         }
     }
 
@@ -587,8 +598,8 @@ impl<'ctx> InstructionValue<'ctx> {
     /// Sets atomic ordering on a memory access instruction.
     pub fn set_atomic_ordering(self, ordering: AtomicOrdering) -> Result<(), InstructionValueError> {
         // Although fence and atomicrmw both have an ordering, the LLVM C API
-        // does not support them. The cmpxchg instruction has two orderings and
-        // does not work with this API.
+        // does not support them (for LLVM < 18). The cmpxchg instruction has two orderings and
+        // does not work with this API
         match (self.get_opcode(), ordering) {
             (InstructionOpcode::Load, AtomicOrdering::Release) => {
                 Err(InstructionValueError::AtomicError(AtomicError::ReleaseOnLoad))
@@ -603,7 +614,51 @@ impl<'ctx> InstructionValue<'ctx> {
                 unsafe { LLVMSetOrdering(self.as_value_ref(), ordering.into()) };
                 Ok(())
             },
-            (_, _) => Err(InstructionValueError::NotLoadOrStoreInst),
+            #[cfg(any(
+                feature = "llvm18-1",
+                feature = "llvm19-1",
+                feature = "llvm20-1",
+                feature = "llvm21-1"
+            ))]
+            (
+                InstructionOpcode::Fence,
+                AtomicOrdering::Acquire
+                | AtomicOrdering::Release
+                | AtomicOrdering::AcquireRelease
+                | AtomicOrdering::SequentiallyConsistent,
+            ) => {
+                unsafe { LLVMSetOrdering(self.as_value_ref(), ordering.into()) };
+                Ok(())
+            },
+            #[cfg(any(
+                feature = "llvm18-1",
+                feature = "llvm19-1",
+                feature = "llvm20-1",
+                feature = "llvm21-1"
+            ))]
+            (InstructionOpcode::Fence, _) => {
+                Err(InstructionValueError::AtomicError(AtomicError::InvalidOrderingOnFence))
+            },
+            #[cfg(any(
+                feature = "llvm18-1",
+                feature = "llvm19-1",
+                feature = "llvm20-1",
+                feature = "llvm21-1"
+            ))]
+            (InstructionOpcode::AtomicRMW, AtomicOrdering::NotAtomic | AtomicOrdering::Unordered) => Err(
+                InstructionValueError::AtomicError(AtomicError::InvalidOrderingOnAtomicRMW),
+            ),
+            #[cfg(any(
+                feature = "llvm18-1",
+                feature = "llvm19-1",
+                feature = "llvm20-1",
+                feature = "llvm21-1"
+            ))]
+            (InstructionOpcode::AtomicRMW, _) => {
+                unsafe { LLVMSetOrdering(self.as_value_ref(), ordering.into()) };
+                Ok(())
+            },
+            (_, _) => Err(InstructionValueError::NotAtomicOrderingInst),
         }
     }
 
