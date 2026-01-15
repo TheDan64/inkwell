@@ -48,8 +48,12 @@ pub enum InstructionValueError {
     NotLoadOrStoreInst,
     #[error("Value is not an alloca instruction.")]
     NotAllocaInst,
-    #[error("Value is not a valid instruction for this operation; expected one of {0:?}")]
-    NotValidInst(&'static [InstructionOpcode]),
+    #[error("Value is not an icmp instruction.")]
+    NotIcmpInst,
+    #[error("Value is not an add, sub, mul, shl or trunc instruction.")]
+    NotArithInst,
+    #[error("Value is not a div or shr instruction.")]
+    NotDivOrShrInst,
     #[error("Alignment Error: {0}")]
     AlignmentError(AlignmentError),
     #[error("Not a GEP instruction.")]
@@ -377,15 +381,6 @@ impl<'ctx> InstructionValue<'ctx> {
         }
     }
 
-    #[llvm_versions(17..)]
-    const NSW_NUW_INSTRUCTIONS: &'static [InstructionOpcode] = &[
-        InstructionOpcode::Add,
-        InstructionOpcode::Sub,
-        InstructionOpcode::Mul,
-        InstructionOpcode::Shl,
-        InstructionOpcode::Trunc,
-    ];
-
     /// SubTypes: Only apply to specific arithmetic instructions
     /// Returns whether or not an arithmetic instruction has the no signed wrap flag set.
     #[llvm_versions(17..)]
@@ -396,7 +391,7 @@ impl<'ctx> InstructionValue<'ctx> {
             | InstructionOpcode::Mul
             | InstructionOpcode::Shl
             | InstructionOpcode::Trunc => Ok(unsafe { llvm_sys::core::LLVMGetNSW(self.as_value_ref()) == 1 }),
-            _ => Err(InstructionValueError::NotValidInst(Self::NSW_NUW_INSTRUCTIONS)),
+            _ => Err(InstructionValueError::NotArithInst),
         }
     }
 
@@ -413,7 +408,7 @@ impl<'ctx> InstructionValue<'ctx> {
                 unsafe { llvm_sys::core::LLVMSetNSW(self.as_value_ref(), flag as i32) };
                 Ok(())
             },
-            _ => Err(InstructionValueError::NotValidInst(Self::NSW_NUW_INSTRUCTIONS)),
+            _ => Err(InstructionValueError::NotArithInst),
         }
     }
 
@@ -427,7 +422,7 @@ impl<'ctx> InstructionValue<'ctx> {
             | InstructionOpcode::Mul
             | InstructionOpcode::Shl
             | InstructionOpcode::Trunc => Ok(unsafe { llvm_sys::core::LLVMGetNUW(self.as_value_ref()) == 1 }),
-            _ => Err(InstructionValueError::NotValidInst(Self::NSW_NUW_INSTRUCTIONS)),
+            _ => Err(InstructionValueError::NotArithInst),
         }
     }
 
@@ -444,17 +439,9 @@ impl<'ctx> InstructionValue<'ctx> {
                 unsafe { llvm_sys::core::LLVMSetNUW(self.as_value_ref(), flag as i32) };
                 Ok(())
             },
-            _ => Err(InstructionValueError::NotValidInst(Self::NSW_NUW_INSTRUCTIONS)),
+            _ => Err(InstructionValueError::NotArithInst),
         }
     }
-
-    #[llvm_versions(17..)]
-    const EXACT_INSTRUCTIONS: &'static [InstructionOpcode] = &[
-        InstructionOpcode::SDiv,
-        InstructionOpcode::UDiv,
-        InstructionOpcode::AShr,
-        InstructionOpcode::LShr,
-    ];
 
     /// SubTypes: Only apply to division and shift right instructions
     /// Returns whether or not an instruction has the exact flag set.
@@ -464,7 +451,7 @@ impl<'ctx> InstructionValue<'ctx> {
             InstructionOpcode::SDiv | InstructionOpcode::UDiv | InstructionOpcode::AShr | InstructionOpcode::LShr => {
                 Ok(unsafe { llvm_sys::core::LLVMGetExact(self.as_value_ref()) == 1 })
             },
-            _ => Err(InstructionValueError::NotValidInst(Self::EXACT_INSTRUCTIONS)),
+            _ => Err(InstructionValueError::NotDivOrShrInst),
         }
     }
 
@@ -477,12 +464,9 @@ impl<'ctx> InstructionValue<'ctx> {
                 unsafe { llvm_sys::core::LLVMSetExact(self.as_value_ref(), flag as i32) };
                 Ok(())
             },
-            _ => Err(InstructionValueError::NotValidInst(Self::EXACT_INSTRUCTIONS)),
+            _ => Err(InstructionValueError::NotDivOrShrInst),
         }
     }
-
-    #[llvm_versions(21..)]
-    const SAME_SIGN_INSTRUCTION: &'static [InstructionOpcode] = &[InstructionOpcode::ICmp];
 
     /// SubTypes: Only apply to integer comparison instruction
     /// Returns whether or not an instruction has the same sign flag set.
@@ -490,7 +474,7 @@ impl<'ctx> InstructionValue<'ctx> {
     pub fn get_same_sign_flag(self) -> Result<bool, InstructionValueError> {
         match self.get_opcode() {
             InstructionOpcode::ICmp => Ok(unsafe { llvm_sys::core::LLVMGetICmpSameSign(self.as_value_ref()) == 1 }),
-            _ => Err(InstructionValueError::NotValidInst(Self::SAME_SIGN_INSTRUCTION)),
+            _ => Err(InstructionValueError::NotIcmpInst),
         }
     }
 
@@ -503,7 +487,7 @@ impl<'ctx> InstructionValue<'ctx> {
                 unsafe { llvm_sys::core::LLVMSetICmpSameSign(self.as_value_ref(), flag as i32) };
                 Ok(())
             },
-            _ => Err(InstructionValueError::NotValidInst(Self::SAME_SIGN_INSTRUCTION)),
+            _ => Err(InstructionValueError::NotIcmpInst),
         }
     }
 
