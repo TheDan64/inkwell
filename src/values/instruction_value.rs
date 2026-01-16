@@ -52,6 +52,8 @@ pub enum InstructionValueError {
     AlignmentError(AlignmentError),
     #[error("Not a GEP instruction.")]
     NotGEPInst,
+    #[error("Not a fast-math supporting instruction.")]
+    NotFastMathInst,
     #[error("Atomic Error: {0}")]
     AtomicError(AtomicError),
     #[error("Metadata is expected to be a node.")]
@@ -306,7 +308,7 @@ impl<'ctx> InstructionValue<'ctx> {
         }
     }
 
-    /// Check whether this instructions supports [fast math flags][0].
+    /// Check whether this instructions supports [fast-math flags][0].
     ///
     /// [0]: https://llvm.org/docs/LangRef.html#fast-math-flags
     #[llvm_versions(18..)]
@@ -314,24 +316,27 @@ impl<'ctx> InstructionValue<'ctx> {
         unsafe { llvm_sys::core::LLVMCanValueUseFastMathFlags(self.as_value_ref()) == 1 }
     }
 
-    /// Get [`FastMathFlags`] of supported instructions.
-    ///
-    /// Calling this on unsupported instructions is safe and returns `None`.
+    // SubTypes: Only apply to fast-math supporting instructions
+    /// Return the [`FastMathFlags`] on supported instructions.
     #[llvm_versions(18..)]
-    pub fn get_fast_math_flags(self) -> Option<FastMathFlags> {
-        self.can_use_fast_math_flags().then(|| {
+    pub fn get_fast_math_flags(self) -> Result<FastMathFlags, InstructionValueError> {
+        if self.can_use_fast_math_flags() {
             let raw = unsafe { llvm_sys::core::LLVMGetFastMathFlags(self.as_value_ref()) };
-            FastMathFlags::from_bits_retain(raw)
-        })
+            Ok(FastMathFlags::from_bits_retain(raw))
+        } else {
+            Err(InstructionValueError::NotFastMathInst)
+        }
     }
 
+    // SubTypes: Only apply to fast-math supporting instructions
     /// Set [`FastMathFlags`] on supported instructions.
-    ///
-    /// Calling this on unsupported instructions is safe and results in a no-op.
     #[llvm_versions(18..)]
-    pub fn set_fast_math_flags(self, flags: FastMathFlags) {
+    pub fn set_fast_math_flags(self, flags: FastMathFlags) -> Result<(), InstructionValueError> {
         if self.can_use_fast_math_flags() {
             unsafe { llvm_sys::core::LLVMSetFastMathFlags(self.as_value_ref(), flags.bits()) };
+            Ok(())
+        } else {
+            Err(InstructionValueError::NotFastMathInst)
         }
     }
 
