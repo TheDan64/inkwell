@@ -59,9 +59,9 @@ use crate::values::operand_bundle::OperandBundle;
 #[llvm_versions(..=14)]
 use crate::values::CallableValue;
 use crate::values::{
-    AggregateValue, AggregateValueEnum, AsValueRef, BasicMetadataValueEnum, BasicValue, BasicValueEnum, CallSiteValue,
-    FloatMathValue, FunctionValue, GlobalValue, InstructionOpcode, InstructionValue, IntMathValue, IntValue, PhiValue,
-    PointerMathValue, PointerValue, StructValue, VectorBaseValue,
+    AggregateValue, AggregateValueEnum, AsValueRef, AtomicError, BasicMetadataValueEnum, BasicValue, BasicValueEnum,
+    CallSiteValue, FloatMathValue, FunctionValue, GlobalValue, InstructionOpcode, InstructionValue, IntMathValue,
+    IntValue, PhiValue, PointerMathValue, PointerValue, StructValue, VectorBaseValue,
 };
 
 use crate::error::AlignmentError;
@@ -77,7 +77,7 @@ enum PositionState {
 }
 
 #[derive(Error, Debug, PartialEq, Eq)]
-pub enum OrderingError {
+pub enum CmpxchgOrderingError {
     #[error("Both success and failure orderings must be monotonic or stronger.")]
     WeakerThanMonotic,
     #[error("The failure ordering may not be stronger than the success ordering.")]
@@ -103,8 +103,10 @@ pub enum BuilderError {
     NotSameType,
     #[error("Values must have pointer or integer type")]
     NotPointerOrInteger,
-    #[error("Ordering error or mismatch")]
-    OrderingError(OrderingError),
+    #[error("Cmpxchg ordering error or mismatch")]
+    CmpxchgOrdering(CmpxchgOrderingError),
+    #[error("Atomic ordering error")]
+    AtomicOrdering(AtomicError),
     #[error("GEP pointee is not a struct")]
     GEPPointee,
     #[error("GEP index out of range")]
@@ -3232,11 +3234,10 @@ impl<'ctx> Builder<'ctx> {
     }
 
     // REVIEW: Not sure if this should return InstructionValue or an actual value
-    // TODO: Better name for num?
     pub fn build_fence(
         &self,
         atomic_ordering: AtomicOrdering,
-        num: i32,
+        is_single_thread: bool,
         name: &str,
     ) -> Result<InstructionValue<'ctx>, BuilderError> {
         if self.positioned.get() != PositionState::Set {
@@ -3244,7 +3245,23 @@ impl<'ctx> Builder<'ctx> {
         }
         let c_string = to_c_str(name);
 
-        let val = unsafe { LLVMBuildFence(self.builder, atomic_ordering.into(), num, c_string.as_ptr()) };
+        // "They can only be given acquire, release, acq_rel, and seq_cst orderings."
+        match atomic_ordering {
+            AtomicOrdering::Acquire
+            | AtomicOrdering::Release
+            | AtomicOrdering::AcquireRelease
+            | AtomicOrdering::SequentiallyConsistent => {},
+            _ => return Err(BuilderError::AtomicOrdering(AtomicError::InvalidOrderingOnFence)),
+        }
+
+        let val = unsafe {
+            LLVMBuildFence(
+                self.builder,
+                atomic_ordering.into(),
+                is_single_thread as i32,
+                c_string.as_ptr(),
+            )
+        };
 
         unsafe { Ok(InstructionValue::new(val)) }
     }
@@ -3494,7 +3511,7 @@ impl<'ctx> Builder<'ctx> {
     /// #[cfg(feature = "llvm21-1")]
     /// builder.build_atomicrmw(AtomicRMWBinOp::Add, i32_ptr_param, i32_seven, AtomicOrdering::Monotonic).unwrap();
     /// #[cfg(not(feature = "llvm21-1"))]
-    /// builder.build_atomicrmw(AtomicRMWBinOp::Add, i32_ptr_param, i32_seven, AtomicOrdering::Unordered).unwrap();
+    /// builder.build_atomicrmw(AtomicRMWBinOp::Add, i32_ptr_param, i32_seven, AtomicOrdering::AcquireRelease).unwrap();
     /// builder.build_return(None).unwrap();
     /// ```
     // https://llvm.org/docs/LangRef.html#atomicrmw-instruction
@@ -3518,6 +3535,14 @@ impl<'ctx> Builder<'ctx> {
         #[cfg(feature = "typed-pointers")]
         if ptr.get_type().get_element_type() != value.get_type().into() {
             return Err(BuilderError::PointeeTypeMismatch);
+        }
+
+        // "This ordering [unordered] cannot be specified for read-modify-write operations."
+        match ordering {
+            AtomicOrdering::NotAtomic | AtomicOrdering::Unordered => {
+                return Err(BuilderError::AtomicOrdering(AtomicError::InvalidOrderingOnAtomicRMW))
+            },
+            _ => {},
         }
 
         let val = unsafe {
@@ -3598,13 +3623,15 @@ impl<'ctx> Builder<'ctx> {
 
         // "Both ordering parameters must be at least monotonic, the ordering constraint on failure must be no stronger than that on success, and the failure ordering cannot be either release or acq_rel." -- https://llvm.org/docs/LangRef.html#cmpxchg-instruction
         if success < AtomicOrdering::Monotonic || failure < AtomicOrdering::Monotonic {
-            return Err(BuilderError::OrderingError(OrderingError::WeakerThanMonotic));
+            return Err(BuilderError::CmpxchgOrdering(CmpxchgOrderingError::WeakerThanMonotic));
         }
         if failure > success {
-            return Err(BuilderError::OrderingError(OrderingError::WeakerSuccessOrdering));
+            return Err(BuilderError::CmpxchgOrdering(
+                CmpxchgOrderingError::WeakerSuccessOrdering,
+            ));
         }
         if failure == AtomicOrdering::Release || failure == AtomicOrdering::AcquireRelease {
-            return Err(BuilderError::OrderingError(OrderingError::ReleaseOrAcqRel));
+            return Err(BuilderError::CmpxchgOrdering(CmpxchgOrderingError::ReleaseOrAcqRel));
         }
 
         let val = unsafe {

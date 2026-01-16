@@ -394,7 +394,7 @@ fn test_volatile_atomicrmw_cmpxchg() {
     let i32_val = i32_type.const_int(7, false);
 
     let atomicrmw = builder
-        .build_atomicrmw(AtomicRMWBinOp::Add, arg1, arg2, AtomicOrdering::Unordered)
+        .build_atomicrmw(AtomicRMWBinOp::Add, arg1, arg2, AtomicOrdering::Monotonic)
         .unwrap()
         .as_instruction_value()
         .unwrap();
@@ -544,7 +544,9 @@ fn test_atomic_ordering_mem_instructions() {
         feature = "llvm20-1",
         feature = "llvm21-1"
     ))]
-    let fence_instruction = builder.build_fence(AtomicOrdering::AcquireRelease, 1, "fence").unwrap();
+    let fence_instruction = builder
+        .build_fence(AtomicOrdering::AcquireRelease, true, "fence")
+        .unwrap();
     let atomicrmw_instruction = builder
         .build_atomicrmw(
             AtomicRMWBinOp::Add,
