@@ -717,6 +717,26 @@ fn test_unconditional_branch() {
 }
 
 #[test]
+fn test_fence() {
+    let context = Context::create();
+    let builder = context.create_builder();
+
+    // Builder continues to function with different context
+    let context = Context::create();
+    let module = context.create_module("my_mod");
+    let void_type = context.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let fn_value = module.add_function("my_fn", fn_type, None);
+    let entry = context.append_basic_block(fn_value, "entry");
+
+    builder.position_at_end(entry);
+    assert!(builder.build_fence(AtomicOrdering::NotAtomic, false, "fence").is_err());
+    assert!(builder
+        .build_fence(AtomicOrdering::AcquireRelease, false, "fence")
+        .is_ok());
+}
+
+#[test]
 fn test_no_builder_double_free() {
     let context = Context::create();
     let builder = context.create_builder();
@@ -1743,7 +1763,7 @@ fn test_atomicrmw() {
     #[cfg(not(feature = "typed-pointers"))]
     let ptr_value = context.ptr_type(AddressSpace::default()).get_undef();
     let zero_value = i32_type.const_zero();
-    let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Unordered);
+    let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Monotonic);
     assert!(result.is_ok());
 
     #[cfg(feature = "typed-pointers")]
@@ -1751,7 +1771,7 @@ fn test_atomicrmw() {
         let i64_type = context.i64_type();
         let ptr_value = i64_type.ptr_type(AddressSpace::default()).get_undef();
         let zero_value = i32_type.const_zero();
-        let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Unordered);
+        let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Monotonic);
         assert!(result.is_err());
     }
 
@@ -1760,7 +1780,7 @@ fn test_atomicrmw() {
     #[cfg(not(feature = "typed-pointers"))]
     let ptr_value = context.ptr_type(AddressSpace::default()).get_undef();
     let zero_value = i31_type.const_zero();
-    let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Unordered);
+    let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Monotonic);
     assert!(result.is_err());
 
     #[cfg(feature = "typed-pointers")]
@@ -1768,7 +1788,7 @@ fn test_atomicrmw() {
     #[cfg(not(feature = "typed-pointers"))]
     let ptr_value = context.ptr_type(AddressSpace::default()).get_undef();
     let zero_value = i4_type.const_zero();
-    let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Unordered);
+    let result = builder.build_atomicrmw(AtomicRMWBinOp::Add, ptr_value, zero_value, AtomicOrdering::Monotonic);
     assert!(result.is_err());
 }
 
