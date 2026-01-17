@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["pass_builder"]};
