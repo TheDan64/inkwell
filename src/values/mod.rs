@@ -52,6 +52,8 @@ mod callable_value;
 pub use crate::values::callable_value::CallableValue;
 
 #[llvm_versions(18..)]
+pub use crate::values::instruction_value::FastMathFlags;
+#[llvm_versions(18..)]
 pub use crate::values::operand_bundle::OperandBundle;
 
 use crate::support::{to_c_str, LLVMString};

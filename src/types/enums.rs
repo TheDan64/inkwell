@@ -117,9 +117,6 @@ impl<'ctx> BasicMetadataTypeEnum<'ctx> {
     ///
     /// Undefined behavior if the referenced type cannot be represented as [`BasicMetadataTypeEnum`],
     /// or the underlying pointer is null.
-    ///
-    /// Before LLVM 6, [`BasicMetadataTypeEnum::MetadataType`] variants cannot be created
-    /// with this function. Attempting to do results in undefined behavior.
     pub unsafe fn new(type_: LLVMTypeRef) -> Self {
         match LLVMGetTypeKind(type_) {
             LLVMTypeKind::LLVMMetadataTypeKind => Self::MetadataType(MetadataType::new(type_)),
