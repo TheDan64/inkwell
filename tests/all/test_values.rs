@@ -97,7 +97,7 @@ fn test_call_site_tail_call_attributes() {
     assert_eq!(call_site.get_tail_call_kind(), LLVMTailCallKindNone);
     assert_eq!(
         call_site.try_as_basic_value().unwrap_instruction().get_tail_call_kind(),
-        Some(LLVMTailCallKindNone)
+        Ok(LLVMTailCallKindNone)
     );
 
     call_site.set_tail_call_kind(LLVMTailCallKindTail);
