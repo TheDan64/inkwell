@@ -2,6 +2,8 @@ use inkwell::context::Context;
 #[cfg(not(feature = "typed-pointers"))]
 use inkwell::types::AnyType;
 use inkwell::types::{AnyTypeEnum, BasicType};
+#[llvm_versions(18..)]
+use inkwell::values::InstructionValueError;
 use inkwell::values::{BasicValue, CallSiteValue, InstructionOpcode::*};
 use inkwell::AtomicRMWBinOp;
 use inkwell::{AddressSpace, AtomicOrdering, FloatPredicate, IntPredicate};
@@ -314,9 +316,9 @@ fn test_instructions() {
     assert!(store_instruction.get_allocated_type().is_err());
     assert!(!store_instruction.is_terminator());
     assert!(return_instruction.is_terminator());
-    assert!(!store_instruction.is_conditional());
-    assert!(!return_instruction.is_conditional());
-    assert!(cond_br_instruction.is_conditional());
+    assert!(store_instruction.is_conditional().is_none());
+    assert!(return_instruction.is_conditional().is_none());
+    assert_eq!(cond_br_instruction.is_conditional(), Some(true));
     assert!(TryInto::<CallSiteValue>::try_into(free_instruction).is_ok());
     assert!(TryInto::<CallSiteValue>::try_into(return_instruction).is_err());
     assert_eq!(store_instruction.get_opcode(), Store);
@@ -694,21 +696,23 @@ fn test_zext_non_negative_flag() {
         .as_instruction_value()
         .unwrap();
 
-    assert_eq!(i32_zext.get_non_negative_flag(), Some(false));
+    assert_eq!(i32_zext.get_non_negative_flag(), Ok(false));
 
-    i32_zext.set_non_negative_flag(true);
+    assert!(i32_zext.set_non_negative_flag(true).is_ok());
 
-    assert_eq!(i32_zext.get_non_negative_flag(), Some(true));
-
+    assert_eq!(i32_zext.get_non_negative_flag(), Ok(true));
     let i32_sext = builder
         .build_int_s_extend(arg1, i64_type, "i32_sext")
         .unwrap()
         .as_instruction_value()
         .unwrap();
 
-    i32_sext.set_non_negative_flag(true);
+    assert!(i32_sext.set_non_negative_flag(true).is_err());
 
-    assert_eq!(i32_sext.get_non_negative_flag(), None);
+    assert_eq!(
+        i32_sext.get_non_negative_flag(),
+        Err(InstructionValueError::NotZextInst)
+    );
 }
 
 #[llvm_versions(18..)]
@@ -736,11 +740,11 @@ fn test_or_disjoint_flag() {
         .as_instruction_value()
         .unwrap();
 
-    assert_eq!(i32_or.get_disjoint_flag(), Some(false));
+    assert_eq!(i32_or.get_disjoint_flag(), Ok(false));
 
-    i32_or.set_disjoint_flag(true);
+    assert!(i32_or.set_disjoint_flag(true).is_ok());
 
-    assert_eq!(i32_or.get_disjoint_flag(), Some(true));
+    assert_eq!(i32_or.get_disjoint_flag(), Ok(true));
 
     let i32_and = builder
         .build_and(arg1, arg2, "i32_and")
@@ -748,9 +752,9 @@ fn test_or_disjoint_flag() {
         .as_instruction_value()
         .unwrap();
 
-    i32_and.set_disjoint_flag(true);
+    assert!(i32_and.set_disjoint_flag(true).is_err());
 
-    assert_eq!(i32_and.get_disjoint_flag(), None);
+    assert_eq!(i32_and.get_disjoint_flag(), Err(InstructionValueError::NotOrInst));
 }
 
 #[test]

@@ -54,6 +54,12 @@ pub enum InstructionValueError {
     NotGEPInst,
     #[error("Not a fast-math supporting instruction.")]
     NotFastMathInst,
+    #[error("Not a call instruction.")]
+    NotCallInst,
+    #[error("Not a zext instruction.")]
+    NotZextInst,
+    #[error("Not an or instruction.")]
+    NotOrInst,
     #[error("Atomic Error: {0}")]
     AtomicError(AtomicError),
     #[error("Metadata is expected to be a node.")]
@@ -277,38 +283,52 @@ impl<'ctx> InstructionValue<'ctx> {
         unsafe { !LLVMIsATerminatorInst(self.as_value_ref()).is_null() }
     }
 
-    // SubTypes: Only apply to terminators
-    /// Returns if a terminator is conditional or not
-    pub fn is_conditional(self) -> bool {
+    // SubTypes: Only apply to branch instructions
+    /// Returns `Some` with whether or not the branch is conditional,
+    /// otherwise `None` if not a branch instruction
+    pub fn is_conditional(self) -> Option<bool> {
         if self.get_opcode() == InstructionOpcode::Br {
-            unsafe { LLVMIsConditional(self.as_value_ref()) == 1 }
-        } else {
-            false
-        }
-    }
-
-    pub fn is_tail_call(self) -> bool {
-        // LLVMIsTailCall has UB if the value is not an llvm::CallInst*.
-        if self.get_opcode() == InstructionOpcode::Call {
-            unsafe { LLVMIsTailCall(self.as_value_ref()) == 1 }
-        } else {
-            false
-        }
-    }
-
-    /// Returns the tail call kind on call instructions.
-    ///
-    /// Other instructions return `None`.
-    #[llvm_versions(18..)]
-    pub fn get_tail_call_kind(self) -> Option<super::LLVMTailCallKind> {
-        if self.get_opcode() == InstructionOpcode::Call {
-            unsafe { llvm_sys::core::LLVMGetTailCallKind(self.as_value_ref()) }.into()
+            Some(unsafe { LLVMIsConditional(self.as_value_ref()) == 1 })
         } else {
             None
         }
     }
 
-    /// Check whether this instructions supports [fast-math flags][0].
+    // SubTypes: Only apply to call instructions
+    /// Returns `Some` with whether or not the call is a tail call,
+    /// otherwise `None` if not a call instruction
+    pub fn is_tail_call(self) -> Option<bool> {
+        if self.get_opcode() == InstructionOpcode::Call {
+            Some(unsafe { LLVMIsTailCall(self.as_value_ref()) == 1 })
+        } else {
+            None
+        }
+    }
+
+    // SubTypes: Only apply to call instructions
+    /// Returns tail call kind of the call instruction
+    #[llvm_versions(18..)]
+    pub fn get_tail_call_kind(self) -> Result<super::LLVMTailCallKind, InstructionValueError> {
+        if self.get_opcode() == InstructionOpcode::Call {
+            Ok(unsafe { llvm_sys::core::LLVMGetTailCallKind(self.as_value_ref()) })
+        } else {
+            Err(InstructionValueError::NotCallInst)
+        }
+    }
+
+    // SubTypes: Only apply to call instructions
+    /// Sets tail call kind of the call instruction
+    #[llvm_versions(18..)]
+    pub fn set_tail_call_kind(self, kind: super::LLVMTailCallKind) -> Result<(), InstructionValueError> {
+        if self.get_opcode() == InstructionOpcode::Call {
+            unsafe { llvm_sys::core::LLVMSetTailCallKind(self.as_value_ref(), kind) };
+            Ok(())
+        } else {
+            Err(InstructionValueError::NotCallInst)
+        }
+    }
+
+    /// Check whether this instructions supports [fast math flags][0].
     ///
     /// [0]: https://llvm.org/docs/LangRef.html#fast-math-flags
     #[llvm_versions(18..)]
@@ -340,41 +360,49 @@ impl<'ctx> InstructionValue<'ctx> {
         }
     }
 
-    /// Check if a `zext` instruction has the non-negative flag set.
-    ///
-    /// Calling this function on other instructions is safe and returns `None`.
+    // SubTypes: Only apply to zext instructions
+    /// Returns the non-negative flag on zext instructions.
     #[llvm_versions(18..)]
-    pub fn get_non_negative_flag(self) -> Option<bool> {
-        (self.get_opcode() == InstructionOpcode::ZExt)
-            .then(|| unsafe { llvm_sys::core::LLVMGetNNeg(self.as_value_ref()) == 1 })
-    }
-
-    /// Set the non-negative flag on `zext` instructions.
-    ///
-    /// Calling this function on other instructions is safe and results in a no-op.
-    #[llvm_versions(18..)]
-    pub fn set_non_negative_flag(self, flag: bool) {
+    pub fn get_non_negative_flag(self) -> Result<bool, InstructionValueError> {
         if self.get_opcode() == InstructionOpcode::ZExt {
-            unsafe { llvm_sys::core::LLVMSetNNeg(self.as_value_ref(), flag as i32) };
+            Ok(unsafe { llvm_sys::core::LLVMGetNNeg(self.as_value_ref()) == 1 })
+        } else {
+            Err(InstructionValueError::NotZextInst)
         }
     }
 
-    /// Checks if an `or` instruction has the `disjoint` flag set.
-    ///
-    /// Calling this function on other instructions is safe and returns `None`.
+    // SubTypes: Only apply to zext instructions
+    /// Set the non-negative flag on zext instructions.
     #[llvm_versions(18..)]
-    pub fn get_disjoint_flag(self) -> Option<bool> {
-        (self.get_opcode() == InstructionOpcode::Or)
-            .then(|| unsafe { llvm_sys::core::LLVMGetIsDisjoint(self.as_value_ref()) == 1 })
+    pub fn set_non_negative_flag(self, flag: bool) -> Result<(), InstructionValueError> {
+        if self.get_opcode() == InstructionOpcode::ZExt {
+            unsafe { llvm_sys::core::LLVMSetNNeg(self.as_value_ref(), flag as i32) };
+            Ok(())
+        } else {
+            Err(InstructionValueError::NotZextInst)
+        }
     }
 
-    /// Set the `disjoint` flag on `or` instructions.
-    ///
-    /// Calling this function on other instructions is safe and results in a no-op.
+    // SubTypes: Only apply to or instructions
+    /// Returns the disjoint flag on or instructions.
     #[llvm_versions(18..)]
-    pub fn set_disjoint_flag(self, flag: bool) {
+    pub fn get_disjoint_flag(self) -> Result<bool, InstructionValueError> {
+        if self.get_opcode() == InstructionOpcode::Or {
+            Ok(unsafe { llvm_sys::core::LLVMGetIsDisjoint(self.as_value_ref()) == 1 })
+        } else {
+            Err(InstructionValueError::NotOrInst)
+        }
+    }
+
+    // SubTypes: Only apply to or instructions
+    /// Set the disjoint flag on or instructions.
+    #[llvm_versions(18..)]
+    pub fn set_disjoint_flag(self, flag: bool) -> Result<(), InstructionValueError> {
         if self.get_opcode() == InstructionOpcode::Or {
             unsafe { llvm_sys::core::LLVMSetIsDisjoint(self.as_value_ref(), flag as i32) };
+            Ok(())
+        } else {
+            Err(InstructionValueError::NotOrInst)
         }
     }
 
