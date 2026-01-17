@@ -52,6 +52,8 @@ pub enum InstructionValueError {
     AlignmentError(AlignmentError),
     #[error("Not a GEP instruction.")]
     NotGEPInst,
+    #[error("Not a fast-math supporting instruction.")]
+    NotFastMathInst,
     #[error("Atomic Error: {0}")]
     AtomicError(AtomicError),
     #[error("Metadata is expected to be a node.")]
@@ -306,7 +308,7 @@ impl<'ctx> InstructionValue<'ctx> {
         }
     }
 
-    /// Check whether this instructions supports [fast math flags][0].
+    /// Check whether this instructions supports [fast-math flags][0].
     ///
     /// [0]: https://llvm.org/docs/LangRef.html#fast-math-flags
     #[llvm_versions(18..)]
@@ -314,26 +316,27 @@ impl<'ctx> InstructionValue<'ctx> {
         unsafe { llvm_sys::core::LLVMCanValueUseFastMathFlags(self.as_value_ref()) == 1 }
     }
 
-    /// Get [fast math flags][0] of supported instructions.
-    ///
-    /// Calling this on unsupported instructions is safe and returns `None`.
-    ///
-    /// [0]: https://llvm.org/docs/LangRef.html#fast-math-flags
+    // SubTypes: Only apply to fast-math supporting instructions
+    /// Return the [`FastMathFlags`] on supported instructions.
     #[llvm_versions(18..)]
-    pub fn get_fast_math_flags(self) -> Option<u32> {
-        self.can_use_fast_math_flags()
-            .then(|| unsafe { llvm_sys::core::LLVMGetFastMathFlags(self.as_value_ref()) } as u32)
+    pub fn get_fast_math_flags(self) -> Result<FastMathFlags, InstructionValueError> {
+        if self.can_use_fast_math_flags() {
+            let raw = unsafe { llvm_sys::core::LLVMGetFastMathFlags(self.as_value_ref()) };
+            Ok(FastMathFlags::from_bits_retain(raw))
+        } else {
+            Err(InstructionValueError::NotFastMathInst)
+        }
     }
 
-    /// Set [fast math flags][0] on supported instructions.
-    ///
-    /// Calling this on unsupported instructions is safe and results in a no-op.
-    ///
-    /// [0]: https://llvm.org/docs/LangRef.html#fast-math-flags
+    // SubTypes: Only apply to fast-math supporting instructions
+    /// Set [`FastMathFlags`] on supported instructions.
     #[llvm_versions(18..)]
-    pub fn set_fast_math_flags(self, flags: u32) {
+    pub fn set_fast_math_flags(self, flags: FastMathFlags) -> Result<(), InstructionValueError> {
         if self.can_use_fast_math_flags() {
-            unsafe { llvm_sys::core::LLVMSetFastMathFlags(self.as_value_ref(), flags) };
+            unsafe { llvm_sys::core::LLVMSetFastMathFlags(self.as_value_ref(), flags.bits()) };
+            Ok(())
+        } else {
+            Err(InstructionValueError::NotFastMathInst)
         }
     }
 
@@ -1040,5 +1043,28 @@ impl<'ctx> Iterator for OperandUseIter<'ctx> {
         } else {
             None
         }
+    }
+}
+
+#[llvm_versions(18..)]
+bitflags::bitflags! {
+    /// Fast math flags to enable otherwise unsafe floating-point transformations.
+    #[repr(transparent)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub struct FastMathFlags: u32 {
+        /// Allows all non-strict floating-point transforms.
+        const AllowReassoc = llvm_sys::LLVMFastMathAllowReassoc;
+        /// Arguments and results are assumed not-NaN.
+        const NoNaNs = llvm_sys::LLVMFastMathNoNaNs;
+        /// Arguments and results are assumed not-infinite.
+        const NoInfs = llvm_sys::LLVMFastMathNoInfs;
+        /// Can ignore the sign of zero.
+        const NoSignedZeros = llvm_sys::LLVMFastMathNoSignedZeros;
+        /// Can use reciprocal multiply instead of division.
+        const AllowReciprocal = llvm_sys::LLVMFastMathAllowReciprocal;
+        /// Can be floating-point contracted (FMA).
+        const AllowContract = llvm_sys::LLVMFastMathAllowContract;
+        /// Allows approximations of math library functions or intrinsics
+        const ApproxFunc = llvm_sys::LLVMFastMathApproxFunc;
     }
 }
