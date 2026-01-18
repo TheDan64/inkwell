@@ -360,7 +360,7 @@ impl<'ctx> InstructionValue<'ctx> {
         }
     }
 
-    /// SubTypes: Only apply to specific arithmetic instructions
+    // SubTypes: Only apply to specific arithmetic instructions
     /// Returns whether or not an arithmetic instruction has the no signed wrap flag set.
     #[llvm_versions(17..)]
     pub fn get_no_signed_wrap_flag(self) -> Result<bool, InstructionValueError> {
@@ -374,7 +374,7 @@ impl<'ctx> InstructionValue<'ctx> {
         }
     }
 
-    /// SubTypes: Only apply to specific arithmetic instructions
+    // SubTypes: Only apply to specific arithmetic instructions
     /// Sets whether or not an arithmetic instruction is no signed wrap.
     #[llvm_versions(17..)]
     pub fn set_no_signed_wrap_flag(self, flag: bool) -> Result<(), InstructionValueError> {
@@ -391,7 +391,7 @@ impl<'ctx> InstructionValue<'ctx> {
         }
     }
 
-    /// SubTypes: Only apply to specific arithmetic instructions
+    // SubTypes: Only apply to specific arithmetic instructions
     /// Returns whether or not an arithmetic instruction has the no unsigned wrap flag set.
     #[llvm_versions(17..)]
     pub fn get_no_unsigned_wrap_flag(self) -> Result<bool, InstructionValueError> {
@@ -405,7 +405,7 @@ impl<'ctx> InstructionValue<'ctx> {
         }
     }
 
-    /// SubTypes: Only apply to specific arithmetic instructions
+    // SubTypes: Only apply to specific arithmetic instructions
     /// Sets whether or not an arithmetic instruction is no unsigned wrap.
     #[llvm_versions(17..)]
     pub fn set_no_unsigned_wrap_flag(self, flag: bool) -> Result<(), InstructionValueError> {
@@ -422,7 +422,7 @@ impl<'ctx> InstructionValue<'ctx> {
         }
     }
 
-    /// SubTypes: Only apply to division and shift right instructions
+    // SubTypes: Only apply to division and shift right instructions
     /// Returns whether or not an instruction has the exact flag set.
     #[llvm_versions(17..)]
     pub fn get_exact_flag(self) -> Result<bool, InstructionValueError> {
@@ -434,7 +434,7 @@ impl<'ctx> InstructionValue<'ctx> {
         }
     }
 
-    /// SubTypes: Only apply to division and shift right instructions
+    // SubTypes: Only apply to division and shift right instructions
     /// Sets whether or not an instruction is exact.
     #[llvm_versions(17..)]
     pub fn set_exact_flag(self, flag: bool) -> Result<(), InstructionValueError> {
@@ -447,7 +447,7 @@ impl<'ctx> InstructionValue<'ctx> {
         }
     }
 
-    /// SubTypes: Only apply to integer comparison instruction
+    // SubTypes: Only apply to integer comparison instruction
     /// Returns whether or not an instruction has the same sign flag set.
     #[llvm_versions(21..)]
     pub fn get_same_sign_flag(self) -> Result<bool, InstructionValueError> {
@@ -457,7 +457,7 @@ impl<'ctx> InstructionValue<'ctx> {
         }
     }
 
-    /// SubTypes: Only apply to integer comparison instruction
+    // SubTypes: Only apply to integer comparison instruction
     /// Sets whether or not an instruction is same sign.
     #[llvm_versions(21..)]
     pub fn set_same_sign_flag(self, flag: bool) -> Result<(), InstructionValueError> {
