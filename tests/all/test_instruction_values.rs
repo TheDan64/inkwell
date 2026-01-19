@@ -322,9 +322,9 @@ fn test_instructions() {
     assert!(store_instruction.get_allocated_type().is_err());
     assert!(!store_instruction.is_terminator());
     assert!(return_instruction.is_terminator());
-    assert!(store_instruction.is_conditional().is_none());
-    assert!(return_instruction.is_conditional().is_none());
-    assert_eq!(cond_br_instruction.is_conditional(), Some(true));
+    assert!(store_instruction.is_conditional().is_err());
+    assert!(return_instruction.is_conditional().is_err());
+    assert_eq!(cond_br_instruction.is_conditional(), Ok(true));
     assert!(TryInto::<CallSiteValue>::try_into(free_instruction).is_ok());
     assert!(TryInto::<CallSiteValue>::try_into(return_instruction).is_err());
     assert_eq!(store_instruction.get_opcode(), Store);

@@ -67,6 +67,8 @@ pub enum InstructionValueError {
     NotZextInst,
     #[error("Not an or instruction.")]
     NotOrInst,
+    #[error("Not a branch instruction.")]
+    NotBrInst,
     #[error("Atomic Error: {0}")]
     AtomicError(AtomicError),
     #[error("Metadata is expected to be a node.")]
@@ -266,24 +268,22 @@ impl<'ctx> InstructionValue<'ctx> {
     }
 
     // SubTypes: Only apply to branch instructions
-    /// Returns `Some` with whether or not the branch is conditional,
-    /// otherwise `None` if not a branch instruction
-    pub fn is_conditional(self) -> Option<bool> {
+    /// Returns whether the branch instruction is conditional
+    pub fn is_conditional(self) -> Result<bool, InstructionValueError> {
         if self.get_opcode() == InstructionOpcode::Br {
-            Some(unsafe { LLVMIsConditional(self.as_value_ref()) == 1 })
+            Ok(unsafe { LLVMIsConditional(self.as_value_ref()) == 1 })
         } else {
-            None
+            Err(InstructionValueError::NotBrInst)
         }
     }
 
     // SubTypes: Only apply to call instructions
-    /// Returns `Some` with whether or not the call is a tail call,
-    /// otherwise `None` if not a call instruction
-    pub fn is_tail_call(self) -> Option<bool> {
+    /// Returns whether the call instruction is tail call
+    pub fn is_tail_call(self) -> Result<bool, InstructionValueError> {
         if self.get_opcode() == InstructionOpcode::Call {
-            Some(unsafe { LLVMIsTailCall(self.as_value_ref()) == 1 })
+            Ok(unsafe { LLVMIsTailCall(self.as_value_ref()) == 1 })
         } else {
-            None
+            Err(InstructionValueError::NotCallInst)
         }
     }
 
