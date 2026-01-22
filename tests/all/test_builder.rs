@@ -328,7 +328,6 @@ fn landing_pad_filter() {
         builder.build_return(Some(&fakepi)).unwrap();
     }
 
-    module.print_to_stderr();
     assert!(module.verify().is_ok());
 }
 

@@ -219,12 +219,11 @@ pub(crate) fn to_c_str(mut s: &str) -> Cow<'_, CStr> {
         s = "\0";
     }
 
-    // Start from the end of the string as it's the most likely place to find a null byte
-    if !s.chars().rev().any(|ch| ch == '\0') {
-        return Cow::from(CString::new(s).expect("unreachable since null bytes are checked"));
+    match CStr::from_bytes_until_nul(s.as_bytes()) {
+        Ok(c) => Cow::from(c),
+        // SAFETY: No internal 0 byte since already `FromBytesUntilNulError`
+        Err(_) => unsafe { Cow::from(CString::new(s.as_bytes()).unwrap_unchecked()) },
     }
-
-    unsafe { Cow::from(CStr::from_ptr(s.as_ptr() as *const _)) }
 }
 
 #[test]

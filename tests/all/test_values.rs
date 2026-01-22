@@ -17,6 +17,7 @@ use inkwell::{AddressSpace, DLLStorageClass, GlobalVisibility, ThreadLocalMode};
 pub use inkwell::llvm_sys::LLVMTailCallKind::*;
 
 use std::convert::TryFrom;
+use std::ffi::CStr;
 
 // TODO: Test GlobalValues used as PointerValues
 
@@ -169,8 +170,8 @@ fn test_call_site_function_value_indirect_call() {
     // }
     // ```
 
-    let llvm_ir = r#"
-        source_filename = "my_mod";
+    let llvm_ir = b"
+        source_filename = \"my_mod\";
 
         define void @my_fn() {
             entry:
@@ -182,9 +183,10 @@ fn test_call_site_function_value_indirect_call() {
         }
 
         declare void @dummy_fn();
-    "#;
+    \0";
 
-    let memory_buffer = MemoryBuffer::create_from_memory_range_copy(llvm_ir.as_bytes(), "my_mod");
+    let memory_buffer =
+        MemoryBuffer::create_from_memory_range_copy(CStr::from_bytes_with_nul(llvm_ir).unwrap(), "my_mod");
     let context = Context::create();
     let module = context.create_module_from_ir(memory_buffer).unwrap();
 

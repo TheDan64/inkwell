@@ -12,6 +12,7 @@ mod test_execution_engine;
 mod test_instruction_conversion;
 mod test_instruction_values;
 mod test_intrinsics;
+mod test_memory_buffer;
 mod test_module;
 mod test_object_file;
 #[cfg(not(any(
