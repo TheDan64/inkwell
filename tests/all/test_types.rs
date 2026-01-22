@@ -1,5 +1,3 @@
-use std::ffi::CStr;
-
 use inkwell::context::Context;
 use inkwell::memory_buffer::MemoryBuffer;
 use inkwell::types::BasicType;
@@ -148,7 +146,7 @@ fn test_function_type() {
 /// Regression test for inkwell#546
 #[test]
 fn test_function_type_metadata_params() {
-    let llvm_ir = CStr::from_bytes_with_nul(b"declare void @my_fn(i32, metadata)\0").unwrap();
+    let llvm_ir = c"declare void @my_fn(i32, metadata)";
 
     let context = Context::create();
     let i32_type = context.i32_type();

@@ -229,16 +229,7 @@ pub(crate) fn to_c_str(mut s: &str) -> Cow<'_, CStr> {
 
 #[test]
 fn test_to_c_str() {
-    assert_eq!(
-        to_c_str("my string"),
-        Cow::<CStr>::Owned(CString::new("my string").unwrap())
-    );
-    assert_eq!(
-        to_c_str("my\0string"),
-        Cow::Borrowed(CStr::from_bytes_with_nul(b"my\0").unwrap())
-    );
-    assert_eq!(
-        to_c_str("my string\0"),
-        Cow::Borrowed(CStr::from_bytes_with_nul(b"my string\0").unwrap())
-    );
+    assert_eq!(to_c_str("my string"), Cow::<CStr>::Owned(c"my string".to_owned()));
+    assert_eq!(to_c_str("my\0string"), Cow::Borrowed(c"my"));
+    assert_eq!(to_c_str("my string\0"), Cow::Borrowed(c"my string"));
 }
