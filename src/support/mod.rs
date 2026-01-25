@@ -214,21 +214,22 @@ pub fn enable_llvm_pretty_stack_trace() {
 /// A) Finds a terminating null byte in the Rust string and can reference it directly like a C string.
 ///
 /// B) Finds no null byte and allocates a new C string based on the input Rust string.
+#[inline]
 pub(crate) fn to_c_str(mut s: &str) -> Cow<'_, CStr> {
     if s.is_empty() {
         s = "\0";
     }
 
-    // Start from the end of the string as it's the most likely place to find a null byte
-    if !s.chars().rev().any(|ch| ch == '\0') {
-        return Cow::from(CString::new(s).expect("unreachable since null bytes are checked"));
+    match CStr::from_bytes_until_nul(s.as_bytes()) {
+        Ok(c) => Cow::from(c),
+        // SAFETY: No internal 0 byte since already `FromBytesUntilNulError`
+        Err(_) => unsafe { Cow::from(CString::new(s.as_bytes()).unwrap_unchecked()) },
     }
-
-    unsafe { Cow::from(CStr::from_ptr(s.as_ptr() as *const _)) }
 }
 
 #[test]
 fn test_to_c_str() {
-    assert!(matches!(to_c_str("my string"), Cow::Owned(_)));
-    assert!(matches!(to_c_str("my string\0"), Cow::Borrowed(_)));
+    assert_eq!(to_c_str("my string"), Cow::<CStr>::Owned(c"my string".to_owned()));
+    assert_eq!(to_c_str("my\0string"), Cow::Borrowed(c"my"));
+    assert_eq!(to_c_str("my string\0"), Cow::Borrowed(c"my string"));
 }

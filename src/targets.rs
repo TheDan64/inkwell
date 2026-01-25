@@ -1173,7 +1173,11 @@ impl TargetMachine {
     ///
     /// let buffer = target_machine.write_to_memory_buffer(&module, FileType::Assembly).unwrap();
     /// ```
-    pub fn write_to_memory_buffer(&self, module: &Module, file_type: FileType) -> Result<MemoryBuffer, LLVMString> {
+    pub fn write_to_memory_buffer(
+        &self,
+        module: &Module,
+        file_type: FileType,
+    ) -> Result<MemoryBuffer<'static>, LLVMString> {
         let mut memory_buffer = ptr::null_mut();
         let mut err_string = MaybeUninit::uninit();
         let return_code = unsafe {

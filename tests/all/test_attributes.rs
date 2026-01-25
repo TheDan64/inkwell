@@ -120,8 +120,6 @@ fn test_attributes_on_function_values() {
     fn_value.add_attribute(AttributeLoc::Return, return_enum_attribute);
     fn_value.add_attribute(AttributeLoc::Function, function_enum_attribute);
 
-    module.print_to_stderr();
-
     module.verify().unwrap();
 
     assert_eq!(fn_value.count_attributes(AttributeLoc::Return), 2);

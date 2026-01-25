@@ -146,15 +146,13 @@ fn test_function_type() {
 /// Regression test for inkwell#546
 #[test]
 fn test_function_type_metadata_params() {
-    let llvm_ir = r#"
-        declare void @my_fn(i32, metadata)
-    "#;
+    let llvm_ir = c"declare void @my_fn(i32, metadata)";
 
     let context = Context::create();
     let i32_type = context.i32_type();
     let md_type = context.metadata_type();
 
-    let memory_buffer = MemoryBuffer::create_from_memory_range_copy(llvm_ir.as_bytes(), "my_mod");
+    let memory_buffer = MemoryBuffer::create_from_memory_range_copy(llvm_ir, "my_mod");
     let module = context.create_module_from_ir(memory_buffer).unwrap();
 
     let fn_type = module.get_function("my_fn").unwrap().get_type();

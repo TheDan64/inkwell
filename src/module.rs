@@ -852,7 +852,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// let buffer = module.write_bitcode_to_memory();
     /// ```
-    pub fn write_bitcode_to_memory(&self) -> MemoryBuffer {
+    pub fn write_bitcode_to_memory(&self) -> MemoryBuffer<'static> {
         let memory_buffer = unsafe { LLVMWriteBitcodeToMemoryBuffer(self.module.get()) };
 
         unsafe { MemoryBuffer::new(memory_buffer) }

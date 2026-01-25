@@ -169,8 +169,8 @@ fn test_call_site_function_value_indirect_call() {
     // }
     // ```
 
-    let llvm_ir = r#"
-        source_filename = "my_mod";
+    let llvm_ir = c"
+        source_filename = \"my_mod\";
 
         define void @my_fn() {
             entry:
@@ -182,9 +182,9 @@ fn test_call_site_function_value_indirect_call() {
         }
 
         declare void @dummy_fn();
-    "#;
+    ";
 
-    let memory_buffer = MemoryBuffer::create_from_memory_range_copy(llvm_ir.as_bytes(), "my_mod");
+    let memory_buffer = MemoryBuffer::create_from_memory_range_copy(llvm_ir, "my_mod");
     let context = Context::create();
     let module = context.create_module_from_ir(memory_buffer).unwrap();
 
