@@ -144,7 +144,7 @@ fn test_write_and_load_memory_buffer() {
 #[test]
 fn test_garbage_ir_fails_create_module_from_ir() {
     let context = Context::create();
-    let memory_buffer = MemoryBuffer::create_from_memory_range(c"garbage ir data", "my_ir");
+    let memory_buffer = MemoryBuffer::create_from_memory_range(b"garbage ir data\0", "my_ir");
 
     assert_eq!(memory_buffer.get_size(), 16);
     assert_eq!(memory_buffer.as_slice(), b"garbage ir data\0");
@@ -154,7 +154,7 @@ fn test_garbage_ir_fails_create_module_from_ir() {
 #[test]
 fn test_garbage_ir_fails_create_module_from_ir_copy() {
     let context = Context::create();
-    let memory_buffer = MemoryBuffer::create_from_memory_range_copy(c"garbage ir data", "my_ir");
+    let memory_buffer = MemoryBuffer::create_from_memory_range_copy(b"garbage ir data\0", "my_ir");
 
     assert_eq!(memory_buffer.get_size(), 16);
     assert_eq!(memory_buffer.as_slice(), b"garbage ir data\0");
@@ -216,7 +216,7 @@ fn test_get_struct_type_global_context() {
 #[test]
 fn test_parse_from_buffer() {
     let context = Context::create();
-    let garbage_buffer = MemoryBuffer::create_from_memory_range(c"garbage ir data", "my_ir");
+    let garbage_buffer = MemoryBuffer::create_from_memory_range(b"garbage ir data\0", "my_ir");
     let module_result = Module::parse_bitcode_from_buffer(&garbage_buffer, &context);
 
     assert!(module_result.is_err());

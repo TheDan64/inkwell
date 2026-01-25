@@ -10,7 +10,6 @@ use llvm_sys::prelude::LLVMMemoryBufferRef;
 use crate::object_file::ObjectFile;
 use crate::support::{to_c_str, LLVMString};
 
-use std::ffi::CStr;
 use std::marker::PhantomData;
 use std::mem::forget;
 use std::path::Path;
@@ -65,12 +64,27 @@ impl MemoryBuffer<'static> {
         unsafe { Ok(Self::new(memory_buffer)) }
     }
 
-    /// Create a memory buffer copied from a [`CStr`].
-    pub fn create_from_memory_range_copy(input: &CStr, name: &str) -> Self {
+    /// Create a memory buffer copied from a byte slice with a trailing nul byte.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the input byte slice does not terminate with a nul byte.
+    pub fn create_from_memory_range_copy(input: &[u8], name: &str) -> Self {
+        assert_eq!(
+            input[input.len() - 1],
+            b'\0',
+            "input byte slice must terminate with a nul byte"
+        );
+
         let name_c_string = to_c_str(name);
 
         let memory_buffer = unsafe {
-            LLVMCreateMemoryBufferWithMemoryRangeCopy(input.as_ptr(), input.count_bytes() + 1, name_c_string.as_ptr())
+            LLVMCreateMemoryBufferWithMemoryRangeCopy(
+                input.as_ptr() as *const libc::c_char,
+                // decremented since technically the nul byte is one past the end of the input.
+                input.len() - 1,
+                name_c_string.as_ptr(),
+            )
         };
 
         unsafe { Self::new(memory_buffer) }
@@ -91,14 +105,25 @@ impl<'a> MemoryBuffer<'a> {
         self.memory_buffer
     }
 
-    /// Create a memory buffer from a [`CStr`].
-    pub fn create_from_memory_range(input: &'a CStr, name: &str) -> Self {
+    /// Create a memory buffer from a byte slice with a trailing nul byte.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the input byte slice does not terminate with a nul byte.
+    pub fn create_from_memory_range(input: &'a [u8], name: &str) -> Self {
+        assert_eq!(
+            input[input.len() - 1],
+            b'\0',
+            "input byte slice must terminate with a nul byte"
+        );
+
         let name_c_string = to_c_str(name);
 
         let memory_buffer = unsafe {
             LLVMCreateMemoryBufferWithMemoryRange(
-                input.as_ptr(),
-                input.count_bytes() + 1,
+                input.as_ptr() as *const libc::c_char,
+                // decremented since technically the nul byte is one past the end of the input.
+                input.len() - 1,
                 name_c_string.as_ptr(),
                 false as i32, // guaranteed to have nul-terminator by CStr
             )
@@ -107,19 +132,24 @@ impl<'a> MemoryBuffer<'a> {
         unsafe { MemoryBuffer::new(memory_buffer) }
     }
 
-    /// Gets a byte slice of this `MemoryBuffer`, containing the trailing nul byte.
-    // The returned value may contain interior nul bytes, hence not returned as CStr.
+    /// Gets a byte slice of this [`MemoryBuffer`], containing the trailing nul byte.
     pub fn as_slice(&self) -> &[u8] {
         unsafe {
             let start = LLVMGetBufferStart(self.memory_buffer);
 
+            // SAFETY: from LLVM `MemoryBuffer.h`:
+            // "this interface guarantees you can read one character past the end of the file,
+            // and that this character will read as '\0'."
+            //
+            // we include it here, so we can create a MemoryBuffer from the returned slice again.
             slice::from_raw_parts(start as *const _, self.get_size())
         }
     }
 
     /// Gets the byte size of this `MemoryBuffer`, counting the trailing nul byte.
     pub fn get_size(&self) -> usize {
-        unsafe { LLVMGetBufferSize(self.memory_buffer) }
+        // buffer size does not include the trailing nul byte, hence incremented.
+        unsafe { LLVMGetBufferSize(self.memory_buffer) + 1 }
     }
 
     /// Convert this `MemoryBuffer` into an `ObjectFile`. LLVM does not currently
