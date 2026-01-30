@@ -17,12 +17,15 @@ use llvm_sys::core::LLVMPointerTypeInContext;
 use llvm_sys::core::{
     LLVMAppendBasicBlockInContext, LLVMConstStructInContext, LLVMContextCreate, LLVMContextDispose,
     LLVMContextSetDiagnosticHandler, LLVMCreateBuilderInContext, LLVMCreateEnumAttribute, LLVMCreateStringAttribute,
-    LLVMDoubleTypeInContext, LLVMFP128TypeInContext, LLVMFloatTypeInContext, LLVMGetGlobalContext,
-    LLVMGetMDKindIDInContext, LLVMHalfTypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext,
-    LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext,
+    LLVMDoubleTypeInContext, LLVMFP128TypeInContext, LLVMFloatTypeInContext, LLVMGetMDKindIDInContext,
+    LLVMHalfTypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext,
+    LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext,
     LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext, LLVMStructCreateNamed, LLVMStructTypeInContext,
     LLVMVoidTypeInContext, LLVMX86FP80TypeInContext,
 };
+
+#[llvm_versions(..22)]
+use llvm_sys::core::LLVMGetGlobalContext;
 
 #[llvm_versions(..19)]
 use llvm_sys::core::LLVMConstStringInContext;
@@ -32,7 +35,12 @@ use llvm_sys::core::LLVMConstStringInContext2;
 
 #[allow(deprecated)]
 use llvm_sys::core::{LLVMMDNodeInContext, LLVMMDStringInContext};
+
+#[llvm_versions(..22)]
 use llvm_sys::ir_reader::LLVMParseIRInContext;
+#[llvm_versions(22..)]
+use llvm_sys::ir_reader::LLVMParseIRInContext2;
+
 use llvm_sys::prelude::{LLVMContextRef, LLVMDiagnosticInfoRef, LLVMTypeRef, LLVMValueRef};
 use llvm_sys::target::{LLVMIntPtrTypeForASInContext, LLVMIntPtrTypeInContext};
 use once_cell::sync::Lazy;
@@ -69,7 +77,20 @@ use std::thread_local;
 // This is still technically unsafe because another program in the same process
 // could also be accessing the global context via the C API. `get_global` has been
 // marked unsafe for this reason. Iff this isn't the case then this should be fully safe.
-static GLOBAL_CTX: Lazy<Mutex<Context>> = Lazy::new(|| unsafe { Mutex::new(Context::new(LLVMGetGlobalContext())) });
+static GLOBAL_CTX: Lazy<Mutex<Context>> = Lazy::new(|| {
+    let context = {
+        #[cfg(feature = "llvm22-1")]
+        {
+            Context::create()
+        }
+        #[cfg(not(feature = "llvm22-1"))]
+        unsafe {
+            Context::new(LLVMGetGlobalContext())
+        }
+    };
+
+    Mutex::new(context)
+});
 
 thread_local! {
     pub(crate) static GLOBAL_CTX_LOCK: Lazy<MutexGuard<'static, Context>> = Lazy::new(|| {
@@ -107,7 +128,10 @@ impl ContextImpl {
         let mut module = ptr::null_mut();
         let mut err_str = ptr::null_mut();
 
+        #[cfg(not(feature = "llvm22-1"))]
         let code = unsafe { LLVMParseIRInContext(self.0, memory_buffer.memory_buffer, &mut module, &mut err_str) };
+        #[cfg(feature = "llvm22-1")]
+        let code = unsafe { LLVMParseIRInContext2(self.0, memory_buffer.memory_buffer, &mut module, &mut err_str) };
 
         forget(memory_buffer);
 
