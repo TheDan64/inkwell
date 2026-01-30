@@ -21,6 +21,9 @@ pub struct LLVMString {
     pub(crate) ptr: *const c_char,
 }
 
+unsafe impl Send for LLVMString {}
+unsafe impl Sync for LLVMString {}
+
 impl LLVMString {
     pub(crate) unsafe fn new(ptr: *const c_char) -> Self {
         LLVMString { ptr }
