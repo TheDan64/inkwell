@@ -189,6 +189,7 @@ fn sized_types(global_ctx: &Context) {
         feature = "llvm19-1",
         feature = "llvm20-1",
         feature = "llvm21-1",
+        feature = "llvm22-1",
     ))]
     let bf16_type = global_ctx.bf16_type();
     let f32_type = global_ctx.f32_type();
@@ -229,6 +230,7 @@ fn sized_types(global_ctx: &Context) {
         feature = "llvm19-1",
         feature = "llvm20-1",
         feature = "llvm21-1",
+        feature = "llvm22-1",
     ))]
     assert!(bf16_type.is_sized());
     assert!(f32_type.is_sized());
@@ -268,6 +270,7 @@ fn sized_types(global_ctx: &Context) {
             feature = "llvm19-1",
             feature = "llvm20-1",
             feature = "llvm21-1",
+            feature = "llvm22-1",
         ))]
         assert!(bf16_type.ptr_type(AddressSpace::default()).is_sized());
         assert!(f32_type.ptr_type(AddressSpace::default()).is_sized());
@@ -300,6 +303,7 @@ fn sized_types(global_ctx: &Context) {
         feature = "llvm19-1",
         feature = "llvm20-1",
         feature = "llvm21-1",
+        feature = "llvm22-1",
     ))]
     assert!(bf16_type.array_type(42).is_sized());
     assert!(f32_type.array_type(42).is_sized());
@@ -333,6 +337,7 @@ fn sized_types(global_ctx: &Context) {
         feature = "llvm19-1",
         feature = "llvm20-1",
         feature = "llvm21-1",
+        feature = "llvm22-1",
     ))]
     assert!(bf16_type.vec_type(42).is_sized());
     assert!(f32_type.vec_type(42).is_sized());
@@ -353,7 +358,8 @@ fn sized_types(global_ctx: &Context) {
         feature = "llvm18-1",
         feature = "llvm19-1",
         feature = "llvm20-1",
-        feature = "llvm21-1"
+        feature = "llvm21-1",
+        feature = "llvm22-1"
     ))]
     {
         assert!(bool_type.scalable_vec_type(42).is_sized());
@@ -375,6 +381,7 @@ fn sized_types(global_ctx: &Context) {
             feature = "llvm19-1",
             feature = "llvm20-1",
             feature = "llvm21-1",
+            feature = "llvm22-1",
         ))]
         assert!(bf16_type.scalable_vec_type(42).is_sized());
         assert!(f32_type.scalable_vec_type(42).is_sized());
@@ -420,6 +427,7 @@ fn test_const_zero() {
         feature = "llvm19-1",
         feature = "llvm20-1",
         feature = "llvm21-1",
+        feature = "llvm22-1",
     ))]
     let bf16_type = context.bf16_type();
     let f32_type = context.f32_type();
@@ -443,7 +451,8 @@ fn test_const_zero() {
         feature = "llvm18-1",
         feature = "llvm19-1",
         feature = "llvm20-1",
-        feature = "llvm21-1"
+        feature = "llvm21-1",
+        feature = "llvm22-1"
     ))]
     let scalable_vec_type = f64_type.scalable_vec_type(42);
     let array_type = f64_type.array_type(42);
@@ -463,7 +472,8 @@ fn test_const_zero() {
         feature = "llvm18-1",
         feature = "llvm19-1",
         feature = "llvm20-1",
-        feature = "llvm21-1"
+        feature = "llvm21-1",
+        feature = "llvm22-1"
     ))]
     scalable_vec_type.size_of();
     array_type.size_of();
@@ -483,7 +493,8 @@ fn test_const_zero() {
         feature = "llvm18-1",
         feature = "llvm19-1",
         feature = "llvm20-1",
-        feature = "llvm21-1"
+        feature = "llvm21-1",
+        feature = "llvm22-1"
     ))]
     scalable_vec_type.get_alignment();
     array_type.get_alignment();
@@ -507,6 +518,7 @@ fn test_const_zero() {
         feature = "llvm19-1",
         feature = "llvm20-1",
         feature = "llvm21-1",
+        feature = "llvm22-1",
     ))]
     let bf16_zero = bf16_type.const_zero();
     let f32_zero = f32_type.const_zero();
@@ -527,7 +539,8 @@ fn test_const_zero() {
         feature = "llvm18-1",
         feature = "llvm19-1",
         feature = "llvm20-1",
-        feature = "llvm21-1"
+        feature = "llvm21-1",
+        feature = "llvm22-1"
     ))]
     let scalable_vec_zero = scalable_vec_type.const_zero();
     let array_zero = array_type.const_zero();
@@ -551,6 +564,7 @@ fn test_const_zero() {
         feature = "llvm19-1",
         feature = "llvm20-1",
         feature = "llvm21-1",
+        feature = "llvm22-1",
     ))]
     assert!(bf16_zero.is_null());
     assert!(f32_zero.is_null());
@@ -571,7 +585,8 @@ fn test_const_zero() {
         feature = "llvm18-1",
         feature = "llvm19-1",
         feature = "llvm20-1",
-        feature = "llvm21-1"
+        feature = "llvm21-1",
+        feature = "llvm22-1"
     ))]
     assert!(scalable_vec_zero.is_null());
     assert!(array_zero.is_null());
@@ -595,6 +610,7 @@ fn test_const_zero() {
         feature = "llvm19-1",
         feature = "llvm20-1",
         feature = "llvm21-1",
+        feature = "llvm22-1",
     ))]
     assert_eq!(bf16_zero.print_to_string().to_str(), Ok("bfloat 0xR0000"));
     assert_eq!(f32_zero.print_to_string().to_str(), Ok("float 0.000000e+00"));
@@ -636,7 +652,8 @@ fn test_const_zero() {
         feature = "llvm18-1",
         feature = "llvm19-1",
         feature = "llvm20-1",
-        feature = "llvm21-1"
+        feature = "llvm21-1",
+        feature = "llvm22-1"
     ))]
     assert_eq!(
         scalable_vec_zero.print_to_string().to_str(),
@@ -665,6 +682,7 @@ fn test_float_type() {
         feature = "llvm19-1",
         feature = "llvm20-1",
         feature = "llvm21-1",
+        feature = "llvm22-1",
     ))]
     let bf16_type = context.bf16_type();
     let f32_type = context.f32_type();
@@ -686,6 +704,7 @@ fn test_float_type() {
         feature = "llvm19-1",
         feature = "llvm20-1",
         feature = "llvm21-1",
+        feature = "llvm22-1",
     ))]
     assert_eq!(bf16_type.get_bit_width(), 16);
     assert_eq!(f32_type.get_bit_width(), 32);
@@ -777,7 +796,8 @@ fn test_basic_type_enum() {
             feature = "llvm18-1",
             feature = "llvm19-1",
             feature = "llvm20-1",
-            feature = "llvm21-1"
+            feature = "llvm21-1",
+            feature = "llvm22-1"
         ))]
         &int.scalable_vec_type(1),
     ];

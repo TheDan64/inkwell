@@ -214,6 +214,7 @@ impl ContextImpl {
         feature = "llvm19-1",
         feature = "llvm20-1",
         feature = "llvm21-1",
+        feature = "llvm22-1",
     ))]
     fn bf16_type<'ctx>(&self) -> FloatType<'ctx> {
         unsafe { FloatType::new(LLVMBFloatTypeInContext(self.0)) }
@@ -593,7 +594,7 @@ impl Context {
     ///     builder.build_call(callable_value, params, "exit").unwrap();
     /// }
     ///
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1", feature = "llvm22-1"))]
     /// builder.build_indirect_call(asm_fn, asm, params, "exit").unwrap();
     ///
     /// builder.build_return(None).unwrap();
@@ -848,6 +849,7 @@ impl Context {
         feature = "llvm19-1",
         feature = "llvm20-1",
         feature = "llvm21-1",
+        feature = "llvm22-1",
     ))]
     #[inline]
     pub fn bf16_type(&self) -> FloatType<'_> {
@@ -1468,7 +1470,7 @@ impl<'ctx> ContextRef<'ctx> {
     ///     builder.build_call(callable_value, params, "exit").unwrap();
     /// }
     ///
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1", feature = "llvm22-1"))]
     /// builder.build_indirect_call(asm_fn, asm, params, "exit").unwrap();
     ///
     /// builder.build_return(None).unwrap();
@@ -1723,6 +1725,7 @@ impl<'ctx> ContextRef<'ctx> {
         feature = "llvm19-1",
         feature = "llvm20-1",
         feature = "llvm21-1",
+        feature = "llvm22-1",
     ))]
     #[inline]
     pub fn bf16_type(&self) -> FloatType<'ctx> {
