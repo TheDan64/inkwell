@@ -7,21 +7,20 @@ use llvm_sys::core::LLVMContextSetOpaquePointers;
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMCreateTypeAttribute;
 
-use llvm_sys::core::LLVMBFloatTypeInContext;
-use llvm_sys::core::LLVMGetInlineAsm;
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMGetTypeByName2;
-use llvm_sys::core::LLVMMetadataTypeInContext;
+
 #[cfg(not(feature = "typed-pointers"))]
 use llvm_sys::core::LLVMPointerTypeInContext;
 use llvm_sys::core::{
-    LLVMAppendBasicBlockInContext, LLVMConstStructInContext, LLVMContextCreate, LLVMContextDispose,
-    LLVMContextSetDiagnosticHandler, LLVMCreateBuilderInContext, LLVMCreateEnumAttribute, LLVMCreateStringAttribute,
-    LLVMDoubleTypeInContext, LLVMFP128TypeInContext, LLVMFloatTypeInContext, LLVMGetMDKindIDInContext,
-    LLVMHalfTypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext,
-    LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext,
-    LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext, LLVMStructCreateNamed, LLVMStructTypeInContext,
-    LLVMVoidTypeInContext, LLVMX86FP80TypeInContext,
+    LLVMAppendBasicBlockInContext, LLVMBFloatTypeInContext, LLVMConstStructInContext, LLVMContextCreate,
+    LLVMContextDispose, LLVMContextSetDiagnosticHandler, LLVMCreateBuilderInContext, LLVMCreateEnumAttribute,
+    LLVMCreateStringAttribute, LLVMDoubleTypeInContext, LLVMFP128TypeInContext, LLVMFloatTypeInContext,
+    LLVMGetInlineAsm, LLVMGetMDKindIDInContext, LLVMHalfTypeInContext, LLVMInsertBasicBlockInContext,
+    LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext,
+    LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMMDNodeInContext2, LLVMMDStringInContext2, LLVMMetadataAsValue,
+    LLVMMetadataTypeInContext, LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext, LLVMStructCreateNamed,
+    LLVMStructTypeInContext, LLVMValueAsMetadata, LLVMVoidTypeInContext, LLVMX86FP80TypeInContext,
 };
 
 #[llvm_versions(..22)]
@@ -33,15 +32,12 @@ use llvm_sys::core::LLVMConstStringInContext;
 #[llvm_versions(19..)]
 use llvm_sys::core::LLVMConstStringInContext2;
 
-#[allow(deprecated)]
-use llvm_sys::core::{LLVMMDNodeInContext, LLVMMDStringInContext};
-
 #[llvm_versions(..22)]
 use llvm_sys::ir_reader::LLVMParseIRInContext;
 #[llvm_versions(22..)]
 use llvm_sys::ir_reader::LLVMParseIRInContext2;
 
-use llvm_sys::prelude::{LLVMContextRef, LLVMDiagnosticInfoRef, LLVMTypeRef, LLVMValueRef};
+use llvm_sys::prelude::{LLVMContextRef, LLVMDiagnosticInfoRef, LLVMMetadataRef, LLVMTypeRef, LLVMValueRef};
 use llvm_sys::target::{LLVMIntPtrTypeForASInContext, LLVMIntPtrTypeInContext};
 use once_cell::sync::Lazy;
 use std::sync::{Mutex, MutexGuard};
@@ -348,28 +344,24 @@ impl ContextImpl {
         }
     }
 
-    #[allow(deprecated)]
     fn metadata_node<'ctx>(&self, values: &[BasicMetadataValueEnum<'ctx>]) -> MetadataValue<'ctx> {
-        let mut tuple_values: Vec<LLVMValueRef> = values.iter().map(|val| val.as_value_ref()).collect();
+        let mut tuple_values: Vec<LLVMMetadataRef> = values
+            .iter()
+            .map(|val| unsafe { LLVMValueAsMetadata(val.as_value_ref()) })
+            .collect();
+
         unsafe {
-            MetadataValue::new(LLVMMDNodeInContext(
-                self.0,
-                tuple_values.as_mut_ptr(),
-                tuple_values.len() as u32,
-            ))
+            let metadata = LLVMMDNodeInContext2(self.0, tuple_values.as_mut_ptr(), tuple_values.len());
+            MetadataValue::new(LLVMMetadataAsValue(self.0, metadata))
         }
     }
 
-    #[allow(deprecated)]
     fn metadata_string<'ctx>(&self, string: &str) -> MetadataValue<'ctx> {
         let c_string = to_c_str(string);
 
         unsafe {
-            MetadataValue::new(LLVMMDStringInContext(
-                self.0,
-                c_string.as_ptr(),
-                c_string.to_bytes().len() as u32,
-            ))
+            let metadata = LLVMMDStringInContext2(self.0, c_string.as_ptr(), c_string.to_bytes_with_nul().len());
+            MetadataValue::new(LLVMMetadataAsValue(self.0, metadata))
         }
     }
 
@@ -1205,6 +1197,7 @@ impl Context {
     ///
     /// let context = Context::create();
     /// let md_string = context.metadata_string("Floats are awesome!");
+    /// let md_node = context.metadata_node(&[md_string.into()]);
     /// let f32_type = context.f32_type();
     /// let f32_one = f32_type.const_float(1.);
     /// let void_type = context.void_type();
@@ -1221,7 +1214,7 @@ impl Context {
     ///
     /// assert!(md_string.is_string());
     ///
-    /// ret_instr.set_metadata(md_string, 0);
+    /// ret_instr.set_metadata(md_node, 0);
     /// ```
     // REVIEW: Seems to be unassigned to anything
     #[inline]

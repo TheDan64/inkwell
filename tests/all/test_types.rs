@@ -146,7 +146,7 @@ fn test_function_type() {
 /// Regression test for inkwell#546
 #[test]
 fn test_function_type_metadata_params() {
-    let llvm_ir = c"declare void @my_fn(i32, metadata)";
+    let llvm_ir = b"declare void @my_fn(i32, metadata)\0";
 
     let context = Context::create();
     let i32_type = context.i32_type();

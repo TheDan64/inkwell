@@ -170,7 +170,7 @@ fn test_call_site_function_value_indirect_call() {
     // }
     // ```
 
-    let llvm_ir = c"
+    let llvm_ir = b"
         source_filename = \"my_mod\";
 
         define void @my_fn() {
@@ -183,7 +183,7 @@ fn test_call_site_function_value_indirect_call() {
         }
 
         declare void @dummy_fn();
-    ";
+    \0";
 
     let memory_buffer = MemoryBuffer::create_from_memory_range_copy(llvm_ir, "my_mod");
     let context = Context::create();
@@ -981,8 +981,8 @@ fn test_metadata() {
 
     let md_string = context.metadata_string("lots of metadata here");
 
-    assert_eq!(md_string.get_node_size(), 0);
-    assert_eq!(md_string.get_node_values().len(), 0);
+    assert_eq!(md_string.get_node_size(), None);
+    assert_eq!(md_string.get_node_values(), None);
     assert_eq!(
         md_string.get_string_value().unwrap().to_str(),
         Ok("lots of metadata here")
@@ -1031,7 +1031,7 @@ fn test_metadata() {
     let md_node_child = context.metadata_node(&[bool_val.into(), f32_val.into()]);
     let md_node = context.metadata_node(&[bool_val.into(), f32_val.into(), md_string.into(), md_node_child.into()]);
 
-    let node_values = md_node.get_node_values();
+    let node_values = md_node.get_node_values().unwrap();
 
     assert_eq!(md_node.get_string_value(), None);
     assert_eq!(node_values.len(), 4);
@@ -1052,7 +1052,7 @@ fn test_metadata() {
 
     assert_eq!(global_md.len(), 1);
 
-    let md = global_md[0].get_node_values();
+    let md = global_md[0].get_node_values().unwrap();
 
     assert_eq!(md.len(), 4);
     assert_eq!(md[0].into_int_value(), bool_val);
@@ -1108,7 +1108,7 @@ fn test_metadata() {
     assert!(ret_instr.has_metadata());
     assert!(ret_instr.get_metadata(1).is_none());
 
-    let md_node_values = ret_instr.get_metadata(2).unwrap().get_node_values();
+    let md_node_values = ret_instr.get_metadata(2).unwrap().get_node_values().unwrap();
 
     assert_eq!(md_node_values.len(), 1);
     assert_eq!(

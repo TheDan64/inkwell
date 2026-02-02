@@ -1029,7 +1029,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(global_md.len(), 2);
     ///
-    /// let (md_0, md_1) = (global_md[0].get_node_values(), global_md[1].get_node_values());
+    /// let (md_0, md_1) = (global_md[0].get_node_values().unwrap(), global_md[1].get_node_values().unwrap());
     ///
     /// assert_eq!(md_0.len(), 1);
     /// assert_eq!(md_1.len(), 2);
@@ -1079,7 +1079,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(global_md.len(), 2);
     ///
-    /// let (md_0, md_1) = (global_md[0].get_node_values(), global_md[1].get_node_values());
+    /// let (md_0, md_1) = (global_md[0].get_node_values().unwrap(), global_md[1].get_node_values().unwrap());
     ///
     /// assert_eq!(md_0.len(), 1);
     /// assert_eq!(md_1.len(), 2);
@@ -1122,7 +1122,7 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(global_md.len(), 2);
     ///
-    /// let (md_0, md_1) = (global_md[0].get_node_values(), global_md[1].get_node_values());
+    /// let (md_0, md_1) = (global_md[0].get_node_values().unwrap(), global_md[1].get_node_values().unwrap());
     ///
     /// assert_eq!(md_0.len(), 1);
     /// assert_eq!(md_1.len(), 2);
