@@ -136,9 +136,9 @@ fn test_write_and_load_memory_buffer() {
     );
 
     let memory_buffer2 = module.write_bitcode_to_memory();
-    let object_file = memory_buffer2.create_object_file();
+    let binary_file = memory_buffer2.create_binary_file(None);
 
-    assert!(object_file.is_err());
+    assert!(binary_file.is_err());
 }
 
 #[test]
