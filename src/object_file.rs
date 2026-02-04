@@ -1,123 +1,171 @@
-#![allow(deprecated)]
-
 use llvm_sys::object::{
-    LLVMDisposeObjectFile, LLVMDisposeRelocationIterator, LLVMDisposeSectionIterator, LLVMDisposeSymbolIterator,
-    LLVMGetRelocationOffset, LLVMGetRelocationSymbol, LLVMGetRelocationType, LLVMGetRelocationTypeName,
-    LLVMGetRelocationValueString, LLVMGetRelocations, LLVMGetSectionAddress, LLVMGetSectionContents,
-    LLVMGetSectionName, LLVMGetSectionSize, LLVMGetSections, LLVMGetSymbolAddress, LLVMGetSymbolName,
-    LLVMGetSymbolSize, LLVMGetSymbols, LLVMIsRelocationIteratorAtEnd, LLVMIsSectionIteratorAtEnd,
-    LLVMIsSymbolIteratorAtEnd, LLVMMoveToNextRelocation, LLVMMoveToNextSection, LLVMMoveToNextSymbol,
-    LLVMObjectFileRef, LLVMRelocationIteratorRef, LLVMSectionIteratorRef, LLVMSymbolIteratorRef,
+    LLVMBinaryCopyMemoryBuffer, LLVMBinaryGetType, LLVMBinaryRef, LLVMDisposeBinary, LLVMDisposeRelocationIterator,
+    LLVMDisposeSectionIterator, LLVMDisposeSymbolIterator, LLVMGetRelocationOffset, LLVMGetRelocationSymbol,
+    LLVMGetRelocationType, LLVMGetRelocationTypeName, LLVMGetRelocationValueString, LLVMGetRelocations,
+    LLVMGetSectionAddress, LLVMGetSectionContainsSymbol, LLVMGetSectionContents, LLVMGetSectionName,
+    LLVMGetSectionSize, LLVMGetSymbolAddress, LLVMGetSymbolName, LLVMGetSymbolSize, LLVMIsRelocationIteratorAtEnd,
+    LLVMMoveToContainingSection, LLVMMoveToNextRelocation, LLVMMoveToNextSection, LLVMMoveToNextSymbol,
+    LLVMObjectFileCopySectionIterator, LLVMObjectFileCopySymbolIterator, LLVMObjectFileIsSectionIteratorAtEnd,
+    LLVMObjectFileIsSymbolIteratorAtEnd, LLVMRelocationIteratorRef, LLVMSectionIteratorRef, LLVMSymbolIteratorRef,
 };
 
+pub use llvm_sys::object::LLVMBinaryType;
+
 use std::ffi::CStr;
+use std::marker::PhantomData;
 
-// REVIEW: Make sure SectionIterator's object_file ptr doesn't outlive ObjectFile
-// REVIEW: This module is very untested
-// TODO: More references to account for lifetimes
-#[derive(Debug)]
-pub struct ObjectFile {
-    object_file: LLVMObjectFileRef,
-}
-
-impl ObjectFile {
-    pub unsafe fn new(object_file: LLVMObjectFileRef) -> Self {
-        assert!(!object_file.is_null());
-
-        ObjectFile { object_file }
-    }
-
-    pub fn as_mut_ptr(&self) -> LLVMObjectFileRef {
-        self.object_file
-    }
-
-    pub fn get_sections(&self) -> SectionIterator {
-        let section_iterator = unsafe { LLVMGetSections(self.object_file) };
-
-        unsafe { SectionIterator::new(section_iterator, self.object_file) }
-    }
-
-    pub fn get_symbols(&self) -> SymbolIterator {
-        let symbol_iterator = unsafe { LLVMGetSymbols(self.object_file) };
-
-        unsafe { SymbolIterator::new(symbol_iterator, self.object_file) }
-    }
-}
-
-impl Drop for ObjectFile {
-    fn drop(&mut self) {
-        unsafe { LLVMDisposeObjectFile(self.object_file) }
-    }
-}
+use crate::memory_buffer::MemoryBuffer;
+use crate::support::LLVMString;
 
 #[derive(Debug)]
-pub struct SectionIterator {
-    section_iterator: LLVMSectionIteratorRef,
-    object_file: LLVMObjectFileRef,
-    before_first: bool,
+pub struct BinaryFile<'a> {
+    binary_file: LLVMBinaryRef,
+    _phantom: PhantomData<&'a ()>,
 }
 
-impl SectionIterator {
-    pub unsafe fn new(section_iterator: LLVMSectionIteratorRef, object_file: LLVMObjectFileRef) -> Self {
-        assert!(!section_iterator.is_null());
-        assert!(!object_file.is_null());
+impl<'a> BinaryFile<'a> {
+    pub unsafe fn new(binary_file: LLVMBinaryRef) -> Self {
+        assert!(!binary_file.is_null());
 
-        SectionIterator {
-            section_iterator,
-            object_file,
-            before_first: true,
+        Self {
+            binary_file,
+            _phantom: PhantomData,
         }
     }
 
-    pub fn as_mut_ptr(&self) -> (LLVMSectionIteratorRef, LLVMObjectFileRef) {
-        (self.section_iterator, self.object_file)
+    pub fn as_mut_ptr(&self) -> LLVMBinaryRef {
+        self.binary_file
+    }
+
+    pub fn get_binary_type(&self) -> LLVMBinaryType {
+        unsafe { LLVMBinaryGetType(self.as_mut_ptr()) }
+    }
+
+    // the backing buffer must outlive 'a, hence never dangling
+    pub fn get_memory_buffer(&self) -> MemoryBuffer<'a> {
+        unsafe { MemoryBuffer::new(LLVMBinaryCopyMemoryBuffer(self.binary_file)) }
+    }
+
+    pub fn get_sections(&self) -> Option<Sections<'_>> {
+        let section_iterator = unsafe { LLVMObjectFileCopySectionIterator(self.binary_file) };
+
+        if section_iterator.is_null() {
+            return None;
+        }
+
+        Some(unsafe { Sections::new(section_iterator, self.binary_file) })
+    }
+
+    pub fn get_symbols(&self) -> Option<Symbols<'_>> {
+        let symbol_iterator = unsafe { LLVMObjectFileCopySymbolIterator(self.binary_file) };
+
+        if symbol_iterator.is_null() {
+            return None;
+        }
+
+        Some(unsafe { Symbols::new(symbol_iterator, self.binary_file) })
     }
 }
 
-impl Iterator for SectionIterator {
-    type Item = Section;
+impl<'a> Drop for BinaryFile<'a> {
+    fn drop(&mut self) {
+        unsafe {
+            LLVMDisposeBinary(self.binary_file);
+        }
+    }
+}
 
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.before_first {
-            self.before_first = false;
-        } else {
+#[derive(Debug)]
+pub struct Sections<'a> {
+    section_iterator: LLVMSectionIteratorRef,
+    binary_file: LLVMBinaryRef,
+    at_start: bool,
+    at_end: bool,
+    _phantom: PhantomData<&'a ()>,
+}
+
+impl<'a> Sections<'a> {
+    pub unsafe fn new(section_iterator: LLVMSectionIteratorRef, binary_file: LLVMBinaryRef) -> Self {
+        assert!(!section_iterator.is_null());
+        assert!(!binary_file.is_null());
+
+        Sections {
+            section_iterator,
+            binary_file,
+            at_start: true,
+            at_end: false,
+            _phantom: PhantomData,
+        }
+    }
+
+    pub fn as_mut_ptr(&self) -> (LLVMSectionIteratorRef, LLVMBinaryRef) {
+        (self.section_iterator, self.binary_file)
+    }
+
+    // Here we cannot use the `Iterator`` trait since `Section` depends on the lifetime of self to
+    // ensure the section cannot be used after another call to `next_section`. If it can be used
+    // after another call, the underlying iterator would have moved to the next section already, and
+    // thus function calls to the old section would return results of the new section.
+    //
+    // This is similar to the `LendingIterator` trait.
+    pub fn next_section(&mut self) -> Option<Section<'_>> {
+        if self.at_end {
+            return None;
+        }
+
+        if !self.at_start {
             unsafe {
                 LLVMMoveToNextSection(self.section_iterator);
             }
         }
+        self.at_start = false;
 
-        let at_end = unsafe { LLVMIsSectionIteratorAtEnd(self.object_file, self.section_iterator) == 1 };
-
-        if at_end {
+        self.at_end = unsafe { LLVMObjectFileIsSectionIteratorAtEnd(self.binary_file, self.section_iterator) == 1 };
+        if self.at_end {
             return None;
         }
 
-        Some(unsafe { Section::new(self.section_iterator, self.object_file) })
+        let section = unsafe { Section::new(self.section_iterator, self.binary_file) };
+        Some(section)
+    }
+
+    // call `next_section` to get the containing section.
+    pub fn move_to_containing_section(&mut self, symbol: &Symbol<'_>) {
+        self.at_start = true;
+        self.at_end = false;
+        unsafe {
+            LLVMMoveToContainingSection(self.section_iterator, symbol.symbol);
+        }
     }
 }
 
-impl Drop for SectionIterator {
+impl<'a> Drop for Sections<'a> {
     fn drop(&mut self) {
         unsafe { LLVMDisposeSectionIterator(self.section_iterator) }
     }
 }
 
 #[derive(Debug)]
-pub struct Section {
+pub struct Section<'a> {
     section: LLVMSectionIteratorRef,
-    object_file: LLVMObjectFileRef,
+    binary_file: LLVMBinaryRef,
+    _phantom: PhantomData<&'a ()>,
 }
 
-impl Section {
-    pub unsafe fn new(section: LLVMSectionIteratorRef, object_file: LLVMObjectFileRef) -> Self {
+impl<'a> Section<'a> {
+    pub unsafe fn new(section: LLVMSectionIteratorRef, binary_file: LLVMBinaryRef) -> Self {
         assert!(!section.is_null());
-        assert!(!object_file.is_null());
+        assert!(!binary_file.is_null());
 
-        Section { section, object_file }
+        Self {
+            section,
+            binary_file,
+            _phantom: PhantomData,
+        }
     }
 
-    pub unsafe fn as_mut_ptr(&self) -> (LLVMSectionIteratorRef, LLVMObjectFileRef) {
-        (self.section, self.object_file)
+    pub unsafe fn as_mut_ptr(&self) -> (LLVMSectionIteratorRef, LLVMBinaryRef) {
+        (self.section, self.binary_file)
     }
 
     pub fn get_name(&self) -> Option<&CStr> {
@@ -129,188 +177,210 @@ impl Section {
         }
     }
 
-    pub fn size(&self) -> u64 {
+    pub fn get_size(&self) -> u64 {
         unsafe { LLVMGetSectionSize(self.section) }
     }
 
     pub fn get_contents(&self) -> &[u8] {
-        unsafe { std::slice::from_raw_parts(LLVMGetSectionContents(self.section) as *const u8, self.size() as usize) }
+        unsafe {
+            std::slice::from_raw_parts(
+                LLVMGetSectionContents(self.section) as *const u8,
+                self.get_size() as usize,
+            )
+        }
     }
 
     pub fn get_address(&self) -> u64 {
         unsafe { LLVMGetSectionAddress(self.section) }
     }
 
-    pub fn get_relocations(&self) -> RelocationIterator {
+    pub fn contains_symbol(&self, symbol: &Symbol<'_>) -> bool {
+        unsafe { LLVMGetSectionContainsSymbol(self.section, symbol.symbol) == 1 }
+    }
+
+    pub fn get_relocations(&self) -> Relocations<'_> {
         let relocation_iterator = unsafe { LLVMGetRelocations(self.section) };
 
-        unsafe { RelocationIterator::new(relocation_iterator, self.section, self.object_file) }
+        unsafe { Relocations::new(relocation_iterator, self.section, self.binary_file) }
     }
 }
 
 #[derive(Debug)]
-pub struct RelocationIterator {
+pub struct Relocations<'a> {
     relocation_iterator: LLVMRelocationIteratorRef,
     section_iterator: LLVMSectionIteratorRef,
-    object_file: LLVMObjectFileRef,
-    before_first: bool,
+    binary_file: LLVMBinaryRef,
+    at_start: bool,
+    at_end: bool,
+    _phantom: PhantomData<&'a ()>,
 }
 
-impl RelocationIterator {
+impl<'a> Relocations<'a> {
     pub unsafe fn new(
         relocation_iterator: LLVMRelocationIteratorRef,
         section_iterator: LLVMSectionIteratorRef,
-        object_file: LLVMObjectFileRef,
+        binary_file: LLVMBinaryRef,
     ) -> Self {
         assert!(!relocation_iterator.is_null());
         assert!(!section_iterator.is_null());
-        assert!(!object_file.is_null());
+        assert!(!binary_file.is_null());
 
-        RelocationIterator {
+        Self {
             relocation_iterator,
             section_iterator,
-            object_file,
-            before_first: true,
+            binary_file,
+            at_start: true,
+            at_end: false,
+            _phantom: PhantomData,
         }
     }
 
-    pub fn as_mut_ptr(&self) -> (LLVMRelocationIteratorRef, LLVMSectionIteratorRef, LLVMObjectFileRef) {
-        (self.relocation_iterator, self.section_iterator, self.object_file)
+    pub fn as_mut_ptr(&self) -> (LLVMRelocationIteratorRef, LLVMSectionIteratorRef, LLVMBinaryRef) {
+        (self.relocation_iterator, self.section_iterator, self.binary_file)
     }
-}
 
-impl Iterator for RelocationIterator {
-    type Item = Relocation;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.before_first {
-            self.before_first = false;
-        } else {
-            unsafe { LLVMMoveToNextRelocation(self.relocation_iterator) }
-        }
-
-        let at_end = unsafe { LLVMIsRelocationIteratorAtEnd(self.section_iterator, self.relocation_iterator) == 1 };
-
-        if at_end {
+    pub fn next_relocation(&mut self) -> Option<Relocation<'_>> {
+        if self.at_end {
             return None;
         }
 
-        Some(unsafe { Relocation::new(self.relocation_iterator, self.object_file) })
+        if !self.at_start {
+            unsafe {
+                LLVMMoveToNextRelocation(self.relocation_iterator);
+            }
+        }
+        self.at_start = false;
+
+        self.at_end = unsafe { LLVMIsRelocationIteratorAtEnd(self.section_iterator, self.relocation_iterator) == 1 };
+        if self.at_end {
+            return None;
+        }
+
+        let relocation = unsafe { Relocation::new(self.relocation_iterator, self.binary_file) };
+        Some(relocation)
     }
 }
 
-impl Drop for RelocationIterator {
+impl<'a> Drop for Relocations<'a> {
     fn drop(&mut self) {
         unsafe { LLVMDisposeRelocationIterator(self.relocation_iterator) }
     }
 }
 
 #[derive(Debug)]
-pub struct Relocation {
+pub struct Relocation<'a> {
     relocation: LLVMRelocationIteratorRef,
-    object_file: LLVMObjectFileRef,
+    binary_file: LLVMBinaryRef,
+    _phantom: PhantomData<&'a ()>,
 }
 
-impl Relocation {
-    pub unsafe fn new(relocation: LLVMRelocationIteratorRef, object_file: LLVMObjectFileRef) -> Self {
+impl<'a> Relocation<'a> {
+    pub unsafe fn new(relocation: LLVMRelocationIteratorRef, binary_file: LLVMBinaryRef) -> Self {
         assert!(!relocation.is_null());
-        assert!(!object_file.is_null());
+        assert!(!binary_file.is_null());
 
-        Relocation {
+        Self {
             relocation,
-            object_file,
+            binary_file,
+            _phantom: PhantomData,
         }
     }
 
-    pub fn as_mut_ptr(&self) -> (LLVMRelocationIteratorRef, LLVMObjectFileRef) {
-        (self.relocation, self.object_file)
+    pub fn as_mut_ptr(&self) -> (LLVMRelocationIteratorRef, LLVMBinaryRef) {
+        (self.relocation, self.binary_file)
     }
 
     pub fn get_offset(&self) -> u64 {
         unsafe { LLVMGetRelocationOffset(self.relocation) }
     }
 
-    pub fn get_symbols(&self) -> SymbolIterator {
-        let symbol_iterator = unsafe {
-            // REVIEW: Is this just returning a single Symbol (given the name) and not a full iterator?
-            LLVMGetRelocationSymbol(self.relocation)
-        };
-
-        unsafe { SymbolIterator::new(symbol_iterator, self.object_file) }
-    }
-
-    pub fn get_type(&self) -> (u64, &CStr) {
+    pub fn get_type(&self) -> (u64, LLVMString) {
         let type_int = unsafe { LLVMGetRelocationType(self.relocation) };
-        let type_name = unsafe { CStr::from_ptr(LLVMGetRelocationTypeName(self.relocation)) };
+        let type_name = unsafe { LLVMString::new(LLVMGetRelocationTypeName(self.relocation)) };
 
         (type_int, type_name)
     }
 
-    pub fn get_value(&self) -> &CStr {
-        unsafe { CStr::from_ptr(LLVMGetRelocationValueString(self.relocation)) }
+    pub fn get_value(&self) -> LLVMString {
+        unsafe { LLVMString::new(LLVMGetRelocationValueString(self.relocation)) }
+    }
+
+    pub fn get_symbol(&self) -> Symbol<'_> {
+        let symbol = unsafe { LLVMGetRelocationSymbol(self.relocation) };
+
+        unsafe { Symbol::new(symbol) }
     }
 }
 
 #[derive(Debug)]
-pub struct SymbolIterator {
+pub struct Symbols<'a> {
     symbol_iterator: LLVMSymbolIteratorRef,
-    object_file: LLVMObjectFileRef,
-    before_first: bool,
+    binary_file: LLVMBinaryRef,
+    at_start: bool,
+    at_end: bool,
+    _phantom: PhantomData<&'a ()>,
 }
 
-impl SymbolIterator {
-    pub unsafe fn new(symbol_iterator: LLVMSymbolIteratorRef, object_file: LLVMObjectFileRef) -> Self {
+impl<'a> Symbols<'a> {
+    pub unsafe fn new(symbol_iterator: LLVMSymbolIteratorRef, binary_file: LLVMBinaryRef) -> Self {
         assert!(!symbol_iterator.is_null());
-        assert!(!object_file.is_null());
+        assert!(!binary_file.is_null());
 
-        SymbolIterator {
+        Self {
             symbol_iterator,
-            object_file,
-            before_first: true,
+            binary_file,
+            at_start: true,
+            at_end: false,
+            _phantom: PhantomData,
         }
     }
 
-    pub fn as_mut_ptr(&self) -> (LLVMSymbolIteratorRef, LLVMObjectFileRef) {
-        (self.symbol_iterator, self.object_file)
+    pub fn as_mut_ptr(&self) -> (LLVMSymbolIteratorRef, LLVMBinaryRef) {
+        (self.symbol_iterator, self.binary_file)
     }
-}
 
-impl Iterator for SymbolIterator {
-    type Item = Symbol;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.before_first {
-            self.before_first = false;
-        } else {
-            unsafe { LLVMMoveToNextSymbol(self.symbol_iterator) }
-        }
-
-        let at_end = unsafe { LLVMIsSymbolIteratorAtEnd(self.object_file, self.symbol_iterator) == 1 };
-
-        if at_end {
+    pub fn next_symbol(&mut self) -> Option<Symbol<'_>> {
+        if self.at_end {
             return None;
         }
 
-        Some(unsafe { Symbol::new(self.symbol_iterator) })
+        if !self.at_start {
+            unsafe {
+                LLVMMoveToNextSymbol(self.symbol_iterator);
+            }
+        }
+        self.at_start = false;
+
+        self.at_end = unsafe { LLVMObjectFileIsSymbolIteratorAtEnd(self.binary_file, self.symbol_iterator) == 1 };
+        if self.at_end {
+            return None;
+        }
+
+        let symbol = unsafe { Symbol::new(self.symbol_iterator) };
+        Some(symbol)
     }
 }
 
-impl Drop for SymbolIterator {
+impl<'a> Drop for Symbols<'a> {
     fn drop(&mut self) {
         unsafe { LLVMDisposeSymbolIterator(self.symbol_iterator) }
     }
 }
 
 #[derive(Debug)]
-pub struct Symbol {
+pub struct Symbol<'a> {
     symbol: LLVMSymbolIteratorRef,
+    _phantom: PhantomData<&'a ()>,
 }
 
-impl Symbol {
+impl<'a> Symbol<'a> {
     pub unsafe fn new(symbol: LLVMSymbolIteratorRef) -> Self {
         assert!(!symbol.is_null());
 
-        Symbol { symbol }
+        Self {
+            symbol,
+            _phantom: PhantomData,
+        }
     }
 
     pub fn as_mut_ptr(&self) -> LLVMSymbolIteratorRef {
@@ -326,7 +396,7 @@ impl Symbol {
         }
     }
 
-    pub fn size(&self) -> u64 {
+    pub fn get_size(&self) -> u64 {
         unsafe { LLVMGetSymbolSize(self.symbol) }
     }
 
