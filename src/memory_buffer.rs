@@ -3,15 +3,14 @@ use llvm_sys::core::{
     LLVMCreateMemoryBufferWithMemoryRangeCopy, LLVMCreateMemoryBufferWithSTDIN, LLVMDisposeMemoryBuffer,
     LLVMGetBufferSize, LLVMGetBufferStart,
 };
-#[allow(deprecated)]
-use llvm_sys::object::LLVMCreateObjectFile;
+use llvm_sys::object::LLVMCreateBinary;
 use llvm_sys::prelude::LLVMMemoryBufferRef;
 
-use crate::object_file::ObjectFile;
+use crate::context::Context;
+use crate::object_file::BinaryFile;
 use crate::support::{to_c_str, LLVMString};
 
 use std::marker::PhantomData;
-use std::mem::forget;
 use std::path::Path;
 use std::ptr;
 use std::slice;
@@ -152,19 +151,24 @@ impl<'a> MemoryBuffer<'a> {
         unsafe { LLVMGetBufferSize(self.memory_buffer) + 1 }
     }
 
-    /// Convert this `MemoryBuffer` into an `ObjectFile`. LLVM does not currently
-    /// provide any way to determine the cause of error if conversion fails.
-    pub fn create_object_file(self) -> Result<ObjectFile, ()> {
-        #[allow(deprecated)]
-        let object_file = unsafe { LLVMCreateObjectFile(self.memory_buffer) };
+    /// Convert this [`MemoryBuffer`] and optional [`Context`] into a [`BinaryFile`].
+    ///
+    /// The context is required if the resulting file is LLVM IR.
+    ///
+    /// Return `Err` with error message if failed.
+    pub fn create_binary_file(&self, context: Option<&Context>) -> Result<BinaryFile<'_>, LLVMString> {
+        let context = context.map_or(ptr::null_mut(), |c| c.raw());
+        let mut err_string = ptr::null_mut();
 
-        forget(self);
+        let binary_file = unsafe { LLVMCreateBinary(self.memory_buffer, context, &mut err_string) };
 
-        if object_file.is_null() {
-            return Err(());
+        if binary_file.is_null() {
+            unsafe {
+                return Err(LLVMString::new(err_string));
+            }
         }
 
-        unsafe { Ok(ObjectFile::new(object_file)) }
+        unsafe { Ok(BinaryFile::new(binary_file)) }
     }
 }
 

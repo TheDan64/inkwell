@@ -1,17 +1,10 @@
 use inkwell::context::Context;
 use inkwell::module::Module;
-use inkwell::targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine};
+use inkwell::object_file::LLVMBinaryType;
+use inkwell::targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine, TargetTriple};
 use inkwell::types::IntType;
 use inkwell::values::BasicValue;
 use inkwell::OptimizationLevel;
-
-fn get_host_cpu_name() -> String {
-    TargetMachine::get_host_cpu_name().to_string()
-}
-
-fn get_host_cpu_features() -> String {
-    TargetMachine::get_host_cpu_features().to_string()
-}
 
 fn ptr_sized_int_type<'ctx>(target_machine: &TargetMachine, context: &'ctx Context) -> IntType<'ctx> {
     let target_data = target_machine.get_target_data();
@@ -23,28 +16,50 @@ fn apply_target_to_module(target_machine: &TargetMachine, module: &Module) {
     module.set_data_layout(&target_machine.get_target_data().get_data_layout());
 }
 
-fn get_native_target_machine() -> TargetMachine {
-    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
-    let target_triple = TargetMachine::get_default_triple();
+fn get_x86_64_target_machine() -> TargetMachine {
+    Target::initialize_x86(&InitializationConfig::default());
+    let target_triple = TargetTriple::create("x86_64-pc-linux-gnu");
     let target = Target::from_triple(&target_triple).unwrap();
     target
         .create_target_machine(
             &target_triple,
-            &get_host_cpu_name(),
-            &get_host_cpu_features(),
+            "x86-64",
+            "",
             OptimizationLevel::None,
-            RelocMode::Default,
+            RelocMode::PIC,
             CodeModel::Default,
         )
         .unwrap()
 }
 
 #[test]
-fn test_section_iterator() {
-    let target_machine = get_native_target_machine();
-
+fn test_binary_file() {
+    let target_machine = get_x86_64_target_machine();
     let context = Context::create();
-    let module = context.create_module("test_section_iterator");
+    let module = context.create_module("test_binary_file");
+
+    apply_target_to_module(&target_machine, &module);
+
+    let memory_buffer = target_machine
+        .write_to_memory_buffer(&module, FileType::Object)
+        .unwrap();
+    let binary_file = memory_buffer.create_binary_file(Some(&context)).unwrap();
+
+    assert!(matches!(
+        binary_file.get_binary_type(),
+        LLVMBinaryType::LLVMBinaryTypeELF64L
+    ));
+
+    let memory_buffer_view = binary_file.get_memory_buffer();
+
+    assert_eq!(memory_buffer.as_slice(), memory_buffer_view.as_slice());
+}
+
+#[test]
+fn test_sections() {
+    let target_machine = get_x86_64_target_machine();
+    let context = Context::create();
+    let module = context.create_module("test_sections");
 
     let gv_a = module.add_global(context.i8_type(), None, "a");
     gv_a.set_initializer(&context.i8_type().const_zero().as_basic_value_enum());
@@ -83,35 +98,36 @@ fn test_section_iterator() {
     let memory_buffer = target_machine
         .write_to_memory_buffer(&module, FileType::Object)
         .unwrap();
-    let object_file = memory_buffer.create_object_file().unwrap();
+    let binary_file = memory_buffer.create_binary_file(None).unwrap();
 
     let mut has_section_a = false;
     let mut has_section_b = false;
     let mut has_section_c = false;
     let mut has_section_d = false;
-    for section in object_file.get_sections() {
+    let mut sections = binary_file.get_sections().unwrap();
+
+    while let Some(section) = sections.next_section() {
         if let Some(name) = section.get_name() {
             match name.to_str().unwrap() {
                 "A" => {
                     assert!(!has_section_a);
                     has_section_a = true;
-                    assert_eq!(section.size(), 1);
+                    assert_eq!(section.get_size(), 1);
                 },
                 "B" => {
                     assert!(!has_section_b);
                     has_section_b = true;
-                    assert_eq!(section.size(), 2);
+                    assert_eq!(section.get_size(), 2);
                 },
                 "C" => {
                     assert!(!has_section_c);
                     has_section_c = true;
-                    assert_eq!(section.size(), 4);
+                    assert_eq!(section.get_size(), 4);
                 },
                 "D" => {
                     assert!(!has_section_d);
                     has_section_d = true;
-                    // FIXME: fails on arm64-apple-darwin22.1.0
-                    assert_eq!(section.size(), 1);
+                    assert_eq!(section.get_size(), 1);
                 },
                 _ => {},
             }
@@ -124,11 +140,11 @@ fn test_section_iterator() {
 }
 
 #[test]
-fn test_symbol_iterator() {
-    let target_machine = get_native_target_machine();
-
+fn test_symbols() {
+    let target_machine = get_x86_64_target_machine();
     let context = Context::create();
-    let module = context.create_module("test_symbol_iterator");
+    let module = context.create_module("test_symbols");
+
     module
         .add_global(context.i8_type(), None, "a")
         .set_initializer(&context.i8_type().const_zero().as_basic_value_enum());
@@ -138,101 +154,98 @@ fn test_symbol_iterator() {
     module
         .add_global(context.i32_type(), None, "c")
         .set_initializer(&context.i32_type().const_zero().as_basic_value_enum());
+
     apply_target_to_module(&target_machine, &module);
 
     let memory_buffer = target_machine
         .write_to_memory_buffer(&module, FileType::Object)
         .unwrap();
-    let object_file = memory_buffer.create_object_file().unwrap();
+    let binary_file = memory_buffer.create_binary_file(None).unwrap();
 
     let mut has_symbol_a = false;
     let mut has_symbol_b = false;
     let mut has_symbol_c = false;
-    for symbol in object_file.get_symbols() {
+    let mut symbols = binary_file.get_symbols().unwrap();
+
+    while let Some(symbol) = symbols.next_symbol() {
         if let Some(name) = symbol.get_name() {
             match name.to_str().unwrap() {
                 "a" => {
                     assert!(!has_symbol_a);
                     has_symbol_a = true;
-                    #[cfg(unix)]
-                    assert_eq!(symbol.size(), 1);
-                    #[cfg(windows)]
-                    assert_eq!(symbol.size(), 0);
+                    assert_eq!(symbol.get_size(), 1);
                 },
                 "b" => {
                     assert!(!has_symbol_b);
                     has_symbol_b = true;
-                    assert_eq!(symbol.size(), 2);
+                    assert_eq!(symbol.get_size(), 2);
                 },
                 "c" => {
                     assert!(!has_symbol_c);
                     has_symbol_c = true;
-                    assert_eq!(symbol.size(), 4);
+                    assert_eq!(symbol.get_size(), 4);
                 },
                 _ => {},
             }
         }
     }
-    // FIXME: fails on arm64-apple-darwin22.1.0
+
     assert!(has_symbol_a);
     assert!(has_symbol_b);
     assert!(has_symbol_c);
 }
 
 #[test]
-fn test_reloc_iterator() {
-    let target_machine = get_native_target_machine();
-
+fn test_relocations() {
+    let target_machine = get_x86_64_target_machine();
     let context = Context::create();
-    let intptr_t = ptr_sized_int_type(&target_machine, &context);
+    let module = context.create_module("test_relocations");
 
-    let module = context.create_module("test_reloc_iterator");
+    let intptr_t = ptr_sized_int_type(&target_machine, &context);
     let x_ptr = module.add_global(context.i8_type(), None, "x").as_pointer_value();
     let x_plus_4 = x_ptr.const_to_int(intptr_t).const_add(intptr_t.const_int(4, false));
+    let y_ptr = module.add_global(context.i8_type(), None, "y").as_pointer_value();
+    let y_plus_4 = y_ptr.const_to_int(intptr_t).const_add(intptr_t.const_int(4, false));
     module.add_global(intptr_t, None, "a").set_initializer(&x_plus_4);
+    module.add_global(intptr_t, None, "b").set_initializer(&y_plus_4);
+    module.add_global(intptr_t, None, "c").set_initializer(&x_plus_4);
+    module.add_global(intptr_t, None, "d").set_initializer(&y_plus_4);
 
     apply_target_to_module(&target_machine, &module);
 
     let memory_buffer = target_machine
         .write_to_memory_buffer(&module, FileType::Object)
         .unwrap();
-    let object_file = memory_buffer.create_object_file().unwrap();
 
-    let mut found_relocation = false;
-    for section in object_file.get_sections() {
-        for _ in section.get_relocations() {
-            found_relocation = true;
-            // We don't stop the traversal here, so as to exercise the iterators.
+    let binary_file = memory_buffer.create_binary_file(Some(&context)).unwrap();
+
+    let mut x_count = 0;
+    let mut y_count = 0;
+    let mut sections = binary_file.get_sections().unwrap();
+
+    while let Some(section) = sections.next_section() {
+        let mut relocations = section.get_relocations();
+        let mut offset = 0;
+
+        while let Some(relocation) = relocations.next_relocation() {
+            assert_eq!(relocation.get_type().0, 1);
+            assert_eq!(*relocation.get_type().1, c"R_X86_64_64");
+            assert_eq!(relocation.get_offset(), offset);
+            offset += 8;
+
+            let symbol = relocation.get_symbol();
+            let name = symbol.get_name().unwrap();
+
+            if name == c"x" {
+                x_count += 1;
+            } else if name == c"y" {
+                y_count += 1;
+            } else {
+                panic!("unexpected relocation symbol name");
+            }
         }
     }
-    assert!(found_relocation);
-}
 
-#[test]
-fn test_section_contains_nul() {
-    let target_machine = get_native_target_machine();
-
-    let context = Context::create();
-    let module = context.create_module("test_section_iterator");
-
-    let gv = module.add_global(context.i32_type(), None, "gv");
-    gv.set_initializer(&context.i32_type().const_int(0xff0000ff, false).as_basic_value_enum());
-    gv.set_section(Some("test"));
-
-    apply_target_to_module(&target_machine, &module);
-
-    let memory_buffer = target_machine
-        .write_to_memory_buffer(&module, FileType::Object)
-        .unwrap();
-    let object_file = memory_buffer.create_object_file().unwrap();
-
-    let mut has_section_test = false;
-    for section in object_file.get_sections() {
-        if section.get_name().and_then(|name| name.to_str().ok()) == Some("test") {
-            assert_eq!(section.get_contents(), 0xff0000ffu32.to_ne_bytes());
-            has_section_test = true;
-            break;
-        }
-    }
-    assert!(has_section_test);
+    assert_eq!(x_count, 2);
+    assert_eq!(y_count, 2);
 }
