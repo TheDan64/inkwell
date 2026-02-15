@@ -865,13 +865,12 @@ impl<'ctx> Module<'ctx> {
     /// # Remarks
     /// See also: [`LLVMVerifyModule`](https://llvm.org/doxygen/group__LLVMCAnalysis.html#ga5645aec2d95116c0432a676db77b2cb0).
     pub fn verify(&self) -> Result<(), LLVMString> {
-        let mut err_str = MaybeUninit::uninit();
+        let mut err_str: *mut ::libc::c_char = ::core::ptr::null_mut();
 
         let action = LLVMVerifierFailureAction::LLVMReturnStatusAction;
 
-        let code = unsafe { LLVMVerifyModule(self.module.get(), action, err_str.as_mut_ptr()) };
+        let code = unsafe { LLVMVerifyModule(self.module.get(), action, &mut err_str) };
 
-        let err_str = unsafe { err_str.assume_init() };
         if code == 1 && !err_str.is_null() {
             return unsafe { Err(LLVMString::new(err_str)) };
         } else if !err_str.is_null() {
