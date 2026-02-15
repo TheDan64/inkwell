@@ -969,18 +969,24 @@ impl<'ctx> Module<'ctx> {
             .to_str()
             .expect("Did not find a valid Unicode path string");
         let path = to_c_str(path_str);
-        let mut err_string = MaybeUninit::uninit();
+        let mut err_string: *mut libc::c_char = ::core::ptr::null_mut();
         let return_code = unsafe {
             LLVMPrintModuleToFile(
                 self.module.get(),
                 path.as_ptr() as *const ::libc::c_char,
-                err_string.as_mut_ptr(),
+                err_string,
             )
         };
 
         if return_code == 1 {
-            unsafe {
-                return Err(LLVMString::new(err_string.assume_init()));
+            if !err_string.is_null() {
+                unsafe {
+                    return Err(LLVMString::new(err_string));
+                }
+            } else {
+                unsafe {
+                    return Err(LLVMString::new("Error string was uninitialized.\0".as_ptr().cast()))
+                }
             }
         }
 
