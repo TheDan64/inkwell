@@ -985,7 +985,7 @@ impl<'ctx> Module<'ctx> {
                 }
             } else {
                 unsafe {
-                    return Err(LLVMString::new("Error string was uninitialized.\0".as_ptr().cast()))
+                    return Err(LLVMString::new(c"Error string was uninitialized.".as_ptr().cast()))
                 }
             }
         }
