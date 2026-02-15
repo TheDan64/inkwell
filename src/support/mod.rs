@@ -26,6 +26,7 @@ unsafe impl Sync for LLVMString {}
 
 impl LLVMString {
     pub(crate) unsafe fn new(ptr: *const c_char) -> Self {
+        debug_assert!(!ptr.is_null());
         LLVMString { ptr }
     }
 
@@ -91,10 +92,8 @@ impl Error for LLVMString {
 
 impl Drop for LLVMString {
     fn drop(&mut self) {
-        if !self.ptr.is_null() {
-            unsafe {
-                LLVMDisposeMessage(self.ptr as *mut _);
-            }
+        unsafe {
+            LLVMDisposeMessage(self.ptr as *mut _);
         }
     }
 }
