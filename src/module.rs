@@ -878,7 +878,6 @@ impl<'ctx> Module<'ctx> {
             unsafe { LLVMDisposeMessage(err_str) };
         }
 
-
         Ok(())
     }
 
@@ -984,9 +983,7 @@ impl<'ctx> Module<'ctx> {
                     return Err(LLVMString::new(err_string));
                 }
             } else {
-                unsafe {
-                    return Err(LLVMString::new(c"Error string was uninitialized.".as_ptr().cast()))
-                }
+                unsafe { return Err(LLVMString::new(c"Error string was uninitialized.".as_ptr().cast())) }
             }
         }
 
