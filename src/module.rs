@@ -969,12 +969,12 @@ impl<'ctx> Module<'ctx> {
             .to_str()
             .expect("Did not find a valid Unicode path string");
         let path = to_c_str(path_str);
-        let mut err_string: *mut *mut libc::c_char = ::core::ptr::null_mut();
+        let mut err_string: *mut libc::c_char = ::core::ptr::null_mut();
         let return_code = unsafe {
             LLVMPrintModuleToFile(
                 self.module.get(),
                 path.as_ptr() as *const ::libc::c_char,
-                err_string,
+                &mut err_string,
             )
         };
 
