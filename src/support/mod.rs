@@ -26,7 +26,7 @@ unsafe impl Sync for LLVMString {}
 
 impl LLVMString {
     pub(crate) unsafe fn new(ptr: *const c_char) -> Self {
-        debug_assert!(!ptr.is_null());
+        assert!(!ptr.is_null());
         LLVMString { ptr }
     }
 
