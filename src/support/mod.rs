@@ -91,8 +91,10 @@ impl Error for LLVMString {
 
 impl Drop for LLVMString {
     fn drop(&mut self) {
-        unsafe {
-            LLVMDisposeMessage(self.ptr as *mut _);
+        if !self.ptr.is_null() {
+            unsafe {
+                LLVMDisposeMessage(self.ptr as *mut _);
+            }
         }
     }
 }
