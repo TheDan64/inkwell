@@ -874,9 +874,10 @@ impl<'ctx> Module<'ctx> {
         let err_str = unsafe { err_str.assume_init() };
         if code == 1 && !err_str.is_null() {
             return unsafe { Err(LLVMString::new(err_str)) };
+        } else if !err_str {
+            unsafe { LLVMDisposeMessage(err_str) };
         }
 
-        unsafe { LLVMDisposeMessage(err_str) };
 
         Ok(())
     }
