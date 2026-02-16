@@ -515,3 +515,10 @@ fn test_double_ee_from_same_module() {
 
     assert!(module.create_interpreter_execution_engine().is_err());
 }
+
+#[test]
+fn test_verify() {
+    let context = Context::create();
+    let module = context.create_module("a");
+    assert!(module.verify().is_ok());
+}

@@ -6,4 +6,5 @@ extend-ignore-identifiers-re = [
     "BVE",
     "olt",
     "TRE",
+    "Cpy",
 ]
