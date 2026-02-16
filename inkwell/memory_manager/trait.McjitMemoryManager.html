@@ -1,0 +1,83 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A trait for user-defined memory management in MCJIT."><title>McjitMemoryManager in inkwell::memory_manager - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-b7b9f40b.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="inkwell" data-themes="" data-resource-suffix="" data-rustdoc-version="1.95.0-nightly (873b4beb0 2026-02-15)" data-channel="nightly" data-search-js="search-63369b7b.js" data-stringdex-js="stringdex-b897f86f.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc trait"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">McjitMemoryManager</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../inkwell/index.html">inkwell</a><span class="version">0.8.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Mcjit<wbr>Memory<wbr>Manager</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#stackmap-and-gc-integration" title="StackMap and GC Integration">StackMap and GC Integration</a></li></ul><h3><a href="#required-methods">Required Methods</a></h3><ul class="block"><li><a href="#tymethod.allocate_code_section" title="allocate_code_section">allocate_code_section</a></li><li><a href="#tymethod.allocate_data_section" title="allocate_data_section">allocate_data_section</a></li><li><a href="#tymethod.destroy" title="destroy">destroy</a></li><li><a href="#tymethod.finalize_memory" title="finalize_memory">finalize_memory</a></li></ul><h3><a href="#implementors">Implementors</a></h3></section><div id="rustdoc-modnav"><h2><a href="index.html">In inkwell::<wbr>memory_<wbr>manager</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">inkwell</a>::<wbr><a href="index.html">memory_manager</a></div><h1>Trait <span class="trait">Mcjit<wbr>Memory<wbr>Manager</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/inkwell/memory_manager.rs.html#22-84">Source</a> </span></div><pre class="rust item-decl"><code>pub trait McjitMemoryManager: <a class="trait" href="https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html" title="trait core::fmt::Debug">Debug</a> {
+    // Required methods
+    fn <a href="#tymethod.allocate_code_section" class="fn">allocate_code_section</a>(
+        &amp;mut self,
+        size: <a class="type" href="../../libc/unix/type.uintptr_t.html" title="type libc::unix::uintptr_t">uintptr_t</a>,
+        alignment: <a class="type" href="../../libc/primitives/type.c_uint.html" title="type libc::primitives::c_uint">c_uint</a>,
+        section_id: <a class="type" href="../../libc/primitives/type.c_uint.html" title="type libc::primitives::c_uint">c_uint</a>,
+        section_name: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>,
+    ) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.pointer.html">*mut </a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>;
+<span class="item-spacer"></span>    fn <a href="#tymethod.allocate_data_section" class="fn">allocate_data_section</a>(
+        &amp;mut self,
+        size: <a class="type" href="../../libc/unix/type.uintptr_t.html" title="type libc::unix::uintptr_t">uintptr_t</a>,
+        alignment: <a class="type" href="../../libc/primitives/type.c_uint.html" title="type libc::primitives::c_uint">c_uint</a>,
+        section_id: <a class="type" href="../../libc/primitives/type.c_uint.html" title="type libc::primitives::c_uint">c_uint</a>,
+        section_name: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>,
+        is_read_only: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>,
+    ) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.pointer.html">*mut </a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>;
+<span class="item-spacer"></span>    fn <a href="#tymethod.finalize_memory" class="fn">finalize_memory</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.unit.html">()</a>, <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;;
+<span class="item-spacer"></span>    fn <a href="#tymethod.destroy" class="fn">destroy</a>(&amp;mut self);
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A trait for user-defined memory management in MCJIT.</p>
+<p>Implementors can override how LLVM’s MCJIT engine allocates memory for code
+and data sections. This is sometimes needed for:</p>
+<ul>
+<li>custom allocators,</li>
+<li>sandboxed or restricted environments,</li>
+<li>capturing stack map sections (e.g., for garbage collection),</li>
+<li>or other specialized JIT memory management requirements.</li>
+</ul>
+<h2 id="stackmap-and-gc-integration"><a class="doc-anchor" href="#stackmap-and-gc-integration">§</a>StackMap and GC Integration</h2>
+<p>By examining the <code>section_name</code> argument in <a href="trait.McjitMemoryManager.html#tymethod.allocate_data_section" title="method inkwell::memory_manager::McjitMemoryManager::allocate_data_section"><code>McjitMemoryManager::allocate_data_section</code></a>,
+you can detect sections such as <code>.llvm_stackmaps</code> (on ELF) or <code>__llvm_stackmaps</code>
+(on Mach-O). Recording the location of these sections may be useful for
+custom garbage collectors. For more information, refer to the <a href="https://llvm.org/docs/StackMaps.html#stack-map-section">LLVM
+StackMaps documentation</a>.</p>
+<p>Typically, on Darwin (Mach-O), the stack map section name is <code>__llvm_stackmaps</code>,
+and on Linux (ELF), it is <code>.llvm_stackmaps</code>.</p>
+</div></details><h2 id="required-methods" class="section-header">Required Methods<a href="#required-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="tymethod.allocate_code_section" class="method"><a class="src rightside" href="../../src/inkwell/memory_manager.rs.html#36-42">Source</a><h4 class="code-header">fn <a href="#tymethod.allocate_code_section" class="fn">allocate_code_section</a>(
+    &amp;mut self,
+    size: <a class="type" href="../../libc/unix/type.uintptr_t.html" title="type libc::unix::uintptr_t">uintptr_t</a>,
+    alignment: <a class="type" href="../../libc/primitives/type.c_uint.html" title="type libc::primitives::c_uint">c_uint</a>,
+    section_id: <a class="type" href="../../libc/primitives/type.c_uint.html" title="type libc::primitives::c_uint">c_uint</a>,
+    section_name: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>,
+) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.pointer.html">*mut </a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a></h4></section></summary><div class="docblock"><p>Allocates a block of memory for a code section.</p>
+<h5 id="parameters"><a class="doc-anchor" href="#parameters">§</a>Parameters</h5>
+<ul>
+<li><code>size</code> - The size in bytes for the code section.</li>
+<li><code>alignment</code> - The required alignment in bytes.</li>
+<li><code>section_id</code> - A numeric ID that LLVM uses to identify this section.</li>
+<li><code>section_name</code> - A name for this section, if provided by LLVM.</li>
+</ul>
+<h5 id="returns"><a class="doc-anchor" href="#returns">§</a>Returns</h5>
+<p>Returns a pointer to the allocated memory. Implementors must ensure it is
+at least <code>size</code> bytes long and meets <code>alignment</code> requirements.</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.allocate_data_section" class="method"><a class="src rightside" href="../../src/inkwell/memory_manager.rs.html#58-65">Source</a><h4 class="code-header">fn <a href="#tymethod.allocate_data_section" class="fn">allocate_data_section</a>(
+    &amp;mut self,
+    size: <a class="type" href="../../libc/unix/type.uintptr_t.html" title="type libc::unix::uintptr_t">uintptr_t</a>,
+    alignment: <a class="type" href="../../libc/primitives/type.c_uint.html" title="type libc::primitives::c_uint">c_uint</a>,
+    section_id: <a class="type" href="../../libc/primitives/type.c_uint.html" title="type libc::primitives::c_uint">c_uint</a>,
+    section_name: &amp;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.str.html">str</a>,
+    is_read_only: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>,
+) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.pointer.html">*mut </a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a></h4></section></summary><div class="docblock"><p>Allocates a block of memory for a data section.</p>
+<h5 id="parameters-1"><a class="doc-anchor" href="#parameters-1">§</a>Parameters</h5>
+<ul>
+<li><code>size</code> - The size in bytes for the data section.</li>
+<li><code>alignment</code> - The required alignment in bytes.</li>
+<li><code>section_id</code> - A numeric ID that LLVM uses to identify this section.</li>
+<li><code>section_name</code> - A name for this section, if provided by LLVM.</li>
+<li><code>is_read_only</code> - Whether this data section should be read-only.</li>
+</ul>
+<h5 id="returns-1"><a class="doc-anchor" href="#returns-1">§</a>Returns</h5>
+<p>Returns a pointer to the allocated memory. Implementors must ensure it is
+at least <code>size</code> bytes long and meets <code>alignment</code> requirements.</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.finalize_memory" class="method"><a class="src rightside" href="../../src/inkwell/memory_manager.rs.html#77">Source</a><h4 class="code-header">fn <a href="#tymethod.finalize_memory" class="fn">finalize_memory</a>(&amp;mut self) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.unit.html">()</a>, <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;</h4></section></summary><div class="docblock"><p>Finalizes memory permissions for all allocated sections.</p>
+<p>This is called once all sections have been allocated. Implementors can set
+permissions such as making code sections executable or data sections
+read-only.</p>
+<h5 id="errors"><a class="doc-anchor" href="#errors">§</a>Errors</h5>
+<p>If any error occurs (for example, failing to set page permissions),
+return an <code>Err(String)</code>. This error is reported back to LLVM as a C string.</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.destroy" class="method"><a class="src rightside" href="../../src/inkwell/memory_manager.rs.html#83">Source</a><h4 class="code-header">fn <a href="#tymethod.destroy" class="fn">destroy</a>(&amp;mut self)</h4></section></summary><div class="docblock"><p>Cleans up or deallocates resources before the memory manager is destroyed.</p>
+<p>This is called when LLVM has finished using the memory manager. Any
+additional allocations or references should be released here if needed.</p>
+</div></details></div><h2 id="implementors" class="section-header">Implementors<a href="#implementors" class="anchor">§</a></h2><div id="implementors-list"></div><script src="../../trait.impl/inkwell/memory_manager/trait.McjitMemoryManager.js" async></script></section></div></main></body></html>
