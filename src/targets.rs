@@ -37,7 +37,6 @@ use crate::{AddressSpace, OptimizationLevel};
 use std::default::Default;
 use std::ffi::CStr;
 use std::fmt;
-use std::mem::MaybeUninit;
 use std::path::Path;
 use std::ptr;
 
