@@ -220,20 +220,20 @@ impl<'ctx> ExecutionEngine<'ctx> {
         }
 
         let mut new_module = MaybeUninit::uninit();
-        let mut err_string = MaybeUninit::uninit();
+        let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
 
         let code = unsafe {
             LLVMRemoveModule(
                 self.execution_engine_inner(),
                 module.module.get(),
                 new_module.as_mut_ptr(),
-                err_string.as_mut_ptr(),
+                &mut err_string,
             )
         };
 
         if code == 1 {
             unsafe {
-                return Err(RemoveModuleError::LLVMError(LLVMString::new(err_string.assume_init())));
+                return Err(RemoveModuleError::LLVMError(LLVMString::new(err_string)));
             }
         }
 
