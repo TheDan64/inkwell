@@ -151,6 +151,8 @@ pub enum InstructionOpcode {
     VAArg,
     Xor,
     ZExt,
+    #[cfg(feature = "llvm22-1")]
+    PtrToAddr,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
@@ -618,7 +620,8 @@ impl<'ctx> InstructionValue<'ctx> {
                 feature = "llvm18-1",
                 feature = "llvm19-1",
                 feature = "llvm20-1",
-                feature = "llvm21-1"
+                feature = "llvm21-1",
+                feature = "llvm22-1"
             ))]
             InstructionOpcode::Fence => Ok(unsafe { LLVMGetOrdering(self.as_value_ref()) }.into()),
             _ => Err(InstructionValueError::NotAtomicOrderingInst),
@@ -649,7 +652,8 @@ impl<'ctx> InstructionValue<'ctx> {
                 feature = "llvm18-1",
                 feature = "llvm19-1",
                 feature = "llvm20-1",
-                feature = "llvm21-1"
+                feature = "llvm21-1",
+                feature = "llvm22-1"
             ))]
             (
                 InstructionOpcode::Fence,
@@ -665,7 +669,8 @@ impl<'ctx> InstructionValue<'ctx> {
                 feature = "llvm18-1",
                 feature = "llvm19-1",
                 feature = "llvm20-1",
-                feature = "llvm21-1"
+                feature = "llvm21-1",
+                feature = "llvm22-1"
             ))]
             (InstructionOpcode::Fence, _) => {
                 Err(InstructionValueError::AtomicError(AtomicError::InvalidOrderingOnFence))
@@ -674,7 +679,8 @@ impl<'ctx> InstructionValue<'ctx> {
                 feature = "llvm18-1",
                 feature = "llvm19-1",
                 feature = "llvm20-1",
-                feature = "llvm21-1"
+                feature = "llvm21-1",
+                feature = "llvm22-1"
             ))]
             (InstructionOpcode::AtomicRMW, AtomicOrdering::NotAtomic | AtomicOrdering::Unordered) => Err(
                 InstructionValueError::AtomicError(AtomicError::InvalidOrderingOnAtomicRMW),
@@ -683,7 +689,8 @@ impl<'ctx> InstructionValue<'ctx> {
                 feature = "llvm18-1",
                 feature = "llvm19-1",
                 feature = "llvm20-1",
-                feature = "llvm21-1"
+                feature = "llvm21-1",
+                feature = "llvm22-1"
             ))]
             (InstructionOpcode::AtomicRMW, _) => {
                 unsafe { LLVMSetOrdering(self.as_value_ref(), ordering.into()) };
