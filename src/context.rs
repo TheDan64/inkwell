@@ -360,7 +360,7 @@ impl ContextImpl {
         let c_string = to_c_str(string);
 
         unsafe {
-            let metadata = LLVMMDStringInContext2(self.0, c_string.as_ptr(), c_string.to_bytes_with_nul().len());
+            let metadata = LLVMMDStringInContext2(self.0, c_string.as_ptr(), c_string.count_bytes());
             MetadataValue::new(LLVMMetadataAsValue(self.0, metadata))
         }
     }
