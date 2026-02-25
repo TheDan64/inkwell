@@ -1,3 +1,4 @@
+use std::num::NonZeroU32;
 use inkwell::builder::BuilderError;
 use inkwell::context::Context;
 use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, OptimizationLevel};
@@ -1754,8 +1755,8 @@ fn test_atomicrmw() {
     builder.position_at_end(entry);
 
     let i32_type = context.i32_type();
-    let i31_type = context.custom_width_int_type(31);
-    let i4_type = context.custom_width_int_type(4);
+    let i31_type = context.custom_width_int_type(NonZeroU32::new(31).unwrap()).unwrap();
+    let i4_type = context.custom_width_int_type(NonZeroU32::new(4).unwrap()).unwrap();
 
     #[cfg(feature = "typed-pointers")]
     let ptr_value = i32_type.ptr_type(AddressSpace::default()).get_undef();
