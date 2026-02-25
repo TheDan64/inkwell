@@ -229,7 +229,7 @@ fn test_relocations() {
 
         while let Some(relocation) = relocations.next_relocation() {
             assert_eq!(relocation.get_type().0, 1);
-            assert_eq!(*relocation.get_type().1, c"R_X86_64_64");
+            assert_eq!(&(*relocation.get_type().1).to_bytes()[..11], "R_X86_64_64".as_bytes());
             assert_eq!(relocation.get_offset(), offset);
             offset += 8;
 
