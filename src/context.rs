@@ -186,13 +186,13 @@ impl ContextImpl {
         self.custom_width_int_type(NonZeroU32::new(128).unwrap()).unwrap()
     }
 
-    fn custom_width_int_type<'ctx>(&self, bits: NonZeroU32) -> Result<IntType<'ctx>, LLVMString> {
+    fn custom_width_int_type<'ctx>(&self, bits: NonZeroU32) -> Result<IntType<'ctx>, &'static str> {
         let width = bits.get();
 
         if width >= LLVM_MIN_INT_BITS && width <= LLVM_MAX_INT_BITS {
             unsafe { IntType::new(LLVMIntTypeInContext(self.0, bits)) }
         } else {
-            unsafe { Err(LLVMString::create_from_str(&format!("Invalid bit width: {}\0", width))) }
+            unsafe { Err("LLVM only supports integers with bit widths between 1 and 8388608 (inclusive)") }
         }
     }
 
@@ -770,7 +770,7 @@ impl Context {
     /// assert_eq!(i42_type.get_context(), context);
     /// ```
     #[inline]
-    pub fn custom_width_int_type(&self, bits: NonZeroU32) -> Result<IntType<'_>, LLVMString> {
+    pub fn custom_width_int_type(&self, bits: NonZeroU32) -> Result<IntType<'_>, &'static str> {
         self.context.custom_width_int_type(bits)
     }
 
@@ -1647,7 +1647,7 @@ impl<'ctx> ContextRef<'ctx> {
     /// assert_eq!(i42_type.get_context(), context);
     /// ```
     #[inline]
-    pub fn custom_width_int_type(&self, bits: NonZeroU32) -> Result<IntType<'ctx>, LLVMString> {
+    pub fn custom_width_int_type(&self, bits: NonZeroU32) -> Result<IntType<'ctx>, &'static str> {
         self.context.custom_width_int_type(bits)
     }
 
