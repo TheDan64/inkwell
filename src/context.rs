@@ -81,7 +81,6 @@ thread_local! {
 // "The integer type is a very simple type that simply specifies an arbitrary bit width...
 // Any bit width from 1 bit to 2^23-1 (about 8 million) can be specified."
 // Reference: https://llvm.org/docs/LangRef.html#integer-type
-const LLVM_MIN_INT_BITS: u32 = 1;
 const LLVM_MAX_INT_BITS: u32 = 1 << 23;
 
 /// This struct allows us to share method impls across Context and ContextRef types
@@ -189,7 +188,7 @@ impl ContextImpl {
     fn custom_width_int_type<'ctx>(&self, bits: NonZeroU32) -> Result<IntType<'ctx>, &'static str> {
         let width = bits.get();
 
-        if width >= LLVM_MIN_INT_BITS && width <= LLVM_MAX_INT_BITS {
+        if width <= LLVM_MAX_INT_BITS {
             unsafe { IntType::new(LLVMIntTypeInContext(self.0, bits)) }
         } else {
             unsafe { Err("LLVM only supports integers with bit widths between 1 and 8388608 (inclusive)") }
