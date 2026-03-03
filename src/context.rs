@@ -759,6 +759,7 @@ impl Context {
     /// # Example
     ///
     /// ```no_run
+    /// use std::num::NonZeroU32;
     /// use inkwell::context::Context;
     ///
     /// let context = Context::create();
@@ -1636,6 +1637,7 @@ impl<'ctx> ContextRef<'ctx> {
     /// # Example
     ///
     /// ```no_run
+    /// use std::num::NonZeroU32;
     /// use inkwell::context::Context;
     ///
     /// let context = Context::create();
