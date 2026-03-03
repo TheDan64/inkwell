@@ -474,19 +474,15 @@ impl<'ctx> Module<'ctx> {
         }
 
         let mut execution_engine = MaybeUninit::uninit();
-        let mut err_string = MaybeUninit::uninit();
+        let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
         let code = unsafe {
             // Takes ownership of module
-            LLVMCreateExecutionEngineForModule(
-                execution_engine.as_mut_ptr(),
-                self.module.get(),
-                err_string.as_mut_ptr(),
-            )
+            LLVMCreateExecutionEngineForModule(execution_engine.as_mut_ptr(), self.module.get(), &mut err_string)
         };
 
         if code == 1 {
             unsafe {
-                return Err(LLVMString::new(err_string.assume_init()));
+                return Err(LLVMString::new(err_string));
             }
         }
 
@@ -528,20 +524,16 @@ impl<'ctx> Module<'ctx> {
         }
 
         let mut execution_engine = MaybeUninit::uninit();
-        let mut err_string = MaybeUninit::uninit();
+        let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
 
         let code = unsafe {
             // Takes ownership of module
-            LLVMCreateInterpreterForModule(
-                execution_engine.as_mut_ptr(),
-                self.module.get(),
-                err_string.as_mut_ptr(),
-            )
+            LLVMCreateInterpreterForModule(execution_engine.as_mut_ptr(), self.module.get(), &mut err_string)
         };
 
         if code == 1 {
             unsafe {
-                return Err(LLVMString::new(err_string.assume_init()));
+                return Err(LLVMString::new(err_string));
             }
         }
 
@@ -587,7 +579,7 @@ impl<'ctx> Module<'ctx> {
         }
 
         let mut execution_engine = MaybeUninit::uninit();
-        let mut err_string = MaybeUninit::uninit();
+        let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
 
         let code = unsafe {
             // Takes ownership of module
@@ -595,13 +587,13 @@ impl<'ctx> Module<'ctx> {
                 execution_engine.as_mut_ptr(),
                 self.module.get(),
                 opt_level as u32,
-                err_string.as_mut_ptr(),
+                &mut err_string,
             )
         };
 
         if code == 1 {
             unsafe {
-                return Err(LLVMString::new(err_string.assume_init()));
+                return Err(LLVMString::new(err_string));
             }
         }
 
@@ -714,21 +706,21 @@ impl<'ctx> Module<'ctx> {
 
         // 5) Create MCJIT
         let mut execution_engine = MaybeUninit::uninit();
-        let mut err_string = MaybeUninit::uninit();
+        let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
         let code = unsafe {
             llvm_sys::execution_engine::LLVMCreateMCJITCompilerForModule(
                 execution_engine.as_mut_ptr(),
                 self.module.get(),
                 &mut options,
                 std::mem::size_of::<llvm_sys::execution_engine::LLVMMCJITCompilerOptions>(),
-                err_string.as_mut_ptr(),
+                &mut err_string,
             )
         };
 
         // If creation fails, extract the error string
         if code == 1 {
             unsafe {
-                return Err(LLVMString::new(err_string.assume_init()));
+                return Err(LLVMString::new(err_string));
             }
         }
 
@@ -967,7 +959,7 @@ impl<'ctx> Module<'ctx> {
             .to_str()
             .expect("Did not find a valid Unicode path string");
         let path = to_c_str(path_str);
-        let mut err_string: *mut libc::c_char = ::core::ptr::null_mut();
+        let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
         let return_code = unsafe {
             LLVMPrintModuleToFile(
                 self.module.get(),
@@ -1262,7 +1254,7 @@ impl<'ctx> Module<'ctx> {
         context: impl AsContextRef<'ctx>,
     ) -> Result<Self, LLVMString> {
         let mut module = MaybeUninit::uninit();
-        let mut err_string = MaybeUninit::uninit();
+        let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
 
         // LLVM has a newer version of this function w/o the error result since 3.8 but this deprecated function
         // hasen't yet been removed even in LLVM 8. Seems fine to use instead of switching to their
@@ -1273,13 +1265,13 @@ impl<'ctx> Module<'ctx> {
                 context.as_ctx_ref(),
                 buffer.memory_buffer,
                 module.as_mut_ptr(),
-                err_string.as_mut_ptr(),
+                &mut err_string,
             )
         };
 
         if success != 0 {
             unsafe {
-                return Err(LLVMString::new(err_string.assume_init()));
+                return Err(LLVMString::new(err_string));
             }
         }
 

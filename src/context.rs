@@ -63,6 +63,7 @@ use crate::AddressSpace;
 
 use std::marker::PhantomData;
 use std::mem::forget;
+use std::num::NonZeroU32;
 use std::ptr;
 use std::thread_local;
 
@@ -93,6 +94,12 @@ thread_local! {
         GLOBAL_CTX.lock().unwrap_or_else(|e| e.into_inner())
     });
 }
+
+// LLVM's arbitrary bit-width integer constraints.
+// "The integer type is a very simple type that simply specifies an arbitrary bit width...
+// Any bit width from 1 bit to 2^23-1 (about 8 million) can be specified."
+// Reference: https://llvm.org/docs/LangRef.html#integer-type
+const LLVM_MAX_INT_BITS: u32 = 1 << 23;
 
 /// This struct allows us to share method impls across Context and ContextRef types
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -196,11 +203,17 @@ impl ContextImpl {
 
     // TODO: Call LLVMInt128TypeInContext in applicable versions
     fn i128_type<'ctx>(&self) -> IntType<'ctx> {
-        self.custom_width_int_type(128)
+        self.custom_width_int_type(NonZeroU32::new(128).unwrap()).unwrap()
     }
 
-    fn custom_width_int_type<'ctx>(&self, bits: u32) -> IntType<'ctx> {
-        unsafe { IntType::new(LLVMIntTypeInContext(self.0, bits)) }
+    fn custom_width_int_type<'ctx>(&self, bits: NonZeroU32) -> Result<IntType<'ctx>, &'static str> {
+        let width = bits.get();
+
+        if width <= LLVM_MAX_INT_BITS {
+            unsafe { Ok(IntType::new(LLVMIntTypeInContext(self.0, width))) }
+        } else {
+            Err("LLVM only supports integers with bit widths between 1 and 8388608 (inclusive)")
+        }
     }
 
     fn metadata_type<'ctx>(&self) -> MetadataType<'ctx> {
@@ -768,16 +781,18 @@ impl Context {
     /// # Example
     ///
     /// ```no_run
+    /// use std::num::NonZeroU32;
     /// use inkwell::context::Context;
     ///
     /// let context = Context::create();
-    /// let i42_type = context.custom_width_int_type(42);
+    /// let width = NonZeroU32::new(42).unwrap();
+    /// let i42_type = context.custom_width_int_type(width).unwrap();
     ///
     /// assert_eq!(i42_type.get_bit_width(), 42);
     /// assert_eq!(i42_type.get_context(), context);
     /// ```
     #[inline]
-    pub fn custom_width_int_type(&self, bits: u32) -> IntType<'_> {
+    pub fn custom_width_int_type(&self, bits: NonZeroU32) -> Result<IntType<'_>, &'static str> {
         self.context.custom_width_int_type(bits)
     }
 
@@ -1645,16 +1660,18 @@ impl<'ctx> ContextRef<'ctx> {
     /// # Example
     ///
     /// ```no_run
+    /// use std::num::NonZeroU32;
     /// use inkwell::context::Context;
     ///
     /// let context = Context::create();
-    /// let i42_type = context.custom_width_int_type(42);
+    /// let width = NonZeroU32::new(42).unwrap();
+    /// let i42_type = context.custom_width_int_type(width).unwrap();
     ///
     /// assert_eq!(i42_type.get_bit_width(), 42);
     /// assert_eq!(i42_type.get_context(), context);
     /// ```
     #[inline]
-    pub fn custom_width_int_type(&self, bits: u32) -> IntType<'ctx> {
+    pub fn custom_width_int_type(&self, bits: NonZeroU32) -> Result<IntType<'ctx>, &'static str> {
         self.context.custom_width_int_type(bits)
     }
 
