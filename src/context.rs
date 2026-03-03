@@ -189,7 +189,7 @@ impl ContextImpl {
         let width = bits.get();
 
         if width <= LLVM_MAX_INT_BITS {
-            unsafe { Ok(IntType::new(LLVMIntTypeInContext(self.0, bits))) }
+            unsafe { Ok(IntType::new(LLVMIntTypeInContext(self.0, width))) }
         } else {
             unsafe { Err("LLVM only supports integers with bit widths between 1 and 8388608 (inclusive)") }
         }
