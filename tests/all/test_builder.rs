@@ -1,7 +1,7 @@
-use std::num::NonZeroU32;
 use inkwell::builder::BuilderError;
 use inkwell::context::Context;
 use inkwell::{AddressSpace, AtomicOrdering, AtomicRMWBinOp, OptimizationLevel};
+use std::num::NonZeroU32;
 
 use std::ptr::null;
 
