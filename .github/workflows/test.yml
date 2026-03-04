@@ -50,6 +50,7 @@ jobs:
       run: |
         wget https://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb
         sudo apt install ./libtinfo5_6.3-2ubuntu0.1_amd64.deb
+    # TODO: move back to https://apt.llvm.org/llvm.sh (once the file is properly synced)
     - name: Install LLVM and Clang (LLVM >= 19.1)
       if: ${{ matrix.llvm-version[0] >= 19 }}
       run: |
