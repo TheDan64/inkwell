@@ -95,6 +95,55 @@ fn test_build_call() {
 }
 
 #[test]
+fn test_build_call_with_metadata_string() {
+    let context = Context::create();
+    let module = context.create_module("sample");
+    let builder = context.create_builder();
+
+    let f64_type = context.f64_type();
+    let metadata_type = context.metadata_type();
+    let intrinsic_type = f64_type.fn_type(
+        &[
+            f64_type.into(),
+            f64_type.into(),
+            metadata_type.into(),
+            metadata_type.into(),
+        ],
+        false,
+    );
+    let intrinsic = module.add_function("llvm.experimental.constrained.fsub.f64", intrinsic_type, None);
+
+    let wrapper_type = f64_type.fn_type(&[f64_type.into(), f64_type.into()], false);
+    let wrapper = module.add_function("fsub_wrapper", wrapper_type, None);
+    let entry = context.append_basic_block(wrapper, "entry");
+    builder.position_at_end(entry);
+
+    let arg1 = wrapper.get_first_param().unwrap();
+    let arg2 = wrapper.get_nth_param(1).unwrap();
+    arg1.set_name("arg1");
+    arg2.set_name("arg2");
+
+    let ret = builder
+        .build_call(
+            intrinsic,
+            &[
+                arg1.into(),
+                arg2.into(),
+                context.metadata_string("round.tonearest").into(),
+                context.metadata_string("fpexcept.strict").into(),
+            ],
+            "ret",
+        )
+        .unwrap()
+        .try_as_basic_value()
+        .unwrap_basic()
+        .into_float_value();
+    builder.build_return(Some(&ret)).unwrap();
+
+    assert_eq!(module.verify(), Ok(()));
+}
+
+#[test]
 fn test_build_invoke_cleanup_resume() {
     let context = Context::create();
     let module = context.create_module("sum");
