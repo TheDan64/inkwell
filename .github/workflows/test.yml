@@ -54,7 +54,7 @@ jobs:
       if: ${{ matrix.llvm-version[0] >= 19 }}
       run: |
         sudo apt install --no-install-recommends -y lsb-release wget software-properties-common gnupg
-        wget https://apt.llvm.org/llvm.sh
+        wget https://raw.githubusercontent.com/opencollab/llvm-jenkins.debian.net/refs/heads/master/llvm.sh
         chmod +x llvm.sh
         sudo ./llvm.sh ${{ matrix.llvm-version[2] }}
         sudo apt-get update
