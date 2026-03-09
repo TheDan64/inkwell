@@ -165,7 +165,10 @@ fn test_function_type_metadata_params() {
 
 #[test]
 fn test_sized_types() {
-    unsafe { Context::get_global(sized_types) }
+    #[allow(deprecated)]
+    unsafe {
+        Context::get_global(sized_types)
+    }
 }
 
 fn sized_types(global_ctx: &Context) {

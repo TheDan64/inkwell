@@ -74,6 +74,7 @@ use std::thread_local;
 static GLOBAL_CTX: Lazy<Mutex<Context>> = Lazy::new(|| Mutex::new(Context::create()));
 
 thread_local! {
+    #[deprecated(note = "use Context::create instead")]
     pub(crate) static GLOBAL_CTX_LOCK: Lazy<MutexGuard<'static, Context>> = Lazy::new(|| {
         GLOBAL_CTX.lock().unwrap_or_else(|e| e.into_inner())
     });
@@ -495,10 +496,12 @@ impl Context {
     ///     })
     /// };
     /// ```
+    #[deprecated(note = "use Context::create instead")]
     pub unsafe fn get_global<F, R>(func: F) -> R
     where
         F: FnOnce(&Context) -> R,
     {
+        #[allow(deprecated)]
         GLOBAL_CTX_LOCK.with(|lazy| func(lazy))
     }
 

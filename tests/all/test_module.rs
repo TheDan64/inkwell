@@ -177,6 +177,7 @@ fn test_get_struct_type() {
 #[test]
 fn test_get_struct_type_global_context() {
     unsafe {
+        #[allow(deprecated)]
         Context::get_global(|context| {
             let module = context.create_module("my_module");
 
