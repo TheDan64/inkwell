@@ -50,11 +50,12 @@ jobs:
       run: |
         wget https://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb
         sudo apt install ./libtinfo5_6.3-2ubuntu0.1_amd64.deb
-    # TODO: move back to https://apt.llvm.org/llvm.sh (once the file is properly synced)
     - name: Install LLVM and Clang (LLVM >= 19.1)
       if: ${{ matrix.llvm-version[0] >= 19 }}
       run: |
         sudo apt install --no-install-recommends -y lsb-release wget software-properties-common gnupg
+        # TODO: move back to https://apt.llvm.org/llvm.sh (once the file is properly synced)
+        # Issue link: https://github.com/llvm/llvm-project/issues/183715
         wget https://raw.githubusercontent.com/opencollab/llvm-jenkins.debian.net/refs/heads/master/llvm.sh
         chmod +x llvm.sh
         sudo ./llvm.sh ${{ matrix.llvm-version[2] }}

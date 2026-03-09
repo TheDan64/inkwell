@@ -127,6 +127,8 @@ pub enum InstructionOpcode {
     Or,
     #[llvm_variant(LLVMPHI)]
     Phi,
+    #[cfg(feature = "llvm22-1")]
+    PtrToAddr,
     PtrToInt,
     Resume,
     #[llvm_variant(LLVMRet)]
@@ -151,8 +153,6 @@ pub enum InstructionOpcode {
     VAArg,
     Xor,
     ZExt,
-    #[cfg(feature = "llvm22-1")]
-    PtrToAddr,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]

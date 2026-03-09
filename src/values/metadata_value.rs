@@ -11,7 +11,7 @@ use crate::values::{BasicMetadataValueEnum, Value};
 
 use super::AnyValue;
 
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 use std::fmt::{self, Display};
 
 /// Value returned by [`Context::get_kind_id()`](crate::context::Context::get_kind_id)
@@ -77,18 +77,15 @@ impl<'ctx> MetadataValue<'ctx> {
         unsafe { LLVMIsAMDString(self.as_value_ref()) == self.as_value_ref() }
     }
 
-    pub fn get_string_value(&self) -> Option<CString> {
+    pub fn get_string_value(&self) -> Option<&[u8]> {
         let mut len = 0;
         let ptr = unsafe { LLVMGetMDString(self.as_value_ref(), &mut len) };
         if ptr.is_null() {
             return None;
         }
 
-        // Since LLVM 22, the verifier does not allow including the '\0' in the crated MDString values.
-        // And so we must append the trailing zero character once we get a slice from the MDString.
-        let mut bytes = unsafe { core::slice::from_raw_parts(ptr as *const u8, len as usize) }.to_vec();
-        bytes.push(b'\0');
-        CString::from_vec_with_nul(bytes).ok()
+        // Since LLVM 22, the verifier does not allow including the '\0' in the created MDString values.
+        unsafe { Some(core::slice::from_raw_parts(ptr as *const u8, len as usize)) }
     }
 
     // SubTypes: Node only one day

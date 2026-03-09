@@ -23,9 +23,6 @@ use llvm_sys::core::{
     LLVMStructTypeInContext, LLVMValueAsMetadata, LLVMVoidTypeInContext, LLVMX86FP80TypeInContext,
 };
 
-#[llvm_versions(..22)]
-use llvm_sys::core::LLVMGetGlobalContext;
-
 #[llvm_versions(..19)]
 use llvm_sys::core::LLVMConstStringInContext;
 
@@ -74,20 +71,7 @@ use std::thread_local;
 // This is still technically unsafe because another program in the same process
 // could also be accessing the global context via the C API. `get_global` has been
 // marked unsafe for this reason. Iff this isn't the case then this should be fully safe.
-static GLOBAL_CTX: Lazy<Mutex<Context>> = Lazy::new(|| {
-    let context = {
-        #[cfg(feature = "llvm22-1")]
-        {
-            Context::create()
-        }
-        #[cfg(not(feature = "llvm22-1"))]
-        unsafe {
-            Context::new(LLVMGetGlobalContext())
-        }
-    };
-
-    Mutex::new(context)
-});
+static GLOBAL_CTX: Lazy<Mutex<Context>> = Lazy::new(|| Mutex::new(Context::create()));
 
 thread_local! {
     pub(crate) static GLOBAL_CTX_LOCK: Lazy<MutexGuard<'static, Context>> = Lazy::new(|| {

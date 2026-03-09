@@ -983,10 +983,7 @@ fn test_metadata() {
 
     assert_eq!(md_string.get_node_size(), None);
     assert_eq!(md_string.get_node_values(), None);
-    assert_eq!(
-        md_string.get_string_value().unwrap().to_str(),
-        Ok("lots of metadata here")
-    );
+    assert_eq!(md_string.get_string_value().unwrap(), b"lots of metadata here");
 
     let bool_type = context.bool_type();
     // let i8_type = context.i8_type();
