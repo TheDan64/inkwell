@@ -32,6 +32,8 @@ pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = if cfg!(feature = "llvm11-0") {
     41
 } else if cfg!(any(feature = "llvm20-1", feature = "llvm21-1")) {
     42
+} else if cfg!(feature = "llvm22-1") {
+    47
 } else {
     panic!("Unhandled LLVM version")
 };
@@ -75,15 +77,15 @@ impl<'ctx> MetadataValue<'ctx> {
         unsafe { LLVMIsAMDString(self.as_value_ref()) == self.as_value_ref() }
     }
 
-    pub fn get_string_value(&self) -> Option<&CStr> {
+    pub fn get_string_value(&self) -> Option<&[u8]> {
         let mut len = 0;
         let ptr = unsafe { LLVMGetMDString(self.as_value_ref(), &mut len) };
         if ptr.is_null() {
             return None;
         }
 
-        let bytes = unsafe { core::slice::from_raw_parts(ptr as *const u8, len as usize) };
-        CStr::from_bytes_with_nul(bytes).ok()
+        // Since LLVM 22, the verifier does not allow including the '\0' in the created MDString values.
+        unsafe { Some(core::slice::from_raw_parts(ptr as *const u8, len as usize)) }
     }
 
     // SubTypes: Node only one day

@@ -3508,9 +3508,9 @@ impl<'ctx> Builder<'ctx> {
     /// let i32_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
     /// let builder = context.create_builder();
     /// builder.position_at_end(entry);
-    /// #[cfg(feature = "llvm21-1")]
+    /// #[cfg(any(feature = "llvm21-1", feature = "llvm22-1"))]
     /// builder.build_atomicrmw(AtomicRMWBinOp::Add, i32_ptr_param, i32_seven, AtomicOrdering::Monotonic).unwrap();
-    /// #[cfg(not(feature = "llvm21-1"))]
+    /// #[cfg(not(any(feature = "llvm21-1", feature = "llvm22-1")))]
     /// builder.build_atomicrmw(AtomicRMWBinOp::Add, i32_ptr_param, i32_seven, AtomicOrdering::AcquireRelease).unwrap();
     /// builder.build_return(None).unwrap();
     /// ```

@@ -223,17 +223,17 @@ fn test_get_next_use() {
 
     let arg1 = function.get_first_param().unwrap().into_float_value();
 
-    #[cfg(feature = "llvm21-1")]
+    #[cfg(any(feature = "llvm21-1", feature = "llvm22-1"))]
     let f32_ptr = builder.build_alloca(f32_type, "f32_ptr").unwrap();
-    #[cfg(feature = "llvm21-1")]
+    #[cfg(any(feature = "llvm21-1", feature = "llvm22-1"))]
     let _ = builder.build_store(f32_ptr, f32_type.const_float(std::f64::consts::PI));
-    #[cfg(feature = "llvm21-1")]
+    #[cfg(any(feature = "llvm21-1", feature = "llvm22-1"))]
     let f32_val = builder
         .build_load(f32_type, f32_ptr, "f32_val")
         .unwrap()
         .into_float_value();
 
-    #[cfg(not(feature = "llvm21-1"))]
+    #[cfg(not(any(feature = "llvm21-1", feature = "llvm22-1")))]
     let f32_val = f32_type.const_float(std::f64::consts::PI);
 
     let add_pi0 = builder.build_float_add(arg1, f32_val, "add_pi").unwrap();
@@ -544,7 +544,8 @@ fn test_atomic_ordering_mem_instructions() {
         feature = "llvm18-1",
         feature = "llvm19-1",
         feature = "llvm20-1",
-        feature = "llvm21-1"
+        feature = "llvm21-1",
+        feature = "llvm22-1"
     ))]
     let fence_instruction = builder
         .build_fence(AtomicOrdering::AcquireRelease, true, "fence")
@@ -573,7 +574,8 @@ fn test_atomic_ordering_mem_instructions() {
         feature = "llvm18-1",
         feature = "llvm19-1",
         feature = "llvm20-1",
-        feature = "llvm21-1"
+        feature = "llvm21-1",
+        feature = "llvm22-1"
     ))]
     assert_eq!(
         fence_instruction.get_atomic_ordering().unwrap(),
@@ -607,7 +609,8 @@ fn test_atomic_ordering_mem_instructions() {
         feature = "llvm18-1",
         feature = "llvm19-1",
         feature = "llvm20-1",
-        feature = "llvm21-1"
+        feature = "llvm21-1",
+        feature = "llvm22-1"
     ))]
     {
         assert!(fence_instruction
