@@ -32,11 +32,11 @@ impl<'ctx> GenericValue<'ctx> {
 
     // SubType: create_generic_value() -> GenericValue<PointerValue, T>
     // REVIEW: How safe is this really?
-    pub unsafe fn create_generic_value_of_pointer<T>(value: &mut T) -> Self {
+    pub unsafe fn create_generic_value_of_pointer<T>(value: &mut T) -> Self { unsafe {
         let value = LLVMCreateGenericValueOfPointer(value as *mut _ as *mut c_void);
 
         GenericValue::new(value)
-    }
+    }}
 
     // SubType: impl only for GenericValue<IntValue>
     pub fn as_int(self, is_signed: bool) -> u64 {
@@ -50,9 +50,9 @@ impl<'ctx> GenericValue<'ctx> {
 
     // SubType: impl only for GenericValue<PointerValue, T>
     // REVIEW: How safe is this really?
-    pub unsafe fn into_pointer<T>(self) -> *mut T {
+    pub unsafe fn into_pointer<T>(self) -> *mut T { unsafe {
         LLVMGenericValueToPointer(self.generic_value) as *mut T
-    }
+    }}
 }
 
 impl Drop for GenericValue<'_> {

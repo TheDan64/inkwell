@@ -28,13 +28,13 @@ impl<'ctx> VectorValue<'ctx> {
     /// # Safety
     ///
     /// The ref must be valid and of type vector.
-    pub unsafe fn new(vector_value: LLVMValueRef) -> Self {
+    pub unsafe fn new(vector_value: LLVMValueRef) -> Self { unsafe {
         assert!(!vector_value.is_null());
 
         VectorValue {
             vec_value: Value::new(vector_value),
         }
-    }
+    }}
 
     /// Determines whether or not a `VectorValue` is a constant.
     ///

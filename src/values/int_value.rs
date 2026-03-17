@@ -52,13 +52,13 @@ impl<'ctx> IntValue<'ctx> {
     /// # Safety
     ///
     /// The ref must be valid and of type int.
-    pub unsafe fn new(value: LLVMValueRef) -> Self {
+    pub unsafe fn new(value: LLVMValueRef) -> Self { unsafe {
         assert!(!value.is_null());
 
         IntValue {
             int_value: Value::new(value),
         }
-    }
+    }}
 
     /// Gets the name of an `IntValue`. If the value is a constant, this will
     /// return an empty string.

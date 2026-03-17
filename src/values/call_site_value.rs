@@ -113,9 +113,9 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// # Safety
     ///
     /// The ref must be valid and of type call site.
-    pub unsafe fn new(value: LLVMValueRef) -> Self {
+    pub unsafe fn new(value: LLVMValueRef) -> Self { unsafe {
         CallSiteValue(Value::new(value))
-    }
+    }}
 
     /// Sets whether or not this call is a tail call.
     ///

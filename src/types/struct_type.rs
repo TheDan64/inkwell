@@ -27,13 +27,13 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// # Safety
     /// Undefined behavior, if referenced type isn't struct type
-    pub unsafe fn new(struct_type: LLVMTypeRef) -> Self {
+    pub unsafe fn new(struct_type: LLVMTypeRef) -> Self { unsafe {
         assert!(!struct_type.is_null());
 
         StructType {
             struct_type: Type::new(struct_type),
         }
-    }
+    }}
 
     /// Gets the type of a field belonging to this `StructType`.
     ///

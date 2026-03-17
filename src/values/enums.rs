@@ -78,7 +78,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
     /// # Safety
     ///
     /// The ref must be valid and of supported enum type options ([LLVMTypeKind]).
-    pub unsafe fn new(value: LLVMValueRef) -> Self {
+    pub unsafe fn new(value: LLVMValueRef) -> Self { unsafe {
         match LLVMGetTypeKind(LLVMTypeOf(value)) {
             LLVMTypeKind::LLVMFloatTypeKind
             | LLVMTypeKind::LLVMFP128TypeKind
@@ -136,7 +136,7 @@ impl<'ctx> AnyValueEnum<'ctx> {
             LLVMTypeKind::LLVMMetadataTypeKind => panic!("Metadata values are not supported as AnyValue's."),
             _ => panic!("The given type is not supported."),
         }
-    }
+    }}
 
     pub fn get_type(&self) -> AnyTypeEnum<'ctx> {
         unsafe { AnyTypeEnum::new(LLVMTypeOf(self.as_value_ref())) }
@@ -279,7 +279,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
     /// # Safety
     ///
     /// The ref must be valid and of supported enum type options ([LLVMTypeKind]).
-    pub unsafe fn new(value: LLVMValueRef) -> Self {
+    pub unsafe fn new(value: LLVMValueRef) -> Self { unsafe {
         match LLVMGetTypeKind(LLVMTypeOf(value)) {
             LLVMTypeKind::LLVMFloatTypeKind
             | LLVMTypeKind::LLVMFP128TypeKind
@@ -326,7 +326,7 @@ impl<'ctx> BasicValueEnum<'ctx> {
             },
             _ => unreachable!("The given type is not a basic type."),
         }
-    }
+    }}
 
     /// Get the name of the `BasicValueEnum`.
     pub fn get_name(&self) -> &CStr {
@@ -456,13 +456,13 @@ impl<'ctx> AggregateValueEnum<'ctx> {
     /// # Safety
     ///
     /// The ref must be valid and of supported aggregate type enum options ([LLVMTypeKind]).
-    pub unsafe fn new(value: LLVMValueRef) -> Self {
+    pub unsafe fn new(value: LLVMValueRef) -> Self { unsafe {
         match LLVMGetTypeKind(LLVMTypeOf(value)) {
             LLVMTypeKind::LLVMArrayTypeKind => AggregateValueEnum::ArrayValue(ArrayValue::new(value)),
             LLVMTypeKind::LLVMStructTypeKind => AggregateValueEnum::StructValue(StructValue::new(value)),
             _ => unreachable!("The given type is not an aggregate type."),
         }
-    }
+    }}
 
     pub fn is_array_value(self) -> bool {
         matches!(self, AggregateValueEnum::ArrayValue(_))
@@ -492,7 +492,7 @@ impl<'ctx> AggregateValueEnum<'ctx> {
 }
 
 impl<'ctx> BasicMetadataValueEnum<'ctx> {
-    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
+    pub(crate) unsafe fn new(value: LLVMValueRef) -> Self { unsafe {
         match LLVMGetTypeKind(LLVMTypeOf(value)) {
             LLVMTypeKind::LLVMFloatTypeKind
             | LLVMTypeKind::LLVMFP128TypeKind
@@ -540,7 +540,7 @@ impl<'ctx> BasicMetadataValueEnum<'ctx> {
             LLVMTypeKind::LLVMMetadataTypeKind => BasicMetadataValueEnum::MetadataValue(MetadataValue::new(value)),
             _ => unreachable!("Unsupported type"),
         }
-    }
+    }}
 
     pub fn is_array_value(self) -> bool {
         matches!(self, BasicMetadataValueEnum::ArrayValue(_))

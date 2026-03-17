@@ -237,13 +237,13 @@ pub trait PassManagerSubType {
 impl PassManagerSubType for Module<'_> {
     type Input = ();
 
-    unsafe fn create<I: Borrow<Self::Input>>(_: I) -> LLVMPassManagerRef {
+    unsafe fn create<I: Borrow<Self::Input>>(_: I) -> LLVMPassManagerRef { unsafe {
         LLVMCreatePassManager()
-    }
+    }}
 
-    unsafe fn run_in_pass_manager(&self, pass_manager: &PassManager<Self>) -> bool {
+    unsafe fn run_in_pass_manager(&self, pass_manager: &PassManager<Self>) -> bool { unsafe {
         LLVMRunPassManager(pass_manager.pass_manager, self.module.get()) == 1
-    }
+    }}
 }
 
 // With GATs https://github.com/rust-lang/rust/issues/44265 this could be
@@ -251,13 +251,13 @@ impl PassManagerSubType for Module<'_> {
 impl<'ctx> PassManagerSubType for FunctionValue<'ctx> {
     type Input = Module<'ctx>;
 
-    unsafe fn create<I: Borrow<Self::Input>>(input: I) -> LLVMPassManagerRef {
+    unsafe fn create<I: Borrow<Self::Input>>(input: I) -> LLVMPassManagerRef { unsafe {
         LLVMCreateFunctionPassManagerForModule(input.borrow().module.get())
-    }
+    }}
 
-    unsafe fn run_in_pass_manager(&self, pass_manager: &PassManager<Self>) -> bool {
+    unsafe fn run_in_pass_manager(&self, pass_manager: &PassManager<Self>) -> bool { unsafe {
         LLVMRunFunctionPassManager(pass_manager.pass_manager, self.as_value_ref()) == 1
-    }
+    }}
 }
 
 // SubTypes: PassManager<Module>, PassManager<FunctionValue>

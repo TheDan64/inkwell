@@ -24,13 +24,13 @@ impl<'ctx> FunctionType<'ctx> {
     ///
     /// # Safety
     /// Undefined behavior, if referenced type isn't function type
-    pub unsafe fn new(fn_type: LLVMTypeRef) -> Self {
+    pub unsafe fn new(fn_type: LLVMTypeRef) -> Self { unsafe {
         assert!(!fn_type.is_null());
 
         FunctionType {
             fn_type: Type::new(fn_type),
         }
-    }
+    }}
 
     /// Creates a `PointerType` with this `FunctionType` for its element type.
     ///

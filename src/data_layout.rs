@@ -9,13 +9,13 @@ pub struct DataLayout {
 }
 
 impl DataLayout {
-    pub(crate) unsafe fn new_owned(data_layout: *const ::libc::c_char) -> DataLayout {
+    pub(crate) unsafe fn new_owned(data_layout: *const ::libc::c_char) -> DataLayout { unsafe {
         debug_assert!(!data_layout.is_null());
 
         DataLayout {
             data_layout: LLVMStringOrRaw::Owned(LLVMString::new(data_layout)),
         }
-    }
+    }}
 
     pub(crate) unsafe fn new_borrowed(data_layout: *const ::libc::c_char) -> DataLayout {
         debug_assert!(!data_layout.is_null());

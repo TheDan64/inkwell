@@ -460,11 +460,11 @@ impl Context {
     /// This function is exposed only for interoperability with other LLVM IR libraries.
     /// It's not intended to be used by most users, hence marked as unsafe.
     /// Use [`Context::create`] instead.
-    pub unsafe fn new(context: LLVMContextRef) -> Self {
+    pub unsafe fn new(context: LLVMContextRef) -> Self { unsafe {
         Context {
             context: ContextImpl::new(context),
         }
-    }
+    }}
 
     /// Creates a new `Context`.
     ///
@@ -1377,12 +1377,12 @@ impl<'ctx> ContextRef<'ctx> {
     ///
     /// This function is exposed only for interoperability with other LLVM IR libraries.
     /// It's not intended to be used by most users, hence marked as unsafe.
-    pub unsafe fn new(context: LLVMContextRef) -> Self {
+    pub unsafe fn new(context: LLVMContextRef) -> Self { unsafe {
         ContextRef {
             context: ContextImpl::new(context),
             _marker: PhantomData,
         }
-    }
+    }}
 
     /// Creates a new `Builder` for a `Context`.
     ///

@@ -28,13 +28,13 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// # Safety
     /// Undefined behavior, if referenced type isn't pointer type
-    pub unsafe fn new(ptr_type: LLVMTypeRef) -> Self {
+    pub unsafe fn new(ptr_type: LLVMTypeRef) -> Self { unsafe {
         assert!(!ptr_type.is_null());
 
         PointerType {
             ptr_type: Type::new(ptr_type),
         }
-    }
+    }}
 
     /// Gets the size of this `PointerType`. Value may vary depending on the target architecture.
     ///

@@ -25,13 +25,13 @@ impl<'ctx> ScalableVectorValue<'ctx> {
     /// # Safety
     ///
     /// The ref must be valid and of type scalable vector.
-    pub unsafe fn new(scalable_vector_value: LLVMValueRef) -> Self {
+    pub unsafe fn new(scalable_vector_value: LLVMValueRef) -> Self { unsafe {
         assert!(!scalable_vector_value.is_null());
 
         ScalableVectorValue {
             scalable_vec_value: Value::new(scalable_vector_value),
         }
-    }
+    }}
 
     /// Determines whether or not a `ScalableVectorValue` is a constant.
     ///

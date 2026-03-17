@@ -1114,7 +1114,7 @@ impl<'ctx> Builder<'ctx> {
         ptr: PointerValue<'ctx>,
         ordered_indexes: &[IntValue<'ctx>],
         name: &str,
-    ) -> Result<PointerValue<'ctx>, BuilderError> {
+    ) -> Result<PointerValue<'ctx>, BuilderError> { unsafe {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
         }
@@ -1142,7 +1142,7 @@ impl<'ctx> Builder<'ctx> {
         );
 
         Ok(PointerValue::new(value))
-    }
+    }}
 
     // REVIEW: Doesn't GEP work on array too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
@@ -1153,7 +1153,7 @@ impl<'ctx> Builder<'ctx> {
         ptr: PointerValue<'ctx>,
         ordered_indexes: &[IntValue<'ctx>],
         name: &str,
-    ) -> Result<PointerValue<'ctx>, BuilderError> {
+    ) -> Result<PointerValue<'ctx>, BuilderError> { unsafe {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
         }
@@ -1171,7 +1171,7 @@ impl<'ctx> Builder<'ctx> {
         );
 
         Ok(PointerValue::new(value))
-    }
+    }}
 
     // REVIEW: Doesn't GEP work on array too?
     // REVIEW: This could be merge in with build_gep via a in_bounds: bool param
@@ -1182,7 +1182,7 @@ impl<'ctx> Builder<'ctx> {
         ptr: PointerValue<'ctx>,
         ordered_indexes: &[IntValue<'ctx>],
         name: &str,
-    ) -> Result<PointerValue<'ctx>, BuilderError> {
+    ) -> Result<PointerValue<'ctx>, BuilderError> { unsafe {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
         }
@@ -1210,7 +1210,7 @@ impl<'ctx> Builder<'ctx> {
         );
 
         Ok(PointerValue::new(value))
-    }
+    }}
 
     // REVIEW: Doesn't GEP work on array too?
     // REVIEW: This could be merge in with build_gep via a in_bounds: bool param
@@ -1222,7 +1222,7 @@ impl<'ctx> Builder<'ctx> {
         ptr: PointerValue<'ctx>,
         ordered_indexes: &[IntValue<'ctx>],
         name: &str,
-    ) -> Result<PointerValue<'ctx>, BuilderError> {
+    ) -> Result<PointerValue<'ctx>, BuilderError> { unsafe {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
         }
@@ -1240,7 +1240,7 @@ impl<'ctx> Builder<'ctx> {
         );
 
         Ok(PointerValue::new(value))
-    }
+    }}
 
     /// Builds a GEP instruction on a struct pointer. Returns `Err(BuilderError::GEPError)` if input `PointerValue` doesn't
     /// point to a struct or if index is out of bounds.
@@ -3407,7 +3407,7 @@ impl<'ctx> Builder<'ctx> {
     }
 
     // The unsafety of this function should be fixable with subtypes. See GH #32
-    pub unsafe fn build_global_string(&self, value: &str, name: &str) -> Result<GlobalValue<'ctx>, BuilderError> {
+    pub unsafe fn build_global_string(&self, value: &str, name: &str) -> Result<GlobalValue<'ctx>, BuilderError> { unsafe {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
         }
@@ -3416,7 +3416,7 @@ impl<'ctx> Builder<'ctx> {
         let value = LLVMBuildGlobalString(self.builder, c_string_value.as_ptr(), c_string_name.as_ptr());
 
         Ok(GlobalValue::new(value))
-    }
+    }}
 
     // REVIEW: Does this similar fn have the same issue build_global_string does? If so, mark as unsafe
     // and fix with subtypes.

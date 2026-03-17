@@ -25,13 +25,13 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// # Safety
     /// Undefined behavior, if referenced type isn't float type
-    pub unsafe fn new(float_type: LLVMTypeRef) -> Self {
+    pub unsafe fn new(float_type: LLVMTypeRef) -> Self { unsafe {
         assert!(!float_type.is_null());
 
         FloatType {
             float_type: Type::new(float_type),
         }
-    }
+    }}
 
     /// Creates a `FunctionType` with this `FloatType` for its return type.
     ///

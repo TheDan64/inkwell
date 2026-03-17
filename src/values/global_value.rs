@@ -41,13 +41,13 @@ impl<'ctx> GlobalValue<'ctx> {
     /// # Safety
     ///
     /// The ref must be valid and of type global.
-    pub unsafe fn new(value: LLVMValueRef) -> Self {
+    pub unsafe fn new(value: LLVMValueRef) -> Self { unsafe {
         assert!(!value.is_null());
 
         GlobalValue {
             global_value: Value::new(value),
         }
-    }
+    }}
 
     /// Get name of the `GlobalValue`.
     pub fn get_name(&self) -> &CStr {
@@ -205,9 +205,9 @@ impl<'ctx> GlobalValue<'ctx> {
         self.global_value.set_section(section)
     }
 
-    pub unsafe fn delete(self) {
+    pub unsafe fn delete(self) { unsafe {
         LLVMDeleteGlobal(self.as_value_ref())
-    }
+    }}
 
     pub fn as_pointer_value(self) -> PointerValue<'ctx> {
         unsafe { PointerValue::new(self.as_value_ref()) }

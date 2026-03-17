@@ -49,14 +49,14 @@ impl<'ctx> MetadataValue<'ctx> {
     /// # Safety
     ///
     /// The ref must be valid and of type metadata.
-    pub unsafe fn new(value: LLVMValueRef) -> Self {
+    pub unsafe fn new(value: LLVMValueRef) -> Self { unsafe {
         assert!(!value.is_null());
         assert!(!LLVMIsAMDNode(value).is_null() || !LLVMIsAMDString(value).is_null());
 
         MetadataValue {
             metadata_value: Value::new(value),
         }
-    }
+    }}
 
     pub(crate) fn as_metadata_ref(self) -> LLVMMetadataRef {
         unsafe { LLVMValueAsMetadata(self.as_value_ref()) }

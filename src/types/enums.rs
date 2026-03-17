@@ -117,12 +117,12 @@ impl<'ctx> BasicMetadataTypeEnum<'ctx> {
     ///
     /// Undefined behavior if the referenced type cannot be represented as [`BasicMetadataTypeEnum`],
     /// or the underlying pointer is null.
-    pub unsafe fn new(type_: LLVMTypeRef) -> Self {
+    pub unsafe fn new(type_: LLVMTypeRef) -> Self { unsafe {
         match LLVMGetTypeKind(type_) {
             LLVMTypeKind::LLVMMetadataTypeKind => Self::MetadataType(MetadataType::new(type_)),
             _ => BasicTypeEnum::new(type_).into(),
         }
-    }
+    }}
 
     pub fn into_array_type(self) -> ArrayType<'ctx> {
         if let BasicMetadataTypeEnum::ArrayType(t) = self {
@@ -240,7 +240,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
     ///
     /// # Safety
     /// Undefined behavior, if referenced type isn't part of `AnyTypeEnum`
-    pub unsafe fn new(type_: LLVMTypeRef) -> Self {
+    pub unsafe fn new(type_: LLVMTypeRef) -> Self { unsafe {
         match LLVMGetTypeKind(type_) {
             LLVMTypeKind::LLVMVoidTypeKind => AnyTypeEnum::VoidType(VoidType::new(type_)),
             LLVMTypeKind::LLVMHalfTypeKind
@@ -317,7 +317,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
             ))]
             LLVMTypeKind::LLVMTargetExtTypeKind => panic!("FIXME: Unsupported type: TargetExt"),
         }
-    }
+    }}
 
     /// This will panic if type is a void or function type.
     pub(crate) fn as_basic_type_enum(&self) -> BasicTypeEnum<'ctx> {
@@ -463,7 +463,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
     ///
     /// # Safety
     /// Undefined behavior, if referenced type isn't part of basic type enum.
-    pub unsafe fn new(type_: LLVMTypeRef) -> Self {
+    pub unsafe fn new(type_: LLVMTypeRef) -> Self { unsafe {
         match LLVMGetTypeKind(type_) {
             LLVMTypeKind::LLVMHalfTypeKind
             | LLVMTypeKind::LLVMFloatTypeKind
@@ -542,7 +542,7 @@ impl<'ctx> BasicTypeEnum<'ctx> {
             ))]
             LLVMTypeKind::LLVMTargetExtTypeKind => unreachable!("Unsupported basic type: TargetExt"),
         }
-    }
+    }}
 
     pub fn into_array_type(self) -> ArrayType<'ctx> {
         if let BasicTypeEnum::ArrayType(t) = self {

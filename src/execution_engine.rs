@@ -95,7 +95,7 @@ pub struct ExecutionEngine<'ctx> {
 }
 
 impl<'ctx> ExecutionEngine<'ctx> {
-    pub unsafe fn new(execution_engine: Rc<LLVMExecutionEngineRef>, jit_mode: bool) -> Self {
+    pub unsafe fn new(execution_engine: Rc<LLVMExecutionEngineRef>, jit_mode: bool) -> Self { unsafe {
         assert!(!execution_engine.is_null());
 
         // REVIEW: Will we have to do this for LLVMGetExecutionEngineTargetMachine too?
@@ -106,7 +106,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
             target_data: Some(TargetData::new(target_data)),
             jit_mode,
         }
-    }
+    }}
 
     /// Acquires the underlying raw pointer belonging to this `ExecutionEngine` type.
     pub fn as_mut_ptr(&self) -> LLVMExecutionEngineRef {
@@ -305,7 +305,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
     pub unsafe fn get_function<F>(&self, fn_name: &str) -> Result<JitFunction<'ctx, F>, FunctionLookupError>
     where
         F: UnsafeFunctionPointer,
-    {
+    { unsafe {
         if !self.jit_mode {
             return Err(FunctionLookupError::JITNotEnabled);
         }
@@ -324,7 +324,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
             _execution_engine: execution_engine.clone(),
             inner: transmute_copy(&address),
         })
-    }
+    }}
 
     /// Attempts to look up a function's address by its name. May return Err if the function cannot be
     /// found or some other unknown error has occurred.
@@ -381,7 +381,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
         &self,
         function: FunctionValue<'ctx>,
         args: &[&GenericValue<'ctx>],
-    ) -> GenericValue<'ctx> {
+    ) -> GenericValue<'ctx> { unsafe {
         let mut args: Vec<LLVMGenericValueRef> = args.iter().map(|val| val.generic_value).collect();
 
         let value = LLVMRunFunction(
@@ -392,12 +392,12 @@ impl<'ctx> ExecutionEngine<'ctx> {
         ); // REVIEW: usize to u32 ok??
 
         GenericValue::new(value)
-    }
+    }}
 
     // TODOC: Marked as unsafe because input function could very well do something unsafe. It's up to the caller
     // to ensure that doesn't happen by defining their function correctly.
     // SubType: Only for JIT EEs?
-    pub unsafe fn run_function_as_main(&self, function: FunctionValue<'ctx>, args: &[&str]) -> c_int {
+    pub unsafe fn run_function_as_main(&self, function: FunctionValue<'ctx>, args: &[&str]) -> c_int { unsafe {
         let cstring_args: Vec<_> = args.iter().map(|&arg| to_c_str(arg)).collect();
         let raw_args: Vec<*const _> = cstring_args.iter().map(|arg| arg.as_ptr()).collect();
 
@@ -410,7 +410,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
             raw_args.as_ptr(),
             environment_variables.as_ptr(),
         ) // REVIEW: usize to u32 cast ok??
-    }
+    }}
 
     pub fn free_fn_machine_code(&self, function: FunctionValue<'ctx>) {
         unsafe { LLVMFreeMachineCodeForFunction(self.execution_engine_inner(), function.as_value_ref()) }
@@ -535,9 +535,9 @@ macro_rules! impl_unsafe_fn {
             /// preserves the `unsafe` marker for any calls.
             #[allow(non_snake_case)]
             #[inline(always)]
-            pub unsafe fn call(&self, $( $param: $param ),*) -> Output {
+            pub unsafe fn call(&self, $( $param: $param ),*) -> Output { unsafe {
                 (self.inner)($( $param ),*)
-            }
+            }}
         }
 
         impl_unsafe_fn!(@recurse $( $param ),*);

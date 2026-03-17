@@ -74,13 +74,13 @@ impl<'ctx> IntType<'ctx> {
     ///
     /// # Safety
     /// Undefined behavior, if referenced type isn't int type
-    pub unsafe fn new(int_type: LLVMTypeRef) -> Self {
+    pub unsafe fn new(int_type: LLVMTypeRef) -> Self { unsafe {
         assert!(!int_type.is_null());
 
         IntType {
             int_type: Type::new(int_type),
         }
-    }
+    }}
 
     /// Creates an `IntValue` representing a constant value of this `IntType`. It will be automatically assigned this `IntType`'s `Context`.
     ///

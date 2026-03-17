@@ -166,7 +166,7 @@ impl<'ctx> InstructionValue<'ctx> {
     /// # Safety
     ///
     /// The ref must be valid and of type instruction.
-    pub unsafe fn new(instruction_value: LLVMValueRef) -> Self {
+    pub unsafe fn new(instruction_value: LLVMValueRef) -> Self { unsafe {
         debug_assert!(!instruction_value.is_null());
 
         let value = Value::new(instruction_value);
@@ -176,7 +176,7 @@ impl<'ctx> InstructionValue<'ctx> {
         InstructionValue {
             instruction_value: value,
         }
-    }
+    }}
 
     /// Creates a clone of this `InstructionValue`, and returns it.
     /// The clone will have no parent, and no name.

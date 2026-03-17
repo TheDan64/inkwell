@@ -25,13 +25,13 @@ impl<'ctx> PhiValue<'ctx> {
     /// # Safety
     ///
     /// The ref must be valid and of type phi.
-    pub unsafe fn new(value: LLVMValueRef) -> Self {
+    pub unsafe fn new(value: LLVMValueRef) -> Self { unsafe {
         assert!(!value.is_null());
 
         PhiValue {
             phi_value: Value::new(value),
         }
-    }
+    }}
 
     pub fn add_incoming(self, incoming: &[(&dyn BasicValue<'ctx>, BasicBlock<'ctx>)]) {
         let (mut values, mut basic_blocks): (Vec<LLVMValueRef>, Vec<LLVMBasicBlockRef>) = {

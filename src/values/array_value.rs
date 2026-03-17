@@ -25,23 +25,23 @@ impl<'ctx> ArrayValue<'ctx> {
     /// # Safety
     ///
     /// The ref must be valid and of type array.
-    pub unsafe fn new(value: LLVMValueRef) -> Self {
+    pub unsafe fn new(value: LLVMValueRef) -> Self { unsafe {
         assert!(!value.is_null());
 
         ArrayValue {
             array_value: Value::new(value),
         }
-    }
+    }}
 
     /// Creates a new constant `ArrayValue` with the given type and values.
     ///
     /// # Safety
     ///
     /// `values` must be of the same type as `ty`.
-    pub unsafe fn new_const_array<T: AsTypeRef, V: AsValueRef>(ty: &T, values: &[V]) -> Self {
+    pub unsafe fn new_const_array<T: AsTypeRef, V: AsValueRef>(ty: &T, values: &[V]) -> Self { unsafe {
         let values = values.iter().map(V::as_value_ref).collect::<Vec<_>>();
         Self::new_raw_const_array(ty.as_type_ref(), &values)
-    }
+    }}
 
     /// Creates a new constant `ArrayValue` with the given type and values.
     ///

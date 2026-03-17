@@ -21,13 +21,13 @@ impl<'ctx> ScalableVectorType<'ctx> {
     ///
     /// # Safety
     /// Undefined behavior, if referenced type isn't scalable vector type
-    pub unsafe fn new(scalable_vector_type: LLVMTypeRef) -> Self {
+    pub unsafe fn new(scalable_vector_type: LLVMTypeRef) -> Self { unsafe {
         assert!(!scalable_vector_type.is_null());
 
         ScalableVectorType {
             scalable_vec_type: Type::new(scalable_vector_type),
         }
-    }
+    }}
 
     // TODO: impl only for ScalableVectorType<!StructType<Opaque>>
     // REVIEW: What about Opaque struct hiding in deeper levels

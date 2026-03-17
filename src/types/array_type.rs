@@ -23,13 +23,13 @@ impl<'ctx> ArrayType<'ctx> {
     ///
     /// # Safety
     /// Undefined behavior, if referenced type isn't array type
-    pub unsafe fn new(array_type: LLVMTypeRef) -> Self {
+    pub unsafe fn new(array_type: LLVMTypeRef) -> Self { unsafe {
         assert!(!array_type.is_null());
 
         ArrayType {
             array_type: Type::new(array_type),
         }
-    }
+    }}
 
     // TODO: impl only for ArrayType<!StructType<Opaque>>
     /// Gets the size of this `ArrayType`. Value may vary depending on the target architecture.

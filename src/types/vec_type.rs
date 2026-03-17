@@ -21,13 +21,13 @@ impl<'ctx> VectorType<'ctx> {
     ///
     /// # Safety
     /// Undefined behavior, if referenced type isn't vector type
-    pub unsafe fn new(vector_type: LLVMTypeRef) -> Self {
+    pub unsafe fn new(vector_type: LLVMTypeRef) -> Self { unsafe {
         assert!(!vector_type.is_null());
 
         VectorType {
             vec_type: Type::new(vector_type),
         }
-    }
+    }}
 
     // TODO: impl only for VectorType<!StructType<Opaque>>
     // REVIEW: What about Opaque struct hiding in deeper levels

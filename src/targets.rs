@@ -1479,9 +1479,9 @@ impl TargetMachineOptions {
     /// if not disposed via `fn LLVMCreateTargetMachineWithOptions()`.
     /// - The only way to access it is via this private method.
     /// - Disposal is taken care of automatically in `Drop::drop`.
-    unsafe fn inner(&mut self) -> LLVMTargetMachineOptionsRef {
+    unsafe fn inner(&mut self) -> LLVMTargetMachineOptionsRef { unsafe {
         *self.0.get_or_insert_with(|| LLVMCreateTargetMachineOptions())
-    }
+    }}
 }
 
 #[llvm_versions(18..)]

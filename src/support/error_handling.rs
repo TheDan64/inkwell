@@ -19,9 +19,9 @@ use llvm_sys::LLVMDiagnosticSeverity;
 // }
 // and will be called before LLVM calls C exit()
 /// Installs an error handler to be called before LLVM exits.
-pub unsafe fn install_fatal_error_handler(handler: extern "C" fn(*const ::libc::c_char)) {
+pub unsafe fn install_fatal_error_handler(handler: extern "C" fn(*const ::libc::c_char)) { unsafe {
     LLVMInstallFatalErrorHandler(Some(handler))
-}
+}}
 
 /// Resets LLVM's fatal error handler back to the default
 pub fn reset_fatal_error_handler() {
