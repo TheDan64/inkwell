@@ -1,3 +1,4 @@
+use llvm_sys::LLVMOpcode;
 #[llvm_versions(14..)]
 use llvm_sys::core::LLVMGetGEPSourceElementType;
 use llvm_sys::core::{
@@ -9,17 +10,16 @@ use llvm_sys::core::{
     LLVMSetMetadata, LLVMSetOperand, LLVMSetOrdering, LLVMSetVolatile, LLVMValueAsBasicBlock, LLVMValueIsBasicBlock,
 };
 use llvm_sys::prelude::LLVMValueRef;
-use llvm_sys::LLVMOpcode;
 
 use std::{ffi::CStr, fmt, fmt::Display};
 
+use crate::AtomicRMWBinOp;
 use crate::debug_info::DILocation;
 use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, MetadataValue, Value};
-use crate::AtomicRMWBinOp;
+use crate::{AtomicOrdering, FloatPredicate, IntPredicate};
 use crate::{basic_block::BasicBlock, types::AnyTypeEnum};
 use crate::{error::AlignmentError, values::basic_value_use::Operand};
 use crate::{types::BasicTypeEnum, values::traits::AsValueRef};
-use crate::{AtomicOrdering, FloatPredicate, IntPredicate};
 
 use super::AnyValue;
 
@@ -166,17 +166,19 @@ impl<'ctx> InstructionValue<'ctx> {
     /// # Safety
     ///
     /// The ref must be valid and of type instruction.
-    pub unsafe fn new(instruction_value: LLVMValueRef) -> Self { unsafe {
-        debug_assert!(!instruction_value.is_null());
+    pub unsafe fn new(instruction_value: LLVMValueRef) -> Self {
+        unsafe {
+            debug_assert!(!instruction_value.is_null());
 
-        let value = Value::new(instruction_value);
+            let value = Value::new(instruction_value);
 
-        debug_assert!(value.is_instruction());
+            debug_assert!(value.is_instruction());
 
-        InstructionValue {
-            instruction_value: value,
+            InstructionValue {
+                instruction_value: value,
+            }
         }
-    }}
+    }
 
     /// Creates a clone of this `InstructionValue`, and returns it.
     /// The clone will have no parent, and no name.
@@ -196,10 +198,10 @@ impl<'ctx> InstructionValue<'ctx> {
     /// Get a instruction with it's name
     /// Compares against all instructions after self, and self.
     pub fn get_instruction_with_name(&self, name: &str) -> Option<InstructionValue<'ctx>> {
-        if let Some(ins_name) = self.get_name() {
-            if ins_name.to_str() == Ok(name) {
-                return Some(*self);
-            }
+        if let Some(ins_name) = self.get_name()
+            && ins_name.to_str() == Ok(name)
+        {
+            return Some(*self);
         }
         self.get_next_instruction()?.get_instruction_with_name(name)
     }

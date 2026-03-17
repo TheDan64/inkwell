@@ -97,15 +97,13 @@ impl Intrinsic {
             return None;
         }
 
-        let res = unsafe {
+        unsafe {
             FunctionValue::new(LLVMGetIntrinsicDeclaration(
                 module.module.get(),
                 self.id,
                 param_types.as_mut_ptr(),
                 param_types.len(),
             ))
-        };
-
-        res
+        }
     }
 }
