@@ -1,5 +1,6 @@
 //! A `Module` represents a single code compilation unit.
 
+use llvm_sys::LLVMLinkage;
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyModule};
 #[allow(deprecated)]
 use llvm_sys::bit_reader::LLVMParseBitcodeInContext;
@@ -25,15 +26,14 @@ use llvm_sys::execution_engine::{
 use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
 #[llvm_versions(13..)]
 use llvm_sys::transforms::pass_builder::LLVMRunPasses;
-use llvm_sys::LLVMLinkage;
 
 use llvm_sys::LLVMModuleFlagBehavior;
 
 use std::cell::{Cell, Ref, RefCell};
-use std::ffi::{c_void, CStr};
+use std::ffi::{CStr, c_void};
 use std::fs::File;
 use std::marker::PhantomData;
-use std::mem::{forget, MaybeUninit};
+use std::mem::{MaybeUninit, forget};
 use std::path::Path;
 use std::ptr;
 use std::rc::Rc;
@@ -46,12 +46,12 @@ use crate::debug_info::{DICompileUnit, DWARFEmissionKind, DWARFSourceLanguage, D
 use crate::execution_engine::ExecutionEngine;
 use crate::memory_buffer::MemoryBuffer;
 use crate::memory_manager::{
-    allocate_code_section_adapter, allocate_data_section_adapter, destroy_adapter, finalize_memory_adapter,
-    McjitMemoryManager, MemoryManagerAdapter,
+    McjitMemoryManager, MemoryManagerAdapter, allocate_code_section_adapter, allocate_data_section_adapter,
+    destroy_adapter, finalize_memory_adapter,
 };
 #[llvm_versions(13..)]
 use crate::passes::PassBuilderOptions;
-use crate::support::{to_c_str, LLVMString};
+use crate::support::{LLVMString, to_c_str};
 #[llvm_versions(13..)]
 use crate::targets::TargetMachine;
 use crate::targets::{CodeModel, InitializationConfig, Target, TargetTriple};

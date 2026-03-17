@@ -22,13 +22,15 @@ impl<'ctx> StructValue<'ctx> {
     /// # Safety
     ///
     /// The ref must be valid and of type struct.
-    pub unsafe fn new(value: LLVMValueRef) -> Self { unsafe {
-        assert!(!value.is_null());
+    pub unsafe fn new(value: LLVMValueRef) -> Self {
+        unsafe {
+            assert!(!value.is_null());
 
-        StructValue {
-            struct_value: Value::new(value),
+            StructValue {
+                struct_value: Value::new(value),
+            }
         }
-    }}
+    }
 
     /// Gets the value of a field belonging to this `StructValue`.
     ///

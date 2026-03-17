@@ -2,13 +2,13 @@
 use llvm_sys::core::LLVMGetArrayLength;
 use llvm_sys::prelude::LLVMTypeRef;
 
+use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::traits::AsTypeRef;
 use crate::types::{BasicTypeEnum, FunctionType, PointerType, Type};
 use crate::values::{ArrayValue, IntValue};
-use crate::AddressSpace;
 
 use std::fmt::{self, Display};
 
@@ -23,13 +23,15 @@ impl<'ctx> ArrayType<'ctx> {
     ///
     /// # Safety
     /// Undefined behavior, if referenced type isn't array type
-    pub unsafe fn new(array_type: LLVMTypeRef) -> Self { unsafe {
-        assert!(!array_type.is_null());
+    pub unsafe fn new(array_type: LLVMTypeRef) -> Self {
+        unsafe {
+            assert!(!array_type.is_null());
 
-        ArrayType {
-            array_type: Type::new(array_type),
+            ArrayType {
+                array_type: Type::new(array_type),
+            }
         }
-    }}
+    }
 
     // TODO: impl only for ArrayType<!StructType<Opaque>>
     /// Gets the size of this `ArrayType`. Value may vary depending on the target architecture.

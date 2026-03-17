@@ -1,10 +1,10 @@
 //! This module contains some supplemental functions for dealing with errors.
 
 use libc::c_void;
+use llvm_sys::LLVMDiagnosticSeverity;
 use llvm_sys::core::{LLVMGetDiagInfoDescription, LLVMGetDiagInfoSeverity};
 use llvm_sys::error_handling::{LLVMInstallFatalErrorHandler, LLVMResetFatalErrorHandler};
 use llvm_sys::prelude::LLVMDiagnosticInfoRef;
-use llvm_sys::LLVMDiagnosticSeverity;
 
 // REVIEW: Maybe it's possible to have a safe wrapper? If we can
 // wrap the provided function input ptr into a &CStr somehow
@@ -19,9 +19,9 @@ use llvm_sys::LLVMDiagnosticSeverity;
 // }
 // and will be called before LLVM calls C exit()
 /// Installs an error handler to be called before LLVM exits.
-pub unsafe fn install_fatal_error_handler(handler: extern "C" fn(*const ::libc::c_char)) { unsafe {
-    LLVMInstallFatalErrorHandler(Some(handler))
-}}
+pub unsafe fn install_fatal_error_handler(handler: extern "C" fn(*const ::libc::c_char)) {
+    unsafe { LLVMInstallFatalErrorHandler(Some(handler)) }
+}
 
 /// Resets LLVM's fatal error handler back to the default
 pub fn reset_fatal_error_handler() {

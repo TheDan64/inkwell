@@ -29,9 +29,9 @@ use std::fmt::{self, Display};
 #[llvm_versions(..=17)]
 use crate::types::FloatType;
 use crate::types::{AsTypeRef, IntType, PointerType};
-use crate::values::traits::AsValueRef;
 #[llvm_versions(..=17)]
 use crate::values::FloatValue;
+use crate::values::traits::AsValueRef;
 #[llvm_versions(..=16)]
 use crate::values::{BasicValue, BasicValueEnum};
 use crate::values::{InstructionValue, PointerValue, Value};
@@ -52,13 +52,15 @@ impl<'ctx> IntValue<'ctx> {
     /// # Safety
     ///
     /// The ref must be valid and of type int.
-    pub unsafe fn new(value: LLVMValueRef) -> Self { unsafe {
-        assert!(!value.is_null());
+    pub unsafe fn new(value: LLVMValueRef) -> Self {
+        unsafe {
+            assert!(!value.is_null());
 
-        IntValue {
-            int_value: Value::new(value),
+            IntValue {
+                int_value: Value::new(value),
+            }
         }
-    }}
+    }
 
     /// Gets the name of an `IntValue`. If the value is a constant, this will
     /// return an empty string.

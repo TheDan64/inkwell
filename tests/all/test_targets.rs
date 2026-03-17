@@ -7,7 +7,7 @@ use inkwell::{AddressSpace, OptimizationLevel};
 use regex::Regex;
 
 use std::env::temp_dir;
-use std::fs::{remove_file, File};
+use std::fs::{File, remove_file};
 use std::io::Read;
 use std::str::from_utf8;
 

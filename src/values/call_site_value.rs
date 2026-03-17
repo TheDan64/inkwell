@@ -1,5 +1,6 @@
 use std::fmt::{self, Display};
 
+use llvm_sys::LLVMTypeKind;
 use llvm_sys::core::LLVMGetCalledFunctionType;
 use llvm_sys::core::{
     LLVMGetCalledValue, LLVMGetInstructionCallConv, LLVMGetTypeKind, LLVMIsTailCall, LLVMSetInstrParamAlignment,
@@ -8,7 +9,6 @@ use llvm_sys::core::{
 #[llvm_versions(18..)]
 use llvm_sys::core::{LLVMGetTailCallKind, LLVMSetTailCallKind};
 use llvm_sys::prelude::LLVMValueRef;
-use llvm_sys::LLVMTypeKind;
 
 use crate::attributes::{Attribute, AttributeLoc};
 use crate::types::FunctionType;
@@ -113,9 +113,9 @@ impl<'ctx> CallSiteValue<'ctx> {
     /// # Safety
     ///
     /// The ref must be valid and of type call site.
-    pub unsafe fn new(value: LLVMValueRef) -> Self { unsafe {
-        CallSiteValue(Value::new(value))
-    }}
+    pub unsafe fn new(value: LLVMValueRef) -> Self {
+        unsafe { CallSiteValue(Value::new(value)) }
+    }
 
     /// Sets whether or not this call is a tail call.
     ///

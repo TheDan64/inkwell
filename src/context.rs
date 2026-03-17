@@ -17,8 +17,8 @@ use llvm_sys::core::{
     LLVMContextDispose, LLVMContextSetDiagnosticHandler, LLVMCreateBuilderInContext, LLVMCreateEnumAttribute,
     LLVMCreateStringAttribute, LLVMDoubleTypeInContext, LLVMFP128TypeInContext, LLVMFloatTypeInContext,
     LLVMGetInlineAsm, LLVMGetMDKindIDInContext, LLVMHalfTypeInContext, LLVMInsertBasicBlockInContext,
-    LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext,
-    LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMMDNodeInContext2, LLVMMDStringInContext2, LLVMMetadataAsValue,
+    LLVMInt1TypeInContext, LLVMInt8TypeInContext, LLVMInt16TypeInContext, LLVMInt32TypeInContext,
+    LLVMInt64TypeInContext, LLVMIntTypeInContext, LLVMMDNodeInContext2, LLVMMDStringInContext2, LLVMMetadataAsValue,
     LLVMMetadataTypeInContext, LLVMModuleCreateWithNameInContext, LLVMPPCFP128TypeInContext, LLVMStructCreateNamed,
     LLVMStructTypeInContext, LLVMValueAsMetadata, LLVMVoidTypeInContext, LLVMX86FP80TypeInContext,
 };
@@ -39,12 +39,13 @@ use llvm_sys::target::{LLVMIntPtrTypeForASInContext, LLVMIntPtrTypeInContext};
 use once_cell::sync::Lazy;
 use std::sync::{Mutex, MutexGuard};
 
+use crate::AddressSpace;
 use crate::attributes::Attribute;
 use crate::basic_block::BasicBlock;
 use crate::builder::Builder;
 use crate::memory_buffer::MemoryBuffer;
 use crate::module::Module;
-use crate::support::{to_c_str, LLVMString};
+use crate::support::{LLVMString, to_c_str};
 use crate::targets::TargetData;
 #[llvm_versions(12..)]
 use crate::types::AnyTypeEnum;
@@ -56,7 +57,6 @@ use crate::values::{
     ArrayValue, AsValueRef, BasicMetadataValueEnum, BasicValueEnum, FunctionValue, MetadataValue, PointerValue,
     StructValue,
 };
-use crate::AddressSpace;
 
 use std::marker::PhantomData;
 use std::mem::forget;
@@ -460,11 +460,13 @@ impl Context {
     /// This function is exposed only for interoperability with other LLVM IR libraries.
     /// It's not intended to be used by most users, hence marked as unsafe.
     /// Use [`Context::create`] instead.
-    pub unsafe fn new(context: LLVMContextRef) -> Self { unsafe {
-        Context {
-            context: ContextImpl::new(context),
+    pub unsafe fn new(context: LLVMContextRef) -> Self {
+        unsafe {
+            Context {
+                context: ContextImpl::new(context),
+            }
         }
-    }}
+    }
 
     /// Creates a new `Context`.
     ///
@@ -1377,12 +1379,14 @@ impl<'ctx> ContextRef<'ctx> {
     ///
     /// This function is exposed only for interoperability with other LLVM IR libraries.
     /// It's not intended to be used by most users, hence marked as unsafe.
-    pub unsafe fn new(context: LLVMContextRef) -> Self { unsafe {
-        ContextRef {
-            context: ContextImpl::new(context),
-            _marker: PhantomData,
+    pub unsafe fn new(context: LLVMContextRef) -> Self {
+        unsafe {
+            ContextRef {
+                context: ContextImpl::new(context),
+                _marker: PhantomData,
+            }
         }
-    }}
+    }
 
     /// Creates a new `Builder` for a `Context`.
     ///

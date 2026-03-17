@@ -59,7 +59,7 @@ pub use crate::values::instruction_value::FastMathFlags;
 #[llvm_versions(18..)]
 pub use crate::values::operand_bundle::OperandBundle;
 
-use crate::support::{to_c_str, LLVMString};
+use crate::support::{LLVMString, to_c_str};
 pub use crate::values::array_value::ArrayValue;
 pub use crate::values::basic_value_use::{BasicValueUse, Operand};
 pub use crate::values::call_site_value::{CallSiteValue, ValueKind};
@@ -74,7 +74,7 @@ pub use crate::values::instruction_value::{
     AtomicError, InstructionOpcode, InstructionValue, InstructionValueError, OperandIter, OperandUseIter,
 };
 pub use crate::values::int_value::IntValue;
-pub use crate::values::metadata_value::{MetadataValue, FIRST_CUSTOM_METADATA_KIND_ID};
+pub use crate::values::metadata_value::{FIRST_CUSTOM_METADATA_KIND_ID, MetadataValue};
 pub use crate::values::phi_value::IncomingIter;
 pub use crate::values::phi_value::PhiValue;
 pub use crate::values::ptr_value::PointerValue;

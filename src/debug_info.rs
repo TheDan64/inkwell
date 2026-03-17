@@ -100,12 +100,12 @@
 //! dibuilder.finalize();
 //! ```
 
+use crate::AddressSpace;
 use crate::basic_block::BasicBlock;
 use crate::context::{AsContextRef, Context};
 pub use crate::debug_info::flags::{DIFlags, DIFlagsConstants};
 use crate::module::Module;
 use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, MetadataValue, PointerValue};
-use crate::AddressSpace;
 
 use llvm_sys::core::LLVMMetadataAsValue;
 
@@ -1110,13 +1110,15 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     /// Construct a placeholders derived type to be used when building debug info with circular references.
     ///
     /// All placeholders must be replaced before calling finalize().
-    pub unsafe fn create_placeholder_derived_type(&self, context: impl AsContextRef<'ctx>) -> DIDerivedType<'ctx> { unsafe {
-        let metadata_ref = LLVMTemporaryMDNode(context.as_ctx_ref(), std::ptr::null_mut(), 0);
-        DIDerivedType {
-            metadata_ref,
-            _marker: PhantomData,
+    pub unsafe fn create_placeholder_derived_type(&self, context: impl AsContextRef<'ctx>) -> DIDerivedType<'ctx> {
+        unsafe {
+            let metadata_ref = LLVMTemporaryMDNode(context.as_ctx_ref(), std::ptr::null_mut(), 0);
+            DIDerivedType {
+                metadata_ref,
+                _marker: PhantomData,
+            }
         }
-    }}
+    }
 
     /// Deletes a placeholder, replacing all uses of it with another derived type.
     ///
@@ -1127,9 +1129,11 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         &self,
         placeholder: DIDerivedType<'ctx>,
         other: DIDerivedType<'ctx>,
-    ) { unsafe {
-        LLVMMetadataReplaceAllUsesWith(placeholder.metadata_ref, other.metadata_ref);
-    }}
+    ) {
+        unsafe {
+            LLVMMetadataReplaceAllUsesWith(placeholder.metadata_ref, other.metadata_ref);
+        }
+    }
 
     /// Construct any deferred debug info descriptors. May generate invalid metadata if debug info
     /// is incomplete. Module/function verification can then fail.

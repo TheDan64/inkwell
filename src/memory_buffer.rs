@@ -8,7 +8,7 @@ use llvm_sys::prelude::LLVMMemoryBufferRef;
 
 use crate::context::Context;
 use crate::object_file::BinaryFile;
-use crate::support::{to_c_str, LLVMString};
+use crate::support::{LLVMString, to_c_str};
 
 use std::marker::PhantomData;
 use std::path::Path;

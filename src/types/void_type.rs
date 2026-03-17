@@ -20,13 +20,15 @@ impl<'ctx> VoidType<'ctx> {
     ///
     /// # Safety
     /// Undefined behavior, if referenced type isn't void type
-    pub unsafe fn new(void_type: LLVMTypeRef) -> Self { unsafe {
-        assert!(!void_type.is_null());
+    pub unsafe fn new(void_type: LLVMTypeRef) -> Self {
+        unsafe {
+            assert!(!void_type.is_null());
 
-        VoidType {
-            void_type: Type::new(void_type),
+            VoidType {
+                void_type: Type::new(void_type),
+            }
         }
-    }}
+    }
 
     // REVIEW: Always false -> const fn?
     /// Gets whether or not this `VoidType` is sized or not. This may always

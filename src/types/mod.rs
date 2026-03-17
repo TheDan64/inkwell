@@ -44,6 +44,7 @@ use llvm_sys::core::LLVMScalableVectorType;
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMGetPoison;
 
+use llvm_sys::LLVMTypeKind;
 #[allow(deprecated)]
 use llvm_sys::core::LLVMArrayType;
 use llvm_sys::core::{
@@ -51,17 +52,16 @@ use llvm_sys::core::{
     LLVMGetTypeKind, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMSizeOf, LLVMTypeIsSized, LLVMVectorType,
 };
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
-use llvm_sys::LLVMTypeKind;
 #[cfg(feature = "experimental")]
 use static_alloc::Bump;
 
 use std::fmt;
 use std::marker::PhantomData;
 
+use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::values::IntValue;
-use crate::AddressSpace;
 
 // Worth noting that types seem to be singletons. At the very least, primitives are.
 // Though this is likely only true per thread since LLVM claims to not be very thread-safe.

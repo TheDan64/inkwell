@@ -8,14 +8,14 @@ use llvm_sys::execution_engine::{
 
 use crate::context::Context;
 use crate::module::Module;
-use crate::support::{to_c_str, LLVMString};
+use crate::support::{LLVMString, to_c_str};
 use crate::targets::TargetData;
 use crate::values::{AnyValue, AsValueRef, FunctionValue, GenericValue};
 
 use std::error::Error;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::marker::PhantomData;
-use std::mem::{forget, size_of, transmute_copy, MaybeUninit};
+use std::mem::{MaybeUninit, forget, size_of, transmute_copy};
 use std::ops::Deref;
 use std::rc::Rc;
 
@@ -95,18 +95,20 @@ pub struct ExecutionEngine<'ctx> {
 }
 
 impl<'ctx> ExecutionEngine<'ctx> {
-    pub unsafe fn new(execution_engine: Rc<LLVMExecutionEngineRef>, jit_mode: bool) -> Self { unsafe {
-        assert!(!execution_engine.is_null());
+    pub unsafe fn new(execution_engine: Rc<LLVMExecutionEngineRef>, jit_mode: bool) -> Self {
+        unsafe {
+            assert!(!execution_engine.is_null());
 
-        // REVIEW: Will we have to do this for LLVMGetExecutionEngineTargetMachine too?
-        let target_data = LLVMGetExecutionEngineTargetData(*execution_engine);
+            // REVIEW: Will we have to do this for LLVMGetExecutionEngineTargetMachine too?
+            let target_data = LLVMGetExecutionEngineTargetData(*execution_engine);
 
-        ExecutionEngine {
-            execution_engine: Some(ExecEngineInner(execution_engine, PhantomData)),
-            target_data: Some(TargetData::new(target_data)),
-            jit_mode,
+            ExecutionEngine {
+                execution_engine: Some(ExecEngineInner(execution_engine, PhantomData)),
+                target_data: Some(TargetData::new(target_data)),
+                jit_mode,
+            }
         }
-    }}
+    }
 
     /// Acquires the underlying raw pointer belonging to this `ExecutionEngine` type.
     pub fn as_mut_ptr(&self) -> LLVMExecutionEngineRef {
@@ -213,7 +215,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
     pub fn remove_module(&self, module: &Module<'ctx>) -> Result<(), RemoveModuleError> {
         match *module.owned_by_ee.borrow() {
             Some(ref ee) if ee.execution_engine_inner() != self.execution_engine_inner() => {
-                return Err(RemoveModuleError::IncorrectModuleOwner)
+                return Err(RemoveModuleError::IncorrectModuleOwner);
             },
             None => return Err(RemoveModuleError::ModuleNotOwned),
             _ => (),
@@ -305,26 +307,28 @@ impl<'ctx> ExecutionEngine<'ctx> {
     pub unsafe fn get_function<F>(&self, fn_name: &str) -> Result<JitFunction<'ctx, F>, FunctionLookupError>
     where
         F: UnsafeFunctionPointer,
-    { unsafe {
-        if !self.jit_mode {
-            return Err(FunctionLookupError::JITNotEnabled);
+    {
+        unsafe {
+            if !self.jit_mode {
+                return Err(FunctionLookupError::JITNotEnabled);
+            }
+
+            let address = self.get_function_address(fn_name)?;
+
+            assert_eq!(
+                size_of::<F>(),
+                size_of::<usize>(),
+                "The type `F` must have the same size as a function pointer"
+            );
+
+            let execution_engine = self.execution_engine.as_ref().expect(EE_INNER_PANIC);
+
+            Ok(JitFunction {
+                _execution_engine: execution_engine.clone(),
+                inner: transmute_copy(&address),
+            })
         }
-
-        let address = self.get_function_address(fn_name)?;
-
-        assert_eq!(
-            size_of::<F>(),
-            size_of::<usize>(),
-            "The type `F` must have the same size as a function pointer"
-        );
-
-        let execution_engine = self.execution_engine.as_ref().expect(EE_INNER_PANIC);
-
-        Ok(JitFunction {
-            _execution_engine: execution_engine.clone(),
-            inner: transmute_copy(&address),
-        })
-    }}
+    }
 
     /// Attempts to look up a function's address by its name. May return Err if the function cannot be
     /// found or some other unknown error has occurred.
@@ -381,36 +385,40 @@ impl<'ctx> ExecutionEngine<'ctx> {
         &self,
         function: FunctionValue<'ctx>,
         args: &[&GenericValue<'ctx>],
-    ) -> GenericValue<'ctx> { unsafe {
-        let mut args: Vec<LLVMGenericValueRef> = args.iter().map(|val| val.generic_value).collect();
+    ) -> GenericValue<'ctx> {
+        unsafe {
+            let mut args: Vec<LLVMGenericValueRef> = args.iter().map(|val| val.generic_value).collect();
 
-        let value = LLVMRunFunction(
-            self.execution_engine_inner(),
-            function.as_value_ref(),
-            args.len() as u32,
-            args.as_mut_ptr(),
-        ); // REVIEW: usize to u32 ok??
+            let value = LLVMRunFunction(
+                self.execution_engine_inner(),
+                function.as_value_ref(),
+                args.len() as u32,
+                args.as_mut_ptr(),
+            ); // REVIEW: usize to u32 ok??
 
-        GenericValue::new(value)
-    }}
+            GenericValue::new(value)
+        }
+    }
 
     // TODOC: Marked as unsafe because input function could very well do something unsafe. It's up to the caller
     // to ensure that doesn't happen by defining their function correctly.
     // SubType: Only for JIT EEs?
-    pub unsafe fn run_function_as_main(&self, function: FunctionValue<'ctx>, args: &[&str]) -> c_int { unsafe {
-        let cstring_args: Vec<_> = args.iter().map(|&arg| to_c_str(arg)).collect();
-        let raw_args: Vec<*const _> = cstring_args.iter().map(|arg| arg.as_ptr()).collect();
+    pub unsafe fn run_function_as_main(&self, function: FunctionValue<'ctx>, args: &[&str]) -> c_int {
+        unsafe {
+            let cstring_args: Vec<_> = args.iter().map(|&arg| to_c_str(arg)).collect();
+            let raw_args: Vec<*const _> = cstring_args.iter().map(|arg| arg.as_ptr()).collect();
 
-        let environment_variables = []; // TODO: Support envp. Likely needs to be null terminated
+            let environment_variables = []; // TODO: Support envp. Likely needs to be null terminated
 
-        LLVMRunFunctionAsMain(
-            self.execution_engine_inner(),
-            function.as_value_ref(),
-            raw_args.len() as u32,
-            raw_args.as_ptr(),
-            environment_variables.as_ptr(),
-        ) // REVIEW: usize to u32 cast ok??
-    }}
+            LLVMRunFunctionAsMain(
+                self.execution_engine_inner(),
+                function.as_value_ref(),
+                raw_args.len() as u32,
+                raw_args.as_ptr(),
+                environment_variables.as_ptr(),
+            ) // REVIEW: usize to u32 cast ok??
+        }
+    }
 
     pub fn free_fn_machine_code(&self, function: FunctionValue<'ctx>) {
         unsafe { LLVMFreeMachineCodeForFunction(self.execution_engine_inner(), function.as_value_ref()) }
@@ -659,8 +667,8 @@ pub mod experimental {
 
     #[test]
     fn test_mangled_str() {
-        use crate::targets::{CodeModel, InitializationConfig, RelocMode, Target};
         use crate::OptimizationLevel;
+        use crate::targets::{CodeModel, InitializationConfig, RelocMode, Target};
 
         Target::initialize_native(&InitializationConfig::default()).unwrap();
 

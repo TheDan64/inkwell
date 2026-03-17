@@ -5,10 +5,10 @@ use crate::types::AsTypeRef;
 use crate::values::AsValueRef;
 use crate::values::{AnyValue, FunctionValue, PointerValue};
 
+use llvm_sys::LLVMTypeKind;
 use llvm_sys::core::{LLVMGetElementType, LLVMGetTypeKind, LLVMTypeOf};
 use llvm_sys::prelude::LLVMTypeRef;
 use llvm_sys::prelude::LLVMValueRef;
-use llvm_sys::LLVMTypeKind;
 
 /// Either [FunctionValue] or [PointerValue].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

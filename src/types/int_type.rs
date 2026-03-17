@@ -4,14 +4,14 @@ use llvm_sys::core::{
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfInt;
 use llvm_sys::prelude::LLVMTypeRef;
 
+use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
-use crate::types::traits::AsTypeRef;
 #[llvm_versions(12..)]
 use crate::types::ScalableVectorType;
+use crate::types::traits::AsTypeRef;
 use crate::types::{ArrayType, FunctionType, PointerType, Type, VectorType};
 use crate::values::{ArrayValue, GenericValue, IntValue};
-use crate::AddressSpace;
 
 use crate::types::enums::BasicMetadataTypeEnum;
 use std::convert::TryFrom;
@@ -74,13 +74,15 @@ impl<'ctx> IntType<'ctx> {
     ///
     /// # Safety
     /// Undefined behavior, if referenced type isn't int type
-    pub unsafe fn new(int_type: LLVMTypeRef) -> Self { unsafe {
-        assert!(!int_type.is_null());
+    pub unsafe fn new(int_type: LLVMTypeRef) -> Self {
+        unsafe {
+            assert!(!int_type.is_null());
 
-        IntType {
-            int_type: Type::new(int_type),
+            IntType {
+                int_type: Type::new(int_type),
+            }
         }
-    }}
+    }
 
     /// Creates an `IntValue` representing a constant value of this `IntType`. It will be automatically assigned this `IntType`'s `Context`.
     ///

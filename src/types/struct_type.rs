@@ -8,13 +8,13 @@ use std::ffi::CStr;
 use std::fmt::{self, Display};
 use std::mem::forget;
 
+use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::traits::AsTypeRef;
 use crate::types::{ArrayType, BasicTypeEnum, FunctionType, PointerType, Type};
 use crate::values::{ArrayValue, AsValueRef, BasicValueEnum, IntValue, StructValue};
-use crate::AddressSpace;
 
 /// A `StructType` is the type of a heterogeneous container of types.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -27,13 +27,15 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// # Safety
     /// Undefined behavior, if referenced type isn't struct type
-    pub unsafe fn new(struct_type: LLVMTypeRef) -> Self { unsafe {
-        assert!(!struct_type.is_null());
+    pub unsafe fn new(struct_type: LLVMTypeRef) -> Self {
+        unsafe {
+            assert!(!struct_type.is_null());
 
-        StructType {
-            struct_type: Type::new(struct_type),
+            StructType {
+                struct_type: Type::new(struct_type),
+            }
         }
-    }}
+    }
 
     /// Gets the type of a field belonging to this `StructType`.
     ///

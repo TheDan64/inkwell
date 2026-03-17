@@ -1,10 +1,10 @@
+use inkwell::OptimizationLevel;
 use inkwell::context::Context;
 use inkwell::module::Module;
 use inkwell::object_file::LLVMBinaryType;
 use inkwell::targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine, TargetTriple};
 use inkwell::types::IntType;
 use inkwell::values::BasicValue;
-use inkwell::OptimizationLevel;
 
 fn ptr_sized_int_type<'ctx>(target_machine: &TargetMachine, context: &'ctx Context) -> IntType<'ctx> {
     let target_data = target_machine.get_target_data();
