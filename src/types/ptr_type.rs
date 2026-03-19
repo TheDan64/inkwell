@@ -3,16 +3,16 @@ use llvm_sys::core::LLVMGetPointerAddressSpace;
 use llvm_sys::core::LLVMPointerTypeIsOpaque;
 use llvm_sys::prelude::LLVMTypeRef;
 
+use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
-use crate::types::traits::AsTypeRef;
 #[cfg(feature = "typed-pointers")]
 use crate::types::AnyTypeEnum;
 #[llvm_versions(12..)]
 use crate::types::ScalableVectorType;
+use crate::types::traits::AsTypeRef;
 use crate::types::{ArrayType, FunctionType, Type, VectorType};
 use crate::values::{ArrayValue, IntValue, PointerValue};
-use crate::AddressSpace;
 
 use crate::types::enums::BasicMetadataTypeEnum;
 use std::fmt::{self, Display};
@@ -29,10 +29,12 @@ impl<'ctx> PointerType<'ctx> {
     /// # Safety
     /// Undefined behavior, if referenced type isn't pointer type
     pub unsafe fn new(ptr_type: LLVMTypeRef) -> Self {
-        assert!(!ptr_type.is_null());
+        unsafe {
+            assert!(!ptr_type.is_null());
 
-        PointerType {
-            ptr_type: Type::new(ptr_type),
+            PointerType {
+                ptr_type: Type::new(ptr_type),
+            }
         }
     }
 

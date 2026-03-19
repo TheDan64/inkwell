@@ -20,7 +20,7 @@ use crate::values::traits::AsValueRef;
 use crate::values::{InstructionValue, Value};
 
 #[llvm_versions(..=18)]
-use crate::{values::IntValue, FloatPredicate};
+use crate::{FloatPredicate, values::IntValue};
 
 use super::AnyValue;
 
@@ -36,10 +36,12 @@ impl<'ctx> FloatValue<'ctx> {
     ///
     /// The ref must be valid and of type float.
     pub unsafe fn new(value: LLVMValueRef) -> Self {
-        assert!(!value.is_null());
+        unsafe {
+            assert!(!value.is_null());
 
-        FloatValue {
-            float_value: Value::new(value),
+            FloatValue {
+                float_value: Value::new(value),
+            }
         }
     }
 

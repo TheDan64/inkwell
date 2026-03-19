@@ -18,11 +18,11 @@
 use std::collections::HashMap;
 use std::io::{self, Write};
 
+use inkwell::OptimizationLevel;
 use inkwell::context::Context;
 use inkwell::module::Module;
 #[llvm_versions(..=15)]
 use inkwell::passes::PassManager;
-use inkwell::OptimizationLevel;
 #[llvm_versions(16..)]
 use inkwell::{
     passes::PassBuilderOptions,
@@ -49,13 +49,13 @@ macro_rules! print_flush {
     };
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn putchard(x: f64) -> f64 {
     print_flush!("{}", x as u8 as char);
     x
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn printd(x: f64) -> f64 {
     println!("{x}");
     x

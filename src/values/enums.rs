@@ -79,62 +79,66 @@ impl<'ctx> AnyValueEnum<'ctx> {
     ///
     /// The ref must be valid and of supported enum type options ([LLVMTypeKind]).
     pub unsafe fn new(value: LLVMValueRef) -> Self {
-        match LLVMGetTypeKind(LLVMTypeOf(value)) {
-            LLVMTypeKind::LLVMFloatTypeKind
-            | LLVMTypeKind::LLVMFP128TypeKind
-            | LLVMTypeKind::LLVMDoubleTypeKind
-            | LLVMTypeKind::LLVMHalfTypeKind
-            | LLVMTypeKind::LLVMX86_FP80TypeKind
-            | LLVMTypeKind::LLVMPPC_FP128TypeKind => AnyValueEnum::FloatValue(FloatValue::new(value)),
-            #[cfg(any(
-                feature = "llvm11-0",
-                feature = "llvm12-0",
-                feature = "llvm13-0",
-                feature = "llvm14-0",
-                feature = "llvm15-0",
-                feature = "llvm16-0",
-                feature = "llvm17-0",
-                feature = "llvm18-1",
-                feature = "llvm19-1",
-                feature = "llvm20-1",
-                feature = "llvm21-1",
-                feature = "llvm22-1",
-            ))]
-            LLVMTypeKind::LLVMBFloatTypeKind => AnyValueEnum::FloatValue(FloatValue::new(value)),
-            LLVMTypeKind::LLVMIntegerTypeKind => AnyValueEnum::IntValue(IntValue::new(value)),
-            LLVMTypeKind::LLVMStructTypeKind => AnyValueEnum::StructValue(StructValue::new(value)),
-            LLVMTypeKind::LLVMPointerTypeKind => match LLVMGetValueKind(value) {
-                LLVMValueKind::LLVMFunctionValueKind => AnyValueEnum::FunctionValue(FunctionValue::new(value).unwrap()),
-                _ => AnyValueEnum::PointerValue(PointerValue::new(value)),
-            },
-            LLVMTypeKind::LLVMArrayTypeKind => AnyValueEnum::ArrayValue(ArrayValue::new(value)),
-            LLVMTypeKind::LLVMVectorTypeKind => AnyValueEnum::VectorValue(VectorValue::new(value)),
-            #[cfg(any(
-                feature = "llvm11-0",
-                feature = "llvm12-0",
-                feature = "llvm13-0",
-                feature = "llvm14-0",
-                feature = "llvm15-0",
-                feature = "llvm16-0",
-                feature = "llvm17-0",
-                feature = "llvm18-1",
-                feature = "llvm19-1",
-                feature = "llvm20-1",
-                feature = "llvm21-1",
-                feature = "llvm22-1",
-            ))]
-            LLVMTypeKind::LLVMScalableVectorTypeKind => {
-                AnyValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))
-            },
-            LLVMTypeKind::LLVMFunctionTypeKind => AnyValueEnum::FunctionValue(FunctionValue::new(value).unwrap()),
-            LLVMTypeKind::LLVMVoidTypeKind => {
-                if LLVMIsAInstruction(value).is_null() {
-                    panic!("Void value isn't an instruction.");
-                }
-                AnyValueEnum::InstructionValue(InstructionValue::new(value))
-            },
-            LLVMTypeKind::LLVMMetadataTypeKind => panic!("Metadata values are not supported as AnyValue's."),
-            _ => panic!("The given type is not supported."),
+        unsafe {
+            match LLVMGetTypeKind(LLVMTypeOf(value)) {
+                LLVMTypeKind::LLVMFloatTypeKind
+                | LLVMTypeKind::LLVMFP128TypeKind
+                | LLVMTypeKind::LLVMDoubleTypeKind
+                | LLVMTypeKind::LLVMHalfTypeKind
+                | LLVMTypeKind::LLVMX86_FP80TypeKind
+                | LLVMTypeKind::LLVMPPC_FP128TypeKind => AnyValueEnum::FloatValue(FloatValue::new(value)),
+                #[cfg(any(
+                    feature = "llvm11-0",
+                    feature = "llvm12-0",
+                    feature = "llvm13-0",
+                    feature = "llvm14-0",
+                    feature = "llvm15-0",
+                    feature = "llvm16-0",
+                    feature = "llvm17-0",
+                    feature = "llvm18-1",
+                    feature = "llvm19-1",
+                    feature = "llvm20-1",
+                    feature = "llvm21-1",
+                    feature = "llvm22-1",
+                ))]
+                LLVMTypeKind::LLVMBFloatTypeKind => AnyValueEnum::FloatValue(FloatValue::new(value)),
+                LLVMTypeKind::LLVMIntegerTypeKind => AnyValueEnum::IntValue(IntValue::new(value)),
+                LLVMTypeKind::LLVMStructTypeKind => AnyValueEnum::StructValue(StructValue::new(value)),
+                LLVMTypeKind::LLVMPointerTypeKind => match LLVMGetValueKind(value) {
+                    LLVMValueKind::LLVMFunctionValueKind => {
+                        AnyValueEnum::FunctionValue(FunctionValue::new(value).unwrap())
+                    },
+                    _ => AnyValueEnum::PointerValue(PointerValue::new(value)),
+                },
+                LLVMTypeKind::LLVMArrayTypeKind => AnyValueEnum::ArrayValue(ArrayValue::new(value)),
+                LLVMTypeKind::LLVMVectorTypeKind => AnyValueEnum::VectorValue(VectorValue::new(value)),
+                #[cfg(any(
+                    feature = "llvm11-0",
+                    feature = "llvm12-0",
+                    feature = "llvm13-0",
+                    feature = "llvm14-0",
+                    feature = "llvm15-0",
+                    feature = "llvm16-0",
+                    feature = "llvm17-0",
+                    feature = "llvm18-1",
+                    feature = "llvm19-1",
+                    feature = "llvm20-1",
+                    feature = "llvm21-1",
+                    feature = "llvm22-1",
+                ))]
+                LLVMTypeKind::LLVMScalableVectorTypeKind => {
+                    AnyValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))
+                },
+                LLVMTypeKind::LLVMFunctionTypeKind => AnyValueEnum::FunctionValue(FunctionValue::new(value).unwrap()),
+                LLVMTypeKind::LLVMVoidTypeKind => {
+                    if LLVMIsAInstruction(value).is_null() {
+                        panic!("Void value isn't an instruction.");
+                    }
+                    AnyValueEnum::InstructionValue(InstructionValue::new(value))
+                },
+                LLVMTypeKind::LLVMMetadataTypeKind => panic!("Metadata values are not supported as AnyValue's."),
+                _ => panic!("The given type is not supported."),
+            }
         }
     }
 
@@ -280,51 +284,53 @@ impl<'ctx> BasicValueEnum<'ctx> {
     ///
     /// The ref must be valid and of supported enum type options ([LLVMTypeKind]).
     pub unsafe fn new(value: LLVMValueRef) -> Self {
-        match LLVMGetTypeKind(LLVMTypeOf(value)) {
-            LLVMTypeKind::LLVMFloatTypeKind
-            | LLVMTypeKind::LLVMFP128TypeKind
-            | LLVMTypeKind::LLVMDoubleTypeKind
-            | LLVMTypeKind::LLVMHalfTypeKind
-            | LLVMTypeKind::LLVMX86_FP80TypeKind
-            | LLVMTypeKind::LLVMPPC_FP128TypeKind => BasicValueEnum::FloatValue(FloatValue::new(value)),
-            #[cfg(any(
-                feature = "llvm11-0",
-                feature = "llvm12-0",
-                feature = "llvm13-0",
-                feature = "llvm14-0",
-                feature = "llvm15-0",
-                feature = "llvm16-0",
-                feature = "llvm17-0",
-                feature = "llvm18-1",
-                feature = "llvm19-1",
-                feature = "llvm20-1",
-                feature = "llvm21-1",
-                feature = "llvm22-1",
-            ))]
-            LLVMTypeKind::LLVMBFloatTypeKind => BasicValueEnum::FloatValue(FloatValue::new(value)),
-            LLVMTypeKind::LLVMIntegerTypeKind => BasicValueEnum::IntValue(IntValue::new(value)),
-            LLVMTypeKind::LLVMStructTypeKind => BasicValueEnum::StructValue(StructValue::new(value)),
-            LLVMTypeKind::LLVMPointerTypeKind => BasicValueEnum::PointerValue(PointerValue::new(value)),
-            LLVMTypeKind::LLVMArrayTypeKind => BasicValueEnum::ArrayValue(ArrayValue::new(value)),
-            LLVMTypeKind::LLVMVectorTypeKind => BasicValueEnum::VectorValue(VectorValue::new(value)),
-            #[cfg(any(
-                feature = "llvm11-0",
-                feature = "llvm12-0",
-                feature = "llvm13-0",
-                feature = "llvm14-0",
-                feature = "llvm15-0",
-                feature = "llvm16-0",
-                feature = "llvm17-0",
-                feature = "llvm18-1",
-                feature = "llvm19-1",
-                feature = "llvm20-1",
-                feature = "llvm21-1",
-                feature = "llvm22-1",
-            ))]
-            LLVMTypeKind::LLVMScalableVectorTypeKind => {
-                BasicValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))
-            },
-            _ => unreachable!("The given type is not a basic type."),
+        unsafe {
+            match LLVMGetTypeKind(LLVMTypeOf(value)) {
+                LLVMTypeKind::LLVMFloatTypeKind
+                | LLVMTypeKind::LLVMFP128TypeKind
+                | LLVMTypeKind::LLVMDoubleTypeKind
+                | LLVMTypeKind::LLVMHalfTypeKind
+                | LLVMTypeKind::LLVMX86_FP80TypeKind
+                | LLVMTypeKind::LLVMPPC_FP128TypeKind => BasicValueEnum::FloatValue(FloatValue::new(value)),
+                #[cfg(any(
+                    feature = "llvm11-0",
+                    feature = "llvm12-0",
+                    feature = "llvm13-0",
+                    feature = "llvm14-0",
+                    feature = "llvm15-0",
+                    feature = "llvm16-0",
+                    feature = "llvm17-0",
+                    feature = "llvm18-1",
+                    feature = "llvm19-1",
+                    feature = "llvm20-1",
+                    feature = "llvm21-1",
+                    feature = "llvm22-1",
+                ))]
+                LLVMTypeKind::LLVMBFloatTypeKind => BasicValueEnum::FloatValue(FloatValue::new(value)),
+                LLVMTypeKind::LLVMIntegerTypeKind => BasicValueEnum::IntValue(IntValue::new(value)),
+                LLVMTypeKind::LLVMStructTypeKind => BasicValueEnum::StructValue(StructValue::new(value)),
+                LLVMTypeKind::LLVMPointerTypeKind => BasicValueEnum::PointerValue(PointerValue::new(value)),
+                LLVMTypeKind::LLVMArrayTypeKind => BasicValueEnum::ArrayValue(ArrayValue::new(value)),
+                LLVMTypeKind::LLVMVectorTypeKind => BasicValueEnum::VectorValue(VectorValue::new(value)),
+                #[cfg(any(
+                    feature = "llvm11-0",
+                    feature = "llvm12-0",
+                    feature = "llvm13-0",
+                    feature = "llvm14-0",
+                    feature = "llvm15-0",
+                    feature = "llvm16-0",
+                    feature = "llvm17-0",
+                    feature = "llvm18-1",
+                    feature = "llvm19-1",
+                    feature = "llvm20-1",
+                    feature = "llvm21-1",
+                    feature = "llvm22-1",
+                ))]
+                LLVMTypeKind::LLVMScalableVectorTypeKind => {
+                    BasicValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))
+                },
+                _ => unreachable!("The given type is not a basic type."),
+            }
         }
     }
 
@@ -457,10 +463,12 @@ impl<'ctx> AggregateValueEnum<'ctx> {
     ///
     /// The ref must be valid and of supported aggregate type enum options ([LLVMTypeKind]).
     pub unsafe fn new(value: LLVMValueRef) -> Self {
-        match LLVMGetTypeKind(LLVMTypeOf(value)) {
-            LLVMTypeKind::LLVMArrayTypeKind => AggregateValueEnum::ArrayValue(ArrayValue::new(value)),
-            LLVMTypeKind::LLVMStructTypeKind => AggregateValueEnum::StructValue(StructValue::new(value)),
-            _ => unreachable!("The given type is not an aggregate type."),
+        unsafe {
+            match LLVMGetTypeKind(LLVMTypeOf(value)) {
+                LLVMTypeKind::LLVMArrayTypeKind => AggregateValueEnum::ArrayValue(ArrayValue::new(value)),
+                LLVMTypeKind::LLVMStructTypeKind => AggregateValueEnum::StructValue(StructValue::new(value)),
+                _ => unreachable!("The given type is not an aggregate type."),
+            }
         }
     }
 
@@ -493,52 +501,54 @@ impl<'ctx> AggregateValueEnum<'ctx> {
 
 impl<'ctx> BasicMetadataValueEnum<'ctx> {
     pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
-        match LLVMGetTypeKind(LLVMTypeOf(value)) {
-            LLVMTypeKind::LLVMFloatTypeKind
-            | LLVMTypeKind::LLVMFP128TypeKind
-            | LLVMTypeKind::LLVMDoubleTypeKind
-            | LLVMTypeKind::LLVMHalfTypeKind
-            | LLVMTypeKind::LLVMX86_FP80TypeKind
-            | LLVMTypeKind::LLVMPPC_FP128TypeKind => BasicMetadataValueEnum::FloatValue(FloatValue::new(value)),
-            #[cfg(any(
-                feature = "llvm11-0",
-                feature = "llvm12-0",
-                feature = "llvm13-0",
-                feature = "llvm14-0",
-                feature = "llvm15-0",
-                feature = "llvm16-0",
-                feature = "llvm17-0",
-                feature = "llvm18-1",
-                feature = "llvm19-1",
-                feature = "llvm20-1",
-                feature = "llvm21-1",
-                feature = "llvm22-1",
-            ))]
-            LLVMTypeKind::LLVMBFloatTypeKind => BasicMetadataValueEnum::FloatValue(FloatValue::new(value)),
-            LLVMTypeKind::LLVMIntegerTypeKind => BasicMetadataValueEnum::IntValue(IntValue::new(value)),
-            LLVMTypeKind::LLVMStructTypeKind => BasicMetadataValueEnum::StructValue(StructValue::new(value)),
-            LLVMTypeKind::LLVMPointerTypeKind => BasicMetadataValueEnum::PointerValue(PointerValue::new(value)),
-            LLVMTypeKind::LLVMArrayTypeKind => BasicMetadataValueEnum::ArrayValue(ArrayValue::new(value)),
-            LLVMTypeKind::LLVMVectorTypeKind => BasicMetadataValueEnum::VectorValue(VectorValue::new(value)),
-            #[cfg(any(
-                feature = "llvm11-0",
-                feature = "llvm12-0",
-                feature = "llvm13-0",
-                feature = "llvm14-0",
-                feature = "llvm15-0",
-                feature = "llvm16-0",
-                feature = "llvm17-0",
-                feature = "llvm18-1",
-                feature = "llvm19-1",
-                feature = "llvm20-1",
-                feature = "llvm21-1",
-                feature = "llvm22-1",
-            ))]
-            LLVMTypeKind::LLVMScalableVectorTypeKind => {
-                BasicMetadataValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))
-            },
-            LLVMTypeKind::LLVMMetadataTypeKind => BasicMetadataValueEnum::MetadataValue(MetadataValue::new(value)),
-            _ => unreachable!("Unsupported type"),
+        unsafe {
+            match LLVMGetTypeKind(LLVMTypeOf(value)) {
+                LLVMTypeKind::LLVMFloatTypeKind
+                | LLVMTypeKind::LLVMFP128TypeKind
+                | LLVMTypeKind::LLVMDoubleTypeKind
+                | LLVMTypeKind::LLVMHalfTypeKind
+                | LLVMTypeKind::LLVMX86_FP80TypeKind
+                | LLVMTypeKind::LLVMPPC_FP128TypeKind => BasicMetadataValueEnum::FloatValue(FloatValue::new(value)),
+                #[cfg(any(
+                    feature = "llvm11-0",
+                    feature = "llvm12-0",
+                    feature = "llvm13-0",
+                    feature = "llvm14-0",
+                    feature = "llvm15-0",
+                    feature = "llvm16-0",
+                    feature = "llvm17-0",
+                    feature = "llvm18-1",
+                    feature = "llvm19-1",
+                    feature = "llvm20-1",
+                    feature = "llvm21-1",
+                    feature = "llvm22-1",
+                ))]
+                LLVMTypeKind::LLVMBFloatTypeKind => BasicMetadataValueEnum::FloatValue(FloatValue::new(value)),
+                LLVMTypeKind::LLVMIntegerTypeKind => BasicMetadataValueEnum::IntValue(IntValue::new(value)),
+                LLVMTypeKind::LLVMStructTypeKind => BasicMetadataValueEnum::StructValue(StructValue::new(value)),
+                LLVMTypeKind::LLVMPointerTypeKind => BasicMetadataValueEnum::PointerValue(PointerValue::new(value)),
+                LLVMTypeKind::LLVMArrayTypeKind => BasicMetadataValueEnum::ArrayValue(ArrayValue::new(value)),
+                LLVMTypeKind::LLVMVectorTypeKind => BasicMetadataValueEnum::VectorValue(VectorValue::new(value)),
+                #[cfg(any(
+                    feature = "llvm11-0",
+                    feature = "llvm12-0",
+                    feature = "llvm13-0",
+                    feature = "llvm14-0",
+                    feature = "llvm15-0",
+                    feature = "llvm16-0",
+                    feature = "llvm17-0",
+                    feature = "llvm18-1",
+                    feature = "llvm19-1",
+                    feature = "llvm20-1",
+                    feature = "llvm21-1",
+                    feature = "llvm22-1",
+                ))]
+                LLVMTypeKind::LLVMScalableVectorTypeKind => {
+                    BasicMetadataValueEnum::ScalableVectorValue(ScalableVectorValue::new(value))
+                },
+                LLVMTypeKind::LLVMMetadataTypeKind => BasicMetadataValueEnum::MetadataValue(MetadataValue::new(value)),
+                _ => unreachable!("Unsupported type"),
+            }
         }
     }
 

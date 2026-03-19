@@ -10,7 +10,7 @@ use inkwell::types::{AnyTypeEnum, StringRadix, VectorType};
 use inkwell::values::CallSiteValue;
 #[llvm_versions(18..)]
 use inkwell::values::OperandBundle;
-use inkwell::values::{AnyValue, BasicValue, InstructionOpcode::*, FIRST_CUSTOM_METADATA_KIND_ID};
+use inkwell::values::{AnyValue, BasicValue, FIRST_CUSTOM_METADATA_KIND_ID, InstructionOpcode::*};
 use inkwell::{AddressSpace, DLLStorageClass, GlobalVisibility, ThreadLocalMode};
 
 #[llvm_versions(18..)]

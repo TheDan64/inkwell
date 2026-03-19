@@ -40,13 +40,15 @@ impl<'ctx> FunctionValue<'ctx> {
     ///
     /// The ref must be valid and of type function.
     pub unsafe fn new(value: LLVMValueRef) -> Option<Self> {
-        if value.is_null() || LLVMIsAFunction(value).is_null() {
-            return None;
-        }
+        unsafe {
+            if value.is_null() || LLVMIsAFunction(value).is_null() {
+                return None;
+            }
 
-        Some(FunctionValue {
-            fn_value: Value::new(value),
-        })
+            Some(FunctionValue {
+                fn_value: Value::new(value),
+            })
+        }
     }
 
     pub fn get_linkage(self) -> Linkage {
@@ -201,7 +203,7 @@ impl<'ctx> FunctionValue<'ctx> {
 
     // TODO: Look for ways to prevent use after delete but maybe not possible
     pub unsafe fn delete(self) {
-        LLVMDeleteFunction(self.as_value_ref())
+        unsafe { LLVMDeleteFunction(self.as_value_ref()) }
     }
 
     pub fn get_type(self) -> FunctionType<'ctx> {

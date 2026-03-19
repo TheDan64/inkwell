@@ -26,10 +26,12 @@ impl<'ctx> PhiValue<'ctx> {
     ///
     /// The ref must be valid and of type phi.
     pub unsafe fn new(value: LLVMValueRef) -> Self {
-        assert!(!value.is_null());
+        unsafe {
+            assert!(!value.is_null());
 
-        PhiValue {
-            phi_value: Value::new(value),
+            PhiValue {
+                phi_value: Value::new(value),
+            }
         }
     }
 

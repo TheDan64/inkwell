@@ -100,12 +100,12 @@
 //! dibuilder.finalize();
 //! ```
 
+use crate::AddressSpace;
 use crate::basic_block::BasicBlock;
 use crate::context::{AsContextRef, Context};
 pub use crate::debug_info::flags::{DIFlags, DIFlagsConstants};
 use crate::module::Module;
 use crate::values::{AsValueRef, BasicValueEnum, InstructionValue, MetadataValue, PointerValue};
-use crate::AddressSpace;
 
 use llvm_sys::core::LLVMMetadataAsValue;
 
@@ -1111,10 +1111,12 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     ///
     /// All placeholders must be replaced before calling finalize().
     pub unsafe fn create_placeholder_derived_type(&self, context: impl AsContextRef<'ctx>) -> DIDerivedType<'ctx> {
-        let metadata_ref = LLVMTemporaryMDNode(context.as_ctx_ref(), std::ptr::null_mut(), 0);
-        DIDerivedType {
-            metadata_ref,
-            _marker: PhantomData,
+        unsafe {
+            let metadata_ref = LLVMTemporaryMDNode(context.as_ctx_ref(), std::ptr::null_mut(), 0);
+            DIDerivedType {
+                metadata_ref,
+                _marker: PhantomData,
+            }
         }
     }
 
@@ -1128,7 +1130,9 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         placeholder: DIDerivedType<'ctx>,
         other: DIDerivedType<'ctx>,
     ) {
-        LLVMMetadataReplaceAllUsesWith(placeholder.metadata_ref, other.metadata_ref);
+        unsafe {
+            LLVMMetadataReplaceAllUsesWith(placeholder.metadata_ref, other.metadata_ref);
+        }
     }
 
     /// Construct any deferred debug info descriptors. May generate invalid metadata if debug info

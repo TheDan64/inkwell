@@ -50,11 +50,13 @@ impl<'ctx> MetadataValue<'ctx> {
     ///
     /// The ref must be valid and of type metadata.
     pub unsafe fn new(value: LLVMValueRef) -> Self {
-        assert!(!value.is_null());
-        assert!(!LLVMIsAMDNode(value).is_null() || !LLVMIsAMDString(value).is_null());
+        unsafe {
+            assert!(!value.is_null());
+            assert!(!LLVMIsAMDNode(value).is_null() || !LLVMIsAMDString(value).is_null());
 
-        MetadataValue {
-            metadata_value: Value::new(value),
+            MetadataValue {
+                metadata_value: Value::new(value),
+            }
         }
     }
 

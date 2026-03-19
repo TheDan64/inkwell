@@ -30,10 +30,12 @@ impl<'ctx> PointerValue<'ctx> {
     ///
     /// The ref must be valid and of type pointer.
     pub unsafe fn new(value: LLVMValueRef) -> Self {
-        assert!(!value.is_null());
+        unsafe {
+            assert!(!value.is_null());
 
-        PointerValue {
-            ptr_value: Value::new(value),
+            PointerValue {
+                ptr_value: Value::new(value),
+            }
         }
     }
 
@@ -87,73 +89,79 @@ impl<'ctx> PointerValue<'ctx> {
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
     #[cfg(feature = "typed-pointers")]
     pub unsafe fn const_gep(self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
-        let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
+        unsafe {
+            let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
-        #[cfg(not(feature = "llvm16-0"))]
-        #[allow(deprecated)]
-        let value = {
-            LLVMConstGEP(
-                self.as_value_ref(),
-                index_values.as_mut_ptr(),
-                index_values.len() as u32,
-            )
-        };
-        #[cfg(feature = "llvm16-0")]
-        let value = {
-            LLVMConstGEP2(
-                self.get_type().get_element_type().as_type_ref(),
-                self.as_value_ref(),
-                index_values.as_mut_ptr(),
-                index_values.len() as u32,
-            )
-        };
+            #[cfg(not(feature = "llvm16-0"))]
+            #[allow(deprecated)]
+            let value = {
+                LLVMConstGEP(
+                    self.as_value_ref(),
+                    index_values.as_mut_ptr(),
+                    index_values.len() as u32,
+                )
+            };
+            #[cfg(feature = "llvm16-0")]
+            let value = {
+                LLVMConstGEP2(
+                    self.get_type().get_element_type().as_type_ref(),
+                    self.as_value_ref(),
+                    index_values.as_mut_ptr(),
+                    index_values.len() as u32,
+                )
+            };
 
-        PointerValue::new(value)
+            PointerValue::new(value)
+        }
     }
 
     // REVIEW: Should this be on array value too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
     #[cfg(not(feature = "typed-pointers"))]
     pub unsafe fn const_gep<T: BasicType<'ctx>>(self, ty: T, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
-        let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
+        unsafe {
+            let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
-        let value = {
-            LLVMConstGEP2(
-                ty.as_type_ref(),
-                self.as_value_ref(),
-                index_values.as_mut_ptr(),
-                index_values.len() as u32,
-            )
-        };
+            let value = {
+                LLVMConstGEP2(
+                    ty.as_type_ref(),
+                    self.as_value_ref(),
+                    index_values.as_mut_ptr(),
+                    index_values.len() as u32,
+                )
+            };
 
-        PointerValue::new(value)
+            PointerValue::new(value)
+        }
     }
 
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
     #[cfg(feature = "typed-pointers")]
     pub unsafe fn const_in_bounds_gep(self, ordered_indexes: &[IntValue<'ctx>]) -> PointerValue<'ctx> {
-        let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
+        unsafe {
+            let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
-        #[cfg(not(feature = "llvm16-0"))]
-        #[allow(deprecated)]
-        let value = {
-            LLVMConstInBoundsGEP(
-                self.as_value_ref(),
-                index_values.as_mut_ptr(),
-                index_values.len() as u32,
-            )
-        };
-        #[cfg(feature = "llvm16-0")]
-        let value = {
-            LLVMConstInBoundsGEP2(
-                self.get_type().get_element_type().as_type_ref(),
-                self.as_value_ref(),
-                index_values.as_mut_ptr(),
-                index_values.len() as u32,
-            )
-        };
+            #[cfg(not(feature = "llvm16-0"))]
+            #[allow(deprecated)]
+            let value = {
+                LLVMConstInBoundsGEP(
+                    self.as_value_ref(),
+                    index_values.as_mut_ptr(),
+                    index_values.len() as u32,
+                )
+            };
+            #[cfg(feature = "llvm16-0")]
+            let value = {
+                LLVMConstInBoundsGEP2(
+                    self.get_type().get_element_type().as_type_ref(),
+                    self.as_value_ref(),
+                    index_values.as_mut_ptr(),
+                    index_values.len() as u32,
+                )
+            };
 
-        PointerValue::new(value)
+            PointerValue::new(value)
+        }
     }
 
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
@@ -163,18 +171,20 @@ impl<'ctx> PointerValue<'ctx> {
         ty: T,
         ordered_indexes: &[IntValue<'ctx>],
     ) -> PointerValue<'ctx> {
-        let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
+        unsafe {
+            let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
 
-        let value = {
-            LLVMConstInBoundsGEP2(
-                ty.as_type_ref(),
-                self.as_value_ref(),
-                index_values.as_mut_ptr(),
-                index_values.len() as u32,
-            )
-        };
+            let value = {
+                LLVMConstInBoundsGEP2(
+                    ty.as_type_ref(),
+                    self.as_value_ref(),
+                    index_values.as_mut_ptr(),
+                    index_values.len() as u32,
+                )
+            };
 
-        PointerValue::new(value)
+            PointerValue::new(value)
+        }
     }
 }
 

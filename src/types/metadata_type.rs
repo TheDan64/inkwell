@@ -20,10 +20,12 @@ impl<'ctx> MetadataType<'ctx> {
     /// # Safety
     /// Undefined behavior, if referenced type isn't metadata type
     pub unsafe fn new(metadata_type: LLVMTypeRef) -> Self {
-        assert!(!metadata_type.is_null());
+        unsafe {
+            assert!(!metadata_type.is_null());
 
-        MetadataType {
-            metadata_type: Type::new(metadata_type),
+            MetadataType {
+                metadata_type: Type::new(metadata_type),
+            }
         }
     }
 

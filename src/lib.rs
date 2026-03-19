@@ -167,11 +167,7 @@ impl TryFrom<u32> for AddressSpace {
 
     fn try_from(val: u32) -> Result<Self, Self::Error> {
         // address space is a 24-bit integer
-        if val < 1 << 24 {
-            Ok(AddressSpace(val))
-        } else {
-            Err(())
-        }
+        if val < 1 << 24 { Ok(AddressSpace(val)) } else { Err(()) }
     }
 }
 

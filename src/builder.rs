@@ -54,10 +54,10 @@ use crate::support::to_c_str;
 #[llvm_versions(15..)]
 use crate::types::FunctionType;
 use crate::types::{AsTypeRef, BasicType, FloatMathType, IntMathType, PointerMathType, PointerType};
-#[llvm_versions(18..)]
-use crate::values::operand_bundle::OperandBundle;
 #[llvm_versions(..=14)]
 use crate::values::CallableValue;
+#[llvm_versions(18..)]
+use crate::values::operand_bundle::OperandBundle;
 use crate::values::{
     AggregateValue, AggregateValueEnum, AsValueRef, AtomicError, BasicMetadataValueEnum, BasicValue, BasicValueEnum,
     CallSiteValue, FloatMathValue, FunctionValue, GlobalValue, InstructionOpcode, InstructionValue, IntMathValue,
@@ -1115,33 +1115,35 @@ impl<'ctx> Builder<'ctx> {
         ordered_indexes: &[IntValue<'ctx>],
         name: &str,
     ) -> Result<PointerValue<'ctx>, BuilderError> {
-        if self.positioned.get() != PositionState::Set {
-            return Err(BuilderError::UnsetPosition);
+        unsafe {
+            if self.positioned.get() != PositionState::Set {
+                return Err(BuilderError::UnsetPosition);
+            }
+            let c_string = to_c_str(name);
+
+            let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
+
+            #[cfg(not(feature = "llvm16-0"))]
+            #[allow(deprecated)]
+            let value = LLVMBuildGEP(
+                self.builder,
+                ptr.as_value_ref(),
+                index_values.as_mut_ptr(),
+                index_values.len() as u32,
+                c_string.as_ptr(),
+            );
+            #[cfg(feature = "llvm16-0")]
+            let value = LLVMBuildGEP2(
+                self.builder,
+                ptr.get_type().get_element_type().as_type_ref(),
+                ptr.as_value_ref(),
+                index_values.as_mut_ptr(),
+                index_values.len() as u32,
+                c_string.as_ptr(),
+            );
+
+            Ok(PointerValue::new(value))
         }
-        let c_string = to_c_str(name);
-
-        let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
-
-        #[cfg(not(feature = "llvm16-0"))]
-        #[allow(deprecated)]
-        let value = LLVMBuildGEP(
-            self.builder,
-            ptr.as_value_ref(),
-            index_values.as_mut_ptr(),
-            index_values.len() as u32,
-            c_string.as_ptr(),
-        );
-        #[cfg(feature = "llvm16-0")]
-        let value = LLVMBuildGEP2(
-            self.builder,
-            ptr.get_type().get_element_type().as_type_ref(),
-            ptr.as_value_ref(),
-            index_values.as_mut_ptr(),
-            index_values.len() as u32,
-            c_string.as_ptr(),
-        );
-
-        Ok(PointerValue::new(value))
     }
 
     // REVIEW: Doesn't GEP work on array too?
@@ -1154,23 +1156,25 @@ impl<'ctx> Builder<'ctx> {
         ordered_indexes: &[IntValue<'ctx>],
         name: &str,
     ) -> Result<PointerValue<'ctx>, BuilderError> {
-        if self.positioned.get() != PositionState::Set {
-            return Err(BuilderError::UnsetPosition);
+        unsafe {
+            if self.positioned.get() != PositionState::Set {
+                return Err(BuilderError::UnsetPosition);
+            }
+            let c_string = to_c_str(name);
+
+            let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
+
+            let value = LLVMBuildGEP2(
+                self.builder,
+                pointee_ty.as_type_ref(),
+                ptr.as_value_ref(),
+                index_values.as_mut_ptr(),
+                index_values.len() as u32,
+                c_string.as_ptr(),
+            );
+
+            Ok(PointerValue::new(value))
         }
-        let c_string = to_c_str(name);
-
-        let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
-
-        let value = LLVMBuildGEP2(
-            self.builder,
-            pointee_ty.as_type_ref(),
-            ptr.as_value_ref(),
-            index_values.as_mut_ptr(),
-            index_values.len() as u32,
-            c_string.as_ptr(),
-        );
-
-        Ok(PointerValue::new(value))
     }
 
     // REVIEW: Doesn't GEP work on array too?
@@ -1183,33 +1187,35 @@ impl<'ctx> Builder<'ctx> {
         ordered_indexes: &[IntValue<'ctx>],
         name: &str,
     ) -> Result<PointerValue<'ctx>, BuilderError> {
-        if self.positioned.get() != PositionState::Set {
-            return Err(BuilderError::UnsetPosition);
+        unsafe {
+            if self.positioned.get() != PositionState::Set {
+                return Err(BuilderError::UnsetPosition);
+            }
+            let c_string = to_c_str(name);
+
+            let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
+
+            #[cfg(not(feature = "llvm16-0"))]
+            #[allow(deprecated)]
+            let value = LLVMBuildInBoundsGEP(
+                self.builder,
+                ptr.as_value_ref(),
+                index_values.as_mut_ptr(),
+                index_values.len() as u32,
+                c_string.as_ptr(),
+            );
+            #[cfg(feature = "llvm16-0")]
+            let value = LLVMBuildInBoundsGEP2(
+                self.builder,
+                ptr.get_type().get_element_type().as_type_ref(),
+                ptr.as_value_ref(),
+                index_values.as_mut_ptr(),
+                index_values.len() as u32,
+                c_string.as_ptr(),
+            );
+
+            Ok(PointerValue::new(value))
         }
-        let c_string = to_c_str(name);
-
-        let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
-
-        #[cfg(not(feature = "llvm16-0"))]
-        #[allow(deprecated)]
-        let value = LLVMBuildInBoundsGEP(
-            self.builder,
-            ptr.as_value_ref(),
-            index_values.as_mut_ptr(),
-            index_values.len() as u32,
-            c_string.as_ptr(),
-        );
-        #[cfg(feature = "llvm16-0")]
-        let value = LLVMBuildInBoundsGEP2(
-            self.builder,
-            ptr.get_type().get_element_type().as_type_ref(),
-            ptr.as_value_ref(),
-            index_values.as_mut_ptr(),
-            index_values.len() as u32,
-            c_string.as_ptr(),
-        );
-
-        Ok(PointerValue::new(value))
     }
 
     // REVIEW: Doesn't GEP work on array too?
@@ -1223,23 +1229,25 @@ impl<'ctx> Builder<'ctx> {
         ordered_indexes: &[IntValue<'ctx>],
         name: &str,
     ) -> Result<PointerValue<'ctx>, BuilderError> {
-        if self.positioned.get() != PositionState::Set {
-            return Err(BuilderError::UnsetPosition);
+        unsafe {
+            if self.positioned.get() != PositionState::Set {
+                return Err(BuilderError::UnsetPosition);
+            }
+            let c_string = to_c_str(name);
+
+            let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
+
+            let value = LLVMBuildInBoundsGEP2(
+                self.builder,
+                pointee_ty.as_type_ref(),
+                ptr.as_value_ref(),
+                index_values.as_mut_ptr(),
+                index_values.len() as u32,
+                c_string.as_ptr(),
+            );
+
+            Ok(PointerValue::new(value))
         }
-        let c_string = to_c_str(name);
-
-        let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter().map(|val| val.as_value_ref()).collect();
-
-        let value = LLVMBuildInBoundsGEP2(
-            self.builder,
-            pointee_ty.as_type_ref(),
-            ptr.as_value_ref(),
-            index_values.as_mut_ptr(),
-            index_values.len() as u32,
-            c_string.as_ptr(),
-        );
-
-        Ok(PointerValue::new(value))
     }
 
     /// Builds a GEP instruction on a struct pointer. Returns `Err(BuilderError::GEPError)` if input `PointerValue` doesn't
@@ -3408,14 +3416,16 @@ impl<'ctx> Builder<'ctx> {
 
     // The unsafety of this function should be fixable with subtypes. See GH #32
     pub unsafe fn build_global_string(&self, value: &str, name: &str) -> Result<GlobalValue<'ctx>, BuilderError> {
-        if self.positioned.get() != PositionState::Set {
-            return Err(BuilderError::UnsetPosition);
-        }
-        let c_string_value = to_c_str(value);
-        let c_string_name = to_c_str(name);
-        let value = LLVMBuildGlobalString(self.builder, c_string_value.as_ptr(), c_string_name.as_ptr());
+        unsafe {
+            if self.positioned.get() != PositionState::Set {
+                return Err(BuilderError::UnsetPosition);
+            }
+            let c_string_value = to_c_str(value);
+            let c_string_name = to_c_str(name);
+            let value = LLVMBuildGlobalString(self.builder, c_string_value.as_ptr(), c_string_name.as_ptr());
 
-        Ok(GlobalValue::new(value))
+            Ok(GlobalValue::new(value))
+        }
     }
 
     // REVIEW: Does this similar fn have the same issue build_global_string does? If so, mark as unsafe
@@ -3540,7 +3550,7 @@ impl<'ctx> Builder<'ctx> {
         // "This ordering [unordered] cannot be specified for read-modify-write operations."
         match ordering {
             AtomicOrdering::NotAtomic | AtomicOrdering::Unordered => {
-                return Err(BuilderError::AtomicOrdering(AtomicError::InvalidOrderingOnAtomicRMW))
+                return Err(BuilderError::AtomicOrdering(AtomicError::InvalidOrderingOnAtomicRMW));
             },
             _ => {},
         }

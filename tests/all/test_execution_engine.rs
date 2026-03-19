@@ -11,8 +11,8 @@ use inkwell::{AddressSpace, IntPredicate, OptimizationLevel};
 #[cfg(target_os = "windows")]
 use windows::Win32::System::{
     Memory::{
-        VirtualAlloc, VirtualFree, VirtualProtect, MEM_COMMIT, MEM_RELEASE, MEM_RESERVE, PAGE_EXECUTE_READ,
-        PAGE_READWRITE,
+        MEM_COMMIT, MEM_RELEASE, MEM_RESERVE, PAGE_EXECUTE_READ, PAGE_READWRITE, VirtualAlloc, VirtualFree,
+        VirtualProtect,
     },
     SystemInformation::{GetSystemInfo, SYSTEM_INFO},
 };

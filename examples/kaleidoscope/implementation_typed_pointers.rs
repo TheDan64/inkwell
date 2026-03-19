@@ -4,12 +4,12 @@ use std::iter::Peekable;
 use std::ops::DerefMut;
 use std::str::Chars;
 
+use inkwell::FloatPredicate;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::module::Module;
 use inkwell::types::BasicMetadataTypeEnum;
 use inkwell::values::{BasicMetadataValueEnum, BasicValueEnum, FloatValue, FunctionValue, PointerValue};
-use inkwell::FloatPredicate;
 
 use crate::Token::*;
 

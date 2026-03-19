@@ -781,9 +781,11 @@ fn test_fence() {
 
     builder.position_at_end(entry);
     assert!(builder.build_fence(AtomicOrdering::NotAtomic, false, "fence").is_err());
-    assert!(builder
-        .build_fence(AtomicOrdering::AcquireRelease, false, "fence")
-        .is_ok());
+    assert!(
+        builder
+            .build_fence(AtomicOrdering::AcquireRelease, false, "fence")
+            .is_ok()
+    );
 }
 
 #[test]
@@ -1214,31 +1216,43 @@ fn test_insert_value() {
     let const_int3 = i32_type.const_int(6, false);
     let const_float = f32_type.const_float(2.0);
 
-    assert!(builder
-        .build_insert_value(array, const_int1, 0, "insert")
-        .unwrap()
-        .is_array_value());
-    assert!(builder
-        .build_insert_value(array, const_int2, 1, "insert")
-        .unwrap()
-        .is_array_value());
-    assert!(builder
-        .build_insert_value(array, const_int3, 2, "insert")
-        .unwrap()
-        .is_array_value());
-    assert!(builder
-        .build_insert_value(array, const_int3, 3, "insert")
-        .is_err_and(|e| e == BuilderError::ExtractOutOfRange));
-    assert!(builder
-        .build_insert_value(array, const_int3, 4, "insert")
-        .is_err_and(|e| e == BuilderError::ExtractOutOfRange));
+    assert!(
+        builder
+            .build_insert_value(array, const_int1, 0, "insert")
+            .unwrap()
+            .is_array_value()
+    );
+    assert!(
+        builder
+            .build_insert_value(array, const_int2, 1, "insert")
+            .unwrap()
+            .is_array_value()
+    );
+    assert!(
+        builder
+            .build_insert_value(array, const_int3, 2, "insert")
+            .unwrap()
+            .is_array_value()
+    );
+    assert!(
+        builder
+            .build_insert_value(array, const_int3, 3, "insert")
+            .is_err_and(|e| e == BuilderError::ExtractOutOfRange)
+    );
+    assert!(
+        builder
+            .build_insert_value(array, const_int3, 4, "insert")
+            .is_err_and(|e| e == BuilderError::ExtractOutOfRange)
+    );
 
     assert!(builder.build_extract_value(array, 0, "extract").unwrap().is_int_value());
     assert!(builder.build_extract_value(array, 1, "extract").unwrap().is_int_value());
     assert!(builder.build_extract_value(array, 2, "extract").unwrap().is_int_value());
-    assert!(builder
-        .build_extract_value(array, 3, "extract")
-        .is_err_and(|e| e == BuilderError::ExtractOutOfRange));
+    assert!(
+        builder
+            .build_extract_value(array, 3, "extract")
+            .is_err_and(|e| e == BuilderError::ExtractOutOfRange)
+    );
 
     let struct_alloca = builder.build_alloca(struct_type, "struct_alloca").unwrap();
     #[cfg(feature = "typed-pointers")]
@@ -1252,35 +1266,51 @@ fn test_insert_value() {
         .unwrap()
         .into_struct_value();
 
-    assert!(builder
-        .build_insert_value(struct_value, const_int2, 0, "insert")
-        .unwrap()
-        .is_struct_value());
-    assert!(builder
-        .build_insert_value(struct_value, const_float, 1, "insert")
-        .unwrap()
-        .is_struct_value());
-    assert!(builder
-        .build_insert_value(struct_value, const_float, 2, "insert")
-        .is_err_and(|e| e == BuilderError::ExtractOutOfRange));
-    assert!(builder
-        .build_insert_value(struct_value, const_float, 3, "insert")
-        .is_err_and(|e| e == BuilderError::ExtractOutOfRange));
+    assert!(
+        builder
+            .build_insert_value(struct_value, const_int2, 0, "insert")
+            .unwrap()
+            .is_struct_value()
+    );
+    assert!(
+        builder
+            .build_insert_value(struct_value, const_float, 1, "insert")
+            .unwrap()
+            .is_struct_value()
+    );
+    assert!(
+        builder
+            .build_insert_value(struct_value, const_float, 2, "insert")
+            .is_err_and(|e| e == BuilderError::ExtractOutOfRange)
+    );
+    assert!(
+        builder
+            .build_insert_value(struct_value, const_float, 3, "insert")
+            .is_err_and(|e| e == BuilderError::ExtractOutOfRange)
+    );
 
-    assert!(builder
-        .build_extract_value(struct_value, 0, "extract")
-        .unwrap()
-        .is_int_value());
-    assert!(builder
-        .build_extract_value(struct_value, 1, "extract")
-        .unwrap()
-        .is_float_value());
-    assert!(builder
-        .build_extract_value(struct_value, 2, "extract")
-        .is_err_and(|e| e == BuilderError::ExtractOutOfRange));
-    assert!(builder
-        .build_extract_value(struct_value, 3, "extract")
-        .is_err_and(|e| e == BuilderError::ExtractOutOfRange));
+    assert!(
+        builder
+            .build_extract_value(struct_value, 0, "extract")
+            .unwrap()
+            .is_int_value()
+    );
+    assert!(
+        builder
+            .build_extract_value(struct_value, 1, "extract")
+            .unwrap()
+            .is_float_value()
+    );
+    assert!(
+        builder
+            .build_extract_value(struct_value, 2, "extract")
+            .is_err_and(|e| e == BuilderError::ExtractOutOfRange)
+    );
+    assert!(
+        builder
+            .build_extract_value(struct_value, 3, "extract")
+            .is_err_and(|e| e == BuilderError::ExtractOutOfRange)
+    );
 
     builder.build_return(None).unwrap();
 
@@ -1396,7 +1426,10 @@ fn test_alignment_bytes() {
                 "alignment of {alignment} was a power of 2 under 2^64, but did not verify for memcpy."
             );
         } else {
-            assert!(result.is_err(), "alignment of {alignment} was a power of 2 under 2^64, yet verification passed for memcpy when it should not have.");
+            assert!(
+                result.is_err(),
+                "alignment of {alignment} was a power of 2 under 2^64, yet verification passed for memcpy when it should not have."
+            );
         }
 
         let result = run_memmove_on(&context, &module, alignment);
@@ -1407,7 +1440,10 @@ fn test_alignment_bytes() {
                 "alignment of {alignment} was a power of 2 under 2^64, but did not verify for memmove."
             );
         } else {
-            assert!(result.is_err(), "alignment of {alignment} was a power of 2 under 2^64, yet verification passed for memmove when it should not have.");
+            assert!(
+                result.is_err(),
+                "alignment of {alignment} was a power of 2 under 2^64, yet verification passed for memmove when it should not have."
+            );
         }
     };
 
@@ -2048,8 +2084,10 @@ fn test_safe_struct_gep() {
         assert!(builder.build_struct_gep(i32_ty, i32_ptr, 10, "struct_gep").is_err());
         assert!(builder.build_struct_gep(struct_ty, struct_ptr, 0, "struct_gep").is_ok());
         assert!(builder.build_struct_gep(struct_ty, struct_ptr, 1, "struct_gep").is_ok());
-        assert!(builder
-            .build_struct_gep(struct_ty, struct_ptr, 2, "struct_gep")
-            .is_err());
+        assert!(
+            builder
+                .build_struct_gep(struct_ty, struct_ptr, 2, "struct_gep")
+                .is_err()
+        );
     }
 }

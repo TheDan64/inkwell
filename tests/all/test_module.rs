@@ -1,9 +1,9 @@
+use inkwell::OptimizationLevel;
 use inkwell::context::Context;
 use inkwell::memory_buffer::MemoryBuffer;
 use inkwell::module::Module;
 use inkwell::targets::{Target, TargetTriple};
 use inkwell::values::AnyValue;
-use inkwell::OptimizationLevel;
 
 use std::env::temp_dir;
 use std::fs::{self, remove_file};

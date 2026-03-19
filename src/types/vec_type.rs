@@ -1,12 +1,12 @@
 use llvm_sys::core::{LLVMConstVector, LLVMGetVectorSize};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
+use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::support::LLVMString;
 use crate::types::enums::BasicMetadataTypeEnum;
-use crate::types::{traits::AsTypeRef, ArrayType, BasicTypeEnum, FunctionType, PointerType, Type};
+use crate::types::{ArrayType, BasicTypeEnum, FunctionType, PointerType, Type, traits::AsTypeRef};
 use crate::values::{ArrayValue, BasicValue, IntValue, VectorValue};
-use crate::AddressSpace;
 
 use std::fmt::{self, Display};
 
@@ -22,10 +22,12 @@ impl<'ctx> VectorType<'ctx> {
     /// # Safety
     /// Undefined behavior, if referenced type isn't vector type
     pub unsafe fn new(vector_type: LLVMTypeRef) -> Self {
-        assert!(!vector_type.is_null());
+        unsafe {
+            assert!(!vector_type.is_null());
 
-        VectorType {
-            vec_type: Type::new(vector_type),
+            VectorType {
+                vec_type: Type::new(vector_type),
+            }
         }
     }
 

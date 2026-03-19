@@ -8,9 +8,9 @@ use llvm_sys::core::{
     LLVMSetVisibility,
 };
 
+use llvm_sys::LLVMThreadLocalMode;
 use llvm_sys::core::{LLVMGetUnnamedAddress, LLVMSetUnnamedAddress};
 use llvm_sys::prelude::LLVMValueRef;
-use llvm_sys::LLVMThreadLocalMode;
 
 use llvm_sys::LLVMUnnamedAddr;
 
@@ -42,10 +42,12 @@ impl<'ctx> GlobalValue<'ctx> {
     ///
     /// The ref must be valid and of type global.
     pub unsafe fn new(value: LLVMValueRef) -> Self {
-        assert!(!value.is_null());
+        unsafe {
+            assert!(!value.is_null());
 
-        GlobalValue {
-            global_value: Value::new(value),
+            GlobalValue {
+                global_value: Value::new(value),
+            }
         }
     }
 
@@ -206,7 +208,7 @@ impl<'ctx> GlobalValue<'ctx> {
     }
 
     pub unsafe fn delete(self) {
-        LLVMDeleteGlobal(self.as_value_ref())
+        unsafe { LLVMDeleteGlobal(self.as_value_ref()) }
     }
 
     pub fn as_pointer_value(self) -> PointerValue<'ctx> {

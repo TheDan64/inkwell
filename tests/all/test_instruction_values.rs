@@ -1,3 +1,4 @@
+use inkwell::AtomicRMWBinOp;
 use inkwell::context::Context;
 #[cfg(not(feature = "typed-pointers"))]
 use inkwell::types::AnyType;
@@ -5,7 +6,6 @@ use inkwell::types::{AnyTypeEnum, BasicType};
 #[llvm_versions(18..)]
 use inkwell::values::InstructionValueError;
 use inkwell::values::{BasicValue, CallSiteValue, InstructionOpcode::*};
-use inkwell::AtomicRMWBinOp;
 use inkwell::{AddressSpace, AtomicOrdering, FloatPredicate, IntPredicate};
 
 #[test]
@@ -597,12 +597,16 @@ fn test_atomic_ordering_mem_instructions() {
     assert!(load_instruction.set_atomic_ordering(AtomicOrdering::Acquire).is_ok());
 
     assert!(store_instruction.set_atomic_ordering(AtomicOrdering::Acquire).is_err());
-    assert!(store_instruction
-        .set_atomic_ordering(AtomicOrdering::AcquireRelease)
-        .is_err());
-    assert!(load_instruction
-        .set_atomic_ordering(AtomicOrdering::AcquireRelease)
-        .is_err());
+    assert!(
+        store_instruction
+            .set_atomic_ordering(AtomicOrdering::AcquireRelease)
+            .is_err()
+    );
+    assert!(
+        load_instruction
+            .set_atomic_ordering(AtomicOrdering::AcquireRelease)
+            .is_err()
+    );
     assert!(load_instruction.set_atomic_ordering(AtomicOrdering::Release).is_err());
 
     #[cfg(any(
@@ -613,18 +617,26 @@ fn test_atomic_ordering_mem_instructions() {
         feature = "llvm22-1"
     ))]
     {
-        assert!(fence_instruction
-            .set_atomic_ordering(AtomicOrdering::SequentiallyConsistent)
-            .is_ok());
-        assert!(fence_instruction
-            .set_atomic_ordering(AtomicOrdering::Monotonic)
-            .is_err());
-        assert!(atomicrmw_instruction
-            .set_atomic_ordering(AtomicOrdering::AcquireRelease)
-            .is_ok());
-        assert!(atomicrmw_instruction
-            .set_atomic_ordering(AtomicOrdering::Unordered)
-            .is_err());
+        assert!(
+            fence_instruction
+                .set_atomic_ordering(AtomicOrdering::SequentiallyConsistent)
+                .is_ok()
+        );
+        assert!(
+            fence_instruction
+                .set_atomic_ordering(AtomicOrdering::Monotonic)
+                .is_err()
+        );
+        assert!(
+            atomicrmw_instruction
+                .set_atomic_ordering(AtomicOrdering::AcquireRelease)
+                .is_ok()
+        );
+        assert!(
+            atomicrmw_instruction
+                .set_atomic_ordering(AtomicOrdering::Unordered)
+                .is_err()
+        );
     }
 
     let fadd_instruction = builder
@@ -670,8 +682,8 @@ fn test_metadata_kinds() {
 
 #[test]
 fn test_find_instruction_with_name() {
-    use inkwell::context::Context;
     use inkwell::AddressSpace;
+    use inkwell::context::Context;
 
     let context = Context::create();
     let module = context.create_module("ret");

@@ -1,8 +1,8 @@
+use inkwell::AddressSpace;
 use inkwell::context::Context;
 use inkwell::memory_buffer::MemoryBuffer;
 use inkwell::types::BasicType;
 use inkwell::values::AnyValue;
-use inkwell::AddressSpace;
 
 #[test]
 fn test_struct_type() {

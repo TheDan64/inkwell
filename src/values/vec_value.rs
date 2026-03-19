@@ -29,10 +29,12 @@ impl<'ctx> VectorValue<'ctx> {
     ///
     /// The ref must be valid and of type vector.
     pub unsafe fn new(vector_value: LLVMValueRef) -> Self {
-        assert!(!vector_value.is_null());
+        unsafe {
+            assert!(!vector_value.is_null());
 
-        VectorValue {
-            vec_value: Value::new(vector_value),
+            VectorValue {
+                vec_value: Value::new(vector_value),
+            }
         }
     }
 

@@ -71,10 +71,10 @@ use llvm_sys::transforms::pass_builder::{
 #[llvm_versions(12..=16)]
 use llvm_sys::transforms::scalar::LLVMAddInstructionSimplifyPass;
 
-use crate::module::Module;
-use crate::values::{AsValueRef, FunctionValue};
 #[llvm_versions(..=16)]
 use crate::OptimizationLevel;
+use crate::module::Module;
+use crate::values::{AsValueRef, FunctionValue};
 
 use std::borrow::Borrow;
 use std::marker::PhantomData;
@@ -238,11 +238,11 @@ impl PassManagerSubType for Module<'_> {
     type Input = ();
 
     unsafe fn create<I: Borrow<Self::Input>>(_: I) -> LLVMPassManagerRef {
-        LLVMCreatePassManager()
+        unsafe { LLVMCreatePassManager() }
     }
 
     unsafe fn run_in_pass_manager(&self, pass_manager: &PassManager<Self>) -> bool {
-        LLVMRunPassManager(pass_manager.pass_manager, self.module.get()) == 1
+        unsafe { LLVMRunPassManager(pass_manager.pass_manager, self.module.get()) == 1 }
     }
 }
 
@@ -252,11 +252,11 @@ impl<'ctx> PassManagerSubType for FunctionValue<'ctx> {
     type Input = Module<'ctx>;
 
     unsafe fn create<I: Borrow<Self::Input>>(input: I) -> LLVMPassManagerRef {
-        LLVMCreateFunctionPassManagerForModule(input.borrow().module.get())
+        unsafe { LLVMCreateFunctionPassManagerForModule(input.borrow().module.get()) }
     }
 
     unsafe fn run_in_pass_manager(&self, pass_manager: &PassManager<Self>) -> bool {
-        LLVMRunFunctionPassManager(pass_manager.pass_manager, self.as_value_ref()) == 1
+        unsafe { LLVMRunFunctionPassManager(pass_manager.pass_manager, self.as_value_ref()) == 1 }
     }
 }
 

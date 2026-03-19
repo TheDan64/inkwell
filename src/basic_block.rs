@@ -37,17 +37,19 @@ impl<'ctx> BasicBlock<'ctx> {
     ///
     /// The ref must be valid and point to a valid LLVM basic block.
     pub unsafe fn new(basic_block: LLVMBasicBlockRef) -> Option<Self> {
-        if basic_block.is_null() {
-            return None;
+        unsafe {
+            if basic_block.is_null() {
+                return None;
+            }
+
+            // NOTE: There is a LLVMBasicBlockAsValue but it might be the same as casting
+            assert!(!LLVMIsABasicBlock(basic_block as LLVMValueRef).is_null());
+
+            Some(BasicBlock {
+                basic_block,
+                _marker: PhantomData,
+            })
         }
-
-        // NOTE: There is a LLVMBasicBlockAsValue but it might be the same as casting
-        assert!(!LLVMIsABasicBlock(basic_block as LLVMValueRef).is_null());
-
-        Some(BasicBlock {
-            basic_block,
-            _marker: PhantomData,
-        })
     }
 
     /// Acquires the underlying raw pointer belonging to this `BasicBlock` type.
@@ -418,14 +420,16 @@ impl<'ctx> BasicBlock<'ctx> {
     /// assert!(function.get_basic_blocks().is_empty());
     /// ```
     pub unsafe fn delete(self) -> Result<(), ()> {
-        // This method is UB if the parent no longer exists, so we must check for parent (or encode into type system)
-        if self.get_parent().is_none() {
-            return Err(());
+        unsafe {
+            // This method is UB if the parent no longer exists, so we must check for parent (or encode into type system)
+            if self.get_parent().is_none() {
+                return Err(());
+            }
+
+            LLVMDeleteBasicBlock(self.basic_block);
+
+            Ok(())
         }
-
-        LLVMDeleteBasicBlock(self.basic_block);
-
-        Ok(())
     }
 
     /// Obtains the `ContextRef` this `BasicBlock` belongs to.
@@ -576,18 +580,20 @@ impl<'ctx> BasicBlock<'ctx> {
     /// assert!(unsafe { next_bb.get_address() }.is_some());
     /// ```
     pub unsafe fn get_address(self) -> Option<PointerValue<'ctx>> {
-        let parent = self.get_parent()?;
+        unsafe {
+            let parent = self.get_parent()?;
 
-        // Taking the address of the entry block is illegal.
-        self.get_previous_basic_block()?;
+            // Taking the address of the entry block is illegal.
+            self.get_previous_basic_block()?;
 
-        let value = PointerValue::new(LLVMBlockAddress(parent.as_value_ref(), self.basic_block));
+            let value = PointerValue::new(LLVMBlockAddress(parent.as_value_ref(), self.basic_block));
 
-        if value.is_null() {
-            return None;
+            if value.is_null() {
+                return None;
+            }
+
+            Some(value)
         }
-
-        Some(value)
     }
 }
 

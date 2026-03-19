@@ -1,7 +1,7 @@
+use inkwell::AddressSpace;
 use inkwell::attributes::{Attribute, AttributeLoc};
 use inkwell::context::Context;
 use inkwell::values::BasicValueEnum;
-use inkwell::AddressSpace;
 
 #[test]
 fn test_enum_attribute_kinds() {
@@ -43,8 +43,8 @@ fn test_string_attributes() {
 #[llvm_versions(12..)]
 #[test]
 fn test_type_attribute() {
-    use inkwell::types::{AnyType, BasicType};
     use inkwell::AddressSpace;
+    use inkwell::types::{AnyType, BasicType};
 
     let context = Context::create();
     let kind_id = Attribute::get_named_enum_kind_id("sret");
@@ -151,9 +151,11 @@ fn test_attributes_on_function_values() {
 
     assert_eq!(fn_value.count_attributes(AttributeLoc::Function), 0);
     assert_eq!(fn_value.count_attributes(AttributeLoc::Return), 0);
-    assert!(fn_value
-        .get_enum_attribute(AttributeLoc::Return, inreg_attribute)
-        .is_none());
+    assert!(
+        fn_value
+            .get_enum_attribute(AttributeLoc::Return, inreg_attribute)
+            .is_none()
+    );
     assert!(fn_value.get_string_attribute(AttributeLoc::Return, "my_key").is_none());
     assert_eq!(fn_value.attributes(AttributeLoc::Function), vec![]);
     assert_eq!(fn_value.attributes(AttributeLoc::Return), vec![]);
@@ -219,19 +221,25 @@ fn test_attributes_on_call_site_values() {
 
     assert_eq!(call_site_value.count_attributes(AttributeLoc::Return), 0);
     assert_eq!(call_site_value.attributes(AttributeLoc::Return), vec![]);
-    assert!(call_site_value
-        .get_enum_attribute(AttributeLoc::Return, alignstack_attribute)
-        .is_none());
-    assert!(call_site_value
-        .get_string_attribute(AttributeLoc::Return, "my_key")
-        .is_none());
+    assert!(
+        call_site_value
+            .get_enum_attribute(AttributeLoc::Return, alignstack_attribute)
+            .is_none()
+    );
+    assert!(
+        call_site_value
+            .get_string_attribute(AttributeLoc::Return, "my_key")
+            .is_none()
+    );
     assert_eq!(call_site_value.get_called_fn_value(), Some(fn_value));
 
     call_site_value.set_alignment_attribute(AttributeLoc::Return, 16);
 
     assert_eq!(call_site_value.count_attributes(AttributeLoc::Return), 1);
     assert_eq!(call_site_value.attributes(AttributeLoc::Return).len(), 1);
-    assert!(call_site_value
-        .get_enum_attribute(AttributeLoc::Return, align_attribute)
-        .is_some());
+    assert!(
+        call_site_value
+            .get_enum_attribute(AttributeLoc::Return, align_attribute)
+            .is_some()
+    );
 }

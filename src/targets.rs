@@ -29,7 +29,7 @@ use crate::data_layout::DataLayout;
 use crate::memory_buffer::MemoryBuffer;
 use crate::module::Module;
 use crate::passes::PassManager;
-use crate::support::{to_c_str, LLVMString};
+use crate::support::{LLVMString, to_c_str};
 use crate::types::{AnyType, AsTypeRef, IntType, StructType};
 use crate::values::{AsValueRef, GlobalValue};
 use crate::{AddressSpace, OptimizationLevel};
@@ -1480,7 +1480,7 @@ impl TargetMachineOptions {
     /// - The only way to access it is via this private method.
     /// - Disposal is taken care of automatically in `Drop::drop`.
     unsafe fn inner(&mut self) -> LLVMTargetMachineOptionsRef {
-        *self.0.get_or_insert_with(|| LLVMCreateTargetMachineOptions())
+        unsafe { *self.0.get_or_insert_with(|| LLVMCreateTargetMachineOptions()) }
     }
 }
 

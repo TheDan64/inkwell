@@ -21,10 +21,12 @@ impl<'ctx> VoidType<'ctx> {
     /// # Safety
     /// Undefined behavior, if referenced type isn't void type
     pub unsafe fn new(void_type: LLVMTypeRef) -> Self {
-        assert!(!void_type.is_null());
+        unsafe {
+            assert!(!void_type.is_null());
 
-        VoidType {
-            void_type: Type::new(void_type),
+            VoidType {
+                void_type: Type::new(void_type),
+            }
         }
     }
 
