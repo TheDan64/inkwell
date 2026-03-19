@@ -5,7 +5,7 @@
 [![codecov](https://codecov.io/gh/TheDan64/inkwell/branch/master/graph/badge.svg)](https://codecov.io/gh/TheDan64/inkwell)
 [![lines of code](https://tokei.rs/b1/github/TheDan64/inkwell)](https://github.com/Aaronepower/tokei)
 [![Join the chat at https://gitter.im/inkwell-rs/Lobby](https://badges.gitter.im/inkwell-rs/Lobby.svg)](https://gitter.im/inkwell-rs/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-![Minimum rustc 1.56](https://img.shields.io/badge/rustc-1.56+-brightgreen.svg)
+![Minimum rustc 1.85](https://img.shields.io/badge/rustc-1.85+-brightgreen.svg)
 
 **I**t's a **N**ew **K**ind of **W**rapper for **E**xposing **LL**VM (*S*afely)
 
@@ -13,8 +13,8 @@ Inkwell aims to help you pen your own programming languages by safely wrapping l
 
 ## Requirements
 
-* Rust 1.56+ (Stable, Beta, or Nightly)
-* One of LLVM 11-21
+* Rust 1.85+
+* One of LLVM 11-22
 
 ## Usage
 
@@ -22,11 +22,11 @@ You'll need to point your Cargo.toml to use a single LLVM version feature flag c
 
 ```toml
 [dependencies]
-inkwell = { version = "0.8.0", features = ["llvm21-1"] }
+inkwell = { version = "0.8.0", features = ["llvm22-1"] }
 ```
 
 Supported versions:
-LLVM 11-21 mapping to a cargo feature flag `llvmM-0` where `M` corresponds to the LLVM major version.
+LLVM 11-22 mapping to a cargo feature flag `llvmM-0` where `M` corresponds to the LLVM major version.
 
 Please be aware that we may make breaking changes on master from time to time since we are
 pre-v1.0.0, in compliance with semver. Please prefer a crates.io release whenever possible!
