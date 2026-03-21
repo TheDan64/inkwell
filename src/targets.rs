@@ -21,8 +21,7 @@ use llvm_sys::target_machine::{
     LLVMTargetMachineOptionsSetCodeGenOptLevel, LLVMTargetMachineOptionsSetCodeModel,
     LLVMTargetMachineOptionsSetFeatures, LLVMTargetMachineOptionsSetRelocMode,
 };
-use once_cell::sync::Lazy;
-use std::sync::RwLock;
+use std::sync::{LazyLock, RwLock};
 
 use crate::context::AsContextRef;
 use crate::data_layout::DataLayout;
@@ -168,7 +167,7 @@ impl fmt::Display for TargetTriple {
     }
 }
 
-static TARGET_LOCK: Lazy<RwLock<()>> = Lazy::new(|| RwLock::new(()));
+static TARGET_LOCK: LazyLock<RwLock<()>> = LazyLock::new(|| RwLock::new(()));
 
 // NOTE: Versions verified as target-complete: 3.6, 3.7, 3.8, 3.9, 4.0
 #[derive(Debug, Eq, PartialEq)]
