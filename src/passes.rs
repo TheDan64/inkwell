@@ -265,6 +265,10 @@ impl<'ctx> PassManagerSubType for FunctionValue<'ctx> {
 /// documentation for specific passes is directly from the [LLVM
 /// documentation](https://llvm.org/docs/Passes.html).
 #[derive(Debug)]
+#[deprecated(
+    since = "0.8.0",
+    note = "Deprecated legacy LLVM PassManager. Use PassBuilderOptions with Module::run_passes (new pass manager). This will be removed once LLVM 16 support is dropped."
+)]
 pub struct PassManager<T> {
     pub(crate) pass_manager: LLVMPassManagerRef,
     sub_type: PhantomData<T>,
