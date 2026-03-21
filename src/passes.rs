@@ -267,7 +267,7 @@ impl<'ctx> PassManagerSubType for FunctionValue<'ctx> {
 #[derive(Debug)]
 #[deprecated(
     since = "0.8.0",
-    note = "Deprecated legacy LLVM PassManager. Use PassBuilderOptions with Module::run_passes (new pass manager). This will be removed once LLVM 16 support is dropped."
+    note = "Use [`PassBuilderOptions`] with [`Module::run_passes`] instead (new pass manager). This struct will be removed once LLVM 16 support is dropped."
 )]
 pub struct PassManager<T> {
     pub(crate) pass_manager: LLVMPassManagerRef,
