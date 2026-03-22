@@ -150,6 +150,7 @@ impl PassManagerBuilder {
     ///
     /// pass_manager_builder.populate_function_pass_manager(&fpm);
     /// ```
+    #[allow(deprecated)]
     pub fn populate_function_pass_manager(&self, pass_manager: &PassManager<FunctionValue>) {
         unsafe {
             LLVMPassManagerBuilderPopulateFunctionPassManager(self.pass_manager_builder, pass_manager.pass_manager)
@@ -176,6 +177,7 @@ impl PassManagerBuilder {
     ///
     /// pass_manager_builder.populate_module_pass_manager(&fpm);
     /// ```
+    #[allow(deprecated)]
     pub fn populate_module_pass_manager(&self, pass_manager: &PassManager<Module>) {
         unsafe { LLVMPassManagerBuilderPopulateModulePassManager(self.pass_manager_builder, pass_manager.pass_manager) }
     }
@@ -200,6 +202,7 @@ impl PassManagerBuilder {
     ///
     /// pass_manager_builder.populate_lto_pass_manager(&lpm, false, false);
     /// ```
+    #[allow(deprecated)]
     #[llvm_versions(..=14)]
     pub fn populate_lto_pass_manager(&self, pass_manager: &PassManager<Module>, internalize: bool, run_inliner: bool) {
         use llvm_sys::transforms::pass_manager_builder::LLVMPassManagerBuilderPopulateLTOPassManager;
@@ -229,11 +232,13 @@ pub trait PassManagerSubType {
     type Input;
 
     unsafe fn create<I: Borrow<Self::Input>>(input: I) -> LLVMPassManagerRef;
+    #[allow(deprecated)]
     unsafe fn run_in_pass_manager(&self, pass_manager: &PassManager<Self>) -> bool
     where
         Self: Sized;
 }
 
+#[allow(deprecated)]
 impl PassManagerSubType for Module<'_> {
     type Input = ();
 
@@ -248,6 +253,7 @@ impl PassManagerSubType for Module<'_> {
 
 // With GATs https://github.com/rust-lang/rust/issues/44265 this could be
 // type Input<'a> = &'a Module;
+#[allow(deprecated)]
 impl<'ctx> PassManagerSubType for FunctionValue<'ctx> {
     type Input = Module<'ctx>;
 
@@ -266,7 +272,7 @@ impl<'ctx> PassManagerSubType for FunctionValue<'ctx> {
 /// documentation](https://llvm.org/docs/Passes.html).
 #[derive(Debug)]
 #[deprecated(
-    since = "0.8.0",
+    since = "0.9.0",
     note = "Use [`PassBuilderOptions`] with [`Module::run_passes`] instead (new pass manager). This struct will be removed once LLVM 16 support is dropped."
 )]
 pub struct PassManager<T> {
@@ -274,6 +280,7 @@ pub struct PassManager<T> {
     sub_type: PhantomData<T>,
 }
 
+#[allow(deprecated)]
 impl PassManager<FunctionValue<'_>> {
     /// Acquires the underlying raw pointer belonging to this `PassManager<T>` type.
     pub fn as_mut_ptr(&self) -> LLVMPassManagerRef {
@@ -290,6 +297,7 @@ impl PassManager<FunctionValue<'_>> {
     }
 }
 
+#[allow(deprecated)]
 impl<T: PassManagerSubType> PassManager<T> {
     pub unsafe fn new(pass_manager: LLVMPassManagerRef) -> Self {
         assert!(!pass_manager.is_null());
@@ -1092,6 +1100,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     }
 }
 
+#[allow(deprecated)]
 impl<T> Drop for PassManager<T> {
     fn drop(&mut self) {
         unsafe { LLVMDisposePassManager(self.pass_manager) }

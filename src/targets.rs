@@ -27,6 +27,7 @@ use crate::context::AsContextRef;
 use crate::data_layout::DataLayout;
 use crate::memory_buffer::MemoryBuffer;
 use crate::module::Module;
+#[allow(deprecated)]
 use crate::passes::PassManager;
 use crate::support::{LLVMString, to_c_str};
 use crate::types::{AnyType, AsTypeRef, IntType, StructType};
@@ -1133,6 +1134,7 @@ impl TargetMachine {
     }
 
     // TODO: Move to PassManager?
+    #[allow(deprecated)]
     pub fn add_analysis_passes<T>(&self, pass_manager: &PassManager<T>) {
         unsafe { LLVMAddAnalysisPasses(self.target_machine, pass_manager.pass_manager) }
     }
