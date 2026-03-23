@@ -12,7 +12,9 @@ use llvm_sys::core::{
 };
 use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
 use llvm_sys::debuginfo::{LLVMGetSubprogram, LLVMSetSubprogram};
+use llvm_sys::error::LLVMGetErrorMessage;
 use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
+use llvm_sys::transforms::pass_builder::LLVMRunPassesOnFunction;
 
 use std::ffi::CStr;
 use std::fmt::{self, Display};
@@ -23,7 +25,9 @@ use crate::attributes::{Attribute, AttributeLoc};
 use crate::basic_block::BasicBlock;
 use crate::debug_info::DISubprogram;
 use crate::module::Linkage;
-use crate::support::to_c_str;
+use crate::passes::PassBuilderOptions;
+use crate::support::{LLVMString, to_c_str};
+use crate::targets::TargetMachine;
 use crate::types::FunctionType;
 use crate::values::traits::{AnyValue, AsValueRef};
 use crate::values::{BasicValueEnum, GlobalValue, Value};
@@ -519,6 +523,36 @@ impl<'ctx> FunctionValue<'ctx> {
     pub fn append_existing_basic_block(&self, basic_block: BasicBlock<'ctx>) {
         unsafe {
             LLVMAppendExistingBasicBlock(self.as_value_ref(), basic_block.as_mut_ptr());
+        }
+    }
+
+    /// Construct and run a set of passes over a function.
+    ///
+    /// Behaves the same as [`Module::run_passes`](crate::module::Module::run_passes), but
+    /// operates on a single function instead of an entire module.
+    ///
+    /// See [`Module::run_passes`](crate::module::Module::run_passes) for details on
+    /// the passes format.
+    #[llvm_versions(13..)]
+    pub fn run_passes(
+        &self,
+        passes: &str,
+        machine: &TargetMachine,
+        options: PassBuilderOptions,
+    ) -> Result<(), LLVMString> {
+        unsafe {
+            let error = LLVMRunPassesOnFunction(
+                self.as_value_ref(),
+                to_c_str(passes).as_ptr(),
+                machine.target_machine,
+                options.options_ref,
+            );
+            if error.is_null() {
+                Ok(())
+            } else {
+                let message = LLVMGetErrorMessage(error);
+                Err(LLVMString::new(message as *const libc::c_char))
+            }
         }
     }
 }
