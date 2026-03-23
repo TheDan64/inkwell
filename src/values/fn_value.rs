@@ -12,8 +12,10 @@ use llvm_sys::core::{
 };
 use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
 use llvm_sys::debuginfo::{LLVMGetSubprogram, LLVMSetSubprogram};
+#[llvm_versions(13..)]
 use llvm_sys::error::LLVMGetErrorMessage;
 use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
+#[llvm_versions(13..)]
 use llvm_sys::transforms::pass_builder::LLVMRunPassesOnFunction;
 
 use std::ffi::CStr;
@@ -25,8 +27,12 @@ use crate::attributes::{Attribute, AttributeLoc};
 use crate::basic_block::BasicBlock;
 use crate::debug_info::DISubprogram;
 use crate::module::Linkage;
+#[llvm_versions(13..)]
 use crate::passes::PassBuilderOptions;
-use crate::support::{LLVMString, to_c_str};
+#[llvm_versions(13..)]
+use crate::support::LLVMString;
+use crate::support::to_c_str;
+#[llvm_versions(13..)]
 use crate::targets::TargetMachine;
 use crate::types::FunctionType;
 use crate::values::traits::{AnyValue, AsValueRef};
