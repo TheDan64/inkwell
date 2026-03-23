@@ -12,10 +12,10 @@ use llvm_sys::core::{
 };
 use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
 use llvm_sys::debuginfo::{LLVMGetSubprogram, LLVMSetSubprogram};
-#[llvm_versions(13..)]
+#[llvm_versions(20..)]
 use llvm_sys::error::LLVMGetErrorMessage;
 use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
-#[llvm_versions(13..)]
+#[llvm_versions(20..)]
 use llvm_sys::transforms::pass_builder::LLVMRunPassesOnFunction;
 
 use std::ffi::CStr;
@@ -27,12 +27,12 @@ use crate::attributes::{Attribute, AttributeLoc};
 use crate::basic_block::BasicBlock;
 use crate::debug_info::DISubprogram;
 use crate::module::Linkage;
-#[llvm_versions(13..)]
+#[llvm_versions(20..)]
 use crate::passes::PassBuilderOptions;
-#[llvm_versions(13..)]
+#[llvm_versions(20..)]
 use crate::support::LLVMString;
 use crate::support::to_c_str;
-#[llvm_versions(13..)]
+#[llvm_versions(20..)]
 use crate::targets::TargetMachine;
 use crate::types::FunctionType;
 use crate::values::traits::{AnyValue, AsValueRef};
@@ -539,7 +539,7 @@ impl<'ctx> FunctionValue<'ctx> {
     ///
     /// See [`Module::run_passes`](crate::module::Module::run_passes) for details on
     /// the passes format.
-    #[llvm_versions(13..)]
+    #[llvm_versions(20..)]
     pub fn run_passes(
         &self,
         passes: &str,
