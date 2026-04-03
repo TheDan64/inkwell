@@ -24,6 +24,7 @@ mod test_object_file;
     feature = "llvm22-1"
 )))]
 mod test_passes;
+mod test_passes_on_function;
 mod test_targets;
 mod test_tari_example;
 mod test_types;
