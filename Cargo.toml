@@ -178,5 +178,8 @@ regex = "1"
 version = "0.62.2"
 features = ["Win32_System_SystemInformation", "Win32_System_Memory"]
 
+[package.metadata.docs.rs]
+features = ["llvm22-1-no-llvm-linking"]
+
 [badges]
 codecov = { repository = "TheDan64/inkwell" }
