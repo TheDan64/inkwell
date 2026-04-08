@@ -2071,7 +2071,7 @@ fn test_safe_struct_gep() {
     let struct_ptr = fn_value.get_last_param().unwrap().into_pointer_value();
 
     #[cfg(feature = "typed-pointers")]
-    {
+    unsafe {
         assert!(builder.build_struct_gep(i32_ptr, 0, "struct_gep").is_err());
         assert!(builder.build_struct_gep(i32_ptr, 10, "struct_gep").is_err());
         assert!(builder.build_struct_gep(struct_ptr, 0, "struct_gep").is_ok());
@@ -2079,7 +2079,7 @@ fn test_safe_struct_gep() {
         assert!(builder.build_struct_gep(struct_ptr, 2, "struct_gep").is_err());
     }
     #[cfg(not(feature = "typed-pointers"))]
-    {
+    unsafe {
         assert!(builder.build_struct_gep(i32_ty, i32_ptr, 0, "struct_gep").is_err());
         assert!(builder.build_struct_gep(i32_ty, i32_ptr, 10, "struct_gep").is_err());
         assert!(builder.build_struct_gep(struct_ty, struct_ptr, 0, "struct_gep").is_ok());

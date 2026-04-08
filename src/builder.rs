@@ -1280,14 +1280,16 @@ impl<'ctx> Builder<'ctx> {
     /// let i32_ptr = fn_value.get_first_param().unwrap().into_pointer_value();
     /// let struct_ptr = fn_value.get_last_param().unwrap().into_pointer_value();
     ///
-    /// assert!(builder.build_struct_gep(i32_ptr, 0, "struct_gep").is_err());
-    /// assert!(builder.build_struct_gep(i32_ptr, 10, "struct_gep").is_err());
-    /// assert!(builder.build_struct_gep(struct_ptr, 0, "struct_gep").is_ok());
-    /// assert!(builder.build_struct_gep(struct_ptr, 1, "struct_gep").is_ok());
-    /// assert!(builder.build_struct_gep(struct_ptr, 2, "struct_gep").is_err());
+    /// unsafe {
+    ///     assert!(builder.build_struct_gep(i32_ptr, 0, "struct_gep").is_err());
+    ///     assert!(builder.build_struct_gep(i32_ptr, 10, "struct_gep").is_err());
+    ///     assert!(builder.build_struct_gep(struct_ptr, 0, "struct_gep").is_ok());
+    ///     assert!(builder.build_struct_gep(struct_ptr, 1, "struct_gep").is_ok());
+    ///     assert!(builder.build_struct_gep(struct_ptr, 2, "struct_gep").is_err());
+    /// }
     /// ```
     #[cfg(feature = "typed-pointers")]
-    pub fn build_struct_gep(
+    pub unsafe fn build_struct_gep(
         &self,
         ptr: PointerValue<'ctx>,
         index: u32,
@@ -1358,14 +1360,16 @@ impl<'ctx> Builder<'ctx> {
     /// let i32_ptr = fn_value.get_first_param().unwrap().into_pointer_value();
     /// let struct_ptr = fn_value.get_last_param().unwrap().into_pointer_value();
     ///
-    /// assert!(builder.build_struct_gep(i32_ty, i32_ptr, 0, "struct_gep").is_err());
-    /// assert!(builder.build_struct_gep(i32_ty, i32_ptr, 10, "struct_gep").is_err());
-    /// assert!(builder.build_struct_gep(struct_ty, struct_ptr, 0, "struct_gep").is_ok());
-    /// assert!(builder.build_struct_gep(struct_ty, struct_ptr, 1, "struct_gep").is_ok());
-    /// assert!(builder.build_struct_gep(struct_ty, struct_ptr, 2, "struct_gep").is_err());
+    /// unsafe {
+    ///     assert!(builder.build_struct_gep(i32_ty, i32_ptr, 0, "struct_gep").is_err());
+    ///     assert!(builder.build_struct_gep(i32_ty, i32_ptr, 10, "struct_gep").is_err());
+    ///     assert!(builder.build_struct_gep(struct_ty, struct_ptr, 0, "struct_gep").is_ok());
+    ///     assert!(builder.build_struct_gep(struct_ty, struct_ptr, 1, "struct_gep").is_ok());
+    ///     assert!(builder.build_struct_gep(struct_ty, struct_ptr, 2, "struct_gep").is_err());
+    /// }
     /// ```
     #[cfg(not(feature = "typed-pointers"))]
-    pub fn build_struct_gep<T: BasicType<'ctx>>(
+    pub unsafe fn build_struct_gep<T: BasicType<'ctx>>(
         &self,
         pointee_ty: T,
         ptr: PointerValue<'ctx>,
