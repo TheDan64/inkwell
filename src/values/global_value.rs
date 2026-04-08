@@ -11,6 +11,7 @@ use llvm_sys::core::{
 use llvm_sys::LLVMThreadLocalMode;
 use llvm_sys::core::{LLVMGetUnnamedAddress, LLVMSetUnnamedAddress};
 use llvm_sys::prelude::LLVMValueRef;
+use std::convert::TryFrom;
 
 use llvm_sys::LLVMUnnamedAddr;
 
@@ -278,6 +279,19 @@ impl<'ctx> GlobalValue<'ctx> {
 unsafe impl AsValueRef for GlobalValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.global_value.value
+    }
+}
+
+impl<'ctx> TryFrom<PointerValue<'ctx>> for GlobalValue<'ctx> {
+    type Error = ();
+
+    fn try_from(value: PointerValue<'ctx>) -> Result<Self, Self::Error> {
+        let is_global = unsafe { !llvm_sys::core::LLVMIsAGlobalVariable(value.as_value_ref()).is_null() };
+        if is_global {
+            unsafe { Ok(GlobalValue::new(value.as_value_ref())) }
+        } else {
+            Err(())
+        }
     }
 }
 
