@@ -1,5 +1,5 @@
 use crate::builder::{Builder, BuilderError};
-use crate::typed::value::TypedIntValue;
+use crate::typed::value::{TypedFloatValue, TypedIntValue, TypedPointerValue, TypedStructValue};
 use std::convert::TryFrom;
 
 /// A builder that strictly enforces types using Const Generics.
@@ -46,6 +46,26 @@ impl<'a, 'ctx> TypedBuilder<'a, 'ctx> {
     ) -> Result<TypedIntValue<'ctx, W>, BuilderError> {
         let result = self.builder.build_int_mul(lhs.as_untyped(), rhs.as_untyped(), name)?;
         Ok(TypedIntValue::try_from(result).unwrap())
+    }
+
+    pub fn build_float_add<const W: u32>(
+        &self,
+        lhs: TypedFloatValue<'ctx, W>,
+        rhs: TypedFloatValue<'ctx, W>,
+        name: &str,
+    ) -> Result<TypedFloatValue<'ctx, W>, BuilderError> {
+        let result = self.builder.build_float_add(lhs.as_untyped(), rhs.as_untyped(), name)?;
+        Ok(TypedFloatValue::try_from(result).unwrap())
+    }
+
+    pub fn build_float_mul<const W: u32>(
+        &self,
+        lhs: TypedFloatValue<'ctx, W>,
+        rhs: TypedFloatValue<'ctx, W>,
+        name: &str,
+    ) -> Result<TypedFloatValue<'ctx, W>, BuilderError> {
+        let result = self.builder.build_float_mul(lhs.as_untyped(), rhs.as_untyped(), name)?;
+        Ok(TypedFloatValue::try_from(result).unwrap())
     }
 }
 
