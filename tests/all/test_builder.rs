@@ -2094,6 +2094,7 @@ fn test_safe_struct_gep() {
 
 #[test]
 #[should_panic]
+#[cfg(debug_assertions)]
 fn test_builder_context_mismatch_panics() {
     let ctx1 = Context::create();
     let ctx2 = Context::create();

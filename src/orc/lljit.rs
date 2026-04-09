@@ -1,23 +1,25 @@
-use llvm_sys::orc2::lljit::{
-    LLVMOrcCreateLLJITBuilder,
-    LLVMOrcCreateLLJIT,
-    LLVMOrcDisposeLLJIT,
-    LLVMOrcLLJITAddLLVMIRModule,
-    LLVMOrcLLJITGetMainJITDylib,
-    LLVMOrcLLJITLookup,
-    LLVMOrcLLJITRef,
-    LLVMOrcLLJITBuilderRef,
-};
 use llvm_sys::error::LLVMGetErrorMessage;
+use llvm_sys::orc2::lljit::{
+    LLVMOrcCreateLLJIT, LLVMOrcCreateLLJITBuilder, LLVMOrcDisposeLLJIT, LLVMOrcLLJITAddLLVMIRModule,
+    LLVMOrcLLJITBuilderRef, LLVMOrcLLJITGetMainJITDylib, LLVMOrcLLJITLookup, LLVMOrcLLJITRef,
+};
 
-use crate::orc::thread_safe::ThreadSafeModule;
 use crate::execution_engine::UnsafeFunctionPointer;
-use std::ptr;
+use crate::orc::thread_safe::ThreadSafeModule;
 use std::ffi::CString;
+use std::ptr;
 
 #[derive(Debug)]
 pub struct LLJITBuilder {
     builder: LLVMOrcLLJITBuilderRef,
+}
+
+impl Drop for LLJITBuilder {
+    fn drop(&mut self) {
+        unsafe {
+            llvm_sys::orc2::lljit::LLVMOrcDisposeLLJITBuilder(self.builder);
+        }
+    }
 }
 
 impl LLJITBuilder {
@@ -35,11 +37,12 @@ impl LLJITBuilder {
             let err = LLVMOrcCreateLLJIT(&mut jit, self.builder);
             if !err.is_null() {
                 let msg_ptr = LLVMGetErrorMessage(err);
-                let msg = std::ffi::CStr::from_ptr(msg_ptr).to_string_lossy().into_owned();
-                // Notice: llvm-sys doesn't expose LLVMDisposeErrorMessage publicly without another feature
-                // but LLVMGetErrorMessage consumes the error.
-                return Err(msg);
+                let msg = crate::support::LLVMString::new(msg_ptr as *const libc::c_char);
+                return Err(msg.to_string());
             }
+            // By calling mem::forget, we prevent Drop from being called, so builder isn't double-freed.
+            // (LLVMOrcCreateLLJIT takes ownership of the builder on both success and failure!)
+            std::mem::forget(self);
             Ok(LLJIT { jit })
         }
     }
@@ -72,8 +75,8 @@ impl LLJIT {
             let err = LLVMOrcLLJITAddLLVMIRModule(self.jit, dylib, module_ref);
             if !err.is_null() {
                 let msg_ptr = LLVMGetErrorMessage(err);
-                let msg = std::ffi::CStr::from_ptr(msg_ptr).to_string_lossy().into_owned();
-                return Err(msg);
+                let msg = crate::support::LLVMString::new(msg_ptr as *const libc::c_char);
+                return Err(msg.to_string());
             }
             Ok(())
         }
@@ -83,19 +86,24 @@ impl LLJIT {
     where
         F: UnsafeFunctionPointer,
     {
+        assert_eq!(
+            std::mem::size_of::<F>(),
+            std::mem::size_of::<usize>(),
+            "OrcJitFunction must be an unsafe function pointer"
+        );
         let cstr = CString::new(name).unwrap();
         let mut addr: llvm_sys::orc2::LLVMOrcExecutorAddress = 0;
-        
+
         unsafe {
             let err = LLVMOrcLLJITLookup(self.jit, &mut addr, cstr.as_ptr());
             if !err.is_null() {
                 let msg_ptr = LLVMGetErrorMessage(err);
-                let msg = std::ffi::CStr::from_ptr(msg_ptr).to_string_lossy().into_owned();
-                return Err(msg);
+                let msg = crate::support::LLVMString::new(msg_ptr as *const libc::c_char);
+                return Err(msg.to_string());
             }
             // `addr` is generally a u64 representing the JIT'd address
             let ptr_addr = addr as usize;
-            
+
             // Assume the user wants a function wrapping this
             let inner_f = std::mem::transmute_copy(&ptr_addr);
             Ok(OrcJitFunction { inner: inner_f })

@@ -1,10 +1,6 @@
 use llvm_sys::orc2::{
-    LLVMOrcCreateNewThreadSafeContext,
-    LLVMOrcCreateNewThreadSafeModule,
-    LLVMOrcDisposeThreadSafeContext,
-    LLVMOrcDisposeThreadSafeModule,
-    LLVMOrcThreadSafeContextRef,
-    LLVMOrcThreadSafeModuleRef,
+    LLVMOrcCreateNewThreadSafeContext, LLVMOrcCreateNewThreadSafeModule, LLVMOrcDisposeThreadSafeContext,
+    LLVMOrcDisposeThreadSafeModule, LLVMOrcThreadSafeContextRef, LLVMOrcThreadSafeModuleRef,
 };
 
 use crate::module::Module;
@@ -17,18 +13,16 @@ pub struct ThreadSafeContext {
 impl ThreadSafeContext {
     pub fn new() -> Self {
         unsafe {
-            Self {
-                ctx: LLVMOrcCreateNewThreadSafeContext(),
-            }
+            let ctx = LLVMOrcCreateNewThreadSafeContext();
+            assert!(!ctx.is_null(), "LLVMOrcCreateNewThreadSafeContext returned a null handle");
+            Self { ctx }
         }
     }
 }
 
 impl Drop for ThreadSafeContext {
     fn drop(&mut self) {
-        unsafe {
-            LLVMOrcDisposeThreadSafeContext(self.ctx)
-        }
+        unsafe { LLVMOrcDisposeThreadSafeContext(self.ctx) }
     }
 }
 
@@ -42,12 +36,14 @@ impl<'ctx> ThreadSafeModule<'ctx> {
     pub fn new(module: Module<'ctx>, tsc: &ThreadSafeContext) -> Self {
         // Module ownership is transferred to ThreadSafeModule
         let m = module.module.get();
-        // Prevent drop of the original module wrapper so we don't double free
-        std::mem::forget(module);
-        
+
         unsafe {
+            let ts_mod = LLVMOrcCreateNewThreadSafeModule(m, tsc.ctx);
+            // Prevent drop of the original module wrapper so we don't double free
+            std::mem::forget(module);
+            
             Self {
-                module: LLVMOrcCreateNewThreadSafeModule(m, tsc.ctx),
+                module: ts_mod,
                 _marker: std::marker::PhantomData,
             }
         }
@@ -56,8 +52,6 @@ impl<'ctx> ThreadSafeModule<'ctx> {
 
 impl Drop for ThreadSafeModule<'_> {
     fn drop(&mut self) {
-        unsafe {
-            LLVMOrcDisposeThreadSafeModule(self.module)
-        }
+        unsafe { LLVMOrcDisposeThreadSafeModule(self.module) }
     }
 }
