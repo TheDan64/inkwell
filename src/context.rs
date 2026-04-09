@@ -103,7 +103,8 @@ impl ContextImpl {
     }
 
     fn create_builder<'ctx>(&self) -> Builder<'ctx> {
-        unsafe { Builder::new(LLVMCreateBuilderInContext(self.0)) }
+        let builder = unsafe { LLVMCreateBuilderInContext(self.0) };
+        unsafe { Builder::new(builder, ContextRef::new(self.0)) }
     }
 
     fn create_module<'ctx>(&self, name: &str) -> Module<'ctx> {

@@ -120,20 +120,50 @@ pub enum BuilderError {
 pub struct Builder<'ctx> {
     builder: LLVMBuilderRef,
     positioned: Cell<PositionState>,
-    _marker: PhantomData<&'ctx ()>,
+    context: ContextRef<'ctx>,
 }
 
 #[allow(unused)] // only used in documentation
 use crate::context::Context;
+use crate::context::ContextRef;
 
 impl<'ctx> Builder<'ctx> {
-    pub unsafe fn new(builder: LLVMBuilderRef) -> Self {
+    #[cfg(debug_assertions)]
+    fn check_val_context<V: crate::values::AnyValue<'ctx>>(&self, val: V) {
+        unsafe {
+            let ctx = llvm_sys::core::LLVMGetTypeContext(llvm_sys::core::LLVMTypeOf(val.as_value_ref()));
+            assert_eq!(
+                self.context.raw(),
+                ctx,
+                "Builder and Value context mismatch! LLVM will segfault."
+            );
+        }
+    }
+
+    #[cfg(not(debug_assertions))]
+    fn check_val_context<V: crate::values::AnyValue<'ctx>>(&self, _val: V) {}
+
+    #[cfg(debug_assertions)]
+    fn check_type_context<T: crate::types::AnyType<'ctx>>(&self, ty: T) {
+        unsafe {
+            let ctx = llvm_sys::core::LLVMGetTypeContext(ty.as_type_ref());
+            assert_eq!(
+                self.context.raw(),
+                ctx,
+                "Builder and Type context mismatch! LLVM will segfault."
+            );
+        }
+    }
+
+    #[cfg(not(debug_assertions))]
+    fn check_type_context<T: crate::types::AnyType<'ctx>>(&self, _ty: T) {}
+    pub unsafe fn new(builder: LLVMBuilderRef, context: ContextRef<'ctx>) -> Self {
         debug_assert!(!builder.is_null());
 
         Builder {
             positioned: Cell::from(PositionState::NotSet),
             builder,
-            _marker: PhantomData,
+            context,
         }
     }
 
@@ -169,6 +199,9 @@ impl<'ctx> Builder<'ctx> {
     pub fn build_return(&self, value: Option<&dyn BasicValue<'ctx>>) -> Result<InstructionValue<'ctx>, BuilderError> {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
+        }
+        if let Some(val) = value {
+            self.check_val_context(val.as_basic_value_enum());
         }
         let value = unsafe {
             value.map_or_else(
@@ -209,6 +242,9 @@ impl<'ctx> Builder<'ctx> {
     ) -> Result<InstructionValue<'ctx>, BuilderError> {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
+        }
+        for val in values {
+            self.check_val_context(*val);
         }
         let mut args: Vec<LLVMValueRef> = values.iter().map(|val| val.as_value_ref()).collect();
         let value = unsafe { LLVMBuildAggregateRet(self.builder, args.as_mut_ptr(), args.len() as u32) };
@@ -293,6 +329,7 @@ impl<'ctx> Builder<'ctx> {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
         }
+        self.check_val_context(function);
         self.build_direct_call(function, args, name)
     }
 
@@ -333,6 +370,7 @@ impl<'ctx> Builder<'ctx> {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
         }
+        self.check_val_context(function);
         self.build_call_help(function.get_type(), function.as_value_ref(), args, name)
     }
 
@@ -427,6 +465,8 @@ impl<'ctx> Builder<'ctx> {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
         }
+        self.check_type_context(function_type);
+        self.check_val_context(function_pointer);
         self.build_call_help(function_type, function_pointer.as_value_ref(), args, name)
     }
 
@@ -1296,6 +1336,7 @@ impl<'ctx> Builder<'ctx> {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
         }
+        self.check_val_context(ptr);
         let ptr_ty = ptr.get_type();
         let pointee_ty = ptr_ty.get_element_type();
 
@@ -1375,6 +1416,8 @@ impl<'ctx> Builder<'ctx> {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
         }
+        self.check_type_context(pointee_ty.as_any_type_enum());
+        self.check_val_context(ptr);
         let pointee_ty = pointee_ty.as_any_type_enum();
 
         if !pointee_ty.is_struct_type() {
@@ -1576,6 +1619,8 @@ impl<'ctx> Builder<'ctx> {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
         }
+        self.check_val_context(ptr);
+        self.check_val_context(value.as_basic_value_enum());
         let value = unsafe { LLVMBuildStore(self.builder, value.as_value_ref(), ptr.as_value_ref()) };
 
         unsafe { Ok(InstructionValue::new(value)) }
@@ -1614,6 +1659,7 @@ impl<'ctx> Builder<'ctx> {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
         }
+        self.check_val_context(ptr);
         let c_string = to_c_str(name);
 
         #[cfg(not(feature = "llvm16-0"))]
@@ -1670,6 +1716,8 @@ impl<'ctx> Builder<'ctx> {
         if self.positioned.get() != PositionState::Set {
             return Err(BuilderError::UnsetPosition);
         }
+        self.check_type_context(pointee_ty.as_any_type_enum());
+        self.check_val_context(ptr);
         let c_string = to_c_str(name);
 
         let value = unsafe {

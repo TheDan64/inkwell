@@ -2091,3 +2091,24 @@ fn test_safe_struct_gep() {
         );
     }
 }
+
+#[test]
+#[should_panic]
+fn test_builder_context_mismatch_panics() {
+    let ctx1 = Context::create();
+    let ctx2 = Context::create();
+
+    let module = ctx1.create_module("test");
+    let builder = ctx1.create_builder();
+
+    let void_type = ctx1.void_type();
+    let fn_type = void_type.fn_type(&[], false);
+    let function = module.add_function("test_fn", fn_type, None);
+    let entry = ctx1.append_basic_block(function, "entry");
+    builder.position_at_end(entry);
+
+    let val2 = ctx2.f32_type().const_float(0.0);
+
+    // This should gracefully panic in debug mode due to context mismatch, instead of an opaque LLVM segfault
+    builder.build_return(Some(&val2)).unwrap();
+}
