@@ -1,6 +1,5 @@
 use crate::builder::{Builder, BuilderError};
 use crate::typed::value::{TypedFloatValue, TypedIntValue};
-use std::convert::TryFrom;
 
 /// A builder that strictly enforces types using Const Generics.
 #[derive(Debug)]
@@ -25,7 +24,7 @@ impl<'a, 'ctx> TypedBuilder<'a, 'ctx> {
         name: &str,
     ) -> Result<TypedIntValue<'ctx, W>, BuilderError> {
         let result = self.builder.build_int_add(lhs.as_untyped(), rhs.as_untyped(), name)?;
-        Ok(TypedIntValue::try_from(result).unwrap())
+        Ok(TypedIntValue { int_value: result })
     }
 
     pub fn build_int_sub<const W: u32>(
@@ -35,7 +34,7 @@ impl<'a, 'ctx> TypedBuilder<'a, 'ctx> {
         name: &str,
     ) -> Result<TypedIntValue<'ctx, W>, BuilderError> {
         let result = self.builder.build_int_sub(lhs.as_untyped(), rhs.as_untyped(), name)?;
-        Ok(TypedIntValue::try_from(result).unwrap())
+        Ok(TypedIntValue { int_value: result })
     }
 
     pub fn build_int_mul<const W: u32>(
@@ -45,7 +44,7 @@ impl<'a, 'ctx> TypedBuilder<'a, 'ctx> {
         name: &str,
     ) -> Result<TypedIntValue<'ctx, W>, BuilderError> {
         let result = self.builder.build_int_mul(lhs.as_untyped(), rhs.as_untyped(), name)?;
-        Ok(TypedIntValue::try_from(result).unwrap())
+        Ok(TypedIntValue { int_value: result })
     }
 
     pub fn build_float_add<const W: u32>(
@@ -55,7 +54,7 @@ impl<'a, 'ctx> TypedBuilder<'a, 'ctx> {
         name: &str,
     ) -> Result<TypedFloatValue<'ctx, W>, BuilderError> {
         let result = self.builder.build_float_add(lhs.as_untyped(), rhs.as_untyped(), name)?;
-        Ok(TypedFloatValue::try_from(result).unwrap())
+        Ok(TypedFloatValue { float_value: result })
     }
 
     pub fn build_float_mul<const W: u32>(
@@ -65,7 +64,7 @@ impl<'a, 'ctx> TypedBuilder<'a, 'ctx> {
         name: &str,
     ) -> Result<TypedFloatValue<'ctx, W>, BuilderError> {
         let result = self.builder.build_float_mul(lhs.as_untyped(), rhs.as_untyped(), name)?;
-        Ok(TypedFloatValue::try_from(result).unwrap())
+        Ok(TypedFloatValue { float_value: result })
     }
 }
 
