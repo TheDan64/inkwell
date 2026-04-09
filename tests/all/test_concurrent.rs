@@ -36,7 +36,8 @@ fn test_concurrent_compiler_pool() {
         jobs.push(Box::new(MyJob { id: i }));
     }
 
-    assert!(CompilerPool::execute_and_link(&master_context, &master_module, jobs).is_ok());
+    CompilerPool::execute_and_link(&master_context, &master_module, jobs)
+        .expect("CompilerPool::execute_and_link should succeed");
 
     // Verify all 3 functions made it into the master module successfully
     assert!(master_module.get_function("do_work_0").is_some());
