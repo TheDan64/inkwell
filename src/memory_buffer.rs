@@ -65,16 +65,11 @@ impl MemoryBuffer<'static> {
 
     /// Create a memory buffer copied from a byte slice with a trailing nul byte.
     ///
-    /// # Panics
+    /// # Safety
     ///
-    /// Panics if the input byte slice does not terminate with a nul byte.
-    pub fn create_from_memory_range_copy(input: &[u8], name: &str) -> Self {
-        assert_eq!(
-            input[input.len() - 1],
-            b'\0',
-            "input byte slice must terminate with a nul byte"
-        );
-
+    /// The `input` byte slice must confidently terminate with a nul byte (`\0`),
+    /// otherwise LLVM will experience out-of-bounds undefined behavior/segfaults.
+    pub unsafe fn create_from_memory_range_copy(input: &[u8], name: &str) -> Self {
         let name_c_string = to_c_str(name);
 
         let memory_buffer = unsafe {
@@ -106,16 +101,11 @@ impl<'a> MemoryBuffer<'a> {
 
     /// Create a memory buffer from a byte slice with a trailing nul byte.
     ///
-    /// # Panics
+    /// # Safety
     ///
-    /// Panics if the input byte slice does not terminate with a nul byte.
-    pub fn create_from_memory_range(input: &'a [u8], name: &str) -> Self {
-        assert_eq!(
-            input[input.len() - 1],
-            b'\0',
-            "input byte slice must terminate with a nul byte"
-        );
-
+    /// The `input` byte slice must confidently terminate with a nul byte (`\0`),
+    /// otherwise LLVM will experience out-of-bounds undefined behavior/segfaults.
+    pub unsafe fn create_from_memory_range(input: &'a [u8], name: &str) -> Self {
         let name_c_string = to_c_str(name);
 
         let memory_buffer = unsafe {
@@ -124,7 +114,7 @@ impl<'a> MemoryBuffer<'a> {
                 // decremented since technically the nul byte is one past the end of the input.
                 input.len() - 1,
                 name_c_string.as_ptr(),
-                false as i32, // guaranteed to have nul-terminator by CStr
+                false as i32, // required to be false since LLVM expects already nul-terminated arrays
             )
         };
 

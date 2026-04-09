@@ -298,28 +298,7 @@ impl PassManager<FunctionValue<'_>> {
 }
 
 #[allow(deprecated)]
-impl<T: PassManagerSubType> PassManager<T> {
-    pub unsafe fn new(pass_manager: LLVMPassManagerRef) -> Self {
-        assert!(!pass_manager.is_null());
-
-        PassManager {
-            pass_manager,
-            sub_type: PhantomData,
-        }
-    }
-
-    pub fn create<I: Borrow<T::Input>>(input: I) -> PassManager<T> {
-        let pass_manager = unsafe { T::create(input) };
-
-        unsafe { PassManager::new(pass_manager) }
-    }
-
-    /// This method returns true if any of the passes modified the function or module
-    /// and false otherwise.
-    pub fn run_on(&self, input: &T) -> bool {
-        unsafe { input.run_in_pass_manager(self) }
-    }
-
+impl<'ctx> PassManager<Module<'ctx>> {
     /// This pass promotes "by reference" arguments to be "by value" arguments.
     /// In practice, this means looking for internal functions that have pointer
     /// arguments. If it can prove, through the use of alias analysis, that an
@@ -479,6 +458,31 @@ impl<T: PassManagerSubType> PassManager<T> {
     pub fn add_strip_symbol_pass(&self) {
         unsafe { LLVMAddStripSymbolsPass(self.pass_manager) }
     }
+}
+
+#[allow(deprecated)]
+impl<T: PassManagerSubType> PassManager<T> {
+    pub unsafe fn new(pass_manager: LLVMPassManagerRef) -> Self {
+        assert!(!pass_manager.is_null());
+
+        PassManager {
+            pass_manager,
+            sub_type: PhantomData,
+        }
+    }
+
+    pub fn create<I: Borrow<T::Input>>(input: I) -> PassManager<T> {
+        let pass_manager = unsafe { T::create(input) };
+
+        unsafe { PassManager::new(pass_manager) }
+    }
+
+    /// This method returns true if any of the passes modified the function or module
+    /// and false otherwise.
+    pub fn run_on(&self, input: &T) -> bool {
+        unsafe { input.run_in_pass_manager(self) }
+    }
+
 
     /// No LLVM documentation is available at this time.
     #[llvm_versions(..=16)]
