@@ -29,3 +29,4 @@ mod test_targets;
 mod test_tari_example;
 mod test_types;
 mod test_values;
+mod test_concurrent;
