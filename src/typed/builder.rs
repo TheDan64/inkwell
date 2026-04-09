@@ -1,5 +1,5 @@
 use crate::builder::{Builder, BuilderError};
-use crate::typed::value::{TypedFloatValue, TypedIntValue, TypedPointerValue, TypedStructValue};
+use crate::typed::value::{TypedFloatValue, TypedIntValue};
 use std::convert::TryFrom;
 
 /// A builder that strictly enforces types using Const Generics.

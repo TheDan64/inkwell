@@ -25,10 +25,27 @@ fn test_typed_builder_math() {
     let typed_param2: TypedIntValue<32> = param2.try_into().unwrap();
 
     // Compile-time guaranteed math
-    let result = typed_builder.build_int_add(typed_param1, typed_param2, "add_res").unwrap();
+    let sum = typed_builder.build_int_add(typed_param1, typed_param2, "add_res").unwrap();
+    let diff = typed_builder.build_int_sub(sum, typed_param2, "sub_res").unwrap();
+    let result = typed_builder.build_int_mul(diff, typed_param1, "mul_res").unwrap();
     
     // Fallback to untyped to build return value
     builder.build_return(Some(&result.as_untyped())).unwrap();
 
     assert!(fn_value.verify(true));
+}
+
+#[test]
+fn test_typed_int_negative_width_match() {
+    let context = Context::create();
+
+    let i64_type = context.i64_type();
+    let val_64 = i64_type.const_int(42, false);
+
+    // Should fail to convert to TypedIntValue<32>
+    let typed_val_32_res: Result<TypedIntValue<32>, _> = val_64.try_into();
+    assert!(typed_val_32_res.is_err());
+
+    let new_res = TypedIntValue::<32>::new(val_64);
+    assert!(new_res.is_none());
 }
