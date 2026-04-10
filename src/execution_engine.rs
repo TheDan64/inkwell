@@ -124,15 +124,15 @@ impl<'ctx> ExecutionEngine<'ctx> {
         **self.execution_engine_rc()
     }
 
-    /// This function probably doesn't need to be called, but is here due to
-    /// linking(?) requirements. Bad things happen if we don't provide it.
-    pub fn link_in_mc_jit() {
+    // This function is noop, but required for proper MCJIT initialization and
+    // registration. Without it, LTO is free to eliminate it
+    pub(crate) fn link_in_mc_jit() {
         unsafe { LLVMLinkInMCJIT() }
     }
 
-    /// This function probably doesn't need to be called, but is here due to
-    /// linking(?) requirements. Bad things happen if we don't provide it.
-    pub fn link_in_interpreter() {
+    // This function is noop, but required for proper MCJIT initialization and
+    // registration. Without it, LTO is free to eliminate it
+    pub(crate) fn link_in_interpreter() {
         unsafe {
             LLVMLinkInInterpreter();
         }
