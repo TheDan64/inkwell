@@ -462,6 +462,8 @@ impl<'ctx> Module<'ctx> {
     /// ```
     // SubType: ExecutionEngine<Basic?>
     pub fn create_execution_engine(&self) -> Result<ExecutionEngine<'ctx>, LLVMString> {
+        ExecutionEngine::link_in_mc_jit();
+        ExecutionEngine::link_in_interpreter();
         Target::initialize_native(&InitializationConfig::default()).map_err(|mut err_string| {
             err_string.push('\0');
 
@@ -512,6 +514,7 @@ impl<'ctx> Module<'ctx> {
     /// ```
     // SubType: ExecutionEngine<Interpreter>
     pub fn create_interpreter_execution_engine(&self) -> Result<ExecutionEngine<'ctx>, LLVMString> {
+        ExecutionEngine::link_in_interpreter();
         Target::initialize_native(&InitializationConfig::default()).map_err(|mut err_string| {
             err_string.push('\0');
 
@@ -567,6 +570,7 @@ impl<'ctx> Module<'ctx> {
         &self,
         opt_level: OptimizationLevel,
     ) -> Result<ExecutionEngine<'ctx>, LLVMString> {
+        ExecutionEngine::link_in_mc_jit();
         Target::initialize_native(&InitializationConfig::default()).map_err(|mut err_string| {
             err_string.push('\0');
 
@@ -649,6 +653,8 @@ impl<'ctx> Module<'ctx> {
     ) -> Result<ExecutionEngine<'ctx>, LLVMString> {
         use std::mem::MaybeUninit;
         // ...
+
+        ExecutionEngine::link_in_mc_jit();
 
         // 1) Initialize the native target
         Target::initialize_native(&InitializationConfig::default()).map_err(|mut err_string| {
