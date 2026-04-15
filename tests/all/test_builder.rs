@@ -2096,7 +2096,6 @@ fn test_safe_struct_gep() {
 fn test_current_debug_location() {
     let context = Context::create();
     let builder = context.create_builder();
-
     builder.unset_current_debug_location();
     assert!(builder.get_current_debug_location().is_none());
 }
