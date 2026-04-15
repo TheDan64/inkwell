@@ -3677,7 +3677,7 @@ impl<'ctx> Builder<'ctx> {
             return None;
         }
         Some(DILocation {
-            metadata_ref: metadata_ref,
+            metadata_ref,
             _marker: PhantomData,
         })
     }
