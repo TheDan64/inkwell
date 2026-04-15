@@ -3670,14 +3670,14 @@ impl<'ctx> Builder<'ctx> {
     /// Get the debug info source location of the instruction currently pointed at by the builder,
     /// if available.
     pub fn get_current_debug_location(&self) -> Option<DILocation<'ctx>> {
-        use llvm_sys::core::LLVMGetCurrentDebugLocation;
+        use llvm_sys::core::LLVMGetCurrentDebugLocation2;
         use llvm_sys::core::LLVMValueAsMetadata;
-        let metadata_ref = unsafe { LLVMGetCurrentDebugLocation(self.builder) };
+        let metadata_ref = unsafe { LLVMGetCurrentDebugLocation2(self.builder) };
         if metadata_ref.is_null() {
             return None;
         }
         Some(DILocation {
-            metadata_ref: unsafe { LLVMValueAsMetadata(metadata_ref) },
+            metadata_ref: metadata_ref,
             _marker: PhantomData,
         })
     }
