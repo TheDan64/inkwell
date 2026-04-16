@@ -807,7 +807,6 @@ impl<'ctx> Module<'ctx> {
         unsafe { LLVMWriteBitcodeToFile(self.module.get(), c_string.as_ptr()) == 0 }
     }
 
-    // See GH issue #6
     /// `write_bitcode_to_path` should be preferred over this method, as it does not work on all operating systems.
     pub fn write_bitcode_to_file(&self, file: &File, unbuffered: bool) -> bool {
         #[cfg(not(unix))]
