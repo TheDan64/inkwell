@@ -2091,3 +2091,110 @@ fn test_safe_struct_gep() {
         );
     }
 }
+
+#[test]
+fn test_current_debug_location() {
+    use inkwell::debug_info::{
+        AsDIScope, DIFlags, DIFlagsConstants, DISubprogram, DWARFEmissionKind, DWARFSourceLanguage,
+    };
+    use inkwell::module::FlagBehavior;
+    let context = Context::create();
+    let module = context.create_module("bin");
+
+    let debug_metadata_version = context.i32_type().const_int(3, false);
+    module.add_basic_value_flag("Debug Info Version", FlagBehavior::Warning, debug_metadata_version);
+    let builder = context.create_builder();
+
+    assert!(builder.get_current_debug_location().is_none());
+    builder.unset_current_debug_location();
+    assert!(builder.get_current_debug_location().is_none());
+
+    let (dibuilder, compile_unit) = module.create_debug_info_builder(
+        true,
+        DWARFSourceLanguage::C,
+        "source_file",
+        ".",
+        "my llvm compiler frontend",
+        false,
+        "",
+        0,
+        "",
+        DWARFEmissionKind::Full,
+        0,
+        false,
+        false,
+        #[cfg(any(
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+            feature = "llvm14-0",
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-1",
+            feature = "llvm19-1",
+            feature = "llvm20-1",
+            feature = "llvm21-1",
+            feature = "llvm22-1"
+        ))]
+        "",
+        #[cfg(any(
+            feature = "llvm11-0",
+            feature = "llvm12-0",
+            feature = "llvm13-0",
+            feature = "llvm14-0",
+            feature = "llvm15-0",
+            feature = "llvm16-0",
+            feature = "llvm17-0",
+            feature = "llvm18-1",
+            feature = "llvm19-1",
+            feature = "llvm20-1",
+            feature = "llvm21-1",
+            feature = "llvm22-1"
+        ))]
+        "",
+    );
+
+    let ditype = dibuilder
+        .create_basic_type("type_name", 0_u64, 0x00, DIFlags::PUBLIC)
+        .unwrap();
+    let subroutine_type =
+        dibuilder.create_subroutine_type(compile_unit.get_file(), Some(ditype.as_type()), &[], DIFlags::PUBLIC);
+    let func_scope: DISubprogram<'_> = dibuilder.create_function(
+        compile_unit.as_debug_info_scope(),
+        "main",
+        None,
+        compile_unit.get_file(),
+        0,
+        subroutine_type,
+        true,
+        true,
+        0,
+        DIFlags::PUBLIC,
+        false,
+    );
+
+    let fn_type = context.i64_type().fn_type(&[], false);
+    let fn_val = module.add_function("fn_name_str", fn_type, None);
+    fn_val.set_subprogram(func_scope);
+
+    let basic_block = context.append_basic_block(fn_val, "entry");
+    builder.position_at_end(basic_block);
+    builder.build_return(Some(&context.i64_type().const_zero())).unwrap();
+
+    let lexical_block = dibuilder.create_lexical_block(func_scope.as_debug_info_scope(), compile_unit.get_file(), 0, 0);
+
+    let loc = dibuilder.create_debug_location(&context, 0, 0, lexical_block.as_debug_info_scope(), None);
+
+    builder.set_current_debug_location(loc);
+
+    let get_loc = builder.get_current_debug_location();
+    let inner_get_loc = get_loc.expect("Expected non-none debug location.");
+    assert!(core::ptr::eq(inner_get_loc.as_mut_ptr(), loc.as_mut_ptr()));
+    builder.unset_current_debug_location();
+    assert!(builder.get_current_debug_location().is_none());
+
+    dibuilder.finalize();
+
+    assert!(module.verify().is_ok());
+}
