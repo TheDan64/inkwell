@@ -3671,7 +3671,6 @@ impl<'ctx> Builder<'ctx> {
     /// if available.
     pub fn get_current_debug_location(&self) -> Option<DILocation<'ctx>> {
         use llvm_sys::core::LLVMGetCurrentDebugLocation2;
-        use llvm_sys::core::LLVMValueAsMetadata;
         let metadata_ref = unsafe { LLVMGetCurrentDebugLocation2(self.builder) };
         if metadata_ref.is_null() {
             return None;
