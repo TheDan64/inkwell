@@ -815,7 +815,7 @@ impl<'ctx> Module<'ctx> {
         {
             use llvm_sys::bit_writer::LLVMWriteBitcodeToFD;
             use std::os::unix::io::AsRawFd;
-    
+
             // REVIEW: as_raw_fd docs suggest it only works in *nix
             // Also, should_close should maybe be hardcoded to true?
             unsafe {
