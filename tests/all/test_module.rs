@@ -35,13 +35,13 @@ fn test_write_bitcode_to_file() {
     use inkwell::context::Context;
     use std::env::temp_dir;
     use std::fs::{File, remove_file};
-    use std::io::{Read, Seek, SeekFrom};
+    use std::io::Read;
 
     let mut path = temp_dir();
 
     path.push("temp2.bc");
 
-    let mut file = File::create(&path).unwrap();
+    let file = File::create(&path).unwrap();
 
     let context = Context::create();
     let module = context.create_module("my_module");
@@ -50,7 +50,7 @@ fn test_write_bitcode_to_file() {
 
     module.add_function("my_fn", fn_type, None);
     module.write_bitcode_to_file(&file, false);
-
+    
     drop(file);
 
     let mut contents = Vec::new();
@@ -58,7 +58,7 @@ fn test_write_bitcode_to_file() {
 
     file2.read_to_end(&mut contents).expect("Unable to verify written file");
 
-    assert!(contents.len() > 0);
+    assert!(!contents.is_empty());
 
     drop(file2);
 
