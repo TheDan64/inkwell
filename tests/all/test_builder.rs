@@ -2189,10 +2189,7 @@ fn test_current_debug_location() {
     builder.set_current_debug_location(loc);
 
     let get_loc = builder.get_current_debug_location();
-    assert!(get_loc.is_some());
-    let Some(inner_get_loc) = get_loc else {
-        panic!("current debug location was None.");
-    };
+    let inner_get_loc = get_loc.expect("Expected non-none debug location.");
     assert!(core::ptr::eq(inner_get_loc.as_mut_ptr(), loc.as_mut_ptr()));
     builder.unset_current_debug_location();
     assert!(builder.get_current_debug_location().is_none());
