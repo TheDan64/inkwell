@@ -809,25 +809,24 @@ impl<'ctx> Module<'ctx> {
 
     // See GH issue #6
     /// `write_bitcode_to_path` should be preferred over this method, as it does not work on all operating systems.
-    pub fn write_bitcode_to_file(&self, file: &File, should_close: bool, unbuffered: bool) -> bool {
-        #[cfg(unix)]
-        {
-            use llvm_sys::bit_writer::LLVMWriteBitcodeToFD;
-            use std::os::unix::io::AsRawFd;
+    pub fn write_bitcode_to_file(&self, file: &File, unbuffered: bool) -> bool {
+        use llvm_sys::bit_writer::LLVMWriteBitcodeToFD;
+        use std::os::unix::io::AsRawFd;
 
-            // REVIEW: as_raw_fd docs suggest it only works in *nix
-            // Also, should_close should maybe be hardcoded to true?
-            unsafe {
-                LLVMWriteBitcodeToFD(
-                    self.module.get(),
-                    file.as_raw_fd(),
-                    should_close as i32,
-                    unbuffered as i32,
-                ) == 0
-            }
+        // REVIEW: as_raw_fd docs suggest it only works in *nix
+        // Also, should_close should maybe be hardcoded to true?
+        unsafe {
+            LLVMWriteBitcodeToFD(
+                self.module.get(),
+                file.as_raw_fd(),
+                // should_close: Rust will close the
+                // File itself, so `should_close` can
+                // cause a hard failure on non-unix
+                // systems such as Windows.
+                0,
+                unbuffered as i32,
+            ) == 0
         }
-        #[cfg(not(unix))]
-        return false;
     }
 
     /// Writes this `Module` to a `MemoryBuffer`.
