@@ -824,8 +824,7 @@ impl<'ctx> Module<'ctx> {
                     file.as_raw_fd(),
                     // should_close: Rust will close the
                     // File itself, so `should_close` can
-                    // cause a hard failure on non-unix
-                    // systems such as Windows.
+                    // cause a hard failure.
                     0,
                     unbuffered as i32,
                 ) == 0
