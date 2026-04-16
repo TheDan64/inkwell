@@ -32,6 +32,7 @@ fn test_write_bitcode_to_path() {
 // TODO: If this TODO/REVIEW is here in the upstream repo, then remove it. It is out of date.
 // REVIEW: This test infrequently fails. Seems to happen more often on travis.
 // Possibly a LLVM bug? Wrapper is really straightforward. See issue #6 on GH
+#[cfg(unix)]
 #[test]
 fn test_write_bitcode_to_file() {
     use inkwell::context::Context;
