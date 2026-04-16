@@ -50,7 +50,7 @@ fn test_write_bitcode_to_file() {
 
     module.add_function("my_fn", fn_type, None);
     module.write_bitcode_to_file(&file, false);
-    
+
     drop(file);
 
     let mut contents = Vec::new();
