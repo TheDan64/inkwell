@@ -807,9 +807,10 @@ impl<'ctx> Module<'ctx> {
         unsafe { LLVMWriteBitcodeToFile(self.module.get(), c_string.as_ptr()) == 0 }
     }
 
-    // See GH issue #6
     /// `write_bitcode_to_path` should be preferred over this method, as it does not work on all operating systems.
-    pub fn write_bitcode_to_file(&self, file: &File, should_close: bool, unbuffered: bool) -> bool {
+    pub fn write_bitcode_to_file(&self, file: &File, unbuffered: bool) -> bool {
+        #[cfg(not(unix))]
+        return false;
         #[cfg(unix)]
         {
             use llvm_sys::bit_writer::LLVMWriteBitcodeToFD;
@@ -821,13 +822,14 @@ impl<'ctx> Module<'ctx> {
                 LLVMWriteBitcodeToFD(
                     self.module.get(),
                     file.as_raw_fd(),
-                    should_close as i32,
+                    // should_close: Rust will close the
+                    // File itself, so `should_close` can
+                    // cause a hard failure.
+                    0,
                     unbuffered as i32,
                 ) == 0
             }
         }
-        #[cfg(not(unix))]
-        return false;
     }
 
     /// Writes this `Module` to a `MemoryBuffer`.
