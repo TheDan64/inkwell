@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["LLVMComdatSelectionKind"],"fn":["LLVMGetComdat","LLVMGetComdatSelectionKind","LLVMGetOrInsertComdat","LLVMSetComdat","LLVMSetComdatSelectionKind"]};
