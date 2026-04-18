@@ -14,14 +14,14 @@ use llvm_sys::target_machine::{
     LLVMTargetMachineEmitToMemoryBuffer, LLVMTargetMachineRef, LLVMTargetRef,
 };
 use llvm_sys::target_machine::{
-    LLVMCreateTargetDataLayout, LLVMOpaqueTargetMachine, LLVMOpaqueTargetMachineOptions, LLVMTarget,
+    LLVMCreateTargetDataLayout, LLVMOpaqueTargetMachine, LLVMTarget,
 };
 #[llvm_versions(18..)]
 use llvm_sys::target_machine::{
     LLVMCreateTargetMachineOptions, LLVMCreateTargetMachineWithOptions, LLVMDisposeTargetMachineOptions,
     LLVMTargetMachineOptionsRef, LLVMTargetMachineOptionsSetABI, LLVMTargetMachineOptionsSetCPU,
     LLVMTargetMachineOptionsSetCodeGenOptLevel, LLVMTargetMachineOptionsSetCodeModel,
-    LLVMTargetMachineOptionsSetFeatures, LLVMTargetMachineOptionsSetRelocMode,
+    LLVMTargetMachineOptionsSetFeatures, LLVMTargetMachineOptionsSetRelocMode, LLVMOpaqueTargetMachineOptions,
 };
 use std::sync::{LazyLock, RwLock};
 

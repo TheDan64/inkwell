@@ -652,8 +652,8 @@ impl<'ctx> Builder<'ctx> {
                 fn_val_ref,
                 args.as_mut_ptr(),
                 args.len() as u32,
-                then_block.basic_block,
-                catch_block.basic_block,
+                then_block.basic_block.as_ptr(),
+                catch_block.basic_block.as_ptr(),
                 c_string.as_ptr(),
             )
         };
