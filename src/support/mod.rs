@@ -14,12 +14,14 @@ use std::ffi::{CStr, CString};
 use std::fmt::{self, Debug, Display, Formatter};
 use std::ops::Deref;
 use std::path::Path;
+use std::ptr::NonNull;
 
 /// An owned LLVM String. Also known as a LLVM Message
 #[derive(Eq)]
 pub struct LLVMString {
-    pub(crate) ptr: *const c_char,
+    pub(crate) ptr: NonNull<c_char>,
 }
+const _: () = assert_niche::<LLVMString>();
 
 unsafe impl Send for LLVMString {}
 unsafe impl Sync for LLVMString {}
@@ -27,7 +29,9 @@ unsafe impl Sync for LLVMString {}
 impl LLVMString {
     pub(crate) unsafe fn new(ptr: *const c_char) -> Self {
         assert!(!ptr.is_null());
-        LLVMString { ptr }
+        LLVMString {
+            ptr: unsafe { NonNull::new_unchecked(ptr.cast_mut()) },
+        }
     }
 
     /// This is a convenience method for creating a Rust `String`,
@@ -57,7 +61,7 @@ impl Deref for LLVMString {
     type Target = CStr;
 
     fn deref(&self) -> &Self::Target {
-        unsafe { CStr::from_ptr(self.ptr) }
+        unsafe { CStr::from_ptr(self.ptr.as_ptr()) }
     }
 }
 
@@ -93,7 +97,7 @@ impl Error for LLVMString {
 impl Drop for LLVMString {
     fn drop(&mut self) {
         unsafe {
-            LLVMDisposeMessage(self.ptr as *mut _);
+            LLVMDisposeMessage(self.ptr.as_ptr());
         }
     }
 }
@@ -105,14 +109,14 @@ impl Drop for LLVMString {
 #[derive(Eq)]
 pub(crate) enum LLVMStringOrRaw {
     Owned(LLVMString),
-    Borrowed(*const c_char),
+    Borrowed(NonNull<c_char>),
 }
 
 impl LLVMStringOrRaw {
     pub fn as_str(&self) -> &CStr {
         match self {
             LLVMStringOrRaw::Owned(llvm_string) => llvm_string.deref(),
-            LLVMStringOrRaw::Borrowed(ptr) => unsafe { CStr::from_ptr(*ptr) },
+            LLVMStringOrRaw::Borrowed(ptr) => unsafe { CStr::from_ptr(ptr.as_ptr()) },
         }
     }
 }
@@ -231,6 +235,45 @@ pub(crate) fn to_c_str(mut s: &str) -> Cow<'_, CStr> {
         // SAFETY: No internal 0 byte since already `FromBytesUntilNulError`
         Err(_) => unsafe { Cow::from(CString::new(s.as_bytes()).unwrap_unchecked()) },
     }
+}
+
+/// Perform an assertion at compile time.
+///
+/// # Example
+///
+/// ```ignore
+/// use inkwell::support::const_assert;
+/// #[repr(transparent)]
+/// struct Foo {
+///     bar: &'static (),
+/// }
+/// const _: () = const_assert(size_of::<Foo>() == size_of::<&'static ()>());
+/// ```
+#[track_caller]
+#[inline(always)]
+pub(crate) const fn const_assert(assertion: bool) {
+    if !assertion {
+        panic!("Assertion Failed");
+    }
+}
+
+/// Asserts that a type has at least one niche. Having a niche means that `size_of::<T>() == size_of::<Option<T>>()`.
+///
+/// # Example
+///
+/// ```ignore
+/// use std::ptr::NonNull;
+/// use inkwell::support::assert_niche;
+///
+/// struct Foo {
+///     bar: NonNull<Foo>,
+/// }
+/// const _: () = assert_niche::<Foo>();
+/// ```
+#[track_caller]
+#[inline(always)]
+pub(crate) const fn assert_niche<T>() {
+    const_assert(size_of::<T>() == size_of::<Option<T>>());
 }
 
 #[test]

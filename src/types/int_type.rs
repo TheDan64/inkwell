@@ -6,7 +6,7 @@ use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::AddressSpace;
 use crate::context::ContextRef;
-use crate::support::LLVMString;
+use crate::support::{LLVMString, assert_niche};
 #[llvm_versions(12..)]
 use crate::types::ScalableVectorType;
 use crate::types::traits::AsTypeRef;
@@ -64,10 +64,12 @@ impl StringRadix {
 }
 
 /// An `IntType` is the type of an integer constant or variable.
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct IntType<'ctx> {
     int_type: Type<'ctx>,
 }
+const _: () = assert_niche::<IntType>();
 
 impl<'ctx> IntType<'ctx> {
     /// Create `IntType` from [`LLVMTypeRef`]
@@ -414,7 +416,7 @@ impl<'ctx> IntType<'ctx> {
 
 unsafe impl AsTypeRef for IntType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.int_type.ty
+        self.int_type.as_mut_ptr()
     }
 }
 

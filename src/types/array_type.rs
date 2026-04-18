@@ -4,7 +4,7 @@ use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::AddressSpace;
 use crate::context::ContextRef;
-use crate::support::LLVMString;
+use crate::support::{LLVMString, assert_niche};
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::traits::AsTypeRef;
 use crate::types::{BasicTypeEnum, FunctionType, PointerType, Type};
@@ -13,10 +13,12 @@ use crate::values::{ArrayValue, IntValue};
 use std::fmt::{self, Display};
 
 /// An `ArrayType` is the type of contiguous constants or variables.
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct ArrayType<'ctx> {
     array_type: Type<'ctx>,
 }
+const _: () = assert_niche::<ArrayType>();
 
 impl<'ctx> ArrayType<'ctx> {
     /// Create `ArrayType` from [`LLVMTypeRef`]
@@ -258,7 +260,7 @@ impl<'ctx> ArrayType<'ctx> {
 
 unsafe impl AsTypeRef for ArrayType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.array_type.ty
+        self.array_type.as_mut_ptr()
     }
 }
 

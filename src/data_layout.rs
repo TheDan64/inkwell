@@ -1,5 +1,5 @@
-use std::ffi::CStr;
 use std::fmt;
+use std::{ffi::CStr, ptr::NonNull};
 
 use crate::support::{LLVMString, LLVMStringOrRaw};
 
@@ -23,7 +23,7 @@ impl DataLayout {
         debug_assert!(!data_layout.is_null());
 
         DataLayout {
-            data_layout: LLVMStringOrRaw::Borrowed(data_layout),
+            data_layout: LLVMStringOrRaw::Borrowed(unsafe { NonNull::new_unchecked(data_layout.cast_mut()) }),
         }
     }
 
@@ -33,8 +33,8 @@ impl DataLayout {
 
     pub fn as_ptr(&self) -> *const ::libc::c_char {
         match self.data_layout {
-            LLVMStringOrRaw::Owned(ref llvm_string) => llvm_string.ptr,
-            LLVMStringOrRaw::Borrowed(ptr) => ptr,
+            LLVMStringOrRaw::Owned(ref llvm_string) => llvm_string.ptr.as_ptr(),
+            LLVMStringOrRaw::Borrowed(ptr) => ptr.as_ptr().cast_const(),
         }
     }
 }

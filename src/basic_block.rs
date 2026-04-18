@@ -1,5 +1,6 @@
 //! A `BasicBlock` is a container of instructions.
 
+use llvm_sys::LLVMBasicBlock;
 use llvm_sys::core::{
     LLVMBasicBlockAsValue, LLVMBlockAddress, LLVMDeleteBasicBlock, LLVMGetBasicBlockName, LLVMGetBasicBlockParent,
     LLVMGetBasicBlockTerminator, LLVMGetFirstInstruction, LLVMGetFirstUse, LLVMGetLastInstruction,
@@ -10,12 +11,13 @@ use llvm_sys::core::{
 use llvm_sys::prelude::{LLVMBasicBlockRef, LLVMValueRef};
 
 use crate::context::ContextRef;
-use crate::support::to_c_str;
+use crate::support::{assert_niche, to_c_str};
 use crate::values::{AsValueRef, BasicValueUse, FunctionValue, InstructionValue, PointerValue};
 
 use std::ffi::CStr;
 use std::fmt;
 use std::marker::PhantomData;
+use std::ptr::NonNull;
 
 /// A `BasicBlock` is a container of instructions.
 ///
@@ -24,11 +26,13 @@ use std::marker::PhantomData;
 /// A well formed `BasicBlock` is a list of non terminating instructions followed by a single terminating
 /// instruction. `BasicBlock`s are allowed to be malformed prior to running validation because it may be useful
 /// when constructing or modifying a program.
+#[repr(transparent)]
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct BasicBlock<'ctx> {
-    pub(crate) basic_block: LLVMBasicBlockRef,
+    pub(crate) basic_block: NonNull<LLVMBasicBlock>,
     _marker: PhantomData<&'ctx ()>,
 }
+const _: () = assert_niche::<BasicBlock>();
 
 impl<'ctx> BasicBlock<'ctx> {
     /// Create a basic block from an [LLVMBasicBlockRef].
@@ -46,7 +50,7 @@ impl<'ctx> BasicBlock<'ctx> {
             assert!(!LLVMIsABasicBlock(basic_block as LLVMValueRef).is_null());
 
             Some(BasicBlock {
-                basic_block,
+                basic_block: NonNull::new_unchecked(basic_block),
                 _marker: PhantomData,
             })
         }
@@ -54,7 +58,7 @@ impl<'ctx> BasicBlock<'ctx> {
 
     /// Acquires the underlying raw pointer belonging to this `BasicBlock` type.
     pub fn as_mut_ptr(&self) -> LLVMBasicBlockRef {
-        self.basic_block
+        self.basic_block.as_ptr()
     }
 
     /// Obtains the `FunctionValue` that this `BasicBlock` belongs to, if any.
@@ -80,7 +84,7 @@ impl<'ctx> BasicBlock<'ctx> {
     /// assert!(basic_block.get_parent().is_none());
     /// ```
     pub fn get_parent(self) -> Option<FunctionValue<'ctx>> {
-        unsafe { FunctionValue::new(LLVMGetBasicBlockParent(self.basic_block)) }
+        unsafe { FunctionValue::new(LLVMGetBasicBlockParent(self.as_mut_ptr())) }
     }
 
     /// Gets the `BasicBlock` preceding the current one, in its own scope, if any.
@@ -112,7 +116,7 @@ impl<'ctx> BasicBlock<'ctx> {
     pub fn get_previous_basic_block(self) -> Option<BasicBlock<'ctx>> {
         self.get_parent()?;
 
-        unsafe { BasicBlock::new(LLVMGetPreviousBasicBlock(self.basic_block)) }
+        unsafe { BasicBlock::new(LLVMGetPreviousBasicBlock(self.as_mut_ptr())) }
     }
 
     /// Gets the `BasicBlock` succeeding the current one, in its own scope, if any.
@@ -145,7 +149,7 @@ impl<'ctx> BasicBlock<'ctx> {
     pub fn get_next_basic_block(self) -> Option<BasicBlock<'ctx>> {
         self.get_parent()?;
 
-        unsafe { BasicBlock::new(LLVMGetNextBasicBlock(self.basic_block)) }
+        unsafe { BasicBlock::new(LLVMGetNextBasicBlock(self.as_mut_ptr())) }
     }
 
     /// Prepends one `BasicBlock` before another.
@@ -178,7 +182,7 @@ impl<'ctx> BasicBlock<'ctx> {
             return Err(());
         }
 
-        unsafe { LLVMMoveBasicBlockBefore(self.basic_block, basic_block.basic_block) }
+        unsafe { LLVMMoveBasicBlockBefore(self.as_mut_ptr(), basic_block.as_mut_ptr()) }
 
         Ok(())
     }
@@ -213,7 +217,7 @@ impl<'ctx> BasicBlock<'ctx> {
             return Err(());
         }
 
-        unsafe { LLVMMoveBasicBlockAfter(self.basic_block, basic_block.basic_block) }
+        unsafe { LLVMMoveBasicBlockAfter(self.as_mut_ptr(), basic_block.as_mut_ptr()) }
 
         Ok(())
     }
@@ -241,7 +245,7 @@ impl<'ctx> BasicBlock<'ctx> {
     /// assert_eq!(basic_block.get_first_instruction().unwrap().get_opcode(), InstructionOpcode::Return);
     /// ```
     pub fn get_first_instruction(self) -> Option<InstructionValue<'ctx>> {
-        let value = unsafe { LLVMGetFirstInstruction(self.basic_block) };
+        let value = unsafe { LLVMGetFirstInstruction(self.as_mut_ptr()) };
 
         if value.is_null() {
             return None;
@@ -273,7 +277,7 @@ impl<'ctx> BasicBlock<'ctx> {
     /// assert_eq!(basic_block.get_last_instruction().unwrap().get_opcode(), InstructionOpcode::Return);
     /// ```
     pub fn get_last_instruction(self) -> Option<InstructionValue<'ctx>> {
-        let value = unsafe { LLVMGetLastInstruction(self.basic_block) };
+        let value = unsafe { LLVMGetLastInstruction(self.as_mut_ptr()) };
 
         if value.is_null() {
             return None;
@@ -347,7 +351,7 @@ impl<'ctx> BasicBlock<'ctx> {
     // TODOC: Every BB must have a terminating instruction or else it is invalid
     // REVIEW: Unclear how this differs from get_last_instruction
     pub fn get_terminator(self) -> Option<InstructionValue<'ctx>> {
-        let value = unsafe { LLVMGetBasicBlockTerminator(self.basic_block) };
+        let value = unsafe { LLVMGetBasicBlockTerminator(self.as_mut_ptr()) };
 
         if value.is_null() {
             return None;
@@ -393,7 +397,7 @@ impl<'ctx> BasicBlock<'ctx> {
             return Err(());
         }
 
-        unsafe { LLVMRemoveBasicBlockFromParent(self.basic_block) }
+        unsafe { LLVMRemoveBasicBlockFromParent(self.as_mut_ptr()) }
 
         Ok(())
     }
@@ -426,7 +430,7 @@ impl<'ctx> BasicBlock<'ctx> {
                 return Err(());
             }
 
-            LLVMDeleteBasicBlock(self.basic_block);
+            LLVMDeleteBasicBlock(self.as_mut_ptr());
 
             Ok(())
         }
@@ -450,7 +454,7 @@ impl<'ctx> BasicBlock<'ctx> {
     /// assert_eq!(context, basic_block.get_context());
     /// ```
     pub fn get_context(self) -> ContextRef<'ctx> {
-        unsafe { ContextRef::new(LLVMGetTypeContext(LLVMTypeOf(LLVMBasicBlockAsValue(self.basic_block)))) }
+        unsafe { ContextRef::new(LLVMGetTypeContext(LLVMTypeOf(LLVMBasicBlockAsValue(self.as_mut_ptr())))) }
     }
 
     /// Gets the name of a `BasicBlock`.
@@ -471,7 +475,7 @@ impl<'ctx> BasicBlock<'ctx> {
     /// assert_eq!(bb.get_name().to_str(), Ok("entry"));
     /// ```
     pub fn get_name(&self) -> &CStr {
-        let ptr = unsafe { LLVMGetBasicBlockName(self.basic_block) };
+        let ptr = unsafe { LLVMGetBasicBlockName(self.as_mut_ptr()) };
 
         unsafe { CStr::from_ptr(ptr) }
     }
@@ -482,7 +486,7 @@ impl<'ctx> BasicBlock<'ctx> {
 
         unsafe {
             LLVMSetValueName2(
-                LLVMBasicBlockAsValue(self.basic_block),
+                LLVMBasicBlockAsValue(self.as_mut_ptr()),
                 c_string.as_ptr(),
                 c_string.to_bytes().len(),
             )
@@ -513,8 +517,8 @@ impl<'ctx> BasicBlock<'ctx> {
     /// assert_eq!(branch_inst.get_operand(0).unwrap().unwrap_block(), bb2);
     /// ```
     pub fn replace_all_uses_with(self, other: &BasicBlock<'ctx>) {
-        let value = unsafe { LLVMBasicBlockAsValue(self.basic_block) };
-        let other = unsafe { LLVMBasicBlockAsValue(other.basic_block) };
+        let value = unsafe { LLVMBasicBlockAsValue(self.as_mut_ptr()) };
+        let other = unsafe { LLVMBasicBlockAsValue(other.as_mut_ptr()) };
 
         // LLVM may infinite-loop when they aren't distinct, which is UB in C++.
         if value != other {
@@ -549,7 +553,7 @@ impl<'ctx> BasicBlock<'ctx> {
     /// assert!(bb1.get_first_use().is_some());
     /// ```
     pub fn get_first_use(self) -> Option<BasicValueUse<'ctx>> {
-        let use_ = unsafe { LLVMGetFirstUse(LLVMBasicBlockAsValue(self.basic_block)) };
+        let use_ = unsafe { LLVMGetFirstUse(LLVMBasicBlockAsValue(self.as_mut_ptr())) };
 
         if use_.is_null() {
             return None;
@@ -586,7 +590,7 @@ impl<'ctx> BasicBlock<'ctx> {
             // Taking the address of the entry block is illegal.
             self.get_previous_basic_block()?;
 
-            let value = PointerValue::new(LLVMBlockAddress(parent.as_value_ref(), self.basic_block));
+            let value = PointerValue::new(LLVMBlockAddress(parent.as_value_ref(), self.as_mut_ptr()));
 
             if value.is_null() {
                 return None;
@@ -599,12 +603,12 @@ impl<'ctx> BasicBlock<'ctx> {
 
 impl fmt::Debug for BasicBlock<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let llvm_value = unsafe { CStr::from_ptr(LLVMPrintValueToString(self.basic_block as LLVMValueRef)) };
-        let llvm_type = unsafe { CStr::from_ptr(LLVMPrintTypeToString(LLVMTypeOf(self.basic_block as LLVMValueRef))) };
-        let is_const = unsafe { LLVMIsConstant(self.basic_block as LLVMValueRef) == 1 };
+        let llvm_value = unsafe { CStr::from_ptr(LLVMPrintValueToString(self.as_mut_ptr() as LLVMValueRef)) };
+        let llvm_type = unsafe { CStr::from_ptr(LLVMPrintTypeToString(LLVMTypeOf(self.as_mut_ptr() as LLVMValueRef))) };
+        let is_const = unsafe { LLVMIsConstant(self.as_mut_ptr() as LLVMValueRef) == 1 };
 
         f.debug_struct("BasicBlock")
-            .field("address", &self.basic_block)
+            .field("address", &self.as_mut_ptr())
             .field("is_const", &is_const)
             .field("llvm_value", &llvm_value)
             .field("llvm_type", &llvm_type)

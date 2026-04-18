@@ -99,7 +99,7 @@ impl Intrinsic {
 
         unsafe {
             FunctionValue::new(LLVMGetIntrinsicDeclaration(
-                module.module.get(),
+                module.as_mut_ptr(),
                 self.id,
                 param_types.as_mut_ptr(),
                 param_types.len(),

@@ -11,16 +11,19 @@ use llvm_sys::prelude::LLVMValueRef;
 use std::ffi::CStr;
 use std::fmt::{self, Display};
 
+use crate::support::assert_niche;
 use crate::types::VectorType;
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, InstructionValue, IntValue, Value};
 
 use super::AnyValue;
 
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct VectorValue<'ctx> {
     vec_value: Value<'ctx>,
 }
+const _: () = assert_niche::<VectorValue>();
 
 impl<'ctx> VectorValue<'ctx> {
     /// Get a value from an [LLVMValueRef].
@@ -147,7 +150,7 @@ impl<'ctx> VectorValue<'ctx> {
 
 unsafe impl AsValueRef for VectorValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
-        self.vec_value.value
+        self.vec_value.as_mut_ptr()
     }
 }
 

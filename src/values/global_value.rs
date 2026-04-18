@@ -19,6 +19,7 @@ use std::fmt::{self, Display};
 
 use crate::comdat::Comdat;
 use crate::module::Linkage;
+use crate::support::assert_niche;
 use crate::types::AnyTypeEnum;
 use crate::values::traits::AsValueRef;
 
@@ -30,10 +31,12 @@ use super::AnyValue;
 
 // REVIEW: GlobalValues are always PointerValues. With SubTypes, we should
 // compress this into a PointerValue<Global> type
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct GlobalValue<'ctx> {
     global_value: Value<'ctx>,
 }
+const _: () = assert_niche::<GlobalValue>();
 
 impl<'ctx> GlobalValue<'ctx> {
     /// Get a value from an [LLVMValueRef].
@@ -245,7 +248,7 @@ impl<'ctx> GlobalValue<'ctx> {
     pub fn set_comdat(self, comdat: Comdat) {
         use llvm_sys::comdat::LLVMSetComdat;
 
-        unsafe { LLVMSetComdat(self.as_value_ref(), comdat.0) }
+        unsafe { LLVMSetComdat(self.as_value_ref(), comdat.as_mut_ptr()) }
     }
 
     pub fn get_unnamed_address(self) -> UnnamedAddress {
@@ -277,7 +280,7 @@ impl<'ctx> GlobalValue<'ctx> {
 
 unsafe impl AsValueRef for GlobalValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
-        self.global_value.value
+        self.global_value.as_mut_ptr()
     }
 }
 

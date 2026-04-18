@@ -2,8 +2,13 @@
 // https://llvm.org/doxygen/IR_2Comdat_8h_source.html
 // https://stackoverflow.com/questions/1834597/what-is-the-comdat-section-used-for
 
+use std::ptr::NonNull;
+
+use llvm_sys::LLVMComdat;
 use llvm_sys::comdat::{LLVMComdatSelectionKind, LLVMGetComdatSelectionKind, LLVMSetComdatSelectionKind};
 use llvm_sys::prelude::LLVMComdatRef;
+
+use crate::support::assert_niche;
 
 #[llvm_enum(LLVMComdatSelectionKind)]
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -27,31 +32,37 @@ pub enum ComdatSelectionKind {
 }
 
 /// A `Comdat` determines how to resolve duplicate sections when linking.
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
-pub struct Comdat(pub(crate) LLVMComdatRef);
+pub struct Comdat(pub(crate) NonNull<LLVMComdat>);
+const _: () = assert_niche::<Comdat>();
 
 impl Comdat {
-    /// Creates a new `Comdat` type from a raw pointer.
+    /// Creates a new [Comdat] type from an [LLVMComdatRef].
+    ///
+    /// # Safety
+    ///
+    /// `comdat` must be non-null and point to a valid value.
     pub unsafe fn new(comdat: LLVMComdatRef) -> Self {
         debug_assert!(!comdat.is_null());
 
-        Comdat(comdat)
+        Comdat(unsafe { NonNull::new_unchecked(comdat) })
     }
 
     /// Acquires the underlying raw pointer belonging to this `Comdat` type.
     pub fn as_mut_ptr(&self) -> LLVMComdatRef {
-        self.0
+        self.0.as_ptr()
     }
 
     /// Gets what kind of `Comdat` this is.
     pub fn get_selection_kind(self) -> ComdatSelectionKind {
-        let kind_ptr = unsafe { LLVMGetComdatSelectionKind(self.0) };
+        let kind_ptr = unsafe { LLVMGetComdatSelectionKind(self.as_mut_ptr()) };
 
         ComdatSelectionKind::new(kind_ptr)
     }
 
     /// Sets what kind of `Comdat` this should be.
     pub fn set_selection_kind(self, kind: ComdatSelectionKind) {
-        unsafe { LLVMSetComdatSelectionKind(self.0, kind.into()) }
+        unsafe { LLVMSetComdatSelectionKind(self.as_mut_ptr(), kind.into()) }
     }
 }

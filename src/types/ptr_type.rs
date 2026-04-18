@@ -5,7 +5,7 @@ use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::AddressSpace;
 use crate::context::ContextRef;
-use crate::support::LLVMString;
+use crate::support::{LLVMString, assert_niche};
 #[cfg(feature = "typed-pointers")]
 use crate::types::AnyTypeEnum;
 #[llvm_versions(12..)]
@@ -18,10 +18,12 @@ use crate::types::enums::BasicMetadataTypeEnum;
 use std::fmt::{self, Display};
 
 /// A `PointerType` is the type of a pointer constant or variable.
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct PointerType<'ctx> {
     ptr_type: Type<'ctx>,
 }
+const _: () = assert_niche::<PointerType>();
 
 impl<'ctx> PointerType<'ctx> {
     /// Create `PointerType` from [`LLVMTypeRef`]
@@ -375,13 +377,13 @@ impl<'ctx> PointerType<'ctx> {
     /// Determine whether this pointer is opaque.
     #[llvm_versions(15..)]
     pub fn is_opaque(self) -> bool {
-        unsafe { LLVMPointerTypeIsOpaque(self.ptr_type.ty) != 0 }
+        unsafe { LLVMPointerTypeIsOpaque(self.ptr_type.as_mut_ptr()) != 0 }
     }
 }
 
 unsafe impl AsTypeRef for PointerType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.ptr_type.ty
+        self.ptr_type.as_mut_ptr()
     }
 }
 

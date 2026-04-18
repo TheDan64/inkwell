@@ -1,6 +1,5 @@
 //! A `Module` represents a single code compilation unit.
 
-use llvm_sys::LLVMLinkage;
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyModule};
 #[allow(deprecated)]
 use llvm_sys::bit_reader::LLVMParseBitcodeInContext;
@@ -26,6 +25,7 @@ use llvm_sys::execution_engine::{
 use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
 #[llvm_versions(13..)]
 use llvm_sys::transforms::pass_builder::LLVMRunPasses;
+use llvm_sys::{LLVMLinkage, LLVMModule};
 
 use llvm_sys::LLVMModuleFlagBehavior;
 
@@ -35,7 +35,7 @@ use std::fs::File;
 use std::marker::PhantomData;
 use std::mem::{MaybeUninit, forget};
 use std::path::Path;
-use std::ptr;
+use std::ptr::{self, NonNull};
 use std::rc::Rc;
 
 use crate::comdat::Comdat;
@@ -171,7 +171,7 @@ pub enum Linkage {
 #[derive(Debug, PartialEq, Eq)]
 pub struct Module<'ctx> {
     data_layout: RefCell<Option<DataLayout>>,
-    pub(crate) module: Cell<LLVMModuleRef>,
+    pub(crate) module: Cell<NonNull<LLVMModule>>,
     pub(crate) owned_by_ee: RefCell<Option<ExecutionEngine<'ctx>>>,
     _marker: PhantomData<&'ctx Context>,
 }
@@ -186,7 +186,7 @@ impl<'ctx> Module<'ctx> {
         debug_assert!(!module.is_null());
 
         Module {
-            module: Cell::new(module),
+            module: Cell::new(unsafe { NonNull::new_unchecked(module) }),
             owned_by_ee: RefCell::new(None),
             data_layout: RefCell::new(Some(Module::get_borrowed_data_layout(module))),
             _marker: PhantomData,
@@ -195,7 +195,7 @@ impl<'ctx> Module<'ctx> {
 
     /// Acquires the underlying raw pointer belonging to this `Module` type.
     pub fn as_mut_ptr(&self) -> LLVMModuleRef {
-        self.module.get()
+        self.module.get().as_ptr()
     }
 
     /// Creates a function given its `name` and `ty`, adds it to the `Module`
@@ -222,7 +222,7 @@ impl<'ctx> Module<'ctx> {
     pub fn add_function(&self, name: &str, ty: FunctionType<'ctx>, linkage: Option<Linkage>) -> FunctionValue<'ctx> {
         let c_string = to_c_str(name);
         let fn_value = unsafe {
-            FunctionValue::new(LLVMAddFunction(self.module.get(), c_string.as_ptr(), ty.as_type_ref()))
+            FunctionValue::new(LLVMAddFunction(self.as_mut_ptr(), c_string.as_ptr(), ty.as_type_ref()))
                 .expect("add_function should always succeed in adding a new function")
         };
 
@@ -246,7 +246,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(local_module.get_context(), local_context);
     /// ```
     pub fn get_context(&self) -> ContextRef<'ctx> {
-        unsafe { ContextRef::new(LLVMGetModuleContext(self.module.get())) }
+        unsafe { ContextRef::new(LLVMGetModuleContext(self.as_mut_ptr())) }
     }
 
     /// Gets the first `FunctionValue` defined in this `Module`.
@@ -268,7 +268,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(fn_value, module.get_first_function().unwrap());
     /// ```
     pub fn get_first_function(&self) -> Option<FunctionValue<'ctx>> {
-        unsafe { FunctionValue::new(LLVMGetFirstFunction(self.module.get())) }
+        unsafe { FunctionValue::new(LLVMGetFirstFunction(self.as_mut_ptr())) }
     }
 
     /// Gets the last `FunctionValue` defined in this `Module`.
@@ -290,7 +290,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(fn_value, module.get_last_function().unwrap());
     /// ```
     pub fn get_last_function(&self) -> Option<FunctionValue<'ctx>> {
-        unsafe { FunctionValue::new(LLVMGetLastFunction(self.module.get())) }
+        unsafe { FunctionValue::new(LLVMGetLastFunction(self.as_mut_ptr())) }
     }
 
     /// Gets a `FunctionValue` defined in this `Module` by its name.
@@ -314,7 +314,7 @@ impl<'ctx> Module<'ctx> {
     pub fn get_function(&self, name: &str) -> Option<FunctionValue<'ctx>> {
         let c_string = to_c_str(name);
 
-        unsafe { FunctionValue::new(LLVMGetNamedFunction(self.module.get(), c_string.as_ptr())) }
+        unsafe { FunctionValue::new(LLVMGetNamedFunction(self.as_mut_ptr(), c_string.as_ptr())) }
     }
 
     /// An iterator over the functions in this `Module`.
@@ -364,7 +364,7 @@ impl<'ctx> Module<'ctx> {
     pub fn get_struct_type(&self, name: &str) -> Option<StructType<'ctx>> {
         let c_string = to_c_str(name);
 
-        let struct_type = unsafe { LLVMGetTypeByName(self.module.get(), c_string.as_ptr()) };
+        let struct_type = unsafe { LLVMGetTypeByName(self.as_mut_ptr(), c_string.as_ptr()) };
 
         if struct_type.is_null() {
             return None;
@@ -414,7 +414,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_triple(), triple);
     /// ```
     pub fn set_triple(&self, triple: &TargetTriple) {
-        unsafe { LLVMSetTarget(self.module.get(), triple.as_ptr()) }
+        unsafe { LLVMSetTarget(self.as_mut_ptr(), triple.as_ptr()) }
     }
 
     /// Gets the `TargetTriple` assigned to this `Module`. If none has been
@@ -439,7 +439,7 @@ impl<'ctx> Module<'ctx> {
     /// ```
     pub fn get_triple(&self) -> TargetTriple {
         // REVIEW: This isn't an owned LLVMString, is it? If so, need to deallocate.
-        let target_str = unsafe { LLVMGetTarget(self.module.get()) };
+        let target_str = unsafe { LLVMGetTarget(self.as_mut_ptr()) };
 
         unsafe { TargetTriple::new(LLVMString::create_from_c_str(CStr::from_ptr(target_str))) }
     }
@@ -479,7 +479,7 @@ impl<'ctx> Module<'ctx> {
         let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
         let code = unsafe {
             // Takes ownership of module
-            LLVMCreateExecutionEngineForModule(execution_engine.as_mut_ptr(), self.module.get(), &mut err_string)
+            LLVMCreateExecutionEngineForModule(execution_engine.as_mut_ptr(), self.as_mut_ptr(), &mut err_string)
         };
 
         if code == 1 {
@@ -531,7 +531,7 @@ impl<'ctx> Module<'ctx> {
 
         let code = unsafe {
             // Takes ownership of module
-            LLVMCreateInterpreterForModule(execution_engine.as_mut_ptr(), self.module.get(), &mut err_string)
+            LLVMCreateInterpreterForModule(execution_engine.as_mut_ptr(), self.as_mut_ptr(), &mut err_string)
         };
 
         if code == 1 {
@@ -589,7 +589,7 @@ impl<'ctx> Module<'ctx> {
             // Takes ownership of module
             LLVMCreateJITCompilerForModule(
                 execution_engine.as_mut_ptr(),
-                self.module.get(),
+                self.as_mut_ptr(),
                 opt_level as u32,
                 &mut err_string,
             )
@@ -716,7 +716,7 @@ impl<'ctx> Module<'ctx> {
         let code = unsafe {
             llvm_sys::execution_engine::LLVMCreateMCJITCompilerForModule(
                 execution_engine.as_mut_ptr(),
-                self.module.get(),
+                self.as_mut_ptr(),
                 &mut options,
                 std::mem::size_of::<llvm_sys::execution_engine::LLVMMCJITCompilerOptions>(),
                 &mut err_string,
@@ -766,12 +766,12 @@ impl<'ctx> Module<'ctx> {
         let value = unsafe {
             match address_space {
                 Some(address_space) => LLVMAddGlobalInAddressSpace(
-                    self.module.get(),
+                    self.as_mut_ptr(),
                     type_.as_type_ref(),
                     c_string.as_ptr(),
                     address_space.0,
                 ),
-                None => LLVMAddGlobal(self.module.get(), type_.as_type_ref(), c_string.as_ptr()),
+                None => LLVMAddGlobal(self.as_mut_ptr(), type_.as_type_ref(), c_string.as_ptr()),
             }
         };
 
@@ -804,7 +804,7 @@ impl<'ctx> Module<'ctx> {
             .expect("Did not find a valid Unicode path string");
         let c_string = to_c_str(path_str);
 
-        unsafe { LLVMWriteBitcodeToFile(self.module.get(), c_string.as_ptr()) == 0 }
+        unsafe { LLVMWriteBitcodeToFile(self.as_mut_ptr(), c_string.as_ptr()) == 0 }
     }
 
     /// `write_bitcode_to_path` should be preferred over this method, as it does not work on all operating systems.
@@ -820,7 +820,7 @@ impl<'ctx> Module<'ctx> {
             // Also, should_close should maybe be hardcoded to true?
             unsafe {
                 LLVMWriteBitcodeToFD(
-                    self.module.get(),
+                    self.as_mut_ptr(),
                     file.as_raw_fd(),
                     // should_close: Rust will close the
                     // File itself, so `should_close` can
@@ -853,7 +853,7 @@ impl<'ctx> Module<'ctx> {
     /// let buffer = module.write_bitcode_to_memory();
     /// ```
     pub fn write_bitcode_to_memory(&self) -> MemoryBuffer<'static> {
-        let memory_buffer = unsafe { LLVMWriteBitcodeToMemoryBuffer(self.module.get()) };
+        let memory_buffer = unsafe { LLVMWriteBitcodeToMemoryBuffer(self.as_mut_ptr()) };
 
         unsafe { MemoryBuffer::new(memory_buffer) }
     }
@@ -869,7 +869,7 @@ impl<'ctx> Module<'ctx> {
 
         let action = LLVMVerifierFailureAction::LLVMReturnStatusAction;
 
-        let code = unsafe { LLVMVerifyModule(self.module.get(), action, &mut err_str) };
+        let code = unsafe { LLVMVerifyModule(self.as_mut_ptr(), action, &mut err_str) };
 
         if code == 1 && !err_str.is_null() {
             return unsafe { Err(LLVMString::new(err_str)) };
@@ -942,22 +942,22 @@ impl<'ctx> Module<'ctx> {
     /// ```
     pub fn set_data_layout(&self, data_layout: &DataLayout) {
         unsafe {
-            LLVMSetDataLayout(self.module.get(), data_layout.as_ptr());
+            LLVMSetDataLayout(self.as_mut_ptr(), data_layout.as_ptr());
         }
 
-        *self.data_layout.borrow_mut() = Some(Module::get_borrowed_data_layout(self.module.get()));
+        *self.data_layout.borrow_mut() = Some(Module::get_borrowed_data_layout(self.as_mut_ptr()));
     }
 
     /// Prints the content of the `Module` to stderr.
     pub fn print_to_stderr(&self) {
         unsafe {
-            LLVMDumpModule(self.module.get());
+            LLVMDumpModule(self.as_mut_ptr());
         }
     }
 
     /// Prints the content of the `Module` to an `LLVMString`.
     pub fn print_to_string(&self) -> LLVMString {
-        unsafe { LLVMString::new(LLVMPrintModuleToString(self.module.get())) }
+        unsafe { LLVMString::new(LLVMPrintModuleToString(self.as_mut_ptr())) }
     }
 
     /// Prints the content of the `Module` to a file.
@@ -970,7 +970,7 @@ impl<'ctx> Module<'ctx> {
         let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
         let return_code = unsafe {
             LLVMPrintModuleToFile(
-                self.module.get(),
+                self.as_mut_ptr(),
                 path.as_ptr() as *const ::libc::c_char,
                 &mut err_string,
             )
@@ -997,7 +997,7 @@ impl<'ctx> Module<'ctx> {
 
     /// Sets the inline assembly for the `Module`.
     pub fn set_inline_assembly(&self, asm: &str) {
-        unsafe { LLVMSetModuleInlineAsm2(self.module.get(), asm.as_ptr() as *const ::libc::c_char, asm.len()) }
+        unsafe { LLVMSetModuleInlineAsm2(self.as_mut_ptr(), asm.as_ptr() as *const ::libc::c_char, asm.len()) }
     }
 
     // REVIEW: Should module take ownership of metadata?
@@ -1047,7 +1047,7 @@ impl<'ctx> Module<'ctx> {
 
         let c_string = to_c_str(key);
         unsafe {
-            LLVMAddNamedMetadataOperand(self.module.get(), c_string.as_ptr(), metadata.as_value_ref());
+            LLVMAddNamedMetadataOperand(self.as_mut_ptr(), c_string.as_ptr(), metadata.as_value_ref());
         }
 
         Ok(())
@@ -1093,7 +1093,7 @@ impl<'ctx> Module<'ctx> {
     pub fn get_global_metadata_size(&self, key: &str) -> u32 {
         let c_string = to_c_str(key);
 
-        unsafe { LLVMGetNamedMetadataNumOperands(self.module.get(), c_string.as_ptr()) }
+        unsafe { LLVMGetNamedMetadataNumOperands(self.as_mut_ptr(), c_string.as_ptr()) }
     }
 
     // SubTypes: -> Vec<MetadataValue<Node>>
@@ -1141,7 +1141,7 @@ impl<'ctx> Module<'ctx> {
         let ptr = vec.as_mut_ptr();
 
         unsafe {
-            LLVMGetNamedMetadataOperands(self.module.get(), c_string.as_ptr(), ptr);
+            LLVMGetNamedMetadataOperands(self.as_mut_ptr(), c_string.as_ptr(), ptr);
 
             vec.set_len(count);
         };
@@ -1168,7 +1168,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_first_global().unwrap(), global);
     /// ```
     pub fn get_first_global(&self) -> Option<GlobalValue<'ctx>> {
-        let value = unsafe { LLVMGetFirstGlobal(self.module.get()) };
+        let value = unsafe { LLVMGetFirstGlobal(self.as_mut_ptr()) };
 
         if value.is_null() {
             return None;
@@ -1196,7 +1196,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_last_global().unwrap(), global);
     /// ```
     pub fn get_last_global(&self) -> Option<GlobalValue<'ctx>> {
-        let value = unsafe { LLVMGetLastGlobal(self.module.get()) };
+        let value = unsafe { LLVMGetLastGlobal(self.as_mut_ptr()) };
 
         if value.is_null() {
             return None;
@@ -1225,7 +1225,7 @@ impl<'ctx> Module<'ctx> {
     /// ```
     pub fn get_global(&self, name: &str) -> Option<GlobalValue<'ctx>> {
         let c_string = to_c_str(name);
-        let value = unsafe { LLVMGetNamedGlobal(self.module.get(), c_string.as_ptr()) };
+        let value = unsafe { LLVMGetNamedGlobal(self.as_mut_ptr(), c_string.as_ptr()) };
 
         if value.is_null() {
             return None;
@@ -1271,7 +1271,7 @@ impl<'ctx> Module<'ctx> {
         let success = unsafe {
             LLVMParseBitcodeInContext(
                 context.as_ctx_ref(),
-                buffer.memory_buffer,
+                buffer.as_mut_ptr(),
                 module.as_mut_ptr(),
                 &mut err_string,
             )
@@ -1327,7 +1327,7 @@ impl<'ctx> Module<'ctx> {
     /// ```
     pub fn get_name(&self) -> &CStr {
         let mut length = 0;
-        let cstr_ptr = unsafe { LLVMGetModuleIdentifier(self.module.get(), &mut length) };
+        let cstr_ptr = unsafe { LLVMGetModuleIdentifier(self.as_mut_ptr(), &mut length) };
 
         unsafe { CStr::from_ptr(cstr_ptr) }
     }
@@ -1347,7 +1347,7 @@ impl<'ctx> Module<'ctx> {
     /// assert_eq!(module.get_name().to_str(), Ok("my_module2"));
     /// ```
     pub fn set_name(&self, name: &str) {
-        unsafe { LLVMSetModuleIdentifier(self.module.get(), name.as_ptr() as *const ::libc::c_char, name.len()) }
+        unsafe { LLVMSetModuleIdentifier(self.as_mut_ptr(), name.as_ptr() as *const ::libc::c_char, name.len()) }
     }
 
     /// Gets the source file name. It defaults to the module identifier but is separate from it.
@@ -1371,7 +1371,7 @@ impl<'ctx> Module<'ctx> {
         use llvm_sys::core::LLVMGetSourceFileName;
 
         let mut len = 0;
-        let ptr = unsafe { LLVMGetSourceFileName(self.module.get(), &mut len) };
+        let ptr = unsafe { LLVMGetSourceFileName(self.as_mut_ptr(), &mut len) };
 
         unsafe { CStr::from_ptr(ptr) }
     }
@@ -1398,7 +1398,7 @@ impl<'ctx> Module<'ctx> {
 
         unsafe {
             LLVMSetSourceFileName(
-                self.module.get(),
+                self.as_mut_ptr(),
                 file_name.as_ptr() as *const ::libc::c_char,
                 file_name.len(),
             )
@@ -1437,7 +1437,7 @@ impl<'ctx> Module<'ctx> {
         // Here we assign an error handler to extract the error message, if any, for us.
         context.set_diagnostic_handler(get_error_str_diagnostic_handler, char_ptr_ptr);
 
-        let code = unsafe { LLVMLinkModules2(self.module.get(), other.module.get()) };
+        let code = unsafe { LLVMLinkModules2(self.as_mut_ptr(), other.as_mut_ptr()) };
 
         forget(other);
 
@@ -1456,7 +1456,7 @@ impl<'ctx> Module<'ctx> {
         use llvm_sys::comdat::LLVMGetOrInsertComdat;
 
         let c_string = to_c_str(name);
-        let comdat_ptr = unsafe { LLVMGetOrInsertComdat(self.module.get(), c_string.as_ptr()) };
+        let comdat_ptr = unsafe { LLVMGetOrInsertComdat(self.as_mut_ptr(), c_string.as_ptr()) };
 
         unsafe { Comdat::new(comdat_ptr) }
     }
@@ -1468,13 +1468,13 @@ impl<'ctx> Module<'ctx> {
     pub fn get_flag(&self, key: &str) -> Option<MetadataValue<'ctx>> {
         use llvm_sys::core::LLVMMetadataAsValue;
 
-        let flag = unsafe { LLVMGetModuleFlag(self.module.get(), key.as_ptr() as *const ::libc::c_char, key.len()) };
+        let flag = unsafe { LLVMGetModuleFlag(self.as_mut_ptr(), key.as_ptr() as *const ::libc::c_char, key.len()) };
 
         if flag.is_null() {
             return None;
         }
 
-        let flag_value = unsafe { LLVMMetadataAsValue(LLVMGetModuleContext(self.module.get()), flag) };
+        let flag_value = unsafe { LLVMMetadataAsValue(LLVMGetModuleContext(self.as_mut_ptr()), flag) };
 
         unsafe { Some(MetadataValue::new(flag_value)) }
     }
@@ -1486,7 +1486,7 @@ impl<'ctx> Module<'ctx> {
 
         unsafe {
             LLVMAddModuleFlag(
-                self.module.get(),
+                self.as_mut_ptr(),
                 behavior.into(),
                 key.as_ptr() as *mut ::libc::c_char,
                 key.len(),
@@ -1505,7 +1505,7 @@ impl<'ctx> Module<'ctx> {
 
         unsafe {
             LLVMAddModuleFlag(
-                self.module.get(),
+                self.as_mut_ptr(),
                 behavior.into(),
                 key.as_ptr() as *mut ::libc::c_char,
                 key.len(),
@@ -1516,12 +1516,12 @@ impl<'ctx> Module<'ctx> {
 
     /// Strips and debug info from the module, if it exists.
     pub fn strip_debug_info(&self) -> bool {
-        unsafe { LLVMStripModuleDebugInfo(self.module.get()) == 1 }
+        unsafe { LLVMStripModuleDebugInfo(self.as_mut_ptr()) == 1 }
     }
 
     /// Gets the version of debug metadata contained in this `Module`.
     pub fn get_debug_metadata_version(&self) -> libc::c_uint {
-        unsafe { LLVMGetModuleDebugMetadataVersion(self.module.get()) }
+        unsafe { LLVMGetModuleDebugMetadataVersion(self.as_mut_ptr()) }
     }
 
     /// Creates a `DebugInfoBuilder` for this `Module`.
@@ -1638,9 +1638,9 @@ impl<'ctx> Module<'ctx> {
     ) -> Result<(), LLVMString> {
         unsafe {
             let error = LLVMRunPasses(
-                self.module.get(),
+                self.as_mut_ptr(),
                 to_c_str(passes).as_ptr(),
-                machine.target_machine,
+                machine.target_machine.as_ptr(),
                 options.options_ref,
             );
             if error.is_null() {
@@ -1664,7 +1664,7 @@ impl Clone for Module<'_> {
             verify.unwrap_err()
         );
 
-        unsafe { Module::new(LLVMCloneModule(self.module.get())) }
+        unsafe { Module::new(LLVMCloneModule(self.as_mut_ptr())) }
     }
 }
 
@@ -1674,7 +1674,7 @@ impl Drop for Module<'_> {
     fn drop(&mut self) {
         if self.owned_by_ee.borrow_mut().take().is_none() {
             unsafe {
-                LLVMDisposeModule(self.module.get());
+                LLVMDisposeModule(self.as_mut_ptr());
             }
         }
 

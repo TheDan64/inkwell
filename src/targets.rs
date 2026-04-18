@@ -1,11 +1,10 @@
 use llvm_sys::target::{
     LLVMABIAlignmentOfType, LLVMABISizeOfType, LLVMByteOrder, LLVMByteOrdering, LLVMCallFrameAlignmentOfType,
     LLVMCopyStringRepOfTargetData, LLVMCreateTargetData, LLVMDisposeTargetData, LLVMElementAtOffset,
-    LLVMIntPtrTypeForASInContext, LLVMIntPtrTypeInContext, LLVMOffsetOfElement, LLVMPointerSize, LLVMPointerSizeForAS,
-    LLVMPreferredAlignmentOfGlobal, LLVMPreferredAlignmentOfType, LLVMSizeOfTypeInBits, LLVMStoreSizeOfType,
-    LLVMTargetDataRef,
+    LLVMIntPtrTypeForASInContext, LLVMIntPtrTypeInContext, LLVMOffsetOfElement, LLVMOpaqueTargetData, LLVMPointerSize,
+    LLVMPointerSizeForAS, LLVMPreferredAlignmentOfGlobal, LLVMPreferredAlignmentOfType, LLVMSizeOfTypeInBits,
+    LLVMStoreSizeOfType, LLVMTargetDataRef,
 };
-use llvm_sys::target_machine::LLVMCreateTargetDataLayout;
 use llvm_sys::target_machine::{
     LLVMAddAnalysisPasses, LLVMCodeGenFileType, LLVMCodeModel, LLVMCreateTargetMachine, LLVMDisposeTargetMachine,
     LLVMGetDefaultTargetTriple, LLVMGetFirstTarget, LLVMGetNextTarget, LLVMGetTargetDescription, LLVMGetTargetFromName,
@@ -13,6 +12,9 @@ use llvm_sys::target_machine::{
     LLVMGetTargetMachineTriple, LLVMGetTargetName, LLVMRelocMode, LLVMSetTargetMachineAsmVerbosity,
     LLVMTargetHasAsmBackend, LLVMTargetHasJIT, LLVMTargetHasTargetMachine, LLVMTargetMachineEmitToFile,
     LLVMTargetMachineEmitToMemoryBuffer, LLVMTargetMachineRef, LLVMTargetRef,
+};
+use llvm_sys::target_machine::{
+    LLVMCreateTargetDataLayout, LLVMOpaqueTargetMachine, LLVMOpaqueTargetMachineOptions, LLVMTarget,
 };
 #[llvm_versions(18..)]
 use llvm_sys::target_machine::{
@@ -29,7 +31,7 @@ use crate::memory_buffer::MemoryBuffer;
 use crate::module::Module;
 #[allow(deprecated)]
 use crate::passes::PassManager;
-use crate::support::{LLVMString, to_c_str};
+use crate::support::{LLVMString, assert_niche, to_c_str};
 use crate::types::{AnyType, AsTypeRef, IntType, StructType};
 use crate::values::{AsValueRef, GlobalValue};
 use crate::{AddressSpace, OptimizationLevel};
@@ -38,7 +40,7 @@ use std::default::Default;
 use std::ffi::CStr;
 use std::fmt;
 use std::path::Path;
-use std::ptr;
+use std::ptr::{self, NonNull};
 
 #[derive(Default, Debug, PartialEq, Eq, Copy, Clone)]
 pub enum CodeModel {
@@ -171,21 +173,25 @@ impl fmt::Display for TargetTriple {
 static TARGET_LOCK: LazyLock<RwLock<()>> = LazyLock::new(|| RwLock::new(()));
 
 // NOTE: Versions verified as target-complete: 3.6, 3.7, 3.8, 3.9, 4.0
+#[repr(transparent)]
 #[derive(Debug, Eq, PartialEq)]
 pub struct Target {
-    target: LLVMTargetRef,
+    target: NonNull<LLVMTarget>,
 }
+const _: () = assert_niche::<Target>();
 
 impl Target {
     pub unsafe fn new(target: LLVMTargetRef) -> Self {
         assert!(!target.is_null());
 
-        Target { target }
+        Target {
+            target: unsafe { NonNull::new_unchecked(target) },
+        }
     }
 
     /// Acquires the underlying raw pointer belonging to this `Target` type.
     pub fn as_mut_ptr(&self) -> LLVMTargetRef {
-        self.target
+        self.target.as_ptr()
     }
 
     // REVIEW: Should this just initialize all? Is opt into each a good idea?
@@ -912,7 +918,7 @@ impl Target {
 
         let target_machine = unsafe {
             LLVMCreateTargetMachine(
-                self.target,
+                self.target.as_ptr(),
                 triple.as_ptr(),
                 cpu.as_ptr(),
                 features.as_ptr(),
@@ -958,7 +964,7 @@ impl Target {
         triple: &TargetTriple,
         options: TargetMachineOptions,
     ) -> Option<TargetMachine> {
-        options.into_target_machine(self.target, triple)
+        options.into_target_machine(self.target.as_ptr(), triple)
     }
 
     pub fn get_first() -> Option<Self> {
@@ -975,7 +981,7 @@ impl Target {
     }
 
     pub fn get_next(&self) -> Option<Self> {
-        let target = unsafe { LLVMGetNextTarget(self.target) };
+        let target = unsafe { LLVMGetNextTarget(self.target.as_ptr()) };
 
         if target.is_null() {
             return None;
@@ -985,11 +991,11 @@ impl Target {
     }
 
     pub fn get_name(&self) -> &CStr {
-        unsafe { CStr::from_ptr(LLVMGetTargetName(self.target)) }
+        unsafe { CStr::from_ptr(LLVMGetTargetName(self.target.as_ptr())) }
     }
 
     pub fn get_description(&self) -> &CStr {
-        unsafe { CStr::from_ptr(LLVMGetTargetDescription(self.target)) }
+        unsafe { CStr::from_ptr(LLVMGetTargetDescription(self.target.as_ptr())) }
     }
 
     pub fn from_name(name: &str) -> Option<Self> {
@@ -1030,41 +1036,45 @@ impl Target {
     }
 
     pub fn has_jit(&self) -> bool {
-        unsafe { LLVMTargetHasJIT(self.target) == 1 }
+        unsafe { LLVMTargetHasJIT(self.target.as_ptr()) == 1 }
     }
 
     pub fn has_target_machine(&self) -> bool {
-        unsafe { LLVMTargetHasTargetMachine(self.target) == 1 }
+        unsafe { LLVMTargetHasTargetMachine(self.target.as_ptr()) == 1 }
     }
 
     pub fn has_asm_backend(&self) -> bool {
-        unsafe { LLVMTargetHasAsmBackend(self.target) == 1 }
+        unsafe { LLVMTargetHasAsmBackend(self.target.as_ptr()) == 1 }
     }
 }
 
+#[repr(transparent)]
 #[derive(Debug)]
 pub struct TargetMachine {
-    pub(crate) target_machine: LLVMTargetMachineRef,
+    pub(crate) target_machine: NonNull<LLVMOpaqueTargetMachine>,
 }
+const _: () = assert_niche::<TargetMachine>();
 
 impl TargetMachine {
     pub unsafe fn new(target_machine: LLVMTargetMachineRef) -> Self {
         assert!(!target_machine.is_null());
 
-        TargetMachine { target_machine }
+        TargetMachine {
+            target_machine: unsafe { NonNull::new_unchecked(target_machine) },
+        }
     }
 
     /// Acquires the underlying raw pointer belonging to this `TargetMachine` type.
     pub fn as_mut_ptr(&self) -> LLVMTargetMachineRef {
-        self.target_machine
+        self.target_machine.as_ptr()
     }
 
     pub fn get_target(&self) -> Target {
-        unsafe { Target::new(LLVMGetTargetMachineTarget(self.target_machine)) }
+        unsafe { Target::new(LLVMGetTargetMachineTarget(self.target_machine.as_ptr())) }
     }
 
     pub fn get_triple(&self) -> TargetTriple {
-        let str = unsafe { LLVMString::new(LLVMGetTargetMachineTriple(self.target_machine)) };
+        let str = unsafe { LLVMString::new(LLVMGetTargetMachineTriple(self.target_machine.as_ptr())) };
 
         unsafe { TargetTriple::new(str) }
     }
@@ -1117,26 +1127,26 @@ impl TargetMachine {
     }
 
     pub fn get_cpu(&self) -> LLVMString {
-        unsafe { LLVMString::new(LLVMGetTargetMachineCPU(self.target_machine)) }
+        unsafe { LLVMString::new(LLVMGetTargetMachineCPU(self.target_machine.as_ptr())) }
     }
 
     pub fn get_feature_string(&self) -> &CStr {
-        unsafe { CStr::from_ptr(LLVMGetTargetMachineFeatureString(self.target_machine)) }
+        unsafe { CStr::from_ptr(LLVMGetTargetMachineFeatureString(self.target_machine.as_ptr())) }
     }
 
     /// Create TargetData from this target machine
     pub fn get_target_data(&self) -> TargetData {
-        unsafe { TargetData::new(LLVMCreateTargetDataLayout(self.target_machine)) }
+        unsafe { TargetData::new(LLVMCreateTargetDataLayout(self.target_machine.as_ptr())) }
     }
 
     pub fn set_asm_verbosity(&self, verbosity: bool) {
-        unsafe { LLVMSetTargetMachineAsmVerbosity(self.target_machine, verbosity as i32) }
+        unsafe { LLVMSetTargetMachineAsmVerbosity(self.target_machine.as_ptr(), verbosity as i32) }
     }
 
     // TODO: Move to PassManager?
     #[allow(deprecated)]
     pub fn add_analysis_passes<T>(&self, pass_manager: &PassManager<T>) {
-        unsafe { LLVMAddAnalysisPasses(self.target_machine, pass_manager.pass_manager) }
+        unsafe { LLVMAddAnalysisPasses(self.target_machine.as_ptr(), pass_manager.pass_manager) }
     }
 
     /// Writes a `TargetMachine` to a `MemoryBuffer`.
@@ -1181,11 +1191,11 @@ impl TargetMachine {
         let mut memory_buffer = ptr::null_mut();
         let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
         let return_code = unsafe {
-            let module_ptr = module.module.get();
+            let module_ptr = module.as_mut_ptr();
             let file_type_ptr = file_type.as_llvm_file_type();
 
             LLVMTargetMachineEmitToMemoryBuffer(
-                self.target_machine,
+                self.target_machine.as_ptr(),
                 module_ptr,
                 file_type_ptr,
                 &mut err_string,
@@ -1245,12 +1255,12 @@ impl TargetMachine {
         let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
         let return_code = unsafe {
             // REVIEW: Why does LLVM need a mutable ptr to path...?
-            let module_ptr = module.module.get();
+            let module_ptr = module.as_mut_ptr();
             let path_ptr = path_c_string.as_ptr() as *mut _;
             let file_type_ptr = file_type.as_llvm_file_type();
 
             LLVMTargetMachineEmitToFile(
-                self.target_machine,
+                self.target_machine.as_ptr(),
                 module_ptr,
                 path_ptr,
                 file_type_ptr,
@@ -1270,7 +1280,7 @@ impl TargetMachine {
 
 impl Drop for TargetMachine {
     fn drop(&mut self) {
-        unsafe { LLVMDisposeTargetMachine(self.target_machine) }
+        unsafe { LLVMDisposeTargetMachine(self.target_machine.as_ptr()) }
     }
 }
 
@@ -1280,21 +1290,25 @@ pub enum ByteOrdering {
     LittleEndian,
 }
 
+#[repr(transparent)]
 #[derive(PartialEq, Eq, Debug)]
 pub struct TargetData {
-    pub(crate) target_data: LLVMTargetDataRef,
+    pub(crate) target_data: NonNull<LLVMOpaqueTargetData>,
 }
+const _: () = assert_niche::<TargetData>();
 
 impl TargetData {
     pub unsafe fn new(target_data: LLVMTargetDataRef) -> TargetData {
         assert!(!target_data.is_null());
 
-        TargetData { target_data }
+        TargetData {
+            target_data: unsafe { NonNull::new_unchecked(target_data) },
+        }
     }
 
     /// Acquires the underlying raw pointer belonging to this `TargetData` type.
     pub fn as_mut_ptr(&self) -> LLVMTargetDataRef {
-        self.target_data
+        self.target_data.as_ptr()
     }
 
     /// Gets the `IntType` representing a bit width of a pointer. It will be assigned the referenced context.
@@ -1322,21 +1336,21 @@ impl TargetData {
     ) -> IntType<'ctx> {
         let int_type_ptr = match address_space {
             Some(address_space) => unsafe {
-                LLVMIntPtrTypeForASInContext(context.as_ctx_ref(), self.target_data, address_space.0)
+                LLVMIntPtrTypeForASInContext(context.as_ctx_ref(), self.target_data.as_ptr(), address_space.0)
             },
-            None => unsafe { LLVMIntPtrTypeInContext(context.as_ctx_ref(), self.target_data) },
+            None => unsafe { LLVMIntPtrTypeInContext(context.as_ctx_ref(), self.target_data.as_ptr()) },
         };
 
         unsafe { IntType::new(int_type_ptr) }
     }
 
     pub fn get_data_layout(&self) -> DataLayout {
-        unsafe { DataLayout::new_owned(LLVMCopyStringRepOfTargetData(self.target_data)) }
+        unsafe { DataLayout::new_owned(LLVMCopyStringRepOfTargetData(self.target_data.as_ptr())) }
     }
 
     // REVIEW: Does this only work if Sized?
     pub fn get_bit_size(&self, type_: &dyn AnyType) -> u64 {
-        unsafe { LLVMSizeOfTypeInBits(self.target_data, type_.as_type_ref()) }
+        unsafe { LLVMSizeOfTypeInBits(self.target_data.as_ptr(), type_.as_type_ref()) }
     }
 
     // TODOC: This can fail on LLVM's side(exit?), but it doesn't seem like we have any way to check this in rust
@@ -1347,7 +1361,7 @@ impl TargetData {
     }
 
     pub fn get_byte_ordering(&self) -> ByteOrdering {
-        let byte_ordering = unsafe { LLVMByteOrder(self.target_data) };
+        let byte_ordering = unsafe { LLVMByteOrder(self.target_data.as_ptr()) };
 
         match byte_ordering {
             LLVMByteOrdering::LLVMBigEndian => ByteOrdering::BigEndian,
@@ -1357,37 +1371,37 @@ impl TargetData {
 
     pub fn get_pointer_byte_size(&self, address_space: Option<AddressSpace>) -> u32 {
         match address_space {
-            Some(address_space) => unsafe { LLVMPointerSizeForAS(self.target_data, address_space.0) },
-            None => unsafe { LLVMPointerSize(self.target_data) },
+            Some(address_space) => unsafe { LLVMPointerSizeForAS(self.target_data.as_ptr(), address_space.0) },
+            None => unsafe { LLVMPointerSize(self.target_data.as_ptr()) },
         }
     }
 
     pub fn get_store_size(&self, type_: &dyn AnyType) -> u64 {
-        unsafe { LLVMStoreSizeOfType(self.target_data, type_.as_type_ref()) }
+        unsafe { LLVMStoreSizeOfType(self.target_data.as_ptr(), type_.as_type_ref()) }
     }
 
     pub fn get_abi_size(&self, type_: &dyn AnyType) -> u64 {
-        unsafe { LLVMABISizeOfType(self.target_data, type_.as_type_ref()) }
+        unsafe { LLVMABISizeOfType(self.target_data.as_ptr(), type_.as_type_ref()) }
     }
 
     pub fn get_abi_alignment(&self, type_: &dyn AnyType) -> u32 {
-        unsafe { LLVMABIAlignmentOfType(self.target_data, type_.as_type_ref()) }
+        unsafe { LLVMABIAlignmentOfType(self.target_data.as_ptr(), type_.as_type_ref()) }
     }
 
     pub fn get_call_frame_alignment(&self, type_: &dyn AnyType) -> u32 {
-        unsafe { LLVMCallFrameAlignmentOfType(self.target_data, type_.as_type_ref()) }
+        unsafe { LLVMCallFrameAlignmentOfType(self.target_data.as_ptr(), type_.as_type_ref()) }
     }
 
     pub fn get_preferred_alignment(&self, type_: &dyn AnyType) -> u32 {
-        unsafe { LLVMPreferredAlignmentOfType(self.target_data, type_.as_type_ref()) }
+        unsafe { LLVMPreferredAlignmentOfType(self.target_data.as_ptr(), type_.as_type_ref()) }
     }
 
     pub fn get_preferred_alignment_of_global(&self, value: &GlobalValue) -> u32 {
-        unsafe { LLVMPreferredAlignmentOfGlobal(self.target_data, value.as_value_ref()) }
+        unsafe { LLVMPreferredAlignmentOfGlobal(self.target_data.as_ptr(), value.as_value_ref()) }
     }
 
     pub fn element_at_offset(&self, struct_type: &StructType, offset: u64) -> u32 {
-        unsafe { LLVMElementAtOffset(self.target_data, struct_type.as_type_ref(), offset) }
+        unsafe { LLVMElementAtOffset(self.target_data.as_ptr(), struct_type.as_type_ref(), offset) }
     }
 
     pub fn offset_of_element(&self, struct_type: &StructType, element: u32) -> Option<u64> {
@@ -1397,7 +1411,7 @@ impl TargetData {
 
         unsafe {
             Some(LLVMOffsetOfElement(
-                self.target_data,
+                self.target_data.as_ptr(),
                 struct_type.as_type_ref(),
                 element,
             ))
@@ -1407,7 +1421,7 @@ impl TargetData {
 
 impl Drop for TargetData {
     fn drop(&mut self) {
-        unsafe { LLVMDisposeTargetData(self.target_data) }
+        unsafe { LLVMDisposeTargetData(self.target_data.as_ptr()) }
     }
 }
 
@@ -1418,7 +1432,7 @@ impl Drop for TargetData {
 /// and provides default values for unspecified settings.
 #[llvm_versions(18..)]
 #[derive(Default, Debug)]
-pub struct TargetMachineOptions(Option<LLVMTargetMachineOptionsRef>);
+pub struct TargetMachineOptions(Option<NonNull<LLVMOpaqueTargetMachineOptions>>);
 
 #[llvm_versions(18..)]
 impl TargetMachineOptions {
@@ -1481,7 +1495,11 @@ impl TargetMachineOptions {
     /// - The only way to access it is via this private method.
     /// - Disposal is taken care of automatically in `Drop::drop`.
     unsafe fn inner(&mut self) -> LLVMTargetMachineOptionsRef {
-        unsafe { *self.0.get_or_insert_with(|| LLVMCreateTargetMachineOptions()) }
+        unsafe {
+            self.0
+                .get_or_insert_with(|| NonNull::new_unchecked(LLVMCreateTargetMachineOptions()))
+                .as_ptr()
+        }
     }
 }
 
@@ -1489,7 +1507,7 @@ impl TargetMachineOptions {
 impl Drop for TargetMachineOptions {
     fn drop(&mut self) {
         if let Some(inner) = self.0 {
-            unsafe { LLVMDisposeTargetMachineOptions(inner) };
+            unsafe { LLVMDisposeTargetMachineOptions(inner.as_ptr()) };
         }
     }
 }

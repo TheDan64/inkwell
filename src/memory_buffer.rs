@@ -1,3 +1,4 @@
+use llvm_sys::LLVMMemoryBuffer;
 use llvm_sys::core::{
     LLVMCreateMemoryBufferWithContentsOfFile, LLVMCreateMemoryBufferWithMemoryRange,
     LLVMCreateMemoryBufferWithMemoryRangeCopy, LLVMCreateMemoryBufferWithSTDIN, LLVMDisposeMemoryBuffer,
@@ -8,18 +9,20 @@ use llvm_sys::prelude::LLVMMemoryBufferRef;
 
 use crate::context::Context;
 use crate::object_file::BinaryFile;
-use crate::support::{LLVMString, to_c_str};
+use crate::support::{LLVMString, assert_niche, to_c_str};
 
 use std::marker::PhantomData;
 use std::path::Path;
-use std::ptr;
+use std::ptr::{self, NonNull};
 use std::slice;
 
+#[repr(transparent)]
 #[derive(Debug)]
 pub struct MemoryBuffer<'a> {
-    pub(crate) memory_buffer: LLVMMemoryBufferRef,
+    pub(crate) memory_buffer: NonNull<LLVMMemoryBuffer>,
     _phantom: PhantomData<&'a [u8]>,
 }
+const _: () = assert_niche::<MemoryBuffer>();
 
 // The backing memory is owned and managed by LLVM, such that it is valid throughout the buffer's
 // lifetime, hence 'static.
@@ -95,13 +98,13 @@ impl<'a> MemoryBuffer<'a> {
         assert!(!memory_buffer.is_null());
 
         Self {
-            memory_buffer,
+            memory_buffer: unsafe { NonNull::new_unchecked(memory_buffer) },
             _phantom: PhantomData,
         }
     }
 
     pub fn as_mut_ptr(&self) -> LLVMMemoryBufferRef {
-        self.memory_buffer
+        self.memory_buffer.as_ptr()
     }
 
     /// Create a memory buffer from a byte slice with a trailing nul byte.
@@ -134,7 +137,7 @@ impl<'a> MemoryBuffer<'a> {
     /// Gets a byte slice of this [`MemoryBuffer`], containing the trailing nul byte.
     pub fn as_slice(&self) -> &[u8] {
         unsafe {
-            let start = LLVMGetBufferStart(self.memory_buffer);
+            let start = LLVMGetBufferStart(self.as_mut_ptr());
 
             // SAFETY: from LLVM `MemoryBuffer.h`:
             // "this interface guarantees you can read one character past the end of the file,
@@ -148,7 +151,7 @@ impl<'a> MemoryBuffer<'a> {
     /// Gets the byte size of this `MemoryBuffer`, counting the trailing nul byte.
     pub fn get_size(&self) -> usize {
         // buffer size does not include the trailing nul byte, hence incremented.
-        unsafe { LLVMGetBufferSize(self.memory_buffer) + 1 }
+        unsafe { LLVMGetBufferSize(self.as_mut_ptr()) + 1 }
     }
 
     /// Convert this [`MemoryBuffer`] and optional [`Context`] into a [`BinaryFile`].
@@ -160,7 +163,7 @@ impl<'a> MemoryBuffer<'a> {
         let context = context.map_or(ptr::null_mut(), |c| c.raw());
         let mut err_string = ptr::null_mut();
 
-        let binary_file = unsafe { LLVMCreateBinary(self.memory_buffer, context, &mut err_string) };
+        let binary_file = unsafe { LLVMCreateBinary(self.as_mut_ptr(), context, &mut err_string) };
 
         if binary_file.is_null() {
             unsafe {
@@ -175,7 +178,7 @@ impl<'a> MemoryBuffer<'a> {
 impl<'a> Drop for MemoryBuffer<'a> {
     fn drop(&mut self) {
         unsafe {
-            LLVMDisposeMemoryBuffer(self.memory_buffer);
+            LLVMDisposeMemoryBuffer(self.as_mut_ptr());
         }
     }
 }

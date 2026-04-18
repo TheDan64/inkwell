@@ -1,7 +1,7 @@
 use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::context::ContextRef;
-use crate::support::LLVMString;
+use crate::support::{LLVMString, assert_niche};
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::traits::AsTypeRef;
 use crate::types::{FunctionType, Type};
@@ -10,10 +10,12 @@ use std::fmt::{self, Display};
 
 /// A `VoidType` is a special type with no possible direct instances. It's only
 /// useful as a function return type.
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct VoidType<'ctx> {
     void_type: Type<'ctx>,
 }
+const _: () = assert_niche::<VoidType>();
 
 impl<'ctx> VoidType<'ctx> {
     /// Create `VoidType` from [`LLVMTypeRef`]
@@ -88,7 +90,7 @@ impl<'ctx> VoidType<'ctx> {
 
 unsafe impl AsTypeRef for VoidType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.void_type.ty
+        self.void_type.as_mut_ptr()
     }
 }
 
