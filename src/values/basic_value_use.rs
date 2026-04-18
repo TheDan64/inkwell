@@ -6,6 +6,7 @@ use std::marker::PhantomData;
 use std::ptr::NonNull;
 
 use crate::basic_block::BasicBlock;
+use crate::support::assert_niche;
 use crate::values::{AnyValueEnum, BasicValueEnum};
 
 /// Either [BasicValueEnum] or [BasicBlock].
@@ -95,6 +96,7 @@ impl<'ctx> Operand<'ctx> {
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct BasicValueUse<'ctx>(NonNull<LLVMUse>, PhantomData<&'ctx ()>);
+const _: () = assert_niche::<BasicValueUse>();
 
 impl<'ctx> BasicValueUse<'ctx> {
     /// Get a value from an [LLVMUseRef].
