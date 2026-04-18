@@ -273,7 +273,7 @@ pub(crate) const fn const_assert(assertion: bool) {
 #[track_caller]
 #[inline(always)]
 pub(crate) const fn assert_niche<T>() {
-    const_assert(size_of::<T>() == size_of::<Option<T>>());
+    const_assert(size_of::<T>() == size_of::<Option<T>>() && align_of::<T>() == align_of::<Option<T>>());
 }
 
 #[test]
