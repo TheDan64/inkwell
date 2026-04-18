@@ -13,15 +13,13 @@ use llvm_sys::target_machine::{
     LLVMTargetHasAsmBackend, LLVMTargetHasJIT, LLVMTargetHasTargetMachine, LLVMTargetMachineEmitToFile,
     LLVMTargetMachineEmitToMemoryBuffer, LLVMTargetMachineRef, LLVMTargetRef,
 };
-use llvm_sys::target_machine::{
-    LLVMCreateTargetDataLayout, LLVMOpaqueTargetMachine, LLVMTarget,
-};
+use llvm_sys::target_machine::{LLVMCreateTargetDataLayout, LLVMOpaqueTargetMachine, LLVMTarget};
 #[llvm_versions(18..)]
 use llvm_sys::target_machine::{
     LLVMCreateTargetMachineOptions, LLVMCreateTargetMachineWithOptions, LLVMDisposeTargetMachineOptions,
-    LLVMTargetMachineOptionsRef, LLVMTargetMachineOptionsSetABI, LLVMTargetMachineOptionsSetCPU,
-    LLVMTargetMachineOptionsSetCodeGenOptLevel, LLVMTargetMachineOptionsSetCodeModel,
-    LLVMTargetMachineOptionsSetFeatures, LLVMTargetMachineOptionsSetRelocMode, LLVMOpaqueTargetMachineOptions,
+    LLVMOpaqueTargetMachineOptions, LLVMTargetMachineOptionsRef, LLVMTargetMachineOptionsSetABI,
+    LLVMTargetMachineOptionsSetCPU, LLVMTargetMachineOptionsSetCodeGenOptLevel, LLVMTargetMachineOptionsSetCodeModel,
+    LLVMTargetMachineOptionsSetFeatures, LLVMTargetMachineOptionsSetRelocMode,
 };
 use std::sync::{LazyLock, RwLock};
 
