@@ -6,6 +6,7 @@ use llvm_sys::prelude::LLVMValueRef;
 use llvm_sys::core::LLVMValueAsMetadata;
 use llvm_sys::prelude::LLVMMetadataRef;
 
+use crate::support::assert_niche;
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicMetadataValueEnum, Value};
 
@@ -38,10 +39,12 @@ pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = if cfg!(feature = "llvm11-0") {
     panic!("Unhandled LLVM version")
 };
 
+#[repr(transparent)]
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct MetadataValue<'ctx> {
     metadata_value: Value<'ctx>,
 }
+const _: () = assert_niche::<MetadataValue>();
 
 impl<'ctx> MetadataValue<'ctx> {
     /// Get a value from an [LLVMValueRef].
@@ -130,7 +133,7 @@ impl<'ctx> MetadataValue<'ctx> {
 
 unsafe impl AsValueRef for MetadataValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
-        self.metadata_value.value
+        self.metadata_value.as_mut_ptr()
     }
 }
 

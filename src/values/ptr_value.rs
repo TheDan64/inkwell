@@ -11,6 +11,7 @@ use std::convert::TryFrom;
 use std::ffi::CStr;
 use std::fmt::{self, Display};
 
+use crate::support::assert_niche;
 #[cfg(not(feature = "typed-pointers"))]
 use crate::types::BasicType;
 use crate::types::{AsTypeRef, IntType, PointerType};
@@ -18,10 +19,12 @@ use crate::values::{AsValueRef, InstructionValue, IntValue, Value};
 
 use super::AnyValue;
 
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct PointerValue<'ctx> {
     ptr_value: Value<'ctx>,
 }
+const _: () = assert_niche::<PointerValue>();
 
 impl<'ctx> PointerValue<'ctx> {
     /// Get a value from an [LLVMValueRef].
@@ -208,7 +211,7 @@ impl<'ctx> PointerValue<'ctx> {
 
 unsafe impl AsValueRef for PointerValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
-        self.ptr_value.value
+        self.ptr_value.as_mut_ptr()
     }
 }
 

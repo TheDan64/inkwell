@@ -8,16 +8,19 @@ use llvm_sys::prelude::LLVMValueRef;
 use std::ffi::CStr;
 use std::fmt::{self, Display};
 
+use crate::support::assert_niche;
 use crate::types::ScalableVectorType;
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, InstructionValue, IntValue, Value};
 
 use super::AnyValue;
 
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct ScalableVectorValue<'ctx> {
     scalable_vec_value: Value<'ctx>,
 }
+const _: () = assert_niche::<ScalableVectorValue>();
 
 impl<'ctx> ScalableVectorValue<'ctx> {
     /// Get a value from an [LLVMValueRef].
@@ -140,7 +143,7 @@ impl<'ctx> ScalableVectorValue<'ctx> {
 
 unsafe impl AsValueRef for ScalableVectorValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
-        self.scalable_vec_value.value
+        self.scalable_vec_value.as_mut_ptr()
     }
 }
 

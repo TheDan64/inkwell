@@ -1,3 +1,4 @@
+use crate::support::assert_niche;
 #[llvm_versions(..=17)]
 use crate::types::IntType;
 #[llvm_versions(..=18)]
@@ -24,10 +25,12 @@ use crate::{FloatPredicate, values::IntValue};
 
 use super::AnyValue;
 
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct FloatValue<'ctx> {
     float_value: Value<'ctx>,
 }
+const _: () = assert_niche::<FloatValue>();
 
 impl<'ctx> FloatValue<'ctx> {
     /// Get a value from an [LLVMValueRef].
@@ -197,7 +200,7 @@ impl<'ctx> FloatValue<'ctx> {
 
 unsafe impl AsValueRef for FloatValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
-        self.float_value.value
+        self.float_value.as_mut_ptr()
     }
 }
 

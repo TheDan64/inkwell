@@ -1,15 +1,20 @@
 //! `Attribute`s are optional modifiers to functions, function parameters, and return types.
 
-use llvm_sys::core::{
-    LLVMGetEnumAttributeKind, LLVMGetEnumAttributeKindForName, LLVMGetEnumAttributeValue, LLVMGetLastEnumAttributeKind,
-    LLVMGetStringAttributeKind, LLVMGetStringAttributeValue, LLVMIsEnumAttribute, LLVMIsStringAttribute,
-};
 #[llvm_versions(12..)]
 use llvm_sys::core::{LLVMGetTypeAttributeValue, LLVMIsTypeAttribute};
 use llvm_sys::prelude::LLVMAttributeRef;
+use llvm_sys::{
+    LLVMOpaqueAttributeRef,
+    core::{
+        LLVMGetEnumAttributeKind, LLVMGetEnumAttributeKindForName, LLVMGetEnumAttributeValue,
+        LLVMGetLastEnumAttributeKind, LLVMGetStringAttributeKind, LLVMGetStringAttributeValue, LLVMIsEnumAttribute,
+        LLVMIsStringAttribute,
+    },
+};
 
-use std::ffi::CStr;
+use std::{ffi::CStr, ptr::NonNull};
 
+use crate::support::assert_niche;
 #[llvm_versions(12..)]
 use crate::types::AnyTypeEnum;
 
@@ -17,17 +22,19 @@ use crate::types::AnyTypeEnum;
 // REVIEW: Should Attributes have a 'ctx lifetime?
 /// Functions, function parameters, and return types can have `Attribute`s to indicate
 /// how they should be treated by optimizations and code generation.
+#[repr(transparent)]
 #[derive(Clone, Copy)]
 pub struct Attribute {
-    pub(crate) attribute: LLVMAttributeRef,
+    pub(crate) attribute: NonNull<LLVMOpaqueAttributeRef>,
 }
+const _: () = assert_niche::<Attribute>();
 
 impl std::fmt::Debug for Attribute {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.is_string() {
             return f
                 .debug_struct("Attribute::String")
-                .field("ptr", &self.attribute)
+                .field("ptr", &self.as_mut_ptr())
                 .field("kind_id", &self.get_string_kind_id())
                 .field("value", &self.get_string_value())
                 .finish();
@@ -36,7 +43,7 @@ impl std::fmt::Debug for Attribute {
         if self.is_enum() {
             return f
                 .debug_struct("Attribute::Enum")
-                .field("ptr", &self.attribute)
+                .field("ptr", &self.as_mut_ptr())
                 .field("kind_id", &self.get_enum_kind_id())
                 .field("value", &self.get_enum_value())
                 .finish();
@@ -45,7 +52,7 @@ impl std::fmt::Debug for Attribute {
         if self.is_type() {
             return f
                 .debug_struct("Attribute::Type")
-                .field("ptr", &self.attribute)
+                .field("ptr", &self.as_mut_ptr())
                 .field("kind_id", &self.get_enum_kind_id())
                 .field("value", &self.get_type_value())
                 .finish();
@@ -84,16 +91,22 @@ impl PartialEq<Self> for Attribute {
 }
 
 impl Attribute {
-    /// Creates a new `Attribute` from a raw pointer.
+    /// Creates a new [Attribute] from a raw pointer.
+    ///
+    /// # Safety
+    ///
+    /// `attribute` must be non-null and point to a valid value.
     pub unsafe fn new(attribute: LLVMAttributeRef) -> Self {
         debug_assert!(!attribute.is_null());
 
-        Attribute { attribute }
+        Attribute {
+            attribute: unsafe { NonNull::new_unchecked(attribute) },
+        }
     }
 
     /// Acquires the underlying raw pointer belonging to this `Attribute` type.
     pub fn as_mut_ptr(&self) -> LLVMAttributeRef {
-        self.attribute
+        self.attribute.as_ptr()
     }
 
     /// Determines whether or not an `Attribute` is an enum. This method will
@@ -111,7 +124,7 @@ impl Attribute {
     /// assert!(enum_attribute.is_enum());
     /// ```
     pub fn is_enum(self) -> bool {
-        unsafe { LLVMIsEnumAttribute(self.attribute) == 1 }
+        unsafe { LLVMIsEnumAttribute(self.as_mut_ptr()) == 1 }
     }
 
     /// Determines whether or not an `Attribute` is a string. This method will
@@ -129,7 +142,7 @@ impl Attribute {
     /// assert!(string_attribute.is_string());
     /// ```
     pub fn is_string(self) -> bool {
-        unsafe { LLVMIsStringAttribute(self.attribute) == 1 }
+        unsafe { LLVMIsStringAttribute(self.as_mut_ptr()) == 1 }
     }
 
     /// Determines whether or not an `Attribute` is a type attribute. This method will
@@ -153,7 +166,7 @@ impl Attribute {
     /// ```
     #[llvm_versions(12..)]
     pub fn is_type(self) -> bool {
-        unsafe { LLVMIsTypeAttribute(self.attribute) == 1 }
+        unsafe { LLVMIsTypeAttribute(self.as_mut_ptr()) == 1 }
     }
 
     // private function to make code elsewhere easier
@@ -196,7 +209,7 @@ impl Attribute {
     pub fn get_enum_kind_id(self) -> u32 {
         assert!(self.get_enum_kind_id_is_valid()); // FIXME: SubTypes
 
-        unsafe { LLVMGetEnumAttributeKind(self.attribute) }
+        unsafe { LLVMGetEnumAttributeKind(self.as_mut_ptr()) }
     }
 
     /// Gets the kind id associated with an enum `Attribute`.
@@ -233,7 +246,7 @@ impl Attribute {
     pub fn get_enum_kind_id(self) -> u32 {
         assert!(self.get_enum_kind_id_is_valid()); // FIXME: SubTypes
 
-        unsafe { LLVMGetEnumAttributeKind(self.attribute) }
+        unsafe { LLVMGetEnumAttributeKind(self.as_mut_ptr()) }
     }
 
     #[cfg(feature = "llvm11-0")]
@@ -274,7 +287,7 @@ impl Attribute {
     pub fn get_enum_value(self) -> u64 {
         assert!(self.is_enum()); // FIXME: SubTypes
 
-        unsafe { LLVMGetEnumAttributeValue(self.attribute) }
+        unsafe { LLVMGetEnumAttributeValue(self.as_mut_ptr()) }
     }
 
     /// Gets the string kind id associated with a string attribute.
@@ -294,7 +307,7 @@ impl Attribute {
         assert!(self.is_string()); // FIXME: SubTypes
 
         let mut length = 0;
-        let cstr_ptr = unsafe { LLVMGetStringAttributeKind(self.attribute, &mut length) };
+        let cstr_ptr = unsafe { LLVMGetStringAttributeKind(self.as_mut_ptr(), &mut length) };
 
         unsafe { CStr::from_ptr(cstr_ptr) }
     }
@@ -315,7 +328,7 @@ impl Attribute {
         assert!(self.is_string()); // FIXME: SubTypes
 
         let mut length = 0;
-        let cstr_ptr = unsafe { LLVMGetStringAttributeValue(self.attribute, &mut length) };
+        let cstr_ptr = unsafe { LLVMGetStringAttributeValue(self.as_mut_ptr(), &mut length) };
 
         unsafe { CStr::from_ptr(cstr_ptr) }
     }
@@ -345,7 +358,7 @@ impl Attribute {
     pub fn get_type_value(&self) -> AnyTypeEnum<'_> {
         assert!(self.is_type()); // FIXME: SubTypes
 
-        unsafe { AnyTypeEnum::new(LLVMGetTypeAttributeValue(self.attribute)) }
+        unsafe { AnyTypeEnum::new(LLVMGetTypeAttributeValue(self.as_mut_ptr())) }
     }
 
     // private function to make code elsewhere easier

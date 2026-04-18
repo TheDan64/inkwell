@@ -11,6 +11,7 @@ use llvm_sys::core::{LLVMGetTailCallKind, LLVMSetTailCallKind};
 use llvm_sys::prelude::LLVMValueRef;
 
 use crate::attributes::{Attribute, AttributeLoc};
+use crate::support::assert_niche;
 use crate::types::FunctionType;
 #[llvm_versions(18..)]
 use crate::values::operand_bundle::OperandBundleIter;
@@ -104,8 +105,10 @@ impl<'ctx> ValueKind<'ctx> {
 /// A value resulting from a function call. It may have function attributes applied to it.
 ///
 /// This struct may be removed in the future in favor of an `InstructionValue<CallSite>` type.
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct CallSiteValue<'ctx>(Value<'ctx>);
+const _: () = assert_niche::<CallSiteValue>();
 
 impl<'ctx> CallSiteValue<'ctx> {
     /// Get a value from an [LLVMValueRef].
@@ -281,7 +284,7 @@ impl<'ctx> CallSiteValue<'ctx> {
     pub fn add_attribute(self, loc: AttributeLoc, attribute: Attribute) {
         use llvm_sys::core::LLVMAddCallSiteAttribute;
 
-        unsafe { LLVMAddCallSiteAttribute(self.as_value_ref(), loc.get_index(), attribute.attribute) }
+        unsafe { LLVMAddCallSiteAttribute(self.as_value_ref(), loc.get_index(), attribute.as_mut_ptr()) }
     }
 
     /// Gets the `FunctionValue` this `CallSiteValue` is based on.
@@ -780,7 +783,7 @@ impl<'ctx> CallSiteValue<'ctx> {
 
 unsafe impl AsValueRef for CallSiteValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
-        self.0.value
+        self.0.as_mut_ptr()
     }
 }
 

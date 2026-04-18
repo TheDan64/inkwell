@@ -3,7 +3,7 @@ use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::AddressSpace;
 use crate::context::ContextRef;
-use crate::support::LLVMString;
+use crate::support::{LLVMString, assert_niche};
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::{ArrayType, BasicTypeEnum, FunctionType, PointerType, Type, traits::AsTypeRef};
 use crate::values::{ArrayValue, IntValue, ScalableVectorValue};
@@ -11,10 +11,12 @@ use crate::values::{ArrayValue, IntValue, ScalableVectorValue};
 use std::fmt::{self, Display};
 
 /// A `ScalableVectorType` is the type of a scalable multiple value SIMD constant or variable.
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct ScalableVectorType<'ctx> {
     scalable_vec_type: Type<'ctx>,
 }
+const _: () = assert_niche::<ScalableVectorType>();
 
 impl<'ctx> ScalableVectorType<'ctx> {
     /// Create `ScalableVectorType` from [`LLVMTypeRef`]
@@ -256,7 +258,7 @@ impl<'ctx> ScalableVectorType<'ctx> {
 
 unsafe impl AsTypeRef for ScalableVectorType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.scalable_vec_type.ty
+        self.scalable_vec_type.as_mut_ptr()
     }
 }
 

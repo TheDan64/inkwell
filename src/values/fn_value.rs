@@ -1,3 +1,4 @@
+use llvm_sys::LLVMValue;
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
 use llvm_sys::core::LLVMAppendExistingBasicBlock;
 use llvm_sys::core::{
@@ -22,6 +23,7 @@ use std::ffi::CStr;
 use std::fmt::{self, Display};
 use std::marker::PhantomData;
 use std::mem::forget;
+use std::ptr::NonNull;
 
 use crate::attributes::{Attribute, AttributeLoc};
 use crate::basic_block::BasicBlock;
@@ -31,17 +33,19 @@ use crate::module::Linkage;
 use crate::passes::PassBuilderOptions;
 #[llvm_versions(20..)]
 use crate::support::LLVMString;
-use crate::support::to_c_str;
+use crate::support::{assert_niche, to_c_str};
 #[llvm_versions(20..)]
 use crate::targets::TargetMachine;
 use crate::types::FunctionType;
 use crate::values::traits::{AnyValue, AsValueRef};
 use crate::values::{BasicValueEnum, GlobalValue, Value};
 
+#[repr(transparent)]
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct FunctionValue<'ctx> {
     fn_value: Value<'ctx>,
 }
+const _: () = assert_niche::<FunctionValue>();
 
 impl<'ctx> FunctionValue<'ctx> {
     /// Get a value from an [LLVMValueRef].
@@ -89,7 +93,7 @@ impl<'ctx> FunctionValue<'ctx> {
             LLVMVerifierFailureAction::LLVMReturnStatusAction
         };
 
-        let code = unsafe { LLVMVerifyFunction(self.fn_value.value, action) };
+        let code = unsafe { LLVMVerifyFunction(self.fn_value.as_mut_ptr(), action) };
 
         code != 1
     }
@@ -138,7 +142,7 @@ impl<'ctx> FunctionValue<'ctx> {
     }
 
     pub fn count_params(self) -> u32 {
-        unsafe { LLVMCountParams(self.fn_value.value) }
+        unsafe { LLVMCountParams(self.fn_value.as_mut_ptr()) }
     }
 
     pub fn count_basic_blocks(self) -> u32 {
@@ -193,7 +197,7 @@ impl<'ctx> FunctionValue<'ctx> {
     }
 
     pub fn get_last_basic_block(self) -> Option<BasicBlock<'ctx>> {
-        unsafe { BasicBlock::new(LLVMGetLastBasicBlock(self.fn_value.value)) }
+        unsafe { BasicBlock::new(LLVMGetLastBasicBlock(self.fn_value.as_mut_ptr())) }
     }
 
     /// Gets the name of a `FunctionValue`.
@@ -286,7 +290,7 @@ impl<'ctx> FunctionValue<'ctx> {
     /// fn_value.add_attribute(AttributeLoc::Return, enum_attribute);
     /// ```
     pub fn add_attribute(self, loc: AttributeLoc, attribute: Attribute) {
-        unsafe { LLVMAddAttributeAtIndex(self.as_value_ref(), loc.get_index(), attribute.attribute) }
+        unsafe { LLVMAddAttributeAtIndex(self.as_value_ref(), loc.get_index(), attribute.as_mut_ptr()) }
     }
 
     /// Counts the number of `Attribute`s belonging to the specified location in this `FunctionValue`.
@@ -499,21 +503,17 @@ impl<'ctx> FunctionValue<'ctx> {
 
     /// Set the debug info descriptor
     pub fn set_subprogram(self, subprogram: DISubprogram<'ctx>) {
-        unsafe { LLVMSetSubprogram(self.as_value_ref(), subprogram.metadata_ref) }
+        unsafe { LLVMSetSubprogram(self.as_value_ref(), subprogram.as_mut_ptr()) }
     }
 
     /// Get the debug info descriptor
     pub fn get_subprogram(self) -> Option<DISubprogram<'ctx>> {
         let metadata_ref = unsafe { LLVMGetSubprogram(self.as_value_ref()) };
 
-        if metadata_ref.is_null() {
-            None
-        } else {
-            Some(DISubprogram {
-                metadata_ref,
-                _marker: PhantomData,
-            })
-        }
+        Some(DISubprogram {
+            metadata_ref: NonNull::new(metadata_ref)?,
+            _marker: PhantomData,
+        })
     }
 
     /// Get the section to which this function belongs
@@ -550,7 +550,7 @@ impl<'ctx> FunctionValue<'ctx> {
             let error = LLVMRunPassesOnFunction(
                 self.as_value_ref(),
                 to_c_str(passes).as_ptr(),
-                machine.target_machine,
+                machine.target_machine.as_ptr(),
                 options.options_ref,
             );
             if error.is_null() {
@@ -565,7 +565,7 @@ impl<'ctx> FunctionValue<'ctx> {
 
 unsafe impl AsValueRef for FunctionValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
-        self.fn_value.value
+        self.fn_value.as_mut_ptr()
     }
 }
 
@@ -580,7 +580,7 @@ impl fmt::Debug for FunctionValue<'_> {
         let llvm_value = self.print_to_string();
         let llvm_type = self.get_type();
         let name = self.get_name();
-        let is_const = unsafe { LLVMIsConstant(self.fn_value.value) == 1 };
+        let is_const = unsafe { LLVMIsConstant(self.fn_value.as_mut_ptr()) == 1 };
         let is_null = self.is_null();
 
         f.debug_struct("FunctionValue")
@@ -595,6 +595,7 @@ impl fmt::Debug for FunctionValue<'_> {
 }
 
 /// Iterate over all `BasicBlock`s in a function.
+#[repr(transparent)]
 #[derive(Debug)]
 pub struct BasicBlockIter<'ctx>(Option<BasicBlock<'ctx>>);
 
@@ -613,17 +614,18 @@ impl<'ctx> Iterator for BasicBlockIter<'ctx> {
 
 #[derive(Debug)]
 pub struct ParamValueIter<'ctx> {
-    param_iter_value: LLVMValueRef,
+    param_iter_value: NonNull<LLVMValue>,
     start: bool,
     _marker: PhantomData<&'ctx ()>,
 }
+const _: () = assert_niche::<ParamValueIter>();
 
 impl<'ctx> Iterator for ParamValueIter<'ctx> {
     type Item = BasicValueEnum<'ctx>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.start {
-            let first_value = unsafe { LLVMGetFirstParam(self.param_iter_value) };
+            let first_value = unsafe { LLVMGetFirstParam(self.param_iter_value.as_ptr()) };
 
             if first_value.is_null() {
                 return None;
@@ -631,18 +633,18 @@ impl<'ctx> Iterator for ParamValueIter<'ctx> {
 
             self.start = false;
 
-            self.param_iter_value = first_value;
+            self.param_iter_value = unsafe { NonNull::new_unchecked(first_value) };
 
             return unsafe { Some(Self::Item::new(first_value)) };
         }
 
-        let next_value = unsafe { LLVMGetNextParam(self.param_iter_value) };
+        let next_value = unsafe { LLVMGetNextParam(self.param_iter_value.as_ptr()) };
 
         if next_value.is_null() {
             return None;
         }
 
-        self.param_iter_value = next_value;
+        self.param_iter_value = unsafe { NonNull::new_unchecked(next_value) };
 
         unsafe { Some(Self::Item::new(next_value)) }
     }

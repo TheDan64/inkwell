@@ -3,7 +3,7 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use crate::AddressSpace;
 use crate::context::ContextRef;
-use crate::support::LLVMString;
+use crate::support::{LLVMString, assert_niche};
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::{ArrayType, BasicTypeEnum, FunctionType, PointerType, Type, traits::AsTypeRef};
 use crate::values::{ArrayValue, BasicValue, IntValue, VectorValue};
@@ -11,10 +11,12 @@ use crate::values::{ArrayValue, BasicValue, IntValue, VectorValue};
 use std::fmt::{self, Display};
 
 /// A `VectorType` is the type of a multiple value SIMD constant or variable.
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct VectorType<'ctx> {
     vec_type: Type<'ctx>,
 }
+const _: () = assert_niche::<VectorType>();
 
 impl<'ctx> VectorType<'ctx> {
     /// Create `VectorType` from [`LLVMTypeRef`]
@@ -284,7 +286,7 @@ impl<'ctx> VectorType<'ctx> {
 
 unsafe impl AsTypeRef for VectorType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.vec_type.ty
+        self.vec_type.as_mut_ptr()
     }
 }
 

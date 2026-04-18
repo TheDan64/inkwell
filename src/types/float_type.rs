@@ -4,7 +4,7 @@ use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::AddressSpace;
 use crate::context::ContextRef;
-use crate::support::LLVMString;
+use crate::support::{LLVMString, assert_niche};
 #[llvm_versions(12..)]
 use crate::types::ScalableVectorType;
 use crate::types::enums::BasicMetadataTypeEnum;
@@ -15,10 +15,12 @@ use crate::values::{ArrayValue, FloatValue, GenericValue, IntValue};
 use std::fmt::{self, Display};
 
 /// A `FloatType` is the type of a floating point constant or variable.
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct FloatType<'ctx> {
     float_type: Type<'ctx>,
 }
+const _: () = assert_niche::<FloatType>();
 
 impl<'ctx> FloatType<'ctx> {
     /// Create `FloatType` from [`LLVMTypeRef`]
@@ -118,7 +120,7 @@ impl<'ctx> FloatType<'ctx> {
     /// let f32_value = f32_type.const_float(42.);
     /// ```
     pub fn const_float(self, value: f64) -> FloatValue<'ctx> {
-        unsafe { FloatValue::new(LLVMConstReal(self.float_type.ty, value)) }
+        unsafe { FloatValue::new(LLVMConstReal(self.float_type.as_mut_ptr(), value)) }
     }
 
     // We could make this safe again by doing the validation for users.
@@ -349,7 +351,7 @@ impl<'ctx> FloatType<'ctx> {
 
 unsafe impl AsTypeRef for FloatType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.float_type.ty
+        self.float_type.as_mut_ptr()
     }
 }
 

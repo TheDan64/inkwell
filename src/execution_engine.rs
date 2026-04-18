@@ -17,6 +17,7 @@ use std::fmt::{self, Debug, Display, Formatter};
 use std::marker::PhantomData;
 use std::mem::{MaybeUninit, forget, size_of, transmute_copy};
 use std::ops::Deref;
+use std::ptr::NonNull;
 use std::rc::Rc;
 
 static EE_INNER_PANIC: &str = "ExecutionEngineInner should exist until Drop";
@@ -201,7 +202,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
     /// assert!(ee.add_module(&module).is_err());
     /// ```
     pub fn add_module(&self, module: &Module<'ctx>) -> Result<(), ()> {
-        unsafe { LLVMAddModule(self.execution_engine_inner(), module.module.get()) }
+        unsafe { LLVMAddModule(self.execution_engine_inner(), module.as_mut_ptr()) }
 
         if module.owned_by_ee.borrow().is_some() {
             return Err(());
@@ -227,7 +228,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
         let code = unsafe {
             LLVMRemoveModule(
                 self.execution_engine_inner(),
-                module.module.get(),
+                module.as_mut_ptr(),
                 new_module.as_mut_ptr(),
                 &mut err_string,
             )
@@ -241,7 +242,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
 
         let new_module = unsafe { new_module.assume_init() };
 
-        module.module.set(new_module);
+        module.module.set(unsafe { NonNull::new_unchecked(new_module) });
         *module.owned_by_ee.borrow_mut() = None;
 
         Ok(())
@@ -387,7 +388,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
         args: &[&GenericValue<'ctx>],
     ) -> GenericValue<'ctx> {
         unsafe {
-            let mut args: Vec<LLVMGenericValueRef> = args.iter().map(|val| val.generic_value).collect();
+            let mut args: Vec<LLVMGenericValueRef> = args.iter().map(|val| val.generic_value.as_ptr()).collect();
 
             let value = LLVMRunFunction(
                 self.execution_engine_inner(),
@@ -461,6 +462,7 @@ impl Clone for ExecutionEngine<'_> {
 }
 
 /// A smart pointer which wraps the `Drop` logic for `LLVMExecutionEngineRef`.
+#[repr(transparent)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct ExecEngineInner<'ctx>(Rc<LLVMExecutionEngineRef>, PhantomData<&'ctx Context>);
 
@@ -620,7 +622,7 @@ pub mod experimental {
 
     impl Orc {
         pub fn create(target_machine: TargetMachine) -> Self {
-            let stack_ref = unsafe { LLVMOrcCreateInstance(target_machine.target_machine) };
+            let stack_ref = unsafe { LLVMOrcCreateInstance(target_machine.target_machine.as_ptr()) };
 
             Orc(stack_ref)
         }

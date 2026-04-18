@@ -9,15 +9,18 @@ use llvm_sys::prelude::LLVMValueRef;
 use std::ffi::CStr;
 use std::fmt::{self, Display};
 
+use crate::support::assert_niche;
 use crate::types::{ArrayType, AsTypeRef};
 use crate::values::traits::{AnyValue, AsValueRef};
 use crate::values::{InstructionValue, Value};
 
 /// An `ArrayValue` is a block of contiguous constants or variables.
+#[repr(transparent)]
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub struct ArrayValue<'ctx> {
     array_value: Value<'ctx>,
 }
+const _: () = assert_niche::<ArrayValue>();
 
 impl<'ctx> ArrayValue<'ctx> {
     /// Get a value from an [LLVMValueRef].
@@ -191,7 +194,7 @@ impl<'ctx> ArrayValue<'ctx> {
 
 unsafe impl AsValueRef for ArrayValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
-        self.array_value.value
+        self.array_value.as_mut_ptr()
     }
 }
 

@@ -1,9 +1,12 @@
+use llvm_sys::LLVMUse;
 use llvm_sys::core::{LLVMGetNextUse, LLVMGetUsedValue, LLVMGetUser, LLVMIsABasicBlock, LLVMValueAsBasicBlock};
 use llvm_sys::prelude::LLVMUseRef;
 
 use std::marker::PhantomData;
+use std::ptr::NonNull;
 
 use crate::basic_block::BasicBlock;
+use crate::support::assert_niche;
 use crate::values::{AnyValueEnum, BasicValueEnum};
 
 /// Either [BasicValueEnum] or [BasicBlock].
@@ -90,8 +93,10 @@ impl<'ctx> Operand<'ctx> {
 }
 
 /// A usage of a `BasicValue` in another value.
+#[repr(transparent)]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct BasicValueUse<'ctx>(LLVMUseRef, PhantomData<&'ctx ()>);
+pub struct BasicValueUse<'ctx>(NonNull<LLVMUse>, PhantomData<&'ctx ()>);
+const _: () = assert_niche::<BasicValueUse>();
 
 impl<'ctx> BasicValueUse<'ctx> {
     /// Get a value from an [LLVMUseRef].
@@ -102,7 +107,12 @@ impl<'ctx> BasicValueUse<'ctx> {
     pub unsafe fn new(use_: LLVMUseRef) -> Self {
         debug_assert!(!use_.is_null());
 
-        BasicValueUse(use_, PhantomData)
+        BasicValueUse(unsafe { NonNull::new_unchecked(use_) }, PhantomData)
+    }
+
+    /// Get the inner [LLVMUseRef].
+    pub fn as_mut_ptr(&self) -> LLVMUseRef {
+        self.0.as_ptr()
     }
 
     /// Gets the next use of a `BasicBlock`, `InstructionValue` or `BasicValue` if any.
@@ -162,7 +172,7 @@ impl<'ctx> BasicValueUse<'ctx> {
     /// 1) In the store instruction
     /// 2) In the pointer bitcast
     pub fn get_next_use(self) -> Option<Self> {
-        let use_ = unsafe { LLVMGetNextUse(self.0) };
+        let use_ = unsafe { LLVMGetNextUse(self.as_mut_ptr()) };
 
         if use_.is_null() {
             return None;
@@ -207,7 +217,7 @@ impl<'ctx> BasicValueUse<'ctx> {
     /// assert_eq!(store_operand_use1.get_user(), store_instruction);
     /// ```
     pub fn get_user(self) -> AnyValueEnum<'ctx> {
-        unsafe { AnyValueEnum::new(LLVMGetUser(self.0)) }
+        unsafe { AnyValueEnum::new(LLVMGetUser(self.as_mut_ptr())) }
     }
 
     /// Gets the used value (a `BasicValueEnum` or `BasicBlock`) of this use.
@@ -251,7 +261,7 @@ impl<'ctx> BasicValueUse<'ctx> {
     /// assert_eq!(bitcast_use_value, free_operand0);
     /// ```
     pub fn get_used_value(self) -> Operand<'ctx> {
-        let used_value = unsafe { LLVMGetUsedValue(self.0) };
+        let used_value = unsafe { LLVMGetUsedValue(self.as_mut_ptr()) };
 
         let is_basic_block = unsafe { !LLVMIsABasicBlock(used_value).is_null() };
 

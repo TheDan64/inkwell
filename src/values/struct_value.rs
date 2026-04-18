@@ -5,16 +5,19 @@ use llvm_sys::prelude::LLVMValueRef;
 use std::ffi::CStr;
 use std::fmt::{self, Display};
 
+use crate::support::assert_niche;
 use crate::types::StructType;
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, InstructionValue, Value};
 
 use super::{AnyValue, BasicValueEnum};
 
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct StructValue<'ctx> {
     struct_value: Value<'ctx>,
 }
+const _: () = assert_niche::<StructValue>();
 
 impl<'ctx> StructValue<'ctx> {
     /// Get a value from an [LLVMValueRef].
@@ -169,7 +172,7 @@ impl<'ctx> StructValue<'ctx> {
 
 unsafe impl AsValueRef for StructValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
-        self.struct_value.value
+        self.struct_value.as_mut_ptr()
     }
 }
 
@@ -186,6 +189,7 @@ pub struct FieldValueIter<'ctx> {
     i: u32,
     count: u32,
 }
+const _: () = assert_niche::<FieldValueIter>();
 
 impl<'ctx> Iterator for FieldValueIter<'ctx> {
     type Item = BasicValueEnum<'ctx>;

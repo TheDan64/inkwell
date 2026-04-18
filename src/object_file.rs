@@ -6,35 +6,39 @@ use llvm_sys::object::{
     LLVMGetSectionSize, LLVMGetSymbolAddress, LLVMGetSymbolName, LLVMGetSymbolSize, LLVMIsRelocationIteratorAtEnd,
     LLVMMoveToContainingSection, LLVMMoveToNextRelocation, LLVMMoveToNextSection, LLVMMoveToNextSymbol,
     LLVMObjectFileCopySectionIterator, LLVMObjectFileCopySymbolIterator, LLVMObjectFileIsSectionIteratorAtEnd,
-    LLVMObjectFileIsSymbolIteratorAtEnd, LLVMRelocationIteratorRef, LLVMSectionIteratorRef, LLVMSymbolIteratorRef,
+    LLVMObjectFileIsSymbolIteratorAtEnd, LLVMOpaqueBinary, LLVMOpaqueRelocationIterator, LLVMOpaqueSectionIterator,
+    LLVMOpaqueSymbolIterator, LLVMRelocationIteratorRef, LLVMSectionIteratorRef, LLVMSymbolIteratorRef,
 };
 
 pub use llvm_sys::object::LLVMBinaryType;
 
 use std::ffi::CStr;
 use std::marker::PhantomData;
+use std::ptr::NonNull;
 
 use crate::memory_buffer::MemoryBuffer;
-use crate::support::LLVMString;
+use crate::support::{LLVMString, assert_niche};
 
+#[repr(transparent)]
 #[derive(Debug)]
 pub struct BinaryFile<'a> {
-    binary_file: LLVMBinaryRef,
+    binary_file: NonNull<LLVMOpaqueBinary>,
     _phantom: PhantomData<&'a ()>,
 }
+const _: () = assert_niche::<BinaryFile>();
 
 impl<'a> BinaryFile<'a> {
     pub unsafe fn new(binary_file: LLVMBinaryRef) -> Self {
         assert!(!binary_file.is_null());
 
         Self {
-            binary_file,
+            binary_file: unsafe { NonNull::new_unchecked(binary_file) },
             _phantom: PhantomData,
         }
     }
 
     pub fn as_mut_ptr(&self) -> LLVMBinaryRef {
-        self.binary_file
+        self.binary_file.as_ptr()
     }
 
     pub fn get_binary_type(&self) -> LLVMBinaryType {
@@ -43,46 +47,47 @@ impl<'a> BinaryFile<'a> {
 
     // the backing buffer must outlive 'a, hence never dangling
     pub fn get_memory_buffer(&self) -> MemoryBuffer<'a> {
-        unsafe { MemoryBuffer::new(LLVMBinaryCopyMemoryBuffer(self.binary_file)) }
+        unsafe { MemoryBuffer::new(LLVMBinaryCopyMemoryBuffer(self.as_mut_ptr())) }
     }
 
     pub fn get_sections(&self) -> Option<Sections<'_>> {
-        let section_iterator = unsafe { LLVMObjectFileCopySectionIterator(self.binary_file) };
+        let section_iterator = unsafe { LLVMObjectFileCopySectionIterator(self.as_mut_ptr()) };
 
         if section_iterator.is_null() {
             return None;
         }
 
-        Some(unsafe { Sections::new(section_iterator, self.binary_file) })
+        Some(unsafe { Sections::new(section_iterator, self.as_mut_ptr()) })
     }
 
     pub fn get_symbols(&self) -> Option<Symbols<'_>> {
-        let symbol_iterator = unsafe { LLVMObjectFileCopySymbolIterator(self.binary_file) };
+        let symbol_iterator = unsafe { LLVMObjectFileCopySymbolIterator(self.as_mut_ptr()) };
 
         if symbol_iterator.is_null() {
             return None;
         }
 
-        Some(unsafe { Symbols::new(symbol_iterator, self.binary_file) })
+        Some(unsafe { Symbols::new(symbol_iterator, self.as_mut_ptr()) })
     }
 }
 
 impl<'a> Drop for BinaryFile<'a> {
     fn drop(&mut self) {
         unsafe {
-            LLVMDisposeBinary(self.binary_file);
+            LLVMDisposeBinary(self.as_mut_ptr());
         }
     }
 }
 
 #[derive(Debug)]
 pub struct Sections<'a> {
-    section_iterator: LLVMSectionIteratorRef,
-    binary_file: LLVMBinaryRef,
+    section_iterator: NonNull<LLVMOpaqueSectionIterator>,
+    binary_file: NonNull<LLVMOpaqueBinary>,
     at_start: bool,
     at_end: bool,
     _phantom: PhantomData<&'a ()>,
 }
+const _: () = assert_niche::<Sections>();
 
 impl<'a> Sections<'a> {
     pub unsafe fn new(section_iterator: LLVMSectionIteratorRef, binary_file: LLVMBinaryRef) -> Self {
@@ -90,8 +95,8 @@ impl<'a> Sections<'a> {
         assert!(!binary_file.is_null());
 
         Sections {
-            section_iterator,
-            binary_file,
+            section_iterator: unsafe { NonNull::new_unchecked(section_iterator) },
+            binary_file: unsafe { NonNull::new_unchecked(binary_file) },
             at_start: true,
             at_end: false,
             _phantom: PhantomData,
@@ -99,7 +104,7 @@ impl<'a> Sections<'a> {
     }
 
     pub fn as_mut_ptr(&self) -> (LLVMSectionIteratorRef, LLVMBinaryRef) {
-        (self.section_iterator, self.binary_file)
+        (self.section_iterator.as_ptr(), self.binary_file.as_ptr())
     }
 
     // Here we cannot use the `Iterator`` trait since `Section` depends on the lifetime of self to
@@ -115,17 +120,19 @@ impl<'a> Sections<'a> {
 
         if !self.at_start {
             unsafe {
-                LLVMMoveToNextSection(self.section_iterator);
+                LLVMMoveToNextSection(self.section_iterator.as_ptr());
             }
         }
         self.at_start = false;
 
-        self.at_end = unsafe { LLVMObjectFileIsSectionIteratorAtEnd(self.binary_file, self.section_iterator) == 1 };
+        self.at_end = unsafe {
+            LLVMObjectFileIsSectionIteratorAtEnd(self.binary_file.as_ptr(), self.section_iterator.as_ptr()) == 1
+        };
         if self.at_end {
             return None;
         }
 
-        let section = unsafe { Section::new(self.section_iterator, self.binary_file) };
+        let section = unsafe { Section::new(self.section_iterator.as_ptr(), self.binary_file.as_ptr()) };
         Some(section)
     }
 
@@ -134,23 +141,24 @@ impl<'a> Sections<'a> {
         self.at_start = true;
         self.at_end = false;
         unsafe {
-            LLVMMoveToContainingSection(self.section_iterator, symbol.symbol);
+            LLVMMoveToContainingSection(self.section_iterator.as_ptr(), symbol.symbol.as_ptr());
         }
     }
 }
 
 impl<'a> Drop for Sections<'a> {
     fn drop(&mut self) {
-        unsafe { LLVMDisposeSectionIterator(self.section_iterator) }
+        unsafe { LLVMDisposeSectionIterator(self.section_iterator.as_ptr()) }
     }
 }
 
 #[derive(Debug)]
 pub struct Section<'a> {
-    section: LLVMSectionIteratorRef,
-    binary_file: LLVMBinaryRef,
+    section: NonNull<LLVMOpaqueSectionIterator>,
+    binary_file: NonNull<LLVMOpaqueBinary>,
     _phantom: PhantomData<&'a ()>,
 }
+const _: () = assert_niche::<Section>();
 
 impl<'a> Section<'a> {
     pub unsafe fn new(section: LLVMSectionIteratorRef, binary_file: LLVMBinaryRef) -> Self {
@@ -158,18 +166,18 @@ impl<'a> Section<'a> {
         assert!(!binary_file.is_null());
 
         Self {
-            section,
-            binary_file,
+            section: unsafe { NonNull::new_unchecked(section) },
+            binary_file: unsafe { NonNull::new_unchecked(binary_file) },
             _phantom: PhantomData,
         }
     }
 
     pub unsafe fn as_mut_ptr(&self) -> (LLVMSectionIteratorRef, LLVMBinaryRef) {
-        (self.section, self.binary_file)
+        (self.section.as_ptr(), self.binary_file.as_ptr())
     }
 
     pub fn get_name(&self) -> Option<&CStr> {
-        let name = unsafe { LLVMGetSectionName(self.section) };
+        let name = unsafe { LLVMGetSectionName(self.section.as_ptr()) };
         if !name.is_null() {
             Some(unsafe { CStr::from_ptr(name) })
         } else {
@@ -178,42 +186,43 @@ impl<'a> Section<'a> {
     }
 
     pub fn get_size(&self) -> u64 {
-        unsafe { LLVMGetSectionSize(self.section) }
+        unsafe { LLVMGetSectionSize(self.section.as_ptr()) }
     }
 
     pub fn get_contents(&self) -> &[u8] {
         unsafe {
             std::slice::from_raw_parts(
-                LLVMGetSectionContents(self.section) as *const u8,
+                LLVMGetSectionContents(self.section.as_ptr()) as *const u8,
                 self.get_size() as usize,
             )
         }
     }
 
     pub fn get_address(&self) -> u64 {
-        unsafe { LLVMGetSectionAddress(self.section) }
+        unsafe { LLVMGetSectionAddress(self.section.as_ptr()) }
     }
 
     pub fn contains_symbol(&self, symbol: &Symbol<'_>) -> bool {
-        unsafe { LLVMGetSectionContainsSymbol(self.section, symbol.symbol) == 1 }
+        unsafe { LLVMGetSectionContainsSymbol(self.section.as_ptr(), symbol.symbol.as_ptr()) == 1 }
     }
 
     pub fn get_relocations(&self) -> Relocations<'_> {
-        let relocation_iterator = unsafe { LLVMGetRelocations(self.section) };
+        let relocation_iterator = unsafe { LLVMGetRelocations(self.section.as_ptr()) };
 
-        unsafe { Relocations::new(relocation_iterator, self.section, self.binary_file) }
+        unsafe { Relocations::new(relocation_iterator, self.section.as_ptr(), self.binary_file.as_ptr()) }
     }
 }
 
 #[derive(Debug)]
 pub struct Relocations<'a> {
-    relocation_iterator: LLVMRelocationIteratorRef,
-    section_iterator: LLVMSectionIteratorRef,
-    binary_file: LLVMBinaryRef,
+    relocation_iterator: NonNull<LLVMOpaqueRelocationIterator>,
+    section_iterator: NonNull<LLVMOpaqueSectionIterator>,
+    binary_file: NonNull<LLVMOpaqueBinary>,
     at_start: bool,
     at_end: bool,
     _phantom: PhantomData<&'a ()>,
 }
+const _: () = assert_niche::<Relocations>();
 
 impl<'a> Relocations<'a> {
     pub unsafe fn new(
@@ -226,9 +235,9 @@ impl<'a> Relocations<'a> {
         assert!(!binary_file.is_null());
 
         Self {
-            relocation_iterator,
-            section_iterator,
-            binary_file,
+            relocation_iterator: unsafe { NonNull::new_unchecked(relocation_iterator) },
+            section_iterator: unsafe { NonNull::new_unchecked(section_iterator) },
+            binary_file: unsafe { NonNull::new_unchecked(binary_file) },
             at_start: true,
             at_end: false,
             _phantom: PhantomData,
@@ -236,7 +245,11 @@ impl<'a> Relocations<'a> {
     }
 
     pub fn as_mut_ptr(&self) -> (LLVMRelocationIteratorRef, LLVMSectionIteratorRef, LLVMBinaryRef) {
-        (self.relocation_iterator, self.section_iterator, self.binary_file)
+        (
+            self.relocation_iterator.as_ptr(),
+            self.section_iterator.as_ptr(),
+            self.binary_file.as_ptr(),
+        )
     }
 
     pub fn next_relocation(&mut self) -> Option<Relocation<'_>> {
@@ -246,33 +259,36 @@ impl<'a> Relocations<'a> {
 
         if !self.at_start {
             unsafe {
-                LLVMMoveToNextRelocation(self.relocation_iterator);
+                LLVMMoveToNextRelocation(self.relocation_iterator.as_ptr());
             }
         }
         self.at_start = false;
 
-        self.at_end = unsafe { LLVMIsRelocationIteratorAtEnd(self.section_iterator, self.relocation_iterator) == 1 };
+        self.at_end = unsafe {
+            LLVMIsRelocationIteratorAtEnd(self.section_iterator.as_ptr(), self.relocation_iterator.as_ptr()) == 1
+        };
         if self.at_end {
             return None;
         }
 
-        let relocation = unsafe { Relocation::new(self.relocation_iterator, self.binary_file) };
+        let relocation = unsafe { Relocation::new(self.relocation_iterator.as_ptr(), self.binary_file.as_ptr()) };
         Some(relocation)
     }
 }
 
 impl<'a> Drop for Relocations<'a> {
     fn drop(&mut self) {
-        unsafe { LLVMDisposeRelocationIterator(self.relocation_iterator) }
+        unsafe { LLVMDisposeRelocationIterator(self.relocation_iterator.as_ptr()) }
     }
 }
 
 #[derive(Debug)]
 pub struct Relocation<'a> {
-    relocation: LLVMRelocationIteratorRef,
-    binary_file: LLVMBinaryRef,
+    relocation: NonNull<LLVMOpaqueRelocationIterator>,
+    binary_file: NonNull<LLVMOpaqueBinary>,
     _phantom: PhantomData<&'a ()>,
 }
+const _: () = assert_niche::<Relocation>();
 
 impl<'a> Relocation<'a> {
     pub unsafe fn new(relocation: LLVMRelocationIteratorRef, binary_file: LLVMBinaryRef) -> Self {
@@ -280,33 +296,33 @@ impl<'a> Relocation<'a> {
         assert!(!binary_file.is_null());
 
         Self {
-            relocation,
-            binary_file,
+            relocation: unsafe { NonNull::new_unchecked(relocation) },
+            binary_file: unsafe { NonNull::new_unchecked(binary_file) },
             _phantom: PhantomData,
         }
     }
 
     pub fn as_mut_ptr(&self) -> (LLVMRelocationIteratorRef, LLVMBinaryRef) {
-        (self.relocation, self.binary_file)
+        (self.relocation.as_ptr(), self.binary_file.as_ptr())
     }
 
     pub fn get_offset(&self) -> u64 {
-        unsafe { LLVMGetRelocationOffset(self.relocation) }
+        unsafe { LLVMGetRelocationOffset(self.relocation.as_ptr()) }
     }
 
     pub fn get_type(&self) -> (u64, LLVMString) {
-        let type_int = unsafe { LLVMGetRelocationType(self.relocation) };
-        let type_name = unsafe { LLVMString::new(LLVMGetRelocationTypeName(self.relocation)) };
+        let type_int = unsafe { LLVMGetRelocationType(self.relocation.as_ptr()) };
+        let type_name = unsafe { LLVMString::new(LLVMGetRelocationTypeName(self.relocation.as_ptr())) };
 
         (type_int, type_name)
     }
 
     pub fn get_value(&self) -> LLVMString {
-        unsafe { LLVMString::new(LLVMGetRelocationValueString(self.relocation)) }
+        unsafe { LLVMString::new(LLVMGetRelocationValueString(self.relocation.as_ptr())) }
     }
 
     pub fn get_symbol(&self) -> Symbol<'_> {
-        let symbol = unsafe { LLVMGetRelocationSymbol(self.relocation) };
+        let symbol = unsafe { LLVMGetRelocationSymbol(self.relocation.as_ptr()) };
 
         unsafe { Symbol::new(symbol) }
     }
@@ -314,12 +330,13 @@ impl<'a> Relocation<'a> {
 
 #[derive(Debug)]
 pub struct Symbols<'a> {
-    symbol_iterator: LLVMSymbolIteratorRef,
-    binary_file: LLVMBinaryRef,
+    symbol_iterator: NonNull<LLVMOpaqueSymbolIterator>,
+    binary_file: NonNull<LLVMOpaqueBinary>,
     at_start: bool,
     at_end: bool,
     _phantom: PhantomData<&'a ()>,
 }
+const _: () = assert_niche::<Symbols>();
 
 impl<'a> Symbols<'a> {
     pub unsafe fn new(symbol_iterator: LLVMSymbolIteratorRef, binary_file: LLVMBinaryRef) -> Self {
@@ -327,8 +344,8 @@ impl<'a> Symbols<'a> {
         assert!(!binary_file.is_null());
 
         Self {
-            symbol_iterator,
-            binary_file,
+            symbol_iterator: unsafe { NonNull::new_unchecked(symbol_iterator) },
+            binary_file: unsafe { NonNull::new_unchecked(binary_file) },
             at_start: true,
             at_end: false,
             _phantom: PhantomData,
@@ -336,7 +353,7 @@ impl<'a> Symbols<'a> {
     }
 
     pub fn as_mut_ptr(&self) -> (LLVMSymbolIteratorRef, LLVMBinaryRef) {
-        (self.symbol_iterator, self.binary_file)
+        (self.symbol_iterator.as_ptr(), self.binary_file.as_ptr())
     }
 
     pub fn next_symbol(&mut self) -> Option<Symbol<'_>> {
@@ -346,49 +363,52 @@ impl<'a> Symbols<'a> {
 
         if !self.at_start {
             unsafe {
-                LLVMMoveToNextSymbol(self.symbol_iterator);
+                LLVMMoveToNextSymbol(self.symbol_iterator.as_ptr());
             }
         }
         self.at_start = false;
 
-        self.at_end = unsafe { LLVMObjectFileIsSymbolIteratorAtEnd(self.binary_file, self.symbol_iterator) == 1 };
+        self.at_end = unsafe {
+            LLVMObjectFileIsSymbolIteratorAtEnd(self.binary_file.as_ptr(), self.symbol_iterator.as_ptr()) == 1
+        };
         if self.at_end {
             return None;
         }
 
-        let symbol = unsafe { Symbol::new(self.symbol_iterator) };
+        let symbol = unsafe { Symbol::new(self.symbol_iterator.as_ptr()) };
         Some(symbol)
     }
 }
 
 impl<'a> Drop for Symbols<'a> {
     fn drop(&mut self) {
-        unsafe { LLVMDisposeSymbolIterator(self.symbol_iterator) }
+        unsafe { LLVMDisposeSymbolIterator(self.symbol_iterator.as_ptr()) }
     }
 }
 
 #[derive(Debug)]
 pub struct Symbol<'a> {
-    symbol: LLVMSymbolIteratorRef,
+    symbol: NonNull<LLVMOpaqueSymbolIterator>,
     _phantom: PhantomData<&'a ()>,
 }
+const _: () = assert_niche::<Symbol>();
 
 impl<'a> Symbol<'a> {
     pub unsafe fn new(symbol: LLVMSymbolIteratorRef) -> Self {
         assert!(!symbol.is_null());
 
         Self {
-            symbol,
+            symbol: unsafe { NonNull::new_unchecked(symbol) },
             _phantom: PhantomData,
         }
     }
 
     pub fn as_mut_ptr(&self) -> LLVMSymbolIteratorRef {
-        self.symbol
+        self.symbol.as_ptr()
     }
 
     pub fn get_name(&self) -> Option<&CStr> {
-        let name = unsafe { LLVMGetSymbolName(self.symbol) };
+        let name = unsafe { LLVMGetSymbolName(self.symbol.as_ptr()) };
         if !name.is_null() {
             Some(unsafe { CStr::from_ptr(name) })
         } else {
@@ -397,10 +417,10 @@ impl<'a> Symbol<'a> {
     }
 
     pub fn get_size(&self) -> u64 {
-        unsafe { LLVMGetSymbolSize(self.symbol) }
+        unsafe { LLVMGetSymbolSize(self.symbol.as_ptr()) }
     }
 
     pub fn get_address(&self) -> u64 {
-        unsafe { LLVMGetSymbolAddress(self.symbol) }
+        unsafe { LLVMGetSymbolAddress(self.symbol.as_ptr()) }
     }
 }
