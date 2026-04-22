@@ -9,6 +9,7 @@ use llvm_sys::core::{LLVMGetTypeAttributeValue, LLVMIsTypeAttribute};
 use llvm_sys::prelude::LLVMAttributeRef;
 
 use std::ffi::CStr;
+use std::num::NonZeroU32;
 
 #[llvm_versions(12..)]
 use crate::types::AnyTypeEnum;
@@ -170,14 +171,16 @@ impl Attribute {
     /// use inkwell::attributes::Attribute;
     ///
     /// // This kind id doesn't exist:
-    /// assert_eq!(Attribute::get_named_enum_kind_id("foobar"), 0);
+    /// assert_eq!(Attribute::get_named_enum_kind_id("foobar"), None);
     ///
     /// // These are real kind ids:
-    /// assert_eq!(Attribute::get_named_enum_kind_id("align"), 1);
-    /// assert_eq!(Attribute::get_named_enum_kind_id("builtin"), 5);
+    /// assert_eq!(Attribute::get_named_enum_kind_id("align").unwrap().get(), 1);
+    /// assert_eq!(Attribute::get_named_enum_kind_id("builtin").unwrap().get(), 5);
     /// ```
-    pub fn get_named_enum_kind_id(name: &str) -> u32 {
-        unsafe { LLVMGetEnumAttributeKindForName(name.as_ptr() as *const ::libc::c_char, name.len()) }
+    pub fn get_named_enum_kind_id(name: &str) -> Option<NonZeroU32> {
+        let id = unsafe { LLVMGetEnumAttributeKindForName(name.as_ptr() as *const ::libc::c_char, name.len()) };
+
+        NonZeroU32::new(id)
     }
 
     /// Gets the kind id associated with an enum `Attribute`.
