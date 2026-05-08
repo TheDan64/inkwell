@@ -44,7 +44,6 @@ use llvm_sys::core::LLVMScalableVectorType;
 #[llvm_versions(12..)]
 use llvm_sys::core::LLVMGetPoison;
 
-use llvm_sys::LLVMTypeKind;
 #[allow(deprecated)]
 use llvm_sys::core::LLVMArrayType;
 use llvm_sys::core::{
@@ -52,53 +51,61 @@ use llvm_sys::core::{
     LLVMGetTypeKind, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMSizeOf, LLVMTypeIsSized, LLVMVectorType,
 };
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
+use llvm_sys::{LLVMType, LLVMTypeKind};
 #[cfg(feature = "experimental")]
 use static_alloc::Bump;
 
 use std::fmt;
 use std::marker::PhantomData;
+use std::ptr::NonNull;
 
 use crate::AddressSpace;
 use crate::context::ContextRef;
-use crate::support::LLVMString;
+use crate::support::{LLVMString, assert_niche};
 use crate::values::IntValue;
 
 // Worth noting that types seem to be singletons. At the very least, primitives are.
 // Though this is likely only true per thread since LLVM claims to not be very thread-safe.
+#[repr(transparent)]
 #[derive(PartialEq, Eq, Clone, Copy)]
 struct Type<'ctx> {
-    ty: LLVMTypeRef,
+    ty: NonNull<LLVMType>,
     _marker: PhantomData<&'ctx ()>,
 }
+const _: () = assert_niche::<Type>();
 
 impl<'ctx> Type<'ctx> {
     unsafe fn new(ty: LLVMTypeRef) -> Self {
         assert!(!ty.is_null());
 
         Type {
-            ty,
+            ty: unsafe { NonNull::new_unchecked(ty) },
             _marker: PhantomData,
         }
     }
 
+    pub(crate) fn as_mut_ptr(&self) -> LLVMTypeRef {
+        self.ty.as_ptr()
+    }
+
     fn const_zero(self) -> LLVMValueRef {
         unsafe {
-            match LLVMGetTypeKind(self.ty) {
-                LLVMTypeKind::LLVMMetadataTypeKind => LLVMConstPointerNull(self.ty),
-                _ => LLVMConstNull(self.ty),
+            match LLVMGetTypeKind(self.as_mut_ptr()) {
+                LLVMTypeKind::LLVMMetadataTypeKind => LLVMConstPointerNull(self.as_mut_ptr()),
+                _ => LLVMConstNull(self.as_mut_ptr()),
             }
         }
     }
 
     fn ptr_type(self, address_space: AddressSpace) -> PointerType<'ctx> {
-        unsafe { PointerType::new(LLVMPointerType(self.ty, address_space.0)) }
+        unsafe { PointerType::new(LLVMPointerType(self.as_mut_ptr(), address_space.0)) }
     }
 
     fn vec_type(self, size: u32) -> VectorType<'ctx> {
         assert!(size != 0, "Vectors of size zero are not allowed.");
         // -- https://llvm.org/docs/LangRef.html#vector-type
 
-        unsafe { VectorType::new(LLVMVectorType(self.ty, size)) }
+        unsafe { VectorType::new(LLVMVectorType(self.as_mut_ptr(), size)) }
     }
 
     #[llvm_versions(12..)]
@@ -106,7 +113,7 @@ impl<'ctx> Type<'ctx> {
         assert!(size != 0, "Vectors of size zero are not allowed.");
         // -- https://llvm.org/docs/LangRef.html#vector-type
 
-        unsafe { ScalableVectorType::new(LLVMScalableVectorType(self.ty, size)) }
+        unsafe { ScalableVectorType::new(LLVMScalableVectorType(self.as_mut_ptr(), size)) }
     }
 
     #[cfg(not(feature = "experimental"))]
@@ -114,7 +121,7 @@ impl<'ctx> Type<'ctx> {
         let mut param_types: Vec<LLVMTypeRef> = param_types.iter().map(|val| val.as_type_ref()).collect();
         unsafe {
             FunctionType::new(LLVMFunctionType(
-                self.ty,
+                self.as_mut_ptr(),
                 param_types.as_mut_ptr(),
                 param_types.len() as u32,
                 is_var_args as i32,
@@ -137,7 +144,7 @@ impl<'ctx> Type<'ctx> {
 
         unsafe {
             FunctionType::new(LLVMFunctionType(
-                self.ty,
+                self.as_mut_ptr(),
                 pool_start.unwrap_or(std::ptr::null_mut()),
                 param_types.len() as u32,
                 is_var_args as i32,
@@ -147,31 +154,31 @@ impl<'ctx> Type<'ctx> {
 
     #[allow(deprecated)]
     fn array_type(self, size: u32) -> ArrayType<'ctx> {
-        unsafe { ArrayType::new(LLVMArrayType(self.ty, size)) }
+        unsafe { ArrayType::new(LLVMArrayType(self.as_mut_ptr(), size)) }
     }
 
     fn get_undef(self) -> LLVMValueRef {
-        unsafe { LLVMGetUndef(self.ty) }
+        unsafe { LLVMGetUndef(self.as_mut_ptr()) }
     }
 
     #[llvm_versions(12..)]
     fn get_poison(&self) -> LLVMValueRef {
-        unsafe { LLVMGetPoison(self.ty) }
+        unsafe { LLVMGetPoison(self.as_mut_ptr()) }
     }
 
     fn get_alignment(self) -> IntValue<'ctx> {
-        unsafe { IntValue::new(LLVMAlignOf(self.ty)) }
+        unsafe { IntValue::new(LLVMAlignOf(self.as_mut_ptr())) }
     }
 
     fn get_context(self) -> ContextRef<'ctx> {
-        unsafe { ContextRef::new(LLVMGetTypeContext(self.ty)) }
+        unsafe { ContextRef::new(LLVMGetTypeContext(self.as_mut_ptr())) }
     }
 
     // REVIEW: This should be known at compile time, maybe as a const fn?
     // On an enum or trait, this would not be known at compile time (unless
     // enum has only sized types for example)
     fn is_sized(self) -> bool {
-        unsafe { LLVMTypeIsSized(self.ty) == 1 }
+        unsafe { LLVMTypeIsSized(self.as_mut_ptr()) == 1 }
     }
 
     fn size_of(self) -> Option<IntValue<'ctx>> {
@@ -179,15 +186,15 @@ impl<'ctx> Type<'ctx> {
             return None;
         }
 
-        unsafe { Some(IntValue::new(LLVMSizeOf(self.ty))) }
+        unsafe { Some(IntValue::new(LLVMSizeOf(self.as_mut_ptr()))) }
     }
 
     fn print_to_string(self) -> LLVMString {
-        unsafe { LLVMString::new(LLVMPrintTypeToString(self.ty)) }
+        unsafe { LLVMString::new(LLVMPrintTypeToString(self.as_mut_ptr())) }
     }
 
     pub fn get_element_type(self) -> AnyTypeEnum<'ctx> {
-        unsafe { AnyTypeEnum::new(LLVMGetElementType(self.ty)) }
+        unsafe { AnyTypeEnum::new(LLVMGetElementType(self.as_mut_ptr())) }
     }
 }
 
@@ -196,7 +203,7 @@ impl fmt::Debug for Type<'_> {
         let llvm_type = self.print_to_string();
 
         f.debug_struct("Type")
-            .field("address", &self.ty)
+            .field("address", &self.as_mut_ptr())
             .field("llvm_type", &llvm_type)
             .finish()
     }

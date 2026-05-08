@@ -6,6 +6,7 @@ use std::ffi::CStr;
 use std::fmt::{self, Display};
 
 use crate::basic_block::BasicBlock;
+use crate::support::assert_niche;
 use crate::values::traits::AsValueRef;
 use crate::values::{BasicValue, BasicValueEnum, InstructionOpcode, InstructionValue, Value};
 
@@ -14,10 +15,12 @@ use super::AnyValue;
 // REVIEW: Metadata for phi values?
 /// A Phi Instruction returns a value based on which basic block branched into
 /// the Phi's containing basic block.
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct PhiValue<'ctx> {
     phi_value: Value<'ctx>,
 }
+const _: () = assert_niche::<PhiValue>();
 
 impl<'ctx> PhiValue<'ctx> {
     /// Get a value from an [LLVMValueRef].
@@ -39,7 +42,7 @@ impl<'ctx> PhiValue<'ctx> {
         let (mut values, mut basic_blocks): (Vec<LLVMValueRef>, Vec<LLVMBasicBlockRef>) = {
             incoming
                 .iter()
-                .map(|&(v, bb)| (v.as_value_ref(), bb.basic_block))
+                .map(|&(v, bb)| (v.as_value_ref(), bb.as_mut_ptr()))
                 .unzip()
         };
 
@@ -126,7 +129,7 @@ impl<'ctx> PhiValue<'ctx> {
 
 unsafe impl AsValueRef for PhiValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
-        self.phi_value.value
+        self.phi_value.as_mut_ptr()
     }
 }
 
@@ -155,6 +158,7 @@ pub struct IncomingIter<'ctx> {
     i: u32,
     count: u32,
 }
+const _: () = assert_niche::<IncomingIter>();
 
 impl<'ctx> Iterator for IncomingIter<'ctx> {
     type Item = (BasicValueEnum<'ctx>, BasicBlock<'ctx>);

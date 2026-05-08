@@ -10,17 +10,19 @@ use std::mem::forget;
 
 use crate::AddressSpace;
 use crate::context::ContextRef;
-use crate::support::LLVMString;
+use crate::support::{LLVMString, assert_niche};
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::traits::AsTypeRef;
 use crate::types::{ArrayType, BasicTypeEnum, FunctionType, PointerType, Type};
 use crate::values::{ArrayValue, AsValueRef, BasicValueEnum, IntValue, StructValue};
 
 /// A `StructType` is the type of a heterogeneous container of types.
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct StructType<'ctx> {
     struct_type: Type<'ctx>,
 }
+const _: () = assert_niche::<StructType>();
 
 impl<'ctx> StructType<'ctx> {
     /// Create `StructType` from [`LLVMTypeRef`]
@@ -436,7 +438,7 @@ impl<'ctx> StructType<'ctx> {
 
 unsafe impl AsTypeRef for StructType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.struct_type.ty
+        self.struct_type.as_mut_ptr()
     }
 }
 
@@ -453,6 +455,7 @@ pub struct FieldTypesIter<'ctx> {
     i: u32,
     count: u32,
 }
+const _: () = assert_niche::<FieldTypesIter>();
 
 impl<'ctx> Iterator for FieldTypesIter<'ctx> {
     type Item = BasicTypeEnum<'ctx>;

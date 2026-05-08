@@ -1,21 +1,24 @@
 use crate::context::Context;
-use crate::support::to_c_str;
+use crate::support::{assert_niche, to_c_str};
 use crate::values::{AnyValueEnum, AsValueRef, BasicValueEnum, CallSiteValue};
+use llvm_sys::LLVMOpaqueOperandBundle;
 use llvm_sys::core::{
     LLVMCreateOperandBundle, LLVMDisposeOperandBundle, LLVMGetNumOperandBundleArgs, LLVMGetNumOperandBundles,
     LLVMGetOperandBundleArgAtIndex, LLVMGetOperandBundleAtIndex, LLVMGetOperandBundleTag,
 };
 use llvm_sys::prelude::{LLVMOperandBundleRef, LLVMValueRef};
-use std::cell::Cell;
 use std::ffi::CStr;
 use std::marker::PhantomData;
+use std::ptr::NonNull;
 
 /// One of an instruction's operand bundles.
+#[repr(transparent)]
 #[derive(Debug)]
 pub struct OperandBundle<'ctx> {
-    bundle: Cell<LLVMOperandBundleRef>,
+    bundle: NonNull<LLVMOpaqueOperandBundle>,
     _marker: PhantomData<&'ctx Context>,
 }
+const _: () = assert_niche::<OperandBundle>();
 
 /// Iterator over an instruction's operand bundles.
 #[derive(Debug)]
@@ -40,8 +43,9 @@ impl<'ctx> OperandBundle<'ctx> {
     ///
     /// The ref must be valid and represent an operand bundle.
     pub unsafe fn new(bundle: LLVMOperandBundleRef) -> Self {
+        debug_assert!(!bundle.is_null(), "bundle must be non-null.");
         Self {
-            bundle: Cell::new(bundle),
+            bundle: unsafe { NonNull::new_unchecked(bundle) },
             _marker: PhantomData,
         }
     }
@@ -76,7 +80,7 @@ impl<'ctx> OperandBundle<'ctx> {
 
     /// Acquire the underlying raw pointer belonging to this `OperandBundle` type.
     pub fn as_mut_ptr(&self) -> LLVMOperandBundleRef {
-        self.bundle.get()
+        self.bundle.as_ptr()
     }
 
     /// Get this operand bundle's tag.
@@ -92,7 +96,7 @@ impl<'ctx> OperandBundle<'ctx> {
     pub fn get_tag(&self) -> Result<&str, std::str::Utf8Error> {
         unsafe {
             let mut size = 0usize;
-            let tag = LLVMGetOperandBundleTag(self.bundle.get(), &mut size as *mut usize);
+            let tag = LLVMGetOperandBundleTag(self.bundle.as_ptr(), &mut size as *mut usize);
             CStr::from_ptr(tag).to_str()
         }
     }

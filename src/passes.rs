@@ -247,7 +247,7 @@ impl PassManagerSubType for Module<'_> {
     }
 
     unsafe fn run_in_pass_manager(&self, pass_manager: &PassManager<Self>) -> bool {
-        unsafe { LLVMRunPassManager(pass_manager.pass_manager, self.module.get()) == 1 }
+        unsafe { LLVMRunPassManager(pass_manager.pass_manager, self.as_mut_ptr()) == 1 }
     }
 }
 
@@ -258,7 +258,7 @@ impl<'ctx> PassManagerSubType for FunctionValue<'ctx> {
     type Input = Module<'ctx>;
 
     unsafe fn create<I: Borrow<Self::Input>>(input: I) -> LLVMPassManagerRef {
-        unsafe { LLVMCreateFunctionPassManagerForModule(input.borrow().module.get()) }
+        unsafe { LLVMCreateFunctionPassManagerForModule(input.borrow().as_mut_ptr()) }
     }
 
     unsafe fn run_in_pass_manager(&self, pass_manager: &PassManager<Self>) -> bool {

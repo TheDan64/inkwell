@@ -11,10 +11,12 @@ use llvm_sys::core::{
 };
 use llvm_sys::prelude::LLVMValueRef;
 
+use std::ptr::NonNull;
 use std::{ffi::CStr, fmt, fmt::Display};
 
 use crate::AtomicRMWBinOp;
 use crate::debug_info::DILocation;
+use crate::support::assert_niche;
 use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, MetadataValue, Value};
 use crate::{AtomicOrdering, FloatPredicate, IntPredicate};
 use crate::{basic_block::BasicBlock, types::AnyTypeEnum};
@@ -155,10 +157,12 @@ pub enum InstructionOpcode {
     ZExt,
 }
 
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct InstructionValue<'ctx> {
     instruction_value: Value<'ctx>,
 }
+const _: () = assert_niche::<InstructionValue>();
 
 impl<'ctx> InstructionValue<'ctx> {
     /// Get a value from an [LLVMValueRef].
@@ -1154,13 +1158,13 @@ impl<'ctx> InstructionValue<'ctx> {
 
     /// Determines whether or not this `Instruction` has any associated metadata.
     pub fn has_metadata(self) -> bool {
-        unsafe { LLVMHasMetadata(self.instruction_value.value) == 1 }
+        unsafe { LLVMHasMetadata(self.instruction_value.as_mut_ptr()) == 1 }
     }
 
     /// Gets the `MetadataValue` associated with this `Instruction` at a specific
     /// `kind_id`.
     pub fn get_metadata(self, kind_id: u32) -> Option<MetadataValue<'ctx>> {
-        let metadata_value = unsafe { LLVMGetMetadata(self.instruction_value.value, kind_id) };
+        let metadata_value = unsafe { LLVMGetMetadata(self.instruction_value.as_mut_ptr(), kind_id) };
 
         if metadata_value.is_null() {
             return None;
@@ -1177,7 +1181,7 @@ impl<'ctx> InstructionValue<'ctx> {
         }
 
         unsafe {
-            LLVMSetMetadata(self.instruction_value.value, kind_id, metadata.as_value_ref());
+            LLVMSetMetadata(self.instruction_value.as_mut_ptr(), kind_id, metadata.as_value_ref());
         }
 
         Ok(())
@@ -1187,20 +1191,16 @@ impl<'ctx> InstructionValue<'ctx> {
     pub fn get_debug_location(self) -> Option<DILocation<'ctx>> {
         // https://github.com/llvm/llvm-project/blob/e83cc896e7c2378914a391f942c188d454b517d2/llvm/include/llvm/IR/Instruction.h#L513
         let metadata_ref = unsafe { llvm_sys::debuginfo::LLVMInstructionGetDebugLoc(self.as_value_ref()) };
-        if metadata_ref.is_null() {
-            None
-        } else {
-            Some(DILocation {
-                metadata_ref,
-                _marker: std::marker::PhantomData,
-            })
-        }
+        Some(DILocation {
+            metadata_ref: NonNull::new(metadata_ref)?,
+            _marker: std::marker::PhantomData,
+        })
     }
 
     /// Set the debug location for this instruction.
     pub fn set_debug_location(self, location: Option<DILocation<'_>>) {
         // https://github.com/llvm/llvm-project/blob/e83cc896e7c2378914a391f942c188d454b517d2/llvm/include/llvm/IR/Instruction.h#L510
-        let metadata_ref = location.map_or(std::ptr::null_mut(), |loc| loc.metadata_ref);
+        let metadata_ref = location.map_or(std::ptr::null_mut(), |loc| loc.as_mut_ptr());
         unsafe {
             llvm_sys::debuginfo::LLVMInstructionSetDebugLoc(self.as_value_ref(), metadata_ref);
         }
@@ -1209,7 +1209,7 @@ impl<'ctx> InstructionValue<'ctx> {
 
 unsafe impl AsValueRef for InstructionValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
-        self.instruction_value.value
+        self.instruction_value.as_mut_ptr()
     }
 }
 
@@ -1226,6 +1226,7 @@ pub struct OperandIter<'ctx> {
     i: u32,
     count: u32,
 }
+const _: () = assert_niche::<OperandIter>();
 
 impl<'ctx> Iterator for OperandIter<'ctx> {
     type Item = Option<Operand<'ctx>>;
@@ -1248,6 +1249,7 @@ pub struct OperandUseIter<'ctx> {
     i: u32,
     count: u32,
 }
+const _: () = assert_niche::<OperandUseIter>();
 
 impl<'ctx> Iterator for OperandUseIter<'ctx> {
     type Item = Option<BasicValueUse<'ctx>>;

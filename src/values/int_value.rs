@@ -26,6 +26,7 @@ use std::convert::TryFrom;
 use std::ffi::CStr;
 use std::fmt::{self, Display};
 
+use crate::support::assert_niche;
 #[llvm_versions(..=17)]
 use crate::types::FloatType;
 use crate::types::{AsTypeRef, IntType, PointerType};
@@ -41,10 +42,12 @@ use crate::IntPredicate;
 
 use super::AnyValue;
 
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct IntValue<'ctx> {
     int_value: Value<'ctx>,
 }
+const _: () = assert_niche::<IntValue>();
 
 impl<'ctx> IntValue<'ctx> {
     /// Get a value from an [LLVMValueRef].
@@ -409,7 +412,7 @@ impl<'ctx> IntValue<'ctx> {
 
 unsafe impl AsValueRef for IntValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
-        self.int_value.value
+        self.int_value.as_mut_ptr()
     }
 }
 

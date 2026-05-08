@@ -1,7 +1,7 @@
 use llvm_sys::prelude::LLVMTypeRef;
 
 use crate::context::ContextRef;
-use crate::support::LLVMString;
+use crate::support::{LLVMString, assert_niche};
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::traits::AsTypeRef;
 use crate::types::{FunctionType, Type};
@@ -9,10 +9,12 @@ use crate::types::{FunctionType, Type};
 use std::fmt::{self, Display};
 
 /// A `MetadataType` is the type of a metadata.
+#[repr(transparent)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct MetadataType<'ctx> {
     metadata_type: Type<'ctx>,
 }
+const _: () = assert_niche::<MetadataType>();
 
 impl<'ctx> MetadataType<'ctx> {
     /// Create `MetadataType` from [`LLVMTypeRef`]
@@ -68,7 +70,7 @@ impl<'ctx> MetadataType<'ctx> {
 
 unsafe impl AsTypeRef for MetadataType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.metadata_type.ty
+        self.metadata_type.as_mut_ptr()
     }
 }
 

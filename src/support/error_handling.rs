@@ -1,10 +1,14 @@
 //! This module contains some supplemental functions for dealing with errors.
 
+use std::ptr::NonNull;
+
 use libc::c_void;
-use llvm_sys::LLVMDiagnosticSeverity;
 use llvm_sys::core::{LLVMGetDiagInfoDescription, LLVMGetDiagInfoSeverity};
 use llvm_sys::error_handling::{LLVMInstallFatalErrorHandler, LLVMResetFatalErrorHandler};
 use llvm_sys::prelude::LLVMDiagnosticInfoRef;
+use llvm_sys::{LLVMDiagnosticInfo, LLVMDiagnosticSeverity};
+
+use crate::support::assert_niche;
 
 // REVIEW: Maybe it's possible to have a safe wrapper? If we can
 // wrap the provided function input ptr into a &CStr somehow
@@ -28,17 +32,26 @@ pub fn reset_fatal_error_handler() {
     unsafe { LLVMResetFatalErrorHandler() }
 }
 
+#[repr(transparent)]
 pub(crate) struct DiagnosticInfo {
-    diagnostic_info: LLVMDiagnosticInfoRef,
+    diagnostic_info: NonNull<LLVMDiagnosticInfo>,
 }
+const _: () = assert_niche::<DiagnosticInfo>();
 
 impl DiagnosticInfo {
     pub unsafe fn new(diagnostic_info: LLVMDiagnosticInfoRef) -> Self {
-        DiagnosticInfo { diagnostic_info }
+        debug_assert!(!diagnostic_info.is_null(), "diagnostic_info must be non-null.");
+        DiagnosticInfo {
+            diagnostic_info: unsafe { NonNull::new_unchecked(diagnostic_info) },
+        }
+    }
+
+    pub fn as_mut_ptr(&self) -> LLVMDiagnosticInfoRef {
+        self.diagnostic_info.as_ptr()
     }
 
     pub(crate) fn get_description(&self) -> *mut ::libc::c_char {
-        unsafe { LLVMGetDiagInfoDescription(self.diagnostic_info) }
+        unsafe { LLVMGetDiagInfoDescription(self.as_mut_ptr()) }
     }
 
     pub(crate) fn severity_is_error(&self) -> bool {
@@ -46,7 +59,7 @@ impl DiagnosticInfo {
     }
 
     fn severity(&self) -> LLVMDiagnosticSeverity {
-        unsafe { LLVMGetDiagInfoSeverity(self.diagnostic_info) }
+        unsafe { LLVMGetDiagInfoSeverity(self.as_mut_ptr()) }
     }
 }
 

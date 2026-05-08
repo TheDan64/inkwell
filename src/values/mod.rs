@@ -59,7 +59,7 @@ pub use crate::values::instruction_value::FastMathFlags;
 #[llvm_versions(18..)]
 pub use crate::values::operand_bundle::OperandBundle;
 
-use crate::support::{LLVMString, to_c_str};
+use crate::support::{LLVMString, assert_niche, to_c_str};
 pub use crate::values::array_value::ArrayValue;
 pub use crate::values::basic_value_use::{BasicValueUse, Operand};
 pub use crate::values::call_site_value::{CallSiteValue, ValueKind};
@@ -90,6 +90,7 @@ pub use crate::values::vec_value::VectorValue;
 #[llvm_versions(18..)]
 pub use llvm_sys::LLVMTailCallKind;
 
+use llvm_sys::LLVMValue;
 use llvm_sys::core::{
     LLVMDumpValue, LLVMGetFirstUse, LLVMGetSection, LLVMGetValueName2, LLVMIsAInstruction, LLVMIsConstant, LLVMIsNull,
     LLVMIsUndef, LLVMPrintTypeToString, LLVMPrintValueToString, LLVMReplaceAllUsesWith, LLVMSetSection,
@@ -100,12 +101,15 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use std::ffi::CStr;
 use std::fmt;
 use std::marker::PhantomData;
+use std::ptr::NonNull;
 
+#[repr(transparent)]
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]
 struct Value<'ctx> {
-    value: LLVMValueRef,
+    value: NonNull<LLVMValue>,
     _marker: PhantomData<&'ctx ()>,
 }
+const _: () = assert_niche::<Value>();
 
 impl<'ctx> Value<'ctx> {
     pub(crate) unsafe fn new(value: LLVMValueRef) -> Self {
@@ -115,13 +119,17 @@ impl<'ctx> Value<'ctx> {
         );
 
         Value {
-            value,
+            value: unsafe { NonNull::new_unchecked(value) },
             _marker: PhantomData,
         }
     }
 
+    pub fn as_mut_ptr(&self) -> LLVMValueRef {
+        self.value.as_ptr()
+    }
+
     fn is_instruction(self) -> bool {
-        unsafe { !LLVMIsAInstruction(self.value).is_null() }
+        unsafe { !LLVMIsAInstruction(self.as_mut_ptr()).is_null() }
     }
 
     fn as_instruction(self) -> Option<InstructionValue<'ctx>> {
@@ -129,15 +137,15 @@ impl<'ctx> Value<'ctx> {
             return None;
         }
 
-        unsafe { Some(InstructionValue::new(self.value)) }
+        unsafe { Some(InstructionValue::new(self.as_mut_ptr())) }
     }
 
     fn is_null(self) -> bool {
-        unsafe { LLVMIsNull(self.value) == 1 }
+        unsafe { LLVMIsNull(self.as_mut_ptr()) == 1 }
     }
 
     fn is_const(self) -> bool {
-        unsafe { LLVMIsConstant(self.value) == 1 }
+        unsafe { LLVMIsConstant(self.as_mut_ptr()) == 1 }
     }
 
     // TODOC: According to https://stackoverflow.com/questions/21593752/llvm-how-to-pass-a-name-to-constantint
@@ -149,7 +157,7 @@ impl<'ctx> Value<'ctx> {
     fn set_name(self, name: &str) {
         let c_string = to_c_str(name);
 
-        unsafe { LLVMSetValueName2(self.value, c_string.as_ptr(), c_string.to_bytes().len()) }
+        unsafe { LLVMSetValueName2(self.as_mut_ptr(), c_string.as_ptr(), c_string.to_bytes().len()) }
     }
 
     // get_name should *not* return a LLVMString, because it is not an owned value AFAICT
@@ -158,39 +166,39 @@ impl<'ctx> Value<'ctx> {
         let ptr = unsafe {
             let mut len = 0;
 
-            LLVMGetValueName2(self.value, &mut len)
+            LLVMGetValueName2(self.as_mut_ptr(), &mut len)
         };
 
         unsafe { CStr::from_ptr(ptr) }
     }
 
     fn is_undef(self) -> bool {
-        unsafe { LLVMIsUndef(self.value) == 1 }
+        unsafe { LLVMIsUndef(self.as_mut_ptr()) == 1 }
     }
 
     fn get_type(self) -> LLVMTypeRef {
-        unsafe { LLVMTypeOf(self.value) }
+        unsafe { LLVMTypeOf(self.as_mut_ptr()) }
     }
 
     fn print_to_string(self) -> LLVMString {
-        unsafe { LLVMString::new(LLVMPrintValueToString(self.value)) }
+        unsafe { LLVMString::new(LLVMPrintValueToString(self.as_mut_ptr())) }
     }
 
     fn print_to_stderr(self) {
-        unsafe { LLVMDumpValue(self.value) }
+        unsafe { LLVMDumpValue(self.as_mut_ptr()) }
     }
 
     // REVIEW: I think this is memory safe, though it may result in an IR error
     // if used incorrectly, which is OK.
     fn replace_all_uses_with(self, other: LLVMValueRef) {
         // LLVM may infinite-loop when they aren't distinct, which is UB in C++.
-        if self.value != other {
-            unsafe { LLVMReplaceAllUsesWith(self.value, other) }
+        if self.as_mut_ptr() != other {
+            unsafe { LLVMReplaceAllUsesWith(self.as_mut_ptr(), other) }
         }
     }
 
     pub fn get_first_use(self) -> Option<BasicValueUse<'ctx>> {
-        let use_ = unsafe { LLVMGetFirstUse(self.value) };
+        let use_ = unsafe { LLVMGetFirstUse(self.as_mut_ptr()) };
 
         if use_.is_null() {
             return None;
@@ -201,7 +209,7 @@ impl<'ctx> Value<'ctx> {
 
     /// Gets the section of the global value
     pub fn get_section(&self) -> Option<&CStr> {
-        let ptr = unsafe { LLVMGetSection(self.value) };
+        let ptr = unsafe { LLVMGetSection(self.as_mut_ptr()) };
 
         if ptr.is_null() {
             return None;
@@ -239,7 +247,7 @@ impl<'ctx> Value<'ctx> {
 
         unsafe {
             LLVMSetSection(
-                self.value,
+                self.as_mut_ptr(),
                 // The as_ref call is important here so that we don't drop the cstr mid use
                 c_string.as_ref().map(|s| s.as_ptr()).unwrap_or(std::ptr::null()),
             )
@@ -250,7 +258,7 @@ impl<'ctx> Value<'ctx> {
 impl fmt::Debug for Value<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let llvm_value = self.print_to_string();
-        let llvm_type = unsafe { CStr::from_ptr(LLVMPrintTypeToString(LLVMTypeOf(self.value))) };
+        let llvm_type = unsafe { CStr::from_ptr(LLVMPrintTypeToString(LLVMTypeOf(self.as_mut_ptr()))) };
         let name = self.get_name();
         let is_const = self.is_const();
         let is_null = self.is_null();
@@ -258,7 +266,7 @@ impl fmt::Debug for Value<'_> {
 
         f.debug_struct("Value")
             .field("name", &name)
-            .field("address", &self.value)
+            .field("address", &self.as_mut_ptr())
             .field("is_const", &is_const)
             .field("is_null", &is_null)
             .field("is_undef", &is_undef)

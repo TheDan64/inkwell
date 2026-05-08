@@ -1,5 +1,7 @@
 use llvm_sys::prelude::LLVMBool;
 
+use crate::support::assert_niche;
+
 /// A trait for user-defined memory management in MCJIT.
 ///
 /// Implementors can override how LLVM's MCJIT engine allocates memory for code
@@ -86,10 +88,12 @@ pub trait McjitMemoryManager: std::fmt::Debug {
 /// Holds a boxed `McjitMemoryManager` and passes it to LLVM as an opaque pointer.
 ///
 /// LLVM calls into the adapter using the extern "C" function pointers defined below.
+#[repr(transparent)]
 #[derive(Debug)]
 pub struct MemoryManagerAdapter {
     pub memory_manager: Box<dyn McjitMemoryManager>,
 }
+const _: () = assert_niche::<MemoryManagerAdapter>();
 
 // ------ Extern "C" Adapters ------
 

@@ -9,15 +9,17 @@ use std::mem::forget;
 
 use crate::AddressSpace;
 use crate::context::ContextRef;
-use crate::support::LLVMString;
+use crate::support::{LLVMString, assert_niche};
 use crate::types::traits::AsTypeRef;
 use crate::types::{AnyType, BasicMetadataTypeEnum, BasicTypeEnum, PointerType, Type};
 
 /// A `FunctionType` is the type of a function variable.
+#[repr(transparent)]
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub struct FunctionType<'ctx> {
     fn_type: Type<'ctx>,
 }
+const _: () = assert_niche::<FunctionType>();
 
 impl<'ctx> FunctionType<'ctx> {
     /// Create `FunctionType` from [`LLVMTypeRef`]
@@ -230,7 +232,7 @@ impl fmt::Debug for FunctionType<'_> {
 
 unsafe impl AsTypeRef for FunctionType<'_> {
     fn as_type_ref(&self) -> LLVMTypeRef {
-        self.fn_type.ty
+        self.fn_type.as_mut_ptr()
     }
 }
 
