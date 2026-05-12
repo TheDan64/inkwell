@@ -13,3 +13,4 @@ Cargo.lock
 # IDE project data
 /.idea/
 /.vscode/
+/.zed/
