@@ -164,7 +164,7 @@ impl<'ctx> CallableValueEnum<'ctx> {
 ///
 /// builder.build_return(Some(&ret_val)).unwrap();
 /// ```
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct CallableValue<'ctx>(CallableValueEnum<'ctx>);
 
 unsafe impl AsValueRef for CallableValue<'_> {
