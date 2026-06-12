@@ -229,7 +229,7 @@ pub(crate) fn to_c_str(s: &str) -> Cow<'_, CStr> {
     if s.is_empty() {
         return Cow::Borrowed(c"");
     }
-    
+
     match CStr::from_bytes_until_nul(s.as_bytes()) {
         Ok(c) => Cow::from(c),
         // SAFETY: No internal 0 byte since already `FromBytesUntilNulError`
