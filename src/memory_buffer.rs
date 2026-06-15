@@ -113,7 +113,7 @@ impl<'a> MemoryBuffer<'a> {
                 input.len(),
                 name_c_string.as_ptr(),
                 /* If this is `true`, LLVM will expect a null-terminator. If it is false, the null-terminator is not
-                 * necesary.
+                 * necessary.
                  * https://llvm.org/doxygen/IR_2Core_8cpp_source.html#l04679
                  * ```
                  * LLVMMemoryBufferRef LLVMCreateMemoryBufferWithMemoryRange(
