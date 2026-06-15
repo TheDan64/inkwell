@@ -154,7 +154,7 @@ impl<'a> MemoryBuffer<'a> {
         }
     }
 
-    /// Gets the byte size of this `MemoryBuffer`, counting the trailing nul byte.
+    /// Gets the byte size of this `MemoryBuffer`.
     pub fn get_size(&self) -> usize {
         unsafe { LLVMGetBufferSize(self.as_mut_ptr()) }
     }
