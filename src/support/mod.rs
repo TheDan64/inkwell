@@ -225,9 +225,9 @@ pub fn enable_llvm_pretty_stack_trace() {
 ///
 /// B) Finds no null byte and allocates a new C string based on the input Rust string.
 #[inline]
-pub(crate) fn to_c_str(mut s: &str) -> Cow<'_, CStr> {
+pub(crate) fn to_c_str(s: &str) -> Cow<'_, CStr> {
     if s.is_empty() {
-        s = "\0";
+        return Cow::Borrowed(c"");
     }
 
     match CStr::from_bytes_until_nul(s.as_bytes()) {
