@@ -66,25 +66,14 @@ impl MemoryBuffer<'static> {
         unsafe { Ok(Self::new(memory_buffer)) }
     }
 
-    /// Create a memory buffer copied from a byte slice with a trailing nul byte.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the input byte slice does not terminate with a nul byte.
+    /// Create a memory buffer copied from a byte slice.
     pub fn create_from_memory_range_copy(input: &[u8], name: &str) -> Self {
-        assert_eq!(
-            input[input.len() - 1],
-            b'\0',
-            "input byte slice must terminate with a nul byte"
-        );
-
         let name_c_string = to_c_str(name);
 
         let memory_buffer = unsafe {
             LLVMCreateMemoryBufferWithMemoryRangeCopy(
                 input.as_ptr() as *const libc::c_char,
-                // decremented since technically the nul byte is one past the end of the input.
-                input.len() - 1,
+                input.len(),
                 name_c_string.as_ptr(),
             )
         };
@@ -112,7 +101,7 @@ impl<'a> MemoryBuffer<'a> {
         let name_c_string = to_c_str(name);
 
         let memory_buffer = unsafe {
-            /* LLVMCreateMemoryBufferWithMemoryRange does not expect a nul-terminated string.
+            /* LLVMCreateMemoryBufferWithMemoryRange does not expect a null-terminated string.
              * StringRef documentation: https://llvm.org/doxygen/StringRef_8h_source.html#l00132
              * ```
              * Get a pointer to the start of the string (which may not be null
@@ -123,7 +112,7 @@ impl<'a> MemoryBuffer<'a> {
                 input.as_ptr() as *const libc::c_char,
                 input.len(),
                 name_c_string.as_ptr(),
-                /* If this is `true`, LLVM will expect a nul-terminator. If it is false, the nul-terminator is not
+                /* If this is `true`, LLVM will expect a null-terminator. If it is false, the null-terminator is not
                  * necesary.
                  * https://llvm.org/doxygen/IR_2Core_8cpp_source.html#l04679
                  * ```
@@ -132,7 +121,7 @@ impl<'a> MemoryBuffer<'a> {
                  *    size_t InputDataLength,
                  *    const char *BufferName,
                  *    LLVMBool RequiresNullTerminator) {
-                 * 
+                 *
                  * return wrap(MemoryBuffer::getMemBuffer(StringRef(InputData, InputDataLength),
                  *                                        StringRef(BufferName),
                  *                                        RequiresNullTerminator).release());
@@ -141,10 +130,10 @@ impl<'a> MemoryBuffer<'a> {
                  * `MemoryBuffer::getMemBuffer` documentation.
                  * https://llvm.org/doxygen/classllvm_1_1MemoryBuffer.html#a0f68098734d6d3b451aacf5b38a67131
                  * ```
-                 * Note that InputData must be null terminated if RequiresNullTerminator is true. 
+                 * Note that InputData must be null terminated if RequiresNullTerminator is true.
                  * ```
                  */
-                false as c_int,
+                false as libc::c_int,
             )
         };
 
@@ -167,8 +156,7 @@ impl<'a> MemoryBuffer<'a> {
 
     /// Gets the byte size of this `MemoryBuffer`, counting the trailing nul byte.
     pub fn get_size(&self) -> usize {
-        // buffer size does not include the trailing nul byte, hence incremented.
-        unsafe { LLVMGetBufferSize(self.as_mut_ptr()) + 1 }
+        unsafe { LLVMGetBufferSize(self.as_mut_ptr()) }
     }
 
     /// Convert this [`MemoryBuffer`] and optional [`Context`] into a [`BinaryFile`].

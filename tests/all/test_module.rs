@@ -147,10 +147,10 @@ fn test_write_and_load_memory_buffer() {
 #[test]
 fn test_garbage_ir_fails_create_module_from_ir() {
     let context = Context::create();
-    let memory_buffer = MemoryBuffer::create_from_memory_range(b"garbage ir data\0", "my_ir");
+    let memory_buffer = MemoryBuffer::create_from_memory_range(b"garbage ir data", "my_ir");
 
-    assert_eq!(memory_buffer.get_size(), 16);
-    assert_eq!(memory_buffer.as_slice(), b"garbage ir data\0");
+    assert_eq!(memory_buffer.get_size(), 15);
+    assert_eq!(memory_buffer.as_slice(), b"garbage ir data");
     assert!(context.create_module_from_ir(memory_buffer).is_err());
 }
 
