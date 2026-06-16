@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["FlagBehavior","Linkage"],"struct":["FunctionIterator","GlobalIterator","Module"]};
