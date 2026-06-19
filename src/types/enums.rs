@@ -761,11 +761,10 @@ impl Display for BasicMetadataTypeEnum<'_> {
 }
 
 #[derive(thiserror::Error, Debug)]
-#[error("The variant `AnyTypeEnum::{}` cannot be used with `{}()`!", self.variant, self.function)]
-pub struct InvalidVariant {
-    // TODO: Shorten lifetime?
-    variant: &'static str,
-    function: &'static str,
+#[error("This variant of `AnyTypeEnum` cannot be used with `{self:?}()`!")]
+pub enum InvalidVariant {
+    FnType,
+    ArrayType,
 }
 
 impl<'ctx> AnyTypeEnum<'ctx> {
@@ -823,10 +822,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
             AnyTypeEnum::VectorType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
             AnyTypeEnum::ScalableVectorType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
             AnyTypeEnum::VoidType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
-            AnyTypeEnum::FunctionType(_) => Err(InvalidVariant {
-                variant: "FunctionType",
-                function: "fn_type",
-            }),
+            AnyTypeEnum::FunctionType(_) => Err(InvalidVariant::FnType),
         }
     }
 
@@ -879,14 +875,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
             AnyTypeEnum::StructType(inner) => Ok(inner.array_type(size)),
             AnyTypeEnum::VectorType(inner) => Ok(inner.array_type(size)),
             AnyTypeEnum::ScalableVectorType(inner) => Ok(inner.array_type(size)),
-            AnyTypeEnum::VoidType(_) => Err(InvalidVariant {
-                variant: "VoidType",
-                function: "array_type",
-            }),
-            AnyTypeEnum::FunctionType(_) => Err(InvalidVariant {
-                variant: "FunctionType",
-                function: "array_type",
-            }),
+            AnyTypeEnum::VoidType(_) | AnyTypeEnum::FunctionType(_) => Err(InvalidVariant::ArrayType),
         }
     }
 }
