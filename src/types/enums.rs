@@ -759,3 +759,126 @@ impl Display for BasicMetadataTypeEnum<'_> {
         write!(f, "{}", self.print_to_string())
     }
 }
+
+#[derive(thiserror::Error, Debug, PartialEq, Eq)]
+pub enum InvalidVariantError<'ctx> {
+    #[error("The variant `AnyTypeEnum::{0:?}` cannot be used with `fn_type`")]
+    FnType(AnyTypeEnum<'ctx>),
+    #[error("The variant `AnyTypeEnum::{0:?}` cannot be used with `array_type`")]
+    ArrayType(AnyTypeEnum<'ctx>),
+}
+
+impl<'ctx> AnyTypeEnum<'ctx> {
+    /// Creates a [`FunctionType`] with [`Self`] for its return type.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`InvalidVariantError`] if [`Self`] cannot be used to create a function type.
+    ///
+    /// In this case, the only variant which cannot be used to create a function type is [`Self::FunctionType`].
+    ///
+    /// # Examples
+    ///
+    /// Using a valid variant:
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::types::AnyTypeEnum;
+    ///
+    /// let context = Context::create();
+    /// let i8_type = context.i8_type();
+    /// let wrapped_type = AnyTypeEnum::from(i8_type);
+    /// let result = wrapped_type.fn_type(&[], false);
+    ///
+    /// // `AnyTypeEnum::IntType` can be used to create a function type.
+    /// assert!(result.is_ok());
+    /// let fn_type = result.unwrap();
+    /// ```
+    ///
+    /// Using an invalid variant:
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::types::AnyTypeEnum;
+    ///
+    /// let context = Context::create();
+    /// let fn_type = context.i8_type().fn_type(&[], false);
+    /// let wrapped_type = AnyTypeEnum::from(fn_type);
+    /// let result = wrapped_type.fn_type(&[], false);
+    ///
+    /// // `AnyTypeEnum::FunctionType` cannot be used to create a function type.
+    /// assert!(result.is_err());
+    /// ```
+    pub fn fn_type(
+        self,
+        param_types: &[BasicMetadataTypeEnum<'ctx>],
+        is_var_args: bool,
+    ) -> Result<FunctionType<'ctx>, InvalidVariantError<'ctx>> {
+        match self {
+            AnyTypeEnum::ArrayType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
+            AnyTypeEnum::FloatType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
+            AnyTypeEnum::IntType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
+            AnyTypeEnum::PointerType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
+            AnyTypeEnum::StructType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
+            AnyTypeEnum::VectorType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
+            AnyTypeEnum::ScalableVectorType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
+            AnyTypeEnum::VoidType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
+            AnyTypeEnum::FunctionType(_) => Err(InvalidVariantError::<'ctx>::FnType(self)),
+        }
+    }
+
+    /// Creates an [`ArrayType`] with [`Self`] for its element type.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`InvalidVariantError`] if [`Self`] cannot be used to create an array type.
+    ///
+    /// In this case, the only variants which cannot be used to create an array type are [`Self::FunctionType`] and [`Self::VoidType`].
+    ///
+    /// # Examples
+    ///
+    /// Using a valid variant:
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::types::AnyTypeEnum;
+    ///
+    /// let context = Context::create();
+    /// let i8_type = context.i8_type();
+    /// let wrapped_type = AnyTypeEnum::from(i8_type);
+    /// let result = wrapped_type.array_type(5);
+    ///
+    /// // `AnyTypeEnum::IntType` can be used to create an array type.
+    /// assert!(result.is_ok());
+    /// let array_type = result.unwrap();
+    /// ```
+    ///
+    /// Using an invalid variant:
+    ///
+    /// ```no_run
+    /// use inkwell::context::Context;
+    /// use inkwell::types::AnyTypeEnum;
+    ///
+    /// let context = Context::create();
+    /// let void_type = context.void_type();
+    /// let wrapped_type = AnyTypeEnum::from(void_type);
+    /// let result = wrapped_type.array_type(5);
+    ///
+    /// // `AnyTypeEnum::VoidType` cannot be used to create an array type.
+    /// assert!(result.is_err());
+    /// ```
+    pub fn array_type(self, size: u32) -> Result<ArrayType<'ctx>, InvalidVariantError<'ctx>> {
+        match self {
+            AnyTypeEnum::ArrayType(inner) => Ok(inner.array_type(size)),
+            AnyTypeEnum::FloatType(inner) => Ok(inner.array_type(size)),
+            AnyTypeEnum::IntType(inner) => Ok(inner.array_type(size)),
+            AnyTypeEnum::PointerType(inner) => Ok(inner.array_type(size)),
+            AnyTypeEnum::StructType(inner) => Ok(inner.array_type(size)),
+            AnyTypeEnum::VectorType(inner) => Ok(inner.array_type(size)),
+            AnyTypeEnum::ScalableVectorType(inner) => Ok(inner.array_type(size)),
+            AnyTypeEnum::VoidType(_) | AnyTypeEnum::FunctionType(_) => {
+                Err(InvalidVariantError::<'ctx>::ArrayType(self))
+            },
+        }
+    }
+}

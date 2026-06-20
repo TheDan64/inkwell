@@ -25,7 +25,7 @@ mod vec_type;
 mod void_type;
 
 pub use crate::types::array_type::ArrayType;
-pub use crate::types::enums::{AnyTypeEnum, BasicMetadataTypeEnum, BasicTypeEnum};
+pub use crate::types::enums::{AnyTypeEnum, BasicMetadataTypeEnum, BasicTypeEnum, InvalidVariantError};
 pub use crate::types::float_type::FloatType;
 pub use crate::types::fn_type::FunctionType;
 pub use crate::types::int_type::{IntType, StringRadix};
