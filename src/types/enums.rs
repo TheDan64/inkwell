@@ -2,6 +2,7 @@ use llvm_sys::LLVMTypeKind;
 use llvm_sys::core::LLVMGetTypeKind;
 use llvm_sys::prelude::LLVMTypeRef;
 
+use crate::Error;
 use crate::support::LLVMString;
 use crate::types::MetadataType;
 use crate::types::traits::AsTypeRef;
@@ -760,11 +761,12 @@ impl Display for BasicMetadataTypeEnum<'_> {
     }
 }
 
-#[derive(thiserror::Error, Debug)]
-#[error("This variant of `AnyTypeEnum` cannot be used with `{self:?}()`!")]
-pub enum InvalidVariant {
-    FnType,
-    ArrayType,
+#[derive(thiserror::Error, Debug, PartialEq, Eq)]
+pub enum InvalidVariantError<'ctx> {
+    #[error("The variant `AnyTypeEnum::{0:?}` cannot be used with `fn_type`")]
+    FnType(AnyTypeEnum<'ctx>),
+    #[error("The variant `AnyTypeEnum::{0:?}` cannot be used with `array_type`")]
+    ArrayType(AnyTypeEnum<'ctx>),
 }
 
 impl<'ctx> AnyTypeEnum<'ctx> {
@@ -772,7 +774,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
     ///
     /// # Errors
     ///
-    /// Returns [`InvalidVariant`] if [`Self`] cannot be used to create a function type.
+    /// Returns [`InvalidVariantError`] if [`Self`] cannot be used to create a function type.
     ///
     /// In this case, the only variant which cannot be used to create a function type is [`Self::FunctionType`].
     ///
@@ -812,7 +814,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         self,
         param_types: &[BasicMetadataTypeEnum<'ctx>],
         is_var_args: bool,
-    ) -> Result<FunctionType<'ctx>, InvalidVariant> {
+    ) -> Result<FunctionType<'ctx>, Error> {
         match self {
             AnyTypeEnum::ArrayType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
             AnyTypeEnum::FloatType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
@@ -822,7 +824,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
             AnyTypeEnum::VectorType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
             AnyTypeEnum::ScalableVectorType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
             AnyTypeEnum::VoidType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
-            AnyTypeEnum::FunctionType(_) => Err(InvalidVariant::FnType),
+            AnyTypeEnum::FunctionType(_) => Err(Error::from(InvalidVariantError::<'ctx>::FnType(self))),
         }
     }
 
@@ -830,7 +832,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
     ///
     /// # Errors
     ///
-    /// Returns [`InvalidVariant`] if [`Self`] cannot be used to create an array type.
+    /// Returns [`InvalidVariantError`] if [`Self`] cannot be used to create an array type.
     ///
     /// In this case, the only variants which cannot be used to create an array type are [`Self::FunctionType`] and [`Self::VoidType`].
     ///
@@ -866,7 +868,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
     /// // `AnyTypeEnum::VoidType` cannot be used to create an array type.
     /// assert!(result.is_err());
     /// ```
-    pub fn array_type(self, size: u32) -> Result<ArrayType<'ctx>, InvalidVariant> {
+    pub fn array_type(self, size: u32) -> Result<ArrayType<'ctx>, Error> {
         match self {
             AnyTypeEnum::ArrayType(inner) => Ok(inner.array_type(size)),
             AnyTypeEnum::FloatType(inner) => Ok(inner.array_type(size)),
@@ -875,7 +877,9 @@ impl<'ctx> AnyTypeEnum<'ctx> {
             AnyTypeEnum::StructType(inner) => Ok(inner.array_type(size)),
             AnyTypeEnum::VectorType(inner) => Ok(inner.array_type(size)),
             AnyTypeEnum::ScalableVectorType(inner) => Ok(inner.array_type(size)),
-            AnyTypeEnum::VoidType(_) | AnyTypeEnum::FunctionType(_) => Err(InvalidVariant::ArrayType),
+            AnyTypeEnum::VoidType(_) | AnyTypeEnum::FunctionType(_) => {
+                Err(Error::from(InvalidVariantError::<'ctx>::ArrayType(self)))
+            },
         }
     }
 }
