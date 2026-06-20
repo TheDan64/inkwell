@@ -27,7 +27,7 @@ pub enum Error {
     EmptyNameError,
     #[error("Metadata is expected to be a node.")]
     GlobalMetadataError,
-    // FIXME: This may allow for accidental over-extending of lifetimes.  Run tests.
-    #[error("Invalid variant: {0}")]
-    InvalidVariantError(#[from] crate::types::InvalidVariantError<'static>),
+    // FIXME: Lifetimes are causing problems
+    // #[error("Invalid variant: {0}")]
+    // InvalidVariantError(#[from] crate::types::InvalidVariantError<'_>),
 }

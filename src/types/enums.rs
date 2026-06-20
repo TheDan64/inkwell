@@ -2,7 +2,6 @@ use llvm_sys::LLVMTypeKind;
 use llvm_sys::core::LLVMGetTypeKind;
 use llvm_sys::prelude::LLVMTypeRef;
 
-use crate::Error;
 use crate::support::LLVMString;
 use crate::types::MetadataType;
 use crate::types::traits::AsTypeRef;
@@ -814,7 +813,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
         self,
         param_types: &[BasicMetadataTypeEnum<'ctx>],
         is_var_args: bool,
-    ) -> Result<FunctionType<'ctx>, Error> {
+    ) -> Result<FunctionType<'ctx>, InvalidVariantError<'ctx>> {
         match self {
             AnyTypeEnum::ArrayType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
             AnyTypeEnum::FloatType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
@@ -824,7 +823,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
             AnyTypeEnum::VectorType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
             AnyTypeEnum::ScalableVectorType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
             AnyTypeEnum::VoidType(inner) => Ok(inner.fn_type(param_types, is_var_args)),
-            AnyTypeEnum::FunctionType(_) => Err(Error::from(InvalidVariantError::<'ctx>::FnType(self))),
+            AnyTypeEnum::FunctionType(_) => Err(InvalidVariantError::<'ctx>::FnType(self)),
         }
     }
 
@@ -868,7 +867,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
     /// // `AnyTypeEnum::VoidType` cannot be used to create an array type.
     /// assert!(result.is_err());
     /// ```
-    pub fn array_type(self, size: u32) -> Result<ArrayType<'ctx>, Error> {
+    pub fn array_type(self, size: u32) -> Result<ArrayType<'ctx>, InvalidVariantError<'ctx>> {
         match self {
             AnyTypeEnum::ArrayType(inner) => Ok(inner.array_type(size)),
             AnyTypeEnum::FloatType(inner) => Ok(inner.array_type(size)),
@@ -878,7 +877,7 @@ impl<'ctx> AnyTypeEnum<'ctx> {
             AnyTypeEnum::VectorType(inner) => Ok(inner.array_type(size)),
             AnyTypeEnum::ScalableVectorType(inner) => Ok(inner.array_type(size)),
             AnyTypeEnum::VoidType(_) | AnyTypeEnum::FunctionType(_) => {
-                Err(Error::from(InvalidVariantError::<'ctx>::ArrayType(self)))
+                Err(InvalidVariantError::<'ctx>::ArrayType(self))
             },
         }
     }
