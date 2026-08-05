@@ -45,8 +45,8 @@ jobs:
     steps:
     - name: Checkout Repo
       uses: actions/checkout@v4
-    - name: Install Dependencies
-      run: sudo apt update && sudo apt install -y libtinfo5
+    #- name: Install Dependencies
+    #  run: sudo apt update && sudo apt install -y libtinfo5
     - name: Install LLVM and Clang (LLVM >= 19.1)
       if: ${{ matrix.llvm-version[0] >= 19 }}
       run: |
