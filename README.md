@@ -14,7 +14,7 @@ Inkwell aims to help you pen your own programming languages by safely wrapping l
 ## Requirements
 
 * Rust 1.85+
-* One of LLVM 11-22
+* One of LLVM 12-22
 
 ## Usage
 
@@ -26,7 +26,7 @@ inkwell = { version = "0.10.0", features = ["llvm22-1"] }
 ```
 
 Supported versions:
-LLVM 11-22 mapping to a cargo feature flag `llvmM-0` where `M` corresponds to the LLVM major version.
+LLVM 12-22 mapping to a cargo feature flag `llvmM-0` where `M` corresponds to the LLVM major version.
 
 Please be aware that we may make breaking changes on master from time to time since we are
 pre-v1.0.0, in compliance with semver. Please prefer a crates.io release whenever possible!
