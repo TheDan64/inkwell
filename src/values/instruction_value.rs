@@ -94,11 +94,11 @@ pub enum InstructionOpcode {
     AtomicCmpXchg,
     AtomicRMW,
     BitCast,
-    #[cfg(not(feature = "llvm23-1"))]
+    #[llvm_versions(..23)]
     Br,
-    #[cfg(feature = "llvm23-1")]
+    #[llvm_versions(23..)]
     UncondBr,
-    #[cfg(feature = "llvm23-1")]
+    #[llvm_versions(23..)]
     CondBr,
     Call,
     CallBr,
@@ -136,7 +136,7 @@ pub enum InstructionOpcode {
     Or,
     #[llvm_variant(LLVMPHI)]
     Phi,
-    #[cfg(any(feature = "llvm22-1", feature = "llvm23-1"))]
+    #[llvm_versions(22..)]
     PtrToAddr,
     PtrToInt,
     Resume,
