@@ -42,14 +42,12 @@ jobs:
         - [ "21.1", "21-1", "21" ]
         - [ "22.1", "22-1", "22" ]
         include:
-        - os: ubuntu-latest
+        - os: ubuntu-22.04
     steps:
     - name: Checkout Repo
       uses: actions/checkout@v4
     - name: Install libtinfo5
-      run: |
-        wget https://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb
-        sudo apt install ./libtinfo5_6.3-2ubuntu0.1_amd64.deb
+      run: sudo apt update && sudo apt install -y libtinfo5
     - name: Install LLVM and Clang (LLVM >= 19.1)
       if: ${{ matrix.llvm-version[0] >= 19 }}
       run: |
