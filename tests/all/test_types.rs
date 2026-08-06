@@ -394,22 +394,28 @@ fn test_const_zero() {
     assert_eq!(i32_zero.print_to_string().to_str(), Ok("i32 0"));
     assert_eq!(i64_zero.print_to_string().to_str(), Ok("i64 0"));
     assert_eq!(i128_zero.print_to_string().to_str(), Ok("i128 0"));
-    assert_eq!(f16_zero.print_to_string().to_str(), Ok("half 0xH0000"));
-    assert_eq!(bf16_zero.print_to_string().to_str(), Ok("bfloat 0xR0000"));
+    assert!(matches!(
+        f16_zero.print_to_string().to_str(),
+        Ok("half 0xH0000" | "half 0.000000e+00")
+    ));
+    assert!(matches!(
+        bf16_zero.print_to_string().to_str(),
+        Ok("bfloat 0xR0000" | "bfloat 0.000000e+00")
+    ));
     assert_eq!(f32_zero.print_to_string().to_str(), Ok("float 0.000000e+00"));
     assert_eq!(f64_zero.print_to_string().to_str(), Ok("double 0.000000e+00"));
-    assert_eq!(
+    assert!(matches!(
         f80_zero.print_to_string().to_str(),
-        Ok("x86_fp80 0xK00000000000000000000")
-    );
-    assert_eq!(
+        Ok("x86_fp80 0xK00000000000000000000" | "x86_fp80 0.000000e+00")
+    ));
+    assert!(matches!(
         f128_zero.print_to_string().to_str(),
-        Ok("fp128 0xL00000000000000000000000000000000")
-    );
-    assert_eq!(
+        Ok("fp128 0xL00000000000000000000000000000000" | "fp128 0.000000e+00")
+    ));
+    assert!(matches!(
         ppc_f128_zero.print_to_string().to_str(),
-        Ok("ppc_fp128 0xM00000000000000000000000000000000")
-    );
+        Ok("ppc_fp128 0xM00000000000000000000000000000000" | "ppc_fp128 0.000000e+00")
+    ));
     assert_eq!(
         struct_zero.print_to_string().to_str(),
         Ok("{ i8, fp128 } zeroinitializer")

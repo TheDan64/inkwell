@@ -21,7 +21,8 @@ mod test_object_file;
     feature = "llvm19-1",
     feature = "llvm20-1",
     feature = "llvm21-1",
-    feature = "llvm22-1"
+    feature = "llvm22-1",
+    feature = "llvm23-1"
 )))]
 mod test_passes;
 mod test_passes_on_function;

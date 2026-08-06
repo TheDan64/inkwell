@@ -79,7 +79,8 @@ fn test_call_site() {
     feature = "llvm19-1",
     feature = "llvm20-1",
     feature = "llvm21-1",
-    feature = "llvm22-1"
+    feature = "llvm22-1",
+    feature = "llvm23-1"
 ))]
 fn test_call_site_tail_call_attributes() {
     let context = Context::create();
@@ -669,12 +670,12 @@ fn test_metadata() {
     // let i64_type = context.i64_type();
     // let i128_type = context.i128_type();
     // let f16_type = context.f16_type();
-    // #[cfg(any(feature = "llvm13-0", feature = "llvm14-0", feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1", feature = "llvm22-1"))]
+    // #[cfg(any(feature = "llvm13-0", feature = "llvm14-0", feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1", feature = "llvm22-1", feature = "llvm23-1"))]
     // let bf16_type = context.bf16_type();
     let f32_type = context.f32_type();
     // let f64_type = context.f64_type();
     // let f128_type = context.f128_type();
-    // #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1", feature = "llvm22-1"))]
+    // #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1", feature = "llvm22-1", feature = "llvm23-1"))]
     // let ptr_type = context.ptr_type(AddressSpace::default());
     // let array_type = f64_type.array_type(42);
     // let ppc_f128_type = context.ppc_f128_type();
@@ -687,15 +688,15 @@ fn test_metadata() {
     // let i64_val = i64_type.const_int(0, false);
     // let i128_val = i128_type.const_int(0, false);
     // let f16_val = f16_type.const_float(0.0);
-    // #[cfg(any(feature = "llvm13-0", feature = "llvm14-0", feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1", feature = "llvm22-1"))]
+    // #[cfg(any(feature = "llvm13-0", feature = "llvm14-0", feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1", feature = "llvm22-1", feature = "llvm23-1"))]
     // let bf16_val = bf16_type.const_float(0.0);
     let f32_val = f32_type.const_float(0.0);
     // let f64_val = f64_type.const_float(0.0);
     // let f128_val = f128_type.const_float(0.0);
     // let ppc_f128_val = ppc_f128_type.const_float(0.0);
-    // #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1", feature = "llvm22-1")))]
+    // #[cfg(not(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1", feature = "llvm22-1", feature = "llvm23-1")))]
     // let ptr_val = bool_type.ptr_type(AddressSpace::default()).const_null();
-    // #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1", feature = "llvm22-1"))]
+    // #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1", feature = "llvm22-1", feature = "llvm23-1"))]
     // let ptr_val = ptr_type.const_null();
     // let array_val = f64_type.const_array(&[f64_val]);
     // let struct_val = context.const_struct(&[i8_val.into(), f128_val.into()], false);
@@ -752,7 +753,7 @@ fn test_metadata() {
     // assert!(i64_val.has_metadata());
     // assert!(!i128_val.has_metadata());
     // assert!(!f16_val.has_metadata());
-    // #[cfg(any(feature = "llvm13-0", feature = "llvm14-0", feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1", feature = "llvm22-1"))]
+    // #[cfg(any(feature = "llvm13-0", feature = "llvm14-0", feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1", feature = "llvm22-1", feature = "llvm23-1"))]
     // assert!(!bf16_val.has_metadata());
     // assert!(!f32_val.has_metadata());
     // assert!(!f64_val.has_metadata());
@@ -806,7 +807,8 @@ fn test_floats() {
         feature = "llvm19-1",
         feature = "llvm20-1",
         feature = "llvm21-1",
-        feature = "llvm22-1"
+        feature = "llvm22-1",
+        feature = "llvm23-1"
     )))]
     {
         use inkwell::FloatPredicate;
@@ -849,7 +851,8 @@ fn test_floats() {
             feature = "llvm19-1",
             feature = "llvm20-1",
             feature = "llvm21-1",
-            feature = "llvm22-1"
+            feature = "llvm22-1",
+            feature = "llvm23-1"
         )))]
         {
             let neg_two = f64_two.const_neg();
@@ -1521,7 +1524,8 @@ fn test_non_fn_ptr_called() {
         feature = "llvm19-1",
         feature = "llvm20-1",
         feature = "llvm21-1",
-        feature = "llvm22-1"
+        feature = "llvm22-1",
+        feature = "llvm23-1"
     ))]
     builder
         .build_indirect_call(i8_ptr_type.fn_type(&[], false), i8_ptr_param, &[], "call")
