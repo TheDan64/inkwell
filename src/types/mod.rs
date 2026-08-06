@@ -38,17 +38,12 @@ pub use crate::types::traits::{AnyType, AsTypeRef, BasicType, FloatMathType, Int
 pub use crate::types::vec_type::VectorType;
 pub use crate::types::void_type::VoidType;
 
-#[llvm_versions(12..)]
-use llvm_sys::core::LLVMScalableVectorType;
-
-#[llvm_versions(12..)]
-use llvm_sys::core::LLVMGetPoison;
-
 #[allow(deprecated)]
 use llvm_sys::core::LLVMArrayType;
 use llvm_sys::core::{
-    LLVMAlignOf, LLVMConstNull, LLVMConstPointerNull, LLVMFunctionType, LLVMGetElementType, LLVMGetTypeContext,
-    LLVMGetTypeKind, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMSizeOf, LLVMTypeIsSized, LLVMVectorType,
+    LLVMAlignOf, LLVMConstNull, LLVMConstPointerNull, LLVMFunctionType, LLVMGetElementType, LLVMGetPoison,
+    LLVMGetTypeContext, LLVMGetTypeKind, LLVMGetUndef, LLVMPointerType, LLVMPrintTypeToString, LLVMScalableVectorType,
+    LLVMSizeOf, LLVMTypeIsSized, LLVMVectorType,
 };
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use llvm_sys::{LLVMType, LLVMTypeKind};
@@ -108,7 +103,6 @@ impl<'ctx> Type<'ctx> {
         unsafe { VectorType::new(LLVMVectorType(self.as_mut_ptr(), size)) }
     }
 
-    #[llvm_versions(12..)]
     fn scalable_vec_type(self, size: u32) -> ScalableVectorType<'ctx> {
         assert!(size != 0, "Vectors of size zero are not allowed.");
         // -- https://llvm.org/docs/LangRef.html#vector-type
@@ -161,7 +155,6 @@ impl<'ctx> Type<'ctx> {
         unsafe { LLVMGetUndef(self.as_mut_ptr()) }
     }
 
-    #[llvm_versions(12..)]
     fn get_poison(&self) -> LLVMValueRef {
         unsafe { LLVMGetPoison(self.as_mut_ptr()) }
     }

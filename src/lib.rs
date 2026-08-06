@@ -42,8 +42,6 @@ pub mod types;
 pub mod values;
 
 // Boilerplate to select a desired llvm_sys version at compile & link time.
-#[cfg(feature = "llvm11-0")]
-pub extern crate llvm_sys_110 as llvm_sys;
 #[cfg(feature = "llvm12-0")]
 pub extern crate llvm_sys_120 as llvm_sys;
 #[cfg(feature = "llvm13-0")]
@@ -110,7 +108,6 @@ macro_rules! assert_unique_used_features {
 }
 
 assert_unique_used_features! {
-    "llvm11-0",
     "llvm12-0",
     "llvm13-0",
     "llvm14-0",
@@ -125,12 +122,7 @@ assert_unique_used_features! {
 }
 
 #[cfg(all(
-    any(
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ),
+    any(feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"),
     not(feature = "typed-pointers")
 ))]
 compile_error!("Opaque pointers are not supported prior to LLVM version 15.0.");

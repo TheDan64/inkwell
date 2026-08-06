@@ -15,12 +15,7 @@ fn test_init_all_passes_for_module() {
     let module = context.create_module("my_module");
     let pass_manager = PassManager::create(());
 
-    #[cfg(any(
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
+    #[cfg(any(feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"))]
     pass_manager.add_argument_promotion_pass();
     pass_manager.add_constant_merge_pass();
     pass_manager.add_merge_functions_pass();
@@ -63,12 +58,7 @@ fn test_init_all_passes_for_module() {
     pass_manager.add_loop_rotate_pass();
     pass_manager.add_loop_reroll_pass();
     pass_manager.add_loop_unroll_pass();
-    #[cfg(any(
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
+    #[cfg(any(feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"))]
     pass_manager.add_loop_unswitch_pass();
     pass_manager.add_memcpy_optimize_pass();
     pass_manager.add_partially_inline_lib_calls_pass();
@@ -161,12 +151,7 @@ fn test_pass_manager_builder() {
 
     pass_manager_builder.populate_module_pass_manager(&module_pass_manager);
 
-    #[cfg(any(
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
+    #[cfg(any(feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"))]
     {
         let module2 = module.clone();
 

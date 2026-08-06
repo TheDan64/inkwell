@@ -51,13 +51,6 @@ use llvm_sys::transforms::scalar::{
 #[llvm_versions(..=16)]
 use llvm_sys::transforms::vectorize::{LLVMAddLoopVectorizePass, LLVMAddSLPVectorizePass};
 
-// LLVM12 removes the ConstantPropagation pass
-// Users should use the InstSimplify pass instead.
-#[cfg(feature = "llvm11-0")]
-use llvm_sys::transforms::ipo::LLVMAddIPConstantPropagationPass;
-#[cfg(feature = "llvm11-0")]
-use llvm_sys::transforms::scalar::LLVMAddConstantPropagationPass;
-
 #[llvm_versions(13..)]
 use llvm_sys::transforms::pass_builder::{
     LLVMCreatePassBuilderOptions, LLVMDisposePassBuilderOptions, LLVMPassBuilderOptionsRef,
@@ -68,7 +61,7 @@ use llvm_sys::transforms::pass_builder::{
     LLVMPassBuilderOptionsSetMergeFunctions, LLVMPassBuilderOptionsSetSLPVectorization,
     LLVMPassBuilderOptionsSetVerifyEach,
 };
-#[llvm_versions(12..=16)]
+#[llvm_versions(..=16)]
 use llvm_sys::transforms::scalar::LLVMAddInstructionSimplifyPass;
 
 #[llvm_versions(..=16)]
@@ -414,20 +407,6 @@ impl<T: PassManagerSubType> PassManager<T> {
     #[llvm_versions(..=16)]
     pub fn add_global_optimizer_pass(&self) {
         unsafe { LLVMAddGlobalOptimizerPass(self.pass_manager) }
-    }
-
-    /// This pass implements an extremely simple interprocedural
-    /// constant propagation pass. It could certainly be improved
-    /// in many different ways, like using a worklist. This pass
-    /// makes arguments dead, but does not remove them. The existing
-    /// dead argument elimination pass should be run after this to
-    /// clean up the mess.
-    ///
-    /// In LLVM 12 and later, this instruction is replaced by the
-    /// [`add_instruction_simplify_pass`].
-    #[cfg(feature = "llvm11-0")]
-    pub fn add_ip_constant_propagation_pass(&self) {
-        unsafe { LLVMAddIPConstantPropagationPass(self.pass_manager) }
     }
 
     /// This file implements a simple interprocedural pass which
@@ -917,31 +896,7 @@ impl<T: PassManagerSubType> PassManager<T> {
     ///
     /// NOTE: this pass has a habit of making definitions be dead. It is a good idea to
     /// run a Dead Instruction Elimination pass sometime after running this pass.
-    ///
-    /// In LLVM 12 and later, this instruction is replaced by the
-    /// [`add_instruction_simplify_pass`].
-    #[cfg(feature = "llvm11-0")]
-    pub fn add_constant_propagation_pass(&self) {
-        unsafe { LLVMAddConstantPropagationPass(self.pass_manager) }
-    }
-
-    /// This pass implements constant propagation and merging. It looks for instructions
-    /// involving only constant operands and replaces them with a constant value instead
-    /// of an instruction. For example:
-    ///
-    /// ```ir
-    /// add i32 1, 2
-    /// ```
-    ///
-    /// becomes
-    ///
-    /// ```ir
-    /// i32 3
-    /// ```
-    ///
-    /// NOTE: this pass has a habit of making definitions be dead. It is a good idea to
-    /// run a Dead Instruction Elimination pass sometime after running this pass.
-    #[llvm_versions(12..=16)]
+    #[llvm_versions(..=16)]
     pub fn add_instruction_simplify_pass(&self) {
         unsafe { LLVMAddInstructionSimplifyPass(self.pass_manager) }
     }

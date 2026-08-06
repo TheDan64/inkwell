@@ -8,10 +8,8 @@ use crate::context::ContextRef;
 use crate::support::{LLVMString, assert_niche};
 #[cfg(feature = "typed-pointers")]
 use crate::types::AnyTypeEnum;
-#[llvm_versions(12..)]
-use crate::types::ScalableVectorType;
 use crate::types::traits::AsTypeRef;
-use crate::types::{ArrayType, FunctionType, Type, VectorType};
+use crate::types::{ArrayType, FunctionType, ScalableVectorType, Type, VectorType};
 use crate::values::{ArrayValue, IntValue, PointerValue};
 
 use crate::types::enums::BasicMetadataTypeEnum;
@@ -276,7 +274,6 @@ impl<'ctx> PointerType<'ctx> {
     ///
     /// assert!(f32_ptr_undef.is_poison());
     /// ```
-    #[llvm_versions(12..)]
     pub fn get_poison(self) -> PointerValue<'ctx> {
         unsafe { PointerValue::new(self.ptr_type.get_poison()) }
     }
@@ -323,7 +320,6 @@ impl<'ctx> PointerType<'ctx> {
     /// assert_eq!(f32_ptr_scalable_vec_type.get_size(), 3);
     /// assert_eq!(f32_ptr_scalable_vec_type.get_element_type().into_pointer_type(), f32_ptr_type);
     /// ```
-    #[llvm_versions(12..)]
     pub fn scalable_vec_type(self, size: u32) -> ScalableVectorType<'ctx> {
         self.ptr_type.scalable_vec_type(size)
     }

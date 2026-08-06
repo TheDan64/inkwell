@@ -67,12 +67,7 @@ fn test_build_call() {
         .unwrap()
         .into_pointer_value();
 
-    #[cfg(any(
-        feature = "llvm11-0",
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0"
-    ))]
+    #[cfg(any(feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0"))]
     {
         use inkwell::values::CallableValue;
         let callable_value = CallableValue::try_from(load).unwrap();
@@ -883,7 +878,6 @@ fn test_vector_convert_ops() {
     assert!(fn_value.verify(true));
 }
 
-#[llvm_versions(12..)]
 #[test]
 fn test_scalable_vector_convert_ops() {
     let context = Context::create();
@@ -962,7 +956,6 @@ fn test_vector_convert_ops_respect_target_signedness() {
     assert!(fn_value.verify(true));
 }
 
-#[llvm_versions(12..)]
 #[test]
 fn test_scalable_vector_convert_ops_respect_target_signedness() {
     let context = Context::create();
@@ -1058,7 +1051,6 @@ fn test_vector_binary_ops() {
     assert!(fn_value.verify(true));
 }
 
-#[llvm_versions(12..)]
 #[test]
 fn test_scalable_vector_binary_ops() {
     let context = Context::create();
@@ -1157,7 +1149,6 @@ fn test_vector_pointer_ops() {
     assert!(fn_value.verify(true));
 }
 
-#[llvm_versions(12..)]
 #[test]
 fn test_scalable_vector_pointer_ops() {
     let context = Context::create();
@@ -1332,13 +1323,8 @@ fn test_insert_element() {
 
     builder.position_at_end(entry);
 
-    #[llvm_versions(12..)]
     fn get_empty_vector_of(ty: IntType<'_>) -> VectorValue<'_> {
         ty.vec_type(4).get_poison()
-    }
-    #[llvm_versions(..12)]
-    fn get_empty_vector_of(ty: IntType<'_>) -> VectorValue<'_> {
-        ty.vec_type(4).get_undef()
     }
 
     let i8_ty = context.i8_type();
@@ -1363,7 +1349,6 @@ fn test_insert_element() {
     assert!(module.verify().is_ok());
 }
 
-#[llvm_versions(12..)]
 #[test]
 fn test_insert_element_scalable() {
     use inkwell::types::IntType;
@@ -1722,19 +1707,6 @@ fn test_bit_cast() {
     #[cfg(not(feature = "typed-pointers"))]
     let i64_ptr_type = context.ptr_type(AddressSpace::default());
     let i32_vec_type = i32_type.vec_type(2);
-    #[cfg(any(
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0",
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-1",
-        feature = "llvm19-1",
-        feature = "llvm20-1",
-        feature = "llvm21-1",
-        feature = "llvm22-1"
-    ))]
     let i32_scalable_vec_type = i32_type.scalable_vec_type(2);
     let arg_types = [
         i32_type.into(),
@@ -1742,19 +1714,6 @@ fn test_bit_cast() {
         i32_vec_type.into(),
         i32_ptr_type.into(),
         f64_type.into(),
-        #[cfg(any(
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-1",
-            feature = "llvm19-1",
-            feature = "llvm20-1",
-            feature = "llvm21-1",
-            feature = "llvm22-1"
-        ))]
         i32_scalable_vec_type.into(),
     ];
     let fn_type = void_type.fn_type(&arg_types, false);
@@ -1766,19 +1725,6 @@ fn test_bit_cast() {
     let i32_vec_arg = fn_value.get_nth_param(2).unwrap();
     let i32_ptr_arg = fn_value.get_nth_param(3).unwrap();
     let f64_arg = fn_value.get_nth_param(4).unwrap();
-    #[cfg(any(
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0",
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-1",
-        feature = "llvm19-1",
-        feature = "llvm20-1",
-        feature = "llvm21-1",
-        feature = "llvm22-1"
-    ))]
     let i32_scalable_vec_arg = fn_value.get_nth_param(5).unwrap();
 
     builder.position_at_end(entry);
@@ -1787,19 +1733,6 @@ fn test_bit_cast() {
 
     builder.build_bit_cast(f32_arg, f32_type, "f32tof32").unwrap();
     builder.build_bit_cast(i32_vec_arg, i64_type, "2xi32toi64").unwrap();
-    #[cfg(any(
-        feature = "llvm12-0",
-        feature = "llvm13-0",
-        feature = "llvm14-0",
-        feature = "llvm15-0",
-        feature = "llvm16-0",
-        feature = "llvm17-0",
-        feature = "llvm18-1",
-        feature = "llvm19-1",
-        feature = "llvm20-1",
-        feature = "llvm21-1",
-        feature = "llvm22-1"
-    ))]
     {
         let i64_scalable_vec_type = i64_type.scalable_vec_type(1);
         let f32_scalable_vec_type = f32_type.scalable_vec_type(2);
@@ -2123,35 +2056,7 @@ fn test_current_debug_location() {
         0,
         false,
         false,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-1",
-            feature = "llvm19-1",
-            feature = "llvm20-1",
-            feature = "llvm21-1",
-            feature = "llvm22-1"
-        ))]
         "",
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-1",
-            feature = "llvm19-1",
-            feature = "llvm20-1",
-            feature = "llvm21-1",
-            feature = "llvm22-1"
-        ))]
         "",
     );
 

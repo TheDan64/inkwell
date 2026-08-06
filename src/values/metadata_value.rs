@@ -19,25 +19,24 @@ use std::fmt::{self, Display};
 /// for the first input string that isn't known.
 ///
 /// Each LLVM version has a different set of pre-defined metadata kinds.
-pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 = if cfg!(feature = "llvm11-0") {
-    30
-} else if cfg!(any(feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0",)) {
-    31
-} else if cfg!(feature = "llvm15-0") {
-    36
-} else if cfg!(any(feature = "llvm16-0", feature = "llvm17-0")) {
-    39
-} else if cfg!(feature = "llvm18-1") {
-    40
-} else if cfg!(feature = "llvm19-1") {
-    41
-} else if cfg!(any(feature = "llvm20-1", feature = "llvm21-1")) {
-    42
-} else if cfg!(feature = "llvm22-1") {
-    47
-} else {
-    panic!("Unhandled LLVM version")
-};
+pub const FIRST_CUSTOM_METADATA_KIND_ID: u32 =
+    if cfg!(any(feature = "llvm12-0", feature = "llvm13-0", feature = "llvm14-0",)) {
+        31
+    } else if cfg!(feature = "llvm15-0") {
+        36
+    } else if cfg!(any(feature = "llvm16-0", feature = "llvm17-0")) {
+        39
+    } else if cfg!(feature = "llvm18-1") {
+        40
+    } else if cfg!(feature = "llvm19-1") {
+        41
+    } else if cfg!(any(feature = "llvm20-1", feature = "llvm21-1")) {
+        42
+    } else if cfg!(feature = "llvm22-1") {
+        47
+    } else {
+        panic!("Unhandled LLVM version")
+    };
 
 #[repr(transparent)]
 #[derive(PartialEq, Eq, Clone, Copy, Hash)]

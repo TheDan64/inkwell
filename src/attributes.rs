@@ -1,6 +1,5 @@
 //! `Attribute`s are optional modifiers to functions, function parameters, and return types.
 
-#[llvm_versions(12..)]
 use llvm_sys::core::{LLVMGetTypeAttributeValue, LLVMIsTypeAttribute};
 use llvm_sys::prelude::LLVMAttributeRef;
 use llvm_sys::{
@@ -15,7 +14,6 @@ use llvm_sys::{
 use std::{ffi::CStr, ptr::NonNull};
 
 use crate::support::assert_niche;
-#[llvm_versions(12..)]
 use crate::types::AnyTypeEnum;
 
 // SubTypes: Attribute<Enum>, Attribute<String>
@@ -164,15 +162,8 @@ impl Attribute {
     ///
     /// assert!(type_attribute.is_type());
     /// ```
-    #[llvm_versions(12..)]
     pub fn is_type(self) -> bool {
         unsafe { LLVMIsTypeAttribute(self.as_mut_ptr()) == 1 }
-    }
-
-    // private function to make code elsewhere easier
-    #[llvm_versions(..12)]
-    fn is_type(self) -> bool {
-        false
     }
 
     /// Gets the enum kind id associated with a builtin name.
@@ -205,25 +196,6 @@ impl Attribute {
     ///
     /// assert_eq!(enum_attribute.get_enum_kind_id(), 0);
     /// ```
-    #[cfg(feature = "llvm11-0")]
-    pub fn get_enum_kind_id(self) -> u32 {
-        assert!(self.get_enum_kind_id_is_valid()); // FIXME: SubTypes
-
-        unsafe { LLVMGetEnumAttributeKind(self.as_mut_ptr()) }
-    }
-
-    /// Gets the kind id associated with an enum `Attribute`.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let enum_attribute = context.create_enum_attribute(0, 10);
-    ///
-    /// assert_eq!(enum_attribute.get_enum_kind_id(), 0);
-    /// ```
     ///
     /// This function also works for type `Attribute`s.
     ///
@@ -242,19 +214,12 @@ impl Attribute {
     ///
     /// assert_eq!(type_attribute.get_enum_kind_id(), kind_id);
     /// ```
-    #[llvm_versions(12..)]
     pub fn get_enum_kind_id(self) -> u32 {
         assert!(self.get_enum_kind_id_is_valid()); // FIXME: SubTypes
 
         unsafe { LLVMGetEnumAttributeKind(self.as_mut_ptr()) }
     }
 
-    #[cfg(feature = "llvm11-0")]
-    fn get_enum_kind_id_is_valid(self) -> bool {
-        self.is_enum()
-    }
-
-    #[llvm_versions(12..)]
     fn get_enum_kind_id_is_valid(self) -> bool {
         self.is_enum() || self.is_type()
     }
@@ -354,17 +319,10 @@ impl Attribute {
     /// assert_eq!(type_attribute.get_type_value(), any_type);
     /// assert_ne!(type_attribute.get_type_value(), context.i64_type().as_any_type_enum());
     /// ```
-    #[llvm_versions(12..)]
     pub fn get_type_value(&self) -> AnyTypeEnum<'_> {
         assert!(self.is_type()); // FIXME: SubTypes
 
         unsafe { AnyTypeEnum::new(LLVMGetTypeAttributeValue(self.as_mut_ptr())) }
-    }
-
-    // private function to make code elsewhere easier
-    #[llvm_versions(..12)]
-    fn get_type_value(&self) {
-        unreachable!("not implemented in this version")
     }
 }
 

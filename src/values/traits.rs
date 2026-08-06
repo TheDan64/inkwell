@@ -1,8 +1,5 @@
-use llvm_sys::core::LLVMIsConstant;
+use llvm_sys::core::{LLVMIsConstant, LLVMIsPoison};
 use llvm_sys::prelude::LLVMValueRef;
-
-#[llvm_versions(12..)]
-use llvm_sys::core::LLVMIsPoison;
 
 use std::fmt::Debug;
 
@@ -177,7 +174,6 @@ pub unsafe trait AnyValue<'ctx>: AsValueRef + Debug {
     }
 
     /// Returns whether the value is `poison`
-    #[llvm_versions(12..)]
     fn is_poison(&self) -> bool {
         unsafe { LLVMIsPoison(self.as_value_ref()) == 1 }
     }

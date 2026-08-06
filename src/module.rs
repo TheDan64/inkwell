@@ -4,8 +4,6 @@ use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyModule};
 #[allow(deprecated)]
 use llvm_sys::bit_reader::LLVMParseBitcodeInContext;
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
-#[cfg(feature = "llvm11-0")]
-use llvm_sys::core::LLVMGetTypeByName;
 use llvm_sys::core::{
     LLVMAddFunction, LLVMAddGlobal, LLVMAddGlobalInAddressSpace, LLVMAddNamedMetadataOperand, LLVMCloneModule,
     LLVMDisposeMessage, LLVMDisposeModule, LLVMDumpModule, LLVMGetFirstFunction, LLVMGetFirstGlobal,
@@ -359,37 +357,6 @@ impl<'ctx> Module<'ctx> {
     ///
     /// assert_eq!(module.get_struct_type("foo").unwrap(), opaque);
     /// ```
-    ///
-    #[cfg(feature = "llvm11-0")]
-    pub fn get_struct_type(&self, name: &str) -> Option<StructType<'ctx>> {
-        let c_string = to_c_str(name);
-
-        let struct_type = unsafe { LLVMGetTypeByName(self.as_mut_ptr(), c_string.as_ptr()) };
-
-        if struct_type.is_null() {
-            return None;
-        }
-
-        unsafe { Some(StructType::new(struct_type)) }
-    }
-
-    /// Gets a named `StructType` from this `Module`'s `Context`.
-    ///
-    /// # Example
-    ///
-    /// ```rust,no_run
-    /// use inkwell::context::Context;
-    ///
-    /// let context = Context::create();
-    /// let module = context.create_module("my_module");
-    ///
-    /// assert!(module.get_struct_type("foo").is_none());
-    ///
-    /// let opaque = context.opaque_struct_type("foo");
-    ///
-    /// assert_eq!(module.get_struct_type("foo").unwrap(), opaque);
-    /// ```
-    #[llvm_versions(12..)]
     pub fn get_struct_type(&self, name: &str) -> Option<StructType<'ctx>> {
         self.get_context().get_struct_type(name)
     }
@@ -1540,35 +1507,7 @@ impl<'ctx> Module<'ctx> {
         dwo_id: libc::c_uint,
         split_debug_inlining: bool,
         debug_info_for_profiling: bool,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-1",
-            feature = "llvm19-1",
-            feature = "llvm20-1",
-            feature = "llvm21-1",
-            feature = "llvm22-1",
-        ))]
         sysroot: &str,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-1",
-            feature = "llvm19-1",
-            feature = "llvm20-1",
-            feature = "llvm21-1",
-            feature = "llvm22-1",
-        ))]
         sdk: &str,
     ) -> (DebugInfoBuilder<'ctx>, DICompileUnit<'ctx>) {
         DebugInfoBuilder::new(
@@ -1586,35 +1525,7 @@ impl<'ctx> Module<'ctx> {
             dwo_id,
             split_debug_inlining,
             debug_info_for_profiling,
-            #[cfg(any(
-                feature = "llvm11-0",
-                feature = "llvm12-0",
-                feature = "llvm13-0",
-                feature = "llvm14-0",
-                feature = "llvm15-0",
-                feature = "llvm16-0",
-                feature = "llvm17-0",
-                feature = "llvm18-1",
-                feature = "llvm19-1",
-                feature = "llvm20-1",
-                feature = "llvm21-1",
-                feature = "llvm22-1",
-            ))]
             sysroot,
-            #[cfg(any(
-                feature = "llvm11-0",
-                feature = "llvm12-0",
-                feature = "llvm13-0",
-                feature = "llvm14-0",
-                feature = "llvm15-0",
-                feature = "llvm16-0",
-                feature = "llvm17-0",
-                feature = "llvm18-1",
-                feature = "llvm19-1",
-                feature = "llvm20-1",
-                feature = "llvm21-1",
-                feature = "llvm22-1",
-            ))]
             sdk,
         )
     }

@@ -5,7 +5,6 @@ use llvm_sys::prelude::LLVMTypeRef;
 use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::support::{LLVMString, assert_niche};
-#[llvm_versions(12..)]
 use crate::types::ScalableVectorType;
 use crate::types::enums::BasicMetadataTypeEnum;
 use crate::types::traits::AsTypeRef;
@@ -102,7 +101,6 @@ impl<'ctx> FloatType<'ctx> {
     /// assert_eq!(f32_vector_type.get_size(), 3);
     /// assert_eq!(f32_vector_type.get_element_type().into_float_type(), f32_type);
     /// ```
-    #[llvm_versions(12..)]
     pub fn scalable_vec_type(self, size: u32) -> ScalableVectorType<'ctx> {
         self.float_type.scalable_vec_type(size)
     }
@@ -263,20 +261,6 @@ impl<'ctx> FloatType<'ctx> {
 
         match type_kind {
             llvm_sys::LLVMTypeKind::LLVMHalfTypeKind => 16,
-            #[cfg(any(
-                feature = "llvm11-0",
-                feature = "llvm12-0",
-                feature = "llvm13-0",
-                feature = "llvm14-0",
-                feature = "llvm15-0",
-                feature = "llvm16-0",
-                feature = "llvm17-0",
-                feature = "llvm18-1",
-                feature = "llvm19-1",
-                feature = "llvm20-1",
-                feature = "llvm21-1",
-                feature = "llvm22-1",
-            ))]
             llvm_sys::LLVMTypeKind::LLVMBFloatTypeKind => 16,
             llvm_sys::LLVMTypeKind::LLVMFloatTypeKind => 32,
             llvm_sys::LLVMTypeKind::LLVMDoubleTypeKind => 64,
@@ -320,7 +304,6 @@ impl<'ctx> FloatType<'ctx> {
     ///
     /// assert!(f32_poison.is_poison());
     /// ```
-    #[llvm_versions(12..)]
     pub fn get_poison(&self) -> FloatValue<'ctx> {
         unsafe { FloatValue::new(self.float_type.get_poison()) }
     }

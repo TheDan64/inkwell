@@ -428,7 +428,6 @@ fn test_volatile_atomicrmw_cmpxchg() {
     assert!(!cmpxchg.get_volatile().unwrap());
 }
 
-#[llvm_versions(12..)]
 #[test]
 fn test_mem_instructions() {
     let context = Context::create();

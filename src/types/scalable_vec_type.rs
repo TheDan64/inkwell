@@ -123,7 +123,6 @@ impl<'ctx> ScalableVectorType<'ctx> {
     ///
     /// assert!(f32_scalable_vec_poison.is_undef());
     /// ```
-    #[llvm_versions(12..)]
     pub fn get_poison(self) -> ScalableVectorValue<'ctx> {
         unsafe { ScalableVectorValue::new(self.scalable_vec_type.get_poison()) }
     }

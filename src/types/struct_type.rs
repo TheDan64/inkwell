@@ -377,7 +377,6 @@ impl<'ctx> StructType<'ctx> {
     ///
     /// assert!(struct_type_poison.is_poison());
     /// ```
-    #[llvm_versions(12..)]
     pub fn get_poison(self) -> StructValue<'ctx> {
         unsafe { StructValue::new(self.struct_type.get_poison()) }
     }

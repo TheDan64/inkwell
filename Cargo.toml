@@ -16,7 +16,6 @@ default = ["target-all"]
 typed-pointers = []
 
 # Please update internal_macros::FEATURE_VERSIONS when adding a new LLVM version
-llvm11-0 = ["llvm-sys-110", "typed-pointers"]
 llvm12-0 = ["llvm-sys-120", "typed-pointers"]
 llvm13-0 = ["llvm-sys-130", "typed-pointers"]
 llvm14-0 = ["llvm-sys-140", "typed-pointers"]
@@ -34,7 +33,6 @@ llvm22-1 = ["llvm-sys-221"]
 # `no-llvm-linking` feature across the board of llvm versions, as it'll cause
 # cargo to try and download and compile them all. See
 # https://github.com/rust-lang/cargo/issues/3494
-llvm11-0-no-llvm-linking = ["llvm11-0", "llvm-sys-110/no-llvm-linking"]
 llvm12-0-no-llvm-linking = ["llvm12-0", "llvm-sys-120/no-llvm-linking"]
 llvm13-0-no-llvm-linking = ["llvm13-0", "llvm-sys-130/no-llvm-linking"]
 llvm14-0-no-llvm-linking = ["llvm14-0", "llvm-sys-140/no-llvm-linking"]
@@ -148,7 +146,6 @@ nightly = ["inkwell_internals/nightly"]
 [dependencies]
 inkwell_internals = { path = "./internal_macros", version = "0.14.0" }
 
-llvm-sys-110 = { package = "llvm-sys", version = "110.0.4", optional = true }
 llvm-sys-120 = { package = "llvm-sys", version = "120.3.2", optional = true }
 llvm-sys-130 = { package = "llvm-sys", version = "130.1.2", optional = true }
 llvm-sys-140 = { package = "llvm-sys", version = "140.1.3", optional = true }

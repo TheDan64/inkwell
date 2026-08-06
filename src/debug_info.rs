@@ -210,35 +210,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         dwo_id: libc::c_uint,
         split_debug_inlining: bool,
         debug_info_for_profiling: bool,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-1",
-            feature = "llvm19-1",
-            feature = "llvm20-1",
-            feature = "llvm21-1",
-            feature = "llvm22-1"
-        ))]
         sysroot: &str,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-1",
-            feature = "llvm19-1",
-            feature = "llvm20-1",
-            feature = "llvm21-1",
-            feature = "llvm22-1"
-        ))]
         sdk: &str,
     ) -> (Self, DICompileUnit<'ctx>) {
         let builder = unsafe {
@@ -268,35 +240,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             dwo_id,
             split_debug_inlining,
             debug_info_for_profiling,
-            #[cfg(any(
-                feature = "llvm11-0",
-                feature = "llvm12-0",
-                feature = "llvm13-0",
-                feature = "llvm14-0",
-                feature = "llvm15-0",
-                feature = "llvm16-0",
-                feature = "llvm17-0",
-                feature = "llvm18-1",
-                feature = "llvm19-1",
-                feature = "llvm20-1",
-                feature = "llvm21-1",
-                feature = "llvm22-1",
-            ))]
             sysroot,
-            #[cfg(any(
-                feature = "llvm11-0",
-                feature = "llvm12-0",
-                feature = "llvm13-0",
-                feature = "llvm14-0",
-                feature = "llvm15-0",
-                feature = "llvm16-0",
-                feature = "llvm17-0",
-                feature = "llvm18-1",
-                feature = "llvm19-1",
-                feature = "llvm20-1",
-                feature = "llvm21-1",
-                feature = "llvm22-1",
-            ))]
             sdk,
         );
 
@@ -334,35 +278,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
         dwo_id: libc::c_uint,
         split_debug_inlining: bool,
         debug_info_for_profiling: bool,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-1",
-            feature = "llvm19-1",
-            feature = "llvm20-1",
-            feature = "llvm21-1",
-            feature = "llvm22-1",
-        ))]
         sysroot: &str,
-        #[cfg(any(
-            feature = "llvm11-0",
-            feature = "llvm12-0",
-            feature = "llvm13-0",
-            feature = "llvm14-0",
-            feature = "llvm15-0",
-            feature = "llvm16-0",
-            feature = "llvm17-0",
-            feature = "llvm18-1",
-            feature = "llvm19-1",
-            feature = "llvm20-1",
-            feature = "llvm21-1",
-            feature = "llvm22-1",
-        ))]
         sdk: &str,
     ) -> DICompileUnit<'ctx> {
         let metadata_ref = unsafe {

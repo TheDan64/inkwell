@@ -7,7 +7,6 @@ use llvm_sys::prelude::LLVMTypeRef;
 use crate::AddressSpace;
 use crate::context::ContextRef;
 use crate::support::{LLVMString, assert_niche};
-#[llvm_versions(12..)]
 use crate::types::ScalableVectorType;
 use crate::types::traits::AsTypeRef;
 use crate::types::{ArrayType, FunctionType, PointerType, Type, VectorType};
@@ -264,7 +263,6 @@ impl<'ctx> IntType<'ctx> {
     /// assert_eq!(i8_scalable_vector_type.get_size(), 3);
     /// assert_eq!(i8_scalable_vector_type.get_element_type().into_int_type(), i8_type);
     /// ```
-    #[llvm_versions(12..)]
     pub fn scalable_vec_type(self, size: u32) -> ScalableVectorType<'ctx> {
         self.int_type.scalable_vec_type(size)
     }
@@ -385,7 +383,6 @@ impl<'ctx> IntType<'ctx> {
     ///
     /// assert!(i8_poison.is_poison());
     /// ```
-    #[llvm_versions(12..)]
     pub fn get_poison(self) -> IntValue<'ctx> {
         unsafe { IntValue::new(self.int_type.get_poison()) }
     }
