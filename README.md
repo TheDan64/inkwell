@@ -22,7 +22,7 @@ You'll need to point your Cargo.toml to use a single LLVM version feature flag c
 
 ```toml
 [dependencies]
-inkwell = { version = "0.8.0", features = ["llvm22-1"] }
+inkwell = { version = "0.10.0", features = ["llvm22-1"] }
 ```
 
 Supported versions:
