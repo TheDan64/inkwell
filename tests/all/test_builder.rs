@@ -94,6 +94,42 @@ fn test_build_call() {
     assert!(module.verify().is_ok());
 }
 
+#[cfg(any(
+    feature = "llvm18-1",
+    feature = "llvm19-1",
+    feature = "llvm20-1",
+    feature = "llvm21-1",
+    feature = "llvm22-1"
+))]
+#[test]
+fn test_build_callbr() {
+    let context = Context::create();
+    let module = context.create_module("callbr");
+    let builder = context.create_builder();
+    let function_type = context.void_type().fn_type(&[], false);
+    let function = module.add_function("branching_assembly", function_type, None);
+    let entry = context.append_basic_block(function, "entry");
+    let fallthrough = context.append_basic_block(function, "fallthrough");
+    let alternate = context.append_basic_block(function, "alternate");
+    let assembly = context.create_inline_asm(function_type, String::new(), "!i".to_owned(), true, false, None, false);
+
+    builder.position_at_end(entry);
+    builder
+        .build_callbr(function_type, assembly, fallthrough, &[alternate], &[], "assembly")
+        .unwrap();
+
+    builder.position_at_end(fallthrough);
+    builder.build_return(None).unwrap();
+
+    builder.position_at_end(alternate);
+    builder.build_return(None).unwrap();
+
+    let ir = module.print_to_string().to_string();
+
+    assert!(module.verify().is_ok(), "{ir}");
+    assert!(ir.contains("callbr void asm sideeffect \"\", \"!i\"()"));
+}
+
 #[test]
 fn test_build_call_with_metadata_string() {
     let context = Context::create();

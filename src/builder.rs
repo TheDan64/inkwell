@@ -1,7 +1,5 @@
 //! A `Builder` enables you to build instructions.
 
-#[llvm_versions(18..)]
-use llvm_sys::core::LLVMBuildCallWithOperandBundles;
 use llvm_sys::core::{
     LLVMAddCase, LLVMAddClause, LLVMAddDestination, LLVMBuildAShr, LLVMBuildAdd, LLVMBuildAddrSpaceCast,
     LLVMBuildAggregateRet, LLVMBuildAlloca, LLVMBuildAnd, LLVMBuildArrayAlloca, LLVMBuildArrayMalloc,
@@ -21,6 +19,8 @@ use llvm_sys::core::{
     LLVMInsertIntoBuilderWithName, LLVMPositionBuilder, LLVMPositionBuilderAtEnd, LLVMPositionBuilderBefore,
     LLVMSetCleanup,
 };
+#[llvm_versions(18..)]
+use llvm_sys::core::{LLVMBuildCallBr, LLVMBuildCallWithOperandBundles};
 
 #[llvm_versions(..20)]
 use llvm_sys::core::LLVMBuildGlobalStringPtr;
@@ -54,10 +54,10 @@ use crate::support::to_c_str;
 #[llvm_versions(15..)]
 use crate::types::FunctionType;
 use crate::types::{AsTypeRef, BasicType, FloatMathType, IntMathType, PointerMathType, PointerType};
-#[llvm_versions(..=14)]
-use crate::values::CallableValue;
 #[llvm_versions(18..)]
 use crate::values::operand_bundle::OperandBundle;
+#[llvm_versions(..=14)]
+use crate::values::CallableValue;
 use crate::values::{
     AggregateValue, AggregateValueEnum, AsValueRef, AtomicError, BasicMetadataValueEnum, BasicValue, BasicValueEnum,
     CallSiteValue, FloatMathValue, FunctionValue, GlobalValue, InstructionOpcode, InstructionValue, IntMathValue,
@@ -428,6 +428,54 @@ impl<'ctx> Builder<'ctx> {
             return Err(BuilderError::UnsetPosition);
         }
         self.build_call_help(function_type, function_pointer.as_value_ref(), args, name)
+    }
+
+    /// Builds a call with a default destination and possible indirect destinations.
+    ///
+    /// This instruction is primarily used for inline assembly with label constraints.
+    #[llvm_versions(18..)]
+    pub fn build_callbr(
+        &self,
+        function_type: FunctionType<'ctx>,
+        function_pointer: PointerValue<'ctx>,
+        default_destination: BasicBlock<'ctx>,
+        indirect_destinations: &[BasicBlock<'ctx>],
+        args: &[BasicMetadataValueEnum<'ctx>],
+        name: &str,
+    ) -> Result<CallSiteValue<'ctx>, BuilderError> {
+        if self.positioned.get() != PositionState::Set {
+            return Err(BuilderError::UnsetPosition);
+        }
+
+        let name = if function_type.get_return_type().is_none() {
+            ""
+        } else {
+            name
+        };
+        let c_string = to_c_str(name);
+        let mut destinations = indirect_destinations
+            .iter()
+            .map(BasicBlock::as_mut_ptr)
+            .collect::<Vec<_>>();
+        let mut args = args.iter().map(AsValueRef::as_value_ref).collect::<Vec<_>>();
+
+        let value = unsafe {
+            LLVMBuildCallBr(
+                self.builder,
+                function_type.as_type_ref(),
+                function_pointer.as_value_ref(),
+                default_destination.as_mut_ptr(),
+                destinations.as_mut_ptr(),
+                destinations.len() as u32,
+                args.as_mut_ptr(),
+                args.len() as u32,
+                std::ptr::null_mut(),
+                0,
+                c_string.as_ptr(),
+            )
+        };
+
+        unsafe { Ok(CallSiteValue::new(value)) }
     }
 
     /// Build a call instruction to a function pointer, with attached operand bundles.
