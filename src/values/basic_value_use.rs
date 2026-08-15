@@ -80,7 +80,7 @@ impl<'ctx> Operand<'ctx> {
     #[must_use]
     #[track_caller]
     pub fn unwrap_value(self) -> BasicValueEnum<'ctx> {
-        self.expect_value("Called unwrap_value() on UsedValue::Block.")
+        self.expect_value("Called unwrap_value() on Operand::Block.")
     }
 
     /// Unwrap [BasicBlock]. Will panic if it is not.
@@ -88,7 +88,7 @@ impl<'ctx> Operand<'ctx> {
     #[must_use]
     #[track_caller]
     pub fn unwrap_block(self) -> BasicBlock<'ctx> {
-        self.expect_block("Called unwrap_block() on UsedValue::Value.")
+        self.expect_block("Called unwrap_block() on Operand::Value.")
     }
 }
 
