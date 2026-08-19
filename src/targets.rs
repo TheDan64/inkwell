@@ -1147,7 +1147,7 @@ impl TargetMachine {
         unsafe { LLVMAddAnalysisPasses(self.target_machine.as_ptr(), pass_manager.pass_manager) }
     }
 
-    /// Writes a `TargetMachine` to a `MemoryBuffer`.
+    /// Compiles `module` to assembly or object code and returns the output in a `MemoryBuffer`.
     ///
     /// # Example
     ///
@@ -1210,7 +1210,7 @@ impl TargetMachine {
         unsafe { Ok(MemoryBuffer::new(memory_buffer)) }
     }
 
-    /// Saves a `TargetMachine` to a file.
+    /// Compiles `module` to assembly or object code and writes the output to `path`.
     ///
     /// # Example
     ///
