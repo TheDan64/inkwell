@@ -86,6 +86,7 @@ impl<'ctx> IntType<'ctx> {
     }
 
     /// Creates an `IntValue` representing a constant value of this `IntType`. It will be automatically assigned this `IntType`'s `Context`.
+    /// Note the bits in `value` beyond the width of this integer type are discarded.
     ///
     /// # Example
     /// ```no_run
@@ -97,7 +98,14 @@ impl<'ctx> IntType<'ctx> {
     /// let i32_value = i32_type.const_int(42, false);
     /// ```
     // TODOC: Maybe better explain sign extension
-    pub fn const_int(self, value: u64, sign_extend: bool) -> IntValue<'ctx> {
+    pub fn const_int(self, mut value: u64, sign_extend: bool) -> IntValue<'ctx> {
+        // LLVM 23 no longer truncates implicitly, so truncate explicitly to preserve the
+        // existing behavior: https://github.com/llvm/llvm-project/pull/171456.
+        let bit_width = self.get_bit_width();
+        if bit_width < u64::BITS {
+            value &= (1 << bit_width) - 1;
+        }
+
         unsafe { IntValue::new(LLVMConstInt(self.as_type_ref(), value, sign_extend as i32)) }
     }
 

@@ -1719,3 +1719,14 @@ fn test_basic_value_types() {
     assert!(scalable_vec_val.as_any_value_enum().is_scalable_vector_value());
     assert!(ppc_f128_val.as_any_value_enum().is_float_value());
 }
+
+#[test]
+fn test_const_int_truncation() {
+    let context = Context::create();
+    let i32_type = context.i32_type();
+
+    let u32_max_in_u32 = i32_type.const_int(u64::from(u32::MAX), false);
+    let u64_max_in_u32 = i32_type.const_int(u64::MAX, false);
+
+    assert_eq!(u32_max_in_u32, u64_max_in_u32);
+}
