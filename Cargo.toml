@@ -163,7 +163,7 @@ llvm-sys-191 = { package = "llvm-sys", version = "191.0.0", optional = true }
 llvm-sys-201 = { package = "llvm-sys", version = "201.0.0", optional = true }
 llvm-sys-211 = { package = "llvm-sys", version = "211.0.0", optional = true }
 llvm-sys-221 = { package = "llvm-sys", version = "221.0.0", optional = true }
-llvm-sys-231 = { package = "llvm-sys", path = "../llvm-sys.rs", version = "231.0.0-rc2", optional = true }
+llvm-sys-231 = { package = "llvm-sys", version = "231.0.0-rc2", optional = true }
 
 libc = "0.2"
 thiserror = "2.0.11"
