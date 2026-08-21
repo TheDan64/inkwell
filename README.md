@@ -26,7 +26,7 @@ inkwell = { version = "0.10.0", features = ["llvm22-1"] }
 ```
 
 Supported versions:
-LLVM 12-22 mapping to a cargo feature flag `llvmM-0` where `M` corresponds to the LLVM major version.
+LLVM 12-22 mapping to a cargo feature flag `llvmM-N` where `M` and `N` correspond to the LLVM major and minor version, e.g. `llvm18-1` for LLVM 18.1.x.
 
 Please be aware that we may make breaking changes on master from time to time since we are
 pre-v1.0.0, in compliance with semver. Please prefer a crates.io release whenever possible!
