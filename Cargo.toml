@@ -27,6 +27,7 @@ llvm19-1 = ["llvm-sys-191"]
 llvm20-1 = ["llvm-sys-201"]
 llvm21-1 = ["llvm-sys-211"]
 llvm22-1 = ["llvm-sys-221"]
+llvm23-1 = ["llvm-sys-231"]
 
 # Don't link against LLVM libraries. This is useful if another dependency is
 # installing LLVM. See llvm-sys for more details. We can't enable a single
@@ -44,6 +45,7 @@ llvm19-1-no-llvm-linking = ["llvm19-1", "llvm-sys-191/no-llvm-linking"]
 llvm20-1-no-llvm-linking = ["llvm20-1", "llvm-sys-201/no-llvm-linking"]
 llvm21-1-no-llvm-linking = ["llvm21-1", "llvm-sys-211/no-llvm-linking"]
 llvm22-1-no-llvm-linking = ["llvm22-1", "llvm-sys-221/no-llvm-linking"]
+llvm23-1-no-llvm-linking = ["llvm23-1", "llvm-sys-231/no-llvm-linking"]
 
 # Linking preference.
 # If none of these are enabled, it defaults to force static linking.
@@ -60,6 +62,7 @@ llvm19-1-force-dynamic = ["llvm19-1", "llvm-sys-191/force-dynamic"]
 llvm20-1-force-dynamic = ["llvm20-1", "llvm-sys-201/force-dynamic"]
 llvm21-1-force-dynamic = ["llvm21-1", "llvm-sys-211/force-dynamic"]
 llvm22-1-force-dynamic = ["llvm22-1", "llvm-sys-221/force-dynamic"]
+llvm23-1-force-dynamic = ["llvm23-1", "llvm-sys-231/force-dynamic"]
 
 # Prefer dynamic linking against LLVM libraries. See llvm-sys for more details
 llvm12-0-prefer-dynamic = ["llvm12-0", "llvm-sys-120/prefer-dynamic"]
@@ -73,6 +76,7 @@ llvm19-1-prefer-dynamic = ["llvm19-1", "llvm-sys-191/prefer-dynamic"]
 llvm20-1-prefer-dynamic = ["llvm20-1", "llvm-sys-201/prefer-dynamic"]
 llvm21-1-prefer-dynamic = ["llvm21-1", "llvm-sys-211/prefer-dynamic"]
 llvm22-1-prefer-dynamic = ["llvm22-1", "llvm-sys-221/prefer-dynamic"]
+llvm23-1-prefer-dynamic = ["llvm23-1", "llvm-sys-231/prefer-dynamic"]
 
 # Force static linking against LLVM libraries. See llvm-sys for more details
 llvm12-0-force-static = ["llvm12-0", "llvm-sys-120/force-static"]
@@ -86,6 +90,7 @@ llvm19-1-force-static = ["llvm19-1", "llvm-sys-191/force-static"]
 llvm20-1-force-static = ["llvm20-1", "llvm-sys-201/force-static"]
 llvm21-1-force-static = ["llvm21-1", "llvm-sys-211/force-static"]
 llvm22-1-force-static = ["llvm22-1", "llvm-sys-221/force-static"]
+llvm23-1-force-static = ["llvm23-1", "llvm-sys-231/force-static"]
 
 # Prefer static linking against LLVM libraries. See llvm-sys for more details
 llvm12-0-prefer-static = ["llvm12-0", "llvm-sys-120/prefer-static"]
@@ -99,6 +104,7 @@ llvm19-1-prefer-static = ["llvm19-1", "llvm-sys-191/prefer-static"]
 llvm20-1-prefer-static = ["llvm20-1", "llvm-sys-201/prefer-static"]
 llvm21-1-prefer-static = ["llvm21-1", "llvm-sys-211/prefer-static"]
 llvm22-1-prefer-static = ["llvm22-1", "llvm-sys-221/prefer-static"]
+llvm23-1-prefer-static = ["llvm23-1", "llvm-sys-231/prefer-static"]
 
 # Don't force linking to libffi on non-windows platforms. Without this feature
 # inkwell always links to libffi on non-windows platforms.
@@ -157,6 +163,7 @@ llvm-sys-191 = { package = "llvm-sys", version = "191.0.0", optional = true }
 llvm-sys-201 = { package = "llvm-sys", version = "201.0.0", optional = true }
 llvm-sys-211 = { package = "llvm-sys", version = "211.0.0", optional = true }
 llvm-sys-221 = { package = "llvm-sys", version = "221.0.0", optional = true }
+llvm-sys-231 = { package = "llvm-sys", version = "231.0.0-rc2", optional = true }
 
 libc = "0.2"
 thiserror = "2.0.11"
@@ -176,7 +183,7 @@ version = "0.62.2"
 features = ["Win32_System_SystemInformation", "Win32_System_Memory"]
 
 [package.metadata.docs.rs]
-features = ["llvm22-1-no-llvm-linking"]
+features = ["llvm23-1-no-llvm-linking"]
 
 [badges]
 codecov = { repository = "TheDan64/inkwell" }

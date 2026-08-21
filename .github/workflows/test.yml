@@ -4,8 +4,8 @@ on: [ push, pull_request ]
 
 env:
   CARGO_TERM_COLOR: always
-  DOC_LLVM_FEATURE: llvm21-1
-  DOC_LLVM_VERSION: "21.1"
+  DOC_LLVM_FEATURE: llvm23-1
+  DOC_LLVM_VERSION: "23.1"
   DOC_PATH: target/doc
 
 jobs:
@@ -40,6 +40,7 @@ jobs:
         - [ "20.1", "20-1", "20" ]
         - [ "21.1", "21-1", "21" ]
         - [ "22.1", "22-1", "22" ]
+        - [ "23.1", "23-1", "23" ]
         include:
         - os: ubuntu-22.04
     steps:
@@ -89,7 +90,7 @@ jobs:
     name: Documentation
     runs-on: ubuntu-latest
     env:
-      LLVM_SYS_211_PREFIX: ${{ github.workspace }}/llvm
+      LLVM_SYS_231_PREFIX: ${{ github.workspace }}/llvm
     needs: [ lint, tests ]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
