@@ -4,8 +4,8 @@ on: [ push, pull_request ]
 
 env:
   CARGO_TERM_COLOR: always
-  DOC_LLVM_FEATURE: llvm21-1
-  DOC_LLVM_VERSION: "21.1"
+  DOC_LLVM_FEATURE: llvm23-1
+  DOC_LLVM_VERSION: "23.1"
   DOC_PATH: target/doc
 
 jobs:
@@ -28,25 +28,37 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        llvm-version:
-        - [ "12.0", "12-0" ]
-        - [ "13.0", "13-0" ]
-        - [ "14.0", "14-0" ]
-        - [ "15.0", "15-0" ]
-        - [ "16.0", "16-0" ]
-        - [ "17.0", "17-0" ]
-        - [ "18.1", "18-1" ]
-        - [ "19.1", "19-1", "19" ]
-        - [ "20.1", "20-1", "20" ]
-        - [ "21.1", "21-1", "21" ]
-        - [ "22.1", "22-1", "22" ]
         include:
-        - os: ubuntu-22.04
+        - llvm-version: [ "12.0", "12-0" ]
+          os: ubuntu-22.04
+        - llvm-version: [ "13.0", "13-0" ]
+          os: ubuntu-22.04
+        - llvm-version: [ "14.0", "14-0" ]
+          os: ubuntu-22.04
+        - llvm-version: [ "15.0", "15-0" ]
+          os: ubuntu-22.04
+        - llvm-version: [ "16.0", "16-0" ]
+          os: ubuntu-22.04
+        - llvm-version: [ "17.0", "17-0" ]
+          os: ubuntu-22.04
+        - llvm-version: [ "18.1", "18-1" ]
+          os: ubuntu-22.04
+        - llvm-version: [ "19.1", "19-1", "19" ]
+          os: ubuntu-latest
+        - llvm-version: [ "20.1", "20-1", "20" ]
+          os: ubuntu-latest
+        - llvm-version: [ "21.1", "21-1", "21" ]
+          os: ubuntu-latest
+        - llvm-version: [ "22.1", "22-1", "22" ]
+          os: ubuntu-latest
+        - llvm-version: [ "23.1", "23-1", "23" ]
+          os: ubuntu-latest
     steps:
     - name: Checkout Repo
       uses: actions/checkout@v4
-    - name: Install libtinfo5
-      run: sudo apt update && sudo apt install -y libtinfo5
+    - name: Install libtinfo5 (LLVM < 19)
+      if: ${{ matrix.llvm-version[0] < 19 }}
+      run: sudo apt-get update && sudo apt-get install -y libtinfo5
     - name: Install LLVM and Clang (LLVM >= 19.1)
       if: ${{ matrix.llvm-version[0] >= 19 }}
       run: |
@@ -61,9 +73,9 @@ jobs:
                                                     llvm-${{ matrix.llvm-version[2] }}-runtime \
                                                     libpolly-${{ matrix.llvm-version[2] }}-dev
         sudo update-alternatives --install /usr/bin/llvm-config llvm-config /usr/bin/llvm-config-${{ matrix.llvm-version[2] }} 10
-    - name: Install LLVM and Clang (12 <= LLVM <= 19)
+    - name: Install LLVM and Clang (12 <= LLVM < 19)
       uses: KyleMayes/install-llvm-action@v2
-      if: ${{ matrix.llvm-version[0] >= 12 && matrix.llvm-version[0] <= 19 }}
+      if: ${{ matrix.llvm-version[0] >= 12 && matrix.llvm-version[0] < 19 }}
       with:
         version: ${{ matrix.llvm-version[0] }}
     - name: llvm-config
@@ -89,7 +101,7 @@ jobs:
     name: Documentation
     runs-on: ubuntu-latest
     env:
-      LLVM_SYS_211_PREFIX: ${{ github.workspace }}/llvm
+      LLVM_SYS_231_PREFIX: ${{ github.workspace }}/llvm
     needs: [ lint, tests ]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:

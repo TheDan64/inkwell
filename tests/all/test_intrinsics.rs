@@ -38,7 +38,8 @@ fn test_get_decl_va_copy() {
         feature = "llvm19-1",
         feature = "llvm20-1",
         feature = "llvm21-1",
-        feature = "llvm22-1"
+        feature = "llvm22-1",
+        feature = "llvm23-1"
     )))]
     {
         assert!(!va_copy.is_overloaded());

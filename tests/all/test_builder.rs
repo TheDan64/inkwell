@@ -81,7 +81,8 @@ fn test_build_call() {
         feature = "llvm19-1",
         feature = "llvm20-1",
         feature = "llvm21-1",
-        feature = "llvm22-1"
+        feature = "llvm22-1",
+        feature = "llvm23-1"
     ))]
     builder.build_indirect_call(fn_type2, load, &[], "call").unwrap();
     builder.build_return(None).unwrap();

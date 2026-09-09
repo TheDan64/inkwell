@@ -928,7 +928,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm19-1",
             feature = "llvm20-1",
             feature = "llvm21-1",
-            feature = "llvm22-1"
+            feature = "llvm22-1",
+            feature = "llvm23-1"
         ))]
         {
             // In LLVM 19+, the insert... functions return a DbgRecord, not a Value.
@@ -941,7 +942,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm19-1",
             feature = "llvm20-1",
             feature = "llvm21-1",
-            feature = "llvm22-1"
+            feature = "llvm22-1",
+            feature = "llvm23-1"
         )))]
         {
             unsafe { InstructionValue::new(value_ref) }
@@ -972,7 +974,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm19-1",
             feature = "llvm20-1",
             feature = "llvm21-1",
-            feature = "llvm22-1"
+            feature = "llvm22-1",
+            feature = "llvm23-1"
         ))]
         {
             // In LLVM 19+, the insert... functions return a DbgRecord, not a Value.
@@ -985,7 +988,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm19-1",
             feature = "llvm20-1",
             feature = "llvm21-1",
-            feature = "llvm22-1"
+            feature = "llvm22-1",
+            feature = "llvm23-1"
         )))]
         {
             unsafe { InstructionValue::new(value_ref) }
@@ -1032,7 +1036,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm19-1",
             feature = "llvm20-1",
             feature = "llvm21-1",
-            feature = "llvm22-1"
+            feature = "llvm22-1",
+            feature = "llvm23-1"
         ))]
         {
             // In LLVM 19+, the insert... functions return a DbgRecord, not a Value.
@@ -1045,7 +1050,8 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             feature = "llvm19-1",
             feature = "llvm20-1",
             feature = "llvm21-1",
-            feature = "llvm22-1"
+            feature = "llvm22-1",
+            feature = "llvm23-1"
         )))]
         {
             unsafe { InstructionValue::new(value_ref) }

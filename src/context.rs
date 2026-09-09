@@ -124,10 +124,10 @@ impl ContextImpl {
         let mut module = ptr::null_mut();
         let mut err_str = ptr::null_mut();
 
-        #[cfg(not(feature = "llvm22-1"))]
+        #[cfg(not(any(feature = "llvm22-1", feature = "llvm23-1")))]
         let code =
             unsafe { LLVMParseIRInContext(self.as_mut_ptr(), memory_buffer.as_mut_ptr(), &mut module, &mut err_str) };
-        #[cfg(feature = "llvm22-1")]
+        #[cfg(any(feature = "llvm22-1", feature = "llvm23-1"))]
         let code =
             unsafe { LLVMParseIRInContext2(self.as_mut_ptr(), memory_buffer.as_mut_ptr(), &mut module, &mut err_str) };
 
@@ -618,7 +618,7 @@ impl Context {
     ///     builder.build_call(callable_value, params, "exit").unwrap();
     /// }
     ///
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1", feature = "llvm22-1"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1", feature = "llvm22-1", feature = "llvm23-1"))]
     /// builder.build_indirect_call(asm_fn, asm, params, "exit").unwrap();
     ///
     /// builder.build_return(None).unwrap();
@@ -1480,7 +1480,7 @@ impl<'ctx> ContextRef<'ctx> {
     ///     builder.build_call(callable_value, params, "exit").unwrap();
     /// }
     ///
-    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1", feature = "llvm22-1"))]
+    /// #[cfg(any(feature = "llvm15-0", feature = "llvm16-0", feature = "llvm17-0", feature = "llvm18-1", feature = "llvm19-1", feature = "llvm20-1", feature = "llvm21-1", feature = "llvm22-1", feature = "llvm23-1"))]
     /// builder.build_indirect_call(asm_fn, asm, params, "exit").unwrap();
     ///
     /// builder.build_return(None).unwrap();
