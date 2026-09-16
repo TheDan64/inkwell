@@ -584,6 +584,18 @@ fn test_binary_ops() {
 }
 
 #[test]
+fn test_build_int_nsw_add_unset_position() {
+    let context = Context::create();
+    let builder = context.create_builder();
+    let one = context.i32_type().const_int(1, false);
+
+    assert_eq!(
+        builder.build_int_nsw_add(one, one, "nsw_add"),
+        Err(BuilderError::UnsetPosition)
+    );
+}
+
+#[test]
 fn test_switch() {
     let context = Context::create();
     let module = context.create_module("unsafe");

@@ -2509,6 +2509,9 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Possibly incorporate into build_int_add via flag param
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_nsw_add<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
+        if self.positioned.get() != PositionState::Set {
+            return Err(BuilderError::UnsetPosition);
+        }
         let c_string = to_c_str(name);
         let value = unsafe {
             LLVMBuildNSWAdd(
