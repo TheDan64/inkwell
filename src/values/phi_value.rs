@@ -92,7 +92,7 @@ impl<'ctx> PhiValue<'ctx> {
         }
     }
 
-    /// Gets the name of a `ArrayValue`. If the value is a constant, this will
+    /// Gets the name of a `PhiValue`. If the value is a constant, this will
     /// return an empty string.
     pub fn get_name(&self) -> &CStr {
         self.phi_value.get_name()

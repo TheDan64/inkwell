@@ -115,13 +115,14 @@ impl<'ctx> ScalableVectorType<'ctx> {
     /// ```ignore
     /// use inkwell::context::Context;
     /// use inkwell::AddressSpace;
+    /// use inkwell::values::AnyValue;
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
     /// let f32_scalable_vec_type = f32_type.scalable_vec_type(3);
-    /// let f32_scalable_vec_poison = f32_scalable_vec_type.get_undef();
+    /// let f32_scalable_vec_poison = f32_scalable_vec_type.get_poison();
     ///
-    /// assert!(f32_scalable_vec_poison.is_undef());
+    /// assert!(f32_scalable_vec_poison.is_poison());
     /// ```
     pub fn get_poison(self) -> ScalableVectorValue<'ctx> {
         unsafe { ScalableVectorValue::new(self.scalable_vec_type.get_poison()) }
