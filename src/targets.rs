@@ -1,10 +1,3 @@
-use llvm_sys::target::{
-    LLVMABIAlignmentOfType, LLVMABISizeOfType, LLVMByteOrder, LLVMByteOrdering, LLVMCallFrameAlignmentOfType,
-    LLVMCopyStringRepOfTargetData, LLVMCreateTargetData, LLVMDisposeTargetData, LLVMElementAtOffset,
-    LLVMIntPtrTypeForASInContext, LLVMIntPtrTypeInContext, LLVMOffsetOfElement, LLVMOpaqueTargetData, LLVMPointerSize,
-    LLVMPointerSizeForAS, LLVMPreferredAlignmentOfGlobal, LLVMPreferredAlignmentOfType, LLVMSizeOfTypeInBits,
-    LLVMStoreSizeOfType, LLVMTargetDataRef,
-};
 use llvm_sys::target_machine::{
     LLVMAddAnalysisPasses, LLVMCodeGenFileType, LLVMCodeModel, LLVMCreateTargetMachine, LLVMDisposeTargetMachine,
     LLVMGetDefaultTargetTriple, LLVMGetFirstTarget, LLVMGetNextTarget, LLVMGetTargetDescription, LLVMGetTargetFromName,
@@ -23,16 +16,13 @@ use llvm_sys::target_machine::{
 };
 use std::sync::{LazyLock, RwLock};
 
-use crate::context::AsContextRef;
+use crate::OptimizationLevel;
 use crate::data_layout::DataLayout;
 use crate::memory_buffer::MemoryBuffer;
 use crate::module::Module;
 #[allow(deprecated)]
 use crate::passes::PassManager;
 use crate::support::{LLVMString, assert_niche, to_c_str};
-use crate::types::{AnyType, AsTypeRef, IntType, StructType};
-use crate::values::{AsValueRef, GlobalValue};
-use crate::{AddressSpace, OptimizationLevel};
 
 use std::default::Default;
 use std::ffi::CStr;
@@ -1046,12 +1036,37 @@ impl Target {
     }
 }
 
+/// An owned target machine, as created by [`Target::create_target_machine`] and friends and
+/// disposed with this value. [`TargetMachineRef`] is the borrowed counterpart.
 #[repr(transparent)]
 #[derive(Debug)]
 pub struct TargetMachine {
     pub(crate) target_machine: NonNull<LLVMOpaqueTargetMachine>,
 }
 const _: () = assert_niche::<TargetMachine>();
+
+/// A target machine owned by something else and borrowed from it for `'a`:
+/// [`ExecutionEngine::get_target_machine`](crate::execution_engine::ExecutionEngine::get_target_machine)
+/// returns MCJIT's own machine (`LLVMGetExecutionEngineTargetMachine`), which lives as long as
+/// the engine. It has every method of [`TargetMachine`] except the constructors;
+/// [`TargetMachine::as_ref`] borrows an owned machine the same way.
+#[derive(Debug, Clone, Copy)]
+pub struct TargetMachineRef<'a> {
+    target_machine: NonNull<LLVMOpaqueTargetMachine>,
+    _marker: std::marker::PhantomData<&'a ()>,
+}
+
+impl<'a> TargetMachineRef<'a> {
+    /// # Safety
+    ///
+    /// `target_machine` must be non-null and stay valid for `'a`.
+    pub(crate) unsafe fn new(target_machine: LLVMTargetMachineRef) -> TargetMachineRef<'a> {
+        TargetMachineRef {
+            target_machine: NonNull::new(target_machine).expect("target machine must be non-null"),
+            _marker: std::marker::PhantomData,
+        }
+    }
+}
 
 impl TargetMachine {
     pub unsafe fn new(target_machine: LLVMTargetMachineRef) -> Self {
@@ -1060,21 +1075,6 @@ impl TargetMachine {
         TargetMachine {
             target_machine: unsafe { NonNull::new_unchecked(target_machine) },
         }
-    }
-
-    /// Acquires the underlying raw pointer belonging to this `TargetMachine` type.
-    pub fn as_mut_ptr(&self) -> LLVMTargetMachineRef {
-        self.target_machine.as_ptr()
-    }
-
-    pub fn get_target(&self) -> Target {
-        unsafe { Target::new(LLVMGetTargetMachineTarget(self.target_machine.as_ptr())) }
-    }
-
-    pub fn get_triple(&self) -> TargetTriple {
-        let str = unsafe { LLVMString::new(LLVMGetTargetMachineTriple(self.target_machine.as_ptr())) };
-
-        unsafe { TargetTriple::new(str) }
     }
 
     /// Gets the default triple for the current system.
@@ -1124,302 +1124,215 @@ impl TargetMachine {
         unsafe { LLVMString::new(LLVMGetHostCPUFeatures()) }
     }
 
-    pub fn get_cpu(&self) -> LLVMString {
-        unsafe { LLVMString::new(LLVMGetTargetMachineCPU(self.target_machine.as_ptr())) }
-    }
-
-    pub fn get_feature_string(&self) -> &CStr {
-        unsafe { CStr::from_ptr(LLVMGetTargetMachineFeatureString(self.target_machine.as_ptr())) }
-    }
-
-    /// Create TargetData from this target machine
-    pub fn get_target_data(&self) -> TargetData {
-        unsafe { TargetData::new(LLVMCreateTargetDataLayout(self.target_machine.as_ptr())) }
-    }
-
-    pub fn set_asm_verbosity(&self, verbosity: bool) {
-        unsafe { LLVMSetTargetMachineAsmVerbosity(self.target_machine.as_ptr(), verbosity as i32) }
-    }
-
-    // TODO: Move to PassManager?
-    #[allow(deprecated)]
-    pub fn add_analysis_passes<T>(&self, pass_manager: &PassManager<T>) {
-        unsafe { LLVMAddAnalysisPasses(self.target_machine.as_ptr(), pass_manager.pass_manager) }
-    }
-
-    /// Compiles `module` to assembly or object code and returns the output in a `MemoryBuffer`.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::OptimizationLevel;
-    /// use inkwell::context::Context;
-    /// use inkwell::targets::{CodeModel, RelocMode, FileType, Target, TargetMachine, TargetTriple, InitializationConfig};
-    ///
-    /// Target::initialize_x86(&InitializationConfig::default());
-    ///
-    /// let opt = OptimizationLevel::Default;
-    /// let reloc = RelocMode::Default;
-    /// let model = CodeModel::Default;
-    /// let target = Target::from_name("x86-64").unwrap();
-    /// let target_machine = target.create_target_machine(
-    ///     &TargetTriple::create("x86_64-pc-linux-gnu"),
-    ///     "x86-64",
-    ///     "+avx2",
-    ///     opt,
-    ///     reloc,
-    ///     model
-    /// )
-    /// .unwrap();
-    ///
-    /// let context = Context::create();
-    /// let module = context.create_module("my_module");
-    /// let void_type = context.void_type();
-    /// let fn_type = void_type.fn_type(&[], false);
-    ///
-    /// module.add_function("my_fn", fn_type, None);
-    ///
-    /// let buffer = target_machine.write_to_memory_buffer(&module, FileType::Assembly).unwrap();
-    /// ```
-    pub fn write_to_memory_buffer(
-        &self,
-        module: &Module,
-        file_type: FileType,
-    ) -> Result<MemoryBuffer<'static>, LLVMString> {
-        let mut memory_buffer = ptr::null_mut();
-        let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
-        let return_code = unsafe {
-            let module_ptr = module.as_mut_ptr();
-            let file_type_ptr = file_type.as_llvm_file_type();
-
-            LLVMTargetMachineEmitToMemoryBuffer(
-                self.target_machine.as_ptr(),
-                module_ptr,
-                file_type_ptr,
-                &mut err_string,
-                &mut memory_buffer,
-            )
-        };
-
-        if return_code == 1 {
-            unsafe {
-                return Err(LLVMString::new(err_string));
-            }
+    /// Borrows this target machine.
+    pub fn as_ref(&self) -> TargetMachineRef<'_> {
+        TargetMachineRef {
+            target_machine: self.target_machine,
+            _marker: std::marker::PhantomData,
         }
-
-        unsafe { Ok(MemoryBuffer::new(memory_buffer)) }
-    }
-
-    /// Compiles `module` to assembly or object code and writes the output to `path`.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::OptimizationLevel;
-    /// use inkwell::context::Context;
-    /// use inkwell::targets::{CodeModel, RelocMode, FileType, Target, TargetMachine, TargetTriple, InitializationConfig};
-    ///
-    /// use std::path::Path;
-    ///
-    /// Target::initialize_x86(&InitializationConfig::default());
-    ///
-    /// let opt = OptimizationLevel::Default;
-    /// let reloc = RelocMode::Default;
-    /// let model = CodeModel::Default;
-    /// let path = Path::new("/tmp/some/path/main.asm");
-    /// let target = Target::from_name("x86-64").unwrap();
-    /// let target_machine = target.create_target_machine(
-    ///     &TargetTriple::create("x86_64-pc-linux-gnu"),
-    ///     "x86-64",
-    ///     "+avx2",
-    ///     opt,
-    ///     reloc,
-    ///     model
-    /// )
-    /// .unwrap();
-    ///
-    /// let context = Context::create();
-    /// let module = context.create_module("my_module");
-    /// let void_type = context.void_type();
-    /// let fn_type = void_type.fn_type(&[], false);
-    ///
-    /// module.add_function("my_fn", fn_type, None);
-    ///
-    /// assert!(target_machine.write_to_file(&module, FileType::Object, &path).is_ok());
-    /// ```
-    pub fn write_to_file(&self, module: &Module, file_type: FileType, path: &Path) -> Result<(), LLVMString> {
-        let path = path.to_str().expect("Did not find a valid Unicode path string");
-        let path_c_string = to_c_str(path);
-        let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
-        let return_code = unsafe {
-            // REVIEW: Why does LLVM need a mutable ptr to path...?
-            let module_ptr = module.as_mut_ptr();
-            let path_ptr = path_c_string.as_ptr() as *mut _;
-            let file_type_ptr = file_type.as_llvm_file_type();
-
-            LLVMTargetMachineEmitToFile(
-                self.target_machine.as_ptr(),
-                module_ptr,
-                path_ptr,
-                file_type_ptr,
-                &mut err_string,
-            )
-        };
-
-        if return_code == 1 {
-            unsafe {
-                return Err(LLVMString::new(err_string));
-            }
-        }
-
-        Ok(())
     }
 }
+
+impl<'a> From<&'a TargetMachine> for TargetMachineRef<'a> {
+    fn from(target_machine: &'a TargetMachine) -> TargetMachineRef<'a> {
+        target_machine.as_ref()
+    }
+}
+
+impl<'a> From<&TargetMachineRef<'a>> for TargetMachineRef<'a> {
+    fn from(target_machine: &TargetMachineRef<'a>) -> TargetMachineRef<'a> {
+        *target_machine
+    }
+}
+
+/// The methods shared by the owned [`TargetMachine`] and the borrowed [`TargetMachineRef`].
+macro_rules! target_machine_methods {
+    ($Self:ty) => {
+        impl $Self {
+            /// Acquires the underlying raw pointer belonging to this target machine.
+            pub fn as_mut_ptr(&self) -> LLVMTargetMachineRef {
+                self.target_machine.as_ptr()
+            }
+
+            pub fn get_target(&self) -> Target {
+                unsafe { Target::new(LLVMGetTargetMachineTarget(self.target_machine.as_ptr())) }
+            }
+
+            pub fn get_triple(&self) -> TargetTriple {
+                let str = unsafe { LLVMString::new(LLVMGetTargetMachineTriple(self.target_machine.as_ptr())) };
+
+                unsafe { TargetTriple::new(str) }
+            }
+
+            pub fn get_cpu(&self) -> LLVMString {
+                unsafe { LLVMString::new(LLVMGetTargetMachineCPU(self.target_machine.as_ptr())) }
+            }
+
+            /// The target features the machine was created with. `LLVMGetTargetMachineFeatureString`
+            /// returns a copy (`strdup`), which this owns, like [`get_cpu`](Self::get_cpu).
+            pub fn get_feature_string(&self) -> LLVMString {
+                unsafe { LLVMString::new(LLVMGetTargetMachineFeatureString(self.target_machine.as_ptr())) }
+            }
+
+            /// The data layout this machine compiles for, computed afresh (`LLVMCreateTargetDataLayout`)
+            /// and owned by the caller.
+            pub fn get_data_layout(&self) -> DataLayout {
+                unsafe { DataLayout::new(LLVMCreateTargetDataLayout(self.target_machine.as_ptr())) }
+            }
+
+            pub fn set_asm_verbosity(&self, verbosity: bool) {
+                unsafe { LLVMSetTargetMachineAsmVerbosity(self.target_machine.as_ptr(), verbosity as i32) }
+            }
+
+            // TODO: Move to PassManager?
+            #[allow(deprecated)]
+            pub fn add_analysis_passes<T>(&self, pass_manager: &PassManager<T>) {
+                unsafe { LLVMAddAnalysisPasses(self.target_machine.as_ptr(), pass_manager.pass_manager) }
+            }
+
+            /// Compiles `module` to assembly or object code and returns the output in a `MemoryBuffer`.
+            ///
+            /// `LLVMTargetMachineEmit` replaces the module's data layout with the machine's
+            /// (`TargetMachineC.cpp`).
+            ///
+            /// # Example
+            ///
+            /// ```no_run
+            /// use inkwell::OptimizationLevel;
+            /// use inkwell::context::Context;
+            /// use inkwell::targets::{CodeModel, RelocMode, FileType, Target, TargetMachine, TargetTriple, InitializationConfig};
+            ///
+            /// Target::initialize_x86(&InitializationConfig::default());
+            ///
+            /// let opt = OptimizationLevel::Default;
+            /// let reloc = RelocMode::Default;
+            /// let model = CodeModel::Default;
+            /// let target = Target::from_name("x86-64").unwrap();
+            /// let target_machine = target.create_target_machine(
+            ///     &TargetTriple::create("x86_64-pc-linux-gnu"),
+            ///     "x86-64",
+            ///     "+avx2",
+            ///     opt,
+            ///     reloc,
+            ///     model
+            /// )
+            /// .unwrap();
+            ///
+            /// let context = Context::create();
+            /// let module = context.create_module("my_module");
+            /// let void_type = context.void_type();
+            /// let fn_type = void_type.fn_type(&[], false);
+            ///
+            /// module.add_function("my_fn", fn_type, None);
+            ///
+            /// let buffer = target_machine.write_to_memory_buffer(&module, FileType::Assembly).unwrap();
+            /// ```
+            pub fn write_to_memory_buffer(
+                &self,
+                module: &Module,
+                file_type: FileType,
+            ) -> Result<MemoryBuffer<'static>, LLVMString> {
+                let mut memory_buffer = ptr::null_mut();
+                let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
+                let return_code = unsafe {
+                    let module_ptr = module.as_mut_ptr();
+                    let file_type_ptr = file_type.as_llvm_file_type();
+
+                    LLVMTargetMachineEmitToMemoryBuffer(
+                        self.target_machine.as_ptr(),
+                        module_ptr,
+                        file_type_ptr,
+                        &mut err_string,
+                        &mut memory_buffer,
+                    )
+                };
+
+                if return_code == 1 {
+                    unsafe {
+                        return Err(LLVMString::new(err_string));
+                    }
+                }
+
+                unsafe { Ok(MemoryBuffer::new(memory_buffer)) }
+            }
+
+            /// Compiles `module` to assembly or object code and writes the output to `path`.
+            ///
+            /// `LLVMTargetMachineEmit` replaces the module's data layout with the machine's
+            /// (`TargetMachineC.cpp`).
+            ///
+            /// # Example
+            ///
+            /// ```no_run
+            /// use inkwell::OptimizationLevel;
+            /// use inkwell::context::Context;
+            /// use inkwell::targets::{CodeModel, RelocMode, FileType, Target, TargetMachine, TargetTriple, InitializationConfig};
+            ///
+            /// use std::path::Path;
+            ///
+            /// Target::initialize_x86(&InitializationConfig::default());
+            ///
+            /// let opt = OptimizationLevel::Default;
+            /// let reloc = RelocMode::Default;
+            /// let model = CodeModel::Default;
+            /// let path = Path::new("/tmp/some/path/main.asm");
+            /// let target = Target::from_name("x86-64").unwrap();
+            /// let target_machine = target.create_target_machine(
+            ///     &TargetTriple::create("x86_64-pc-linux-gnu"),
+            ///     "x86-64",
+            ///     "+avx2",
+            ///     opt,
+            ///     reloc,
+            ///     model
+            /// )
+            /// .unwrap();
+            ///
+            /// let context = Context::create();
+            /// let module = context.create_module("my_module");
+            /// let void_type = context.void_type();
+            /// let fn_type = void_type.fn_type(&[], false);
+            ///
+            /// module.add_function("my_fn", fn_type, None);
+            ///
+            /// assert!(target_machine.write_to_file(&module, FileType::Object, &path).is_ok());
+            /// ```
+            pub fn write_to_file(&self, module: &Module, file_type: FileType, path: &Path) -> Result<(), LLVMString> {
+                let path = path.to_str().expect("Did not find a valid Unicode path string");
+                let path_c_string = to_c_str(path);
+                let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
+                let return_code = unsafe {
+                    // REVIEW: Why does LLVM need a mutable ptr to path...?
+                    let module_ptr = module.as_mut_ptr();
+                    let path_ptr = path_c_string.as_ptr() as *mut _;
+                    let file_type_ptr = file_type.as_llvm_file_type();
+
+                    LLVMTargetMachineEmitToFile(
+                        self.target_machine.as_ptr(),
+                        module_ptr,
+                        path_ptr,
+                        file_type_ptr,
+                        &mut err_string,
+                    )
+                };
+
+                if return_code == 1 {
+                    unsafe {
+                        return Err(LLVMString::new(err_string));
+                    }
+                }
+
+                Ok(())
+            }
+        }
+    };
+}
+
+target_machine_methods!(TargetMachine);
+target_machine_methods!(TargetMachineRef<'_>);
 
 impl Drop for TargetMachine {
     fn drop(&mut self) {
         unsafe { LLVMDisposeTargetMachine(self.target_machine.as_ptr()) }
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Copy, Clone)]
-pub enum ByteOrdering {
-    BigEndian,
-    LittleEndian,
-}
-
-#[repr(transparent)]
-#[derive(PartialEq, Eq, Debug)]
-pub struct TargetData {
-    pub(crate) target_data: NonNull<LLVMOpaqueTargetData>,
-}
-const _: () = assert_niche::<TargetData>();
-
-impl TargetData {
-    pub unsafe fn new(target_data: LLVMTargetDataRef) -> TargetData {
-        assert!(!target_data.is_null());
-
-        TargetData {
-            target_data: unsafe { NonNull::new_unchecked(target_data) },
-        }
-    }
-
-    /// Acquires the underlying raw pointer belonging to this `TargetData` type.
-    pub fn as_mut_ptr(&self) -> LLVMTargetDataRef {
-        self.target_data.as_ptr()
-    }
-
-    /// Gets the `IntType` representing a bit width of a pointer. It will be assigned the referenced context.
-    ///
-    /// # Example
-    ///
-    /// ```no_run
-    /// use inkwell::OptimizationLevel;
-    /// use inkwell::context::Context;
-    /// use inkwell::targets::{InitializationConfig, Target};
-    ///
-    /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
-    ///
-    /// let context = Context::create();
-    /// let module = context.create_module("sum");
-    /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-    /// let target_data = execution_engine.get_target_data();
-    /// let int_type = target_data.ptr_sized_int_type_in_context(&context, None);
-    /// ```
-    #[deprecated(note = "This method will be removed in the future. Please use Context::ptr_sized_int_type instead.")]
-    pub fn ptr_sized_int_type_in_context<'ctx>(
-        &self,
-        context: impl AsContextRef<'ctx>,
-        address_space: Option<AddressSpace>,
-    ) -> IntType<'ctx> {
-        let int_type_ptr = match address_space {
-            Some(address_space) => unsafe {
-                LLVMIntPtrTypeForASInContext(context.as_ctx_ref(), self.target_data.as_ptr(), address_space.0)
-            },
-            None => unsafe { LLVMIntPtrTypeInContext(context.as_ctx_ref(), self.target_data.as_ptr()) },
-        };
-
-        unsafe { IntType::new(int_type_ptr) }
-    }
-
-    pub fn get_data_layout(&self) -> DataLayout {
-        unsafe { DataLayout::new_owned(LLVMCopyStringRepOfTargetData(self.target_data.as_ptr())) }
-    }
-
-    // REVIEW: Does this only work if Sized?
-    pub fn get_bit_size(&self, type_: &dyn AnyType) -> u64 {
-        unsafe { LLVMSizeOfTypeInBits(self.target_data.as_ptr(), type_.as_type_ref()) }
-    }
-
-    // TODOC: This can fail on LLVM's side(exit?), but it doesn't seem like we have any way to check this in rust
-    pub fn create(str_repr: &str) -> TargetData {
-        let c_string = to_c_str(str_repr);
-
-        unsafe { TargetData::new(LLVMCreateTargetData(c_string.as_ptr())) }
-    }
-
-    pub fn get_byte_ordering(&self) -> ByteOrdering {
-        let byte_ordering = unsafe { LLVMByteOrder(self.target_data.as_ptr()) };
-
-        match byte_ordering {
-            LLVMByteOrdering::LLVMBigEndian => ByteOrdering::BigEndian,
-            LLVMByteOrdering::LLVMLittleEndian => ByteOrdering::LittleEndian,
-        }
-    }
-
-    pub fn get_pointer_byte_size(&self, address_space: Option<AddressSpace>) -> u32 {
-        match address_space {
-            Some(address_space) => unsafe { LLVMPointerSizeForAS(self.target_data.as_ptr(), address_space.0) },
-            None => unsafe { LLVMPointerSize(self.target_data.as_ptr()) },
-        }
-    }
-
-    pub fn get_store_size(&self, type_: &dyn AnyType) -> u64 {
-        unsafe { LLVMStoreSizeOfType(self.target_data.as_ptr(), type_.as_type_ref()) }
-    }
-
-    pub fn get_abi_size(&self, type_: &dyn AnyType) -> u64 {
-        unsafe { LLVMABISizeOfType(self.target_data.as_ptr(), type_.as_type_ref()) }
-    }
-
-    pub fn get_abi_alignment(&self, type_: &dyn AnyType) -> u32 {
-        unsafe { LLVMABIAlignmentOfType(self.target_data.as_ptr(), type_.as_type_ref()) }
-    }
-
-    pub fn get_call_frame_alignment(&self, type_: &dyn AnyType) -> u32 {
-        unsafe { LLVMCallFrameAlignmentOfType(self.target_data.as_ptr(), type_.as_type_ref()) }
-    }
-
-    pub fn get_preferred_alignment(&self, type_: &dyn AnyType) -> u32 {
-        unsafe { LLVMPreferredAlignmentOfType(self.target_data.as_ptr(), type_.as_type_ref()) }
-    }
-
-    pub fn get_preferred_alignment_of_global(&self, value: &GlobalValue) -> u32 {
-        unsafe { LLVMPreferredAlignmentOfGlobal(self.target_data.as_ptr(), value.as_value_ref()) }
-    }
-
-    pub fn element_at_offset(&self, struct_type: &StructType, offset: u64) -> u32 {
-        unsafe { LLVMElementAtOffset(self.target_data.as_ptr(), struct_type.as_type_ref(), offset) }
-    }
-
-    pub fn offset_of_element(&self, struct_type: &StructType, element: u32) -> Option<u64> {
-        if element > struct_type.count_fields() - 1 {
-            return None;
-        }
-
-        unsafe {
-            Some(LLVMOffsetOfElement(
-                self.target_data.as_ptr(),
-                struct_type.as_type_ref(),
-                element,
-            ))
-        }
-    }
-}
-
-impl Drop for TargetData {
-    fn drop(&mut self) {
-        unsafe { LLVMDisposeTargetData(self.target_data.as_ptr()) }
     }
 }
 

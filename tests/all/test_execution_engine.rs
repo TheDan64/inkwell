@@ -2,10 +2,10 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use inkwell::context::Context;
-use inkwell::execution_engine::FunctionLookupError;
+use inkwell::execution_engine::{FunctionLookupError, RemoveModuleError};
 use inkwell::memory_manager::McjitMemoryManager;
 use inkwell::module::Linkage;
-use inkwell::targets::{CodeModel, InitializationConfig, Target};
+use inkwell::targets::{CodeModel, InitializationConfig, Target, TargetMachine};
 use inkwell::{AddressSpace, IntPredicate, OptimizationLevel};
 
 #[cfg(target_os = "windows")]
@@ -240,52 +240,123 @@ fn test_mcjit_execution_engine_with_memory_manager() {
 }
 
 #[test]
-fn test_create_mcjit_engine_when_already_owned() {
-    let context = Context::create();
-    let module = context.create_module("owned_module");
-
-    // First engine should succeed
-    let memory_manager = MockMemoryManager::new();
-    let engine_result = module.create_mcjit_execution_engine_with_memory_manager(
-        memory_manager,
-        OptimizationLevel::None,
-        CodeModel::Default,
-        false,
-        false,
-    );
-    assert!(engine_result.is_ok());
-
-    // Second engine should fail
-    let memory_manager2 = MockMemoryManager::new();
-    let second_result = module.create_mcjit_execution_engine_with_memory_manager(
-        memory_manager2,
-        OptimizationLevel::None,
-        CodeModel::Default,
-        false,
-        false,
-    );
-    assert!(
-        second_result.is_err(),
-        "Expected an error when creating a second ExecutionEngine on the same module"
-    );
-}
-
-#[test]
 fn test_add_remove_module() {
     let context = Context::create();
-    let module = context.create_module("test");
-    let ee = module
+    let ee = context
+        .create_module("test")
         .create_jit_execution_engine(OptimizationLevel::default())
         .unwrap();
 
-    assert!(ee.add_module(&module).is_err());
+    // The bootstrap module's handle is handed out once
+    let test = ee.take_initial_loaded_module().unwrap();
+    assert!(ee.take_initial_loaded_module().is_none());
 
-    let module2 = context.create_module("mod2");
+    // Module names need not be unique
+    let module2 = ee.add_module(context.create_module("mod2"));
+    let module3 = ee.add_module(context.create_module("mod2"));
 
-    assert!(ee.remove_module(&module2).is_err());
-    assert!(ee.add_module(&module2).is_ok());
-    assert!(ee.remove_module(&module).is_ok());
-    assert!(ee.remove_module(&module2).is_ok());
+    // A handle from another engine is rejected; that engine keeps its module
+    let ee2 = context
+        .create_module("other")
+        .create_jit_execution_engine(OptimizationLevel::default())
+        .unwrap();
+    let other = ee2.add_module(context.create_module("other2"));
+
+    let other = match ee.remove_module(other) {
+        Err(RemoveModuleError::ModuleNotOwned(other)) => other,
+        result => panic!("expected ModuleNotOwned, got {result:?}"),
+    };
+    // ... and the handle comes back, so the module is not lost
+    assert_eq!(ee2.remove_module(other).unwrap().get_name().to_str(), Ok("other2"));
+
+    // Removed modules come back as plain modules we own again, the bootstrap one included
+    let module2 = ee.remove_module(module2).unwrap();
+    let module3 = ee.remove_module(module3).unwrap();
+    let test = ee.remove_module(test).unwrap();
+
+    assert_eq!(module2.get_name().to_str(), Ok("mod2"));
+    assert_eq!(module3.get_name().to_str(), Ok("mod2"));
+    assert_eq!(test.get_name().to_str(), Ok("test"));
+    assert_ne!(module2.as_mut_ptr(), module3.as_mut_ptr());
+}
+
+#[test]
+fn test_static_constructors_without_modules() {
+    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+
+    let context = Context::create();
+    let builder = context.create_builder();
+    let i64_type = context.i64_type();
+
+    let ee = context
+        .create_module("boot")
+        .create_jit_execution_engine(OptimizationLevel::None)
+        .unwrap();
+    let boot = ee.take_initial_loaded_module().unwrap();
+
+    // An engine that owns nothing and never compiled anything must not crash here
+    // (MCJIT::finalizeObject would dereference a RuntimeDyld that does not exist yet).
+    drop(ee.remove_module(boot).unwrap());
+    ee.run_static_constructors();
+    ee.run_static_destructors();
+    assert_eq!(
+        ee.get_function_address("anything").unwrap_err(),
+        FunctionLookupError::FunctionNotFound
+    );
+
+    // It keeps working with modules added afterwards ...
+    let m = context.create_module("later");
+    let f = m.add_function("seven", i64_type.fn_type(&[], false), None);
+    builder.position_at_end(context.append_basic_block(f, "entry"));
+    builder.build_return(Some(&i64_type.const_int(7, false))).unwrap();
+    let later = ee.add_module(m);
+    ee.run_static_constructors();
+
+    let seven = unsafe { ee.get_function::<unsafe extern "C" fn() -> i64>("seven").unwrap() };
+    assert_eq!(unsafe { seven.call() }, 7);
+
+    // ... and once something has been compiled, finalizing with no owned modules is fine.
+    drop(ee.remove_module(later).unwrap());
+    ee.run_static_constructors();
+    ee.run_static_destructors();
+}
+
+#[test]
+fn test_code_survives_module_removal() {
+    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+
+    let context = Context::create();
+    let builder = context.create_builder();
+    let i64_type = context.i64_type();
+    let fn_type = i64_type.fn_type(&[], false);
+
+    let ee = context
+        .create_module("main")
+        .create_jit_execution_engine(OptimizationLevel::None)
+        .unwrap();
+
+    let extra = context.create_module("extra");
+    let f = extra.add_function("seven", fn_type, None);
+    builder.position_at_end(context.append_basic_block(f, "entry"));
+    builder.build_return(Some(&i64_type.const_int(7, false))).unwrap();
+    let extra = ee.add_module(extra);
+
+    let seven = unsafe { ee.get_function::<unsafe extern "C" fn() -> i64>("seven").unwrap() };
+    assert_eq!(unsafe { seven.call() }, 7);
+
+    // Taking the module back (and dropping it) does not free the generated code
+    let extra = ee.remove_module(extra).unwrap();
+    assert_eq!(extra.get_name().to_str(), Ok("extra"));
+    drop(extra);
+
+    assert_eq!(unsafe { seven.call() }, 7);
+
+    let seven = unsafe { ee.get_function::<unsafe extern "C" fn() -> i64>("seven").unwrap() };
+    assert_eq!(unsafe { seven.call() }, 7);
+
+    // The bootstrap module can be taken back too
+    let main = ee.remove_module(ee.take_initial_loaded_module().unwrap()).unwrap();
+    assert_eq!(main.get_name().to_str(), Ok("main"));
 }
 
 // REVIEW: Global state pollution access tests cause this to pass when run individually
@@ -308,7 +379,7 @@ fn test_add_remove_module() {
 //     let builder = context.create_builder();
 //     let module = context.create_module("errors_abound");
 //     // let mut execution_engine = ExecutionEngine::create_jit_from_module(module, 0);
-//     let mut execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+//     let mut (execution_engine, _) = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 //     let void_type = context.void_type();
 //     let fn_type = void_type.fn_type(&[], false);
 //     let fn_value = module.add_function("func", fn_type, None);
@@ -555,4 +626,83 @@ impl McjitMemoryManager for MockMemoryManager {
             VirtualFree(data.data_buff_ptr.as_ptr() as *mut _, 0, MEM_RELEASE).expect("Failed to free memory.");
         }
     }
+}
+
+#[test]
+fn test_raw_module_and_engine_constructors() {
+    use inkwell::execution_engine::ExecutionEngine;
+    use inkwell::llvm_sys::execution_engine::{LLVMAddModule, LLVMCreateJITCompilerForModule};
+
+    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+
+    let context = Context::create();
+
+    // An engine created around a raw module knows that module
+    let module = context.create_module("raw");
+    let raw = module.as_mut_ptr();
+    std::mem::forget(module); // the engine owns it from here on
+    let ee = unsafe { ExecutionEngine::create_jit_for_module(raw, OptimizationLevel::None) }.unwrap();
+    let initial = ee.take_initial_loaded_module().unwrap();
+    assert!(ee.take_initial_loaded_module().is_none());
+    assert_eq!(ee.remove_module(initial).unwrap().get_name().to_str(), Ok("raw"));
+
+    // So does an engine created through llvm-sys and wrapped afterwards ...
+    let module = context.create_module("wrapped");
+    let raw = module.as_mut_ptr();
+    std::mem::forget(module);
+    let mut raw_ee = std::ptr::null_mut();
+    let mut err = std::ptr::null_mut();
+    assert_eq!(
+        unsafe { LLVMCreateJITCompilerForModule(&mut raw_ee, raw, 0, &mut err) },
+        0
+    );
+    let ee = unsafe { ExecutionEngine::new(raw_ee, raw) };
+    let wrapped = ee.remove_module(ee.take_initial_loaded_module().unwrap()).unwrap();
+    assert_eq!(wrapped.get_name().to_str(), Ok("wrapped"));
+
+    // ... and a module added through the raw API can be tracked and taken back
+    let extra = context.create_module("extra");
+    let raw_extra = extra.as_mut_ptr();
+    std::mem::forget(extra);
+    unsafe { LLVMAddModule(ee.as_mut_ptr(), raw_extra) };
+    let extra = unsafe { ee.track_module(raw_extra) };
+    assert_eq!(ee.remove_module(extra).unwrap().get_name().to_str(), Ok("extra"));
+
+    // The engine owns nothing now and never compiled anything: still no crash
+    ee.run_static_constructors();
+    ee.run_static_destructors();
+
+    // The default engine kind is observed, not assumed: MCJIT has a target machine, the
+    // interpreter does not, and `get_function` goes by that
+    let module = context.create_module("default");
+    let raw = module.as_mut_ptr();
+    std::mem::forget(module);
+    let ee = unsafe { ExecutionEngine::create_for_module(raw) }.unwrap();
+    let has_jit = Target::from_triple(&TargetMachine::get_default_triple())
+        .unwrap()
+        .has_jit();
+    assert_eq!(ee.get_target_machine().is_some(), has_jit);
+    assert_eq!(
+        ee.get_function_address("nothing").unwrap_err(),
+        if has_jit {
+            FunctionLookupError::FunctionNotFound
+        } else {
+            FunctionLookupError::JITNotEnabled
+        }
+    );
+    if let Some(target_machine) = ee.get_target_machine() {
+        // MCJIT's own machine: same layout as the engine reports, borrowed, not disposed
+        assert_eq!(target_machine.get_data_layout(), ee.get_data_layout());
+        assert!(target_machine.get_target().has_jit());
+    }
+
+    let module = context.create_module("interp");
+    let raw = module.as_mut_ptr();
+    std::mem::forget(module);
+    let interpreter = unsafe { ExecutionEngine::create_interpreter_for_module(raw) }.unwrap();
+    assert!(interpreter.get_target_machine().is_none());
+    assert_eq!(
+        interpreter.get_function_address("nothing").unwrap_err(),
+        FunctionLookupError::JITNotEnabled
+    );
 }

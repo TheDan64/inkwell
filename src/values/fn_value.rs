@@ -35,7 +35,7 @@ use crate::passes::PassBuilderOptions;
 use crate::support::LLVMString;
 use crate::support::{assert_niche, to_c_str};
 #[llvm_versions(20..)]
-use crate::targets::TargetMachine;
+use crate::targets::TargetMachineRef;
 use crate::types::FunctionType;
 use crate::values::traits::{AnyValue, AsValueRef};
 use crate::values::{BasicValueEnum, GlobalValue, Value};
@@ -540,17 +540,17 @@ impl<'ctx> FunctionValue<'ctx> {
     /// See [`Module::run_passes`](crate::module::Module::run_passes) for details on
     /// the passes format.
     #[llvm_versions(20..)]
-    pub fn run_passes(
+    pub fn run_passes<'m>(
         &self,
         passes: &str,
-        machine: &TargetMachine,
+        machine: impl Into<TargetMachineRef<'m>>,
         options: PassBuilderOptions,
     ) -> Result<(), LLVMString> {
         unsafe {
             let error = LLVMRunPassesOnFunction(
                 self.as_value_ref(),
                 to_c_str(passes).as_ptr(),
-                machine.target_machine.as_ptr(),
+                machine.into().as_mut_ptr(),
                 options.options_ref,
             );
             if error.is_null() {
