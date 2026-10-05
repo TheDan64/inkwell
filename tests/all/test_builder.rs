@@ -81,7 +81,8 @@ fn test_build_call() {
         feature = "llvm19-1",
         feature = "llvm20-1",
         feature = "llvm21-1",
-        feature = "llvm22-1"
+        feature = "llvm22-1",
+        feature = "llvm23-1"
     ))]
     builder.build_indirect_call(fn_type2, load, &[], "call").unwrap();
     builder.build_return(None).unwrap();
@@ -580,6 +581,18 @@ fn test_binary_ops() {
         assert!(xor.call(false, true));
         assert!(!xor.call(true, true));
     }
+}
+
+#[test]
+fn test_build_int_nsw_add_unset_position() {
+    let context = Context::create();
+    let builder = context.create_builder();
+    let one = context.i32_type().const_int(1, false);
+
+    assert_eq!(
+        builder.build_int_nsw_add(one, one, "nsw_add"),
+        Err(BuilderError::UnsetPosition)
+    );
 }
 
 #[test]

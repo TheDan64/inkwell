@@ -143,13 +143,14 @@ impl<'ctx> VectorType<'ctx> {
     /// ```no_run
     /// use inkwell::context::Context;
     /// use inkwell::AddressSpace;
+    /// use inkwell::values::AnyValue;
     ///
     /// let context = Context::create();
     /// let f32_type = context.f32_type();
     /// let f32_vec_type = f32_type.vec_type(3);
-    /// let f32_vec_poison = f32_vec_type.get_undef();
+    /// let f32_vec_poison = f32_vec_type.get_poison();
     ///
-    /// assert!(f32_vec_poison.is_undef());
+    /// assert!(f32_vec_poison.is_poison());
     /// ```
     pub fn get_poison(self) -> VectorValue<'ctx> {
         unsafe { VectorValue::new(self.vec_type.get_poison()) }
@@ -200,6 +201,7 @@ impl<'ctx> VectorType<'ctx> {
             feature = "llvm20-1",
             feature = "llvm21-1",
             feature = "llvm22-1",
+            feature = "llvm23-1",
         ),
         deprecated(
             note = "Starting from version 15.0, LLVM doesn't differentiate between pointer types. Use Context::ptr_type instead."

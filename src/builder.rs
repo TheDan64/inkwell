@@ -2509,6 +2509,9 @@ impl<'ctx> Builder<'ctx> {
     // REVIEW: Possibly incorporate into build_int_add via flag param
     // SubType: <I>(&self, lhs: &IntValue<I>, rhs: &IntValue<I>, name: &str) -> IntValue<I> {
     pub fn build_int_nsw_add<T: IntMathValue<'ctx>>(&self, lhs: T, rhs: T, name: &str) -> Result<T, BuilderError> {
+        if self.positioned.get() != PositionState::Set {
+            return Err(BuilderError::UnsetPosition);
+        }
         let c_string = to_c_str(name);
         let value = unsafe {
             LLVMBuildNSWAdd(
@@ -3708,7 +3711,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// May return of the following errors:
     /// - `Err(BuilderError::BitwidthError)` if the bitwidth of the value is not a power of 2 and less than 8
-    /// - `Err(BuilderError:PointeeTypeMismatch)` if the pointee type does not match the value's type
+    /// - `Err(BuilderError::PointeeTypeMismatch)` if the pointee type does not match the value's type
     ///
     /// # Example
     ///
@@ -3730,9 +3733,9 @@ impl<'ctx> Builder<'ctx> {
     /// let i32_ptr_param = fn_value.get_first_param().unwrap().into_pointer_value();
     /// let builder = context.create_builder();
     /// builder.position_at_end(entry);
-    /// #[cfg(any(feature = "llvm21-1", feature = "llvm22-1"))]
+    /// #[cfg(any(feature = "llvm21-1", feature = "llvm22-1", feature = "llvm23-1"))]
     /// builder.build_atomicrmw(AtomicRMWBinOp::Add, i32_ptr_param, i32_seven, AtomicOrdering::Monotonic).unwrap();
-    /// #[cfg(not(any(feature = "llvm21-1", feature = "llvm22-1")))]
+    /// #[cfg(not(any(feature = "llvm21-1", feature = "llvm22-1", feature = "llvm23-1")))]
     /// builder.build_atomicrmw(AtomicRMWBinOp::Add, i32_ptr_param, i32_seven, AtomicOrdering::AcquireRelease).unwrap();
     /// builder.build_return(None).unwrap();
     /// ```
@@ -3787,9 +3790,9 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// May return one of the following errors:
     /// - `Err(BuilderError::PointeeTypeMismatch)` if the pointer does not point to an element of the value type
-    /// - `Err(BuilderError::ValueTypeMismatch)` if the value to compare and the new values are not of the same type, or if
-    ///   the value does not have a pointer or integer type
-    /// - `Err(BuilderError::OrderingError)` if the following conditions are not satisfied:
+    /// - `Err(BuilderError::NotSameType)` if the value to compare and the new values are not of the same type
+    /// - `Err(BuilderError::NotPointerOrInteger)` if the value does not have a pointer or integer type
+    /// - `Err(BuilderError::CmpxchgOrdering)` if the following conditions are not satisfied:
     ///     - Both success and failure orderings are not Monotonic or stronger
     ///     - The failure ordering is stronger than the success ordering
     ///     - The failure ordering is release or acquire release
