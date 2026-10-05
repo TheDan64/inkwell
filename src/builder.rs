@@ -3711,7 +3711,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// May return of the following errors:
     /// - `Err(BuilderError::BitwidthError)` if the bitwidth of the value is not a power of 2 and less than 8
-    /// - `Err(BuilderError:PointeeTypeMismatch)` if the pointee type does not match the value's type
+    /// - `Err(BuilderError::PointeeTypeMismatch)` if the pointee type does not match the value's type
     ///
     /// # Example
     ///
@@ -3790,9 +3790,9 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// May return one of the following errors:
     /// - `Err(BuilderError::PointeeTypeMismatch)` if the pointer does not point to an element of the value type
-    /// - `Err(BuilderError::ValueTypeMismatch)` if the value to compare and the new values are not of the same type, or if
-    ///   the value does not have a pointer or integer type
-    /// - `Err(BuilderError::OrderingError)` if the following conditions are not satisfied:
+    /// - `Err(BuilderError::NotSameType)` if the value to compare and the new values are not of the same type
+    /// - `Err(BuilderError::NotPointerOrInteger)` if the value does not have a pointer or integer type
+    /// - `Err(BuilderError::CmpxchgOrdering)` if the following conditions are not satisfied:
     ///     - Both success and failure orderings are not Monotonic or stronger
     ///     - The failure ordering is stronger than the success ordering
     ///     - The failure ordering is release or acquire release
