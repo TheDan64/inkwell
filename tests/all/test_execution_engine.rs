@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use inkwell::context::Context;
-use inkwell::execution_engine::FunctionLookupError;
+use inkwell::execution_engine::{FunctionLookupError, RemoveModuleError};
 use inkwell::memory_manager::McjitMemoryManager;
 use inkwell::module::Linkage;
 use inkwell::targets::{CodeModel, InitializationConfig, Target};
@@ -34,7 +34,7 @@ fn test_get_function_address() {
 
     Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
 
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    let (execution_engine, _) = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
     unsafe {
         assert_eq!(
@@ -50,7 +50,7 @@ fn test_get_function_address() {
     builder.position_at_end(basic_block);
     builder.build_return(None).unwrap();
 
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    let (execution_engine, _) = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
     unsafe {
         assert_eq!(
@@ -112,7 +112,7 @@ fn test_jit_execution_engine() {
 
     Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
 
-    let execution_engine = module
+    let (execution_engine, _) = module
         .create_jit_execution_engine(OptimizationLevel::None)
         .expect("Could not create Execution Engine");
 
@@ -135,7 +135,7 @@ fn test_jit_execution_engine() {
 //     let module = context.create_module("fooo");
 //     let builder = context.create_builder();
 
-//     let ee = module.create_jit_execution_engine(OptimizationLevel::None); // Segfault?
+//     let (ee, _) = module.create_jit_execution_engine(OptimizationLevel::None); // Segfault?
 // }
 
 #[test]
@@ -209,7 +209,7 @@ fn test_mcjit_execution_engine_with_memory_manager() {
 
         module.verify().unwrap();
 
-        let ee = module
+        let (ee, _) = module
             .create_mcjit_execution_engine_with_memory_manager(
                 mmgr,
                 OptimizationLevel::None,
@@ -240,52 +240,83 @@ fn test_mcjit_execution_engine_with_memory_manager() {
 }
 
 #[test]
-fn test_create_mcjit_engine_when_already_owned() {
-    let context = Context::create();
-    let module = context.create_module("owned_module");
-
-    // First engine should succeed
-    let memory_manager = MockMemoryManager::new();
-    let engine_result = module.create_mcjit_execution_engine_with_memory_manager(
-        memory_manager,
-        OptimizationLevel::None,
-        CodeModel::Default,
-        false,
-        false,
-    );
-    assert!(engine_result.is_ok());
-
-    // Second engine should fail
-    let memory_manager2 = MockMemoryManager::new();
-    let second_result = module.create_mcjit_execution_engine_with_memory_manager(
-        memory_manager2,
-        OptimizationLevel::None,
-        CodeModel::Default,
-        false,
-        false,
-    );
-    assert!(
-        second_result.is_err(),
-        "Expected an error when creating a second ExecutionEngine on the same module"
-    );
-}
-
-#[test]
 fn test_add_remove_module() {
     let context = Context::create();
-    let module = context.create_module("test");
-    let ee = module
+    let (ee, test) = context
+        .create_module("test")
         .create_jit_execution_engine(OptimizationLevel::default())
         .unwrap();
 
-    assert!(ee.add_module(&module).is_err());
+    // Module names need not be unique
+    let module2 = ee.add_module(context.create_module("mod2"));
+    let module3 = ee.add_module(context.create_module("mod2"));
 
-    let module2 = context.create_module("mod2");
+    // A handle from another engine is rejected; that engine keeps its module
+    let (ee2, _) = context
+        .create_module("other")
+        .create_jit_execution_engine(OptimizationLevel::default())
+        .unwrap();
+    let other = ee2.add_module(context.create_module("other2"));
 
-    assert!(ee.remove_module(&module2).is_err());
-    assert!(ee.add_module(&module2).is_ok());
-    assert!(ee.remove_module(&module).is_ok());
-    assert!(ee.remove_module(&module2).is_ok());
+    assert_eq!(ee.remove_module(other).unwrap_err(), RemoveModuleError::ModuleNotOwned);
+
+    // Removed modules come back as plain modules we own again, the bootstrap one included
+    let module2 = ee.remove_module(module2).unwrap();
+    let module3 = ee.remove_module(module3).unwrap();
+    let test = ee.remove_module(test).unwrap();
+
+    assert_eq!(module2.get_name().to_str(), Ok("mod2"));
+    assert_eq!(module3.get_name().to_str(), Ok("mod2"));
+    assert_eq!(test.get_name().to_str(), Ok("test"));
+    assert_ne!(module2.as_mut_ptr(), module3.as_mut_ptr());
+
+    // A handle whose engine is gone is rejected by any other engine
+    let (ee3, _) = context
+        .create_module("ee3")
+        .create_jit_execution_engine(OptimizationLevel::default())
+        .unwrap();
+    let stale = ee3.add_module(context.create_module("stale"));
+    drop(ee3);
+
+    assert_eq!(ee.remove_module(stale).unwrap_err(), RemoveModuleError::ModuleNotOwned);
+}
+
+#[test]
+fn test_code_survives_module_removal() {
+    Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+
+    let context = Context::create();
+    let builder = context.create_builder();
+    let i64_type = context.i64_type();
+    let fn_type = i64_type.fn_type(&[], false);
+
+    let (ee, main) = context
+        .create_module("main")
+        .create_jit_execution_engine(OptimizationLevel::None)
+        .unwrap();
+
+    let extra = context.create_module("extra");
+    let f = extra.add_function("seven", fn_type, None);
+    builder.position_at_end(context.append_basic_block(f, "entry"));
+    builder.build_return(Some(&i64_type.const_int(7, false))).unwrap();
+    let extra = ee.add_module(extra);
+
+    let seven = unsafe { ee.get_function::<unsafe extern "C" fn() -> i64>("seven").unwrap() };
+    assert_eq!(unsafe { seven.call() }, 7);
+
+    // Taking the module back (and dropping it) does not free the generated code
+    let extra = ee.remove_module(extra).unwrap();
+    assert_eq!(extra.get_name().to_str(), Ok("extra"));
+    drop(extra);
+
+    assert_eq!(unsafe { seven.call() }, 7);
+
+    let seven = unsafe { ee.get_function::<unsafe extern "C" fn() -> i64>("seven").unwrap() };
+    assert_eq!(unsafe { seven.call() }, 7);
+
+    // The bootstrap module can be taken back too
+    let main = ee.remove_module(main).unwrap();
+    assert_eq!(main.get_name().to_str(), Ok("main"));
 }
 
 // REVIEW: Global state pollution access tests cause this to pass when run individually
@@ -308,7 +339,7 @@ fn test_add_remove_module() {
 //     let builder = context.create_builder();
 //     let module = context.create_module("errors_abound");
 //     // let mut execution_engine = ExecutionEngine::create_jit_from_module(module, 0);
-//     let mut execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+//     let mut (execution_engine, _) = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 //     let void_type = context.void_type();
 //     let fn_type = void_type.fn_type(&[], false);
 //     let fn_value = module.add_function("func", fn_type, None);
@@ -324,7 +355,7 @@ fn test_add_remove_module() {
 
 //     Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
 
-//     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+//     let (execution_engine, _) = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
 //     assert_eq!(execution_engine.get_function_value("errors"), Err(FunctionLookupError::FunctionNotFound));
 
@@ -338,7 +369,7 @@ fn test_add_remove_module() {
 
 //     let context = Context::create();
 //     let module = context.create_module("sum");
-//     let _ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+//     let (_ee, _) = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
 //     drop(context);
 //     drop(module);

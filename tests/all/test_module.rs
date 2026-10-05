@@ -2,7 +2,7 @@ use inkwell::OptimizationLevel;
 use inkwell::context::Context;
 use inkwell::memory_buffer::MemoryBuffer;
 use inkwell::module::Module;
-use inkwell::targets::{Target, TargetTriple};
+use inkwell::targets::{Target, TargetData, TargetTriple};
 use inkwell::values::AnyValue;
 
 use std::env::temp_dir;
@@ -411,12 +411,9 @@ fn test_linking_modules() {
     // fn_val2 is no longer the same instance of f2
     assert_ne!(module.get_function("f2"), Some(fn_val2));
 
-    let _execution_engine = module
-        .create_jit_execution_engine(OptimizationLevel::None)
-        .expect("Could not create Execution Engine");
     let module4 = context.create_module("mod4");
 
-    // EE owned module links in unowned (empty) module
+    // Links in an unowned (empty) module
     assert!(module.link_in_module(module4).is_ok());
 
     let module5 = context.create_module("mod5");
@@ -426,27 +423,50 @@ fn test_linking_modules() {
     builder.position_at_end(basic_block3);
     builder.build_return(None).unwrap();
 
-    // EE owned module links in unowned module which has
-    // another definition for the same function name, "f2"
+    // Links in a module which has another definition for the same function name, "f2"
     assert_eq!(
         module.link_in_module(module5).unwrap_err().to_str(),
         Ok("Linking globals named \'f2\': symbol multiply defined!")
     );
 
-    let module6 = context.create_module("mod5");
+    let (execution_engine, _) = module
+        .create_jit_execution_engine(OptimizationLevel::None)
+        .expect("Could not create Execution Engine");
+
+    let module6 = context.create_module("mod6");
     let fn_val4 = module6.add_function("f4", fn_type, None);
     let basic_block4 = context.append_basic_block(fn_val4, "entry");
 
     builder.position_at_end(basic_block4);
     builder.build_return(None).unwrap();
 
-    let execution_engine2 = module6
-        .create_jit_execution_engine(OptimizationLevel::None)
-        .expect("Could not create Execution Engine");
+    let module6 = execution_engine.add_module(module6);
 
-    // EE owned module cannot link another EE owned module
-    assert!(module.link_in_module(module6).is_err());
-    assert_eq!(execution_engine2.get_function_value("f4"), Ok(fn_val4));
+    assert_eq!(execution_engine.get_function_value("f4"), Ok(fn_val4));
+
+    // A module taken back from an EE is an ordinary module again and can be linked elsewhere
+    let module6 = execution_engine.remove_module(module6).unwrap();
+    let module7 = context.create_module("mod7");
+
+    assert!(module7.link_in_module(module6).is_ok());
+    assert!(module7.get_function("f4").is_some());
+}
+
+#[test]
+fn test_data_layout_follows_link() {
+    let context = Context::create();
+    let dst = context.create_module("dst");
+    let src = context.create_module("src");
+    let data_layout = TargetData::create("e-m:e-i64:64-n8:16:32:64").get_data_layout();
+
+    src.set_data_layout(&data_layout);
+
+    assert_eq!(dst.get_data_layout().as_str().to_bytes(), b"");
+
+    // Linking into a module without a data layout copies the source's over
+    dst.link_in_module(src).unwrap();
+
+    assert_eq!(dst.get_data_layout(), data_layout);
 }
 
 #[test]
@@ -485,7 +505,7 @@ fn test_metadata_flags() {
 }
 
 #[test]
-fn test_double_ee_from_same_module() {
+fn test_multiple_ees_from_module_clones() {
     let context = Context::create();
     let module = context.create_module("mod");
     let void_type = context.void_type();
@@ -497,27 +517,25 @@ fn test_double_ee_from_same_module() {
     builder.position_at_end(basic_block);
     builder.build_return(None).unwrap();
 
-    module
+    // Each engine owns its own copy; the original module stays ours.
+    let (ee1, _) = module
+        .clone()
         .create_execution_engine()
         .expect("Could not create Execution Engine");
-
-    assert!(module.create_execution_engine().is_err());
-
-    let module2 = module.clone();
-
-    module2
+    let (ee2, _) = module
+        .clone()
         .create_jit_execution_engine(OptimizationLevel::None)
         .expect("Could not create Execution Engine");
-
-    assert!(module.create_jit_execution_engine(OptimizationLevel::None).is_err());
-
-    let module3 = module.clone();
-
-    module3
+    let (ee3, _) = module
+        .clone()
         .create_interpreter_execution_engine()
         .expect("Could not create Execution Engine");
 
-    assert!(module.create_interpreter_execution_engine().is_err());
+    assert_eq!(module.get_function("f"), Some(fn_val));
+    // The JIT engine owns a copy of `f`, not the original
+    assert_ne!(ee2.get_function_value("f"), Ok(fn_val));
+    assert!(ee2.get_function_value("f").is_ok());
+    drop((ee1, ee3));
 }
 
 #[test]

@@ -1,8 +1,9 @@
 use inkwell::OptimizationLevel;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
-use inkwell::execution_engine::{ExecutionEngine, JitFunction};
+use inkwell::execution_engine::{EngineModule, ExecutionEngine, JitFunction};
 use inkwell::module::Module;
+use inkwell::support::LLVMString;
 
 use std::error::Error;
 
@@ -16,11 +17,10 @@ struct CodeGen<'ctx> {
     context: &'ctx Context,
     module: Module<'ctx>,
     builder: Builder<'ctx>,
-    execution_engine: ExecutionEngine<'ctx>,
 }
 
-impl CodeGen<'_> {
-    fn jit_compile_sum(&self) -> Option<JitFunction<'_, SumFunc>> {
+impl<'ctx> CodeGen<'ctx> {
+    fn compile_sum(&self) -> Option<()> {
         let i64_type = self.context.i64_type();
         let fn_type = i64_type.fn_type(&[i64_type.into(), i64_type.into(), i64_type.into()], false);
         let function = self.module.add_function("sum", fn_type, None);
@@ -37,22 +37,27 @@ impl CodeGen<'_> {
 
         self.builder.build_return(Some(&sum)).unwrap();
 
-        unsafe { self.execution_engine.get_function("sum").ok() }
+        Some(())
+    }
+
+    /// Hands the finished module to a JIT engine, which owns it from now on.
+    fn into_execution_engine(self) -> Result<(ExecutionEngine<'ctx>, EngineModule<'ctx>), LLVMString> {
+        self.module.create_jit_execution_engine(OptimizationLevel::None)
     }
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let context = Context::create();
-    let module = context.create_module("sum");
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None)?;
     let codegen = CodeGen {
         context: &context,
-        module,
+        module: context.create_module("sum"),
         builder: context.create_builder(),
-        execution_engine,
     };
 
-    let sum = codegen.jit_compile_sum().ok_or("Unable to JIT compile `sum`")?;
+    codegen.compile_sum().ok_or("Unable to build `sum`")?;
+
+    let (execution_engine, _module) = codegen.into_execution_engine()?;
+    let sum: JitFunction<SumFunc> = unsafe { execution_engine.get_function("sum")? };
 
     let x = 1u64;
     let y = 2u64;

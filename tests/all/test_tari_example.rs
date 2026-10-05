@@ -8,9 +8,8 @@ fn test_tari_example() {
     Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
 
     let context = Context::create();
-    let module = context.create_module("sum");
     let builder = context.create_builder();
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    let module = context.create_module("sum");
 
     let i64_type = context.i64_type();
     let fn_type = i64_type.fn_type(&[i64_type.into(), i64_type.into(), i64_type.into()], false);
@@ -28,6 +27,8 @@ fn test_tari_example() {
     let sum = builder.build_int_add(sum, z, "sum").unwrap();
 
     builder.build_return(Some(&sum)).unwrap();
+
+    let (execution_engine, _) = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
     unsafe {
         type Sum = unsafe extern "C" fn(u64, u64, u64) -> u64;

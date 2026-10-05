@@ -221,7 +221,10 @@ fn test_target_data() {
 
     let context = Context::create();
     let module = context.create_module("sum");
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    let (execution_engine, _) = context
+        .create_module("ee")
+        .create_jit_execution_engine(OptimizationLevel::None)
+        .unwrap();
     let target_data = execution_engine.get_target_data();
 
     let data_layout = target_data.get_data_layout();
@@ -238,7 +241,7 @@ fn test_target_data() {
 
     module.set_data_layout(&data_layout);
 
-    assert_eq!(*module.get_data_layout(), data_layout);
+    assert_eq!(module.get_data_layout(), data_layout);
 
     let i32_type = context.i32_type();
     let i64_type = context.i64_type();
@@ -341,7 +344,7 @@ fn test_ptr_sized_int() {
 
     let context = Context::create();
     let module = context.create_module("sum");
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    let (execution_engine, _) = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     let target_data = execution_engine.get_target_data();
     let address_space = AddressSpace::from(1u16);
     let int_type = context.ptr_sized_int_type(target_data, None);

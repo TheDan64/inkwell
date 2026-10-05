@@ -1322,7 +1322,7 @@ impl TargetData {
     ///
     /// let context = Context::create();
     /// let module = context.create_module("sum");
-    /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    /// let (execution_engine, _) = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     /// let target_data = execution_engine.get_target_data();
     /// let int_type = target_data.ptr_sized_int_type_in_context(&context, None);
     /// ```
