@@ -102,31 +102,6 @@ impl Drop for LLVMString {
     }
 }
 
-// Similar to Cow; however does not provide ability to clone
-// since memory is allocated by LLVM. Could use a better name
-// too. This is meant to be an internal wrapper only. Maybe
-// belongs in a private utils module.
-#[derive(Eq)]
-pub(crate) enum LLVMStringOrRaw {
-    Owned(LLVMString),
-    Borrowed(NonNull<c_char>),
-}
-
-impl LLVMStringOrRaw {
-    pub fn as_str(&self) -> &CStr {
-        match self {
-            LLVMStringOrRaw::Owned(llvm_string) => llvm_string.deref(),
-            LLVMStringOrRaw::Borrowed(ptr) => unsafe { CStr::from_ptr(ptr.as_ptr()) },
-        }
-    }
-}
-
-impl PartialEq for LLVMStringOrRaw {
-    fn eq(&self, other: &LLVMStringOrRaw) -> bool {
-        self.as_str() == other.as_str()
-    }
-}
-
 /// This function is very unsafe. Any reference to LLVM data after this function is called will likely segfault.
 /// Probably only ever useful to call before your program ends. Might not even be absolutely necessary.
 pub unsafe fn shutdown_llvm() {

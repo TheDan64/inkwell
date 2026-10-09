@@ -478,7 +478,7 @@ fn test_null_checked_ptr_ops() {
 
     builder.build_return(Some(&index1)).unwrap();
 
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    let (execution_engine, _) = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
     unsafe {
         let check_null_index1 = execution_engine
@@ -502,9 +502,8 @@ fn test_null_checked_ptr_ops() {
 #[test]
 fn test_binary_ops() {
     let context = Context::create();
-    let module = context.create_module("unsafe");
     let builder = context.create_builder();
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    let module = context.create_module("unsafe");
 
     // Here we're going to create an and function which looks roughly like:
     // fn and(left: bool, right: bool) -> bool {
@@ -559,6 +558,8 @@ fn test_binary_ops() {
 
     builder.build_return(Some(&xor)).unwrap();
 
+    let (execution_engine, _) = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+
     unsafe {
         type BoolFunc = unsafe extern "C" fn(bool, bool) -> bool;
 
@@ -598,9 +599,8 @@ fn test_build_int_nsw_add_unset_position() {
 #[test]
 fn test_switch() {
     let context = Context::create();
-    let module = context.create_module("unsafe");
     let builder = context.create_builder();
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    let module = context.create_module("unsafe");
 
     // Here we're going to create a function which looks roughly like:
     // fn switch(val: u8) -> u8 {
@@ -644,6 +644,8 @@ fn test_switch() {
 
     builder.build_return(Some(&double)).unwrap();
 
+    let (execution_engine, _) = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+
     unsafe {
         let switch = execution_engine
             .get_function::<unsafe extern "C" fn(u8) -> u8>("switch")
@@ -660,9 +662,8 @@ fn test_switch() {
 #[test]
 fn test_bit_shifts() {
     let context = Context::create();
-    let module = context.create_module("unsafe");
     let builder = context.create_builder();
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    let module = context.create_module("unsafe");
 
     // Here we're going to create a function which looks roughly like:
     // fn left_shift(value: u8, bits: u8) -> u8 {
@@ -713,6 +714,8 @@ fn test_bit_shifts() {
     let shift = builder.build_right_shift(value, bits, true, "shr").unwrap();
 
     builder.build_return(Some(&shift)).unwrap();
+
+    let (execution_engine, _) = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
     unsafe {
         let left_shift = execution_engine
@@ -1527,7 +1530,7 @@ fn test_memcpy() {
         panic!("Errors defining module: {errors:?}");
     }
 
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    let (execution_engine, _) = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
     unsafe {
         let func = execution_engine
@@ -1614,7 +1617,7 @@ fn test_memmove() {
         panic!("Errors defining module: {errors:?}");
     }
 
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    let (execution_engine, _) = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
     unsafe {
         let func = execution_engine
@@ -1688,7 +1691,7 @@ fn test_memset() {
         panic!("Errors defining module: {errors:?}");
     }
 
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    let (execution_engine, _) = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
     unsafe {
         let func = execution_engine

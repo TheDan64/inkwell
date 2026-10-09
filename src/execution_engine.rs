@@ -12,15 +12,15 @@ use crate::support::{LLVMString, to_c_str};
 use crate::targets::TargetData;
 use crate::values::{AnyValue, AsValueRef, FunctionValue, GenericValue};
 
+use llvm_sys::LLVMModule;
+use llvm_sys::prelude::LLVMModuleRef;
+
+use std::cell::RefCell;
 use std::error::Error;
 use std::fmt::{self, Debug, Display, Formatter};
 use std::marker::PhantomData;
 use std::mem::{MaybeUninit, forget, size_of, transmute_copy};
-use std::ops::Deref;
 use std::ptr::NonNull;
-use std::rc::Rc;
-
-static EE_INNER_PANIC: &str = "ExecutionEngineInner should exist until Drop";
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum FunctionLookupError {
@@ -47,8 +47,9 @@ impl Display for FunctionLookupError {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum RemoveModuleError {
+    /// The `ExecutionEngine` does not own the module behind this [`EngineModule`] (it belongs
+    /// to another engine, or that engine has been dropped).
     ModuleNotOwned,
-    IncorrectModuleOwner,
     LLVMError(LLVMString),
 }
 
@@ -67,8 +68,7 @@ impl Error for RemoveModuleError {
 impl RemoveModuleError {
     fn as_str(&self) -> &str {
         match self {
-            RemoveModuleError::ModuleNotOwned => "Module is not owned by an Execution Engine",
-            RemoveModuleError::IncorrectModuleOwner => "Module is not owned by this Execution Engine",
+            RemoveModuleError::ModuleNotOwned => "Module is not owned by this Execution Engine",
             RemoveModuleError::LLVMError(string) => string.to_str().unwrap_or("LLVMError with invalid unicode"),
         }
     }
@@ -80,49 +80,83 @@ impl Display for RemoveModuleError {
     }
 }
 
-/// A reference-counted wrapper around LLVM's execution engine.
+/// An LLVM execution engine (MCJIT or interpreter).
 ///
-/// # Note
+/// The engine owns the modules handed to it -- by [`Module::create_jit_execution_engine`] and
+/// friends, or by [`add_module`](Self::add_module) -- and destroys them with itself, mirroring
+/// LLVM's `ExecutionEngine`, which takes `std::unique_ptr<Module>`s. Each owned module is
+/// represented by an [`EngineModule`] handle, which [`remove_module`](Self::remove_module)
+/// turns back into a [`Module`]. A module must be complete when it is handed over: MCJIT
+/// compiles it as a whole the first time one of its symbols is requested (or on
+/// [`run_static_constructors`](Self::run_static_constructors)) and ignores any later change.
+/// Add new code as new modules.
 ///
-/// Cloning this object is essentially just a case of copying a couple pointers
-/// and incrementing one or two atomics, so this should be quite cheap to create
-/// copies. The underlying LLVM object will be automatically deallocated when
-/// there are no more references to it.
-#[derive(PartialEq, Eq, Debug)]
+/// If several modules define the same symbol, MCJIT does not report an error: whichever
+/// definition is linked last wins, and which module gets compiled for a lookup is unspecified.
+#[derive(Debug)]
 pub struct ExecutionEngine<'ctx> {
-    execution_engine: Option<ExecEngineInner<'ctx>>,
+    execution_engine: NonNull<llvm_sys::execution_engine::LLVMOpaqueExecutionEngine>,
+    /// Owned by the engine; forgotten rather than dropped.
     target_data: Option<TargetData>,
+    /// The modules the engine currently owns. `LLVMRemoveModule` does not check ownership, so
+    /// this is what `remove_module` validates an `EngineModule` against.
+    modules: RefCell<Vec<NonNull<LLVMModule>>>,
     jit_mode: bool,
+    _marker: PhantomData<&'ctx Context>,
 }
 
+impl PartialEq for ExecutionEngine<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.execution_engine == other.execution_engine
+    }
+}
+
+impl Eq for ExecutionEngine<'_> {}
+
 impl<'ctx> ExecutionEngine<'ctx> {
-    pub unsafe fn new(execution_engine: Rc<LLVMExecutionEngineRef>, jit_mode: bool) -> Self {
+    /// Wraps a raw execution engine, taking ownership.
+    ///
+    /// # Safety
+    ///
+    /// `execution_engine` must be valid and uniquely owned by the caller, and the context it
+    /// was created for must outlive the returned value.
+    pub unsafe fn new(execution_engine: LLVMExecutionEngineRef, jit_mode: bool) -> Self {
         unsafe {
-            assert!(!execution_engine.is_null());
+            let execution_engine = NonNull::new(execution_engine).expect("execution engine must be non-null");
 
             // REVIEW: Will we have to do this for LLVMGetExecutionEngineTargetMachine too?
-            let target_data = LLVMGetExecutionEngineTargetData(*execution_engine);
+            let target_data = LLVMGetExecutionEngineTargetData(execution_engine.as_ptr());
 
             ExecutionEngine {
-                execution_engine: Some(ExecEngineInner(execution_engine, PhantomData)),
+                execution_engine,
                 target_data: Some(TargetData::new(target_data)),
+                modules: RefCell::new(Vec::new()),
                 jit_mode,
+                _marker: PhantomData,
             }
         }
     }
 
     /// Acquires the underlying raw pointer belonging to this `ExecutionEngine` type.
     pub fn as_mut_ptr(&self) -> LLVMExecutionEngineRef {
-        self.execution_engine_inner()
-    }
-
-    pub(crate) fn execution_engine_rc(&self) -> &Rc<LLVMExecutionEngineRef> {
-        &self.execution_engine.as_ref().expect(EE_INNER_PANIC).0
+        self.execution_engine.as_ptr()
     }
 
     #[inline]
     pub(crate) fn execution_engine_inner(&self) -> LLVMExecutionEngineRef {
-        **self.execution_engine_rc()
+        self.execution_engine.as_ptr()
+    }
+
+    /// Records a module LLVM has taken ownership of and returns its handle.
+    pub(crate) fn track_module(&self, module: LLVMModuleRef) -> EngineModule<'ctx> {
+        let module = NonNull::new(module).expect("module must be non-null");
+
+        self.modules.borrow_mut().push(module);
+
+        EngineModule {
+            module,
+            _marker: PhantomData,
+        }
     }
 
     // This function is noop, but required for proper MCJIT initialization and
@@ -173,7 +207,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
     ///
     /// builder.build_return(Some(&retv)).unwrap();
     ///
-    /// let mut ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    /// let (ee, _) = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     /// ee.add_global_mapping(&extf, sumf as usize);
     ///
     /// let result = unsafe { ee.run_function(f, &[]) }.as_float(&ft);
@@ -184,9 +218,11 @@ impl<'ctx> ExecutionEngine<'ctx> {
         unsafe { LLVMAddGlobalMapping(self.execution_engine_inner(), value.as_value_ref(), addr as *mut _) }
     }
 
-    /// Adds a module to an `ExecutionEngine`.
+    /// Hands a complete module to the engine, which owns it from now on.
     ///
-    /// The method will be `Ok(())` if the module does not belong to an `ExecutionEngine` already and `Err(())` otherwise.
+    /// The returned [`EngineModule`] is the only way to refer to the module afterwards, and it
+    /// gives no access to the module's contents: MCJIT compiles a module as a whole and ignores
+    /// later changes.
     ///
     /// ```rust,no_run
     /// use inkwell::targets::{InitializationConfig, Target};
@@ -196,31 +232,42 @@ impl<'ctx> ExecutionEngine<'ctx> {
     /// Target::initialize_native(&InitializationConfig::default()).unwrap();
     ///
     /// let context = Context::create();
-    /// let module = context.create_module("test");
-    /// let mut ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    /// let (ee, _main) = context.create_module("main").create_jit_execution_engine(OptimizationLevel::None).unwrap();
     ///
-    /// assert!(ee.add_module(&module).is_err());
+    /// let helpers = ee.add_module(context.create_module("helpers"));
+    /// // ... look up and run functions ...
+    /// let helpers = ee.remove_module(helpers).unwrap();
+    /// assert_eq!(helpers.get_name().to_str(), Ok("helpers"));
     /// ```
-    pub fn add_module(&self, module: &Module<'ctx>) -> Result<(), ()> {
-        unsafe { LLVMAddModule(self.execution_engine_inner(), module.as_mut_ptr()) }
+    pub fn add_module(&self, module: Module<'ctx>) -> EngineModule<'ctx> {
+        let module = module.into_raw();
 
-        if module.owned_by_ee.borrow().is_some() {
-            return Err(());
-        }
+        unsafe { LLVMAddModule(self.execution_engine_inner(), module) }
 
-        *module.owned_by_ee.borrow_mut() = Some(self.clone());
-
-        Ok(())
+        self.track_module(module)
     }
 
-    pub fn remove_module(&self, module: &Module<'ctx>) -> Result<(), RemoveModuleError> {
-        match *module.owned_by_ee.borrow() {
-            Some(ref ee) if ee.execution_engine_inner() != self.execution_engine_inner() => {
-                return Err(RemoveModuleError::IncorrectModuleOwner);
-            },
-            None => return Err(RemoveModuleError::ModuleNotOwned),
-            _ => (),
-        }
+    /// Takes a module back from the engine.
+    ///
+    /// Machine code already generated from the module stays valid until the engine is dropped,
+    /// and its symbols keep resolving through [`get_function`](Self::get_function). Values of
+    /// the returned module must no longer be passed to this engine (e.g.
+    /// [`run_function`](Self::run_function)).
+    ///
+    /// # Errors
+    ///
+    /// [`ModuleNotOwned`](RemoveModuleError::ModuleNotOwned) if this engine does not own the
+    /// module (the handle came from another engine, which keeps its module), or
+    /// [`LLVMError`](RemoveModuleError::LLVMError) if LLVM refuses the removal.
+    pub fn remove_module(&self, module: EngineModule<'ctx>) -> Result<Module<'ctx>, RemoveModuleError> {
+        // `LLVMRemoveModule` does not check ownership itself: it would hand back a module
+        // another engine still owns, or one that no longer exists.
+        let index = self
+            .modules
+            .borrow()
+            .iter()
+            .position(|m| *m == module.module)
+            .ok_or(RemoveModuleError::ModuleNotOwned)?;
 
         let mut new_module = MaybeUninit::uninit();
         let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
@@ -240,12 +287,9 @@ impl<'ctx> ExecutionEngine<'ctx> {
             }
         }
 
-        let new_module = unsafe { new_module.assume_init() };
+        self.modules.borrow_mut().remove(index);
 
-        module.module.set(unsafe { NonNull::new_unchecked(new_module) });
-        *module.owned_by_ee.borrow_mut() = None;
-
-        Ok(())
+        Ok(unsafe { Module::new(new_module.assume_init()) })
     }
 
     /// Try to load a function from the execution engine.
@@ -285,7 +329,7 @@ impl<'ctx> ExecutionEngine<'ctx> {
     /// builder.build_return(Some(&ret)).unwrap();
     ///
     /// // create the JIT engine
-    /// let mut ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+    /// let (ee, _) = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
     ///
     /// // fetch our JIT'd function and execute it
     /// unsafe {
@@ -300,12 +344,13 @@ impl<'ctx> ExecutionEngine<'ctx> {
     /// It is the caller's responsibility to ensure they call the function with
     /// the correct signature and calling convention.
     ///
-    /// The `JitFunction` wrapper ensures a function won't accidentally outlive the
-    /// execution engine it came from, but adding functions after calling this
-    /// method *may* invalidate the function pointer.
+    /// The `JitFunction` wrapper borrows the execution engine, so a function cannot
+    /// outlive the engine it came from. MCJIT never frees generated code before the
+    /// engine is dropped, so a function fetched again after
+    /// [`remove_module`](Self::remove_module) is still valid.
     ///
     /// [`UnsafeFunctionPointer`]: trait.UnsafeFunctionPointer.html
-    pub unsafe fn get_function<F>(&self, fn_name: &str) -> Result<JitFunction<'ctx, F>, FunctionLookupError>
+    pub unsafe fn get_function<F>(&self, fn_name: &str) -> Result<JitFunction<'_, F>, FunctionLookupError>
     where
         F: UnsafeFunctionPointer,
     {
@@ -322,11 +367,9 @@ impl<'ctx> ExecutionEngine<'ctx> {
                 "The type `F` must have the same size as a function pointer"
             );
 
-            let execution_engine = self.execution_engine.as_ref().expect(EE_INNER_PANIC);
-
             Ok(JitFunction {
-                _execution_engine: execution_engine.clone(),
                 inner: transmute_copy(&address),
+                _marker: PhantomData,
             })
         }
     }
@@ -436,60 +479,50 @@ impl<'ctx> ExecutionEngine<'ctx> {
     }
 }
 
-// Modules owned by the EE will be discarded by the EE so we don't
-// want owned modules to drop.
 impl Drop for ExecutionEngine<'_> {
     fn drop(&mut self) {
+        // The target data belongs to the engine.
         forget(
             self.target_data
                 .take()
                 .expect("TargetData should always exist until Drop"),
         );
 
-        // We must ensure the EE gets dropped before its context does,
-        // which is important in the case where the EE has the last
-        // remaining reference to it context
-        drop(self.execution_engine.take().expect(EE_INNER_PANIC));
+        // Disposing the engine destroys every module it still owns and frees all generated
+        // code. `JitFunction`s borrow `self`, so none can be alive here; `EngineModule`s may
+        // outlive the engine but are inert without it.
+        unsafe { LLVMDisposeExecutionEngine(self.execution_engine.as_ptr()) }
     }
 }
 
-impl Clone for ExecutionEngine<'_> {
-    fn clone(&self) -> Self {
-        let execution_engine_rc = self.execution_engine_rc().clone();
-
-        unsafe { ExecutionEngine::new(execution_engine_rc, self.jit_mode) }
-    }
+/// A module owned by an [`ExecutionEngine`], as returned by the engine constructors on
+/// [`Module`] and by [`ExecutionEngine::add_module`].
+///
+/// The handle is the only way to refer to the module afterwards: pass it to
+/// [`ExecutionEngine::remove_module`] to take the module back. It deliberately gives no access
+/// to the module's contents -- MCJIT compiles a module as a whole and ignores later changes, so
+/// a module must be complete before it is handed over. On its own the handle does nothing, so
+/// it may outlive its engine; the engine checks that it still owns the module before acting on
+/// a handle.
+#[derive(Debug)]
+pub struct EngineModule<'ctx> {
+    module: NonNull<LLVMModule>,
+    _marker: PhantomData<&'ctx Context>,
 }
 
-/// A smart pointer which wraps the `Drop` logic for `LLVMExecutionEngineRef`.
-#[repr(transparent)]
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct ExecEngineInner<'ctx>(Rc<LLVMExecutionEngineRef>, PhantomData<&'ctx Context>);
-
-impl Drop for ExecEngineInner<'_> {
-    fn drop(&mut self) {
-        if Rc::strong_count(&self.0) == 1 {
-            unsafe {
-                LLVMDisposeExecutionEngine(*self.0);
-            }
-        }
-    }
-}
-
-impl Deref for ExecEngineInner<'_> {
-    type Target = LLVMExecutionEngineRef;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
+impl EngineModule<'_> {
+    /// Acquires the underlying raw pointer belonging to this `EngineModule` type.
+    pub fn as_mut_ptr(&self) -> LLVMModuleRef {
+        self.module.as_ptr()
     }
 }
 
 /// A wrapper around a function pointer which ensures the function being pointed
-/// to doesn't accidentally outlive its execution engine.
+/// to doesn't accidentally outlive its execution engine: it borrows the engine.
 #[derive(Clone)]
-pub struct JitFunction<'ctx, F> {
-    _execution_engine: ExecEngineInner<'ctx>,
+pub struct JitFunction<'ee, F> {
     inner: F,
+    _marker: PhantomData<&'ee ()>,
 }
 
 impl<F: Copy> JitFunction<'_, F> {

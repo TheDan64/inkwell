@@ -207,7 +207,7 @@ pub fn main() {
         }
 
         if is_anonymous {
-            let ee = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
+            let (ee, _) = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
 
             let fn_name = function.get_name().to_str().unwrap();
             let maybe_fn = unsafe { ee.get_function::<unsafe extern "C" fn() -> f64>(fn_name) };

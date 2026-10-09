@@ -1,11 +1,12 @@
+use std::ffi::CStr;
 use std::fmt;
-use std::{ffi::CStr, ptr::NonNull};
 
-use crate::support::{LLVMString, LLVMStringOrRaw};
+use crate::support::LLVMString;
 
+/// A data layout string, as attached to a module or described by a `TargetData`.
 #[derive(Eq)]
 pub struct DataLayout {
-    pub(crate) data_layout: LLVMStringOrRaw,
+    pub(crate) data_layout: LLVMString,
 }
 
 impl DataLayout {
@@ -14,28 +15,17 @@ impl DataLayout {
             debug_assert!(!data_layout.is_null());
 
             DataLayout {
-                data_layout: LLVMStringOrRaw::Owned(LLVMString::new(data_layout)),
+                data_layout: LLVMString::new(data_layout),
             }
         }
     }
 
-    pub(crate) unsafe fn new_borrowed(data_layout: *const ::libc::c_char) -> DataLayout {
-        debug_assert!(!data_layout.is_null());
-
-        DataLayout {
-            data_layout: LLVMStringOrRaw::Borrowed(unsafe { NonNull::new_unchecked(data_layout.cast_mut()) }),
-        }
-    }
-
     pub fn as_str(&self) -> &CStr {
-        self.data_layout.as_str()
+        &self.data_layout
     }
 
     pub fn as_ptr(&self) -> *const ::libc::c_char {
-        match self.data_layout {
-            LLVMStringOrRaw::Owned(ref llvm_string) => llvm_string.ptr.as_ptr(),
-            LLVMStringOrRaw::Borrowed(ptr) => ptr.as_ptr().cast_const(),
-        }
+        self.data_layout.ptr.as_ptr()
     }
 }
 
