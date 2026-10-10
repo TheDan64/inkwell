@@ -11,6 +11,7 @@ use llvm_sys::core::{
 use llvm_sys::LLVMThreadLocalMode;
 use llvm_sys::core::{LLVMGetUnnamedAddress, LLVMSetUnnamedAddress};
 use llvm_sys::prelude::LLVMValueRef;
+use std::convert::TryFrom;
 
 use llvm_sys::LLVMUnnamedAddr;
 
@@ -284,6 +285,64 @@ unsafe impl AsValueRef for GlobalValue<'_> {
     }
 }
 
+impl<'ctx> TryFrom<PointerValue<'ctx>> for GlobalValue<'ctx> {
+    type Error = ();
+
+    fn try_from(value: PointerValue<'ctx>) -> Result<Self, Self::Error> {
+        let is_global = unsafe { !llvm_sys::core::LLVMIsAGlobalValue(value.as_value_ref()).is_null() };
+        if is_global {
+            unsafe { Ok(GlobalValue::new(value.as_value_ref())) }
+        } else {
+            Err(())
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::GlobalValue;
+    use std::convert::TryFrom;
+
+    #[test]
+    fn try_from_pointer_value_succeeds_for_global_variable() {
+        let context = crate::context::Context::create();
+        let module = context.create_module("global_value_try_from_success");
+        let i32_type = context.i32_type();
+
+        let global = module.add_global(i32_type, None, "gv");
+        let pointer = global.as_pointer_value();
+
+        assert_eq!(GlobalValue::try_from(pointer), Ok(global));
+    }
+
+    #[test]
+    fn try_from_pointer_value_succeeds_for_function() {
+        let context = crate::context::Context::create();
+        let module = context.create_module("global_value_try_from_fn_success");
+        let void_type = context.void_type();
+        let fn_type = void_type.fn_type(&[], false);
+        let function = module.add_function("f", fn_type, None);
+        let pointer = function.as_global_value().as_pointer_value();
+
+        assert_eq!(GlobalValue::try_from(pointer), Ok(function.as_global_value()));
+    }
+
+    #[test]
+    fn try_from_pointer_value_fails_for_non_global_pointer() {
+        let context = crate::context::Context::create();
+        let module = context.create_module("global_value_try_from_failure");
+        let builder = context.create_builder();
+        let i32_type = context.i32_type();
+        let fn_type = context.void_type().fn_type(&[], false);
+        let function = module.add_function("f", fn_type, None);
+        let entry = context.append_basic_block(function, "entry");
+
+        builder.position_at_end(entry);
+        let pointer = builder.build_alloca(i32_type, "ptr").unwrap();
+
+        assert_eq!(GlobalValue::try_from(pointer), Err(()));
+    }
+}
 impl Display for GlobalValue<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.print_to_string())
