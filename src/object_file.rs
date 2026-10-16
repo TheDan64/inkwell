@@ -322,9 +322,9 @@ impl<'a> Relocation<'a> {
     }
 
     pub fn get_symbol(&self) -> Symbol<'_> {
-        let symbol = unsafe { LLVMGetRelocationSymbol(self.relocation.as_ptr()) };
+        let symbol_iterator = unsafe { LLVMGetRelocationSymbol(self.relocation.as_ptr()) };
 
-        unsafe { Symbol::new(symbol) }
+        unsafe { Symbol::from_iter_with_ownership(symbol_iterator, true) }
     }
 }
 
@@ -375,7 +375,7 @@ impl<'a> Symbols<'a> {
             return None;
         }
 
-        let symbol = unsafe { Symbol::new(self.symbol_iterator.as_ptr()) };
+        let symbol = unsafe { Symbol::from_iter_with_ownership(self.symbol_iterator.as_ptr(), false) };
         Some(symbol)
     }
 }
@@ -389,16 +389,29 @@ impl<'a> Drop for Symbols<'a> {
 #[derive(Debug)]
 pub struct Symbol<'a> {
     symbol: NonNull<LLVMOpaqueSymbolIterator>,
+    /// Whether the iterator has to be disposed.
+    owns_iterator: bool,
     _phantom: PhantomData<&'a ()>,
 }
 const _: () = assert_niche::<Symbol>();
 
 impl<'a> Symbol<'a> {
-    pub unsafe fn new(symbol: LLVMSymbolIteratorRef) -> Self {
-        assert!(!symbol.is_null());
+    /// Wraps a symbol iterator positioned at a symbol. With `ownership`, the iterator is
+    /// disposed with the returned value (`LLVMDisposeSymbolIterator`), as needed for the one
+    /// `LLVMGetRelocationSymbol` allocates; without it, it is only borrowed, as for the iterator
+    /// of a [`Symbols`].
+    ///
+    /// # Safety
+    ///
+    /// `symbol` must be valid, and the binary it points into must outlive the returned value.
+    /// With `ownership`, nobody else may own or dispose the iterator; without it, the
+    /// iterator must outlive the returned value.
+    pub unsafe fn from_iter_with_ownership(iter: LLVMSymbolIteratorRef, ownership: bool) -> Self {
+        assert!(!iter.is_null());
 
         Self {
-            symbol: unsafe { NonNull::new_unchecked(symbol) },
+            symbol: unsafe { NonNull::new_unchecked(iter) },
+            owns_iterator: ownership,
             _phantom: PhantomData,
         }
     }
@@ -422,5 +435,13 @@ impl<'a> Symbol<'a> {
 
     pub fn get_address(&self) -> u64 {
         unsafe { LLVMGetSymbolAddress(self.symbol.as_ptr()) }
+    }
+}
+
+impl Drop for Symbol<'_> {
+    fn drop(&mut self) {
+        if self.owns_iterator {
+            unsafe { LLVMDisposeSymbolIterator(self.symbol.as_ptr()) }
+        }
     }
 }

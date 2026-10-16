@@ -1,5 +1,6 @@
 use inkwell::OptimizationLevel;
 use inkwell::context::Context;
+use inkwell::memory_buffer::MemoryBuffer;
 use inkwell::module::Module;
 use inkwell::object_file::LLVMBinaryType;
 use inkwell::targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine, TargetTriple};
@@ -195,13 +196,13 @@ fn test_symbols() {
     assert!(has_symbol_c);
 }
 
-#[test]
-fn test_relocations() {
-    let target_machine = get_x86_64_target_machine();
+/// An x86-64 object whose data section holds four relocations against the symbols `x` and `y`:
+/// `a` and `c` point at `x + 4`, `b` and `d` at `y + 4`.
+fn relocations_object(target_machine: &TargetMachine) -> MemoryBuffer<'static> {
     let context = Context::create();
     let module = context.create_module("test_relocations");
 
-    let intptr_t = ptr_sized_int_type(&target_machine, &context);
+    let intptr_t = ptr_sized_int_type(target_machine, &context);
     let x_ptr = module.add_global(context.i8_type(), None, "x").as_pointer_value();
     let x_plus_4 = x_ptr.const_to_int(intptr_t).const_add(intptr_t.const_int(4, false));
     let y_ptr = module.add_global(context.i8_type(), None, "y").as_pointer_value();
@@ -211,11 +212,18 @@ fn test_relocations() {
     module.add_global(intptr_t, None, "c").set_initializer(&x_plus_4);
     module.add_global(intptr_t, None, "d").set_initializer(&y_plus_4);
 
-    apply_target_to_module(&target_machine, &module);
+    apply_target_to_module(target_machine, &module);
 
-    let memory_buffer = target_machine
+    target_machine
         .write_to_memory_buffer(&module, FileType::Object)
-        .unwrap();
+        .unwrap()
+}
+
+#[test]
+fn test_relocations() {
+    let target_machine = get_x86_64_target_machine();
+    let context = Context::create();
+    let memory_buffer = relocations_object(&target_machine);
 
     let binary_file = memory_buffer.create_binary_file(Some(&context)).unwrap();
 
@@ -248,4 +256,43 @@ fn test_relocations() {
 
     assert_eq!(x_count, 2);
     assert_eq!(y_count, 2);
+}
+
+#[test]
+fn test_symbol_iterator_ownership() {
+    let target_machine = get_x86_64_target_machine();
+    let context = Context::create();
+    let memory_buffer = relocations_object(&target_machine);
+    let binary_file = memory_buffer.create_binary_file(Some(&context)).unwrap();
+
+    // Borrowed iterator: every `Symbol` from `next_symbol` is a view of the `Symbols` iterator and
+    // is dropped before the next call. If dropping it disposed that iterator, the next call would
+    // be a use-after-free.
+    let mut names = Vec::new();
+    let mut symbols = binary_file.get_symbols().unwrap();
+    while let Some(symbol) = symbols.next_symbol() {
+        if let Some(name) = symbol.get_name() {
+            names.push(name.to_owned());
+        }
+    }
+    drop(symbols);
+    assert!(names.iter().any(|name| name.as_c_str() == c"x"));
+    assert!(names.iter().any(|name| name.as_c_str() == c"y"));
+
+    // Owned iterators: every `get_symbol` call allocates an iterator, which its `Symbol` disposes.
+    // Two are alive at once here, and both must be freed (valgrind reports a leak otherwise).
+    let mut relocation_count = 0;
+    let mut sections = binary_file.get_sections().unwrap();
+    while let Some(section) = sections.next_section() {
+        let mut relocations = section.get_relocations();
+        while let Some(relocation) = relocations.next_relocation() {
+            let first = relocation.get_symbol();
+            let second = relocation.get_symbol();
+            assert_ne!(first.as_mut_ptr(), second.as_mut_ptr());
+            assert_eq!(first.get_name(), second.get_name());
+            assert!(names.iter().any(|name| Some(name.as_c_str()) == first.get_name()));
+            relocation_count += 1;
+        }
+    }
+    assert_eq!(relocation_count, 4);
 }
