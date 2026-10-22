@@ -1443,6 +1443,17 @@ fn test_consts() {
         Some((3.4000000953674316, false))
     );
 
+    // zeroinitializer struct: fields must come from the type, not operands
+    let inner_type = context.struct_type(&[i8_type.into(), i16_type.into()], false);
+    let zero_struct_type = context.struct_type(&[inner_type.into(), i8_type.into(), i16_type.into()], false);
+    let zero_struct_val = zero_struct_type.const_zero();
+    assert_eq!(zero_struct_val.count_fields(), 3);
+    assert_eq!(zero_struct_val.get_fields().count(), 3);
+    assert!(zero_struct_val.get_field_at_index(0).unwrap().is_struct_value());
+    assert!(zero_struct_val.get_field_at_index(1).unwrap().is_int_value());
+    assert!(zero_struct_val.get_field_at_index(2).unwrap().is_int_value());
+    assert!(zero_struct_val.get_field_at_index(3).is_none());
+
     // Non const test
     let builder = context.create_builder();
     let fn_type = void_type.fn_type(&[i32_type.into(), f32_type.into()], false);
