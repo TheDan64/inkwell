@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMGetNumOperands, LLVMGetOperand, LLVMSetOperand};
+use llvm_sys::core::{LLVMGetAggregateElement, LLVMGetNumOperands, LLVMGetOperand, LLVMSetOperand};
 
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -68,6 +68,10 @@ impl<'ctx> StructValue<'ctx> {
     ///
     /// The index must be smaller than [StructValue::count_fields].
     pub unsafe fn get_field_at_index_unchecked(self, index: u32) -> BasicValueEnum<'ctx> {
+        if self.is_const() {
+            return unsafe { BasicValueEnum::new(LLVMGetAggregateElement(self.as_value_ref(), index)) };
+        }
+
         unsafe { BasicValueEnum::new(LLVMGetOperand(self.as_value_ref(), index)) }
     }
 
@@ -113,6 +117,10 @@ impl<'ctx> StructValue<'ctx> {
     /// assert_eq!(struct_val.count_fields(), struct_type.count_fields());
     /// ```
     pub fn count_fields(self) -> u32 {
+        if self.is_const() {
+            return self.get_type().count_fields();
+        }
+
         unsafe { LLVMGetNumOperands(self.as_value_ref()) as u32 }
     }
 
