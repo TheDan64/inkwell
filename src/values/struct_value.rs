@@ -1,4 +1,6 @@
-use llvm_sys::core::{LLVMGetAggregateElement, LLVMGetNumOperands, LLVMGetOperand, LLVMSetOperand};
+#[llvm_versions(15..)]
+use llvm_sys::core::LLVMGetAggregateElement;
+use llvm_sys::core::{LLVMGetNumOperands, LLVMGetOperand, LLVMSetOperand};
 
 use llvm_sys::prelude::LLVMValueRef;
 
@@ -69,7 +71,7 @@ impl<'ctx> StructValue<'ctx> {
     /// The index must be smaller than [StructValue::count_fields].
     pub unsafe fn get_field_at_index_unchecked(self, index: u32) -> BasicValueEnum<'ctx> {
         if self.is_const() {
-            return unsafe { BasicValueEnum::new(LLVMGetAggregateElement(self.as_value_ref(), index)) };
+            return unsafe { BasicValueEnum::new(self.const_field_ref(index)) };
         }
 
         unsafe { BasicValueEnum::new(LLVMGetOperand(self.as_value_ref(), index)) }
@@ -181,6 +183,25 @@ impl<'ctx> StructValue<'ctx> {
 unsafe impl AsValueRef for StructValue<'_> {
     fn as_value_ref(&self) -> LLVMValueRef {
         self.struct_value.as_mut_ptr()
+    }
+}
+
+impl<'ctx> StructValue<'ctx> {
+    /// Reads field `index` of a constant struct, including `zeroinitializer`,
+    /// which has no operands.
+    #[llvm_versions(15..)]
+    unsafe fn const_field_ref(self, index: u32) -> LLVMValueRef {
+        unsafe { LLVMGetAggregateElement(self.as_value_ref(), index) }
+    }
+
+    /// Reads field `index` of a constant struct, including `zeroinitializer`,
+    /// which has no operands. `LLVMGetAggregateElement` only exists from LLVM 15.
+    #[llvm_versions(..15)]
+    unsafe fn const_field_ref(self, index: u32) -> LLVMValueRef {
+        use llvm_sys::core::LLVMConstExtractValue;
+
+        let mut indexes = [index];
+        unsafe { LLVMConstExtractValue(self.as_value_ref(), indexes.as_mut_ptr(), 1) }
     }
 }
 
