@@ -1,7 +1,6 @@
 use inkwell::context::Context;
-use inkwell::targets::{
-    ByteOrdering, CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetData, TargetMachine, TargetTriple,
-};
+use inkwell::data_layout::{ByteOrdering, DataLayout};
+use inkwell::targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine, TargetTriple};
 use inkwell::{AddressSpace, OptimizationLevel};
 
 use regex::Regex;
@@ -221,24 +220,33 @@ fn test_target_data() {
 
     let context = Context::create();
     let module = context.create_module("sum");
-    let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-    let target_data = execution_engine.get_target_data();
+    let execution_engine = context
+        .create_module("ee")
+        .create_jit_execution_engine(OptimizationLevel::None)
+        .unwrap();
+    let target_data = execution_engine.get_data_layout();
 
-    let data_layout = target_data.get_data_layout();
+    let layout_str = target_data.get_string_representation();
 
     // https://llvm.org/docs/LangRef.html#data-layout
     let datalayout_specification_re = Regex::new("[Ee]|S\\d+|P\\d+|A\\d+|p(\\d+)?:\\d+:\\d+(:\\d+)?|i\\d+:\\d+(:\\d+)?|v\\d+:\\d+(:\\d+)?|f\\d+:\\d+(:\\d+)?|a:\\d+(:\\d)?|F[in]\\d+|m:[emoxw]|n\\d+(:\\d)*|ni:\\d+(:\\d)*").unwrap();
-    for specification in data_layout.as_str().to_str().unwrap().split('-') {
+    for specification in layout_str.to_str().unwrap().split('-') {
         assert!(datalayout_specification_re.is_match(specification));
     }
-    assert!(data_layout.as_str().to_str().unwrap().matches('-').count() > 2);
+    assert!(layout_str.to_str().unwrap().matches('-').count() > 2);
 
     // REVIEW: Why is llvm 3.9+ a %? 4.0 on travis doesn't have it, but does for me locally...
     // assert_eq!(module.get_data_layout().as_str(), &*CString::new("%").unwrap());
 
-    module.set_data_layout(&data_layout);
+    module.set_data_layout(target_data);
 
-    assert_eq!(*module.get_data_layout(), data_layout);
+    assert_eq!(module.get_data_layout(), target_data);
+    // The string is borrowed from the module; the object answers the queries
+    assert_eq!(*module.get_data_layout().get_string_representation(), *layout_str);
+    assert_eq!(
+        module.get_data_layout().get_pointer_byte_size(None),
+        target_data.get_pointer_byte_size(None)
+    );
 
     let i32_type = context.i32_type();
     let i64_type = context.i64_type();
@@ -332,7 +340,7 @@ fn test_target_data() {
     assert_eq!(target_data.element_at_offset(&struct_type2, 32), 3); // OoB
     assert_eq!(target_data.element_at_offset(&struct_type2, u64::MAX), 3); // OoB; TODOC: Odd but seems to cap at max element number
 
-    TargetData::create("e-m:e-i64:64-f80:128-n8:16:32:64-S128");
+    DataLayout::create("e-m:e-i64:64-f80:128-n8:16:32:64-S128");
 }
 
 #[test]
@@ -342,7 +350,7 @@ fn test_ptr_sized_int() {
     let context = Context::create();
     let module = context.create_module("sum");
     let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-    let target_data = execution_engine.get_target_data();
+    let target_data = execution_engine.get_data_layout();
     let address_space = AddressSpace::from(1u16);
     let int_type = context.ptr_sized_int_type(target_data, None);
 
