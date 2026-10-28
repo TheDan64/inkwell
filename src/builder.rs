@@ -1735,7 +1735,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// Returns an `Err(BuilderError::AlignmentError)` if the source or destination alignments are not a power of 2.
     ///
-    /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
+    /// [`Context::ptr_sized_int_type`](crate::context::Context::ptr_sized_int_type) will get you one of those.
     pub fn build_memcpy(
         &self,
         dest: PointerValue<'ctx>,
@@ -1782,7 +1782,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// Returns an `Err(BuilderError::AlignmentError)` if the source or destination alignments are not a power of 2 under 2^64.
     ///
-    /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
+    /// [`Context::ptr_sized_int_type`](crate::context::Context::ptr_sized_int_type) will get you one of those.
     pub fn build_memmove(
         &self,
         dest: PointerValue<'ctx>,
@@ -1829,7 +1829,7 @@ impl<'ctx> Builder<'ctx> {
     ///
     /// Returns an `Err(BuilderError::AlignmentError)` if the source alignment is not a power of 2 under 2^64.
     ///
-    /// [`TargetData::ptr_sized_int_type_in_context`](https://thedan64.github.io/inkwell/inkwell/targets/struct.TargetData.html#method.ptr_sized_int_type_in_context) will get you one of those.
+    /// [`Context::ptr_sized_int_type`](crate::context::Context::ptr_sized_int_type) will get you one of those.
     pub fn build_memset(
         &self,
         dest: PointerValue<'ctx>,

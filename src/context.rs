@@ -42,10 +42,10 @@ use crate::AddressSpace;
 use crate::attributes::Attribute;
 use crate::basic_block::BasicBlock;
 use crate::builder::Builder;
+use crate::data_layout::DataLayoutRef;
 use crate::memory_buffer::MemoryBuffer;
 use crate::module::Module;
 use crate::support::{LLVMString, to_c_str};
-use crate::targets::TargetData;
 #[cfg(not(feature = "typed-pointers"))]
 use crate::types::PointerType;
 use crate::types::{AnyTypeEnum, MetadataType};
@@ -215,12 +215,16 @@ impl ContextImpl {
         unsafe { MetadataType::new(LLVMMetadataTypeInContext(self.as_mut_ptr())) }
     }
 
-    fn ptr_sized_int_type<'ctx>(&self, target_data: &TargetData, address_space: Option<AddressSpace>) -> IntType<'ctx> {
+    fn ptr_sized_int_type<'ctx>(
+        &self,
+        target_data: DataLayoutRef<'_>,
+        address_space: Option<AddressSpace>,
+    ) -> IntType<'ctx> {
         let int_type_ptr = match address_space {
             Some(address_space) => unsafe {
-                LLVMIntPtrTypeForASInContext(self.as_mut_ptr(), target_data.target_data.as_ptr(), address_space.0)
+                LLVMIntPtrTypeForASInContext(self.as_mut_ptr(), target_data.as_mut_ptr(), address_space.0)
             },
-            None => unsafe { LLVMIntPtrTypeInContext(self.as_mut_ptr(), target_data.target_data.as_ptr()) },
+            None => unsafe { LLVMIntPtrTypeInContext(self.as_mut_ptr(), target_data.as_mut_ptr()) },
         };
 
         unsafe { IntType::new(int_type_ptr) }
@@ -823,12 +827,16 @@ impl Context {
     /// let context = Context::create();
     /// let module = context.create_module("sum");
     /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-    /// let target_data = execution_engine.get_target_data();
+    /// let target_data = execution_engine.get_data_layout();
     /// let int_type = context.ptr_sized_int_type(&target_data, None);
     /// ```
     #[inline]
-    pub fn ptr_sized_int_type(&self, target_data: &TargetData, address_space: Option<AddressSpace>) -> IntType<'_> {
-        self.context.ptr_sized_int_type(target_data, address_space)
+    pub fn ptr_sized_int_type<'a>(
+        &self,
+        target_data: impl Into<DataLayoutRef<'a>>,
+        address_space: Option<AddressSpace>,
+    ) -> IntType<'_> {
+        self.context.ptr_sized_int_type(target_data.into(), address_space)
     }
 
     /// Gets the `FloatType` representing a 16 bit width. It will be assigned the current context.
@@ -1685,12 +1693,16 @@ impl<'ctx> ContextRef<'ctx> {
     /// let context = Context::create();
     /// let module = context.create_module("sum");
     /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-    /// let target_data = execution_engine.get_target_data();
+    /// let target_data = execution_engine.get_data_layout();
     /// let int_type = context.ptr_sized_int_type(&target_data, None);
     /// ```
     #[inline]
-    pub fn ptr_sized_int_type(&self, target_data: &TargetData, address_space: Option<AddressSpace>) -> IntType<'ctx> {
-        self.context.ptr_sized_int_type(target_data, address_space)
+    pub fn ptr_sized_int_type<'a>(
+        &self,
+        target_data: impl Into<DataLayoutRef<'a>>,
+        address_space: Option<AddressSpace>,
+    ) -> IntType<'ctx> {
+        self.context.ptr_sized_int_type(target_data.into(), address_space)
     }
 
     /// Gets the `FloatType` representing a 16 bit width. It will be assigned the current context.

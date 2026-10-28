@@ -16,10 +16,6 @@ use llvm_sys::core::{LLVMAddModuleFlag, LLVMGetModuleFlag};
 use llvm_sys::debuginfo::{LLVMGetModuleDebugMetadataVersion, LLVMStripModuleDebugInfo};
 #[llvm_versions(13..)]
 use llvm_sys::error::LLVMGetErrorMessage;
-use llvm_sys::execution_engine::{
-    LLVMCreateExecutionEngineForModule, LLVMCreateInterpreterForModule, LLVMCreateJITCompilerForModule,
-    LLVMCreateSimpleMCJITMemoryManager,
-};
 use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
 #[llvm_versions(13..)]
 use llvm_sys::transforms::pass_builder::LLVMRunPasses;
@@ -27,32 +23,27 @@ use llvm_sys::{LLVMLinkage, LLVMModule};
 
 use llvm_sys::LLVMModuleFlagBehavior;
 
-use std::cell::{Cell, Ref, RefCell};
-use std::ffi::{CStr, c_void};
+use std::ffi::CStr;
 use std::fs::File;
 use std::marker::PhantomData;
 use std::mem::{MaybeUninit, forget};
 use std::path::Path;
 use std::ptr::{self, NonNull};
-use std::rc::Rc;
 
 use crate::comdat::Comdat;
 use crate::context::{AsContextRef, Context, ContextRef};
-use crate::data_layout::DataLayout;
+use crate::data_layout::DataLayoutRef;
 
 use crate::debug_info::{DICompileUnit, DWARFEmissionKind, DWARFSourceLanguage, DebugInfoBuilder};
 use crate::execution_engine::ExecutionEngine;
 use crate::memory_buffer::MemoryBuffer;
-use crate::memory_manager::{
-    McjitMemoryManager, MemoryManagerAdapter, allocate_code_section_adapter, allocate_data_section_adapter,
-    destroy_adapter, finalize_memory_adapter,
-};
+use crate::memory_manager::McjitMemoryManager;
 #[llvm_versions(13..)]
 use crate::passes::PassBuilderOptions;
 use crate::support::{LLVMString, to_c_str};
 #[llvm_versions(13..)]
-use crate::targets::TargetMachine;
-use crate::targets::{CodeModel, InitializationConfig, Target, TargetTriple};
+use crate::targets::TargetMachineRef;
+use crate::targets::{CodeModel, TargetTriple};
 use crate::types::{AsTypeRef, BasicType, FunctionType, StructType};
 
 use crate::values::BasicValue;
@@ -168,9 +159,7 @@ pub enum Linkage {
 /// The underlying module will be disposed when dropping this object.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Module<'ctx> {
-    data_layout: RefCell<Option<DataLayout>>,
-    pub(crate) module: Cell<NonNull<LLVMModule>>,
-    pub(crate) owned_by_ee: RefCell<Option<ExecutionEngine<'ctx>>>,
+    module: NonNull<LLVMModule>,
     _marker: PhantomData<&'ctx Context>,
 }
 
@@ -184,16 +173,20 @@ impl<'ctx> Module<'ctx> {
         debug_assert!(!module.is_null());
 
         Module {
-            module: Cell::new(unsafe { NonNull::new_unchecked(module) }),
-            owned_by_ee: RefCell::new(None),
-            data_layout: RefCell::new(Some(Module::get_borrowed_data_layout(module))),
+            module: unsafe { NonNull::new_unchecked(module) },
             _marker: PhantomData,
         }
     }
 
     /// Acquires the underlying raw pointer belonging to this `Module` type.
     pub fn as_mut_ptr(&self) -> LLVMModuleRef {
-        self.module.get().as_ptr()
+        self.module.as_ptr()
+    }
+
+    /// Consumes the `Module` and hands the underlying `LLVMModule` to the caller without
+    /// disposing it. Used when LLVM takes ownership.
+    pub(crate) fn into_raw(self) -> LLVMModuleRef {
+        std::mem::ManuallyDrop::new(self).as_mut_ptr()
     }
 
     /// Creates a function given its `name` and `ty`, adds it to the `Module`
@@ -411,7 +404,9 @@ impl<'ctx> Module<'ctx> {
         unsafe { TargetTriple::new(LLVMString::create_from_c_str(CStr::from_ptr(target_str))) }
     }
 
-    /// Creates an `ExecutionEngine` from this `Module`.
+    /// Creates an `ExecutionEngine` from this `Module`, which must be complete: the engine takes
+    /// ownership of it and later changes would not be reflected in the generated code. Its
+    /// handle is available through [`ExecutionEngine::take_initial_loaded_module`].
     ///
     /// # Example
     /// ```no_run
@@ -424,46 +419,16 @@ impl<'ctx> Module<'ctx> {
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
     /// let execution_engine = module.create_execution_engine().unwrap();
-    ///
-    /// assert_eq!(module.get_context(), context);
     /// ```
     // SubType: ExecutionEngine<Basic?>
-    pub fn create_execution_engine(&self) -> Result<ExecutionEngine<'ctx>, LLVMString> {
-        ExecutionEngine::link_in_mc_jit();
-        ExecutionEngine::link_in_interpreter();
-        Target::initialize_native(&InitializationConfig::default()).map_err(|mut err_string| {
-            err_string.push('\0');
-
-            LLVMString::create_from_str(&err_string)
-        })?;
-
-        if self.owned_by_ee.borrow().is_some() {
-            let string = "This module is already owned by an ExecutionEngine.\0";
-            return Err(LLVMString::create_from_str(string));
-        }
-
-        let mut execution_engine = MaybeUninit::uninit();
-        let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
-        let code = unsafe {
-            // Takes ownership of module
-            LLVMCreateExecutionEngineForModule(execution_engine.as_mut_ptr(), self.as_mut_ptr(), &mut err_string)
-        };
-
-        if code == 1 {
-            unsafe {
-                return Err(LLVMString::new(err_string));
-            }
-        }
-
-        let execution_engine = unsafe { execution_engine.assume_init() };
-        let execution_engine = unsafe { ExecutionEngine::new(Rc::new(execution_engine), false) };
-
-        *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
-
-        Ok(execution_engine)
+    pub fn create_execution_engine(self) -> Result<ExecutionEngine<'ctx>, LLVMString> {
+        // SAFETY: the module is handed over whole, and shares the engine's `'ctx`.
+        unsafe { ExecutionEngine::create_for_module(self.into_raw()) }
     }
 
-    /// Creates an interpreter `ExecutionEngine` from this `Module`.
+    /// Creates an interpreter `ExecutionEngine` from this `Module`, which must be complete: the
+    /// engine takes ownership of it. Its handle is available through
+    /// [`ExecutionEngine::take_initial_loaded_module`].
     ///
     /// # Example
     /// ```no_run
@@ -476,46 +441,17 @@ impl<'ctx> Module<'ctx> {
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
     /// let execution_engine = module.create_interpreter_execution_engine().unwrap();
-    ///
-    /// assert_eq!(module.get_context(), context);
     /// ```
     // SubType: ExecutionEngine<Interpreter>
-    pub fn create_interpreter_execution_engine(&self) -> Result<ExecutionEngine<'ctx>, LLVMString> {
-        ExecutionEngine::link_in_interpreter();
-        Target::initialize_native(&InitializationConfig::default()).map_err(|mut err_string| {
-            err_string.push('\0');
-
-            LLVMString::create_from_str(&err_string)
-        })?;
-
-        if self.owned_by_ee.borrow().is_some() {
-            let string = "This module is already owned by an ExecutionEngine.\0";
-            return Err(LLVMString::create_from_str(string));
-        }
-
-        let mut execution_engine = MaybeUninit::uninit();
-        let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
-
-        let code = unsafe {
-            // Takes ownership of module
-            LLVMCreateInterpreterForModule(execution_engine.as_mut_ptr(), self.as_mut_ptr(), &mut err_string)
-        };
-
-        if code == 1 {
-            unsafe {
-                return Err(LLVMString::new(err_string));
-            }
-        }
-
-        let execution_engine = unsafe { execution_engine.assume_init() };
-        let execution_engine = unsafe { ExecutionEngine::new(Rc::new(execution_engine), false) };
-
-        *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
-
-        Ok(execution_engine)
+    pub fn create_interpreter_execution_engine(self) -> Result<ExecutionEngine<'ctx>, LLVMString> {
+        // SAFETY: the module is handed over whole, and shares the engine's `'ctx`.
+        unsafe { ExecutionEngine::create_interpreter_for_module(self.into_raw()) }
     }
 
-    /// Creates a JIT `ExecutionEngine` from this `Module`.
+    /// Creates a JIT `ExecutionEngine` from this `Module`, which must be complete: the engine
+    /// takes ownership of it and compiles it as a whole on first use, so later changes would
+    /// not be reflected in the generated code. Its handle is available through
+    /// [`ExecutionEngine::take_initial_loaded_module`]; further modules go through [`ExecutionEngine::add_module`].
     ///
     /// # Example
     /// ```no_run
@@ -529,51 +465,14 @@ impl<'ctx> Module<'ctx> {
     /// let context = Context::create();
     /// let module = context.create_module("my_module");
     /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-    ///
-    /// assert_eq!(module.get_context(), context);
     /// ```
     // SubType: ExecutionEngine<Jit>
     pub fn create_jit_execution_engine(
-        &self,
+        self,
         opt_level: OptimizationLevel,
     ) -> Result<ExecutionEngine<'ctx>, LLVMString> {
-        ExecutionEngine::link_in_mc_jit();
-        Target::initialize_native(&InitializationConfig::default()).map_err(|mut err_string| {
-            err_string.push('\0');
-
-            LLVMString::create_from_str(&err_string)
-        })?;
-
-        if self.owned_by_ee.borrow().is_some() {
-            let string = "This module is already owned by an ExecutionEngine.\0";
-            return Err(LLVMString::create_from_str(string));
-        }
-
-        let mut execution_engine = MaybeUninit::uninit();
-        let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
-
-        let code = unsafe {
-            // Takes ownership of module
-            LLVMCreateJITCompilerForModule(
-                execution_engine.as_mut_ptr(),
-                self.as_mut_ptr(),
-                opt_level as u32,
-                &mut err_string,
-            )
-        };
-
-        if code == 1 {
-            unsafe {
-                return Err(LLVMString::new(err_string));
-            }
-        }
-
-        let execution_engine = unsafe { execution_engine.assume_init() };
-        let execution_engine = unsafe { ExecutionEngine::new(Rc::new(execution_engine), true) };
-
-        *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
-
-        Ok(execution_engine)
+        // SAFETY: the module is handed over whole, and shares the engine's `'ctx`.
+        unsafe { ExecutionEngine::create_jit_for_module(self.into_raw(), opt_level) }
     }
 
     /// Creates an MCJIT `ExecutionEngine` for this `Module` using a custom memory manager.
@@ -595,7 +494,6 @@ impl<'ctx> Module<'ctx> {
     ///
     /// Returns a newly created [`ExecutionEngine`] for MCJIT on success. Returns an error if:
     /// - The native target fails to initialize,
-    /// - The `Module` is already owned by another `ExecutionEngine`,
     /// - Or MCJIT fails to create the engine (in which case an error string is returned from LLVM).
     ///
     /// # Notes
@@ -604,106 +502,29 @@ impl<'ctx> Module<'ctx> {
     /// sections (for example, capturing `.llvm_stackmaps` or applying custom permissions).
     /// For details, refer to the [`McjitMemoryManager`] documentation.
     ///
-    /// # Safety
-    ///
-    /// The returned [`ExecutionEngine`] takes ownership of the memory manager. Do not move
-    /// or free the `memory_manager` after calling this method. When the `ExecutionEngine`
-    /// is dropped, LLVM will destroy the memory manager by calling
+    /// The returned [`ExecutionEngine`] takes ownership of the module, which must be complete
+    /// (its handle is available through [`ExecutionEngine::take_initial_loaded_module`]), and of the memory manager. When the `ExecutionEngine`
+    /// is dropped, LLVM destroys the memory manager by calling
     /// [`McjitMemoryManager::destroy()`] and freeing its adapter.
     pub fn create_mcjit_execution_engine_with_memory_manager(
-        &self,
+        self,
         memory_manager: impl McjitMemoryManager + 'static,
         opt_level: OptimizationLevel,
         code_model: CodeModel,
         no_frame_pointer_elim: bool,
         enable_fast_isel: bool,
     ) -> Result<ExecutionEngine<'ctx>, LLVMString> {
-        use std::mem::MaybeUninit;
-        // ...
-
-        ExecutionEngine::link_in_mc_jit();
-
-        // 1) Initialize the native target
-        Target::initialize_native(&InitializationConfig::default()).map_err(|mut err_string| {
-            err_string.push('\0');
-            LLVMString::create_from_str(&err_string)
-        })?;
-
-        // Check if the module is already owned by an ExecutionEngine
-        if self.owned_by_ee.borrow().is_some() {
-            let string = "This module is already owned by an ExecutionEngine.\0";
-            return Err(LLVMString::create_from_str(string));
-        }
-
-        // 2) Box the memory_manager into a MemoryManagerAdapter
-        let adapter = MemoryManagerAdapter {
-            memory_manager: Box::new(memory_manager),
-        };
-        let adapter_box = Box::new(adapter);
-        // Convert the Box into a raw pointer for LLVM.
-        // In `destroy_adapter`, we use `Box::from_raw` to safely reclaim ownership.
-        let opaque = Box::into_raw(adapter_box) as *mut c_void;
-
-        // 3) Create the LLVMMCJITMemoryManager using the custom callbacks
-        let mmgr = unsafe {
-            LLVMCreateSimpleMCJITMemoryManager(
-                opaque,
-                allocate_code_section_adapter,
-                allocate_data_section_adapter,
-                finalize_memory_adapter,
-                Some(destroy_adapter),
-            )
-        };
-        if mmgr.is_null() {
-            let msg = "Failed to create SimpleMCJITMemoryManager.\0";
-            return Err(LLVMString::create_from_str(msg));
-        }
-
-        // 4) Build LLVMMCJITCompilerOptions
-        let mut options_uninit = MaybeUninit::<llvm_sys::execution_engine::LLVMMCJITCompilerOptions>::zeroed();
+        // SAFETY: the module is handed over whole, and shares the engine's `'ctx`.
         unsafe {
-            // Ensure defaults are initialized
-            llvm_sys::execution_engine::LLVMInitializeMCJITCompilerOptions(
-                options_uninit.as_mut_ptr(),
-                std::mem::size_of::<llvm_sys::execution_engine::LLVMMCJITCompilerOptions>(),
-            );
-        }
-        let mut options = unsafe { options_uninit.assume_init() };
-
-        // Override fields
-        options.OptLevel = opt_level as u32;
-        options.CodeModel = code_model.into();
-        options.NoFramePointerElim = no_frame_pointer_elim as i32;
-        options.EnableFastISel = enable_fast_isel as i32;
-        options.MCJMM = mmgr;
-
-        // 5) Create MCJIT
-        let mut execution_engine = MaybeUninit::uninit();
-        let mut err_string: *mut ::libc::c_char = ::core::ptr::null_mut();
-        let code = unsafe {
-            llvm_sys::execution_engine::LLVMCreateMCJITCompilerForModule(
-                execution_engine.as_mut_ptr(),
-                self.as_mut_ptr(),
-                &mut options,
-                std::mem::size_of::<llvm_sys::execution_engine::LLVMMCJITCompilerOptions>(),
-                &mut err_string,
+            ExecutionEngine::create_mcjit_for_module_with_memory_manager(
+                self.into_raw(),
+                memory_manager,
+                opt_level,
+                code_model,
+                no_frame_pointer_elim,
+                enable_fast_isel,
             )
-        };
-
-        // If creation fails, extract the error string
-        if code == 1 {
-            unsafe {
-                return Err(LLVMString::new(err_string));
-            }
         }
-
-        // Otherwise, it succeeded, so wrap the raw pointer
-        let execution_engine = unsafe { execution_engine.assume_init() };
-        let execution_engine = unsafe { ExecutionEngine::new(Rc::new(execution_engine), true) };
-
-        *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
-
-        Ok(execution_engine)
     }
 
     /// Creates a `GlobalValue` based on a type in an address space.
@@ -847,72 +668,76 @@ impl<'ctx> Module<'ctx> {
         Ok(())
     }
 
-    fn get_borrowed_data_layout(module: LLVMModuleRef) -> DataLayout {
-        let data_layout = unsafe {
-            use llvm_sys::core::LLVMGetDataLayoutStr;
-
-            LLVMGetDataLayoutStr(module)
-        };
-
-        unsafe { DataLayout::new_borrowed(data_layout) }
-    }
-
-    /// Gets a smart pointer to the `DataLayout` belonging to a particular `Module`.
+    /// The module's data layout, borrowed from it: `LLVMGetModuleDataLayout` returns the
+    /// module's own `DataLayout` member, so the view stays valid as long as the module and observes
+    /// what later replaces the contents: [`set_data_layout`](Self::set_data_layout),
+    /// [`set_data_layout_str`](Self::set_data_layout_str), [`link_in_module`](Self::link_in_module)
+    /// (the linker copies the source layout into a destination without one) and
+    /// [`TargetMachine::write_to_memory_buffer`](crate::targets::TargetMachine::write_to_memory_buffer) /
+    /// [`write_to_file`](crate::targets::TargetMachine::write_to_file) (`LLVMTargetMachineEmit`
+    /// sets the machine's layout).
     ///
     /// # Example
     ///
-    /// ```no_run
-    /// use inkwell::OptimizationLevel;
+    /// ```
     /// use inkwell::context::Context;
-    /// use inkwell::targets::{InitializationConfig, Target};
-    ///
-    /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+    /// use inkwell::data_layout::DataLayout;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("sum");
-    /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-    /// let target_data = execution_engine.get_target_data();
-    /// let data_layout = target_data.get_data_layout();
+    /// let data_layout = DataLayout::create("e-m:e-i64:64-f80:128-n8:16:32:64-S128");
     ///
     /// module.set_data_layout(&data_layout);
     ///
-    /// assert_eq!(*module.get_data_layout(), data_layout);
+    /// assert_eq!(module.get_data_layout(), data_layout);
+    /// assert_eq!(module.get_data_layout().get_pointer_byte_size(None), 8);
+    /// assert_eq!(module.get_data_layout().get_string_representation().to_str(), Ok("e-m:e-i64:64-f80:128-n8:16:32:64-S128"));
     /// ```
-    pub fn get_data_layout(&self) -> Ref<'_, DataLayout> {
-        Ref::map(self.data_layout.borrow(), |l| {
-            l.as_ref().expect("DataLayout should always exist until Drop")
-        })
+    pub fn get_data_layout(&self) -> DataLayoutRef<'_> {
+        use llvm_sys::target::LLVMGetModuleDataLayout;
+
+        unsafe { DataLayoutRef::new(LLVMGetModuleDataLayout(self.as_mut_ptr())) }
     }
 
-    // REVIEW: Ensure the replaced string ptr still gets cleaned up by the module (I think it does)
-    // valgrind might come in handy once non jemalloc allocators stabilize
-    /// Sets the `DataLayout` for a particular `Module`.
+    /// The module's data layout string, borrowed from the module (`LLVMGetDataLayoutStr`): the
+    /// string representation of [`get_data_layout`](Self::get_data_layout) without a copy, valid
+    /// under the same rule.
+    pub fn get_data_layout_str(&self) -> &CStr {
+        use llvm_sys::core::LLVMGetDataLayoutStr;
+
+        unsafe { CStr::from_ptr(LLVMGetDataLayoutStr(self.as_mut_ptr())) }
+    }
+
+    /// Sets the module's data layout to a copy of `data_layout` (`LLVMSetModuleDataLayout`).
     ///
     /// # Example
     ///
-    /// ```no_run
-    /// use inkwell::OptimizationLevel;
+    /// ```
     /// use inkwell::context::Context;
-    /// use inkwell::targets::{InitializationConfig, Target};
-    ///
-    /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
+    /// use inkwell::data_layout::DataLayout;
     ///
     /// let context = Context::create();
     /// let module = context.create_module("sum");
-    /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-    /// let target_data = execution_engine.get_target_data();
-    /// let data_layout = target_data.get_data_layout();
+    /// let data_layout = DataLayout::create("e-m:e-i64:64-f80:128-n8:16:32:64-S128");
     ///
     /// module.set_data_layout(&data_layout);
     ///
-    /// assert_eq!(*module.get_data_layout(), data_layout);
+    /// assert_eq!(module.get_data_layout(), data_layout);
+    /// assert_eq!(module.get_data_layout().get_pointer_byte_size(None), 8);
+    /// assert_eq!(module.get_data_layout().get_string_representation().to_str(), Ok("e-m:e-i64:64-f80:128-n8:16:32:64-S128"));
     /// ```
-    pub fn set_data_layout(&self, data_layout: &DataLayout) {
-        unsafe {
-            LLVMSetDataLayout(self.as_mut_ptr(), data_layout.as_ptr());
-        }
+    pub fn set_data_layout<'a>(&self, data_layout: impl Into<DataLayoutRef<'a>>) {
+        use llvm_sys::target::LLVMSetModuleDataLayout;
 
-        *self.data_layout.borrow_mut() = Some(Module::get_borrowed_data_layout(self.as_mut_ptr()));
+        unsafe { LLVMSetModuleDataLayout(self.as_mut_ptr(), data_layout.into().as_mut_ptr()) }
+    }
+
+    /// Sets the module's data layout from a layout string (`LLVMSetDataLayout`). On a malformed
+    /// string LLVM ends the process with `report_fatal_error`: the C API has no error path.
+    pub fn set_data_layout_str(&self, data_layout: &str) {
+        let c_string = to_c_str(data_layout);
+
+        unsafe { LLVMSetDataLayout(self.as_mut_ptr(), c_string.as_ptr()) }
     }
 
     /// Prints the content of the `Module` to stderr.
@@ -1374,6 +1199,9 @@ impl<'ctx> Module<'ctx> {
 
     /// Links one module into another. This will merge two `Module`s into one.
     ///
+    /// When this module has no data layout, the linker copies the other module's into it
+    /// (`IRMover.cpp`).
+    ///
     /// # Example
     ///
     /// ```no_run
@@ -1386,11 +1214,6 @@ impl<'ctx> Module<'ctx> {
     /// assert!(module.link_in_module(module2).is_ok());
     /// ```
     pub fn link_in_module(&self, other: Self) -> Result<(), LLVMString> {
-        if other.owned_by_ee.borrow().is_some() {
-            let string = "Cannot link a module which is already owned by an ExecutionEngine.\0";
-            return Err(LLVMString::create_from_str(string));
-        }
-
         use crate::support::error_handling::get_error_str_diagnostic_handler;
         use libc::c_void;
         use llvm_sys::linker::LLVMLinkModules2;
@@ -1541,17 +1364,17 @@ impl<'ctx> Module<'ctx> {
     /// See [`opt`](https://llvm.org/docs/CommandGuide/opt.html)
     /// for full reference of the `passes` format.
     #[llvm_versions(13..)]
-    pub fn run_passes(
+    pub fn run_passes<'m>(
         &self,
         passes: &str,
-        machine: &TargetMachine,
+        machine: impl Into<TargetMachineRef<'m>>,
         options: PassBuilderOptions,
     ) -> Result<(), LLVMString> {
         unsafe {
             let error = LLVMRunPasses(
                 self.as_mut_ptr(),
                 to_c_str(passes).as_ptr(),
-                machine.target_machine.as_ptr(),
+                machine.into().as_mut_ptr(),
                 options.options_ref,
             );
             if error.is_null() {
@@ -1579,17 +1402,11 @@ impl Clone for Module<'_> {
     }
 }
 
-// Module owns the data layout string, so LLVMDisposeModule will deallocate it for us.
-// which is why DataLayout must be called with `new_borrowed`
 impl Drop for Module<'_> {
     fn drop(&mut self) {
-        if self.owned_by_ee.borrow_mut().take().is_none() {
-            unsafe {
-                LLVMDisposeModule(self.as_mut_ptr());
-            }
+        unsafe {
+            LLVMDisposeModule(self.as_mut_ptr());
         }
-
-        // Context & EE will drop naturally if they are unique references at this point
     }
 }
 

@@ -8,13 +8,13 @@ use inkwell::types::IntType;
 use inkwell::values::BasicValue;
 
 fn ptr_sized_int_type<'ctx>(target_machine: &TargetMachine, context: &'ctx Context) -> IntType<'ctx> {
-    let target_data = target_machine.get_target_data();
+    let target_data = target_machine.get_data_layout();
     context.ptr_sized_int_type(&target_data, None)
 }
 
 fn apply_target_to_module(target_machine: &TargetMachine, module: &Module) {
     module.set_triple(&target_machine.get_triple());
-    module.set_data_layout(&target_machine.get_target_data().get_data_layout());
+    module.set_data_layout(&target_machine.get_data_layout());
 }
 
 fn get_x86_64_target_machine() -> TargetMachine {
