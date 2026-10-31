@@ -429,7 +429,15 @@ impl<'a> Symbol<'a> {
         }
     }
 
-    pub fn get_size(&self) -> u64 {
+    /// Gets the size of a common symbol.
+    ///
+    /// # Safety
+    ///
+    /// The symbol must be a common symbol (e.g. a global with `Linkage::Common`). LLVM only
+    /// defines the size for common symbols: for any other symbol, an LLVM build with assertions
+    /// enabled aborts, and other builds may return an unrelated value (such as the address in a
+    /// Mach-O file). The C API offers no way to check the symbol's flags beforehand.
+    pub unsafe fn get_size(&self) -> u64 {
         unsafe { LLVMGetSymbolSize(self.symbol.as_ptr()) }
     }
 
