@@ -144,7 +144,13 @@ use llvm_sys::debuginfo::{
 };
 
 #[llvm_versions(19.1..)]
-use llvm_sys::prelude::LLVMValueRef;
+use crate::support::LLVMString;
+#[llvm_versions(19.1..)]
+use llvm_sys::LLVMOpaqueDbgRecord;
+#[llvm_versions(19.1..)]
+use llvm_sys::core::LLVMPrintDbgRecordToString;
+#[llvm_versions(19.1..)]
+use llvm_sys::prelude::LLVMDbgRecordRef;
 
 use llvm_sys::debuginfo::{LLVMDIBuilderCreateConstantValueExpression, LLVMDIBuilderCreateGlobalVariableExpression};
 use llvm_sys::prelude::{LLVMDIBuilderRef, LLVMMetadataRef};
@@ -905,6 +911,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     }
 
     /// Insert a variable declaration (`llvm.dbg.declare`) before a specified instruction.
+    #[llvm_versions(..19.1)]
     pub fn insert_declare_before_instruction(
         &self,
         storage: PointerValue<'ctx>,
@@ -924,33 +931,35 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             )
         };
 
-        #[cfg(any(
-            feature = "llvm19-1",
-            feature = "llvm20-1",
-            feature = "llvm21-1",
-            feature = "llvm22-1",
-            feature = "llvm23-1"
-        ))]
-        {
-            // In LLVM 19+, the insert... functions return a DbgRecord, not a Value.
-            // We need to cast it to a ValueRef to create an InstructionValue.
-            // This is unsafe, but it's the only way to do it.
-            unsafe { InstructionValue::new(value_ref as LLVMValueRef) }
-        }
+        unsafe { InstructionValue::new(value_ref) }
+    }
 
-        #[cfg(not(any(
-            feature = "llvm19-1",
-            feature = "llvm20-1",
-            feature = "llvm21-1",
-            feature = "llvm22-1",
-            feature = "llvm23-1"
-        )))]
-        {
-            unsafe { InstructionValue::new(value_ref) }
-        }
+    /// Insert a variable declaration (`llvm.dbg.declare`) before a specified instruction.
+    #[llvm_versions(19.1..)]
+    pub fn insert_declare_before_instruction(
+        &self,
+        storage: PointerValue<'ctx>,
+        var_info: Option<DILocalVariable<'ctx>>,
+        expr: Option<DIExpression<'ctx>>,
+        debug_loc: DILocation<'ctx>,
+        instruction: InstructionValue<'ctx>,
+    ) -> DbgRecord<'ctx> {
+        let value_ref = unsafe {
+            LLVMDIBuilderInsertDeclareBefore(
+                self.as_mut_ptr(),
+                storage.as_value_ref(),
+                var_info.map(|v| v.as_mut_ptr()).unwrap_or(std::ptr::null_mut()),
+                expr.unwrap_or_else(|| self.create_expression(vec![])).as_mut_ptr(),
+                debug_loc.as_mut_ptr(),
+                instruction.as_value_ref(),
+            )
+        };
+
+        unsafe { DbgRecord::new(value_ref) }
     }
 
     /// Insert a variable declaration (`llvm.dbg.declare` intrinsic) at the end of `block`
+    #[llvm_versions(..19.1)]
     pub fn insert_declare_at_end(
         &self,
         storage: PointerValue<'ctx>,
@@ -970,30 +979,31 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             )
         };
 
-        #[cfg(any(
-            feature = "llvm19-1",
-            feature = "llvm20-1",
-            feature = "llvm21-1",
-            feature = "llvm22-1",
-            feature = "llvm23-1"
-        ))]
-        {
-            // In LLVM 19+, the insert... functions return a DbgRecord, not a Value.
-            // We need to cast it to a ValueRef to create an InstructionValue.
-            // This is unsafe, but it's the only way to do it.
-            unsafe { InstructionValue::new(value_ref as LLVMValueRef) }
-        }
+        unsafe { InstructionValue::new(value_ref) }
+    }
 
-        #[cfg(not(any(
-            feature = "llvm19-1",
-            feature = "llvm20-1",
-            feature = "llvm21-1",
-            feature = "llvm22-1",
-            feature = "llvm23-1"
-        )))]
-        {
-            unsafe { InstructionValue::new(value_ref) }
-        }
+    /// Insert a variable declaration (`llvm.dbg.declare` intrinsic) at the end of `block`
+    #[llvm_versions(19.1..)]
+    pub fn insert_declare_at_end(
+        &self,
+        storage: PointerValue<'ctx>,
+        var_info: Option<DILocalVariable<'ctx>>,
+        expr: Option<DIExpression<'ctx>>,
+        debug_loc: DILocation<'ctx>,
+        block: BasicBlock<'ctx>,
+    ) -> DbgRecord<'ctx> {
+        let value_ref = unsafe {
+            LLVMDIBuilderInsertDeclareAtEnd(
+                self.as_mut_ptr(),
+                storage.as_value_ref(),
+                var_info.map(|v| v.as_mut_ptr()).unwrap_or(std::ptr::null_mut()),
+                expr.unwrap_or_else(|| self.create_expression(vec![])).as_mut_ptr(),
+                debug_loc.as_mut_ptr(),
+                block.as_mut_ptr(),
+            )
+        };
+
+        unsafe { DbgRecord::new(value_ref) }
     }
 
     /// Create an expression
@@ -1013,6 +1023,7 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
     }
 
     /// Insert a new llvm.dbg.value intrinsic call before an instruction.
+    #[llvm_versions(..19.1)]
     pub fn insert_dbg_value_before(
         &self,
         value: BasicValueEnum<'ctx>,
@@ -1032,30 +1043,31 @@ impl<'ctx> DebugInfoBuilder<'ctx> {
             )
         };
 
-        #[cfg(any(
-            feature = "llvm19-1",
-            feature = "llvm20-1",
-            feature = "llvm21-1",
-            feature = "llvm22-1",
-            feature = "llvm23-1"
-        ))]
-        {
-            // In LLVM 19+, the insert... functions return a DbgRecord, not a Value.
-            // We need to cast it to a ValueRef to create an InstructionValue.
-            // This is unsafe, but it's the only way to do it.
-            unsafe { InstructionValue::new(value_ref as LLVMValueRef) }
-        }
+        unsafe { InstructionValue::new(value_ref) }
+    }
 
-        #[cfg(not(any(
-            feature = "llvm19-1",
-            feature = "llvm20-1",
-            feature = "llvm21-1",
-            feature = "llvm22-1",
-            feature = "llvm23-1"
-        )))]
-        {
-            unsafe { InstructionValue::new(value_ref) }
-        }
+    /// Insert a new llvm.dbg.value intrinsic call before an instruction.
+    #[llvm_versions(19.1..)]
+    pub fn insert_dbg_value_before(
+        &self,
+        value: BasicValueEnum<'ctx>,
+        var_info: DILocalVariable<'ctx>,
+        expr: Option<DIExpression<'ctx>>,
+        debug_loc: DILocation<'ctx>,
+        instruction: InstructionValue<'ctx>,
+    ) -> DbgRecord<'ctx> {
+        let value_ref = unsafe {
+            LLVMDIBuilderInsertDbgValueBefore(
+                self.as_mut_ptr(),
+                value.as_value_ref(),
+                var_info.as_mut_ptr(),
+                expr.unwrap_or_else(|| self.create_expression(vec![])).as_mut_ptr(),
+                debug_loc.as_mut_ptr(),
+                instruction.as_value_ref(),
+            )
+        };
+
+        unsafe { DbgRecord::new(value_ref) }
     }
 
     /// Construct a placeholders derived type to be used when building debug info with circular references.
@@ -1415,6 +1427,37 @@ impl<'ctx> DILocation<'ctx> {
     /// Acquires the underlying raw pointer belonging to this `DILocation` type.
     pub fn as_mut_ptr(&self) -> LLVMMetadataRef {
         self.metadata_ref.as_ptr()
+    }
+}
+
+/// A debug record (such as `#dbg_declare` or `#dbg_value`), which replaces the
+/// `llvm.dbg.*` intrinsic calls starting with LLVM 19.
+#[llvm_versions(19.1..)]
+#[repr(transparent)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct DbgRecord<'ctx> {
+    dbg_record_ref: NonNull<LLVMOpaqueDbgRecord>,
+    _marker: PhantomData<&'ctx Context>,
+}
+
+#[llvm_versions(19.1..)]
+impl<'ctx> DbgRecord<'ctx> {
+    unsafe fn new(dbg_record_ref: LLVMDbgRecordRef) -> Self {
+        debug_assert!(!dbg_record_ref.is_null(), "dbg_record_ref must not be null.");
+        DbgRecord {
+            dbg_record_ref: unsafe { NonNull::new_unchecked(dbg_record_ref) },
+            _marker: PhantomData,
+        }
+    }
+
+    /// Prints this `DbgRecord` to an `LLVMString`.
+    pub fn print_to_string(&self) -> LLVMString {
+        unsafe { LLVMString::new(LLVMPrintDbgRecordToString(self.as_mut_ptr())) }
+    }
+
+    /// Acquires the underlying raw pointer belonging to this `DbgRecord` type.
+    pub fn as_mut_ptr(&self) -> LLVMDbgRecordRef {
+        self.dbg_record_ref.as_ptr()
     }
 }
 
