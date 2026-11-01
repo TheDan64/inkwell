@@ -1,7 +1,7 @@
 use inkwell::OptimizationLevel;
 use inkwell::context::Context;
 use inkwell::memory_buffer::MemoryBuffer;
-use inkwell::module::Module;
+use inkwell::module::{Linkage, Module};
 use inkwell::object_file::LLVMBinaryType;
 use inkwell::targets::{CodeModel, FileType, InitializationConfig, RelocMode, Target, TargetMachine, TargetTriple};
 use inkwell::types::IntType;
@@ -146,15 +146,16 @@ fn test_symbols() {
     let context = Context::create();
     let module = context.create_module("test_symbols");
 
-    module
-        .add_global(context.i8_type(), None, "a")
-        .set_initializer(&context.i8_type().const_zero().as_basic_value_enum());
-    module
-        .add_global(context.i16_type(), None, "b")
-        .set_initializer(&context.i16_type().const_zero().as_basic_value_enum());
-    module
-        .add_global(context.i32_type(), None, "c")
-        .set_initializer(&context.i32_type().const_zero().as_basic_value_enum());
+    // `Symbol::get_size` is only valid for common symbols.
+    for (ty, name) in [
+        (context.i8_type(), "a"),
+        (context.i16_type(), "b"),
+        (context.i32_type(), "c"),
+    ] {
+        let global = module.add_global(ty, None, name);
+        global.set_initializer(&ty.const_zero().as_basic_value_enum());
+        global.set_linkage(Linkage::Common);
+    }
 
     apply_target_to_module(&target_machine, &module);
 
@@ -174,17 +175,17 @@ fn test_symbols() {
                 "a" => {
                     assert!(!has_symbol_a);
                     has_symbol_a = true;
-                    assert_eq!(symbol.get_size(), 1);
+                    assert_eq!(unsafe { symbol.get_size() }, 1);
                 },
                 "b" => {
                     assert!(!has_symbol_b);
                     has_symbol_b = true;
-                    assert_eq!(symbol.get_size(), 2);
+                    assert_eq!(unsafe { symbol.get_size() }, 2);
                 },
                 "c" => {
                     assert!(!has_symbol_c);
                     has_symbol_c = true;
-                    assert_eq!(symbol.get_size(), 4);
+                    assert_eq!(unsafe { symbol.get_size() }, 4);
                 },
                 _ => {},
             }
