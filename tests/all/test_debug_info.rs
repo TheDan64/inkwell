@@ -455,3 +455,87 @@ fn test_enumeration_types() {
     // check that module is still valid
     assert!(module.verify().is_ok());
 }
+
+#[test]
+fn test_insert_declare_and_dbg_value() {
+    let context = Context::create();
+    let module = context.create_module("bin");
+
+    let debug_metadata_version = context.i32_type().const_int(3, false);
+    module.add_basic_value_flag("Debug Info Version", FlagBehavior::Warning, debug_metadata_version);
+    let builder = context.create_builder();
+    let (dibuilder, compile_unit) = module.create_debug_info_builder(
+        true,
+        DWARFSourceLanguage::C,
+        "source_file",
+        ".",
+        "my llvm compiler frontend",
+        false,
+        "",
+        0,
+        "",
+        DWARFEmissionKind::Full,
+        0,
+        false,
+        false,
+        "",
+        "",
+    );
+
+    let ditype = dibuilder
+        .create_basic_type("type_name", 32_u64, 0x00, DIFlags::PUBLIC)
+        .unwrap();
+    let subroutine_type = dibuilder.create_subroutine_type(compile_unit.get_file(), None, &[], DIFlags::PUBLIC);
+    let func_scope = dibuilder.create_function(
+        compile_unit.as_debug_info_scope(),
+        "main",
+        None,
+        compile_unit.get_file(),
+        0,
+        subroutine_type,
+        true,
+        true,
+        0,
+        DIFlags::PUBLIC,
+        false,
+    );
+
+    let fn_val = module.add_function("main", context.void_type().fn_type(&[], false), None);
+    fn_val.set_subprogram(func_scope);
+
+    let entry = context.append_basic_block(fn_val, "entry");
+    builder.position_at_end(entry);
+
+    let loc = dibuilder.create_debug_location(&context, 0, 0, func_scope.as_debug_info_scope(), None);
+    builder.set_current_debug_location(loc);
+
+    let alloca = builder.build_alloca(context.i32_type(), "x").unwrap();
+    let store = builder.build_store(alloca, context.i32_type().const_zero()).unwrap();
+    let var = dibuilder.create_auto_variable(
+        func_scope.as_debug_info_scope(),
+        "x",
+        compile_unit.get_file(),
+        0,
+        ditype.as_type(),
+        true,
+        DIFlags::PUBLIC,
+        0,
+    );
+
+    let declare_before = dibuilder.insert_declare_before_instruction(alloca, Some(var), None, loc, store);
+    let declare_at_end = dibuilder.insert_declare_at_end(alloca, Some(var), None, loc, entry);
+    let dbg_value = dibuilder.insert_dbg_value_before(context.i32_type().const_zero().into(), var, None, loc, store);
+    builder.build_return(None).unwrap();
+
+    // LLVM 19+ returns debug records rather than intrinsic call instructions
+    for record in [declare_before, declare_at_end, dbg_value] {
+        assert!(record.print_to_string().to_str().unwrap().contains("dbg"));
+    }
+
+    dibuilder.finalize();
+
+    assert!(module.verify().is_ok());
+    let ir = module.print_to_string().to_string();
+    assert!(ir.contains("dbg.declare") || ir.contains("dbg_declare"), "{ir}");
+    assert!(ir.contains("dbg.value") || ir.contains("dbg_value"), "{ir}");
+}
