@@ -29,3 +29,25 @@ fn test_memory_buffer_file() {
 
     assert_eq!(memory_buffer.as_slice()[memory_buffer.get_size() - 1], b'\n'); // new line character
 }
+
+#[test]
+fn test_memory_buffer_not_null_terminated() {
+    use inkwell::context::Context;
+
+    // The bytes following the slice must not be read by LLVM's IR lexer.
+    let source = b"define void @f() {\n  ret void\n}\ngarbage";
+    let memory_buffer = MemoryBuffer::create_from_memory_range(&source[..source.len() - 7], "mem_buf");
+    let context = Context::create();
+
+    assert!(context.create_module_from_ir(memory_buffer).is_ok());
+}
+
+#[test]
+fn test_memory_buffer_null_terminated() {
+    let buffer = b"mem\0";
+    let memory_buffer = MemoryBuffer::create_from_memory_range(buffer, "mem_buf");
+
+    // A nul-terminated slice is borrowed rather than copied, without its terminator.
+    assert_eq!(memory_buffer.as_slice().as_ptr(), buffer.as_ptr());
+    assert_eq!(memory_buffer.as_slice(), b"mem");
+}

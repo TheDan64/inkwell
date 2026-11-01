@@ -97,43 +97,23 @@ impl<'a> MemoryBuffer<'a> {
     }
 
     /// Create a memory buffer from a byte slice.
+    ///
+    /// LLVM may read one byte past the end of a memory buffer and expects it to be a nul byte.
+    /// If `input` ends with a nul byte, the buffer borrows `input` without that trailing nul byte.
+    /// Otherwise, `input` is copied into a new nul-terminated buffer owned by LLVM.
     pub fn create_from_memory_range(input: &'a [u8], name: &str) -> Self {
+        let Some((0, input)) = input.split_last() else {
+            return MemoryBuffer::create_from_memory_range_copy(input, name);
+        };
         let name_c_string = to_c_str(name);
 
         let memory_buffer = unsafe {
-            /* LLVMCreateMemoryBufferWithMemoryRange does not expect a null-terminated string.
-             * StringRef documentation: https://llvm.org/doxygen/StringRef_8h_source.html#l00132
-             * ```
-             * Get a pointer to the start of the string (which may not be null
-             * terminated).
-             * ```
-             */
             LLVMCreateMemoryBufferWithMemoryRange(
                 input.as_ptr() as *const libc::c_char,
                 input.len(),
                 name_c_string.as_ptr(),
-                /* If this is `true`, LLVM will expect a null-terminator. If it is false, the null-terminator is not
-                 * necessary.
-                 * https://llvm.org/doxygen/IR_2Core_8cpp_source.html#l04679
-                 * ```
-                 * LLVMMemoryBufferRef LLVMCreateMemoryBufferWithMemoryRange(
-                 *    const char *InputData,
-                 *    size_t InputDataLength,
-                 *    const char *BufferName,
-                 *    LLVMBool RequiresNullTerminator) {
-                 *
-                 * return wrap(MemoryBuffer::getMemBuffer(StringRef(InputData, InputDataLength),
-                 *                                        StringRef(BufferName),
-                 *                                        RequiresNullTerminator).release());
-                 * }
-                 * ```
-                 * `MemoryBuffer::getMemBuffer` documentation.
-                 * https://llvm.org/doxygen/classllvm_1_1MemoryBuffer.html#a0f68098734d6d3b451aacf5b38a67131
-                 * ```
-                 * Note that InputData must be null terminated if RequiresNullTerminator is true.
-                 * ```
-                 */
-                false as libc::c_int,
+                // The byte right after `input` is the nul terminator, so it is safe for LLVM to read it.
+                true as libc::c_int,
             )
         };
 
