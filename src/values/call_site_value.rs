@@ -354,10 +354,9 @@ impl<'ctx> CallSiteValue<'ctx> {
     ///
     /// builder.position_at_end(entry_bb);
     ///
-    /// let fn_ptr = fn_value.as_global_value().as_pointer_value();
-    /// let call_site_value = builder.build_indirect_call(fn_type, fn_ptr, &[], "my_fn").unwrap();
+    /// let call_site_value = builder.build_call(fn_value, &[], "my_fn").unwrap();
     ///
-    /// assert_eq!(call_site_value.get_called_value(), fn_ptr);
+    /// assert_eq!(call_site_value.get_called_value(), fn_value.as_global_value().as_pointer_value());
     /// ```
     pub fn get_called_value(self) -> PointerValue<'ctx> {
         // SAFETY: the passed LLVMValueRef is of type CallSite, and the callee is always a pointer
