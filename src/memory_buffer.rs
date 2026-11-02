@@ -101,6 +101,10 @@ impl<'a> MemoryBuffer<'a> {
     /// LLVM may read one byte past the end of a memory buffer and expects it to be a nul byte.
     /// If `input` ends with a nul byte, the buffer borrows `input` without that trailing nul byte.
     /// Otherwise, `input` is copied into a new nul-terminated buffer owned by LLVM.
+    ///
+    /// Passing `RequiresNullTerminator = false` to LLVM does not avoid this: it only skips LLVM's
+    /// assertion that the buffer is nul-terminated. Consumers such as the IR parser still read
+    /// past the end of the buffer, so a non-nul-terminated slice would be read out of bounds.
     pub fn create_from_memory_range(input: &'a [u8], name: &str) -> Self {
         let Some((0, input)) = input.split_last() else {
             return MemoryBuffer::create_from_memory_range_copy(input, name);
