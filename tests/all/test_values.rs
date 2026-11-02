@@ -203,7 +203,18 @@ fn test_call_site_function_value_indirect_call() {
     assert!(fn_value.is_none());
 
     let loaded_ptr = inst.get_previous_instruction().unwrap();
-    assert_eq!(call_site_value.get_called_value().as_instruction(), Some(loaded_ptr));
+    let called_ptr = call_site_value.get_called_value();
+    assert_eq!(called_ptr.as_instruction(), Some(loaded_ptr));
+    assert!(!called_ptr.is_const());
+
+    // The callee should be usable as a function pointer in a new indirect call.
+    let builder = context.create_builder();
+    builder.position_before(&inst.get_next_instruction().unwrap());
+    let fn_type = context.void_type().fn_type(&[], false);
+    let new_call = builder.build_indirect_call(fn_type, called_ptr, &[], "").unwrap();
+    assert!(new_call.get_called_fn_value().is_none());
+    assert_eq!(new_call.get_called_value(), called_ptr);
+    assert!(module.verify().is_ok());
 }
 
 #[test]
