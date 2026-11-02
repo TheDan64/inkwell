@@ -201,6 +201,9 @@ fn test_call_site_function_value_indirect_call() {
 
     let fn_value = call_site_value.get_called_fn_value();
     assert!(fn_value.is_none());
+
+    let loaded_ptr = inst.get_previous_instruction().unwrap();
+    assert_eq!(call_site_value.get_called_value().as_instruction(), Some(loaded_ptr));
 }
 
 #[test]

@@ -15,7 +15,7 @@ use crate::support::assert_niche;
 use crate::types::FunctionType;
 #[llvm_versions(18..)]
 use crate::values::operand_bundle::OperandBundleIter;
-use crate::values::{AsValueRef, BasicValueEnum, FunctionValue, InstructionValue, Value};
+use crate::values::{AsValueRef, BasicValueEnum, FunctionValue, InstructionValue, PointerValue, Value};
 
 use super::{AnyValue, InstructionOpcode};
 
@@ -332,6 +332,36 @@ impl<'ctx> CallSiteValue<'ctx> {
         fn_value: Option<FunctionValue<'ctx>>,
     ) -> Option<FunctionValue<'ctx>> {
         fn_value.filter(|fn_value| fn_value.get_type() == self.get_called_fn_type())
+    }
+
+    /// Gets the value called by the instruction this `CallSiteValue` is based on.
+    ///
+    /// Unlike [`CallSiteValue::get_called_fn_value`], this always succeeds, including for
+    /// indirect calls and calls whose callee type doesn't match the call's function type.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use inkwell::context::Context;
+    ///
+    /// let context = Context::create();
+    /// let builder = context.create_builder();
+    /// let module = context.create_module("my_mod");
+    /// let void_type = context.void_type();
+    /// let fn_type = void_type.fn_type(&[], false);
+    /// let fn_value = module.add_function("my_fn", fn_type, None);
+    /// let entry_bb = context.append_basic_block(fn_value, "entry");
+    ///
+    /// builder.position_at_end(entry_bb);
+    ///
+    /// let fn_ptr = fn_value.as_global_value().as_pointer_value();
+    /// let call_site_value = builder.build_indirect_call(fn_type, fn_ptr, &[], "my_fn").unwrap();
+    ///
+    /// assert_eq!(call_site_value.get_called_value(), fn_ptr);
+    /// ```
+    pub fn get_called_value(self) -> PointerValue<'ctx> {
+        // SAFETY: the passed LLVMValueRef is of type CallSite, and the callee is always a pointer
+        unsafe { PointerValue::new(LLVMGetCalledValue(self.as_value_ref())) }
     }
 
     /// Gets the type of the function called by the instruction this `CallSiteValue` is based on.
