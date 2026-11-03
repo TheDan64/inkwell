@@ -603,11 +603,13 @@ impl<'ctx> InstructionValue<'ctx> {
     /// Returns alignment on a memory access instruction or alloca.
     pub fn get_alignment(self) -> Result<u32, InstructionValueError> {
         match self.get_opcode() {
-            InstructionOpcode::Alloca
-            | InstructionOpcode::Load
-            | InstructionOpcode::Store
-            | InstructionOpcode::AtomicRMW
-            | InstructionOpcode::AtomicCmpXchg => Ok(unsafe { LLVMGetAlignment(self.as_value_ref()) }),
+            InstructionOpcode::Alloca | InstructionOpcode::Load | InstructionOpcode::Store => {
+                Ok(unsafe { LLVMGetAlignment(self.as_value_ref()) })
+            },
+            #[cfg(not(feature = "llvm12-0"))]
+            InstructionOpcode::AtomicRMW | InstructionOpcode::AtomicCmpXchg => {
+                Ok(unsafe { LLVMGetAlignment(self.as_value_ref()) })
+            },
             _ => Err(InstructionValueError::AlignmentError(
                 AlignmentError::UnalignedInstruction,
             )),
@@ -625,11 +627,12 @@ impl<'ctx> InstructionValue<'ctx> {
         }
 
         match self.get_opcode() {
-            InstructionOpcode::Alloca
-            | InstructionOpcode::Load
-            | InstructionOpcode::Store
-            | InstructionOpcode::AtomicRMW
-            | InstructionOpcode::AtomicCmpXchg => {
+            InstructionOpcode::Alloca | InstructionOpcode::Load | InstructionOpcode::Store => {
+                unsafe { LLVMSetAlignment(self.as_value_ref(), alignment) };
+                Ok(())
+            },
+            #[cfg(not(feature = "llvm12-0"))]
+            InstructionOpcode::AtomicRMW | InstructionOpcode::AtomicCmpXchg => {
                 unsafe { LLVMSetAlignment(self.as_value_ref(), alignment) };
                 Ok(())
             },

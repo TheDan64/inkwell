@@ -427,12 +427,15 @@ fn test_volatile_atomicrmw_cmpxchg() {
     assert!(!atomicrmw.get_volatile().unwrap());
     assert!(!cmpxchg.get_volatile().unwrap());
 
-    assert_eq!(atomicrmw.get_alignment().unwrap(), 4);
-    assert_eq!(cmpxchg.get_alignment().unwrap(), 4);
-    atomicrmw.set_alignment(16).unwrap();
-    cmpxchg.set_alignment(16).unwrap();
-    assert_eq!(atomicrmw.get_alignment().unwrap(), 16);
-    assert_eq!(cmpxchg.get_alignment().unwrap(), 16);
+    #[cfg(not(feature = "llvm12-0"))]
+    {
+        assert_eq!(atomicrmw.get_alignment().unwrap(), 4);
+        assert_eq!(cmpxchg.get_alignment().unwrap(), 4);
+        atomicrmw.set_alignment(16).unwrap();
+        cmpxchg.set_alignment(16).unwrap();
+        assert_eq!(atomicrmw.get_alignment().unwrap(), 16);
+        assert_eq!(cmpxchg.get_alignment().unwrap(), 16);
+    }
 }
 
 #[test]
