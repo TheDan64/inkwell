@@ -11,7 +11,7 @@ env:
 jobs:
   lint:
     name: Linting
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - name: Checkout Repo
       uses: actions/checkout@v4
@@ -44,15 +44,15 @@ jobs:
         - llvm-version: [ "18.1", "18-1" ]
           os: ubuntu-22.04
         - llvm-version: [ "19.1", "19-1", "19" ]
-          os: ubuntu-latest
+          os: ubuntu-24.04
         - llvm-version: [ "20.1", "20-1", "20" ]
-          os: ubuntu-latest
+          os: ubuntu-24.04
         - llvm-version: [ "21.1", "21-1", "21" ]
-          os: ubuntu-latest
+          os: ubuntu-24.04
         - llvm-version: [ "22.1", "22-1", "22" ]
-          os: ubuntu-latest
+          os: ubuntu-24.04
         - llvm-version: [ "23.1", "23-1", "23" ]
-          os: ubuntu-latest
+          os: ubuntu-24.04
     steps:
     - name: Checkout Repo
       uses: actions/checkout@v4
