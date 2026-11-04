@@ -489,3 +489,12 @@ fn test_create_target_machine_from_options() {
 
     write_target_machine_to_memory_buffer(target_machine);
 }
+
+#[llvm_versions(18..)]
+#[test]
+fn test_drop_unused_target_machine_options() {
+    let options = inkwell::targets::TargetMachineOptions::new().set_cpu("x86-64");
+
+    drop(options);
+    drop(inkwell::targets::TargetMachineOptions::default());
+}

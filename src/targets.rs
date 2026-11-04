@@ -1342,13 +1342,22 @@ impl Drop for TargetMachine {
 /// The option structure exposes an additional setting (i.e., the target ABI)
 /// and provides default values for unspecified settings.
 #[llvm_versions(18..)]
-#[derive(Default, Debug)]
-pub struct TargetMachineOptions(Option<NonNull<LLVMOpaqueTargetMachineOptions>>);
+#[derive(Debug)]
+pub struct TargetMachineOptions(NonNull<LLVMOpaqueTargetMachineOptions>);
+
+#[llvm_versions(18..)]
+impl Default for TargetMachineOptions {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 #[llvm_versions(18..)]
 impl TargetMachineOptions {
     pub fn new() -> Self {
-        Default::default()
+        let options = unsafe { LLVMCreateTargetMachineOptions() };
+
+        TargetMachineOptions(NonNull::new(options).expect("target machine options must be non-null"))
     }
 
     pub fn set_cpu(mut self, cpu: &str) -> Self {
@@ -1406,19 +1415,13 @@ impl TargetMachineOptions {
     /// - The only way to access it is via this private method.
     /// - Disposal is taken care of automatically in `Drop::drop`.
     unsafe fn inner(&mut self) -> LLVMTargetMachineOptionsRef {
-        unsafe {
-            self.0
-                .get_or_insert_with(|| NonNull::new_unchecked(LLVMCreateTargetMachineOptions()))
-                .as_ptr()
-        }
+        self.0.as_ptr()
     }
 }
 
 #[llvm_versions(18..)]
 impl Drop for TargetMachineOptions {
     fn drop(&mut self) {
-        if let Some(inner) = self.0 {
-            unsafe { LLVMDisposeTargetMachineOptions(inner.as_ptr()) };
-        }
+        unsafe { LLVMDisposeTargetMachineOptions(self.0.as_ptr()) };
     }
 }
