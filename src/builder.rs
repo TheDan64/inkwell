@@ -3794,7 +3794,7 @@ impl<'ctx> Builder<'ctx> {
     /// - `Err(BuilderError::NotPointerOrInteger)` if the value does not have a pointer or integer type
     /// - `Err(BuilderError::CmpxchgOrdering)` if the following conditions are not satisfied:
     ///     - Both success and failure orderings are not Monotonic or stronger
-    ///     - The failure ordering is stronger than the success ordering
+    ///     - The failure ordering is stronger than the success ordering (LLVM 12 only)
     ///     - The failure ordering is release or acquire release
     ///
     /// # Example
@@ -3846,10 +3846,12 @@ impl<'ctx> Builder<'ctx> {
             return Err(BuilderError::PointeeTypeMismatch);
         }
 
-        // "Both ordering parameters must be at least monotonic, the ordering constraint on failure must be no stronger than that on success, and the failure ordering cannot be either release or acq_rel." -- https://llvm.org/docs/LangRef.html#cmpxchg-instruction
+        // "Both ordering parameters must be at least monotonic, the failure ordering cannot be either release or acq_rel." -- https://llvm.org/docs/LangRef.html#cmpxchg-instruction
         if success < AtomicOrdering::Monotonic || failure < AtomicOrdering::Monotonic {
             return Err(BuilderError::CmpxchgOrdering(CmpxchgOrderingError::WeakerThanMonotic));
         }
+        // LLVM 13 dropped the rule that failure is no stronger than success (https://reviews.llvm.org/D103284)
+        #[cfg(feature = "llvm12-0")]
         if failure > success {
             return Err(BuilderError::CmpxchgOrdering(
                 CmpxchgOrderingError::WeakerSuccessOrdering,
