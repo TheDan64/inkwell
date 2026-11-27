@@ -1924,7 +1924,10 @@ fn test_cmpxchg() {
         AtomicOrdering::Monotonic,
         AtomicOrdering::SequentiallyConsistent,
     );
+    #[cfg(feature = "llvm12-0")]
     assert!(result.is_err());
+    #[cfg(not(feature = "llvm12-0"))]
+    assert!(result.is_ok());
 
     #[cfg(feature = "typed-pointers")]
     {
